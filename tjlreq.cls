@@ -1313,26 +1313,7 @@
 
 \newcommand{\jlreq@warichu@endwarichu}{%
   \jlreq@warichu@kakkofontsize
-  ）%
-  \futurelet\jlreq@next\jlreq@warichu@endwarichu@
-}
-
-\newcommand{\jlreq@warichu@endwarichu@}{%
-  \edef\@tempa{\meaning\jlreq@next}%
-  % 閉じ括弧とかの場合はJFMグルーを挿入する
-  \directlua{
-    local a = [[\@tempa]]
-    if unicode.utf8.match(a,'(.*).') == 'the letter ' then
-      local c = unicode.utf8.match(a,'.*(.)')
-      aga = {'（', '〔', '［', '｛', '〈', '《', '「', '『', '【', '｟', '〘', '〖', '«', '〝', '‘', '“','・', '：', '；'}
-      local addglue = false
-      for i,k in ipairs(aga) do
-        if k == c then addglue = true break end
-      end
-      if addglue == false then tex.print(string.char(92) .. "inhibitglue") end
-    end
-  }%
-  \normalsize
+  \hbox to .5\zh{）}%
 }
 
 % \jlreq@warichu@determinelength{テキスト}{\parshape指定}{成功行数}{最小長さ}{最大長さ}

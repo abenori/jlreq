@@ -1314,7 +1314,7 @@
 \newcommand{\jlreq@warichu@endwarichu}{%
 	\jlreq@warichu@kakkofontsize
 	\hbox to .5\zh{）}%
-	\normalfont
+	\normalsize
 }
 
 \newbox\jlreq@tempboxa

@@ -1226,7 +1226,13 @@
 % 割注を入れるための命令．\warichu{割注}で使う．
 % 改行位置は自動で計算されるが，常に正しいとは限らない．
 % \warichu*は自動で改行されない．\\で改行位置を指定する．
-\newcommand{\warichu}{\@ifstar\jlreq@warichu@noauto\jlreq@warichu@auto}
+\newif\ifjlreq@inwarichu
+\jlreq@inwarichufalse
+\newcommand{\warichu}{%
+	\ifjlreq@inwarichu\ClassError{tjlreq}{\string\warichu\space can't be nested!}\fi
+	\jlreq@inwarichutrue
+	\@ifstar\jlreq@warichu@noauto\jlreq@warichu@auto}
+
 \newcommand{\jlreq@warichu@auto}[1]{%
 	% 割注初め括弧の前の場所を保存
 	\jlreq@savepos@for@remain@linewidth
@@ -1346,6 +1352,7 @@
 }
 
 \newcommand{\jlreq@warichu@endwarichu}{%
+	\jlreq@inwarichufalse
 	{\jlreq@warichu@kakkofontsize\hbox to .5\zh{）}}%
 }
 

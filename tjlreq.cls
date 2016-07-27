@@ -21,55 +21,55 @@
 % サイズ
 \newcommand{\jlreq@checkempty}[2]{\ifx#2\relax\relax\else\ClassError{jlreq}{The option #1 should have no value.}\fi}
 \DeclareOptionX{a3paper}{%
-	\jlreq@checkempty{a3paper}{#1}%
-	\setlength\paperheight {420mm}%
-	\setlength\paperwidth  {297mm}}
+  \jlreq@checkempty{a3paper}{#1}%
+  \setlength\paperheight {420mm}%
+  \setlength\paperwidth  {297mm}}
 \DeclareOptionX{a4paper}{%
-	\setlength\paperheight {297mm}%
-	\setlength\paperwidth  {210mm}}
+  \setlength\paperheight {297mm}%
+  \setlength\paperwidth  {210mm}}
 \DeclareOptionX{a5paper}{%
-	\jlreq@checkempty{a5paper}{#1}%
-	\setlength\paperheight {210mm}%
-	\setlength\paperwidth  {148mm}}
+  \jlreq@checkempty{a5paper}{#1}%
+  \setlength\paperheight {210mm}%
+  \setlength\paperwidth  {148mm}}
 \DeclareOptionX{a6paper}{%
-	\setlength\paperheight {148mm}%
-	\setlength\paperwidth  {105mm}}
+  \setlength\paperheight {148mm}%
+  \setlength\paperwidth  {105mm}}
 \DeclareOptionX{b4paper}{%
-	\setlength\paperheight {364mm}%
-	\setlength\paperwidth  {257mm}}
+  \setlength\paperheight {364mm}%
+  \setlength\paperwidth  {257mm}}
 \DeclareOptionX{b5paper}{%
-	\setlength\paperheight {257mm}%
-	\setlength\paperwidth  {182mm}}
+  \setlength\paperheight {257mm}%
+  \setlength\paperwidth  {182mm}}
 \DeclareOptionX{b6paper}{%
-	\setlength\paperheight {182mm}%
-	\setlength\paperwidth  {128mm}}
+  \setlength\paperheight {182mm}%
+  \setlength\paperwidth  {128mm}}
 \DeclareOptionX{a4j}{%
-	\setlength\paperheight {297mm}%
-	\setlength\paperwidth  {210mm}}
+  \setlength\paperheight {297mm}%
+  \setlength\paperwidth  {210mm}}
 \DeclareOptionX{a5j}{%
-	\setlength\paperheight {210mm}%
-	\setlength\paperwidth  {148mm}}
+  \setlength\paperheight {210mm}%
+  \setlength\paperwidth  {148mm}}
 \DeclareOptionX{b4j}{%
-	\setlength\paperheight {364mm}%
-	\setlength\paperwidth  {257mm}}
+  \setlength\paperheight {364mm}%
+  \setlength\paperwidth  {257mm}}
 \DeclareOptionX{b5j}{%
-	\setlength\paperheight {257mm}%
-	\setlength\paperwidth  {182mm}}
+  \setlength\paperheight {257mm}%
+  \setlength\paperwidth  {182mm}}
 \DeclareOptionX{a4var}{%
-	\setlength\paperheight {283mm}%
-	\setlength\paperwidth  {210mm}}
+  \setlength\paperheight {283mm}%
+  \setlength\paperwidth  {210mm}}
 \DeclareOptionX{b5var}{%
-	\setlength\paperheight {230mm}%
-	\setlength\paperwidth  {182mm}}
+  \setlength\paperheight {230mm}%
+  \setlength\paperwidth  {182mm}}
 \DeclareOptionX{letterpaper}{%
-	\setlength\paperheight {11in}%
-	\setlength\paperwidth  {8.5in}}
+  \setlength\paperheight {11in}%
+  \setlength\paperwidth  {8.5in}}
 \DeclareOptionX{legalpaper}{%
-	\setlength\paperheight {14in}%
-	\setlength\paperwidth  {8.5in}}
+  \setlength\paperheight {14in}%
+  \setlength\paperwidth  {8.5in}}
 \DeclareOptionX{executivepaper}{%
-	\setlength\paperheight {10.5in}%
-	\setlength\paperwidth  {7.25in}}
+  \setlength\paperheight {10.5in}%
+  \setlength\paperwidth  {7.25in}}
 
 \newcommand{\jlreq@scale}{1}
 % jsarticleから
@@ -99,16 +99,15 @@
 \newif\if@landscape \@landscapefalse
 \DeclareOptionX{landscape}{\@landscapetrue}
 \DeclareOptionX{tombo}{%
-	\tombowtrue \tombowdatefalse
-	\setlength{\@tombowwidth}{.1\p@}%
-	\maketombowbox}
+  \tombowtrue \tombowdatefalse
+  \setlength{\@tombowwidth}{.1\p@}%
+  \maketombowbox}
 \DeclareOptionX{mentuke}{%
-	\tombowtrue \tombowdatefalse
-	\setlength{\@tombowwidth}{\z@}%
-	\maketombowbox}
+  \tombowtrue \tombowdatefalse
+  \setlength{\@tombowwidth}{\z@}%
+  \maketombowbox}
 \DeclareOptionX{tate}{%
-	\AtBeginDocument{\tate\message{《縦組モード》}%
-			             \adjustbaseline}%
+  \AtBeginDocument{\tate\message{《縦組モード》}\adjustbaseline}%
 }
 \DeclareOptionX{oneside}{\@twosidefalse \@mparswitchfalse}
 \DeclareOptionX{twoside}{\@twosidetrue \@mparswitchtrue}
@@ -123,9 +122,9 @@
 \ExecuteOptionsX{a4paper,10pt,twoside,onecolumn,final,tate}
 \ProcessOptionsX\relax
 \if@landscape
-	\setlength\@tempdima  {\paperheight}
-	\setlength\paperheight{\paperwidth}
-	\setlength\paperwidth {\@tempdima}
+  \setlength\@tempdima  {\paperheight}
+  \setlength\paperheight{\paperwidth}
+  \setlength\paperwidth {\@tempdima}
 \fi
 % 行送り
 \newcommand{\n@baseline}{16}
@@ -138,15 +137,15 @@
 \setlength{\stockwidth}{\paperwidth}
 \setlength{\stockheight}{\paperheight}
 \iftombow
-	\advance \stockwidth 2in
-	\advance \stockheight 2in
+  \advance \stockwidth 2in
+  \advance \stockheight 2in
 \fi
 \ifdefined\pdfpagewidth
-	\setlength{\pdfpagewidth}{\stockwidth}
-	\setlength{\pdfpageheight}{\stockheight}
+  \setlength{\pdfpagewidth}{\stockwidth}
+  \setlength{\pdfpageheight}{\stockheight}
 \else
-	\setlength{\pagewidth}{\stockwidth}
-	\setlength{\pageheight}{\stockheight}
+  \setlength{\pagewidth}{\stockwidth}
+  \setlength{\pageheight}{\stockheight}
 \fi
 
 \RequirePackage{luatexja-adjust}
@@ -167,7 +166,7 @@
 \DeclareFontShape{JT3}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
 
 \newcommand{\jlreq@setfontsize}[3]{%
-	\@setfontsize#1{#2\jlreq@mpt}{#3\jlreq@mpt}}
+  \@setfontsize#1{#2\jlreq@mpt}{#3\jlreq@mpt}}
 \emergencystretch 3\zw
 
 \renewcommand{\normalsize}{%
@@ -190,25 +189,25 @@
 
 % とりあえずtarticleからほぼそのまま
 \newcommand{\small}{%
-	\@setfontsize\small\@ixpt{11}%
-	\abovedisplayskip 8.5\jlreq@mpt \@plus3\jlreq@mpt \@minus4\jlreq@mpt
-	\abovedisplayshortskip \z@ \@plus2\jlreq@mpt
-	\belowdisplayshortskip 4\jlreq@mpt \@plus2\jlreq@mpt \@minus2\jlreq@mpt
-	\def\@listi{\leftmargin\leftmargini
-			\topsep 4\jlreq@mpt \@plus2\jlreq@mpt \@minus2\jlreq@mpt
-			\parsep 2\jlreq@mpt \@plus\jlreq@mpt \@minus\jlreq@mpt
-			\itemsep \parsep}%
-	\belowdisplayskip \abovedisplayskip}
+  \@setfontsize\small\@ixpt{11}%
+  \abovedisplayskip 8.5\jlreq@mpt \@plus3\jlreq@mpt \@minus4\jlreq@mpt
+  \abovedisplayshortskip \z@ \@plus2\jlreq@mpt
+  \belowdisplayshortskip 4\jlreq@mpt \@plus2\jlreq@mpt \@minus2\jlreq@mpt
+  \def\@listi{\leftmargin\leftmargini
+    \topsep 4\jlreq@mpt \@plus2\jlreq@mpt \@minus2\jlreq@mpt
+    \parsep 2\jlreq@mpt \@plus\jlreq@mpt \@minus\jlreq@mpt
+    \itemsep \parsep}%
+  \belowdisplayskip \abovedisplayskip}
 \newcommand{\footnotesize}{%
-	\jlreq@setfontsize\footnotesize\@viiipt{11}% 脚注文字サイズの二分より少し小さい値を行間に: 4.2.5.e
-	\abovedisplayskip 6\jlreq@mpt \@plus2\jlreq@mpt \@minus4\jlreq@mpt
-	\abovedisplayshortskip \z@ \@plus\jlreq@mpt
-	\belowdisplayshortskip 3\jlreq@mpt \@plus\jlreq@mpt \@minus2\jlreq@mpt
-	\def\@listi{\leftmargin\leftmargini
-			\topsep 3\jlreq@mpt \@plus\jlreq@mpt \@minus\jlreq@mpt
-			\parsep 2\jlreq@mpt \@plus\jlreq@mpt \@minus\jlreq@mpt
-			\itemsep \parsep}%
-	\belowdisplayskip \abovedisplayskip}
+  \jlreq@setfontsize\footnotesize\@viiipt{11}% 脚注文字サイズの二分より少し小さい値を行間に: 4.2.5.e
+  \abovedisplayskip 6\jlreq@mpt \@plus2\jlreq@mpt \@minus4\jlreq@mpt
+  \abovedisplayshortskip \z@ \@plus\jlreq@mpt
+  \belowdisplayshortskip 3\jlreq@mpt \@plus\jlreq@mpt \@minus2\jlreq@mpt
+  \def\@listi{\leftmargin\leftmargini
+    \topsep 3\jlreq@mpt \@plus\jlreq@mpt \@minus\jlreq@mpt
+    \parsep 2\jlreq@mpt \@plus\jlreq@mpt \@minus\jlreq@mpt
+    \itemsep \parsep}%
+  \belowdisplayskip \abovedisplayskip}
 \newcommand{\scriptsize}{\jlreq@setfontsize\scriptsize\@viipt\@viiipt}
 \newcommand{\tiny}{\jlreq@setfontsize\tiny\@vpt\@vipt}
 \newcommand{\large}{\jlreq@setfontsize\large\@xiipt{17}}
@@ -503,9 +502,9 @@
 \setlength{\marginparwidth}{0.333\textwidth} % 根拠無しの1/3：15--20文字らしい
 \setlength{\marginparsep}{20\jlreq@mpt} % フォントサイズ×2（4.2.7：特に問題に～e）
 {%
-	\footnotesize\@tempdima=1\zw
-	\global\divide\marginparwidth\@tempdima \global\multiply\marginparwidth\@tempdima
-	\global\setlength{\marginparpush}{.5\@tempdima} % 同上：c
+  \footnotesize\@tempdima=1\zw
+  \global\divide\marginparwidth\@tempdima \global\multiply\marginparwidth\@tempdima
+  \global\setlength{\marginparpush}{.5\@tempdima} % 同上：c
 }
 % 脚注関連
 % 線までが本文行間分（4.2.6.g），その後が脚注内の行間のつもり
@@ -516,16 +515,16 @@
 \renewcommand{\footnoterule}{\hrule width .333\textwidth} % 4.2.6.f
 % 4.5.2.d
 \newcommand\@makefntext[1]{\parindent 1\zh
-	\addtolength{\leftskip}{2\zh}%
-	\noindent\llap{\@makefnmark}\hskip 1\zh#1}
+  \addtolength{\leftskip}{2\zh}%
+  \noindent\llap{\@makefnmark}\hskip 1\zh#1}
 % 4.2.3.b
 \renewcommand{\@footnotemark}{%
-	\leavevmode
-	\ifhmode\edef\@x@sf{\the\spacefactor}\nobreak\fi
-	\setbox\@tempboxa=\hbox{\@makefnmark}%
-	\hbox to\z@{\hskip-\wd\@tempboxa\raise.9\zh\box\@tempboxa\hss}%
-	\ifhmode\spacefactor\@x@sf\fi
-	\relax}
+  \leavevmode
+  \ifhmode\edef\@x@sf{\the\spacefactor}\nobreak\fi
+  \setbox\@tempboxa=\hbox{\@makefnmark}%
+  \hbox to\z@{\hskip-\wd\@tempboxa\raise.9\zh\box\@tempboxa\hss}%
+  \ifhmode\spacefactor\@x@sf\fi
+  \relax}
 % 図4.61のようにする
 \renewcommand{\@makefnmark}{\hbox{\yoko\rensujiskip=0pt\@textsuperscript{\tate\normalfont（\@thefnmark）\kern-1\zw}}}
 \renewcommand{\thefootnote}{\rensuji{\@arabic\c@footnote}}
@@ -534,28 +533,28 @@
 % ページ番号は下の端．左右が本文と揃わない……
 % 他のも要調整
 \def\ps@plain{\let\@mkboth\@gobbletwo
-	\let\ps@jpl@in\ps@plain
-	\let\@oddhead\@empty
-	\let\@evenhead\@empty
-	\def\@oddfoot{\kern 1\zw\thepage\hfil}%
-	\def\@evenfoot{\hfil\thepage\kern 1\zw}}
+  \let\ps@jpl@in\ps@plain
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{\kern 1\zw\thepage\hfil}%
+  \def\@evenfoot{\hfil\thepage\kern 1\zw}}
 % ページ番号は上の端．
 \def\ps@headings{\let\ps@jpl@in\ps@headnombre
-	\let\@oddfoot\@empty
-	\def\@oddhead{\thepage\quad\rightmark}%
-	\def\@evenhead{\hfil\rightmark\quad\thepage}%
-	\let\@mkboth\markboth
+  \let\@oddfoot\@empty
+  \def\@oddhead{\thepage\quad\rightmark}%
+  \def\@evenhead{\hfil\rightmark\quad\thepage}%
+  \let\@mkboth\markboth
 \def\sectionmark##1{\markright{%
-	\ifnum \c@secnumdepth >\m@ne \thesection.\hskip1\zw\fi
-	##1}}%
+  \ifnum \c@secnumdepth >\m@ne \thesection.\hskip1\zw\fi
+  ##1}}%
 }
 \def\ps@myheadings{\let\ps@jpl@in\ps@plain%
-	\let\@oddfoot\@empty\let\@evenfoot\@empty
-	\def\@evenhead{\thepage\quad{\leftmark}\hfil}%
-	\def\@oddhead{\hfil\thepage\quad\rightmark}%
-	\let\@mkboth\@gobbletwo
-	\let\sectionmark\@gobble
-	\let\subsectionmark\@gobble
+  \let\@oddfoot\@empty\let\@evenfoot\@empty
+  \def\@evenhead{\thepage\quad{\leftmark}\hfil}%
+  \def\@oddhead{\hfil\thepage\quad\rightmark}%
+  \let\@mkboth\@gobbletwo
+  \let\sectionmark\@gobble
+  \let\subsectionmark\@gobble
 }
 
 % セクションとか
@@ -577,77 +576,77 @@
 \renewcommand{\thesection}{\rensuji{\@arabic\c@section}}
 \renewcommand{\thesubsection}{\rensuji{\@alph\c@subsection}}
 \renewcommand{\thesubsubsection}{%
-	\rensuji{\@arabic\c@subsubsection}}
+  \rensuji{\@arabic\c@subsubsection}}
 \renewcommand{\theparagraph}{%
-	(\rensuji{\@arabic\c@paragraph})}
+  (\rensuji{\@arabic\c@paragraph})}
 \renewcommand{\thesubparagraph}{%
-	(\rensuji{\@arabic\c@subparagraph})}
+  (\rensuji{\@arabic\c@subparagraph})}
 % 4.1.3.cにある例のようにする．
 % 4行取り中央にする
 % \part{***}\section{***}とかの場合（4.1.6.e）はどうしよう．
 % 窓見出し，段抜きの見出しとかはない．
 \newcommand{\part}{\par\addvspace{\baselineskip}\vspace*{.5\baselineskip}%
-	\@afterindenttrue
-	\secdef\@part\@spart}
+  \@afterindenttrue
+  \secdef\@part\@spart}
 \def\@part[#1]#2{%
-	\ifnum \c@secnumdepth >\m@ne
-		\refstepcounter{part}%
-		\addcontentsline{toc}{part}{%
-			\prepartname\thepart\postpartname\hspace{1\zw}#1}%
-	\else
-		\addcontentsline{toc}{part}{#1}%
-	\fi
-	\markboth{}{}%
-	{\parindent\z@\raggedright
-	\interlinepenalty\@M\reset@font
-	\hskip 4\zh
-	\@tempdima=\baselineskip
-	\LARGE
-	\baselineskip=\@tempdima
-	\ifnum \c@secnumdepth >\m@ne
-		\headfont\prepartname\thepart\postpartname
-	\fi
-	\hskip 1\zh
-	\headfont#2\par}%
-	\nobreak\vskip 1.5\baselineskip\@afterheading}
+  \ifnum \c@secnumdepth >\m@ne
+    \refstepcounter{part}%
+    \addcontentsline{toc}{part}{%
+      \prepartname\thepart\postpartname\hspace{1\zw}#1}%
+  \else
+    \addcontentsline{toc}{part}{#1}%
+  \fi
+  \markboth{}{}%
+  {\parindent\z@\raggedright
+  \interlinepenalty\@M\reset@font
+  \hskip 4\zh
+  \@tempdima=\baselineskip
+  \LARGE
+  \baselineskip=\@tempdima
+  \ifnum \c@secnumdepth >\m@ne
+    \headfont\prepartname\thepart\postpartname
+  \fi
+  \hskip 1\zh
+  \headfont#2\par}%
+  \nobreak\vskip 1.5\baselineskip\@afterheading}
 \newcommand{\@spart}[1]{{%
-	\parindent\z@\raggedright
-	\interlinepenalty\@M\reset@font
-	\hskip4\zh\LARGE\headfont#1\par}%
-	\nobreak\vskip1.5\baselineskip\@afterheading}
+  \parindent\z@\raggedright
+  \interlinepenalty\@M\reset@font
+  \hskip4\zh\LARGE\headfont#1\par}%
+  \nobreak\vskip1.5\baselineskip\@afterheading}
 
 % 3行取り
 \newcommand{\section}{\@startsection{section}{1}{6\jlreq@normalsize@zenkaku@height}%
-	 {\baselineskip}%
-	 {\baselineskip}%
-	 {\reset@font\@tempdima=\baselineskip\Large\baselineskip=\@tempdima\headfont}}
+   {\baselineskip}%
+   {\baselineskip}%
+   {\reset@font\@tempdima=\baselineskip\Large\baselineskip=\@tempdima\headfont}}
 
 % 2行取り
 \newcommand{\subsection}{\@startsection{subsection}{2}{8\jlreq@normalsize@zenkaku@height}%
-	 {.5\baselineskip}%
-	 {.5\baselineskip}%
-	 {\reset@font\@tempdima=\baselineskip\large\baselineskip=\@tempdima\headfont}}
+   {.5\baselineskip}%
+   {.5\baselineskip}%
+   {\reset@font\@tempdima=\baselineskip\large\baselineskip=\@tempdima\headfont}}
 
 % 1行あけ
 \newcommand{\subsubsection}{\@startsection{subsubsection}{3}{10\jlreq@normalsize@zenkaku@height}%
-	 {\baselineskip}%
-	 {0.00001pt}%
-	 {\reset@font\normalsize\headfont}}
+   {\baselineskip}%
+   {0.00001pt}%
+   {\reset@font\normalsize\headfont}}
 
 % 同行見出し
 \newcommand{\paragraph}{\@startsection{paragraph}{4}{1\zh}%
-	{0pt}%
-	{-1\zh}%
-	{\reset@font\normalsize\bfseries}}
+  {0pt}%
+  {-1\zh}%
+  {\reset@font\normalsize\bfseries}}
 \newcommand{\subparagraph}{\@startsection{subparagraph}{5}{1\zh}%
-	{0pt}%
-	{-1\zh}%
-	{\reset@font\normalsize\headfont}}
+  {0pt}%
+  {-1\zh}%
+  {\reset@font\normalsize\headfont}}
 
 \newcommand{\appendix}{\par
-	\setcounter{section}{0}%
-	\setcounter{subsection}{0}%
-	\renewcommand{\thesection}{\rensuji{\@Alph\c@section}}}
+  \setcounter{section}{0}%
+  \setcounter{subsection}{0}%
+  \renewcommand{\thesection}{\rensuji{\@Alph\c@section}}}
 
 % フロート関連
 % 4.3.3.d
@@ -660,19 +659,19 @@
 
 % 4.3.1 注4
 \newcommand{\@makecaption}[2]{{%
-	\reset@font\small\headfont
-	\vskip\abovecaptionskip
-	\ifnum\ltjgetparameter{direction}=3 \sbox\@tempboxa{#1\hskip1\zw#2}%
-		\else\sbox\@tempboxa{#1: #2}%
-	\fi
-	\ifdim \wd\@tempboxa >\hsize
-		\ifnum\ltjgetparameter{direction}=3  #1\hskip1\zw#2\relax\par
-			\else #1: #2\relax\par\fi
-	\else
-		\global \@minipagefalse
-		\hbox to\hsize{\hfil\box\@tempboxa\hfil}%
-	\fi
-	\vskip\belowcaptionskip}}
+  \reset@font\small\headfont
+  \vskip\abovecaptionskip
+  \ifnum\ltjgetparameter{direction}=3 \sbox\@tempboxa{#1\hskip1\zw#2}%
+    \else\sbox\@tempboxa{#1: #2}%
+  \fi
+  \ifdim \wd\@tempboxa >\hsize
+    \ifnum\ltjgetparameter{direction}=3  #1\hskip1\zw#2\relax\par
+    \else #1: #2\relax\par\fi
+  \else
+    \global \@minipagefalse
+    \hbox to\hsize{\hfil\box\@tempboxa\hfil}%
+  \fi
+  \vskip\belowcaptionskip}}
 % この値はjsclassesから
 \newlength\abovecaptionskip
 \newlength\belowcaptionskip
@@ -684,35 +683,35 @@
 % \begin{figure}\layoutfloat{***}\pcaption{???}\end{figure}にする．
 % 
 %\def\jlreq@saveoriginalcs#1{
-%	\expandafter\expandafter\expandafter\let\expandafter\expandafter\csname jlreq@original@#1\endcsname\csname #1\endcsname
+%  \expandafter\expandafter\expandafter\let\expandafter\expandafter\csname jlreq@original@#1\endcsname\csname #1\endcsname
 %}
 %\long\def\jlreq@replace@layoutfloat#1\caption{\layoutfloat{#1}\jlreq@caption}
 %\long\def\jlreq@caption#1{\ifx#1\jlreq@endmark\else\pcaption{#1}\expandafter\jlreq@replace@layoutfloat\fi}
 %\def\jlreq@modify@float#1{%
-%	\def\lgdef{\long\gdef}
-%	\jlreq@saveoriginalcs{#1}
-%	\@namedef{#1}{\@ifnextchar[{\@nameuse{jlreq@float@#1}}{\@nameuse{jlreq@float@@#1}}}
-%	\expandafter\lgdef\csname jlreq@float@#1\endcsname[##1]{%
-%		\expandafter\csname jlreq@original@#1\endcsname[##1]
-%		\csname jlreq@process@insertlayoutfloat@#1\endcsname{}
-%	}
-%	\expandafter\lgdef\csname jlreq@float@@#1\endcsname{%
-%		\expandafter\csname jlreq@original@#1\endcsname
-%		\csname \jlreq@process@insertlayoutfloat@#1\endcsname{}
-%	}
-%	\expandafter\lgdef\csname jlreq@process@insertlayoutfloat@#1\endcsname ##1##2\end{%
-%		\csname jlreq@checkenvname@#1\endcsname{##1##2}\end
-%	}
-%	\expandafter\lgdef\csname jlreq@checkenvname@#1\endcsname ##1\end##2{%
-%		\def\@tempa{##2}%
-%		\def\@tempb{#1}%
-%		\ifx\@tempa\@tempb
-%			\def\jlreq@next{\jlreq@replace@layoutfloat##1\caption{\jlreq@endmark}\end{##2}}%
-%		\else
-%			\def\jlreq@next{\csname jlreq@process@insertlayoutfloat@#1\endcsname{##1\end{##2}}}%
-%		\fi
-%		\jlreq@next
-%	}
+%  \def\lgdef{\long\gdef}
+%  \jlreq@saveoriginalcs{#1}
+%  \@namedef{#1}{\@ifnextchar[{\@nameuse{jlreq@float@#1}}{\@nameuse{jlreq@float@@#1}}}
+%  \expandafter\lgdef\csname jlreq@float@#1\endcsname[##1]{%
+%    \expandafter\csname jlreq@original@#1\endcsname[##1]
+%    \csname jlreq@process@insertlayoutfloat@#1\endcsname{}
+%  }
+%  \expandafter\lgdef\csname jlreq@float@@#1\endcsname{%
+%    \expandafter\csname jlreq@original@#1\endcsname
+%    \csname \jlreq@process@insertlayoutfloat@#1\endcsname{}
+%  }
+%  \expandafter\lgdef\csname jlreq@process@insertlayoutfloat@#1\endcsname ##1##2\end{%
+%    \csname jlreq@checkenvname@#1\endcsname{##1##2}\end
+%  }
+%  \expandafter\lgdef\csname jlreq@checkenvname@#1\endcsname ##1\end##2{%
+%    \def\@tempa{##2}%
+%    \def\@tempb{#1}%
+%    \ifx\@tempa\@tempb
+%      \def\jlreq@next{\jlreq@replace@layoutfloat##1\caption{\jlreq@endmark}\end{##2}}%
+%    \else
+%      \def\jlreq@next{\csname jlreq@process@insertlayoutfloat@#1\endcsname{##1\end{##2}}}%
+%    \fi
+%    \jlreq@next
+%  }
 %}
 
 % figure環境
@@ -723,11 +722,11 @@
 \newcommand{\ext@figure}{lof}
 \newcommand{\fnum@figure}{\figurename\thefigure}
 \newenvironment{figure}
-	{\@float{figure}}
-	{\end@float}
+  {\@float{figure}}
+  {\end@float}
 \newenvironment{figure*}
-	{\@dblfloat{figure}}
-	{\end@dblfloat}
+  {\@dblfloat{figure}}
+  {\end@dblfloat}
 \DeclareLayoutCaption{figure}<y>(\floatwidth)[cr]
 %\jlreq@modify@float{figure}
 %\jlreq@modify@float{figure*}
@@ -739,11 +738,11 @@
 \newcommand{\ext@table}{lot}
 \newcommand{\fnum@table}{\tablename\thetable}
 \newenvironment{table}
-	{\@float{table}}
-	{\end@float}
+  {\@float{table}}
+  {\end@float}
 \newenvironment{table*}
-	{\@dblfloat{table}}
-	{\end@dblfloat}
+  {\@dblfloat{table}}
+  {\end@dblfloat}
 \DeclareLayoutCaption{table}<y>(\floatwidth)[cr]
 %\jlreq@modify@float{table}
 %\jlreq@modify@float{table*}
@@ -751,126 +750,126 @@
 
 % \maketitleとかabstractとか．tarticleから．
 \if@titlepage
-	\newcommand{\maketitle}{\begin{titlepage}%
-	\let\footnotesize\small
-	\let\footnoterule\relax
-	\let\thanks\p@thanks
-	\let\footnote\thanks
-	\vbox to\textheight\bgroup\tate\hsize\textwidth
-	\null\vfil
-	\vskip 60\jlreq@mpt
-	\begin{center}%
-		{\LARGE \@title \par}%
-		\vskip 3em%
-		{\Large
-		 \lineskip .75em%
-			\begin{tabular}[t]{c}%
-			  \@author
-			\end{tabular}\par}%
-			\vskip 1.5em%
-		{\large \@date \par}%       % Set date in \large size.
-	\end{center}\par
-	\vfil{\centering\@thanks}\vfil\null
-	\egroup
-	\end{titlepage}%
-	\setcounter{footnote}{0}%
-	\global\let\thanks\relax
-	\global\let\maketitle\relax
-	\global\let\p@thanks\relax
-	\global\let\@thanks\@empty
-	\global\let\@author\@empty
-	\global\let\@date\@empty
-	\global\let\@title\@empty
-	\global\let\title\relax
-	\global\let\author\relax
-	\global\let\date\relax
-	\global\let\and\relax
-	}%
+  \newcommand{\maketitle}{\begin{titlepage}%
+  \let\footnotesize\small
+  \let\footnoterule\relax
+  \let\thanks\p@thanks
+  \let\footnote\thanks
+  \vbox to\textheight\bgroup\tate\hsize\textwidth
+  \null\vfil
+  \vskip 60\jlreq@mpt
+  \begin{center}%
+    {\LARGE \@title \par}%
+    \vskip 3em%
+    {\Large
+     \lineskip .75em%
+      \begin{tabular}[t]{c}%
+        \@author
+      \end{tabular}\par}%
+      \vskip 1.5em%
+    {\large \@date \par}%       % Set date in \large size.
+  \end{center}\par
+  \vfil{\centering\@thanks}\vfil\null
+  \egroup
+  \end{titlepage}%
+  \setcounter{footnote}{0}%
+  \global\let\thanks\relax
+  \global\let\maketitle\relax
+  \global\let\p@thanks\relax
+  \global\let\@thanks\@empty
+  \global\let\@author\@empty
+  \global\let\@date\@empty
+  \global\let\@title\@empty
+  \global\let\title\relax
+  \global\let\author\relax
+  \global\let\date\relax
+  \global\let\and\relax
+  }%
 \else
-	\newcommand{\maketitle}{\par
-	\begingroup
-		\renewcommand{\thefootnote}{\fnsymbol{footnote}}%
-		\def\@makefnmark{\hbox{\unless\ifnum\ltjgetparameter{direction}=3 $\m@th^{\@thefnmark}$
-			\else\hbox{\yoko$\m@th^{\@thefnmark}$}\fi}}%
-		\long\def\@makefntext##1{\parindent 1\zw\noindent
-			\hbox to 2\zw{\hss\@makefnmark}##1}%
-		\if@twocolumn
-			\ifnum \col@number=\@ne \@maketitle
-			\else \twocolumn[\@maketitle]%
-			\fi
-		\else
-			\newpage
-			\global\@topnum\z@   % Prevents figures from going at top of page.
-			\@maketitle
-		\fi
-		\thispagestyle{jpl@in}\@thanks
-	\endgroup
-	\setcounter{footnote}{0}%
-	\global\let\thanks\relax
-	\global\let\maketitle\relax
-	\global\let\p@thanks\relax
-	\global\let\@thanks\@empty
-	\global\let\@author\@empty
-	\global\let\@date\@empty
-	\global\let\@title\@empty
-	\global\let\title\relax
-	\global\let\author\relax
-	\global\let\date\relax
-	\global\let\and\relax
-	}
-	% いい加減……一応行送りを整数倍に．
-	\def\@maketitle{%
-	\newpage\null
-	\vskip 2\baselineskip%
-	\begin{center}%
-	\let\footnote\p@thanks
-		{\@tempdima=\baselineskip\LARGE\baselineskip=\@tempdima \@title \par}%
-		\vskip \baselineskip
-		{\@tempdima=\baselineskip\large\baselineskip=\@tempdima
-			\lineskip .5\zw%
-			\begin{tabular}[t]{c}%
-			  \@author
-			\end{tabular}\par}%
-		\vskip \baselineskip
-		{\@tempdima=\baselineskip\large\baselineskip=\@tempdima \@date}%
-	\end{center}%
-	\par\vskip \baselineskip}
+  \newcommand{\maketitle}{\par
+  \begingroup
+    \renewcommand{\thefootnote}{\fnsymbol{footnote}}%
+    \def\@makefnmark{\hbox{\unless\ifnum\ltjgetparameter{direction}=3 $\m@th^{\@thefnmark}$
+      \else\hbox{\yoko$\m@th^{\@thefnmark}$}\fi}}%
+    \long\def\@makefntext##1{\parindent 1\zw\noindent
+      \hbox to 2\zw{\hss\@makefnmark}##1}%
+    \if@twocolumn
+      \ifnum \col@number=\@ne \@maketitle
+      \else \twocolumn[\@maketitle]%
+      \fi
+    \else
+      \newpage
+      \global\@topnum\z@   % Prevents figures from going at top of page.
+      \@maketitle
+    \fi
+    \thispagestyle{jpl@in}\@thanks
+  \endgroup
+  \setcounter{footnote}{0}%
+  \global\let\thanks\relax
+  \global\let\maketitle\relax
+  \global\let\p@thanks\relax
+  \global\let\@thanks\@empty
+  \global\let\@author\@empty
+  \global\let\@date\@empty
+  \global\let\@title\@empty
+  \global\let\title\relax
+  \global\let\author\relax
+  \global\let\date\relax
+  \global\let\and\relax
+  }
+  % いい加減……一応行送りを整数倍に．
+  \def\@maketitle{%
+  \newpage\null
+  \vskip 2\baselineskip%
+  \begin{center}%
+  \let\footnote\p@thanks
+    {\@tempdima=\baselineskip\LARGE\baselineskip=\@tempdima \@title \par}%
+    \vskip \baselineskip
+    {\@tempdima=\baselineskip\large\baselineskip=\@tempdima
+      \lineskip .5\zw%
+      \begin{tabular}[t]{c}%
+        \@author
+      \end{tabular}\par}%
+    \vskip \baselineskip
+    {\@tempdima=\baselineskip\large\baselineskip=\@tempdima \@date}%
+  \end{center}%
+  \par\vskip \baselineskip}
 \fi
 \if@titlepage
-	\newenvironment{abstract}{%
-			\titlepage
-			\null\vfil
-			\@beginparpenalty\@lowpenalty
-			\begin{center}%
-				{\bfseries\abstractname}%
-				\@endparpenalty\@M
-			\end{center}}%
-			{\par\vfil\null\endtitlepage}
+  \newenvironment{abstract}{%
+      \titlepage
+      \null\vfil
+      \@beginparpenalty\@lowpenalty
+      \begin{center}%
+        {\bfseries\abstractname}%
+        \@endparpenalty\@M
+      \end{center}}%
+      {\par\vfil\null\endtitlepage}
 \else
-	\newenvironment{abstract}{%
-		\if@twocolumn
-			\section*{\abstractname}%
-		\else
-			\@tempdima=\baselineskip\small\baselineskip=\@tempdima
-			\begin{center}%
-				{\bfseries\abstractname\vspace{-.5\zw}\vspace{\z@}}%
-			\end{center}%
-			\quotation
-		\fi}{\if@twocolumn\else\endquotation\fi}
+  \newenvironment{abstract}{%
+    \if@twocolumn
+      \section*{\abstractname}%
+    \else
+      \@tempdima=\baselineskip\small\baselineskip=\@tempdima
+      \begin{center}%
+        {\bfseries\abstractname\vspace{-.5\zw}\vspace{\z@}}%
+      \end{center}%
+      \quotation
+    \fi}{\if@twocolumn\else\endquotation\fi}
 \fi
 
 % 箇条書き．cf. JISX4051 8.4
 % 用語定義型
 \newenvironment{description}{\list{}{%
-	\setlength{\leftmargin}{0\zh}% 下げない
-	\setlength{\labelwidth}{0\zh}%
-	\addtolength{\leftmargin}{\leftskip}%
-	\addtolength{\leftmargin}{\labelsep}%
-	\let\makelabel=\descriptionlabel
+  \setlength{\leftmargin}{0\zh}% 下げない
+  \setlength{\labelwidth}{0\zh}%
+  \addtolength{\leftmargin}{\leftskip}%
+  \addtolength{\leftmargin}{\labelsep}%
+  \let\makelabel=\descriptionlabel
 % 同行じゃない場合はこんな感じ？
 %  \let\jlreq@original@@item=\@item
 %  \def\@item[##1]{\jlreq@original@@item[##1]\mbox{}\par
-	}}{\endlist}
+  }}{\endlist}
 \newcommand{\descriptionlabel}[1]{\normalfont\headfont #1}
 
 % enumerateとitemize
@@ -885,48 +884,48 @@
 
 % enumerate, itemize用初期化
 \def\jlreq@init@list{%
-	\setlength{\labelwidth}{2\zh}%
-	\setlength{\topsep}{0pt}%
-	\setlength{\partopsep}{0pt}%
-	\setlength{\itemsep}{0pt}%
-	\setlength{\parsep}{0pt}%
-	\setlength{\listparindent}{1\zh}%
+  \setlength{\labelwidth}{2\zh}%
+  \setlength{\topsep}{0pt}%
+  \setlength{\partopsep}{0pt}%
+  \setlength{\itemsep}{0pt}%
+  \setlength{\parsep}{0pt}%
+  \setlength{\listparindent}{1\zh}%
 % itemizeは直後ベタ，enumerateは直後全角空き．
-	\ifx\@currenvir\jlreq@itemizename
-		\setlength{\labelsep}{0\zh}%
-	\else
-		\setlength{\labelsep}{1\zh}%
-	\fi
-	% \labelsepだけあけるのは一つ目（ラベルの直後）のみ
-	\setlength{\itemindent}{\labelsep}%
+  \ifx\@currenvir\jlreq@itemizename
+    \setlength{\labelsep}{0\zh}%
+  \else
+    \setlength{\labelsep}{1\zh}%
+  \fi
+  % \labelsepだけあけるのは一つ目（ラベルの直後）のみ
+  \setlength{\itemindent}{\labelsep}%
 }
 \def\jlreq@itemizename{itemize}
 
 \def\@listi{%
-	\jlreq@init@list
-	\setlength{\leftmargin}{\leftmargini}%
-	% 最初だけ\leftmarginを調整する
-	\addtolength{\leftmargin}{\leftskip}%
-	\addtolength{\leftmargin}{\labelsep}%
-	\addtolength{\leftmargin}{\labelwidth}%
-	\addtolength{\leftmargin}{-\itemindent}%
+  \jlreq@init@list
+  \setlength{\leftmargin}{\leftmargini}%
+  % 最初だけ\leftmarginを調整する
+  \addtolength{\leftmargin}{\leftskip}%
+  \addtolength{\leftmargin}{\labelsep}%
+  \addtolength{\leftmargin}{\labelwidth}%
+  \addtolength{\leftmargin}{-\itemindent}%
 }
 \let\@listI\@listi
 \def\@listii{%
-	\jlreq@init@list
-	\setlength{\leftmargin}{\leftmarginii}%
+  \jlreq@init@list
+  \setlength{\leftmargin}{\leftmarginii}%
 }
 \def\@listiii{%
-	\jlreq@init@list
-	\setlength{\leftmargin}{\leftmarginiii}%
+  \jlreq@init@list
+  \setlength{\leftmargin}{\leftmarginiii}%
 }
 \def\@listiv{%
-	\jlreq@init@list
-	\setlength{\leftmargin}{\leftmarginiv}%
+  \jlreq@init@list
+  \setlength{\leftmargin}{\leftmarginiv}%
 }
 \def\@listv{%
-	\jlreq@init@list
-	\setlength{\leftmargin}{\leftmarginv}%
+  \jlreq@init@list
+  \setlength{\leftmargin}{\leftmarginv}%
 }
 % レベル1だけはJISX 4051から．後はそのまま．
 \renewcommand{\theenumi}{\Kanji{enumi}}
@@ -948,26 +947,26 @@
 
 % 引用系．1.5em→1\zh，字下げを二文字にした．3.5.2の例．
 \newenvironment{verse}
-	{\let\\\@centercr
-	\list{}{\itemsep\z@ \itemindent -2\zh%
-		\listparindent\itemindent
-		\labelwidth\z@
-		\labelsep\z@
-		\leftmargin=2\zh
-		\rightmargin\leftmargin \advance\leftmargin 2\zh}%
-		\item\relax}{\endlist}
+  {\let\\\@centercr
+  \list{}{\itemsep\z@ \itemindent -2\zh%
+    \listparindent\itemindent
+    \labelwidth\z@
+    \labelsep\z@
+    \leftmargin=2\zh
+    \rightmargin\leftmargin \advance\leftmargin 2\zh}%
+    \item\relax}{\endlist}
 \newenvironment{quotation}
-	{\list{}{\listparindent\parindent
-		\itemindent\listparindent
-		\labelwidth\z@
-		\labelsep\z@
-		\leftmargin=2\zh
-		\rightmargin\leftmargin
-		\parsep\z@ \@plus\jlreq@mpt}%
-		\item\relax}{\endlist}
+  {\list{}{\listparindent\parindent
+    \itemindent\listparindent
+    \labelwidth\z@
+    \labelsep\z@
+    \leftmargin=2\zh
+    \rightmargin\leftmargin
+    \parsep\z@ \@plus\jlreq@mpt}%
+    \item\relax}{\endlist}
 \newenvironment{quote}
-	{\list{}{\rightmargin\leftmargin\labelwidth\z@\leftmargin=2\zh\listparindent\z@}%
-		\item\relax}{\endlist}
+  {\list{}{\rightmargin\leftmargin\labelwidth\z@\leftmargin=2\zh\listparindent\z@}%
+    \item\relax}{\endlist}
 
 % tarticleから変えていない．
 \setlength\arraycolsep{5\jlreq@mpt}
@@ -1012,24 +1011,24 @@
 \newdimen\@lnumwidth
 \def\numberline#1{\hbox to\@lnumwidth{#1\hfil}}
 \def\addcontentsline#1#2#3{%
-	\protected@write\@auxout
-		{\let\label\@gobble \let\index\@gobble \let\glossary\@gobble
+  \protected@write\@auxout
+    {\let\label\@gobble \let\index\@gobble \let\glossary\@gobble
 \@temptokena{\rensuji{\thepage}}}%
-		{\string\@writefile{#1}%
-			{\protect\contentsline{#2}{#3}{\the\@temptokena}}}%
+    {\string\@writefile{#1}%
+      {\protect\contentsline{#2}{#3}{\the\@temptokena}}}%
 }
 
 \newcount\jlreq@top@contents % トップ見出しを入れる．\partから1,2,...
 \newcommand*{\jlreq@set@top@contents}[1]{%
-	\ifnum\jlreq@top@contents=0\relax
-		\jlreq@top@contents=#1\relax
-	\fi
+  \ifnum\jlreq@top@contents=0\relax
+    \jlreq@top@contents=#1\relax
+  \fi
 }
 \newcommand{\tableofcontents}{%
-	\jlreq@top@contents=0\relax
-	\section*{\contentsname
-		\@mkboth{\contentsname}{\contentsname}%
-	}\@starttoc{toc}%
+  \jlreq@top@contents=0\relax
+  \section*{\contentsname
+    \@mkboth{\contentsname}{\contentsname}%
+  }\@starttoc{toc}%
 }
 
 % JIS X 4051自身の目次に近づけようかと……なりきれてないけど．
@@ -1038,60 +1037,60 @@
 % 第三引数は，上からの幅に加え更にトップの見出しからの差による補正（プラス）が入る．
 % リーダーは.から・に変更しました．更に直後から出るように．
 \def\@dottedtocline#1#2#3#4#5{%
-	\ifnum #1>\c@tocdepth \else
-		\vskip\toclineskip \@plus.2\jlreq@mpt
-		{\leftskip #2\relax \rightskip \@tocrmarg \parfillskip -\rightskip
-		\parindent #2\relax\@afterindenttrue
-		\interlinepenalty\@M
-		\leavevmode
-		\@lnumwidth #3\relax
-			\@tempcnta=#1\relax
-			\advance\@tempcnta by 1\relax
-			\advance\@tempcnta by -\jlreq@top@contents\relax
-			\@tempdima=1\zh
-			\multiply \@tempdima by \@tempcnta
-		\advance\leftskip \@lnumwidth \hbox{}\hskip -\leftskip
-			\advance\leftskip\@tempdima
-		{#4}\nobreak
-		\leaders\hbox{$・\mkern \@dotsep mu \m@th \mkern \@dotsep mu$}%
-		\hfill\nobreak
-		\hb@xt@\@pnumwidth{\hss\normalfont \normalcolor #5}%
-		\par}%
-	\fi}
+  \ifnum #1>\c@tocdepth \else
+    \vskip\toclineskip \@plus.2\jlreq@mpt
+    {\leftskip #2\relax \rightskip \@tocrmarg \parfillskip -\rightskip
+    \parindent #2\relax\@afterindenttrue
+    \interlinepenalty\@M
+    \leavevmode
+    \@lnumwidth #3\relax
+      \@tempcnta=#1\relax
+      \advance\@tempcnta by 1\relax
+      \advance\@tempcnta by -\jlreq@top@contents\relax
+      \@tempdima=1\zh
+      \multiply \@tempdima by \@tempcnta
+    \advance\leftskip \@lnumwidth \hbox{}\hskip -\leftskip
+      \advance\leftskip\@tempdima
+    {#4}\nobreak
+    \leaders\hbox{$・\mkern \@dotsep mu \m@th \mkern \@dotsep mu$}%
+    \hfill\nobreak
+    \hb@xt@\@pnumwidth{\hss\normalfont \normalcolor #5}%
+    \par}%
+  \fi}
 \newcommand*{\l@part}[2]{%
-	\jlreq@set@top@contents{1}%
-	\ifnum \c@tocdepth >-2\relax
-		\addpenalty{\@secpenalty}%
-		\begingroup
-		\parindent\z@\rightskip\@pnumwidth
-		\parfillskip-\@pnumwidth
-		{\leavevmode\bfseries
-		\setlength\@lnumwidth{2\zw}%
-		#1\hfil\nobreak
-		\hbox to\@pnumwidth{\hss#2}}\par
-		\nobreak
-		\endgroup
-	\fi}
+  \jlreq@set@top@contents{1}%
+  \ifnum \c@tocdepth >-2\relax
+    \addpenalty{\@secpenalty}%
+    \begingroup
+    \parindent\z@\rightskip\@pnumwidth
+    \parfillskip-\@pnumwidth
+    {\leavevmode\bfseries
+    \setlength\@lnumwidth{2\zw}%
+    #1\hfil\nobreak
+    \hbox to\@pnumwidth{\hss#2}}\par
+    \nobreak
+    \endgroup
+  \fi}
 
 \newcommand*{\l@section}[2]{%
-	\jlreq@set@top@contents{2}%
-	\ifnum \c@tocdepth >\z@
-		\addpenalty{\@secpenalty}%
-		\begingroup
-			\setlength\@lnumwidth{2\zh}%
-			\@tempcnta=2\relax
-			\advance \@tempcnta by -\jlreq@top@contents\relax
-			\@tempdima=1\zh
-			\multiply \@tempdima by \@tempcnta
-			\parindent\z@ \rightskip\@pnumwidth
-			\parfillskip-\rightskip
-			\leavevmode\bfseries
-			\advance\leftskip\@lnumwidth
-			\hskip-\leftskip
-			\advance\leftskip\@tempdima
-			#1\nobreak\hfil\nobreak\hbox to\@pnumwidth{\hss#2}\par
-		\endgroup
-	\fi}
+  \jlreq@set@top@contents{2}%
+  \ifnum \c@tocdepth >\z@
+    \addpenalty{\@secpenalty}%
+    \begingroup
+      \setlength\@lnumwidth{2\zh}%
+      \@tempcnta=2\relax
+      \advance \@tempcnta by -\jlreq@top@contents\relax
+      \@tempdima=1\zh
+      \multiply \@tempdima by \@tempcnta
+      \parindent\z@ \rightskip\@pnumwidth
+      \parfillskip-\rightskip
+      \leavevmode\bfseries
+      \advance\leftskip\@lnumwidth
+      \hskip-\leftskip
+      \advance\leftskip\@tempdima
+      #1\nobreak\hfil\nobreak\hbox to\@pnumwidth{\hss#2}\par
+    \endgroup
+  \fi}
 \newcommand*{\l@subsection}   {\jlreq@set@top@contents{3}\@dottedtocline{2}{0\zh}{2\zw}}
 \newcommand*{\l@subsubsection}{\jlreq@set@top@contents{4}\@dottedtocline{3}{0\zh}{2\zw}}
 \newcommand*{\l@paragraph}    {\jlreq@set@top@contents{5}\@dottedtocline{4}{0\zh}{2\zw}}
@@ -1099,17 +1098,17 @@
 
 % listoffigures
 \newcommand{\listoffigures}{%
-		\jlreq@top@contents=1\relax
-		\section*{\listfigurename
-	\@mkboth{\listfigurename}{\listfigurename}}%
-	\@starttoc{lof}%
+    \jlreq@top@contents=1\relax
+    \section*{\listfigurename
+  \@mkboth{\listfigurename}{\listfigurename}}%
+  \@starttoc{lof}%
 }
 \newcommand*{\l@figure}{\@dottedtocline{1}{0\zw}{2\zw}}
 \newcommand{\listoftables}{%
-		\jlreq@top@contents=1\relax
-		\section*{\listtablename
-	\@mkboth{\listtablename}{\listtablename}}%
-	\@starttoc{lot}%
+    \jlreq@top@contents=1\relax
+    \section*{\listtablename
+  \@mkboth{\listtablename}{\listtablename}}%
+  \@starttoc{lot}%
 }
 \let\l@table\l@figure
 
@@ -1119,34 +1118,34 @@
 \newcommand{\newblock}{\hskip .11em\@plus.33em\@minus.07em}
 \newenvironment{thebibliography}[1]
 {\section*{\refname\@mkboth{\refname}{\refname}}%
-	\list{\@biblabel{\@arabic\c@enumiv}}%
-			{\settowidth\labelwidth{\@biblabel{#1}}%
-			\leftmargin\labelwidth
-			\advance\leftmargin\labelsep
-			\@openbib@code
-			\usecounter{enumiv}%
-			\let\p@enumiv\@empty
-			\renewcommand\theenumiv{\@arabic\c@enumiv}}%
-	\sloppy
-	\clubpenalty4000
-	\@clubpenalty\clubpenalty
-	\widowpenalty4000%
-	\sfcode`\.\@m}
-	{\def\@noitemerr
-		{\@latex@warning{Empty `thebibliography' environment}}%
-	\endlist}
+  \list{\@biblabel{\@arabic\c@enumiv}}%
+      {\settowidth\labelwidth{\@biblabel{#1}}%
+      \leftmargin\labelwidth
+      \advance\leftmargin\labelsep
+      \@openbib@code
+      \usecounter{enumiv}%
+      \let\p@enumiv\@empty
+      \renewcommand\theenumiv{\@arabic\c@enumiv}}%
+  \sloppy
+  \clubpenalty4000
+  \@clubpenalty\clubpenalty
+  \widowpenalty4000%
+  \sfcode`\.\@m}
+  {\def\@noitemerr
+    {\@latex@warning{Empty `thebibliography' environment}}%
+  \endlist}
 \let\@openbib@code\@empty
 
 % 索引
 \newenvironment{theindex}
-	{\if@twocolumn\@restonecolfalse\else\@restonecoltrue\fi
-	 \columnseprule\z@ \columnsep 35\jlreq@mpt
-	 \twocolumn[\section*{\indexname}]%
-	 \@mkboth{\indexname}{\indexname}%
-	 \thispagestyle{jpl@in}\parindent\z@
-	 \parskip\z@ \@plus .3\jlreq@mpt\relax
-	 \let\item\@idxitem}
-	{\if@restonecol\onecolumn\else\clearpage\fi}
+  {\if@twocolumn\@restonecolfalse\else\@restonecoltrue\fi
+   \columnseprule\z@ \columnsep 35\jlreq@mpt
+   \twocolumn[\section*{\indexname}]%
+   \@mkboth{\indexname}{\indexname}%
+   \thispagestyle{jpl@in}\parindent\z@
+   \parskip\z@ \@plus .3\jlreq@mpt\relax
+   \let\item\@idxitem}
+  {\if@restonecol\onecolumn\else\clearpage\fi}
 \newcommand{\@idxitem}{\par\hangindent 40\jlreq@mpt}
 \newcommand{\subitem}{\@idxitem \hspace*{20\jlreq@mpt}}
 \newcommand{\subsubitem}{\@idxitem \hspace*{30\jlreq@mpt}}
@@ -1158,27 +1157,27 @@
 \def\和暦{\西暦false}
 \newcount\heisei \heisei\year \advance\heisei-1988\relax
 \def\today{{%
-	\ifnum\ltjgetparameter{direction}=3
-		\if西暦
-			\kansuji\year 年
-			\kansuji\month 月
-			\kansuji\day 日
-		\else
-			平成\ifnum\heisei=1 元年\else\kansuji\heisei 年\fi
-			\kansuji\month 月
-			\kansuji\day 日
-		\fi
-	\else
-		\if西暦
-			\number\year~年
-			\number\month~月
-			\number\day~日
-		\else
-			平成\ifnum\heisei=1 元年\else\number\heisei~年\fi
-			\number\month~月
-			\number\day~日
-		\fi
-	\fi}}
+  \ifnum\ltjgetparameter{direction}=3
+    \if西暦
+      \kansuji\year 年
+      \kansuji\month 月
+      \kansuji\day 日
+    \else
+      平成\ifnum\heisei=1 元年\else\kansuji\heisei 年\fi
+      \kansuji\month 月
+      \kansuji\day 日
+    \fi
+  \else
+    \if西暦
+      \number\year~年
+      \number\month~月
+      \number\day~日
+    \else
+      平成\ifnum\heisei=1 元年\else\number\heisei~年\fi
+      \number\month~月
+      \number\day~日
+    \fi
+  \fi}}
 
 % ルビ：あればpxrubricaを読む
 \IfFileExists{pxrubrica.sty}{\RequirePackage{pxrubrica}}{}
@@ -1196,32 +1195,32 @@
 \newdimen\jlreq@tempdimc
 % 現在行の残りを得る．zposxを元に計算するだけ．
 \newcommand{\jlreq@remain@linewidth}{%
-	\dimexpr
-	\linewidth + \@totalleftmargin + 
-	\ifodd\zref@extractdefault{jlreq@remain@width.page.\the\jlreq@remain@linewidth@count}{page}{\c@page}
-		\oddsidemargin
-	\else
-		\evensidemargin
-	\fi
-	+ 1in + \hoffset - \zposx{jlreq@remain@width.posx.\the\jlreq@remain@linewidth@count} sp\relax
+  \dimexpr
+  \linewidth + \@totalleftmargin + 
+  \ifodd\zref@extractdefault{jlreq@remain@width.page.\the\jlreq@remain@linewidth@count}{page}{\c@page}
+    \oddsidemargin
+  \else
+    \evensidemargin
+  \fi
+  + 1in + \hoffset - \zposx{jlreq@remain@width.posx.\the\jlreq@remain@linewidth@count} sp\relax
 }
 
 % この命令以降，次にこの命令を実行する前まで\jlreq@remain@linewidthで
 % この場所における残り長さが取得できる．
 \newcommand{\jlreq@savepos@for@remain@linewidth}{%
-	\advance\jlreq@remain@linewidth@count by 1\relax
-	\zsavepos{jlreq@remain@width.posx.\the\jlreq@remain@linewidth@count}%
-	\zref@labelbyprops{jlreq@remain@width.page.\the\jlreq@remain@linewidth@count}{page}%
+  \advance\jlreq@remain@linewidth@count by 1\relax
+  \zsavepos{jlreq@remain@width.posx.\the\jlreq@remain@linewidth@count}%
+  \zref@labelbyprops{jlreq@remain@width.page.\the\jlreq@remain@linewidth@count}{page}%
 }
 
 \newcommand{\jlreq@warichu@kakkofontsize}{%
-	\fontsize{\numexpr \warichusize * 2\relax\jlreq@mpt}{\numexpr \warichusize * 2\relax\jlreq@mpt}%
-	\selectfont
+  \fontsize{\numexpr \warichusize * 2\relax\jlreq@mpt}{\numexpr \warichusize * 2\relax\jlreq@mpt}%
+  \selectfont
 }
 
 \newcommand{\jlreq@warichu@fontsize}{%
-	\fontsize{\warichusize\jlreq@mpt}{\warichusize\jlreq@mpt}%
-	\selectfont
+  \fontsize{\warichusize\jlreq@mpt}{\warichusize\jlreq@mpt}%
+  \selectfont
 }
 
 \newcommand{\warichusize}{6} % 割注の文字サイズ
@@ -1233,147 +1232,147 @@
 \newif\ifjlreq@inwarichu
 \jlreq@inwarichufalse
 \newcommand{\warichu}{%
-	\ifjlreq@inwarichu\ClassError{tjlreq}{\string\warichu\space can't be nested!}\fi
-	\jlreq@inwarichutrue
-	\@ifstar\jlreq@warichu@noauto\jlreq@warichu@auto}
+  \ifjlreq@inwarichu\ClassError{tjlreq}{\string\warichu\space can't be nested!}\fi
+  \jlreq@inwarichutrue
+  \@ifstar\jlreq@warichu@noauto\jlreq@warichu@auto}
 
 \newcommand*{\jlreq@warichu@auto}[1]{%
-	% 割注初め括弧の前の場所を保存
-	\jlreq@savepos@for@remain@linewidth
-	% \jlreq@tempdimbに，現在行の残り長さを入れる
-	\jlreq@tempdimb=\jlreq@remain@linewidth
-	% 括弧の分を引いたものが，割注の使える長さ
-	\setbox\@tempboxa=\hbox{\jlreq@warichu@kakkofontsize\inhibitglue（\inhibitglue}%
-	\addtolength{\jlreq@tempdimb}{-\wd\@tempboxa}%
-	{\jlreq@warichu@kakkofontsize\inhibitglue （}%
-	% 普通に並べた長さを計測し，その半分から始める
-	\setbox\@tempboxa=\hbox{\jlreq@warichu@fontsize #1}%
-	\jlreq@tempdimc=\wd\@tempboxa
-	\divide\jlreq@tempdimc by 2\relax
-	% \@tempcntbに，この長さで計測した場合の行数を入れる
-	\ifdim\jlreq@tempdimc<\jlreq@tempdimb\@tempcntb=2\relax
-	\else
-		\jlreq@tempdima=\dimexpr\jlreq@tempdimc - \jlreq@tempdimb\relax
-		\divide\jlreq@tempdima\linewidth
-		\@tempcntb=\number\jlreq@tempdima
-		\multiply\@tempcntb by 2\relax
-		\advance\@tempcntb by 4\relax
-	\fi
-	% \jlreq@parshapeargに\parshapeに指定する書式の最後以外を入れる．
-	\ifnum\@tempcntb>2\relax
-		\edef\jlreq@parshapearg{0pt \the\jlreq@tempdimb\space 0pt \the\jlreq@tempdimb}%
-		\@tempcnta=4\relax
-		\@whilenum\@tempcnta<\@tempcntb\do{%
-			\edef\jlreq@parshapearg{\jlreq@parshapearg\space 0pt \the\linewidth\space 0pt \the\linewidth}%
-			\advance\@tempcnta by 2\relax
-		}%
-		\setlength{\jlreq@tempdimc}{\dimexpr\jlreq@tempdimc - \jlreq@tempdimb - \linewidth * \numexpr(\@tempcntb - 4)/2\relax\relax}%
-	\else
-		\def\jlreq@parshapearg{}%
-	\fi
-	% 行数を伸ばしつつ良いところを探していく
-	\@whilenum\@tempcntb<1001\do{%
-		\ifnum\@tempcntb>2\jlreq@tempdimb=\linewidth\fi
-		\edef\@tempb{\the\@tempcntb}%
-		\jlreq@warichu@determinelength{#1}{\jlreq@parshapearg}{\@tempb}{\jlreq@tempdimc}{\jlreq@tempdimb}%
-		\@tempcntb=\@tempb
-		\ifnum\@tempcntb>999\relax% ループが長すぎる
-			\global\setbox\jlreq@resultbox=\voidb@x%
-			\@tempcntb=1001\relax
-		\fi
-		\ifvoid\jlreq@resultbox\else% 成功
-			\edef\jlreq@warichu@lines{\the\@tempcntb}% 行数を保存
-			\@tempcntb=1001\relax
-		\fi
-		\advance\@tempcntb by 2\relax
-		\edef\jlreq@parshapearg{\jlreq@parshapearg 0pt \the\jlreq@tempdimb 0pt \the\jlreq@tempdimb}%
-	}%
-	\ifvoid\jlreq@resultbox
-		\ClassWarning{tjlreq}{\string\warichu\space failed, may be a bug}%
-	\else
-		\@tempcnta=0\relax
-		\splittopskip=0pt\relax
-		\splitmaxdepth=\maxdimen
-		% 現在行の残り長さを思い出す
-		\jlreq@tempdimb=\jlreq@remain@linewidth
-		\setbox\@tempboxa=\hbox{\jlreq@warichu@kakkofontsize\inhibitglue（\inhibitglue}%
-		\addtolength{\jlreq@tempdimb}{-\wd\@tempboxa}%
-		\setbox\@tempboxa=\box\jlreq@resultbox
-		\@whilenum\@tempcnta<\jlreq@warichu@lines\do{%
-			\ifnum\@tempcnta>0\relax\jlreq@warichu@autolinebreak\fi
-			% \jlreq@tempdimaに今の行の長さを入れる
-			\ifnum\@tempcnta<\numexpr\jlreq@warichu@lines - 2\relax
-				\ifnum\@tempcnta=0\jlreq@tempdima=\jlreq@tempdimb
-				\else\jlreq@tempdima=\linewidth\fi
-			\else
-				\jlreq@tempdima=-1pt\relax
-			\fi
-			{%
-				\jlreq@warichu@fontsize
-				\setbox\jlreq@tempboxa=\vsplit\@tempboxa to \dimexpr 2\baselineskip - 0.001pt\relax
-				% 改行を\\でしている場合には，割注の長さを計測した物に長さに強制する
-				\ifx\jlreq@warichu@autolinebreak\\\relax
-					\ifdim\jlreq@tempdima>0pt\relax
-						\jlreq@warichu@getlastbox{\jlreq@tempboxa}%
-						\setbox\jlreq@tempboxb=\box\jlreq@resultbox
-						\jlreq@warichu@getlastbox{\jlreq@tempboxa}%
-						\setbox\jlreq@tempboxa=\box\jlreq@resultbox
-						\raise-.5\zw\hbox to \jlreq@tempdima{\vbox{%
-							\hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxa}%
-							\hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxb}}}%
-					\else
-						\raise-.5\zw\hbox{\box\jlreq@tempboxa}%
-					\fi
-				\else
-					\raise-.5\zw\hbox{\box\jlreq@tempboxa}%
-				\fi
-			}%
-			\advance\@tempcnta by 2\relax
-		}%
-	\fi
-	\jlreq@warichu@endwarichu
+  % 割注初め括弧の前の場所を保存
+  \jlreq@savepos@for@remain@linewidth
+  % \jlreq@tempdimbに，現在行の残り長さを入れる
+  \jlreq@tempdimb=\jlreq@remain@linewidth
+  % 括弧の分を引いたものが，割注の使える長さ
+  \setbox\@tempboxa=\hbox{\jlreq@warichu@kakkofontsize\inhibitglue（\inhibitglue}%
+  \addtolength{\jlreq@tempdimb}{-\wd\@tempboxa}%
+  {\jlreq@warichu@kakkofontsize\inhibitglue （}%
+  % 普通に並べた長さを計測し，その半分から始める
+  \setbox\@tempboxa=\hbox{\jlreq@warichu@fontsize #1}%
+  \jlreq@tempdimc=\wd\@tempboxa
+  \divide\jlreq@tempdimc by 2\relax
+  % \@tempcntbに，この長さで計測した場合の行数を入れる
+  \ifdim\jlreq@tempdimc<\jlreq@tempdimb\@tempcntb=2\relax
+  \else
+    \jlreq@tempdima=\dimexpr\jlreq@tempdimc - \jlreq@tempdimb\relax
+    \divide\jlreq@tempdima\linewidth
+    \@tempcntb=\number\jlreq@tempdima
+    \multiply\@tempcntb by 2\relax
+    \advance\@tempcntb by 4\relax
+  \fi
+  % \jlreq@parshapeargに\parshapeに指定する書式の最後以外を入れる．
+  \ifnum\@tempcntb>2\relax
+    \edef\jlreq@parshapearg{0pt \the\jlreq@tempdimb\space 0pt \the\jlreq@tempdimb}%
+    \@tempcnta=4\relax
+    \@whilenum\@tempcnta<\@tempcntb\do{%
+      \edef\jlreq@parshapearg{\jlreq@parshapearg\space 0pt \the\linewidth\space 0pt \the\linewidth}%
+      \advance\@tempcnta by 2\relax
+    }%
+    \setlength{\jlreq@tempdimc}{\dimexpr\jlreq@tempdimc - \jlreq@tempdimb - \linewidth * \numexpr(\@tempcntb - 4)/2\relax\relax}%
+  \else
+    \def\jlreq@parshapearg{}%
+  \fi
+  % 行数を伸ばしつつ良いところを探していく
+  \@whilenum\@tempcntb<1001\do{%
+    \ifnum\@tempcntb>2\jlreq@tempdimb=\linewidth\fi
+    \edef\@tempb{\the\@tempcntb}%
+    \jlreq@warichu@determinelength{#1}{\jlreq@parshapearg}{\@tempb}{\jlreq@tempdimc}{\jlreq@tempdimb}%
+    \@tempcntb=\@tempb
+    \ifnum\@tempcntb>999\relax% ループが長すぎる
+      \global\setbox\jlreq@resultbox=\voidb@x%
+      \@tempcntb=1001\relax
+    \fi
+    \ifvoid\jlreq@resultbox\else% 成功
+      \edef\jlreq@warichu@lines{\the\@tempcntb}% 行数を保存
+      \@tempcntb=1001\relax
+    \fi
+    \advance\@tempcntb by 2\relax
+    \edef\jlreq@parshapearg{\jlreq@parshapearg 0pt \the\jlreq@tempdimb 0pt \the\jlreq@tempdimb}%
+  }%
+  \ifvoid\jlreq@resultbox
+    \ClassWarning{tjlreq}{\string\warichu\space failed, may be a bug}%
+  \else
+    \@tempcnta=0\relax
+    \splittopskip=0pt\relax
+    \splitmaxdepth=\maxdimen
+    % 現在行の残り長さを思い出す
+    \jlreq@tempdimb=\jlreq@remain@linewidth
+    \setbox\@tempboxa=\hbox{\jlreq@warichu@kakkofontsize\inhibitglue（\inhibitglue}%
+    \addtolength{\jlreq@tempdimb}{-\wd\@tempboxa}%
+    \setbox\@tempboxa=\box\jlreq@resultbox
+    \@whilenum\@tempcnta<\jlreq@warichu@lines\do{%
+      \ifnum\@tempcnta>0\relax\jlreq@warichu@autolinebreak\fi
+      % \jlreq@tempdimaに今の行の長さを入れる
+      \ifnum\@tempcnta<\numexpr\jlreq@warichu@lines - 2\relax
+        \ifnum\@tempcnta=0\jlreq@tempdima=\jlreq@tempdimb
+        \else\jlreq@tempdima=\linewidth\fi
+      \else
+        \jlreq@tempdima=-1pt\relax
+      \fi
+      {%
+        \jlreq@warichu@fontsize
+        \setbox\jlreq@tempboxa=\vsplit\@tempboxa to \dimexpr 2\baselineskip - 0.001pt\relax
+        % 改行を\\でしている場合には，割注の長さを計測した物に長さに強制する
+        \ifx\jlreq@warichu@autolinebreak\\\relax
+          \ifdim\jlreq@tempdima>0pt\relax
+            \jlreq@getlastbox{\jlreq@tempboxa}%
+            \setbox\jlreq@tempboxb=\box\jlreq@resultbox
+            \jlreq@getlastbox{\jlreq@tempboxa}%
+            \setbox\jlreq@tempboxa=\box\jlreq@resultbox
+            \raise-.5\zw\hbox to \jlreq@tempdima{\vbox{%
+              \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxa}%
+              \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxb}}}%
+          \else
+            \raise-.5\zw\hbox{\box\jlreq@tempboxa}%
+          \fi
+        \else
+          \raise-.5\zw\hbox{\box\jlreq@tempboxa}%
+        \fi
+      }%
+      \advance\@tempcnta by 2\relax
+    }%
+  \fi
+  \jlreq@warichu@endwarichu
 }
 
 \newcommand*{\jlreq@warichu@noauto}[1]{%
-	{\jlreq@warichu@kakkofontsize
-	\inhibitglue （}%
-	\tracingmacros=1\relax
-	\jlreq@warichu@noauto@#1\\\jlreq@endmark\jlreq@endmark
-	\tracingmacros=0\relax
-	\jlreq@warichu@endwarichu
+  {\jlreq@warichu@kakkofontsize
+  \inhibitglue （}%
+  \tracingmacros=1\relax
+  \jlreq@warichu@noauto@#1\\\jlreq@endmark\jlreq@endmark
+  \tracingmacros=0\relax
+  \jlreq@warichu@endwarichu
 x}
 
 \def\jlreq@warichu@noauto@#1\\#2#3\jlreq@endmark{%
-	\jlreq@warichu@noauto@@#1&\jlreq@endmark\jlreq@endmark
-	\ifx#2\jlreq@endmark\def\jlreq@next{}\else\linebreak\def\jlreq@next{\jlreq@warichu@noauto@#2#3\jlreq@endmark}\fi
-	\jlreq@next
+  \jlreq@warichu@noauto@@#1&\jlreq@endmark\jlreq@endmark
+  \ifx#2\jlreq@endmark\def\jlreq@next{}\else\linebreak\def\jlreq@next{\jlreq@warichu@noauto@#2#3\jlreq@endmark}\fi
+  \jlreq@next
 }
 
 \def\jlreq@warichu@noauto@@#1&#2#3\jlreq@endmark{%
-	\ifx#2\jlreq@endmark
-		\setbox\@tempboxa=\hbox{\jlreq@warichu@fontsize #1}%
-		\jlreq@tempdimc=\wd\@tempboxa
-		\divide\jlreq@tempdimc by 2\relax
-		\jlreq@warichu@determinelength{#1}{}{2}{\jlreq@tempdimc}{\maxdimen}%
-		\ifvoid\jlreq@resultbox\else
-			{%
-				\jlreq@warichu@fontsize\raise-.5\zw\hbox{\box\jlreq@resultbox}%
-			}%
-		\fi
-		\def\jlreq@next{}%
-	\else
-		\def\jlreq@next{\jlreq@warichu@noauto@@@{#1}#2#3}%
-	\fi
-	\jlreq@next
+  \ifx#2\jlreq@endmark
+    \setbox\@tempboxa=\hbox{\jlreq@warichu@fontsize #1}%
+    \jlreq@tempdimc=\wd\@tempboxa
+    \divide\jlreq@tempdimc by 2\relax
+    \jlreq@warichu@determinelength{#1}{}{2}{\jlreq@tempdimc}{\maxdimen}%
+    \ifvoid\jlreq@resultbox\else
+      {%
+        \jlreq@warichu@fontsize\raise-.5\zw\hbox{\box\jlreq@resultbox}%
+      }%
+    \fi
+    \def\jlreq@next{}%
+  \else
+    \def\jlreq@next{\jlreq@warichu@noauto@@@{#1}#2#3}%
+  \fi
+  \jlreq@next
 }
 
 \def\jlreq@warichu@noauto@@@#1#2&\jlreq@endmark{%
-	{\jlreq@warichu@fontsize\raise-.5\zw\hbox{\vbox{\hbox{#1}\hbox{#2}}}}%
+  {\jlreq@warichu@fontsize\raise-.5\zw\hbox{\vbox{\hbox{#1}\hbox{#2}}}}%
 }
 
 \newcommand{\jlreq@warichu@endwarichu}{%
-	\jlreq@inwarichufalse
-	{\jlreq@warichu@kakkofontsize\hbox to .5\zh{）}}%
+  \jlreq@inwarichufalse
+  {\jlreq@warichu@kakkofontsize\hbox to .5\zh{）}}%
 }
 
 \newbox\jlreq@tempboxa
@@ -1381,66 +1380,66 @@ x}
 % \jlreq@warichu@determinelength{テキスト}{\parshape指定}{成功行数}{最小長さ}{最大長さ}
 % \jlreq@resultboxに整形結果を返す．見つからなかったらvoid
 \newcommand{\jlreq@warichu@determinelength}[5]{%
-%	\message{#1 の試行開始，行数 = #3, \the#4 から \the#5まで}%
-	\@tempcnta=0\relax
-	\jlreq@tempdima=#4\relax
-	% 最後の行を少しずつ伸ばしていく
-	\@whilenum\@tempcnta<1000\do{%
-		\ifnum\@tempcnta>999\relax% ループが長すぎる
-			\global\setbox\jlreq@resultbox=\voidb@x%
-			\@tempcnta=1001\relax
-		\else
-			\setbox\@tempboxa=\vbox{%
-				\jlreq@warichu@fontsize
-				\vbadness=10000\hbadness=10000\vfuzz=\maxdimen\hfuzz=\maxdimen
-				\parindent=0pt\leftskip=0pt\rightskip=0pt\relax
-				\parshape #3 #2 0pt \the\jlreq@tempdima 0pt \the\maxdimen
-				#1\par\global\@tempcntb=\prevgraf}%
-%			\message{\string\jlreq@tempdima = \the\jlreq@tempdima で試行，行数は\the\@tempcntb , 書式 #3 #2 0pt \the\jlreq@tempdima 0pt \the\maxdimen}%
-		\fi
-		\jlreq@warichu@getlastbox{\@tempboxa}%
-		\setbox\jlreq@tempboxa=\box\jlreq@resultbox
-		\ifnum\@tempcntb<#3\relax% 行数が達していないならOK
-%			\message{行数 = \the\@tempcntb により確定}
-			\global\setbox\jlreq@resultbox=\vbox{\jlreq@warichu@fontsize
-				\unvbox\@tempboxa\hbox{\unhbox\jlreq@tempboxa\unskip\unskip\unpenalty}%
-				\@whilenum\@tempcntb<#3\do{\hbox{}\advance\@tempcntb by 1}}%
-			\@tempcnta=1001\relax
-		\else
-			% そうでない場合は最後の二行の長さを比較する
-			\jlreq@warichu@getlastbox{\@tempboxa}%
-			\setbox\jlreq@tempboxb=\box\jlreq@resultbox
-%			\message{最終行の長さ \the\wd\jlreq@tempboxa, その前の長さ \the\wd\jlreq@tempboxb]]}%
-			\ifdim\wd\jlreq@tempboxa>\wd\jlreq@tempboxb
-				\advance\jlreq@tempdima by 0.3pt\relax
-			\else
-				% 後ろが短いのでOK
-				\global\setbox\jlreq@resultbox=\vbox{\jlreq@warichu@fontsize
-					\unvbox\@tempboxa\box\jlreq@tempboxb\box\jlreq@tempboxa}%
-				\jlreq@resultdimen=\jlreq@tempdima
-				\@tempcnta=1001\relax
-			\fi
-		\fi
-		\ifdim\jlreq@tempdima>#5\relax
-			\global\setbox\jlreq@resultbox=\box\voidb@x%
-			\@tempcnta=1001\relax
-		\fi
-		\advance\@tempcnta by 1\relax
-	}%
+%  \message{#1 の試行開始，行数 = #3, \the#4 から \the#5まで}%
+  \@tempcnta=0\relax
+  \jlreq@tempdima=#4\relax
+  % 最後の行を少しずつ伸ばしていく
+  \@whilenum\@tempcnta<1000\do{%
+    \ifnum\@tempcnta>999\relax% ループが長すぎる
+      \global\setbox\jlreq@resultbox=\voidb@x%
+      \@tempcnta=1001\relax
+    \else
+      \setbox\@tempboxa=\vbox{%
+        \jlreq@warichu@fontsize
+        \vbadness=10000\hbadness=10000\vfuzz=\maxdimen\hfuzz=\maxdimen
+        \parindent=0pt\leftskip=0pt\rightskip=0pt\relax
+        \parshape #3 #2 0pt \the\jlreq@tempdima 0pt \the\maxdimen
+        #1\par\global\@tempcntb=\prevgraf}%
+%      \message{\string\jlreq@tempdima = \the\jlreq@tempdima で試行，行数は\the\@tempcntb , 書式 #3 #2 0pt \the\jlreq@tempdima 0pt \the\maxdimen}%
+    \fi
+    \jlreq@getlastbox{\@tempboxa}%
+    \setbox\jlreq@tempboxa=\box\jlreq@resultbox
+    \ifnum\@tempcntb<#3\relax% 行数が達していないならOK
+%      \message{行数 = \the\@tempcntb により確定}
+      \global\setbox\jlreq@resultbox=\vbox{\jlreq@warichu@fontsize
+        \unvbox\@tempboxa\hbox{\unhbox\jlreq@tempboxa\unskip\unskip\unpenalty}%
+        \@whilenum\@tempcntb<#3\do{\hbox{}\advance\@tempcntb by 1}}%
+      \@tempcnta=1001\relax
+    \else
+      % そうでない場合は最後の二行の長さを比較する
+      \jlreq@getlastbox{\@tempboxa}%
+      \setbox\jlreq@tempboxb=\box\jlreq@resultbox
+%      \message{最終行の長さ \the\wd\jlreq@tempboxa, その前の長さ \the\wd\jlreq@tempboxb]]}%
+      \ifdim\wd\jlreq@tempboxa>\wd\jlreq@tempboxb
+        \advance\jlreq@tempdima by 0.3pt\relax
+      \else
+        % 後ろが短いのでOK
+        \global\setbox\jlreq@resultbox=\vbox{\jlreq@warichu@fontsize
+          \unvbox\@tempboxa\box\jlreq@tempboxb\box\jlreq@tempboxa}%
+        \jlreq@resultdimen=\jlreq@tempdima
+        \@tempcnta=1001\relax
+      \fi
+    \fi
+    \ifdim\jlreq@tempdima>#5\relax
+      \global\setbox\jlreq@resultbox=\box\voidb@x%
+      \@tempcnta=1001\relax
+    \fi
+    \advance\@tempcnta by 1\relax
+  }%
 }
 
 % vbox #1の最後を\jlreq@resultboxに入れる
 % #1の最後の行は消える
-\newcommand{\jlreq@warichu@getlastbox}[1]{%
-	\setbox#1=\vbox{\jlreq@warichu@fontsize\unvbox#1\relax
-		\unskip\unskip\unpenalty\global\setbox\jlreq@resultbox=\lastbox}%
-	\ifhbox\jlreq@resultbox
-		\global\setbox\jlreq@resultbox=\hbox{%
-			\jlreq@warichu@fontsize
-			\unhbox\jlreq@resultbox\unskip\unskip\unpenalty}%
-	\else
-		\global\setbox\jlreq@resultbox=\box\voidb@x
-	\fi
+\newcommand{\jlreq@getlastbox}[1]{%
+  \setbox#1=\vbox{\jlreq@warichu@fontsize\unvbox#1\relax
+    \unskip\unskip\unpenalty\global\setbox\jlreq@resultbox=\lastbox}%
+  \ifhbox\jlreq@resultbox
+    \global\setbox\jlreq@resultbox=\hbox{%
+      \jlreq@warichu@fontsize
+      \unhbox\jlreq@resultbox\unskip\unskip\unpenalty}%
+  \else
+    \global\setbox\jlreq@resultbox=\box\voidb@x
+  \fi
 }
 
 % デフォルト設定

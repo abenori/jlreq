@@ -1360,6 +1360,7 @@ x}
 				\jlreq@warichu@fontsize\raise-.5\zw\hbox{\box\jlreq@resultbox}%
 			}%
 		\fi
+		\def\jlreq@next{}%
 	\else
 		\def\jlreq@next{\jlreq@warichu@noauto@@@{#1}#2#3}%
 	\fi

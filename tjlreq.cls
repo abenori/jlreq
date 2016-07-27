@@ -8,116 +8,120 @@
 % タブ処理
 % 振分け処理
 % 表
-% http://homepage3.nifty.com/xymtex/fujitas2/texlatex/index.html#tategumi
 \showboxdepth=100
 \showboxbreadth=100
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{tjlreq}[2016/01/01 tjlreq]
 \RequirePackage{luatexja}
+\RequirePackage{xkeyval}
 
 % 和文文字，欧文文字の設定
 \ltjsetparameter{jacharrange={-1, +2, +3, -4, -5, +6, +7, -8}}
+
 % サイズ
-\DeclareOption{a3paper}{%
+\newcommand{\jlreq@checkempty}[2]{\ifx#2\relax\relax\else\ClassError{jlreq}{The option #1 should have no value.}\fi}
+\DeclareOptionX{a3paper}{%
+	\jlreq@checkempty{a3paper}{#1}%
 	\setlength\paperheight {420mm}%
 	\setlength\paperwidth  {297mm}}
-\DeclareOption{a4paper}{%
+\DeclareOptionX{a4paper}{%
 	\setlength\paperheight {297mm}%
 	\setlength\paperwidth  {210mm}}
-\DeclareOption{a5paper}{%
+\DeclareOptionX{a5paper}{%
+	\jlreq@checkempty{a5paper}{#1}%
 	\setlength\paperheight {210mm}%
 	\setlength\paperwidth  {148mm}}
-\DeclareOption{a6paper}{%
+\DeclareOptionX{a6paper}{%
 	\setlength\paperheight {148mm}%
 	\setlength\paperwidth  {105mm}}
-\DeclareOption{b4paper}{%
+\DeclareOptionX{b4paper}{%
 	\setlength\paperheight {364mm}%
 	\setlength\paperwidth  {257mm}}
-\DeclareOption{b5paper}{%
+\DeclareOptionX{b5paper}{%
 	\setlength\paperheight {257mm}%
 	\setlength\paperwidth  {182mm}}
-\DeclareOption{b6paper}{%
+\DeclareOptionX{b6paper}{%
 	\setlength\paperheight {182mm}%
 	\setlength\paperwidth  {128mm}}
-\DeclareOption{a4j}{%
+\DeclareOptionX{a4j}{%
 	\setlength\paperheight {297mm}%
 	\setlength\paperwidth  {210mm}}
-\DeclareOption{a5j}{%
+\DeclareOptionX{a5j}{%
 	\setlength\paperheight {210mm}%
 	\setlength\paperwidth  {148mm}}
-\DeclareOption{b4j}{%
+\DeclareOptionX{b4j}{%
 	\setlength\paperheight {364mm}%
 	\setlength\paperwidth  {257mm}}
-\DeclareOption{b5j}{%
+\DeclareOptionX{b5j}{%
 	\setlength\paperheight {257mm}%
 	\setlength\paperwidth  {182mm}}
-\DeclareOption{a4var}{%
+\DeclareOptionX{a4var}{%
 	\setlength\paperheight {283mm}%
 	\setlength\paperwidth  {210mm}}
-\DeclareOption{b5var}{%
+\DeclareOptionX{b5var}{%
 	\setlength\paperheight {230mm}%
 	\setlength\paperwidth  {182mm}}
-\DeclareOption{letterpaper}{%
+\DeclareOptionX{letterpaper}{%
 	\setlength\paperheight {11in}%
 	\setlength\paperwidth  {8.5in}}
-\DeclareOption{legalpaper}{%
+\DeclareOptionX{legalpaper}{%
 	\setlength\paperheight {14in}%
 	\setlength\paperwidth  {8.5in}}
-\DeclareOption{executivepaper}{%
+\DeclareOptionX{executivepaper}{%
 	\setlength\paperheight {10.5in}%
 	\setlength\paperwidth  {7.25in}}
 
 \newcommand{\jlreq@scale}{1}
 % jsarticleから
-\DeclareOption{8pt} {\renewcommand{\jlreq@scale}{0.833}}% 1.2^(-1)
-\DeclareOption{9pt} {\renewcommand{\jlreq@scale}{0.913}}% 1.2^(-0.5}
-\DeclareOption{10pt}{\renewcommand{\jlreq@scale}{1}}
-\DeclareOption{11pt}{\renewcommand{\jlreq@scale}{1.095}}% 1.2^0.5
-\DeclareOption{12pt}{\renewcommand{\jlreq@scale}{1.200}}
-\DeclareOption{14pt}{\renewcommand{\jlreq@scale}{1.440}}
-\DeclareOption{17pt}{\renewcommand{\jlreq@scale}{1.728}}
-\DeclareOption{20pt}{\renewcommand{\jlreq@scale}{2}}
-\DeclareOption{21pt}{\renewcommand{\jlreq@scale}{2.074}}
-\DeclareOption{25pt}{\renewcommand{\jlreq@scale}{2.488}}
-\DeclareOption{30pt}{\renewcommand{\jlreq@scale}{2.986}}
-\DeclareOption{36pt}{\renewcommand{\jlreq@scale}{3.583}}
-\DeclareOption{43pt}{\renewcommand{\jlreq@scale}{4.300}}
-\DeclareOption{12Q} {\renewcommand{\jlreq@scale}{0.923}}% 1pt*12Q/13Q
-\DeclareOption{14Q} {\renewcommand{\jlreq@scale}{1.077}}% 1pt*14Q/13Q
-\DeclareOption{10ptj}{\renewcommand{\jlreq@scale}{1.085}}% 1pt*10bp/13Q
-\DeclareOption{10.5ptj}{\renewcommand{\jlreq@scale}{1.139}}
-\DeclareOption{11ptj}{\renewcommand{\jlreq@scale}{1.194}}
-\DeclareOption{12ptj}{\renewcommand{\jlreq@scale}{1.302}}
+\DeclareOptionX{8pt} {\renewcommand{\jlreq@scale}{0.833}}% 1.2^(-1)
+\DeclareOptionX{9pt} {\renewcommand{\jlreq@scale}{0.913}}% 1.2^(-0.5}
+\DeclareOptionX{10pt}{\renewcommand{\jlreq@scale}{1}}
+\DeclareOptionX{11pt}{\renewcommand{\jlreq@scale}{1.095}}% 1.2^0.5
+\DeclareOptionX{12pt}{\renewcommand{\jlreq@scale}{1.200}}
+\DeclareOptionX{14pt}{\renewcommand{\jlreq@scale}{1.440}}
+\DeclareOptionX{17pt}{\renewcommand{\jlreq@scale}{1.728}}
+\DeclareOptionX{20pt}{\renewcommand{\jlreq@scale}{2}}
+\DeclareOptionX{21pt}{\renewcommand{\jlreq@scale}{2.074}}
+\DeclareOptionX{25pt}{\renewcommand{\jlreq@scale}{2.488}}
+\DeclareOptionX{30pt}{\renewcommand{\jlreq@scale}{2.986}}
+\DeclareOptionX{36pt}{\renewcommand{\jlreq@scale}{3.583}}
+\DeclareOptionX{43pt}{\renewcommand{\jlreq@scale}{4.300}}
+\DeclareOptionX{12Q} {\renewcommand{\jlreq@scale}{0.923}}% 1pt*12Q/13Q
+\DeclareOptionX{14Q} {\renewcommand{\jlreq@scale}{1.077}}% 1pt*14Q/13Q
+\DeclareOptionX{10ptj}{\renewcommand{\jlreq@scale}{1.085}}% 1pt*10bp/13Q
+\DeclareOptionX{10.5ptj}{\renewcommand{\jlreq@scale}{1.139}}
+\DeclareOptionX{11ptj}{\renewcommand{\jlreq@scale}{1.194}}
+\DeclareOptionX{12ptj}{\renewcommand{\jlreq@scale}{1.302}}
 
 % スイッチ
 \newif\if@restonecol \@restonecolfalse
 \newif\if@titlepage \@titlepagefalse
 \newif\if@landscape \@landscapefalse
-\DeclareOption{landscape}{\@landscapetrue}
-\DeclareOption{tombo}{%
+\DeclareOptionX{landscape}{\@landscapetrue}
+\DeclareOptionX{tombo}{%
 	\tombowtrue \tombowdatefalse
 	\setlength{\@tombowwidth}{.1\p@}%
 	\maketombowbox}
-\DeclareOption{mentuke}{%
+\DeclareOptionX{mentuke}{%
 	\tombowtrue \tombowdatefalse
 	\setlength{\@tombowwidth}{\z@}%
 	\maketombowbox}
-\DeclareOption{tate}{%
+\DeclareOptionX{tate}{%
 	\AtBeginDocument{\tate\message{《縦組モード》}%
 			             \adjustbaseline}%
 }
-\DeclareOption{oneside}{\@twosidefalse \@mparswitchfalse}
-\DeclareOption{twoside}{\@twosidetrue \@mparswitchtrue}
-\DeclareOption{vartwoside}{\@twosidetrue \@mparswitchfalse}
-\DeclareOption{onecolumn}{\@twocolumnfalse}
-\DeclareOption{twocolumn}{\@twocolumntrue}
-\DeclareOption{titlepage}{\@titlepagetrue}
-\DeclareOption{notitlepage}{\@titlepagefalse}
-\DeclareOption{draft}{\setlength\overfullrule{5pt}}
-\DeclareOption{final}{\setlength\overfullrule{0pt}}
+\DeclareOptionX{oneside}{\@twosidefalse \@mparswitchfalse}
+\DeclareOptionX{twoside}{\@twosidetrue \@mparswitchtrue}
+\DeclareOptionX{vartwoside}{\@twosidetrue \@mparswitchfalse}
+\DeclareOptionX{onecolumn}{\@twocolumnfalse}
+\DeclareOptionX{twocolumn}{\@twocolumntrue}
+\DeclareOptionX{titlepage}{\@titlepagetrue}
+\DeclareOptionX{notitlepage}{\@titlepagefalse}
+\DeclareOptionX{draft}{\setlength\overfullrule{5pt}}
+\DeclareOptionX{final}{\setlength\overfullrule{0pt}}
 
-\ExecuteOptions{a4paper,10pt,twoside,onecolumn,final,tate}
-\ProcessOptions\relax
+\ExecuteOptionsX{a4paper,10pt,twoside,onecolumn,final,tate}
+\ProcessOptionsX\relax
 \if@landscape
 	\setlength\@tempdima  {\paperheight}
 	\setlength\paperheight{\paperwidth}
@@ -1233,7 +1237,7 @@
 	\jlreq@inwarichutrue
 	\@ifstar\jlreq@warichu@noauto\jlreq@warichu@auto}
 
-\newcommand{\jlreq@warichu@auto}[1]{%
+\newcommand*{\jlreq@warichu@auto}[1]{%
 	% 割注初め括弧の前の場所を保存
 	\jlreq@savepos@for@remain@linewidth
 	% \jlreq@tempdimbに，現在行の残り長さを入れる
@@ -1330,25 +1334,40 @@
 	\jlreq@warichu@endwarichu
 }
 
-\newcommand{\jlreq@warichu@noauto}[1]{%
+\newcommand*{\jlreq@warichu@noauto}[1]{%
 	{\jlreq@warichu@kakkofontsize
 	\inhibitglue （}%
+	\tracingmacros=1\relax
 	\jlreq@warichu@noauto@#1\\\jlreq@endmark\jlreq@endmark
+	\tracingmacros=0\relax
 	\jlreq@warichu@endwarichu
-}
+x}
 
 \def\jlreq@warichu@noauto@#1\\#2#3\jlreq@endmark{%
-	\setbox\@tempboxa=\hbox{\jlreq@warichu@fontsize #1}%
-	\jlreq@tempdimc=\wd\@tempboxa
-	\divide\jlreq@tempdimc by 2\relax
-	\jlreq@warichu@determinelength{#1}{}{2}{\jlreq@tempdimc}{\maxdimen}%
-	\ifvoid\jlreq@resultbox\else
-		{%
-			\jlreq@warichu@fontsize\raise-.5\zw\hbox{\box\jlreq@resultbox}%
-		}%
-	\fi
+	\jlreq@warichu@noauto@@#1&\jlreq@endmark\jlreq@endmark
 	\ifx#2\jlreq@endmark\def\jlreq@next{}\else\linebreak\def\jlreq@next{\jlreq@warichu@noauto@#2#3\jlreq@endmark}\fi
 	\jlreq@next
+}
+
+\def\jlreq@warichu@noauto@@#1&#2#3\jlreq@endmark{%
+	\ifx#2\jlreq@endmark
+		\setbox\@tempboxa=\hbox{\jlreq@warichu@fontsize #1}%
+		\jlreq@tempdimc=\wd\@tempboxa
+		\divide\jlreq@tempdimc by 2\relax
+		\jlreq@warichu@determinelength{#1}{}{2}{\jlreq@tempdimc}{\maxdimen}%
+		\ifvoid\jlreq@resultbox\else
+			{%
+				\jlreq@warichu@fontsize\raise-.5\zw\hbox{\box\jlreq@resultbox}%
+			}%
+		\fi
+	\else
+		\def\jlreq@next{\jlreq@warichu@noauto@@@{#1}#2#3}%
+	\fi
+	\jlreq@next
+}
+
+\def\jlreq@warichu@noauto@@@#1#2&\jlreq@endmark{%
+	{\jlreq@warichu@fontsize\raise-.5\zw\hbox{\vbox{\hbox{#1}\hbox{#2}}}}%
 }
 
 \newcommand{\jlreq@warichu@endwarichu}{%

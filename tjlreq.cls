@@ -1,7 +1,7 @@
 %#main jlreqtest.tex
-%#! lualatex
-%%#! lualatex jlreqtest.tex ; pdftk jlreqtest.pdf multistamp onlya.pdf output out.pdf
-%%#PDF out.pdf
+%%#! lualatex
+%#! lualatex jlreqtest.tex ; pdftk jlreqtest.pdf multistamp onlya.pdf output out.pdf
+%#PDF out.pdf
 % memo
 % 欧文文字の向きについて (2.3.2.b.1)
 % 割注
@@ -472,7 +472,7 @@
 \setlength{\textheight}{0.727\paperwidth}
 \divide\textheight\baselineskip \multiply\textheight\baselineskip
 
-\setlength{\topskip}{1\zw} % フォントサイズ
+\setlength{\topskip}{1\zw} % フォントサイズと一致させる
 % ヘッダ：本文から1文字分離す．ヘッダの高さはjsarticleに習ってその二倍
 \setlength{\headsep}{1\zh}
 \setlength{\headheight}{2\zh}
@@ -585,7 +585,7 @@
 % 4行取り中央にする
 % \part{***}\section{***}とかの場合（4.1.6.e）はどうしよう．
 % 窓見出し，段抜きの見出しとかはない．
-\newcommand{\part}{\par\addvspace{\baselineskip}\vspace*{.5\baselineskip}%
+\newcommand{\part}{\par\addvspace{1.5\baselineskip}%
   \@afterindenttrue
   \secdef\@part\@spart}
 \def\@part[#1]#2{%
@@ -1193,23 +1193,24 @@
 \newdimen\jlreq@tempdima
 \newdimen\jlreq@tempdimb
 \newdimen\jlreq@tempdimc
-% 現在行の残りを得る．zposxを元に計算するだけ．
+% 現在行の残りを得る．
+% 以下のコードはおかしい．
 \newcommand{\jlreq@remain@linewidth}{%
   \dimexpr
   \linewidth + \@totalleftmargin + 
-  \ifodd\zref@extractdefault{jlreq@remain@width.page.\the\jlreq@remain@linewidth@count}{page}{\c@page}
+  \ifodd\zref@extractdefault{jlreq@remain@width.page.\the\jlreq@remain@linewidth@count}{page}{\c@page}%
     \oddsidemargin
   \else
     \evensidemargin
   \fi
-  + 1in + \hoffset - \zposx{jlreq@remain@width.posx.\the\jlreq@remain@linewidth@count} sp\relax
+  + 1in + \hoffset - \zposx{jlreq@remain@width.pos.\the\jlreq@remain@linewidth@count} sp\relax
 }
 
 % この命令以降，次にこの命令を実行する前まで\jlreq@remain@linewidthで
 % この場所における残り長さが取得できる．
 \newcommand{\jlreq@savepos@for@remain@linewidth}{%
   \advance\jlreq@remain@linewidth@count by 1\relax
-  \zsavepos{jlreq@remain@width.posx.\the\jlreq@remain@linewidth@count}%
+  \zsavepos{jlreq@remain@width.pos.\the\jlreq@remain@linewidth@count}%
   \zref@labelbyprops{jlreq@remain@width.page.\the\jlreq@remain@linewidth@count}{page}%
 }
 
@@ -1311,20 +1312,24 @@
         \jlreq@warichu@fontsize
         \setbox\jlreq@tempboxa=\vsplit\@tempboxa to \dimexpr 2\baselineskip - 0.001pt\relax
         % 改行を\\でしている場合には，割注の長さを計測した物に長さに強制する
+        \jlreq@getlastbox{\jlreq@tempboxa}%
+        \setbox\jlreq@tempboxb=\box\jlreq@resultbox
+        \jlreq@getlastbox{\jlreq@tempboxa}%
+        \seitbox\jlreq@tempboxa=\box\jlreq@resultbox
         \ifx\jlreq@warichu@autolinebreak\\\relax
           \ifdim\jlreq@tempdima>0pt\relax
-            \jlreq@getlastbox{\jlreq@tempboxa}%
-            \setbox\jlreq@tempboxb=\box\jlreq@resultbox
-            \jlreq@getlastbox{\jlreq@tempboxa}%
-            \setbox\jlreq@tempboxa=\box\jlreq@resultbox
             \raise-.5\zw\hbox to \jlreq@tempdima{\vbox{%
               \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxa}%
               \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxb}}}%
           \else
-            \raise-.5\zw\hbox{\box\jlreq@tempboxa}%
+            \raise-.5\zw\hbox to \jlreq@tempdima{\vbox{%
+              \hbox{\unhbox\jlreq@tempboxa}%
+              \hbox{\unhbox\jlreq@tempboxb}}}%
           \fi
         \else
-          \raise-.5\zw\hbox{\box\jlreq@tempboxa}%
+          \raise-.5\zw\hbox to \jlreq@tempdima{\vbox{%
+            \hbox{\unhbox\jlreq@tempboxa}%
+            \hbox{\unhbox\jlreq@tempboxb}}}%
         \fi
       }%
       \advance\@tempcnta by 2\relax

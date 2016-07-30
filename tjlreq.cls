@@ -1,7 +1,7 @@
 %#main jlreqtest.tex
-%#! lualatex
-%%#! lualatex jlreqtest.tex ; pdftk jlreqtest.pdf multistamp onlya.pdf output out.pdf
-%%#PDF out.pdf
+%%#! lualatex
+%#! lualatex jlreqtest.tex ; pdftk jlreqtest.pdf multistamp onlya.pdf output out.pdf
+%#PDF out.pdf
 % memo
 % 欧文文字の向きについて (2.3.2.b.1)
 % 割注
@@ -15,214 +15,13 @@
 \RequirePackage{luatexja}
 \RequirePackage{xkeyval}
 
+%. 基本設定
 % 和文文字，欧文文字の設定
 \ltjsetparameter{jacharrange={-1, +2, +3, -4, -5, +6, +7, -8}}
-
-% サイズ
-\newcommand{\jlreq@checkempty}[2]{\ifx#2\relax\relax\else\ClassError{jlreq}{The option #1 should have no value.}\fi}
-\DeclareOptionX{a3paper}{%
-  \jlreq@checkempty{a3paper}{#1}%
-  \setlength\paperheight {420mm}%
-  \setlength\paperwidth  {297mm}}
-\DeclareOptionX{a4paper}{%
-  \setlength\paperheight {297mm}%
-  \setlength\paperwidth  {210mm}}
-\DeclareOptionX{a5paper}{%
-  \jlreq@checkempty{a5paper}{#1}%
-  \setlength\paperheight {210mm}%
-  \setlength\paperwidth  {148mm}}
-\DeclareOptionX{a6paper}{%
-  \setlength\paperheight {148mm}%
-  \setlength\paperwidth  {105mm}}
-\DeclareOptionX{b4paper}{%
-  \setlength\paperheight {364mm}%
-  \setlength\paperwidth  {257mm}}
-\DeclareOptionX{b5paper}{%
-  \setlength\paperheight {257mm}%
-  \setlength\paperwidth  {182mm}}
-\DeclareOptionX{b6paper}{%
-  \setlength\paperheight {182mm}%
-  \setlength\paperwidth  {128mm}}
-\DeclareOptionX{a4j}{%
-  \setlength\paperheight {297mm}%
-  \setlength\paperwidth  {210mm}}
-\DeclareOptionX{a5j}{%
-  \setlength\paperheight {210mm}%
-  \setlength\paperwidth  {148mm}}
-\DeclareOptionX{b4j}{%
-  \setlength\paperheight {364mm}%
-  \setlength\paperwidth  {257mm}}
-\DeclareOptionX{b5j}{%
-  \setlength\paperheight {257mm}%
-  \setlength\paperwidth  {182mm}}
-\DeclareOptionX{a4var}{%
-  \setlength\paperheight {283mm}%
-  \setlength\paperwidth  {210mm}}
-\DeclareOptionX{b5var}{%
-  \setlength\paperheight {230mm}%
-  \setlength\paperwidth  {182mm}}
-\DeclareOptionX{letterpaper}{%
-  \setlength\paperheight {11in}%
-  \setlength\paperwidth  {8.5in}}
-\DeclareOptionX{legalpaper}{%
-  \setlength\paperheight {14in}%
-  \setlength\paperwidth  {8.5in}}
-\DeclareOptionX{executivepaper}{%
-  \setlength\paperheight {10.5in}%
-  \setlength\paperwidth  {7.25in}}
-
-\newcommand{\jlreq@scale}{1}
-% jsarticleから
-\DeclareOptionX{8pt} {\renewcommand{\jlreq@scale}{0.833}}% 1.2^(-1)
-\DeclareOptionX{9pt} {\renewcommand{\jlreq@scale}{0.913}}% 1.2^(-0.5}
-\DeclareOptionX{10pt}{\renewcommand{\jlreq@scale}{1}}
-\DeclareOptionX{11pt}{\renewcommand{\jlreq@scale}{1.095}}% 1.2^0.5
-\DeclareOptionX{12pt}{\renewcommand{\jlreq@scale}{1.200}}
-\DeclareOptionX{14pt}{\renewcommand{\jlreq@scale}{1.440}}
-\DeclareOptionX{17pt}{\renewcommand{\jlreq@scale}{1.728}}
-\DeclareOptionX{20pt}{\renewcommand{\jlreq@scale}{2}}
-\DeclareOptionX{21pt}{\renewcommand{\jlreq@scale}{2.074}}
-\DeclareOptionX{25pt}{\renewcommand{\jlreq@scale}{2.488}}
-\DeclareOptionX{30pt}{\renewcommand{\jlreq@scale}{2.986}}
-\DeclareOptionX{36pt}{\renewcommand{\jlreq@scale}{3.583}}
-\DeclareOptionX{43pt}{\renewcommand{\jlreq@scale}{4.300}}
-\DeclareOptionX{12Q} {\renewcommand{\jlreq@scale}{0.923}}% 1pt*12Q/13Q
-\DeclareOptionX{14Q} {\renewcommand{\jlreq@scale}{1.077}}% 1pt*14Q/13Q
-\DeclareOptionX{10ptj}{\renewcommand{\jlreq@scale}{1.085}}% 1pt*10bp/13Q
-\DeclareOptionX{10.5ptj}{\renewcommand{\jlreq@scale}{1.139}}
-\DeclareOptionX{11ptj}{\renewcommand{\jlreq@scale}{1.194}}
-\DeclareOptionX{12ptj}{\renewcommand{\jlreq@scale}{1.302}}
-
-% スイッチ
-\newif\if@restonecol \@restonecolfalse
-\newif\if@titlepage \@titlepagefalse
-\newif\if@landscape \@landscapefalse
-\DeclareOptionX{landscape}{\@landscapetrue}
-\DeclareOptionX{tombo}{%
-  \tombowtrue \tombowdatefalse
-  \setlength{\@tombowwidth}{.1\p@}%
-  \maketombowbox}
-\DeclareOptionX{mentuke}{%
-  \tombowtrue \tombowdatefalse
-  \setlength{\@tombowwidth}{\z@}%
-  \maketombowbox}
-\DeclareOptionX{tate}{%
-  \AtBeginDocument{\tate\message{《縦組モード》}\adjustbaseline}%
-}
-\DeclareOptionX{oneside}{\@twosidefalse \@mparswitchfalse}
-\DeclareOptionX{twoside}{\@twosidetrue \@mparswitchtrue}
-\DeclareOptionX{vartwoside}{\@twosidetrue \@mparswitchfalse}
-\DeclareOptionX{onecolumn}{\@twocolumnfalse}
-\DeclareOptionX{twocolumn}{\@twocolumntrue}
-\DeclareOptionX{titlepage}{\@titlepagetrue}
-\DeclareOptionX{notitlepage}{\@titlepagefalse}
-\DeclareOptionX{draft}{\setlength\overfullrule{5pt}}
-\DeclareOptionX{final}{\setlength\overfullrule{0pt}}
-
-\ExecuteOptionsX{a4paper,10pt,twoside,onecolumn,final,tate}
-\ProcessOptionsX\relax
-\if@landscape
-  \setlength\@tempdima  {\paperheight}
-  \setlength\paperheight{\paperwidth}
-  \setlength\paperwidth {\@tempdima}
-\fi
-% 行送り
-\newcommand{\n@baseline}{16}
-\newdimen\jlreq@mpt
-\jlreq@mpt=\jlreq@scale\p@
-
-% \pdfpagewidthとか設定
-\newlength{\stockwidth}
-\newlength{\stockheight}
-\setlength{\stockwidth}{\paperwidth}
-\setlength{\stockheight}{\paperheight}
-\iftombow
-  \advance \stockwidth 2in
-  \advance \stockheight 2in
-\fi
-\ifdefined\pdfpagewidth
-  \setlength{\pdfpagewidth}{\stockwidth}
-  \setlength{\pdfpageheight}{\stockheight}
-\else
-  \setlength{\pagewidth}{\stockwidth}
-  \setlength{\pageheight}{\stockheight}
-\fi
-
-\RequirePackage{luatexja-adjust}
-\ltjenableadjust
-
-% 和文フォント
-\expandafter\let\csname JT3/mc/m/n/10\endcsname\relax
-\DeclareFontShape{JT3}{mc}{m}{n}{<-> s * [0.924715] \ltj@stdmcfont:jfm=jlreqv;script=latn;-kern}{}
-\DeclareFontShape{JT3}{gt}{m}{n}{<-> s * [0.924715] \ltj@stdgtfont:jfm=jlreqv;script=latn;-kern}{}
-\DeclareFontShape{JT3}{mc}{bx}{n}{<->ssub*gt/m/n}{}
-\DeclareFontShape{JT3}{gt}{bx}{n}{<->ssub*gt/m/n}{}
-\DeclareFontShape{JT3}{mc}{m}{it}{<->ssub*mc/m/n}{}
-\DeclareFontShape{JT3}{mc}{m}{sl}{<->ssub*mc/m/n}{}
-\DeclareFontShape{JT3}{mc}{m}{sc}{<->ssub*mc/m/n}{}
-\DeclareFontShape{JT3}{gt}{m}{it}{<->ssub*gt/m/n}{}
-\DeclareFontShape{JT3}{gt}{m}{sl}{<->ssub*gt/m/n}{}
-\DeclareFontShape{JT3}{mc}{bx}{it}{<->ssub*gt/m/n}{}
-\DeclareFontShape{JT3}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
-
-\newcommand{\jlreq@setfontsize}[3]{%
-  \@setfontsize#1{#2\jlreq@mpt}{#3\jlreq@mpt}}
-\emergencystretch 3\zw
-
-\renewcommand{\normalsize}{%
-\jlreq@setfontsize\normalsize\@xpt{\n@baseline}%
-\abovedisplayskip 11\jlreq@mpt \@plus3\jlreq@mpt \@minus4\jlreq@mpt
-\abovedisplayshortskip \z@ \@plus3\jlreq@mpt
-\belowdisplayskip 9\jlreq@mpt \@plus3\jlreq@mpt \@minus4\jlreq@mpt
-\belowdisplayshortskip \belowdisplayskip
-\let\@listi\@listI}
-
-\kanjiencoding{JT3}
-\mcfamily\selectfont\normalsize
-\setbox0\hbox{　} % 全角スペース
-\setlength\Cht{\ht0}
-\setlength\Cdp{\dp0}
-\setlength\Cwd{\wd0}
-\setlength\Cvs{\baselineskip}
-\setlength\Chs{\wd0}
-\tate % ここで発行しておく
-
-% とりあえずtarticleからほぼそのまま
-\newcommand{\small}{%
-  \@setfontsize\small\@ixpt{11}%
-  \abovedisplayskip 8.5\jlreq@mpt \@plus3\jlreq@mpt \@minus4\jlreq@mpt
-  \abovedisplayshortskip \z@ \@plus2\jlreq@mpt
-  \belowdisplayshortskip 4\jlreq@mpt \@plus2\jlreq@mpt \@minus2\jlreq@mpt
-  \def\@listi{\leftmargin\leftmargini
-    \topsep 4\jlreq@mpt \@plus2\jlreq@mpt \@minus2\jlreq@mpt
-    \parsep 2\jlreq@mpt \@plus\jlreq@mpt \@minus\jlreq@mpt
-    \itemsep \parsep}%
-  \belowdisplayskip \abovedisplayskip}
-\newcommand{\footnotesize}{%
-  \jlreq@setfontsize\footnotesize\@viiipt{11}% 脚注文字サイズの二分より少し小さい値を行間に: 4.2.5.e
-  \abovedisplayskip 6\jlreq@mpt \@plus2\jlreq@mpt \@minus4\jlreq@mpt
-  \abovedisplayshortskip \z@ \@plus\jlreq@mpt
-  \belowdisplayshortskip 3\jlreq@mpt \@plus\jlreq@mpt \@minus2\jlreq@mpt
-  \def\@listi{\leftmargin\leftmargini
-    \topsep 3\jlreq@mpt \@plus\jlreq@mpt \@minus\jlreq@mpt
-    \parsep 2\jlreq@mpt \@plus\jlreq@mpt \@minus\jlreq@mpt
-    \itemsep \parsep}%
-  \belowdisplayskip \abovedisplayskip}
-\newcommand{\scriptsize}{\jlreq@setfontsize\scriptsize\@viipt\@viiipt}
-\newcommand{\tiny}{\jlreq@setfontsize\tiny\@vpt\@vipt}
-\newcommand{\large}{\jlreq@setfontsize\large\@xiipt{17}}
-\newcommand{\Large}{\jlreq@setfontsize\Large\@xivpt{21}}
-\newcommand{\LARGE}{\jlreq@setfontsize\LARGE\@xviipt{25}}
-\newcommand{\huge}{\jlreq@setfontsize\huge\@xxpt{28}}
-\newcommand{\Huge}{\jlreq@setfontsize\Huge\@xxvpt{33}}
-
-\RequirePackage{lltjext}
-\def\@Kanji#1{\expandafter\kansuji\number #1\relax} % \relax追加
 
 % kanjiskip, xkanjiskipはjfmのものを使う
 \ltjsetparameter{kanjiskip=\maxdimen}
 \ltjsetparameter{xkanjiskip=\maxdimen}
-\rensujiskip=0.25\zh plus 0.25\zh minus 0.125\zh
 % 禁則処理
 % 行末
 % 初め括弧類
@@ -450,6 +249,229 @@
 \ltjsetparameter{prebreakpenalty={`‥,10000}}
 % ￥100とか70％とか……
 
+%. オプションの処理
+% サイズ
+\newcommand{\jlreq@checkempty}[2]{\ifx#2\relax\relax\else\ClassError{jlreq}{The option #1 should have no value.}\fi}
+\DeclareOptionX{a3paper}{%
+  \jlreq@checkempty{a3paper}{#1}%
+  \setlength\paperheight {420mm}%
+  \setlength\paperwidth  {297mm}}
+\DeclareOptionX{a4paper}{%
+  \jlreq@checkempty{a4paper}{#1}%
+  \setlength\paperheight {297mm}%
+  \setlength\paperwidth  {210mm}}
+\DeclareOptionX{a5paper}{%
+  \jlreq@checkempty{a5paper}{#1}%
+  \setlength\paperheight {210mm}%
+  \setlength\paperwidth  {148mm}}
+\DeclareOptionX{a6paper}{%
+  \jlreq@checkempty{a6paper}{#1}%
+  \setlength\paperheight {148mm}%
+  \setlength\paperwidth  {105mm}}
+\DeclareOptionX{b4paper}{%
+  \jlreq@checkempty{b4paper}{#1}%
+  \setlength\paperheight {364mm}%
+  \setlength\paperwidth  {257mm}}
+\DeclareOptionX{b5paper}{%
+  \jlreq@checkempty{b5paper}{#1}%
+  \setlength\paperheight {257mm}%
+  \setlength\paperwidth  {182mm}}
+\DeclareOptionX{b6paper}{%
+  \jlreq@checkempty{b6paper}{#1}%
+  \setlength\paperheight {182mm}%
+  \setlength\paperwidth  {128mm}}
+\DeclareOptionX{a4j}{%
+  \jlreq@checkempty{a4j}{#1}%
+  \setlength\paperheight {297mm}%
+  \setlength\paperwidth  {210mm}}
+\DeclareOptionX{a5j}{%
+  \jlreq@checkempty{a5j}{#1}%
+  \setlength\paperheight {210mm}%
+  \setlength\paperwidth  {148mm}}
+\DeclareOptionX{b4j}{%
+  \jlreq@checkempty{b4j}{#1}%
+  \setlength\paperheight {364mm}%
+  \setlength\paperwidth  {257mm}}
+\DeclareOptionX{b5j}{%
+  \jlreq@checkempty{b5j}{#1}%
+  \setlength\paperheight {257mm}%
+  \setlength\paperwidth  {182mm}}
+\DeclareOptionX{a4var}{%
+  \jlreq@checkempty{a4var}{#1}%
+  \setlength\paperheight {283mm}%
+  \setlength\paperwidth  {210mm}}
+\DeclareOptionX{b5var}{%
+  \jlreq@checkempty{b5var}{#1}%
+  \setlength\paperheight {230mm}%
+  \setlength\paperwidth  {182mm}}
+\DeclareOptionX{letterpaper}{%
+  \jlreq@checkempty{letterpaper}{#1}%
+  \setlength\paperheight {11in}%
+  \setlength\paperwidth  {8.5in}}
+\DeclareOptionX{legalpaper}{%
+  \jlreq@checkempty{legalpaper}{#1}%
+  \setlength\paperheight {14in}%
+  \setlength\paperwidth  {8.5in}}
+\DeclareOptionX{executivepaper}{%
+  \jlreq@checkempty{executivepaper}{#1}%
+  \setlength\paperheight {10.5in}%
+  \setlength\paperwidth  {7.25in}}
+
+\newcommand{\jlreq@scale}{1}
+% jsarticleから
+\DeclareOptionX{8pt} {\jlreq@checkempty{8pt}{#1}\renewcommand{\jlreq@scale}{0.833}}% 1.2^(-1)
+\DeclareOptionX{9pt} {\jlreq@checkempty{9pt}{#1}\renewcommand{\jlreq@scale}{0.913}}% 1.2^(-0.5}
+\DeclareOptionX{10pt}{\jlreq@checkempty{10pt}{#1}\renewcommand{\jlreq@scale}{1}}
+\DeclareOptionX{11pt}{\jlreq@checkempty{11pt}{#1}\renewcommand{\jlreq@scale}{1.095}}% 1.2^0.5
+\DeclareOptionX{12pt}{\jlreq@checkempty{12pt}{#1}\renewcommand{\jlreq@scale}{1.200}}
+\DeclareOptionX{14pt}{\jlreq@checkempty{14pt}{#1}\renewcommand{\jlreq@scale}{1.440}}
+\DeclareOptionX{17pt}{\jlreq@checkempty{17pt}{#1}\renewcommand{\jlreq@scale}{1.728}}
+\DeclareOptionX{20pt}{\jlreq@checkempty{20pt}{#1}\renewcommand{\jlreq@scale}{2}}
+\DeclareOptionX{21pt}{\jlreq@checkempty{21pt}{#1}\renewcommand{\jlreq@scale}{2.074}}
+\DeclareOptionX{25pt}{\jlreq@checkempty{25pt}{#1}\renewcommand{\jlreq@scale}{2.488}}
+\DeclareOptionX{30pt}{\jlreq@checkempty{30pt}{#1}\renewcommand{\jlreq@scale}{2.986}}
+\DeclareOptionX{36pt}{\jlreq@checkempty{36pt}{#1}\renewcommand{\jlreq@scale}{3.583}}
+\DeclareOptionX{43pt}{\jlreq@checkempty{43pt}{#1}\renewcommand{\jlreq@scale}{4.300}}
+\DeclareOptionX{12Q} {\jlreq@checkempty{12Q}{#1}\renewcommand{\jlreq@scale}{0.923}}% 1pt*12Q/13Q
+\DeclareOptionX{14Q} {\jlreq@checkempty{14Q}{#1}\renewcommand{\jlreq@scale}{1.077}}% 1pt*14Q/13Q
+\DeclareOptionX{10ptj}{\jlreq@checkempty{10ptj}{#1}\renewcommand{\jlreq@scale}{1.085}}% 1pt*10bp/13Q
+\DeclareOptionX{10.5ptj}{\jlreq@checkempty{10.5ptj}{#1}\renewcommand{\jlreq@scale}{1.139}}
+\DeclareOptionX{11ptj}{\jlreq@checkempty{11ptj}{#1}\renewcommand{\jlreq@scale}{1.194}}
+\DeclareOptionX{12ptj}{\jlreq@checkempty{12ptj}{#1}\renewcommand{\jlreq@scale}{1.302}}
+
+\newif\if@restonecol \@restonecolfalse
+\newif\if@titlepage \@titlepagefalse
+\newif\if@landscape \@landscapefalse
+\DeclareOptionX{landscape}{\jlreq@checkempty{landscape}{#1}\@landscapetrue}
+\DeclareOptionX{tombo}{%
+  \jlreq@checkempty{tombo}{#1}%
+  \tombowtrue \tombowdatefalse
+  \setlength{\@tombowwidth}{.1\p@}%
+  \maketombowbox}
+\DeclareOptionX{mentuke}{%
+  \jlreq@checkempty{mentuke}{#1}%
+  \tombowtrue \tombowdatefalse
+  \setlength{\@tombowwidth}{\z@}%
+  \maketombowbox}
+\DeclareOptionX{tate}{%
+  \jlreq@checkempty{tate}{#1}%
+  \AtBeginDocument{\tate\message{《縦組モード》}\adjustbaseline}%
+}
+\DeclareOptionX{oneside}{\jlreq@checkempty{oneside}{#1}\@twosidefalse \@mparswitchfalse}
+\DeclareOptionX{twoside}{\jlreq@checkempty{twoside}{#1}\@twosidetrue \@mparswitchtrue}
+\DeclareOptionX{vartwoside}{\jlreq@checkempty{vartwoside}{#1}\@twosidetrue \@mparswitchfalse}
+\DeclareOptionX{onecolumn}{\jlreq@checkempty{onecolumn}{#1}\@twocolumnfalse}
+\DeclareOptionX{twocolumn}{\jlreq@checkempty{twocolumn}{#1}\@twocolumntrue}
+\DeclareOptionX{titlepage}{\jlreq@checkempty{titlepage}{#1}\@titlepagetrue}
+\DeclareOptionX{notitlepage}{\jlreq@checkempty{notitlepage}{#1}\@titlepagefalse}
+\DeclareOptionX{draft}{\jlreq@checkempty{draft}{#1}\setlength\overfullrule{5pt}}
+\DeclareOptionX{final}{\jlreq@checkempty{final}{#1}\setlength\overfullrule{0pt}}
+% 行の長さ
+\newcommand{\jlreq@line@length}{}
+\DeclareOptionX{line_length}{\renewcommand{\jlreq@line@length}{#1}}
+% 1ページあたりの行数
+\newcommand{\jlreq@number@of@lines}{}
+\DeclareOptionX{number_of_lines}{\renewcommand{\jlreq@number@of@lines}{#1}}
+\ExecuteOptionsX{a4paper,10pt,twoside,onecolumn,final,tate}
+\ProcessOptionsX\relax
+
+\if@landscape
+  \setlength\@tempdima  {\paperheight}
+  \setlength\paperheight{\paperwidth}
+  \setlength\paperwidth {\@tempdima}
+\fi
+% 行送り
+\newcommand{\n@baseline}{16}
+
+% スケーリング用
+\newdimen\jlreq@mpt
+\jlreq@mpt=\jlreq@scale\p@
+
+
+% \pdfpagewidthとか設定
+\newlength{\stockwidth}
+\newlength{\stockheight}
+\setlength{\stockwidth}{\paperwidth}
+\setlength{\stockheight}{\paperheight}
+\iftombow
+  \advance \stockwidth 2in
+  \advance \stockheight 2in
+\fi
+\setlength{\pagewidth}{\stockwidth}
+\setlength{\pageheight}{\stockheight}
+
+\RequirePackage{luatexja-adjust}
+\ltjenableadjust
+
+% 和文フォント
+\expandafter\let\csname JT3/mc/m/n/10\endcsname\relax
+\DeclareFontShape{JT3}{mc}{m}{n}{<-> s * [0.924715] \ltj@stdmcfont:jfm=jlreqv;script=latn;-kern}{}
+\DeclareFontShape{JT3}{gt}{m}{n}{<-> s * [0.924715] \ltj@stdgtfont:jfm=jlreqv;script=latn;-kern}{}
+\DeclareFontShape{JT3}{mc}{bx}{n}{<->ssub*gt/m/n}{}
+\DeclareFontShape{JT3}{gt}{bx}{n}{<->ssub*gt/m/n}{}
+\DeclareFontShape{JT3}{mc}{m}{it}{<->ssub*mc/m/n}{}
+\DeclareFontShape{JT3}{mc}{m}{sl}{<->ssub*mc/m/n}{}
+\DeclareFontShape{JT3}{mc}{m}{sc}{<->ssub*mc/m/n}{}
+\DeclareFontShape{JT3}{gt}{m}{it}{<->ssub*gt/m/n}{}
+\DeclareFontShape{JT3}{gt}{m}{sl}{<->ssub*gt/m/n}{}
+\DeclareFontShape{JT3}{mc}{bx}{it}{<->ssub*gt/m/n}{}
+\DeclareFontShape{JT3}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
+
+\newcommand{\jlreq@setfontsize}[3]{%
+  \@setfontsize#1{#2\jlreq@mpt}{#3\jlreq@mpt}}
+\emergencystretch 3\zw
+
+\renewcommand{\normalsize}{%
+\jlreq@setfontsize\normalsize\@xpt{\n@baseline}%
+\abovedisplayskip 11\jlreq@mpt \@plus3\jlreq@mpt \@minus4\jlreq@mpt
+\abovedisplayshortskip \z@ \@plus3\jlreq@mpt
+\belowdisplayskip 9\jlreq@mpt \@plus3\jlreq@mpt \@minus4\jlreq@mpt
+\belowdisplayshortskip \belowdisplayskip
+\let\@listi\@listI}
+
+\kanjiencoding{JT3}
+\mcfamily\selectfont\normalsize
+\setbox0\hbox{　} % 全角スペース
+\setlength\Cht{\ht0}
+\setlength\Cdp{\dp0}
+\setlength\Cwd{\wd0}
+\setlength\Cvs{\baselineskip}
+\setlength\Chs{\wd0}
+\tate % ここで発行しておく
+
+% とりあえずtarticleからほぼそのまま
+\newcommand{\small}{%
+  \@setfontsize\small\@ixpt{11}%
+  \abovedisplayskip 8.5\jlreq@mpt \@plus3\jlreq@mpt \@minus4\jlreq@mpt
+  \abovedisplayshortskip \z@ \@plus2\jlreq@mpt
+  \belowdisplayshortskip 4\jlreq@mpt \@plus2\jlreq@mpt \@minus2\jlreq@mpt
+  \def\@listi{\leftmargin\leftmargini
+    \topsep 4\jlreq@mpt \@plus2\jlreq@mpt \@minus2\jlreq@mpt
+    \parsep 2\jlreq@mpt \@plus\jlreq@mpt \@minus\jlreq@mpt
+    \itemsep \parsep}%
+  \belowdisplayskip \abovedisplayskip}
+\newcommand{\footnotesize}{%
+  \jlreq@setfontsize\footnotesize\@viiipt{11}% 脚注文字サイズの二分より少し小さい値を行間に: 4.2.5.e
+  \abovedisplayskip 6\jlreq@mpt \@plus2\jlreq@mpt \@minus4\jlreq@mpt
+  \abovedisplayshortskip \z@ \@plus\jlreq@mpt
+  \belowdisplayshortskip 3\jlreq@mpt \@plus\jlreq@mpt \@minus2\jlreq@mpt
+  \def\@listi{\leftmargin\leftmargini
+    \topsep 3\jlreq@mpt \@plus\jlreq@mpt \@minus\jlreq@mpt
+    \parsep 2\jlreq@mpt \@plus\jlreq@mpt \@minus\jlreq@mpt
+    \itemsep \parsep}%
+  \belowdisplayskip \abovedisplayskip}
+\newcommand{\scriptsize}{\jlreq@setfontsize\scriptsize\@viipt\@viiipt}
+\newcommand{\tiny}{\jlreq@setfontsize\tiny\@vpt\@vipt}
+\newcommand{\large}{\jlreq@setfontsize\large\@xiipt{17}}
+\newcommand{\Large}{\jlreq@setfontsize\Large\@xivpt{21}}
+\newcommand{\LARGE}{\jlreq@setfontsize\LARGE\@xviipt{25}}
+\newcommand{\huge}{\jlreq@setfontsize\huge\@xxpt{28}}
+\newcommand{\Huge}{\jlreq@setfontsize\Huge\@xxvpt{33}}
+
+\RequirePackage{lltjext}
+\def\@Kanji#1{\expandafter\kansuji\number #1\relax} % \relax追加
+\rensujiskip=0.25\zh plus 0.25\zh minus 0.125\zh
+
 % このあたりはtarticleと同じ
 \setlength\lineskip{1\jlreq@mpt}
 \setlength\normallineskip{1\jlreq@mpt}
@@ -464,15 +486,21 @@
 % ページレイアウト
 % 縦が0.768倍，横が0.727倍となるようにする．
 % JISX4051のA5の例から換算
+
+% \jlreq@setlength[単位]{セットする値}{値の入っているマクロ}{デフォルト}
+\newcommand\jlreq@setlength[4][]{%
+  \expandafter\ifx #3\relax\relax\setlength{#2}{#4}
+  \else\setlength{#2}{#3 #1}\fi
+}
+
 % 縦 (\textwidth)
-\setlength{\textwidth}{0.768\paperheight}
+\jlreq@setlength{\textwidth}{\jlreq@line@length}{0.768\paperheight}
 \@tempdima=1\zh
 \divide\textwidth\zh \multiply\textwidth\zh
 % 横 (\textheight)
-\setlength{\textheight}{0.727\paperwidth}
+\jlreq@setlength[\baselineskip]{\textheight}{\jlreq@number@of@lines}{0.727\paperwidth}
 \divide\textheight\baselineskip \multiply\textheight\baselineskip
-
-\setlength{\topskip}{1\zw} % フォントサイズ
+\setlength{\topskip}{1\zw} % フォントサイズと一致させる
 % ヘッダ：本文から1文字分離す．ヘッダの高さはjsarticleに習ってその二倍
 \setlength{\headsep}{1\zh}
 \setlength{\headheight}{2\zh}
@@ -585,7 +613,7 @@
 % 4行取り中央にする
 % \part{***}\section{***}とかの場合（4.1.6.e）はどうしよう．
 % 窓見出し，段抜きの見出しとかはない．
-\newcommand{\part}{\par\addvspace{\baselineskip}\vspace*{.5\baselineskip}%
+\newcommand{\part}{\par\addvspace{1.5\baselineskip}%
   \@afterindenttrue
   \secdef\@part\@spart}
 \def\@part[#1]#2{%
@@ -1193,23 +1221,24 @@
 \newdimen\jlreq@tempdima
 \newdimen\jlreq@tempdimb
 \newdimen\jlreq@tempdimc
-% 現在行の残りを得る．zposxを元に計算するだけ．
+% 現在行の残りを得る．
+% 以下のコードはおかしい．
 \newcommand{\jlreq@remain@linewidth}{%
   \dimexpr
   \linewidth + \@totalleftmargin + 
-  \ifodd\zref@extractdefault{jlreq@remain@width.page.\the\jlreq@remain@linewidth@count}{page}{\c@page}
+  \ifodd\zref@extractdefault{jlreq@remain@width.page.\the\jlreq@remain@linewidth@count}{page}{\c@page}%
     \oddsidemargin
   \else
     \evensidemargin
   \fi
-  + 1in + \hoffset - \zposx{jlreq@remain@width.posx.\the\jlreq@remain@linewidth@count} sp\relax
+  + 1in + \hoffset - \zposx{jlreq@remain@width.pos.\the\jlreq@remain@linewidth@count} sp\relax
 }
 
 % この命令以降，次にこの命令を実行する前まで\jlreq@remain@linewidthで
 % この場所における残り長さが取得できる．
 \newcommand{\jlreq@savepos@for@remain@linewidth}{%
   \advance\jlreq@remain@linewidth@count by 1\relax
-  \zsavepos{jlreq@remain@width.posx.\the\jlreq@remain@linewidth@count}%
+  \zsavepos{jlreq@remain@width.pos.\the\jlreq@remain@linewidth@count}%
   \zref@labelbyprops{jlreq@remain@width.page.\the\jlreq@remain@linewidth@count}{page}%
 }
 
@@ -1311,20 +1340,24 @@
         \jlreq@warichu@fontsize
         \setbox\jlreq@tempboxa=\vsplit\@tempboxa to \dimexpr 2\baselineskip - 0.001pt\relax
         % 改行を\\でしている場合には，割注の長さを計測した物に長さに強制する
+        \jlreq@getlastbox{\jlreq@tempboxa}%
+        \setbox\jlreq@tempboxb=\box\jlreq@resultbox
+        \jlreq@getlastbox{\jlreq@tempboxa}%
+        \setbox\jlreq@tempboxa=\box\jlreq@resultbox
         \ifx\jlreq@warichu@autolinebreak\\\relax
           \ifdim\jlreq@tempdima>0pt\relax
-            \jlreq@getlastbox{\jlreq@tempboxa}%
-            \setbox\jlreq@tempboxb=\box\jlreq@resultbox
-            \jlreq@getlastbox{\jlreq@tempboxa}%
-            \setbox\jlreq@tempboxa=\box\jlreq@resultbox
             \raise-.5\zw\hbox to \jlreq@tempdima{\vbox{%
               \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxa}%
               \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxb}}}%
           \else
-            \raise-.5\zw\hbox{\box\jlreq@tempboxa}%
+            \raise-.5\zw\hbox to \jlreq@tempdima{\vbox{%
+              \hbox{\unhbox\jlreq@tempboxa}%
+              \hbox{\unhbox\jlreq@tempboxb}}}%
           \fi
         \else
-          \raise-.5\zw\hbox{\box\jlreq@tempboxa}%
+          \raise-.5\zw\hbox to \jlreq@tempdima{\vbox{%
+            \hbox{\unhbox\jlreq@tempboxa}%
+            \hbox{\unhbox\jlreq@tempboxb}}}%
         \fi
       }%
       \advance\@tempcnta by 2\relax

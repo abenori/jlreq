@@ -14,6 +14,7 @@
 \ProvidesClass{tjlreq}[2016/01/01 tjlreq]
 \RequirePackage{luatexja}
 \RequirePackage{xkeyval}
+\directlua{jlreq = {}}
 
 %. 基本設定
 % 和文文字，欧文文字の設定
@@ -372,8 +373,16 @@
 % 1ページあたりの行数
 \newcommand{\jlreq@number@of@lines}{}
 \DeclareOptionX{number_of_lines}{\renewcommand{\jlreq@number@of@lines}{#1}}
+\newcommand{\jlreq@open@bracket@pos}{zenkaku_tentsuki}
+% 行頭に括弧が来たときにどうするか．
+% 段落頭指定_折り返し行頭指定 で与える．
+\define@choicekey{tjlreq.cls}{open_bracket_pos}{zenkaku_tentsuki,zenkakunibu_nibu,nibu_tentsuki}{\renewcommand{\jlreq@open@bracket@pos}{#1}}
 \ExecuteOptionsX{a4paper,10pt,twoside,onecolumn,final,tate}
 \ProcessOptionsX\relax
+
+% この値は後でjfm-jlreq内で読む
+\directlua{jlreq.open_bracket_pos = [[\jlreq@open@bracket@pos]]}
+
 
 \if@landscape
   \setlength\@tempdima  {\paperheight}
@@ -484,15 +493,23 @@
 \@medpenalty  151
 \@highpenalty 301
 % ページレイアウト
-% 縦が0.768倍，横が0.727倍となるようにする．
-% JISX4051のA5の例から換算
-
 % \jlreq@setlength[単位]{セットする値}{値の入っているマクロ}{デフォルト}
 \newcommand\jlreq@setlength[4][]{%
   \expandafter\ifx #3\relax\relax\setlength{#2}{#4}
-  \else\setlength{#2}{#3 #1}\fi
+  \else\setlength{#2}{\dimexpr\jlreq@expand@speciallength{#3 #1}\relax}\fi
+}
+\def\jlreq@expand@speciallength#1{%
+  % zhやzwを\zhや\zwにする．
+  \directlua{
+    local yen = string.char(92)
+    local s = [[#1]]
+    s = s:gsub("zw",yen .. "zw"):gsub("zh",yen .. "zh")
+    tex.print(s)
+  }%
 }
 
+% デフォルト値は縦が0.768倍，横が0.727倍．
+% JISX4051のA5の例から換算
 % 縦 (\textwidth)
 \jlreq@setlength{\textwidth}{\jlreq@line@length}{0.768\paperheight}
 \@tempdima=1\zh

@@ -3,7 +3,7 @@
 3.1.6.a
 ]]
 
-luatexja.jfont.define_jfm{
+local jfm = {
 	dir = 'tate',
 	zw = 1.0,
 	zh = 1.0,
@@ -770,11 +770,35 @@ luatexja.jfont.define_jfm{
 	-- [30] --  縦中横中の文字
 	
 	[90] = { -- 行頭
-		chars = {'parbdd'},
+		chars = {'parbdd','boxbdd'},
 		glue = {
 			[1] = {0, 0, 0}, -- 行頭括弧はベタ組
 		},
 	},
-
 }
 
+tex.print("\\message{" .. jlreq.open_bracket_pos .. "}")
+
+local r = jlreq.open_bracket_pos:find("_")
+local danraku = jlreq.open_bracket_pos:sub(1,r - 1)
+local orikaeshi = jlreq.open_bracket_pos:sub(r + 1)
+
+-- 折り返し行頭を二分下げるのはこれでできる？
+if orikaeshi == "nibu" then
+	jfm[1].width = 1
+	for k,v in pairs(jfm) do
+		if tonumber(k) ~= nil then
+			if v.glue[1] ~= nil then v.glue[1][1] = v.glue[1][1] - 0.5
+			else v.glue[1] = {-0.5,0,0} end
+		end
+	end
+end
+
+-- 段落行頭の二分下げ
+if danraku == "zenkakunibu" then
+	jfm[90].glue[1][1] = jfm[90].glue[1][1] + 0.5
+elseif danraku == "nibu" then
+	jfm[90].glue[1][1] = jfm[90].glue[1][1] - 0.5
+end
+
+luatexja.jfont.define_jfm(jfm)

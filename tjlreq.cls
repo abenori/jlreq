@@ -253,136 +253,125 @@
 %. オプションの処理
 % サイズ
 \newcommand{\jlreq@checkempty}[2]{\ifx#2\relax\relax\else\ClassError{jlreq}{The option #1 should have no value.}\fi}
-\DeclareOptionX{a3paper}{%
-  \jlreq@checkempty{a3paper}{#1}%
+% 引数無しの\DeclareOptionX
+\newcommand{\jlreq@DeclareOption}[2]{%
+  \DeclareOptionX{#1}{\jlreq@checkempty{#1}{##1}#2}
+}
+\jlreq@DeclareOption{a3paper}{%
   \setlength\paperheight {420mm}%
   \setlength\paperwidth  {297mm}}
-\DeclareOptionX{a4paper}{%
-  \jlreq@checkempty{a4paper}{#1}%
+\jlreq@DeclareOption{a4paper}{%
   \setlength\paperheight {297mm}%
   \setlength\paperwidth  {210mm}}
-\DeclareOptionX{a5paper}{%
-  \jlreq@checkempty{a5paper}{#1}%
+\jlreq@DeclareOption{a5paper}{%
   \setlength\paperheight {210mm}%
   \setlength\paperwidth  {148mm}}
-\DeclareOptionX{a6paper}{%
-  \jlreq@checkempty{a6paper}{#1}%
+\jlreq@DeclareOption{a6paper}{%
   \setlength\paperheight {148mm}%
   \setlength\paperwidth  {105mm}}
-\DeclareOptionX{b4paper}{%
-  \jlreq@checkempty{b4paper}{#1}%
+\jlreq@DeclareOption{b4paper}{%
   \setlength\paperheight {364mm}%
   \setlength\paperwidth  {257mm}}
-\DeclareOptionX{b5paper}{%
-  \jlreq@checkempty{b5paper}{#1}%
+\jlreq@DeclareOption{b5paper}{%
   \setlength\paperheight {257mm}%
   \setlength\paperwidth  {182mm}}
-\DeclareOptionX{b6paper}{%
-  \jlreq@checkempty{b6paper}{#1}%
+\jlreq@DeclareOption{b6paper}{%
   \setlength\paperheight {182mm}%
   \setlength\paperwidth  {128mm}}
-\DeclareOptionX{a4j}{%
-  \jlreq@checkempty{a4j}{#1}%
+\jlreq@DeclareOption{a4j}{%
   \setlength\paperheight {297mm}%
   \setlength\paperwidth  {210mm}}
-\DeclareOptionX{a5j}{%
-  \jlreq@checkempty{a5j}{#1}%
+\jlreq@DeclareOption{a5j}{%
   \setlength\paperheight {210mm}%
   \setlength\paperwidth  {148mm}}
-\DeclareOptionX{b4j}{%
-  \jlreq@checkempty{b4j}{#1}%
+\jlreq@DeclareOption{b4j}{%
   \setlength\paperheight {364mm}%
   \setlength\paperwidth  {257mm}}
-\DeclareOptionX{b5j}{%
-  \jlreq@checkempty{b5j}{#1}%
+\jlreq@DeclareOption{b5j}{%
   \setlength\paperheight {257mm}%
   \setlength\paperwidth  {182mm}}
-\DeclareOptionX{a4var}{%
-  \jlreq@checkempty{a4var}{#1}%
+\jlreq@DeclareOption{a4var}{%
   \setlength\paperheight {283mm}%
   \setlength\paperwidth  {210mm}}
-\DeclareOptionX{b5var}{%
-  \jlreq@checkempty{b5var}{#1}%
+\jlreq@DeclareOption{b5var}{%
   \setlength\paperheight {230mm}%
   \setlength\paperwidth  {182mm}}
-\DeclareOptionX{letterpaper}{%
-  \jlreq@checkempty{letterpaper}{#1}%
+\jlreq@DeclareOption{letterpaper}{%
   \setlength\paperheight {11in}%
   \setlength\paperwidth  {8.5in}}
-\DeclareOptionX{legalpaper}{%
-  \jlreq@checkempty{legalpaper}{#1}%
+\jlreq@DeclareOption{legalpaper}{%
   \setlength\paperheight {14in}%
   \setlength\paperwidth  {8.5in}}
-\DeclareOptionX{executivepaper}{%
-  \jlreq@checkempty{executivepaper}{#1}%
+\jlreq@DeclareOption{executivepaper}{%
   \setlength\paperheight {10.5in}%
   \setlength\paperwidth  {7.25in}}
 
 \newcommand{\jlreq@scale}{1}
 % jsarticleから
-\DeclareOptionX{8pt} {\jlreq@checkempty{8pt}{#1}\renewcommand{\jlreq@scale}{0.833}}% 1.2^(-1)
-\DeclareOptionX{9pt} {\jlreq@checkempty{9pt}{#1}\renewcommand{\jlreq@scale}{0.913}}% 1.2^(-0.5}
-\DeclareOptionX{10pt}{\jlreq@checkempty{10pt}{#1}\renewcommand{\jlreq@scale}{1}}
-\DeclareOptionX{11pt}{\jlreq@checkempty{11pt}{#1}\renewcommand{\jlreq@scale}{1.095}}% 1.2^0.5
-\DeclareOptionX{12pt}{\jlreq@checkempty{12pt}{#1}\renewcommand{\jlreq@scale}{1.200}}
-\DeclareOptionX{14pt}{\jlreq@checkempty{14pt}{#1}\renewcommand{\jlreq@scale}{1.440}}
-\DeclareOptionX{17pt}{\jlreq@checkempty{17pt}{#1}\renewcommand{\jlreq@scale}{1.728}}
-\DeclareOptionX{20pt}{\jlreq@checkempty{20pt}{#1}\renewcommand{\jlreq@scale}{2}}
-\DeclareOptionX{21pt}{\jlreq@checkempty{21pt}{#1}\renewcommand{\jlreq@scale}{2.074}}
-\DeclareOptionX{25pt}{\jlreq@checkempty{25pt}{#1}\renewcommand{\jlreq@scale}{2.488}}
-\DeclareOptionX{30pt}{\jlreq@checkempty{30pt}{#1}\renewcommand{\jlreq@scale}{2.986}}
-\DeclareOptionX{36pt}{\jlreq@checkempty{36pt}{#1}\renewcommand{\jlreq@scale}{3.583}}
-\DeclareOptionX{43pt}{\jlreq@checkempty{43pt}{#1}\renewcommand{\jlreq@scale}{4.300}}
-\DeclareOptionX{12Q} {\jlreq@checkempty{12Q}{#1}\renewcommand{\jlreq@scale}{0.923}}% 1pt*12Q/13Q
-\DeclareOptionX{14Q} {\jlreq@checkempty{14Q}{#1}\renewcommand{\jlreq@scale}{1.077}}% 1pt*14Q/13Q
-\DeclareOptionX{10ptj}{\jlreq@checkempty{10ptj}{#1}\renewcommand{\jlreq@scale}{1.085}}% 1pt*10bp/13Q
-\DeclareOptionX{10.5ptj}{\jlreq@checkempty{10.5ptj}{#1}\renewcommand{\jlreq@scale}{1.139}}
-\DeclareOptionX{11ptj}{\jlreq@checkempty{11ptj}{#1}\renewcommand{\jlreq@scale}{1.194}}
-\DeclareOptionX{12ptj}{\jlreq@checkempty{12ptj}{#1}\renewcommand{\jlreq@scale}{1.302}}
+\jlreq@DeclareOption{8pt} {\renewcommand{\jlreq@scale}{0.833}}% 1.2^(-1)
+\jlreq@DeclareOption{9pt} {\renewcommand{\jlreq@scale}{0.913}}% 1.2^(-0.5}
+\jlreq@DeclareOption{10pt}{\renewcommand{\jlreq@scale}{1}}
+\jlreq@DeclareOption{11pt}{\renewcommand{\jlreq@scale}{1.095}}% 1.2^0.5
+\jlreq@DeclareOption{12pt}{\renewcommand{\jlreq@scale}{1.200}}
+\jlreq@DeclareOption{14pt}{\renewcommand{\jlreq@scale}{1.440}}
+\jlreq@DeclareOption{17pt}{\renewcommand{\jlreq@scale}{1.728}}
+\jlreq@DeclareOption{20pt}{\renewcommand{\jlreq@scale}{2}}
+\jlreq@DeclareOption{21pt}{\renewcommand{\jlreq@scale}{2.074}}
+\jlreq@DeclareOption{25pt}{\renewcommand{\jlreq@scale}{2.488}}
+\jlreq@DeclareOption{30pt}{\renewcommand{\jlreq@scale}{2.986}}
+\jlreq@DeclareOption{36pt}{\renewcommand{\jlreq@scale}{3.583}}
+\jlreq@DeclareOption{43pt}{\renewcommand{\jlreq@scale}{4.300}}
+\jlreq@DeclareOption{12Q} {\renewcommand{\jlreq@scale}{0.923}}% 1pt*12Q/13Q
+\jlreq@DeclareOption{14Q} {\renewcommand{\jlreq@scale}{1.077}}% 1pt*14Q/13Q
+\jlreq@DeclareOption{10ptj}{\renewcommand{\jlreq@scale}{1.085}}% 1pt*10bp/13Q
+\jlreq@DeclareOption{10.5ptj}{\renewcommand{\jlreq@scale}{1.139}}
+\jlreq@DeclareOption{11ptj}{\renewcommand{\jlreq@scale}{1.194}}
+\jlreq@DeclareOption{12ptj}{\renewcommand{\jlreq@scale}{1.302}}
 
 \newif\if@restonecol \@restonecolfalse
 \newif\if@titlepage \@titlepagefalse
 \newif\if@landscape \@landscapefalse
-\DeclareOptionX{landscape}{\jlreq@checkempty{landscape}{#1}\@landscapetrue}
-\DeclareOptionX{tombo}{%
-  \jlreq@checkempty{tombo}{#1}%
+\jlreq@DeclareOption{landscape}{\@landscapetrue}
+\jlreq@DeclareOption{tombo}{%
   \tombowtrue \tombowdatefalse
   \setlength{\@tombowwidth}{.1\p@}%
   \maketombowbox}
-\DeclareOptionX{mentuke}{%
-  \jlreq@checkempty{mentuke}{#1}%
+\jlreq@DeclareOption{mentuke}{%
   \tombowtrue \tombowdatefalse
   \setlength{\@tombowwidth}{\z@}%
   \maketombowbox}
-\DeclareOptionX{tate}{%
-  \jlreq@checkempty{tate}{#1}%
+\jlreq@DeclareOption{tate}{%
   \AtBeginDocument{\tate\message{《縦組モード》}\adjustbaseline}%
 }
-\DeclareOptionX{oneside}{\jlreq@checkempty{oneside}{#1}\@twosidefalse \@mparswitchfalse}
-\DeclareOptionX{twoside}{\jlreq@checkempty{twoside}{#1}\@twosidetrue \@mparswitchtrue}
-\DeclareOptionX{vartwoside}{\jlreq@checkempty{vartwoside}{#1}\@twosidetrue \@mparswitchfalse}
-\DeclareOptionX{onecolumn}{\jlreq@checkempty{onecolumn}{#1}\@twocolumnfalse}
-\DeclareOptionX{twocolumn}{\jlreq@checkempty{twocolumn}{#1}\@twocolumntrue}
-\DeclareOptionX{titlepage}{\jlreq@checkempty{titlepage}{#1}\@titlepagetrue}
-\DeclareOptionX{notitlepage}{\jlreq@checkempty{notitlepage}{#1}\@titlepagefalse}
-\DeclareOptionX{draft}{\jlreq@checkempty{draft}{#1}\setlength\overfullrule{5pt}}
-\DeclareOptionX{final}{\jlreq@checkempty{final}{#1}\setlength\overfullrule{0pt}}
+\jlreq@DeclareOption{oneside}{\@twosidefalse \@mparswitchfalse}
+\jlreq@DeclareOption{twoside}{\@twosidetrue \@mparswitchtrue}
+\jlreq@DeclareOption{vartwoside}{\@twosidetrue \@mparswitchfalse}
+\jlreq@DeclareOption{onecolumn}{\@twocolumnfalse}
+\jlreq@DeclareOption{twocolumn}{\@twocolumntrue}
+\jlreq@DeclareOption{titlepage}{\@titlepagetrue}
+\jlreq@DeclareOption{notitlepage}{\@titlepagefalse}
+\jlreq@DeclareOption{draft}{\setlength\overfullrule{5pt}}
+\jlreq@DeclareOption{final}{\setlength\overfullrule{0pt}}
 % 行の長さ
 \newcommand{\jlreq@line@length}{}
 \DeclareOptionX{line_length}{\renewcommand{\jlreq@line@length}{#1}}
 % 1ページあたりの行数
 \newcommand{\jlreq@number@of@lines}{}
 \DeclareOptionX{number_of_lines}{\renewcommand{\jlreq@number@of@lines}{#1}}
-\newcommand{\jlreq@open@bracket@pos}{zenkaku_tentsuki}
 % 行頭に括弧が来たときにどうするか．
 % 段落頭指定_折り返し行頭指定 で与える．
+\newcommand{\jlreq@open@bracket@pos}{zenkaku_tentsuki}
 \define@choicekey{tjlreq.cls}{open_bracket_pos}{zenkaku_tentsuki,zenkakunibu_nibu,nibu_tentsuki}{\renewcommand{\jlreq@open@bracket@pos}{#1}}
+\newif\ifjlreq@burasage
+\jlreq@DeclareOption{hanging_punctuation}{\jlreq@burasagetrue}
+
 \ExecuteOptionsX{a4paper,10pt,twoside,onecolumn,final,tate}
 \ProcessOptionsX\relax
 
 % この値は後でjfm-jlreq内で読む
 \directlua{jlreq.open_bracket_pos = [[\jlreq@open@bracket@pos]]}
-
+\ifjlreq@burasage\directlua{jlreq.burasage = true}
+\else\directlua{jlreq.burasage = false}\fi
 
 \if@landscape
   \setlength\@tempdima  {\paperheight}
@@ -1224,13 +1213,13 @@
     \fi
   \fi}}
 
-% ルビ：あればpxrubricaを読む
-\IfFileExists{pxrubrica.sty}{\RequirePackage{pxrubrica}}{}
+% ルビ
+\RequirePackage{luatexja-ruby}
 
 % 割注: 3.4
 \RequirePackage[savepos]{zref}
-\newcount\jlreq@remain@linewidth@count
-\jlreq@remain@linewidth@count=0
+\newcount\jlreq@rest@linewidth@count
+\jlreq@rest@linewidth@count=0
 % 計算結果を返すための変数
 \newdimen\jlreq@resultdimen
 \newbox\jlreq@resultbox
@@ -1240,23 +1229,23 @@
 \newdimen\jlreq@tempdimc
 % 現在行の残りを得る．
 % 以下のコードはおかしい．
-\newcommand{\jlreq@remain@linewidth}{%
+\newcommand{\jlreq@rest@linewidth}{%
   \dimexpr
   \linewidth + \@totalleftmargin + 
-  \ifodd\zref@extractdefault{jlreq@remain@width.page.\the\jlreq@remain@linewidth@count}{page}{\c@page}%
+  \ifodd\zref@extractdefault{jlreq@rest@width.page.\the\jlreq@rest@linewidth@count}{page}{\c@page}%
     \oddsidemargin
   \else
     \evensidemargin
   \fi
-  + 1in + \hoffset - \zposx{jlreq@remain@width.pos.\the\jlreq@remain@linewidth@count} sp\relax
+  + 1in + \hoffset - \zposx{jlreq@rest@width.pos.\the\jlreq@rest@linewidth@count} sp\relax
 }
 
-% この命令以降，次にこの命令を実行する前まで\jlreq@remain@linewidthで
+% この命令以降，次にこの命令を実行する前まで\jlreq@rest@linewidthで
 % この場所における残り長さが取得できる．
-\newcommand{\jlreq@savepos@for@remain@linewidth}{%
-  \advance\jlreq@remain@linewidth@count by 1\relax
-  \zsavepos{jlreq@remain@width.pos.\the\jlreq@remain@linewidth@count}%
-  \zref@labelbyprops{jlreq@remain@width.page.\the\jlreq@remain@linewidth@count}{page}%
+\newcommand{\jlreq@savepos@for@rest@linewidth}{%
+  \advance\jlreq@rest@linewidth@count by 1\relax
+  \zsavepos{jlreq@rest@width.pos.\the\jlreq@rest@linewidth@count}%
+  \zref@labelbyprops{jlreq@rest@width.page.\the\jlreq@rest@linewidth@count}{page}%
 }
 
 \newcommand{\jlreq@warichu@kakkofontsize}{%
@@ -1284,9 +1273,9 @@
 
 \newcommand*{\jlreq@warichu@auto}[1]{%
   % 割注初め括弧の前の場所を保存
-  \jlreq@savepos@for@remain@linewidth
+  \jlreq@savepos@for@rest@linewidth
   % \jlreq@tempdimbに，現在行の残り長さを入れる
-  \jlreq@tempdimb=\jlreq@remain@linewidth
+  \jlreq@tempdimb=\jlreq@rest@linewidth
   % 括弧の分を引いたものが，割注の使える長さ
   \setbox\@tempboxa=\hbox{\jlreq@warichu@kakkofontsize\inhibitglue（\inhibitglue}%
   \addtolength{\jlreq@tempdimb}{-\wd\@tempboxa}%
@@ -1340,7 +1329,7 @@
     \splittopskip=0pt\relax
     \splitmaxdepth=\maxdimen
     % 現在行の残り長さを思い出す
-    \jlreq@tempdimb=\jlreq@remain@linewidth
+    \jlreq@tempdimb=\jlreq@rest@linewidth
     \setbox\@tempboxa=\hbox{\jlreq@warichu@kakkofontsize\inhibitglue（\inhibitglue}%
     \addtolength{\jlreq@tempdimb}{-\wd\@tempboxa}%
     \setbox\@tempboxa=\box\jlreq@resultbox

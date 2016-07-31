@@ -517,6 +517,7 @@ local jfm = {
 	[14] = { -- 和字間隔
 		chars = {'　'},
 		align = 'middle',
+		width= 1,height = 1,depth = 0,
 		glue = {
 			[1] = {0, 0, 0},
 			[2] = {0, 0, 0},
@@ -777,13 +778,11 @@ local jfm = {
 	},
 }
 
-tex.print("\\message{" .. jlreq.open_bracket_pos .. "}")
-
 local r = jlreq.open_bracket_pos:find("_")
 local danraku = jlreq.open_bracket_pos:sub(1,r - 1)
 local orikaeshi = jlreq.open_bracket_pos:sub(r + 1)
 
--- 折り返し行頭を二分下げるのはこれでできる？
+-- 折り返し行頭を二分下げる
 if orikaeshi == "nibu" then
 	jfm[1].width = 1
 	for k,v in pairs(jfm) do
@@ -794,11 +793,17 @@ if orikaeshi == "nibu" then
 	end
 end
 
--- 段落行頭の二分下げ
+-- 段落行頭の下げ
 if danraku == "zenkakunibu" then
 	jfm[90].glue[1][1] = jfm[90].glue[1][1] + 0.5
 elseif danraku == "nibu" then
 	jfm[90].glue[1][1] = jfm[90].glue[1][1] - 0.5
+end
+
+-- ぶら下げ組を有効に
+if jlreq.burasage then
+	jfm[6].end_shrink = 0.5
+	jfm[7].end_shrink = 0.5
 end
 
 luatexja.jfont.define_jfm(jfm)

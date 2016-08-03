@@ -362,6 +362,7 @@
 % 段落頭指定_折り返し行頭指定 で与える．
 \newcommand{\jlreq@open@bracket@pos}{zenkaku_tentsuki}
 \define@choicekey{tjlreq.cls}{open_bracket_pos}{zenkaku_tentsuki,zenkakunibu_nibu,nibu_tentsuki}{\renewcommand{\jlreq@open@bracket@pos}{#1}}
+% ぶら下げ組みをするか
 \newif\ifjlreq@burasage
 \jlreq@DeclareOption{hanging_punctuation}{\jlreq@burasagetrue}
 

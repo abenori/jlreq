@@ -49,6 +49,7 @@ local jfm = {
 	dir = 'tate',
 	zw = 1.0,
 	zh = 1.0,
+	version = 2,
 	-- 原則使わない
 	kanjiskip = {0, 0, 0},
 	xkanjiskip = {0, 0, 0},
@@ -135,7 +136,7 @@ local jfm = {
 			[30] = {0.5, 0, 0.5, ratio = 0, priority = 1},
 		]]
 		},
---		end_adjust = {-0.5, 0},
+		end_adjust = {0.5,0},
 	},
 	
 	-- [3*]はハイフン類．幅が違うので分ける．
@@ -244,7 +245,7 @@ local jfm = {
 			[30] = {0.25, 0, 0.25, ratio = 0, priority = 2},
 		]]
 		},
-		end_stretch = 0.25, -- 本当は前も同時につぶす？（3.8.3.c）
+		end_adjust = {0.25,0}, -- 0.25 -> 0は詰め，優先順位は第三段階
 	},
 	
 	[6] = { -- 句点類
@@ -288,7 +289,7 @@ local jfm = {
 			[30] = {0.5, 0, 0, ratio = 0},
 		]]
 		},
-		end_stretch = 0.5,
+		end_adjust = {0.5, 0},
 	},
 	
 	[7] = { -- 読点類
@@ -332,7 +333,7 @@ local jfm = {
 			[30] = {0.5, 0, 0.5, ratio = 0, priority = 1},
 		]]
 		},
-		end_stretch = 0.5,
+		end_adjust = {0.5, 0},
 	},
 	
 	[8] = { -- 分離禁止文字
@@ -1163,8 +1164,9 @@ if jlreq ~= nil then
 		local danraku = jlreq.open_bracket_pos:sub(1,r - 1)
 		local orikaeshi = jlreq.open_bracket_pos:sub(r + 1)
 
-		-- 折り返し行頭を二分下げる……つもり
+		-- 折り返し行頭の開き括弧を二分下げる……つもり
 		if orikaeshi == "nibu" then
+			-- widthを二分増やし，その代わりJFMグルーを二分減らす
 			jfm[1].width = 1
 			for k,v in pairs(jfm) do
 				if tonumber(k) ~= nil then
@@ -1182,11 +1184,18 @@ if jlreq ~= nil then
 		end
 	end
 
-	-- ぶら下げ組を有効に
+	-- ぶら下げ組を有効にする．
 	if jlreq.burasage == true then
-		jfm[6].end_shrink = 0.5
-		jfm[7].end_shrink = 0.5
+		for dummy,class in ipairs({6,7}) do
+			table.insert(jfm[class].end_adjust,-0.5)
+			-- 漢字間glueが十分に伸びるので，それにより改行位置が補正されることが多い．
+			-- widthを0とし，その代わり後ろのglueを0.5増やしてみる．
+			jfm[class].width = 0
+			for k,v in ipairs(jfm[class].end_adjust) do jfm[class].end_adjust[k] = v + 0.5 end
+			for k,v in pairs(jfm[class].glue) do jfm[class].glue[k][1] = v[1] + 0.5  end
+		end
 	end
 end
+
 
 luatexja.jfont.define_jfm(jfm)

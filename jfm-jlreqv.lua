@@ -1158,6 +1158,23 @@ local jfm = {
 	},
 }
 
+for k,v in pairs(jfm) do
+	if type(k) == "number" then
+		for kk,vv in pairs(v.glue) do
+			vv.kanjiskip_natural = 1
+		end
+	end
+end
+
+local function add_space(before,after,glueorkern,space,ratio)
+	if jfm[before][glueorkern] == nil then jfm[before][glueorkern] = {} end
+	if jfm[before][glueorkern][after] == nil then jfm[before][glueorkern][after] = {0} end
+	local origratio = jfm[before][glueorkern][after].ratio
+	if origratio == nil then origratio = 0.5 end
+	jfm[before][glueorkern][after].ratio = (jfm[before][glueorkern][after][1] * origratio + space * ratio) /  (jfm[before][glueorkern][after][1] + ratio)
+	jfm[before][glueorkern][after][1] = jfm[before][glueorkern][after][1] + space
+end
+
 if jlreq ~= nil then
 	if type(jlreq.open_bracket_pos) == "string" then
 		local r = jlreq.open_bracket_pos:find("_")
@@ -1167,20 +1184,19 @@ if jlreq ~= nil then
 		-- 折り返し行頭の開き括弧を二分下げる……つもり
 		if orikaeshi == "nibu" then
 			-- widthを二分増やし，その代わりJFMグルーを二分減らす
-			jfm[1].width = 1
+			jfm[1].width = jfm[1].width + 0.5
 			for k,v in pairs(jfm) do
-				if tonumber(k) ~= nil then
-					if v.glue[1] ~= nil then v.glue[1][1] = v.glue[1][1] - 0.5
-					else v.glue[1] = {-0.5,0,0} end
+				if type(k) == "number" then
+					add_space(k,1,"glue",-0.5,1)
 				end
 			end
 		end
 
 		-- 段落行頭の下げ
 		if danraku == "zenkakunibu" then
-			jfm[90].glue[1][1] = jfm[90].glue[1][1] + 0.5
+			add_space(90,1,"glue",0.5,1)
 		elseif danraku == "nibu" then
-			jfm[90].glue[1][1] = jfm[90].glue[1][1] - 0.5
+			add_space(90,1,"glue",-0.5,1)
 		end
 	end
 
@@ -1192,7 +1208,7 @@ if jlreq ~= nil then
 			-- widthを0とし，その代わり後ろのglueを0.5増やしてみる．
 			jfm[class].width = 0
 			for k,v in ipairs(jfm[class].end_adjust) do jfm[class].end_adjust[k] = v + 0.5 end
-			for k,v in pairs(jfm[class].glue) do jfm[class].glue[k][1] = v[1] + 0.5  end
+			for k,v in pairs(jfm[class].glue) do add_space(class,k,"glue",0.5,0) end
 		end
 	end
 end

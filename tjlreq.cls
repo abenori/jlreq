@@ -416,8 +416,7 @@
 \DeclareFontShape{JT3}{mc}{bx}{it}{<->ssub*gt/m/n}{}
 \DeclareFontShape{JT3}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
 
-\newcommand{\jlreq@setfontsize}[3]{%
-  \@setfontsize#1{#2\jlreq@mpt}{#3\jlreq@mpt}}
+\newcommand{\jlreq@setfontsize}[3]{\@setfontsize#1{#2\jlreq@mpt}{#3\jlreq@mpt}}
 \emergencystretch 3\zw
 
 \renewcommand{\normalsize}{%
@@ -468,8 +467,8 @@
 \newcommand{\Huge}{\jlreq@setfontsize\Huge\@xxvpt{33}}
 
 \RequirePackage{lltjext}
-\def\@Kanji#1{\expandafter\kansuji\number #1\relax} % \relax追加
-\rensujiskip=0.25\zh plus 0.25\zh minus 0.125\zh
+\renewcommand*{\@Kanji}[1]{\expandafter\kansuji\number #1\relax} % \relax追加
+\rensujiskip=0\zh plus 0.25\zh minus 0\zh
 
 % このあたりはtarticleと同じ
 \setlength\lineskip{1\jlreq@mpt}
@@ -561,7 +560,7 @@
   \ifhmode\spacefactor\@x@sf\fi
   \relax}
 % 図4.61のようにする
-\renewcommand{\@makefnmark}{\hbox{\yoko\rensujiskip=0pt\@textsuperscript{\tate\normalfont（\@thefnmark）\kern-1\zw}}}
+\renewcommand{\@makefnmark}{\hbox{\yoko\@textsuperscript{\tate\normalfont（\@thefnmark）\kern-1\zw}}}
 \renewcommand{\thefootnote}{\rensuji{\@arabic\c@footnote}}
 
 % ページスタイル．

@@ -306,27 +306,23 @@
   \setlength\paperheight {10.5in}%
   \setlength\paperwidth  {7.25in}}
 
-\newcommand{\jlreq@scale}{1}
-% jsarticleから
-\jlreq@DeclareOption{8pt} {\renewcommand{\jlreq@scale}{0.833}}% 1.2^(-1)
-\jlreq@DeclareOption{9pt} {\renewcommand{\jlreq@scale}{0.913}}% 1.2^(-0.5}
-\jlreq@DeclareOption{10pt}{\renewcommand{\jlreq@scale}{1}}
-\jlreq@DeclareOption{11pt}{\renewcommand{\jlreq@scale}{1.095}}% 1.2^0.5
-\jlreq@DeclareOption{12pt}{\renewcommand{\jlreq@scale}{1.200}}
-\jlreq@DeclareOption{14pt}{\renewcommand{\jlreq@scale}{1.440}}
-\jlreq@DeclareOption{17pt}{\renewcommand{\jlreq@scale}{1.728}}
-\jlreq@DeclareOption{20pt}{\renewcommand{\jlreq@scale}{2}}
-\jlreq@DeclareOption{21pt}{\renewcommand{\jlreq@scale}{2.074}}
-\jlreq@DeclareOption{25pt}{\renewcommand{\jlreq@scale}{2.488}}
-\jlreq@DeclareOption{30pt}{\renewcommand{\jlreq@scale}{2.986}}
-\jlreq@DeclareOption{36pt}{\renewcommand{\jlreq@scale}{3.583}}
-\jlreq@DeclareOption{43pt}{\renewcommand{\jlreq@scale}{4.300}}
-\jlreq@DeclareOption{12Q} {\renewcommand{\jlreq@scale}{0.923}}% 1pt*12Q/13Q
-\jlreq@DeclareOption{14Q} {\renewcommand{\jlreq@scale}{1.077}}% 1pt*14Q/13Q
-\jlreq@DeclareOption{10ptj}{\renewcommand{\jlreq@scale}{1.085}}% 1pt*10bp/13Q
-\jlreq@DeclareOption{10.5ptj}{\renewcommand{\jlreq@scale}{1.139}}
-\jlreq@DeclareOption{11ptj}{\renewcommand{\jlreq@scale}{1.194}}
-\jlreq@DeclareOption{12ptj}{\renewcommand{\jlreq@scale}{1.302}}
+\newdimen\jlreq@fontsize
+\jlreq@fontsize=10pt
+\DeclareOptionX{fontsize}{%
+  \@tempdima=2.5mm\relax
+  \setlength{\jlreq@fontsize}{%
+    \dimexpr\directlua{
+      local yen = string.char(92)
+      local s = [[#1]]
+      s = s:gsub("Q"," * 2.5mm")
+      tex.print(s)
+    }\relax
+  }%
+}
+% 行送り，指定無しの場合は文字サイズの1.6倍とするので，後で計算する
+\newdimen\jlreq@baselineskip
+\newcommand{\jlreq@option@baselineskip}{}
+\DeclareOptionX{baselineskip}{\def\jlreq@option@baselineskip{#1}}
 
 \newif\if@restonecol \@restonecolfalse
 \newif\if@titlepage \@titlepagefalse
@@ -366,7 +362,7 @@
 \newif\ifjlreq@burasage
 \jlreq@DeclareOption{hanging_punctuation}{\jlreq@burasagetrue}
 
-\ExecuteOptionsX{a4paper,10pt,twoside,onecolumn,final,tate}
+\ExecuteOptionsX{a4paper,fontsize=10pt,twoside,onecolumn,final,tate}
 \ProcessOptionsX\relax
 
 % この値は後でjfm-jlreq内で読む
@@ -379,12 +375,27 @@
   \setlength\paperheight{\paperwidth}
   \setlength\paperwidth {\@tempdima}
 \fi
-% 行送り
-\newcommand{\n@baseline}{16}
 
 % スケーリング用
 \newdimen\jlreq@mpt
-\jlreq@mpt=\jlreq@scale\p@
+\jlreq@mpt=\dimexpr\jlreq@fontsize/10\relax
+% \baselineskipの計算
+\ifx\jlreq@option@baselineskip\relax\relax
+  \setlength{\jlreq@baselineskip}{1.6\jlreq@fontsize}%
+\else
+  \setlength{\jlreq@baselineskip}{%
+    \dimexpr\directlua{
+      local yen = string.char(92)
+      local s = [[\jlreq@option@baselineskip]]
+      s = s:gsub("Q"," * 2.5mm"):gsub("z[hw]",yen .. "jlreq@fontsize")
+      tex.print(s)
+    }\relax
+  }%
+\fi
+\ifdim\jlreq@fontsize>\jlreq@baselineskip
+  \ClassError{tjlreq}{The baselineskip is less than fontsize}%
+\fi
+
 
 
 % \pdfpagewidthとか設定
@@ -420,12 +431,12 @@
 \emergencystretch 3\zw
 
 \renewcommand{\normalsize}{%
-\jlreq@setfontsize\normalsize\@xpt{\n@baseline}%
-\abovedisplayskip 11\jlreq@mpt \@plus3\jlreq@mpt \@minus4\jlreq@mpt
-\abovedisplayshortskip \z@ \@plus3\jlreq@mpt
-\belowdisplayskip 9\jlreq@mpt \@plus3\jlreq@mpt \@minus4\jlreq@mpt
-\belowdisplayshortskip \belowdisplayskip
-\let\@listi\@listI}
+  \@setfontsize\normalsize{\jlreq@fontsize}{\jlreq@baselineskip}%
+  \abovedisplayskip 11\jlreq@mpt \@plus3\jlreq@mpt \@minus4\jlreq@mpt
+  \abovedisplayshortskip \z@ \@plus3\jlreq@mpt
+  \belowdisplayskip 9\jlreq@mpt \@plus3\jlreq@mpt \@minus4\jlreq@mpt
+  \belowdisplayshortskip \belowdisplayskip
+  \let\@listi\@listI}
 
 \kanjiencoding{JT3}
 \mcfamily\selectfont\normalsize

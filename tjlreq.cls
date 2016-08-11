@@ -252,9 +252,9 @@
 
 %. オプションの処理
 % サイズ
-\newcommand{\jlreq@checkempty}[2]{\ifx#2\relax\relax\else\ClassError{jlreq}{The option #1 should have no value.}\fi}
+\newcommand*{\jlreq@checkempty}[2]{\ifx#2\relax\relax\else\ClassError{jlreq}{The option #1 should have no value.}\fi}
 % 引数無しの\DeclareOptionX
-\newcommand{\jlreq@DeclareOption}[2]{%
+\newcommand*{\jlreq@DeclareOption}[2]{%
   \DeclareOptionX{#1}{\jlreq@checkempty{#1}{##1}#2}
 }
 \jlreq@DeclareOption{a3paper}{%
@@ -321,7 +321,7 @@
 }
 % 行送り，指定無しの場合は文字サイズの1.6倍とするので，後で計算する
 \newdimen\jlreq@baselineskip
-\newcommand{\jlreq@option@baselineskip}{}
+\newcommand*{\jlreq@option@baselineskip}{}
 \DeclareOptionX{baselineskip}{\def\jlreq@option@baselineskip{#1}}
 
 \newif\if@restonecol \@restonecolfalse
@@ -349,14 +349,14 @@
 \jlreq@DeclareOption{draft}{\setlength\overfullrule{5pt}}
 \jlreq@DeclareOption{final}{\setlength\overfullrule{0pt}}
 % 行の長さ
-\newcommand{\jlreq@line@length}{}
+\newcommand*{\jlreq@line@length}{}
 \DeclareOptionX{line_length}{\renewcommand{\jlreq@line@length}{#1}}
 % 1ページあたりの行数
-\newcommand{\jlreq@number@of@lines}{}
+\newcommand*{\jlreq@number@of@lines}{}
 \DeclareOptionX{number_of_lines}{\renewcommand{\jlreq@number@of@lines}{#1}}
 % 行頭に括弧が来たときにどうするか．
 % 段落頭指定_折り返し行頭指定 で与える．
-\newcommand{\jlreq@open@bracket@pos}{zenkaku_tentsuki}
+\newcommand*{\jlreq@open@bracket@pos}{zenkaku_tentsuki}
 \define@choicekey{tjlreq.cls}{open_bracket_pos}{zenkaku_tentsuki,zenkakunibu_nibu,nibu_tentsuki}{\renewcommand{\jlreq@open@bracket@pos}{#1}}
 % ぶら下げ組みをするか
 \newif\ifjlreq@burasage
@@ -380,9 +380,10 @@
 \newdimen\jlreq@mpt
 \jlreq@mpt=\dimexpr\jlreq@fontsize/10\relax
 % \baselineskipの計算
-\ifx\jlreq@option@baselineskip\relax\relax
+\ifx\jlreq@option@baselineskip\@empty
   \setlength{\jlreq@baselineskip}{1.6\jlreq@fontsize}%
 \else
+\show\jlreq@option@baselineskip
   \setlength{\jlreq@baselineskip}{%
     \dimexpr\directlua{
       local yen = string.char(92)
@@ -412,6 +413,7 @@
 
 \RequirePackage{luatexja-adjust}
 \ltjenableadjust
+\ltjenableadjust[lineend=extended]
 
 % 和文フォント
 \expandafter\let\csname JT3/mc/m/n/10\endcsname\relax

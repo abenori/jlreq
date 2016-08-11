@@ -1162,6 +1162,7 @@ for k,v in pairs(jfm) do
 	if type(k) == "number" then
 		for kk,vv in pairs(v.glue) do
 			vv.kanjiskip_natural = 1
+			vv.kanjiskip_stretch = 1
 		end
 	end
 end
@@ -1204,11 +1205,6 @@ if jlreq ~= nil then
 	if jlreq.burasage == true then
 		for dummy,class in ipairs({6,7}) do
 			table.insert(jfm[class].end_adjust,-0.5)
-			-- 漢字間glueが十分に伸びるので，それにより改行位置が補正されることが多い．
-			-- widthを0とし，その代わり後ろのglueを0.5増やしてみる．
-			jfm[class].width = 0
-			for k,v in ipairs(jfm[class].end_adjust) do jfm[class].end_adjust[k] = v + 0.5 end
-			for k,v in pairs(jfm[class].glue) do add_space(class,k,"glue",0.5,0) end
 		end
 	end
 end

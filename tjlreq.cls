@@ -308,21 +308,24 @@
 
 \newdimen\jlreq@fontsize
 \jlreq@fontsize=10pt
-\DeclareOptionX{fontsize}{%
+\newcommand*{\jlreq@inoption@setfontsize}[2]{%
   \@tempdima=2.5mm\relax
-  \setlength{\jlreq@fontsize}{%
+  \setlength{#1}{%
     \dimexpr\directlua{
       local yen = string.char(92)
-      local s = [[#1]]
+      local s = [[#2]]
       s = s:gsub("Q"," * 2.5mm")
       tex.print(s)
     }\relax
   }%
-}
-% 行送り，指定無しの場合は文字サイズの1.6倍とするので，後で計算する
+}  
+\DeclareOptionX{fontsize}{\jlreq@inoption@setfontsize{\jlreq@fontsize}{#1}}
+
+% 行送り，指定無しの場合は文字サイズの1.7倍とするので，後で計算する
 \newdimen\jlreq@baselineskip
 \newcommand*{\jlreq@option@baselineskip}{}
 \DeclareOptionX{baselineskip}{\def\jlreq@option@baselineskip{#1}}
+\DeclareOptionX{linegap}{\def\jlreq@option@baselineskip{1zh + #1}}
 
 \newif\if@restonecol \@restonecolfalse
 \newif\if@titlepage \@titlepagefalse
@@ -381,9 +384,8 @@
 \jlreq@mpt=\dimexpr\jlreq@fontsize/10\relax
 % \baselineskipの計算
 \ifx\jlreq@option@baselineskip\@empty
-  \setlength{\jlreq@baselineskip}{1.6\jlreq@fontsize}%
+  \setlength{\jlreq@baselineskip}{\dimexpr 17\jlreq@fontsize/10\relax}%
 \else
-\show\jlreq@option@baselineskip
   \setlength{\jlreq@baselineskip}{%
     \dimexpr\directlua{
       local yen = string.char(92)
@@ -396,8 +398,6 @@
 \ifdim\jlreq@fontsize>\jlreq@baselineskip
   \ClassError{tjlreq}{The baselineskip is less than fontsize}%
 \fi
-
-
 
 % \pdfpagewidthとか設定
 \newlength{\stockwidth}
@@ -412,13 +412,12 @@
 \setlength{\pageheight}{\stockheight}
 
 \RequirePackage{luatexja-adjust}
-\ltjenableadjust
-\ltjenableadjust[lineend=extended]
+\ltjenableadjust[lineend=extended,priority=true]
 
 % 和文フォント
 \expandafter\let\csname JT3/mc/m/n/10\endcsname\relax
-\DeclareFontShape{JT3}{mc}{m}{n}{<-> s * [0.924715] \ltj@stdmcfont:jfm=jlreqv;script=latn;-kern}{}
-\DeclareFontShape{JT3}{gt}{m}{n}{<-> s * [0.924715] \ltj@stdgtfont:jfm=jlreqv;script=latn;-kern}{}
+\DeclareFontShape{JT3}{mc}{m}{n}{<->\ltj@stdmcfont:jfm=jlreqv;script=latn;-kern}{}
+\DeclareFontShape{JT3}{gt}{m}{n}{<->\ltj@stdgtfont:jfm=jlreqv;script=latn;-kern}{}
 \DeclareFontShape{JT3}{mc}{bx}{n}{<->ssub*gt/m/n}{}
 \DeclareFontShape{JT3}{gt}{bx}{n}{<->ssub*gt/m/n}{}
 \DeclareFontShape{JT3}{mc}{m}{it}{<->ssub*mc/m/n}{}
@@ -434,9 +433,9 @@
 
 \renewcommand{\normalsize}{%
   \@setfontsize\normalsize{\jlreq@fontsize}{\jlreq@baselineskip}%
-  \abovedisplayskip 11\jlreq@mpt \@plus3\jlreq@mpt \@minus4\jlreq@mpt
-  \abovedisplayshortskip \z@ \@plus3\jlreq@mpt
-  \belowdisplayskip 9\jlreq@mpt \@plus3\jlreq@mpt \@minus4\jlreq@mpt
+  \abovedisplayskip 1.1\jlreq@fontsize \@plus .3\jlreq@fontsize \@minus .4\jlreq@fontsize
+  \abovedisplayshortskip \z@ \@plus .3\jlreq@fontsize
+  \belowdisplayskip .9\jlreq@fontsize \@plus.3\jlreq@fontsize \@minus.4\jlreq@fontsize
   \belowdisplayshortskip \belowdisplayskip
   \let\@listi\@listI}
 
@@ -450,19 +449,9 @@
 \setlength\Chs{\wd0}
 \tate % ここで発行しておく
 
-% とりあえずtarticleからほぼそのまま
-\newcommand{\small}{%
-  \@setfontsize\small\@ixpt{11}%
-  \abovedisplayskip 8.5\jlreq@mpt \@plus3\jlreq@mpt \@minus4\jlreq@mpt
-  \abovedisplayshortskip \z@ \@plus2\jlreq@mpt
-  \belowdisplayshortskip 4\jlreq@mpt \@plus2\jlreq@mpt \@minus2\jlreq@mpt
-  \def\@listi{\leftmargin\leftmargini
-    \topsep 4\jlreq@mpt \@plus2\jlreq@mpt \@minus2\jlreq@mpt
-    \parsep 2\jlreq@mpt \@plus\jlreq@mpt \@minus\jlreq@mpt
-    \itemsep \parsep}%
-  \belowdisplayskip \abovedisplayskip}
+% 4.1.3.a
 \newcommand{\footnotesize}{%
-  \jlreq@setfontsize\footnotesize\@viiipt{11}% 脚注文字サイズの二分より少し小さい値を行間に: 4.2.5.e
+  \@setfontsize\footnotesize{.8\jlreq@fontsize}{\dimexpr 95\jlreq@baselineskip/170\relax}% 脚注文字サイズの二分より少し小さい値を行間に: 4.2.5.e
   \abovedisplayskip 6\jlreq@mpt \@plus2\jlreq@mpt \@minus4\jlreq@mpt
   \abovedisplayshortskip \z@ \@plus\jlreq@mpt
   \belowdisplayshortskip 3\jlreq@mpt \@plus\jlreq@mpt \@minus2\jlreq@mpt
@@ -471,13 +460,24 @@
     \parsep 2\jlreq@mpt \@plus\jlreq@mpt \@minus\jlreq@mpt
     \itemsep \parsep}%
   \belowdisplayskip \abovedisplayskip}
-\newcommand{\scriptsize}{\jlreq@setfontsize\scriptsize\@viipt\@viiipt}
-\newcommand{\tiny}{\jlreq@setfontsize\tiny\@vpt\@vipt}
-\newcommand{\large}{\jlreq@setfontsize\large\@xiipt{17}}
-\newcommand{\Large}{\jlreq@setfontsize\Large\@xivpt{21}}
-\newcommand{\LARGE}{\jlreq@setfontsize\LARGE\@xviipt{25}}
-\newcommand{\huge}{\jlreq@setfontsize\huge\@xxpt{28}}
-\newcommand{\Huge}{\jlreq@setfontsize\Huge\@xxvpt{33}}
+% tsize10.cloの引数を，そのまま\jlreq@fontsize/\jlreq@baselineskipでスケーリングしているだけ．
+\newcommand{\small}{%
+  \@setfontsize\small{.9\jlreq@fontsize}{\dimexpr 11\jlreq@baselineskip/17\relax}%
+  \abovedisplayskip 8.5\jlreq@mpt \@plus3\jlreq@mpt \@minus4\jlreq@mpt
+  \abovedisplayshortskip \z@ \@plus2\jlreq@mpt
+  \belowdisplayshortskip 4\jlreq@mpt \@plus2\jlreq@mpt \@minus2\jlreq@mpt
+  \def\@listi{\leftmargin\leftmargini
+    \topsep 4\jlreq@mpt \@plus2\jlreq@mpt \@minus2\jlreq@mpt
+    \parsep 2\jlreq@mpt \@plus\jlreq@mpt \@minus\jlreq@mpt
+    \itemsep \parsep}%
+  \belowdisplayskip \abovedisplayskip}
+\newcommand{\scriptsize}{\@setfontsize\scriptsize{\dimexpr 7\jlreq@fontsize/10\relax}{\dimexpr 8\jlreq@baselineskip/17\relax}}
+\newcommand{\tiny}{\@setfontsize\tiny{\dimexpr 5\jlreq@fontsize/10\relax}{\dimexpr 6\jlreq@baselineskip/17\relax}}
+\newcommand{\large}{\@setfontsize\large{\dimexpr12\jlreq@fontsize/10\relax}{\jlreq@baselineskip}}
+\newcommand{\Large}{\@setfontsize\Large{\dimexpr14\jlreq@fontsize/10\relax}{\dimexpr 21\jlreq@baselineskip/17\relax}}
+\newcommand{\LARGE}{\@setfontsize\LARGE{\dimexpr17\jlreq@fontsize/10\relax}{\dimexpr 25\jlreq@baselineskip/17\relax}}
+\newcommand{\huge}{\@setfontsize\huge{2\jlreq@fontsize}{\dimexpr 28\jlreq@baselineskip/17\relax}}
+\newcommand{\Huge}{\@setfontsize\Huge{\dimexpr 25\jlreq@fontsize/10\relax}{\dimexpr 33\jlreq@baselineskip/17\relax}}
 
 \RequirePackage{lltjext}
 \renewcommand*{\@Kanji}[1]{\expandafter\kansuji\number #1\relax} % \relax追加
@@ -496,10 +496,6 @@
 \@highpenalty 301
 % ページレイアウト
 % \jlreq@setlength[単位]{セットする値}{値の入っているマクロ}{デフォルト}
-\newcommand\jlreq@setlength[4][]{%
-  \expandafter\ifx #3\relax\relax\setlength{#2}{#4}
-  \else\setlength{#2}{\dimexpr\jlreq@expand@speciallength{#3 #1}\relax}\fi
-}
 \def\jlreq@expand@speciallength#1{%
   % zhやzwを\zhや\zwにする．
   \directlua{
@@ -508,6 +504,10 @@
     s = s:gsub("zw",yen .. "zw"):gsub("zh",yen .. "zh")
     tex.print(s)
   }%
+}
+\newcommand\jlreq@setlength[4][]{%
+  \expandafter\ifx #3\relax\relax\setlength{#2}{#4}
+  \else\setlength{#2}{\dimexpr\jlreq@expand@speciallength{#3 #1}\relax}\fi
 }
 
 % デフォルト値は縦が0.768倍，横が0.727倍．

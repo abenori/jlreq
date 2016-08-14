@@ -50,9 +50,8 @@ local jfm = {
 	zw = 1.0,
 	zh = 1.0,
 	version = 2,
-	-- 原則使わない
-	kanjiskip = {0, 0, 0},
-	xkanjiskip = {0, 0, 0},
+	kanjiskip = {0, 0, 0},-- 原則使わない
+	xkanjiskip = {0.25, 0.25, 0.125},
 	
 	-- alignは適当
 	[1] = { -- 初め括弧類
@@ -1011,7 +1010,6 @@ local jfm = {
 			[30] = {0, 0, 0},
 		}
 	},
-	]]
 	
 	[27] = {-- 欧文
 		chars = {'jcharbdd'},
@@ -1047,7 +1045,6 @@ local jfm = {
 		}
 	},
 	
-	--[[
 	[28] = { -- 割注始め括弧類
 		chars = {'（', '〔', '［'},
 		glue = {

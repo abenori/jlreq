@@ -1,7 +1,7 @@
 %#main jlreqtest.tex
 %%#! lualatex
-%#! lualatex jlreqtest.tex ; pdftk jlreqtest.pdf multistamp onlya.pdf output out.pdf
-%#PDF out.pdf
+%%#! lualatex jlreqtest.tex ; pdftk jlreqtest.pdf multistamp onlya.pdf output out.pdf
+%%#PDF out.pdf
 % memo
 % 欧文文字の向きについて (2.3.2.b.1)
 % 割注
@@ -15,6 +15,29 @@
 \RequirePackage{luatexja}
 \RequirePackage{xkeyval}
 \directlua{jlreq = {}}
+
+%. helper
+\def\jlreq@once@expand#1{\expandafter\unexpanded\expandafter{#1}}
+\newdimen\jlreq@tempdima
+\newdimen\jlreq@tempdimb
+\newdimen\jlreq@tempdimc
+% 計算結果を返すための変数
+\newdimen\jlreq@resultdimen
+\newbox\jlreq@resultbox
+{\catcode`|=0 \catcode`\\=12 |gdef|jlreq@normal@backslash{\}}
+
+% vbox #1の最後を\jlreq@resultboxに入れる
+% #1の最後の行は消える
+\newcommand{\jlreq@getlastbox}[1]{%
+  \setbox#1=\vbox{\unvbox#1\relax
+    \unskip\unskip\unpenalty\global\setbox\jlreq@resultbox=\lastbox}%
+  \ifhbox\jlreq@resultbox
+    \global\setbox\jlreq@resultbox=\hbox{%
+      \unhbox\jlreq@resultbox\unskip\unskip\unpenalty}%
+  \else
+    \global\setbox\jlreq@resultbox=\box\voidb@x
+  \fi
+}
 
 %. 基本設定
 % 和文文字，欧文文字の設定
@@ -252,7 +275,7 @@
 
 %. オプションの処理
 % サイズ
-\newcommand*{\jlreq@checkempty}[2]{\ifx#2\relax\relax\else\ClassError{jlreq}{The option #1 should have no value.}\fi}
+\newcommand*{\jlreq@checkempty}[2]{\ifx#2\relax\relax\else\ClassError{jlreq}{The option #1 should have no value}{\@ehc}\fi}
 % 引数無しの\DeclareOptionX
 \newcommand*{\jlreq@DeclareOption}[2]{%
   \DeclareOptionX{#1}{\jlreq@checkempty{#1}{##1}#2}
@@ -396,7 +419,7 @@
   }%
 \fi
 \ifdim\jlreq@fontsize>\jlreq@baselineskip
-  \ClassError{tjlreq}{The baselineskip is less than fontsize}%
+  \ClassError{tjlreq}{The baselineskip is less than fontsize}{\@ehc}%
 \fi
 
 % \pdfpagewidthとか設定
@@ -430,6 +453,7 @@
 
 \emergencystretch 3\zw
 
+%. フォントサイズ変更命令
 \renewcommand{\normalsize}{%
   \@setfontsize\normalsize{\jlreq@fontsize}{\jlreq@baselineskip}%
   \abovedisplayskip 1.1\jlreq@fontsize \@plus .3\jlreq@fontsize \@minus .4\jlreq@fontsize
@@ -603,13 +627,7 @@
   \let\subsectionmark\@gobble
 }
 
-% セクションとか
-% 今の1\zh/1\zwのサイズを保存
-\newdimen\jlreq@normalsize@zenkaku@height
-\jlreq@normalsize@zenkaku@height=1\zh
-\newdimen\jlreq@normalsize@zenkaku@width
-\jlreq@normalsize@zenkaku@width=1\zw
-
+%. 見出し関係 (4.1)
 \newcommand{\headfont}{\gtfamily\sffamily}
 \setcounter{secnumdepth}{3}
 \newcounter{part}
@@ -627,67 +645,154 @@
   (\rensuji{\@arabic\c@paragraph})}
 \renewcommand{\thesubparagraph}{%
   (\rensuji{\@arabic\c@subparagraph})}
-% 4.1.3.cにある例のようにする．
-% 4行取り中央にする
-% \part{***}\section{***}とかの場合（4.1.6.e）はどうしよう．
-% 窓見出し，段抜きの見出しとかはない．
-\newcommand{\part}{\par\addvspace{1.5\baselineskip}%
-  \@afterindenttrue
-  \secdef\@part\@spart}
-\def\@part[#1]#2{%
-  \ifnum \c@secnumdepth >\m@ne
-    \refstepcounter{part}%
-    \addcontentsline{toc}{part}{%
-      \prepartname\thepart\postpartname\hspace{1\zw}#1}%
-  \else
-    \addcontentsline{toc}{part}{#1}%
-  \fi
-  \markboth{}{}%
-  {\parindent\z@\raggedright
-  \interlinepenalty\@M\reset@font
-  \hskip 4\zh
-  \@tempdima=\baselineskip
-  \LARGE
-  \baselineskip=\@tempdima
-  \ifnum \c@secnumdepth >\m@ne
-    \headfont\prepartname\thepart\postpartname
-  \fi
-  \hskip 1\zh
-  \headfont#2\par}%
-  \nobreak\vskip 1.5\baselineskip\@afterheading}
-\newcommand{\@spart}[1]{{%
-  \parindent\z@\raggedright
-  \interlinepenalty\@M\reset@font
-  \hskip4\zh\LARGE\headfont#1\par}%
-  \nobreak\vskip1.5\baselineskip\@afterheading}
 
-% 3行取り
-\newcommand{\section}{\@startsection{section}{1}{6\jlreq@normalsize@zenkaku@height}%
-   {\baselineskip}%
-   {\baselineskip}%
-   {\reset@font\@tempdima=\baselineskip\Large\baselineskip=\@tempdima\headfont}}
-
-% 2行取り
-\newcommand{\subsection}{\@startsection{subsection}{2}{8\jlreq@normalsize@zenkaku@height}%
-   {.5\baselineskip}%
-   {.5\baselineskip}%
-   {\reset@font\@tempdima=\baselineskip\large\baselineskip=\@tempdima\headfont}}
-
-% 1行あけ
-\newcommand{\subsubsection}{\@startsection{subsubsection}{3}{10\jlreq@normalsize@zenkaku@height}%
-   {\baselineskip}%
-   {0.00001pt}%
-   {\reset@font\normalsize\headfont}}
+\renewcommand*{\@seccntformat}[1]{\csname the#1\endcsname\hspace{1\jlreq@fontsize}}
+\newcommand*{\jlreq@absdimenmodoki}[1]{\ifdim#1=0pt 0.001pt\else\ifnum#1<0pt -#1\else#1\fi\fi}
+% 別行見出し
+% \DeclareBlockHeading{命令名}{レベル}{lines=何行取りか,before_space=前のスペース,after_space=後ろのスペース,indent=インデント,font=書式変更命令}
+% before/after_spaceが両方定義されていた場合はlinesは無視される．
+% TODO: 改ページするかなど，4.1.4
+\newcommand*{\DeclareBlockHeading}[3]{%
+  \@ifundefined{c@#1}{\newcounter{#1}}{}%
+  \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}%
+  \begingroup
+    \def\jlreq@lines{1}%
+    \define@key{jlreq@key}{lines}{\def\jlreq@lines{##1}}%
+    \def\jlreq@before@space{}%
+    \define@key{jlreq@key}{before_space}{\def\jlreq@before@space{##1}}%
+    \def\jlreq@after@space{}%
+    \define@key{jlreq@key}{after_space}{\def\jlreq@after@space{##1}}%
+    \def\jlreq@fontcommand{\normalsize}%
+    \define@key{jlreq@key}{font}{\def\jlreq@fontcommand{##1}}%
+    \def\jlreq@indent{0}%
+    \define@key{jlreq@key}{indent}{\def\jlreq@indent{##1}}%
+    \setkeys{jlreq@key}{#3}%
+    % \jlreq@linesを長さに直す
+    \edef\jlreq@lines{\jlreq@once@expand{\jlreq@lines}\baselineskip}%
+    % after@spaceとbefore@spaceが空ならセットする．
+    \ifx\jlreq@after@space\@empty
+      \ifx\jlreq@before@space\@empty
+        \edef\jlreq@before@space{(\jlreq@once@expand{\jlreq@lines} - \baselineskip)/2}%
+      \fi
+      \edef\jlreq@after@space{\jlreq@once@expand{\jlreq@lines} - \jlreq@once@expand{\jlreq@before@space} - \baselineskip}%
+    \else
+      \ifx\jlreq@before@space\@empty
+        \edef\jlreq@before@space{\jlreq@once@expand{\jlreq@lines} - \jlreq@once@expand{\jlreq@after@space} - \baselineskip}%
+      \fi
+    \fi
+    \global\edef\@tempa{{\unexpanded{#1}}{\unexpanded{#2}}{\jlreq@once@expand{\jlreq@indent}\jlreq@fontsize}{\dimexpr\jlreq@once@expand{\jlreq@before@space}\relax}{\noexpand\jlreq@absdimenmodoki{\dimexpr\jlreq@once@expand{\jlreq@after@space}\relax}}{\jlreq@tempdima=\baselineskip\noexpand\reset@font\jlreq@once@expand{\jlreq@fontcommand}\baselineskip=\jlreq@tempdima}}
+  \endgroup
+  \expandafter\edef\csname #1\endcsname{\noexpand\@startsection\jlreq@once@expand{\@tempa}}%
+}
+\newcommand*{\NewBlockHeading}[3]{%
+  \expandafter\@ifdefinable\csname #1\endcsname{\DeclareBlockHeading{#1}{#2}{#3}}%
+}
+\newcommand*{\RenewBlockHeading}[3]{%
+  \@ifundefined{#1}{\@latex@error{\expandafter\string\csname#1\endcsname\space undefined}\@ehc}{\DeclareBlockHeading{#1}{#2}{#3}}%
+}
+\newcommand*{\ProvideBlockHeading}[3]{%
+  \@ifundefined{#1}{\DeclareBlockHeading{#1}{#2}{#3}}{}%
+}
 
 % 同行見出し
-\newcommand{\paragraph}{\@startsection{paragraph}{4}{1\zh}%
-  {0pt}%
-  {-1\zh}%
-  {\reset@font\normalsize\bfseries}}
-\newcommand{\subparagraph}{\@startsection{subparagraph}{5}{1\zh}%
-  {0pt}%
-  {-1\zh}%
-  {\reset@font\normalsize\headfont}}
+% \DeclareRuninHeading{命令名}{レベル}{書体変更命令}
+\newcommand*{\DeclareRuninHeading}[3]{%
+  \@ifundefined{c@#1}{\newcounter{#1}}{}%
+  \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}%
+  \begingroup
+    \def\jlreq@fontcommand{\normalfont\normalsize}%
+    \define@key{jlreq@key}{font}{\def\jlreq@fontcommand{##1}}%
+    \def\jlreq@indent{1}%
+    \define@key{jlreq@key}{indent}{\def\jlreq@indent{##1}}%
+    \setkeys{jlreq@key}{#3}%
+    \global\edef\@tempa{{\unexpanded{#1}}{\unexpanded{#2}}{\jlreq@once@expand{\jlreq@indent}\jlreq@fontsize}{0pt}{-1\jlreq@fontsize}{\jlreq@tempdima=\baselineskip\noexpand\reset@font\jlreq@once@expand{\jlreq@fontcommand}\baselineskip=\jlreq@tempdima}}%
+  \endgroup
+  \expandafter\edef\csname #1\endcsname{\noexpand\@startsection\jlreq@once@expand{\@tempa}}%
+}
+\newcommand*{\NewRuninHeading}[3]{%
+  \expandafter\@ifdefinable\csname #1\endcsname{\DeclareRuninHeading{#1}{#2}{#3}}%
+}
+\newcommand*{\RenewRuninHeading}[3]{%
+  \@ifundefined{#1}{\@latex@error{\expandafter\string\csname#1\endcsname\space undefined}\@ehc}{\DeclareRuninHeading{#1}{#2}{#3}}%
+}
+\newcommand*{\ProvideRuninHeading}[3]{%
+  \@ifundefined{#1}{\DeclareRuninHeading{#1}{#2}{#3}}{}%
+}
+
+% 窓見出し
+\newcount\jlreq@wraplinecount
+\newdimen\jlreq@hangindent
+\def\jlreq@CutinHeading@start#1#2#3#4#5#6#7{%
+  \ifnum0\ifnum\jlreq@wraplinecount<-1 1\fi\ifnum\jlreq@wraplinecount>1 1\fi>0\relax
+    \ClassError{jlreq}{Can not use \jlreq@normal@backslash#1 here}{\@ehc}%
+  \else
+    \jlreq@CutinHeading@@start{#2}{#3}{#4}{#5}{#6}{#7}%
+  \fi
+}
+% 1 = 書式指定，2 = インデント, 3 = 見出しと本文の間, 4 = これを越えたら二行以上，5 = これを越えたら三行以上，6 = テキスト
+\def\jlreq@CutinHeading@@start#1#2#3#4#5#6{%
+  \par\leavevmode
+  \setbox\@tempboxa=\hbox{#1#6}%
+  \@tempdima=\wd\@tempboxa
+  \ifdim\@tempdima>#5\def\jlreq@CutinHeading@linecount{3}%
+  \else\ifdim\@tempdima>#4\def\jlreq@CutinHeading@linecount{2}%
+  \else\def\jlreq@CutinHeading@linecount{1}\fi\fi
+  \divide\@tempdima by \jlreq@CutinHeading@linecount
+  \ifnum\jlreq@CutinHeading@linecount=1\relax
+    \setbox\jlreq@resultbox=\vbox{\parindent=0pt\rightskip=0pt\leftskip=0pt\hbox{#1#6}}%
+    \def\jlreq@CutinHeading@linecount{2}%
+  \else
+    \jlreq@warichu@determinelength{#6}{#1}{}{\jlreq@CutinHeading@linecount}{\jlreq@CutinHeading@linecount}{\@tempdima}{\linewidth}%
+    \def\jlreq@CutinHeading@linecount{3}%
+  \fi
+  \setbox\@tempboxa=\vtop to \dimexpr\jlreq@CutinHeading@linecount\baselineskip\relax{\vskip 0pt plus 1fill minus 1fill \box\jlreq@resultbox\vskip 0pt plus 1fill minus 1fill}%
+  \ht\@tempboxa=\Cht
+  \dp\@tempboxa=\Cdp
+  \@tempdima=\wd\@tempboxa
+  \hangindent=\dimexpr#2\zh + \@tempdima + #3\relax\hangafter=-\jlreq@CutinHeading@linecount
+  \jlreq@hangindent=\hangindent\jlreq@wraplinecount=\hangafter
+  \hspace*{#2\zh}%
+  \kern-\dimexpr\@tempdima + #3 + \parindent\relax
+  \box\@tempboxa
+  \hspace*{#3}%
+  \let\jlreq@original@par=\par
+  \def\par{%
+    \jlreq@original@par
+    \ifnum\jlreq@wraplinecount>1\relax
+      \hangindent=\jlreq@hangindent\hangafter=\jlreq@wraplinecount\advance\jlreq@wraplinecount by -1\relax
+    \else\ifnum\jlreq@wraplinecount<-1\relax
+      \hangindent=\jlreq@hangindent\hangafter=\jlreq@wraplinecount\advance\jlreq@wraplinecount by 1\relax
+    \else
+      \jlreq@wraplinecount=1\jlreq@hangindent=0pt\relax
+      \let\par=\jlreq@original@par
+    \fi\fi
+  }%
+}
+
+\newcommand*{\DeclareCutinHeading}[3]{%
+  \begingroup
+    \def\jlreq@fontcommand{\bfseries\gtfamily}%
+    \define@key{jlreq@key}{font}{\def\jlreq@fontcommand{##1}}%
+    \def\jlreq@onelinemax{6\jlreq@fontsize}%
+    \define@key{jlreq@key}{onelinemax}{\def\jlreq@onelinemax{##1}}%
+    \def\jlreq@twolinemax{20\jlreq@fontsize}%
+    \define@key{jlreq@key}{twolinemax}{\def\jlreq@twolinemax{##1}}%
+    \def\jlreq@indent{0}%
+    \define@key{jlreq@key}{indent}{\def\jlreq@indent{##1}}%
+    \def\jlreq@afterindent{1\zh}%
+    \define@key{jlreq@key}{afterindent}{\def\jlreq@afterindent{##1}}%
+    \setkeys*{jlreq@key}{#3}%
+    \global\edef\@tempa{{#1}{\jlreq@once@expand{\jlreq@fontcommand}}{\jlreq@once@expand{\jlreq@indent}}{\jlreq@once@expand{\jlreq@afterindent}}{\jlreq@once@expand{\jlreq@onelinemax}}{\jlreq@once@expand{\jlreq@twolinemax}}}
+  \endgroup
+  \expandafter\edef\csname #1\endcsname{\noexpand\jlreq@CutinHeading@start\jlreq@once@expand{\@tempa}}
+}
+
+\NewBlockHeading{part}{0}{font={\LARGE\headfont},indent=4,lines=4}
+\NewBlockHeading{section}{1}{font={\Large\headfont},indent=6,lines=3}
+\NewBlockHeading{subsection}{2}{font={\large\headfont},indent=8,lines=2}
+\NewBlockHeading{subsubsection}{3}{font={\normalsize\headfont},indent=10,lines=2,before_space=\baselineskip}
+\NewRuninHeading{paragraph}{4}{font={\normalsize\bfseries}}
+\NewRuninHeading{subparagraph}{5}{font={\normalsize\headfont}}
 
 \newcommand{\appendix}{\par
   \setcounter{section}{0}%
@@ -1232,13 +1337,7 @@
 \RequirePackage[savepos]{zref}
 \newcount\jlreq@rest@linewidth@count
 \jlreq@rest@linewidth@count=0
-% 計算結果を返すための変数
-\newdimen\jlreq@resultdimen
-\newbox\jlreq@resultbox
 
-\newdimen\jlreq@tempdima
-\newdimen\jlreq@tempdimb
-\newdimen\jlreq@tempdimc
 % 現在行の残りを得る．
 % 以下のコードはおかしい．
 \newcommand{\jlreq@rest@linewidth}{%
@@ -1279,7 +1378,7 @@
 \newif\ifjlreq@inwarichu
 \jlreq@inwarichufalse
 \newcommand*{\warichu}{%
-  \ifjlreq@inwarichu\ClassError{tjlreq}{\string\warichu\space can't be nested!}\fi
+  \ifjlreq@inwarichu\ClassError{tjlreq}{\string\warichu\space can't be nested}{\@ehc}\fi
   \jlreq@inwarichutrue
   \@ifstar\jlreq@warichu@noauto\jlreq@warichu@auto}
 
@@ -1321,7 +1420,7 @@
   \@whilenum\@tempcntb<1001\do{%
     \ifnum\@tempcntb>2\jlreq@tempdimb=\linewidth\fi
     \edef\@tempb{\the\@tempcntb}%
-    \jlreq@warichu@determinelength{#1}{\jlreq@parshapearg}{\@tempb}{\jlreq@tempdimc}{\jlreq@tempdimb}%
+    \jlreq@warichu@determinelength{#1}{\jlreq@warichu@fontsize}{\jlreq@parshapearg}{2}{\@tempb}{\jlreq@tempdimc}{\jlreq@tempdimb}%
     \@tempcntb=\@tempb
     \ifnum\@tempcntb>999\relax% ループが長すぎる
       \global\setbox\jlreq@resultbox=\voidb@x%
@@ -1404,7 +1503,7 @@
     \setbox\@tempboxa=\hbox{\jlreq@warichu@fontsize #1}%
     \jlreq@tempdimc=\wd\@tempboxa
     \divide\jlreq@tempdimc by 2\relax
-    \jlreq@warichu@determinelength{#1}{}{2}{\jlreq@tempdimc}{\maxdimen}%
+    \jlreq@warichu@determinelength{#1}{\jlreq@warichu@fontsize}{}{2}{2}{\jlreq@tempdimc}{\maxdimen}%
     \ifvoid\jlreq@resultbox\else
       {%
         \jlreq@warichu@fontsize\raise-.5\zw\hbox{\box\jlreq@resultbox}%
@@ -1428,69 +1527,59 @@
 
 \newbox\jlreq@tempboxa
 \newbox\jlreq@tempboxb
-% \jlreq@warichu@determinelength{テキスト}{\parshape指定}{成功行数}{最小長さ}{最大長さ}
+% \jlreq@warichu@determinelength{テキスト(1)}{書式指定(2)}{\parshape指定(3)}{調整に使う行数(4)}{成功行数(5)}{最小長さ(6)}{最大長さ(7)}
 % \jlreq@resultboxに整形結果を返す．見つからなかったらvoid
-\newcommand{\jlreq@warichu@determinelength}[5]{%
-%  \message{#1 の試行開始，行数 = #3, \the#4 から \the#5まで}%
+\newcommand{\jlreq@warichu@determinelength}[7]{%
+%  \message{#1 の試行開始，行数 = #5, \the#6 から \the#7まで}%
+  \@tempcnta=1\relax
+  \def\@tempa{}%
+  \@whilenum\@tempcnta<#4\do{%
+    \expandafter\def\expandafter\@tempa\expandafter{\@tempa 0pt \the\jlreq@tempdima}%
+    \advance\@tempcnta by 1\relax
+  }%
   \@tempcnta=0\relax
-  \jlreq@tempdima=#4\relax
+  \jlreq@tempdima=#6\relax
   % 最後の行を少しずつ伸ばしていく
   \@whilenum\@tempcnta<1000\do{%
     \ifnum\@tempcnta>999\relax% ループが長すぎる
       \global\setbox\jlreq@resultbox=\voidb@x%
       \@tempcnta=1001\relax
     \else
-      \setbox\@tempboxa=\vbox{%
-        \jlreq@warichu@fontsize
+      \setbox\@tempboxa=\vbox{#2%
         \vbadness=10000\hbadness=10000\vfuzz=\maxdimen\hfuzz=\maxdimen
         \parindent=0pt\leftskip=0pt\rightskip=0pt\relax
-        \parshape #3 #2 0pt \the\jlreq@tempdima 0pt \the\maxdimen
+        \parshape #5 #3 \@tempa 0pt \the\maxdimen
         #1\par\global\@tempcntb=\prevgraf}%
-%      \message{\string\jlreq@tempdima = \the\jlreq@tempdima で試行，行数は\the\@tempcntb , 書式 #3 #2 0pt \the\jlreq@tempdima 0pt \the\maxdimen}%
+%      \message{\string\jlreq@tempdima = \the\jlreq@tempdima で試行，行数は\the\@tempcntb , 書式 #5 #3 \@tempa 0pt \the\maxdimen}%
     \fi
     \jlreq@getlastbox{\@tempboxa}%
     \setbox\jlreq@tempboxa=\box\jlreq@resultbox
-    \ifnum\@tempcntb<#3\relax% 行数が達していないならOK
+    \ifnum\@tempcntb<#5\relax% 行数が達していないならOK
 %      \message{行数 = \the\@tempcntb により確定}
-      \global\setbox\jlreq@resultbox=\vbox{\jlreq@warichu@fontsize
+      \global\setbox\jlreq@resultbox=\vbox{#2%
         \unvbox\@tempboxa\hbox{\unhbox\jlreq@tempboxa\unskip\unskip\unpenalty}%
-        \@whilenum\@tempcntb<#3\do{\hbox{}\advance\@tempcntb by 1}}%
+        \@whilenum\@tempcntb<#5\do{\hbox{}\advance\@tempcntb by 1}}%
       \@tempcnta=1001\relax
     \else
       % そうでない場合は最後の二行の長さを比較する
       \jlreq@getlastbox{\@tempboxa}%
       \setbox\jlreq@tempboxb=\box\jlreq@resultbox
-%      \message{最終行の長さ \the\wd\jlreq@tempboxa, その前の長さ \the\wd\jlreq@tempboxb]]}%
+%      \message{最終行の長さ \the\wd\jlreq@tempboxa, その前の長さ \the\wd\jlreq@tempboxb}%
       \ifdim\wd\jlreq@tempboxa>\wd\jlreq@tempboxb
         \advance\jlreq@tempdima by 0.3pt\relax
       \else
         % 後ろが短いのでOK
-        \global\setbox\jlreq@resultbox=\vbox{\jlreq@warichu@fontsize
-          \unvbox\@tempboxa\box\jlreq@tempboxb\box\jlreq@tempboxa}%
+        \global\setbox\jlreq@resultbox=\vbox{#2\unvbox\@tempboxa\box\jlreq@tempboxb\box\jlreq@tempboxa}%
         \jlreq@resultdimen=\jlreq@tempdima
         \@tempcnta=1001\relax
       \fi
     \fi
-    \ifdim\jlreq@tempdima>#5\relax
-      \global\setbox\jlreq@resultbox=\box\voidb@x%
+    \ifdim\jlreq@tempdima>#7\relax
+      \global\setbox\jlreq@resultbox=\box\voidb@x
       \@tempcnta=1001\relax
     \fi
     \advance\@tempcnta by 1\relax
   }%
-}
-
-% vbox #1の最後を\jlreq@resultboxに入れる
-% #1の最後の行は消える
-\newcommand{\jlreq@getlastbox}[1]{%
-  \setbox#1=\vbox{\jlreq@warichu@fontsize\unvbox#1\relax
-    \unskip\unskip\unpenalty\global\setbox\jlreq@resultbox=\lastbox}%
-  \ifhbox\jlreq@resultbox
-    \global\setbox\jlreq@resultbox=\hbox{%
-      \jlreq@warichu@fontsize
-      \unhbox\jlreq@resultbox\unskip\unskip\unpenalty}%
-  \else
-    \global\setbox\jlreq@resultbox=\box\voidb@x
-  \fi
 }
 
 % デフォルト設定

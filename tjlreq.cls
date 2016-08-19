@@ -24,7 +24,6 @@
 % 計算結果を返すための変数
 \newdimen\jlreq@resultdimen
 \newbox\jlreq@resultbox
-{\catcode`|=0 \catcode`\\=12 |gdef|jlreq@normal@backslash{\}}
 
 % vbox #1の最後を\jlreq@resultboxに入れる
 % #1の最後の行は消える
@@ -436,6 +435,10 @@
 
 \RequirePackage{luatexja-adjust}
 \ltjenableadjust[lineend=extended,priority=true]
+\directlua{
+  luatexja.adjust.make_priority_table(1,0,-1,5)
+  luatexja.adjust.make_priority_table(2,0,-1,5)
+}
 
 % 和文フォント
 \expandafter\let\csname JT3/mc/m/n/10\endcsname\relax
@@ -724,7 +727,7 @@
 \newdimen\jlreq@hangindent
 \def\jlreq@CutinHeading@start#1#2#3#4#5#6#7{%
   \ifnum0\ifnum\jlreq@wraplinecount<-1 1\fi\ifnum\jlreq@wraplinecount>1 1\fi>0\relax
-    \ClassError{jlreq}{Can not use \jlreq@normal@backslash#1 here}{\@ehc}%
+    \ClassError{jlreq}{Can not use \expandafter\string\csname#1\endcsname\space here}{\@ehc}%
   \else
     \jlreq@CutinHeading@@start{#2}{#3}{#4}{#5}{#6}{#7}%
   \fi

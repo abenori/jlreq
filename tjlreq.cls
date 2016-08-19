@@ -273,7 +273,7 @@
 % ￥100とか70％とか……
 
 %. オプションの処理
-% サイズ
+%.. 基本版面
 \newcommand*{\jlreq@checkempty}[2]{\ifx#2\relax\relax\else\ClassError{jlreq}{The option #1 should have no value}{\@ehc}\fi}
 % 引数無しの\DeclareOptionX
 \newcommand*{\jlreq@DeclareOption}[2]{%
@@ -349,6 +349,28 @@
 \DeclareOptionX{baselineskip}{\def\jlreq@option@baselineskip{#1}}
 \DeclareOptionX{linegap}{\def\jlreq@option@baselineskip{1zh + #1}}
 
+% 行の長さ
+\newcommand*{\jlreq@line@length}{}
+\DeclareOptionX{line_length}{\renewcommand*{\jlreq@line@length}{#1}}
+% 1ページあたりの行数
+\newcommand*{\jlreq@number@of@lines}{}
+\DeclareOptionX{number_of_lines}{\renewcommand*{\jlreq@number@of@lines}{#1}}
+% 下
+\newcommand*{\jlreq@foot@space}{}
+\define@key{tjlreq.cls}{foot_space}{\renewcommand*{\jlreq@foot@space}{#1}}
+% のど
+\newcommand*{\jlreq@nodo}{}
+\define@key{tjlreq.cls}{gutter}{\renewcommand*{\jlreq@nodo}{#1}}
+
+%.. 組み方系
+% 行頭に括弧が来たときにどうするか．
+% 段落頭指定_折り返し行頭指定 で与える．
+\newcommand*{\jlreq@open@bracket@pos}{zenkaku_tentsuki}
+\define@choicekey{tjlreq.cls}{open_bracket_pos}{zenkaku_tentsuki,zenkakunibu_nibu,nibu_tentsuki}{\renewcommand{\jlreq@open@bracket@pos}{#1}}
+% ぶら下げ組みをするか
+\newif\ifjlreq@burasage
+\jlreq@DeclareOption{hanging_punctuation}{\jlreq@burasagetrue}
+
 \newif\if@restonecol \@restonecolfalse
 \newif\if@titlepage \@titlepagefalse
 \newif\if@landscape \@landscapefalse
@@ -373,19 +395,7 @@
 \jlreq@DeclareOption{notitlepage}{\@titlepagefalse}
 \jlreq@DeclareOption{draft}{\setlength\overfullrule{5pt}}
 \jlreq@DeclareOption{final}{\setlength\overfullrule{0pt}}
-% 行の長さ
-\newcommand*{\jlreq@line@length}{}
-\DeclareOptionX{line_length}{\renewcommand{\jlreq@line@length}{#1}}
-% 1ページあたりの行数
-\newcommand*{\jlreq@number@of@lines}{}
-\DeclareOptionX{number_of_lines}{\renewcommand{\jlreq@number@of@lines}{#1}}
-% 行頭に括弧が来たときにどうするか．
-% 段落頭指定_折り返し行頭指定 で与える．
-\newcommand*{\jlreq@open@bracket@pos}{zenkaku_tentsuki}
-\define@choicekey{tjlreq.cls}{open_bracket_pos}{zenkaku_tentsuki,zenkakunibu_nibu,nibu_tentsuki}{\renewcommand{\jlreq@open@bracket@pos}{#1}}
-% ぶら下げ組みをするか
-\newif\ifjlreq@burasage
-\jlreq@DeclareOption{hanging_punctuation}{\jlreq@burasagetrue}
+
 
 \ExecuteOptionsX{a4paper,fontsize=10pt,twoside,onecolumn,final,tate}
 \ProcessOptionsX\relax
@@ -440,7 +450,7 @@
   luatexja.adjust.make_priority_table(2,0,-1,5)
 }
 
-% 和文フォント
+%. 和文フォント
 \expandafter\let\csname JT3/mc/m/n/10\endcsname\relax
 \DeclareFontShape{JT3}{mc}{m}{n}{<->\ltj@stdmcfont:jfm=jlreqv;script=latn;-kern}{}
 \DeclareFontShape{JT3}{gt}{m}{n}{<->\ltj@stdgtfont:jfm=jlreqv;script=latn;-kern}{}
@@ -456,7 +466,6 @@
 
 \emergencystretch 3\zw
 
-%. フォントサイズ変更命令
 \renewcommand{\normalsize}{%
   \@setfontsize\normalsize{\jlreq@fontsize}{\jlreq@baselineskip}%
   \abovedisplayskip 1.1\jlreq@fontsize \@plus .3\jlreq@fontsize \@minus .4\jlreq@fontsize
@@ -520,46 +529,70 @@
 \@lowpenalty   51
 \@medpenalty  151
 \@highpenalty 301
-% ページレイアウト
+
+%. ページレイアウト
 % \jlreq@setlength[単位]{セットする値}{値の入っているマクロ}{デフォルト}
 \def\jlreq@expand@speciallength#1{%
   % zhやzwを\zhや\zwにする．
-  \directlua{
+  \dimexpr\directlua{
     local yen = string.char(92)
     local s = [[#1]]
     s = s:gsub("zw",yen .. "zw"):gsub("zh",yen .. "zh")
     tex.print(s)
-  }%
-}
-\newcommand\jlreq@setlength[4][]{%
-  \expandafter\ifx #3\relax\relax\setlength{#2}{#4}
-  \else\setlength{#2}{\dimexpr\jlreq@expand@speciallength{#3 #1}\relax}\fi
+  }\relax
 }
 
 % デフォルト値は縦が0.768倍，横が0.727倍．
 % JISX4051のA5の例から換算
 % 縦 (\textwidth)
-\jlreq@setlength{\textwidth}{\jlreq@line@length}{0.768\paperheight}
-\@tempdima=1\zh
-\divide\textwidth\zh \multiply\textwidth\zh
+\ifx\jlreq@line@length\@empty
+  \setlength{\textwidth}{0.768\paperheight}
+  \divide\textwidth\zh
+\else
+  \setlength{\textwidth}{\jlreq@expand@speciallength{\jlreq@line@length}}
+  \divide\textwidth\zh
+  % 2.4.2.c 注2
+%  \ifnum\number\textwidth>52
+%    \ClassWarningNoLine{tjlreq}{JLREQ recommends that the length of the line is less than or equal to that of the 50 characters. The given length is greater than that}
+%  \fi
+\fi
+\multiply\textwidth\zh
+
 % 横 (\textheight)
-\jlreq@setlength[\baselineskip]{\textheight}{\jlreq@number@of@lines}{0.727\paperwidth}
+\ifx\jlreq@number@of@lines\@empty
+  \setlength{\textheight}{0.727\paperwidth}
+\else
+  \setlength{\textwidth}{\jlreq@expand@speciallength{\jlreq@number@of@lines\baselineskip}}
+\fi
 \divide\textheight\baselineskip \multiply\textheight\baselineskip
+
 \setlength{\topskip}{1\zw} % フォントサイズと一致させる
 % ヘッダ：本文から1文字分離す．ヘッダの高さはjsarticleに習ってその二倍
 \setlength{\headsep}{1\zh}
 \setlength{\headheight}{2\zh}
-% 中央配置のための計算
 % 横
-\setlength{\oddsidemargin}{\paperwidth}
-\addtolength{\oddsidemargin}{-\textheight}
-\setlength{\oddsidemargin}{.5\oddsidemargin}
-\addtolength{\oddsidemargin}{-1in}
-\setlength{\evensidemargin}{\oddsidemargin}
+\ifx\jlreq@nodo\@empty
+  % 中央配置
+  \setlength{\oddsidemargin}{\paperwidth}
+  \addtolength{\oddsidemargin}{-\textheight}
+  \setlength{\oddsidemargin}{.5\oddsidemargin}
+  \addtolength{\oddsidemargin}{-1in}
+  \setlength{\evensidemargin}{\oddsidemargin}
+\else
+  \setlength{\oddsidemargin}{\jlreq@expand@speciallength{\jlreq@nodo}}
+  \setlength{\evensidemargin}{\dimexpr\paperwidth - \textheight - \oddsidemargin\relax}
+  \addtolength{\oddsidemargin}{-1in}
+  \addtolength{\evensidemargin}{-1in}
+\fi
 % 縦
 \setlength{\topmargin}{\paperheight}
 \addtolength{\topmargin}{-\textwidth}
-\setlength{\topmargin}{0.5\topmargin}
+\ifx\jlreq@foot@space\@empty
+  % 中央配置
+  \setlength{\topmargin}{0.5\topmargin}
+\else
+  \addtolength{\topmargin}{-\jlreq@expand@speciallength{\jlreq@foot@space}}
+\fi
 \addtolength{\topmargin}{-\headsep}
 \addtolength{\topmargin}{-\headheight}
 \addtolength{\topmargin}{-1in}
@@ -602,7 +635,7 @@
 \renewcommand{\@makefnmark}{\hbox{\yoko\@textsuperscript{\tate\normalfont（\@thefnmark）\kern-1\zw}}}
 \renewcommand{\thefootnote}{\rensuji{\@arabic\c@footnote}}
 
-% ページスタイル．
+%. ページスタイル．
 % ページ番号は下の端．左右が本文と揃わない……
 % 他のも要調整
 \def\ps@plain{\let\@mkboth\@gobbletwo

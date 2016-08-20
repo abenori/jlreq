@@ -397,7 +397,7 @@
 \jlreq@DeclareOption{final}{\setlength\overfullrule{0pt}}
 
 
-\ExecuteOptionsX{a4paper,fontsize=10pt,twoside,onecolumn,final,tate}
+\ExecuteOptionsX{a4paper,fontsize=9pt,twoside,onecolumn,final,tate}
 \ProcessOptionsX\relax
 
 % この値は後でjfm-jlreq内で読む
@@ -485,6 +485,7 @@
 \tate % ここで発行しておく
 
 % 4.1.3.a
+% 2.5.2 \baselineskipは一定の方がよい？
 \newcommand{\footnotesize}{%
   \@setfontsize\footnotesize{.8\jlreq@fontsize}{\dimexpr 95\jlreq@baselineskip/170\relax}% 脚注文字サイズの二分より少し小さい値を行間に: 4.2.5.e
   \abovedisplayskip 6\jlreq@mpt \@plus2\jlreq@mpt \@minus4\jlreq@mpt

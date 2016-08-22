@@ -25,6 +25,31 @@
 \newdimen\jlreq@resultdimen
 \newbox\jlreq@resultbox
 
+% 現在行の残りを得る．
+\RequirePackage[savepos]{zref}
+\newcount\jlreq@rest@linewidth@count
+\jlreq@rest@linewidth@count=0
+
+% 以下のコードはおかしい．
+\newcommand*{\jlreq@current@linewidth}{%
+  \dimexpr\zposx{jlreq@rest@width.pos.\the\jlreq@rest@linewidth@count} sp - \@totalleftmargin -
+  \ifodd\zref@extractdefault{jlreq@rest@width.page.\the\jlreq@rest@linewidth@count}{page}{\c@page}%
+    \oddsidemargin
+  \else
+    \evensidemargin
+  \fi
+  - 1in - \hoffset\relax
+}
+\newcommand*{\jlreq@rest@linewidth}{\dimexpr\linewidth - \jlreq@current@linewidth\relax}
+
+% この命令以降，次にこの命令を実行する前まで\jlreq@rest@linewidthで
+% この場所における残り長さが取得できる．
+\newcommand*{\jlreq@savepos@for@rest@linewidth}{%
+  \advance\jlreq@rest@linewidth@count by 1\relax
+  \zsavepos{jlreq@rest@width.pos.\the\jlreq@rest@linewidth@count}%
+  \zref@labelbyprops{jlreq@rest@width.page.\the\jlreq@rest@linewidth@count}{page}%
+}
+
 % vbox #1の最後を\jlreq@resultboxに入れる
 % #1の最後の行は消える
 \newcommand{\jlreq@getlastbox}[1]{%
@@ -39,13 +64,13 @@
 }
 
 %. 基本設定
-% 和文文字，欧文文字の設定
+% 和文文字，欧文文字の設定（とりあえずLuaTeX-jaのデフォルトのまま）
 \ltjsetparameter{jacharrange={-1, +2, +3, -4, -5, +6, +7, -8}}
 
 % kanjiskip, xkanjiskipはjfmのものを使う
 \ltjsetparameter{kanjiskip=\maxdimen}
 \ltjsetparameter{xkanjiskip=\maxdimen}
-% 禁則処理
+% 禁則処理，表1,2に従う
 % 行末
 % 初め括弧類
 \ltjsetparameter{postbreakpenalty={`（,10000}}
@@ -272,13 +297,13 @@
 \ltjsetparameter{prebreakpenalty={`‥,10000}}
 % ￥100とか70％とか……
 
-%. オプションの処理
-%.. 基本版面
+%. オプションの定義
 \newcommand*{\jlreq@checkempty}[2]{\ifx#2\relax\relax\else\ClassError{jlreq}{The option #1 should have no value}{\@ehc}\fi}
 % 引数無しの\DeclareOptionX
 \newcommand*{\jlreq@DeclareOption}[2]{%
   \DeclareOptionX{#1}{\jlreq@checkempty{#1}{##1}#2}
 }
+%.. 基本版面．まずは紙サイズ．
 \jlreq@DeclareOption{a3paper}{%
   \setlength\paperheight {420mm}%
   \setlength\paperwidth  {297mm}}
@@ -328,26 +353,20 @@
   \setlength\paperheight {10.5in}%
   \setlength\paperwidth  {7.25in}}
 
+% フォントサイズ，行長，1ページあたりの行数で基本版面のサイズを決める（2.4.1.a）
 \newdimen\jlreq@fontsize
 \jlreq@fontsize=10pt
-\newcommand*{\jlreq@inoption@setfontsize}[2]{%
+\DeclareOptionX{fontsize}{%
   \@tempdima=2.5mm\relax
-  \setlength{#1}{%
+  \setlength{\jlreq@fontsize}{%
     \dimexpr\directlua{
       local yen = string.char(92)
-      local s = [[#2]]
+      local s = [[#1]]
       s = s:gsub("Q"," * 2.5mm")
       tex.print(s)
     }\relax
   }%
-}  
-\DeclareOptionX{fontsize}{\jlreq@inoption@setfontsize{\jlreq@fontsize}{#1}}
-
-% 行送り，指定無しの場合は文字サイズの1.7倍とするので，後で計算する
-\newdimen\jlreq@baselineskip
-\newcommand*{\jlreq@option@baselineskip}{}
-\DeclareOptionX{baselineskip}{\def\jlreq@option@baselineskip{#1}}
-\DeclareOptionX{linegap}{\def\jlreq@option@baselineskip{1zh + #1}}
+}
 
 % 行の長さ
 \newcommand*{\jlreq@line@length}{}
@@ -355,21 +374,37 @@
 % 1ページあたりの行数
 \newcommand*{\jlreq@number@of@lines}{}
 \DeclareOptionX{number_of_lines}{\renewcommand*{\jlreq@number@of@lines}{#1}}
-% 下
+
+% 地の空き量，のどの空き量で配置位置を決める（2.4.1.b）省略されたら中央配置．
+% 地
 \newcommand*{\jlreq@foot@space}{}
 \define@key{tjlreq.cls}{foot_space}{\renewcommand*{\jlreq@foot@space}{#1}}
 % のど
 \newcommand*{\jlreq@nodo}{}
 \define@key{tjlreq.cls}{gutter}{\renewcommand*{\jlreq@nodo}{#1}}
 
+% 行送り，指定無しの場合は文字サイズの1.7倍とする．（1.5から2倍が好ましい：2.4.2.d 注3）
+\newdimen\jlreq@baselineskip
+\newcommand*{\jlreq@option@baselineskip}{}
+\DeclareOptionX{baselineskip}{\def\jlreq@option@baselineskip{#1}}
+\DeclareOptionX{linegap}{\def\jlreq@option@baselineskip{1zh + #1}}
+
 %.. 組み方系
-% 行頭に括弧が来たときにどうするか．
+% 行頭に括弧が来たときの配置：3.1.5
 % 段落頭指定_折り返し行頭指定 で与える．
 \newcommand*{\jlreq@open@bracket@pos}{zenkaku_tentsuki}
 \define@choicekey{tjlreq.cls}{open_bracket_pos}{zenkaku_tentsuki,zenkakunibu_nibu,nibu_tentsuki}{\renewcommand{\jlreq@open@bracket@pos}{#1}}
-% ぶら下げ組みをするか
+% ぶら下げ組みをするか：3.8.2 注1
 \newif\ifjlreq@burasage
 \jlreq@DeclareOption{hanging_punctuation}{\jlreq@burasagetrue}
+
+%.. 脚注
+% 合印の場所（4.2.3）行間に入れるか否か
+\newcommand*{\jlreq@referencemark}{inline}
+\define@choicekey{tjlreq.cls}{reference_mark}{inline,interlinear}{\renewcommand*{\jlreq@referencemark}{#1}}
+% 脚注の字下げ，一行目を下げるならばone，二行目以降ならばtwo．ちょっと酷いので後で考える．
+\newcommand*{\jlreq@footnotetext@indent}{one}
+\define@choicekey{tjlreq.cls}{footnotetext_indent}{one,two}{\renewcommand*{\jlreq@footnotetext@indent}{#1}}
 
 \newif\if@restonecol \@restonecolfalse
 \newif\if@titlepage \@titlepagefalse
@@ -396,15 +431,16 @@
 \jlreq@DeclareOption{draft}{\setlength\overfullrule{5pt}}
 \jlreq@DeclareOption{final}{\setlength\overfullrule{0pt}}
 
-
 \ExecuteOptionsX{a4paper,fontsize=9pt,twoside,onecolumn,final,tate}
 \ProcessOptionsX\relax
 
+%. オプション処理
 % この値は後でjfm-jlreq内で読む
 \directlua{jlreq.open_bracket_pos = [[\jlreq@open@bracket@pos]]}
 \ifjlreq@burasage\directlua{jlreq.burasage = true}
 \else\directlua{jlreq.burasage = false}\fi
 
+% landscapeの場合縦横をひっくり返す
 \if@landscape
   \setlength\@tempdima  {\paperheight}
   \setlength\paperheight{\paperwidth}
@@ -443,6 +479,8 @@
 \setlength{\pagewidth}{\stockwidth}
 \setlength{\pageheight}{\stockheight}
 
+
+%. 和文フォント
 \RequirePackage{luatexja-adjust}
 \ltjenableadjust[lineend=extended,priority=true]
 \directlua{
@@ -450,7 +488,6 @@
   luatexja.adjust.make_priority_table(2,0,-1,5)
 }
 
-%. 和文フォント
 \expandafter\let\csname JT3/mc/m/n/10\endcsname\relax
 \DeclareFontShape{JT3}{mc}{m}{n}{<->\ltj@stdmcfont:jfm=jlreqv;script=latn;-kern}{}
 \DeclareFontShape{JT3}{gt}{m}{n}{<->\ltj@stdgtfont:jfm=jlreqv;script=latn;-kern}{}
@@ -531,8 +568,18 @@
 \@medpenalty  151
 \@highpenalty 301
 
+% 変数定義（他にも散らばっているけど）
+% 罫線の太さ（4.4.3.c 注1）
+\newdimen\jlreq@omotekeiwidth
+\jlreq@omotekeiwidth=0.12mm
+\newdimen\jlreq@chuubusokeiwidth
+\jlreq@chuubusokeiwidth=0.25mm
+\newdimen\jlreq@urakeiwidth
+\jlreq@urakeiwidth=0.4mm
+% 脚注のインデント
+\newdimen\jlreq@footnoteindent
+
 %. ページレイアウト
-% \jlreq@setlength[単位]{セットする値}{値の入っているマクロ}{デフォルト}
 \def\jlreq@expand@speciallength#1{%
   % zhやzwを\zhや\zwにする．
   \dimexpr\directlua{
@@ -543,8 +590,7 @@
   }\relax
 }
 
-% デフォルト値は縦が0.768倍，横が0.727倍．
-% JISX4051のA5の例から換算
+% デフォルト値は縦が0.768倍，横が0.727倍（JISX4051のA5の例から換算……）．
 % 縦 (\textwidth)
 \ifx\jlreq@line@length\@empty
   \setlength{\textwidth}{0.768\paperheight}
@@ -552,7 +598,7 @@
 \else
   \setlength{\textwidth}{\jlreq@expand@speciallength{\jlreq@line@length}}
   \divide\textwidth\zh
-  % 2.4.2.c 注2
+  % 縦ならば一行52文字以下，横ならば40文字以下が望ましい．2.4.2.c 注2
 %  \ifnum\number\textwidth>52
 %    \ClassWarningNoLine{tjlreq}{JLREQ recommends that the length of the line is less than or equal to that of the 50 characters. The given length is greater than that}
 %  \fi
@@ -613,27 +659,64 @@
   \global\divide\marginparwidth\@tempdima \global\multiply\marginparwidth\@tempdima
   \global\setlength{\marginparpush}{.5\@tempdima} % 同上：c
 }
-% 脚注関連
-% 線までが本文行間分（4.2.6.g），その後が脚注内の行間のつもり
+% 脚注関連（縦書きの時は傍注，4.2.5）
 {\footnotesize\global\setlength{\footnotesep}{.7\baselineskip}} % 何でかわからん……
-\setlength{\@tempdima}{\baselineskip}
-\addtolength{\@tempdima}{-.5\zw}
-\setlength{\skip\footins}{\@tempdima plus 1\zw}
-\renewcommand{\footnoterule}{\hrule width .333\textwidth} % 4.2.6.f
-% 4.5.2.d
-\newcommand\@makefntext[1]{\parindent 1\zh
-  \addtolength{\leftskip}{2\zh}%
-  \noindent\llap{\@makefnmark}\hskip 1\zh#1}
-% 4.2.3.b
-\renewcommand{\@footnotemark}{%
-  \leavevmode
-  \ifhmode\edef\@x@sf{\the\spacefactor}\nobreak\fi
-  \setbox\@tempboxa=\hbox{\@makefnmark}%
-  \hbox to\z@{\hskip-\wd\@tempboxa\raise.9\zh\box\@tempboxa\hss}%
-  \ifhmode\spacefactor\@x@sf\fi
-  \relax}
+% 罫線の前は行間分，最大＋文字サイズ分伸びる（4.2.5.g）
+\setlength{\skip\footins}{\dimexpr\baselineskip - 1\zw\relax plus 1\zw}
+% 脚注の前の罫線は表罫で，長さは行長の1/3位（4.2.6.f）
+\renewcommand{\footnoterule}{\hrule width .333\textwidth height \jlreq@omotekeiwidth}
+% インデントの計算：脚注の長さが文字の整数倍になるように字下げする（4.2.5.b）
+{
+  \@tempdima=\textwidth
+  \footnotesize
+  \divide\@tempdima\zh \multiply\@tempdima\zh
+  \global\jlreq@footnoteindent=\dimexpr\textwidth - \@tempdima\relax
+}
+% 二行目以降の字下げを全角空きにする方にしておく．（オプションで制御できるべき）：4.2.5.d
+\def\@tempa{one}
+\ifx\jlreq@footnotetext@indent\@tempa
+  \newcommand\@makefntext[1]{\parindent 1\zh
+    \addtolength{\leftskip}{\dimexpr \jlreq@footnoteindent + 1\zh\relax} %全体をインデント+1文字分下げる
+    \noindent\llap{\@makefnmark}\hskip 1\zh#1}% 見出し出力と一文字分の空き
+\else
+  \newcommand\@makefntext[1]{\parindent 1\zh
+    \addtolength{\leftskip}{\jlreq@footnoteindent} %全体をインデント
+    \leavevmode\@makefnmark\hskip 1\zh#1}% 見出し出力と一文字分の空き
+\fi
+% 合印：4.2.3
+% 文字サイズは6ポイントくらい（4.2.3.a）
+\def\@tempa{inline}
+\ifx\jlreq@referencemark\@tempa
+  \renewcommand{\@footnotemark}{%
+    \leavevmode
+    \ifhmode\edef\@x@sf{\the\spacefactor}\nobreak\fi
+    \ifnum\ltjgetparameter{direction}=3\relax
+      \hbox{\@textsuperscript{\normalfont\@thefnmark}}%
+    \else
+      \setbox\@tempboxa=\hbox{\scriptsize\@makefnmark}%
+      \inhibitglue\raise\dimexpr.5\zw - (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa\inhibitglue
+    \fi
+    \ifhmode\spacefactor\@x@sf\fi
+    \relax}
+\else
+  \renewcommand{\@footnotemark}{%
+    \leavevmode
+    \ifhmode\edef\@x@sf{\the\spacefactor}\nobreak\fi
+    \setbox\@tempboxa=\hbox{\scriptsize\@makefnmark}%
+    % 行頭に来たときに頭を天にそろえる処理．
+    \jlreq@savepos@for@rest@linewidth
+    \ifdim\jlreq@current@linewidth<\wd\@tempboxa
+      \@tempdima=\jlreq@current@linewidth
+    \else
+      \@tempdima=\wd\@tempboxa
+    \fi
+    \hbox to\z@{\hskip-\@tempdima\raise\dimexpr.5\zw + (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa}%
+    \ifhmode\spacefactor\@x@sf\fi
+    \relax}
+\fi
 % 図4.61のようにする
-\renewcommand{\@makefnmark}{\hbox{\yoko\@textsuperscript{\tate\normalfont（\@thefnmark）\kern-1\zw}}}
+% 文字サイズは要検討（cf. 4.2.3.a）
+\renewcommand{\@makefnmark}{\hbox{（\@thefnmark）}}
 \renewcommand{\thefootnote}{\rensuji{\@arabic\c@footnote}}
 
 %. ページスタイル．
@@ -1371,31 +1454,6 @@
 \RequirePackage{luatexja-ruby}
 
 % 割注: 3.4
-\RequirePackage[savepos]{zref}
-\newcount\jlreq@rest@linewidth@count
-\jlreq@rest@linewidth@count=0
-
-% 現在行の残りを得る．
-% 以下のコードはおかしい．
-\newcommand{\jlreq@rest@linewidth}{%
-  \dimexpr
-  \linewidth + \@totalleftmargin + 
-  \ifodd\zref@extractdefault{jlreq@rest@width.page.\the\jlreq@rest@linewidth@count}{page}{\c@page}%
-    \oddsidemargin
-  \else
-    \evensidemargin
-  \fi
-  + 1in + \hoffset - \zposx{jlreq@rest@width.pos.\the\jlreq@rest@linewidth@count} sp\relax
-}
-
-% この命令以降，次にこの命令を実行する前まで\jlreq@rest@linewidthで
-% この場所における残り長さが取得できる．
-\newcommand*{\jlreq@savepos@for@rest@linewidth}{%
-  \advance\jlreq@rest@linewidth@count by 1\relax
-  \zsavepos{jlreq@rest@width.pos.\the\jlreq@rest@linewidth@count}%
-  \zref@labelbyprops{jlreq@rest@width.page.\the\jlreq@rest@linewidth@count}{page}%
-}
-
 \newcommand{\jlreq@warichu@kakkofontsize}{%
   \fontsize{\numexpr \warichusize * 2\relax\jlreq@mpt}{\numexpr \warichusize * 2\relax\jlreq@mpt}%
   \selectfont

@@ -21,6 +21,9 @@
 \newdimen\jlreq@tempdima
 \newdimen\jlreq@tempdimb
 \newdimen\jlreq@tempdimc
+\newif\ifjlreq@tempa
+\newif\ifjlreq@tempb
+\newif\ifjlreq@tempc
 % 計算結果を返すための変数
 \newdimen\jlreq@resultdimen
 \newbox\jlreq@resultbox
@@ -298,7 +301,10 @@
 % ￥100とか70％とか……
 
 %. オプションの定義
-\newcommand*{\jlreq@checkempty}[2]{\ifx#2\relax\relax\else\ClassError{jlreq}{The option #1 should have no value}{\@ehc}\fi}
+\newcommand*{\jlreq@checkempty}[2]{%
+  \def\@tempa{#2}
+  \ifx\@tempa\@empty\else\ClassError{jlreq}{The option #1 should have no value}{\@ehc}\fi
+}
 % 引数無しの\DeclareOptionX
 \newcommand*{\jlreq@DeclareOption}[2]{%
   \DeclareOptionX{#1}{\jlreq@checkempty{#1}{##1}#2}
@@ -378,10 +384,10 @@
 % 地の空き量，のどの空き量で配置位置を決める（2.4.1.b）省略されたら中央配置．
 % 地
 \newcommand*{\jlreq@foot@space}{}
-\define@key{tjlreq.cls}{foot_space}{\renewcommand*{\jlreq@foot@space}{#1}}
+\DeclareOptionX{foot_space}{\renewcommand*{\jlreq@foot@space}{#1}}
 % のど
 \newcommand*{\jlreq@nodo}{}
-\define@key{tjlreq.cls}{gutter}{\renewcommand*{\jlreq@nodo}{#1}}
+\DeclareOptionX{gutter}{\renewcommand*{\jlreq@nodo}{#1}}
 
 % 行送り，指定無しの場合は文字サイズの1.7倍とする．（1.5から2倍が好ましい：2.4.2.d 注3）
 \newdimen\jlreq@baselineskip
@@ -398,13 +404,16 @@
 \newif\ifjlreq@burasage
 \jlreq@DeclareOption{hanging_punctuation}{\jlreq@burasagetrue}
 
-%.. 脚注
+%.. 注
 % 合印の場所（4.2.3）行間に入れるか否か
 \newcommand*{\jlreq@referencemark}{inline}
 \define@choicekey{tjlreq.cls}{reference_mark}{inline,interlinear}{\renewcommand*{\jlreq@referencemark}{#1}}
 % 脚注の字下げ，一行目を下げるならばone，二行目以降ならばtwo．ちょっと酷いので後で考える．
 \newcommand*{\jlreq@footnotetext@indent}{one}
 \define@choicekey{tjlreq.cls}{footnotetext_indent}{one,two}{\renewcommand*{\jlreq@footnotetext@indent}{#1}}
+% 後注をどこに配置するか．_headings（全ての見出し）,_paragraph（段落後）,_で始まらないやつ（その名前の見出し）．カンマ区切り
+\newcommand*{\jlreq@endnote@position}{_headings}
+\DeclareOptionX{endnote_position}{\renewcommand*{\jlreq@endnote@position}{#1}}
 
 \newif\if@restonecol \@restonecolfalse
 \newif\if@titlepage \@titlepagefalse
@@ -432,7 +441,20 @@
 \jlreq@DeclareOption{final}{\setlength\overfullrule{0pt}}
 
 \ExecuteOptionsX{a4paper,fontsize=9pt,twoside,onecolumn,final,tate}
-\ProcessOptionsX\relax
+
+% {}は\ProcessOptionsXで処理させることはできないが，\setkeys*ならばできる．
+\edef\@curroptions{\@ptionlist{\@currname.\@currext}}%
+\let\jlreq@original@classsoptions=\@curroptions
+\def\@tempa#1{\setkeys{\@currname.\@currext}{#1}}
+\expandafter\@tempa\expandafter{\@curroptions}
+% 残ったオプションをセットし，ProcessOptionsXで処理させる．
+% （単に\@unusedoptionlistをセットするだけでもよいだろうか？）
+\expandafter\let\csname opt@\@currname.\@currext\endcsname=\XKV@rm
+\let\XKV@classoptionslist=\XKV@rm
+\edef\@curroptions{\@ptionlist{\@currname.\@currext}}%
+\ProcessOptionsX*\relax
+\expandafter\let\csname opt@\@currname.\@currext\endcsname=\jlreq@originalclsoptions
+\let\XKV@classoptionslist=\jlreq@originalclsoptions
 
 %. オプション処理
 % この値は後でjfm-jlreq内で読む
@@ -651,101 +673,6 @@
 % columnsep/columnseprule 二段組み用
 \setlength{\columnsep}{2\zh} % フォントサイズ×2
 \setlength{\columnseprule}{0\jlreq@mpt}
-% 傍注はこれではうまく行かないはず．
-\setlength{\marginparwidth}{0.333\textwidth} % 根拠無しの1/3：15--20文字らしい
-\setlength{\marginparsep}{20\jlreq@mpt} % フォントサイズ×2（4.2.7：特に問題に～e）
-{%
-  \footnotesize\@tempdima=1\zw
-  \global\divide\marginparwidth\@tempdima \global\multiply\marginparwidth\@tempdima
-  \global\setlength{\marginparpush}{.5\@tempdima} % 同上：c
-}
-% 脚注関連（縦書きの時は傍注，4.2.5）
-{\footnotesize\global\setlength{\footnotesep}{.7\baselineskip}} % 何でかわからん……
-% 罫線の前は行間分，最大＋文字サイズ分伸びる（4.2.5.g）
-\setlength{\skip\footins}{\dimexpr\baselineskip - 1\zw\relax plus 1\zw}
-% 脚注の前の罫線は表罫で，長さは行長の1/3位（4.2.6.f）
-\renewcommand{\footnoterule}{\hrule width .333\textwidth height \jlreq@omotekeiwidth}
-% インデントの計算：脚注の長さが文字の整数倍になるように字下げする（4.2.5.b）
-{
-  \@tempdima=\textwidth
-  \footnotesize
-  \divide\@tempdima\zh \multiply\@tempdima\zh
-  \global\jlreq@footnoteindent=\dimexpr\textwidth - \@tempdima\relax
-}
-% 二行目以降の字下げを全角空きにする方にしておく．（オプションで制御できるべき）：4.2.5.d
-\def\@tempa{one}
-\ifx\jlreq@footnotetext@indent\@tempa
-  \newcommand\@makefntext[1]{\parindent 1\zh
-    \addtolength{\leftskip}{\dimexpr \jlreq@footnoteindent + 1\zh\relax} %全体をインデント+1文字分下げる
-    \noindent\llap{\@makefnmark}\hskip 1\zh#1}% 見出し出力と一文字分の空き
-\else
-  \newcommand\@makefntext[1]{\parindent 1\zh
-    \addtolength{\leftskip}{\jlreq@footnoteindent} %全体をインデント
-    \leavevmode\@makefnmark\hskip 1\zh#1}% 見出し出力と一文字分の空き
-\fi
-% 合印：4.2.3
-% 文字サイズは6ポイントくらい（4.2.3.a）
-\def\@tempa{inline}
-\ifx\jlreq@referencemark\@tempa
-  \renewcommand{\@footnotemark}{%
-    \leavevmode
-    \ifhmode\edef\@x@sf{\the\spacefactor}\nobreak\fi
-    \ifnum\ltjgetparameter{direction}=3\relax
-      \hbox{\@textsuperscript{\normalfont\@thefnmark}}%
-    \else
-      \setbox\@tempboxa=\hbox{\scriptsize\@makefnmark}%
-      \inhibitglue\raise\dimexpr.5\zw - (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa\inhibitglue
-    \fi
-    \ifhmode\spacefactor\@x@sf\fi
-    \relax}
-\else
-  \renewcommand{\@footnotemark}{%
-    \leavevmode
-    \ifhmode\edef\@x@sf{\the\spacefactor}\nobreak\fi
-    \setbox\@tempboxa=\hbox{\scriptsize\@makefnmark}%
-    % 行頭に来たときに頭を天にそろえる処理．
-    \jlreq@savepos@for@rest@linewidth
-    \ifdim\jlreq@current@linewidth<\wd\@tempboxa
-      \@tempdima=\jlreq@current@linewidth
-    \else
-      \@tempdima=\wd\@tempboxa
-    \fi
-    \hbox to\z@{\hskip-\@tempdima\raise\dimexpr.5\zw + (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa}%
-    \ifhmode\spacefactor\@x@sf\fi
-    \relax}
-\fi
-% 図4.61のようにする
-% 文字サイズは要検討（cf. 4.2.3.a）
-\renewcommand{\@makefnmark}{\hbox{（\@thefnmark）}}
-\renewcommand{\thefootnote}{\rensuji{\@arabic\c@footnote}}
-
-%. ページスタイル．
-% ページ番号は下の端．左右が本文と揃わない……
-% 他のも要調整
-\def\ps@plain{\let\@mkboth\@gobbletwo
-  \let\ps@jpl@in\ps@plain
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{\kern 1\zw\thepage\hfil}%
-  \def\@evenfoot{\hfil\thepage\kern 1\zw}}
-% ページ番号は上の端．
-\def\ps@headings{\let\ps@jpl@in\ps@headnombre
-  \let\@oddfoot\@empty
-  \def\@oddhead{\thepage\quad\rightmark}%
-  \def\@evenhead{\hfil\rightmark\quad\thepage}%
-  \let\@mkboth\markboth
-\def\sectionmark##1{\markright{%
-  \ifnum \c@secnumdepth >\m@ne \thesection.\hskip1\zw\fi
-  ##1}}%
-}
-\def\ps@myheadings{\let\ps@jpl@in\ps@plain%
-  \let\@oddfoot\@empty\let\@evenfoot\@empty
-  \def\@evenhead{\thepage\quad{\leftmark}\hfil}%
-  \def\@oddhead{\hfil\thepage\quad\rightmark}%
-  \let\@mkboth\@gobbletwo
-  \let\sectionmark\@gobble
-  \let\subsectionmark\@gobble
-}
 
 %. 見出し関係 (4.1)
 \newcommand{\headfont}{\gtfamily\sffamily}
@@ -768,6 +695,8 @@
 
 \renewcommand*{\@seccntformat}[1]{\csname the#1\endcsname\hspace{1\jlreq@fontsize}}
 \newcommand*{\jlreq@absdimenmodoki}[1]{\ifdim#1=0pt 0.001pt\else\ifnum#1<0pt -#1\else#1\fi\fi}
+% 見出しの直前に実行される
+\newcommand*{\jlreq@hook@beforeheadings}[1]{}
 % 別行見出し
 % \DeclareBlockHeading{命令名}{レベル}{lines=何行取りか,before_space=前のスペース,after_space=後ろのスペース,indent=インデント,font=書式変更命令}
 % before/after_spaceが両方定義されていた場合はlinesは無視される．
@@ -789,7 +718,7 @@
     \setkeys{jlreq@key}{#3}%
     % \jlreq@linesを長さに直す
     \edef\jlreq@lines{\jlreq@once@expand{\jlreq@lines}\baselineskip}%
-    % after@spaceとbefore@spaceが空ならセットする．
+    % after@spaceとbefore@spaceが空なら値を入れる
     \ifx\jlreq@after@space\@empty
       \ifx\jlreq@before@space\@empty
         \edef\jlreq@before@space{(\jlreq@once@expand{\jlreq@lines} - \baselineskip)/2}%
@@ -802,7 +731,8 @@
     \fi
     \global\edef\@tempa{{\unexpanded{#1}}{\unexpanded{#2}}{\jlreq@once@expand{\jlreq@indent}\jlreq@fontsize}{\dimexpr\jlreq@once@expand{\jlreq@before@space}\relax}{\noexpand\jlreq@absdimenmodoki{\dimexpr\jlreq@once@expand{\jlreq@after@space}\relax}}{\jlreq@tempdima=\baselineskip\noexpand\reset@font\jlreq@once@expand{\jlreq@fontcommand}\baselineskip=\jlreq@tempdima}}
   \endgroup
-  \expandafter\edef\csname #1\endcsname{\noexpand\@startsection\jlreq@once@expand{\@tempa}}%
+  \expandafter\edef\csname #1\endcsname{\noexpand\jlreq@hook@beforeheadings{#1}%
+    \noexpand\@startsection\jlreq@once@expand{\@tempa}}%
 }
 \newcommand*{\NewBlockHeading}[3]{%
   \expandafter\@ifdefinable\csname #1\endcsname{\DeclareBlockHeading{#1}{#2}{#3}}%
@@ -827,7 +757,8 @@
     \setkeys{jlreq@key}{#3}%
     \global\edef\@tempa{{\unexpanded{#1}}{\unexpanded{#2}}{\jlreq@once@expand{\jlreq@indent}\jlreq@fontsize}{0pt}{-1\jlreq@fontsize}{\jlreq@tempdima=\baselineskip\noexpand\reset@font\jlreq@once@expand{\jlreq@fontcommand}\baselineskip=\jlreq@tempdima}}%
   \endgroup
-  \expandafter\edef\csname #1\endcsname{\noexpand\@startsection\jlreq@once@expand{\@tempa}}%
+  \expandafter\edef\csname #1\endcsname{\noexpand\jlreq@hook@beforeheadings{#1}%
+    \noexpand\@startsection\jlreq@once@expand{\@tempa}}%
 }
 \newcommand*{\NewRuninHeading}[3]{%
   \expandafter\@ifdefinable\csname #1\endcsname{\DeclareRuninHeading{#1}{#2}{#3}}%
@@ -877,15 +808,17 @@
   \hspace*{#3}%
   \let\jlreq@original@par=\par
   \def\par{%
-    \jlreq@original@par
-    \ifnum\jlreq@wraplinecount>1\relax
-      \hangindent=\jlreq@hangindent\hangafter=\jlreq@wraplinecount\advance\jlreq@wraplinecount by -1\relax
-    \else\ifnum\jlreq@wraplinecount<-1\relax
-      \hangindent=\jlreq@hangindent\hangafter=\jlreq@wraplinecount\advance\jlreq@wraplinecount by 1\relax
-    \else
-      \jlreq@wraplinecount=1\jlreq@hangindent=0pt\relax
-      \let\par=\jlreq@original@par
-    \fi\fi
+    \ifvmode\jlreq@original@par\else
+      \jlreq@original@par
+      \ifnum\jlreq@wraplinecount>1\relax
+        \hangindent=\jlreq@hangindent\hangafter=\jlreq@wraplinecount\advance\jlreq@wraplinecount by -1\relax
+      \else\ifnum\jlreq@wraplinecount<-1\relax
+        \hangindent=\jlreq@hangindent\hangafter=\jlreq@wraplinecount\advance\jlreq@wraplinecount by 1\relax
+      \else
+        \jlreq@wraplinecount=1\jlreq@hangindent=0pt\relax
+        \let\par=\jlreq@original@par
+      \fi\fi
+    \fi
   }%
 }
 
@@ -904,7 +837,8 @@
     \setkeys*{jlreq@key}{#3}%
     \global\edef\@tempa{{#1}{\jlreq@once@expand{\jlreq@fontcommand}}{\jlreq@once@expand{\jlreq@indent}}{\jlreq@once@expand{\jlreq@afterindent}}{\jlreq@once@expand{\jlreq@onelinemax}}{\jlreq@once@expand{\jlreq@twolinemax}}}
   \endgroup
-  \expandafter\edef\csname #1\endcsname{\noexpand\jlreq@CutinHeading@start\jlreq@once@expand{\@tempa}}
+  \expandafter\edef\csname #1\endcsname{\noexpand\jlreq@hook@beforeheadings{#1}%
+    \noexpand\jlreq@CutinHeading@start\jlreq@once@expand{\@tempa}}
 }
 
 \NewBlockHeading{part}{0}{font={\LARGE\headfont},indent=4,lines=4}
@@ -918,6 +852,209 @@
   \setcounter{section}{0}%
   \setcounter{subsection}{0}%
   \renewcommand{\thesection}{\rensuji{\@Alph\c@section}}}
+
+%. 注
+% 合印：4.2.3
+% 文字サイズは6ポイントくらい（4.2.3.a）とりあえす\scriptsize
+\def\@tempa{inline}
+\ifx\jlreq@referencemark\@tempa
+  \renewcommand{\@footnotemark}{%
+    \leavevmode
+    \ifhmode\edef\@x@sf{\the\spacefactor}\nobreak\fi
+    \ifnum\ltjgetparameter{direction}=4\relax
+      \hbox{\@textsuperscript{\normalfont\@makefnmark}}%
+    \else
+      \setbox\@tempboxa=\hbox{\scriptsize\@makefnmark}%
+      \inhibitglue\raise\dimexpr.5\zw - (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa\inhibitglue
+    \fi
+    \ifhmode\spacefactor\@x@sf\fi
+    \relax}
+\else
+  \renewcommand{\@footnotemark}{%
+    \leavevmode
+    \ifhmode\edef\@x@sf{\the\spacefactor}\nobreak\fi
+    \setbox\@tempboxa=\hbox{\scriptsize\@makefnmark}%
+    % 行頭に来たときに頭を天にそろえる処理．
+    \jlreq@savepos@for@rest@linewidth
+    \ifdim\jlreq@current@linewidth<\wd\@tempboxa
+      \@tempdima=\jlreq@current@linewidth
+    \else
+      \@tempdima=\wd\@tempboxa
+    \fi
+    \hbox to\z@{\hskip-\@tempdima\raise\dimexpr.5\zw + (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa}%
+    \ifhmode\spacefactor\@x@sf\fi
+    \relax}
+\fi
+
+%.. 脚注（縦書きの時は傍注，4.2.5）
+{\footnotesize\global\setlength{\footnotesep}{.7\baselineskip}} % 何でかわからん……
+% 罫線の前は行間分，最大＋文字サイズ分伸びる（4.2.5.g）
+\setlength{\skip\footins}{\dimexpr\baselineskip - 1\zw\relax plus 1\zw}
+% 脚注の前の罫線は表罫で，長さは行長の1/3位（4.2.6.f）
+\renewcommand{\footnoterule}{\hrule width .333\textwidth height \jlreq@omotekeiwidth}
+% インデントの計算：脚注の長さが文字の整数倍になるように字下げする（4.2.5.b）
+{
+  \@tempdima=\textwidth
+  \footnotesize
+  \divide\@tempdima\zh \multiply\@tempdima\zh
+  \global\jlreq@footnoteindent=\dimexpr\textwidth - \@tempdima\relax
+}
+% 二行目以降の字下げを全角空きにする方にしておく．（オプションで制御できるべき）：4.2.5.d
+\def\@tempa{one}
+\ifx\jlreq@footnotetext@indent\@tempa
+  \newcommand\@makefntext[1]{\parindent 1\zh
+    \addtolength{\leftskip}{\dimexpr \jlreq@footnoteindent + 1\zh\relax} %全体をインデント+1文字分下げる
+    \noindent\llap{\@makefnmark}\hskip 1\zh#1}% 見出し出力と一文字分の空き
+\else
+  \newcommand\@makefntext[1]{\parindent 1\zh
+    \addtolength{\leftskip}{\jlreq@footnoteindent} %全体をインデント
+    \leavevmode\@makefnmark\hskip 1\zh#1}% 見出し出力と一文字分の空き
+\fi
+% 図4.61のようにする
+\renewcommand{\@makefnmark}{\hbox{（\@thefnmark）}}
+\renewcommand{\thefootnote}{\rensuji{\@arabic\c@footnote}}
+
+%.. 後注（4.2.4）
+% 文字サイズは\footnotesizeを使う
+\newdimen\jlreq@endnote@prepostspace
+% 前の分との間は行間分空ける（4.2.4.f）
+\jlreq@endnote@prepostspace=\dimexpr\baselineskip - 1\zw\relax
+\newdimen\jlreq@endnote@indent
+\newcounter{endnote}
+\def\endnote{\@ifnextchar[{\jlreq@endnote}{\stepcounter{endnote}\jlreq@endnote[\theendnote]}}
+% 現在の後注一覧を保持する
+\def\jlreq@endnote@texts{}
+\def\jlreq@endnote@addtext#1#2{%
+  \expandafter\gdef\expandafter\jlreq@endnote@texts\expandafter{\jlreq@endnote@texts{{#1}{#2}}}}
+\def\jlreq@endnote[#1]#2{%
+  \begingroup
+   \protected@xdef\@thefnmark{#1}%
+   \@endnotemark
+   \expandafter\jlreq@endnote@addtext\expandafter{\@thefnmark}{#2}%
+  \endgroup
+}
+\def\jlreq@theendnotes#1{%
+  \ifx\jlreq@endmark#1\else
+    \jlreq@output@endnotes#1
+    \expandafter\jlreq@theendnotes
+  \fi
+}
+\def\jlreq@output@endnotes#1#2{%
+  \protected@xdef\@thefnmark{#1}%
+  \item\@makeentext{#2}
+}
+
+\def\theendnotes{%
+  \ifx\jlreq@endnote@texts\@empty\else
+    \begingroup
+      \let\jlreq@tempa=\jlreq@endnote@texts
+      \gdef\jlreq@endnote@texts{}%
+      \footnotesize
+      % 後注の長さを文字サイズの整数倍にする（4.2.4.b）
+      \@tempdima=\dimexpr\linewidth - \jlreq@endnote@indent - \leftskip\relax
+      \divide\@tempdima\zh\multiply\@tempdima\zh
+      \begin{list}{}{%
+        \itemsep=0pt\relax
+        \parsep=0pt\relax
+        \partopsep=0pt\relax
+        \topsep=\dimexpr\jlreq@endnote@prepostspace - \parskip\relax
+        \leftmargin=\dimexpr\linewidth - \@tempdima\relax
+      }
+      \expandafter\jlreq@theendnotes\jlreq@tempa\jlreq@endmark
+      \end{list}%
+    \endgroup
+    \par\vskip\dimexpr\jlreq@fontsize - \jlreq@baselineskip\relax
+  \fi
+}
+
+\jlreq@endnote@indent=2\zh
+% 二行目以降を二文字分下げる
+{\footnotesize\global\advance\jlreq@endnote@indent by 2\zh}
+\newcommand{\@makeentext}[1]{\parindent 1\zh
+    \leavevmode\hskip-2\zh\@makeenmark\hskip 1\zh#1}% 見出し出力と一文字分の空き
+\renewcommand{\theendnote}{\rensuji{\@arabic\c@endnote}}
+
+\let\@makeenmark=\@makefnmark
+\let\@endnotemark=\@footnotemark
+
+% \theendnoteの出力を仕込む
+\long\def\jlreq@do#1#2{%
+  \def\@tempb{#1}%
+  \ifjlreq@tempb\else
+    \ifx\@tempa\@tempb #2 \jlreq@tempbtrue\fi
+  \fi
+}
+\jlreq@tempafalse
+% \@tempcに\jlreq@hook@beforeheadingsに入れるものを放り込んでいく
+\def\@tempc#1{}
+\@for\@tempa:=\jlreq@endnote@position\do{
+  \jlreq@tempbfalse
+  \jlreq@do{_headings}{\jlreq@tempatrue}
+  \jlreq@do{_paragraph}{
+    \jlreq@tempatrue% _paragraphの時は_headingsも有効にする
+    \PushPostHook{par}{%
+      \ifx\jlreq@endnote@texts\@empty\else
+        % なんかうまくいってそう
+        \vskip\dimexpr-\baselineskip\relax
+        \vskip\dimexpr-\baselineskip\relax
+        \theendnotes
+      \fi
+    }%
+  }
+  \ifjlreq@tempb\else
+    \edef\@deftempc{%
+      \unexpanded{\def\@tempc#1}{\jlreq@once@expand{\@tempc{#1}}%
+        \unexpanded{\def\@tempa}{\@tempa}\unexpanded{\def\@tempb{##1}}%
+        \unexpanded{\ifx\@tempa\@tempb\theendnotes\fi}%
+      }
+    }
+    \@deftempc
+  \fi
+}
+\ifjlreq@tempa
+  \def\@tempc#1{\theendnotes}
+\fi
+\edef\@defhook{\unexpanded{\global\def\jlreq@hook@beforeheadings#1}{\jlreq@once@expand{\@tempc{#1}}}}
+\@defhook
+%\AtEndDocument{\theendnotes}
+
+% 傍注はこれではうまく行かないはず．
+\setlength{\marginparwidth}{0.333\textwidth} % 根拠無しの1/3：15--20文字らしい
+\setlength{\marginparsep}{20\jlreq@mpt} % フォントサイズ×2（4.2.7：特に問題に～e）
+{%
+  \footnotesize\@tempdima=1\zw
+  \global\divide\marginparwidth\@tempdima \global\multiply\marginparwidth\@tempdima
+  \global\setlength{\marginparpush}{.5\@tempdima} % 同上：c
+}
+
+%. ページスタイル．
+% ページ番号は下の端．左右が本文と揃わない……
+% 他のも要調整
+\def\ps@plain{\let\@mkboth\@gobbletwo
+  \let\ps@jpl@in\ps@plain
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{\kern 1\zw\thepage\hfil}%
+  \def\@evenfoot{\hfil\thepage\kern 1\zw}}
+% ページ番号は上の端．
+\def\ps@headings{\let\ps@jpl@in\ps@headnombre
+  \let\@oddfoot\@empty
+  \def\@oddhead{\thepage\quad\rightmark}%
+  \def\@evenhead{\hfil\rightmark\quad\thepage}%
+  \let\@mkboth\markboth
+\def\sectionmark##1{\markright{%
+  \ifnum \c@secnumdepth >\m@ne \thesection.\hskip1\zw\fi
+  ##1}}%
+}
+\def\ps@myheadings{\let\ps@jpl@in\ps@plain%
+  \let\@oddfoot\@empty\let\@evenfoot\@empty
+  \def\@evenhead{\thepage\quad{\leftmark}\hfil}%
+  \def\@oddhead{\hfil\thepage\quad\rightmark}%
+  \let\@mkboth\@gobbletwo
+  \let\sectionmark\@gobble
+  \let\subsectionmark\@gobble
+}
+
 
 % フロート関連
 % 4.3.3.d

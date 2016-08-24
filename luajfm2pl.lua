@@ -1,5 +1,7 @@
 kpse.set_program_name("texlua","lualatex")
 
+no_jis_chars = {'｟', '〘', '〖', '«','〝','‘','“','｠', '〙', '〗', '»', '〟', '’', '”','゠', '–','‼', '⁇', '⁈', '⁉','—','〳', '〴', '〵','〻','ゕ', 'ゖ', 'ッ', 'ャ', 'ュ', 'ョ', 'ヮ', 'ヵ', 'ヶ', 'ㇰ', 'ㇱ', 'ㇲ', 'ㇳ', 'ㇴ', 'ㇵ', 'ㇶ', 'ㇷ', 'ㇸ', 'ㇹ', 'ㇺ', 'ㇻ', 'ㇼ', 'ㇽ', 'ㇾ', 'ㇿ','€','№','㌃','㌍','㌔','㌘','㌢','㌣','㌦','㌧','㌫','㌶','㌻','㍉','㍊','㍍','㍑','㍗','㎎','㎏','㎜','㎝','㎞','㎡','㏄','㏋', 'ℓ','ゔ','ヷ', 'ヸ', 'ヹ', 'ヺ','≃','≅', '≈','≢','≶', '≷', '⋚', '⋛','⌅', '⌆','⊄', '⊅','⊊', '⊋','∉','∦','↔','⊕', '⊗','∓','℧', 'Å', '−'}
+
 if arg[1] == nil then
 	print('Usage: texlua luajfm2pl.lua <JFM for LuaTeX-ja> [<PL file name>]')
 	os.exit(0)
@@ -127,9 +129,8 @@ for cls,val in pairs(jfm) do
 end
 
 -- charsを書き出す文字列に変換しておく．
-local invalid_chars = {}
-local invalid_chars_hash = {}
-for _,c in ipairs(invalid_chars) do invalid_chars_hash[c] = true end
+local no_jis_chars_hash = {}
+for _,c in ipairs(no_jis_chars) do no_jis_chars_hash[c] = true end
 
 for class,val in pairs(jfm) do
 	if type(class) ~= "number" or class == 0 then goto continue end
@@ -144,8 +145,7 @@ for class,val in pairs(jfm) do
 			end
 			if cs[2] == "*" then ac = cs[1] end
 		end
-		if invalid_chars_hash[ac] ~= true then table.insert(chars,ac) end
-		
+		if no_jis_chars_hash[ac] ~= true then table.insert(chars,ac) end
 	end
 	chars = array_uniq(chars)
  	-- charsが空になった場合は消しておく

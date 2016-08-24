@@ -1,4 +1,4 @@
-all: ujlreq-v.vf ujlreq-v.tfm
+all: ujlreq-v.vf ujlreq-v.tfm jlreq-v.vf jlreq-v.tfm
 
 ujlreq-v.vf: ujlreq-v.tfm
 	makejvf -i -u jis ujlreq-v.tfm urmlv.tfm
@@ -8,4 +8,14 @@ ujlreq-v.tfm: ujlreq-v.pl
 
 ujlreq-v.pl: jfm-jlreqv.lua luajfm2pl.lua
 	texlua luajfm2pl.lua jlreqv ujlreq-v.pl
+
+jlreq-v.vf: jlreq-v.tfm
+	makejvf -i -u jis jlreq-v.tfm rmlv.tfm
+
+jlreq-v.tfm: jlreq-v.pl
+	ppltotf jlreq-v.pl jlreq-v.tfm
+
+jlreq-v.pl: jfm-jlreqv.lua luajfm2pl.lua
+	texlua luajfm2pl.lua jlreqv jlreq-v.pl
+
 

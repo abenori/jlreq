@@ -1,5 +1,5 @@
 %#main jlreqtest.tex
-%#! uplatex
+%#! platex
 %%#! lualatex
 %%#! lualatex jlreqtest.tex ; pdftk jlreqtest.pdf multistamp onlya.pdf output out.pdf
 %%#PDF out.pdf
@@ -172,11 +172,13 @@
 \jlreq@setpostbreakpenalty{「}{10000}
 \jlreq@setpostbreakpenalty{『}{10000}
 \jlreq@setpostbreakpenalty{【}{10000}
+\ifx p\jlreq@engine\else
 \jlreq@setpostbreakpenalty{｟}{10000}
 \jlreq@setpostbreakpenalty{〘}{10000}
 \jlreq@setpostbreakpenalty{〖}{10000}
 \jlreq@setpostbreakpenalty{«}{10000}
 \jlreq@setpostbreakpenalty{〝}{10000}
+\fi
 \jlreq@setpostbreakpenalty{‘}{10000}
 \jlreq@setpostbreakpenalty{“}{10000}
 % 前置省略記号
@@ -184,8 +186,10 @@
 \jlreq@setpostbreakpenalty{＄}{10000}
 \jlreq@setpostbreakpenalty{￡}{10000}
 \jlreq@setpostbreakpenalty{＃}{10000}
+\ifx p\jlreq@engine\else
 \jlreq@setpostbreakpenalty{€}{10000}
 \jlreq@setpostbreakpenalty{№}{10000}
+\fi
 % 行頭
 % 終わり括弧類
 \jlreq@setprebreakpenalty{）}{10000}
@@ -197,25 +201,31 @@
 \jlreq@setprebreakpenalty{」}{10000}
 \jlreq@setprebreakpenalty{』}{10000}
 \jlreq@setprebreakpenalty{】}{10000}
+\ifx p\jlreq@engine\else
 \jlreq@setprebreakpenalty{｠}{10000}
 \jlreq@setprebreakpenalty{〙}{10000}
 \jlreq@setprebreakpenalty{〗}{10000}
 \jlreq@setprebreakpenalty{»}{10000}
 \jlreq@setprebreakpenalty{〟}{10000}
+\fi
 \jlreq@setprebreakpenalty{’}{10000}
 \jlreq@setprebreakpenalty{”}{10000}
 % ハイフン類
 \jlreq@setprebreakpenalty{‐}{10000}
+\ifx p\jlreq@engine\else
 \jlreq@setprebreakpenalty{゠}{10000}
 \jlreq@setprebreakpenalty{–}{10000}
 \jlreq@setprebreakpenalty{〜}{10000}
+\fi
 % 区切り約物
 \jlreq@setprebreakpenalty{！}{10000}
 \jlreq@setprebreakpenalty{？}{10000}
+\ifx p\jlreq@engine\else
 \jlreq@setprebreakpenalty{‼}{10000}
 \jlreq@setprebreakpenalty{⁇}{10000}
 \jlreq@setprebreakpenalty{⁈}{10000}
 \jlreq@setprebreakpenalty{⁉}{10000}
+\fi
 % 中点類
 \jlreq@setprebreakpenalty{・}{10000}
 \jlreq@setprebreakpenalty{：}{10000}
@@ -232,7 +242,9 @@
 \jlreq@setprebreakpenalty{ゝ}{10000}
 \jlreq@setprebreakpenalty{ゞ}{10000}
 \jlreq@setprebreakpenalty{々}{10000}
+\ifx p\jlreq@engine\else
 \jlreq@setprebreakpenalty{〻}{10000}
+\fi
 % 長音記号
 \jlreq@setprebreakpenalty{ー}{10000}
 % 小書きの仮名
@@ -251,8 +263,10 @@
 \jlreq@setprebreakpenalty{ゅ}{10000}
 \jlreq@setprebreakpenalty{ょ}{10000}
 \jlreq@setprebreakpenalty{ゎ}{10000}
+\ifx p\jlreq@engine\else
 \jlreq@setprebreakpenalty{ゕ}{10000}
 \jlreq@setprebreakpenalty{ゖ}{10000}
+\fi
 \jlreq@setprebreakpenalty{ッ}{10000}
 \jlreq@setprebreakpenalty{ャ}{10000}
 \jlreq@setprebreakpenalty{ュ}{10000}
@@ -260,6 +274,7 @@
 \jlreq@setprebreakpenalty{ヮ}{10000}
 \jlreq@setprebreakpenalty{ヵ}{10000}
 \jlreq@setprebreakpenalty{ヶ}{10000}
+\ifx p\jlreq@engine\else
 \jlreq@setprebreakpenalty{ㇰ}{10000}
 \jlreq@setprebreakpenalty{ㇱ}{10000}
 \jlreq@setprebreakpenalty{ㇲ}{10000}
@@ -276,6 +291,7 @@
 \jlreq@setprebreakpenalty{ㇽ}{10000}
 \jlreq@setprebreakpenalty{ㇾ}{10000}
 \jlreq@setprebreakpenalty{ㇿ}{10000}
+\fi
 
 % xkanjiskip
 % 初め括弧類（二分）
@@ -288,11 +304,13 @@
 \jlreq@setjaxspmode{「}{preonly}
 \jlreq@setjaxspmode{『}{preonly}
 \jlreq@setjaxspmode{【}{preonly}
+\ifx p\jlreq@engine\else
 \jlreq@setjaxspmode{｟}{preonly}
 \jlreq@setjaxspmode{〘}{preonly}
 \jlreq@setjaxspmode{〖}{preonly}
 \jlreq@setjaxspmode{«}{preonly}
 \jlreq@setjaxspmode{〝}{preonly}
+\fi
 \jlreq@setjaxspmode{‘}{preonly}
 \jlreq@setjaxspmode{“}{preonly}
 % 終わり括弧類（二分）
@@ -305,25 +323,31 @@
 \jlreq@setjaxspmode{」}{postonly}
 \jlreq@setjaxspmode{』}{postonly}
 \jlreq@setjaxspmode{】}{postonly}
+\ifx p\jlreq@engine\else
 \jlreq@setjaxspmode{｠}{postonly}
 \jlreq@setjaxspmode{〙}{postonly}
 \jlreq@setjaxspmode{〗}{postonly}
 \jlreq@setjaxspmode{»}{postonly}
 \jlreq@setjaxspmode{〟}{postonly}
+\fi
 \jlreq@setjaxspmode{’}{postonly}
 \jlreq@setjaxspmode{”}{postonly}
 % ハイフン類（二分）
 \jlreq@setjaxspmode{‐}{inhibit}
+\ifx p\jlreq@engine\else
 \jlreq@setjaxspmode{゠}{inhibit}
 \jlreq@setjaxspmode{–}{inhibit}
 \jlreq@setjaxspmode{〜}{inhibit}
+\fi
 % 区切り約物
 \jlreq@setjaxspmode{！}{postonly}
 \jlreq@setjaxspmode{？}{postonly}
+\ifx p\jlreq@engine\else
 \jlreq@setjaxspmode{‼}{postonly}
 \jlreq@setjaxspmode{⁇}{postonly}
 \jlreq@setjaxspmode{⁈}{postonly}
 \jlreq@setjaxspmode{⁉}{postonly}
+\fi
 % 中点類
 \jlreq@setjaxspmode{・}{postonly}
 \jlreq@setjaxspmode{：}{postonly}
@@ -338,16 +362,20 @@
 \jlreq@setjaxspmode{—}{inhibit}
 \jlreq@setjaxspmode{…}{inhibit}
 \jlreq@setjaxspmode{‥}{inhibit}
+\ifx p\jlreq@engine\else
 \jlreq@setjaxspmode{〳}{inhibit}
 \jlreq@setjaxspmode{〴}{inhibit}
 \jlreq@setjaxspmode{〵}{inhibit}
+\fi
 % 前置省略記号
 \jlreq@setjaxspmode{￥}{inhibit}
 \jlreq@setjaxspmode{＄}{inhibit}
 \jlreq@setjaxspmode{￡}{inhibit}
 \jlreq@setjaxspmode{＃}{inhibit}
+\ifx p\jlreq@engine\else
 \jlreq@setjaxspmode{€}{inhibit}
 \jlreq@setjaxspmode{№}{inhibit}
+\fi
 % 後置省略記号
 \jlreq@setjaxspmode{°}{inhibit}
 \jlreq@setjaxspmode{′}{inhibit}
@@ -356,6 +384,7 @@
 \jlreq@setjaxspmode{￠}{inhibit}
 \jlreq@setjaxspmode{％}{inhibit}
 \jlreq@setjaxspmode{‰}{inhibit}
+\ifx p\jlreq@engine\else
 \jlreq@setjaxspmode{㏋}{inhibit}
 \jlreq@setjaxspmode{ℓ}{inhibit}
 \jlreq@setjaxspmode{㌃}{inhibit}
@@ -381,6 +410,7 @@
 \jlreq@setjaxspmode{㎞}{inhibit}
 \jlreq@setjaxspmode{㎡}{inhibit}
 \jlreq@setjaxspmode{㏄}{inhibit}
+\fi
 % 分割禁止（分離禁止文字は特定の並びで分割禁止だが，とりあえず一括で禁止しておく．）
 \jlreq@setprebreakpenalty{—}{10000}
 \jlreq@setprebreakpenalty{…}{10000}
@@ -655,6 +685,20 @@
   \DeclareFontShape{JT2}{gt}{m}{sl}{<->ssub*gt/m/n}{}
   \DeclareFontShape{JT2}{mc}{bx}{it}{<->ssub*gt/m/n}{}
   \DeclareFontShape{JT2}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
+\fi
+\ifx p\jlreq@engine
+  \expandafter\let\csname JT1/mc/m/n/10\endcsname\relax
+  \DeclareFontShape{JT1}{mc}{m}{n}{<-> jlreq-v}{}
+  \DeclareFontShape{JT1}{gt}{m}{n}{<-> jlreq-v}{}
+  \DeclareFontShape{JT1}{mc}{bx}{n}{<->ssub*gt/m/n}{}
+  \DeclareFontShape{JT1}{gt}{bx}{n}{<->ssub*gt/m/n}{}
+  \DeclareFontShape{JT1}{mc}{m}{it}{<->ssub*mc/m/n}{}
+  \DeclareFontShape{JT1}{mc}{m}{sl}{<->ssub*mc/m/n}{}
+  \DeclareFontShape{JT1}{mc}{m}{sc}{<->ssub*mc/m/n}{}
+  \DeclareFontShape{JT1}{gt}{m}{it}{<->ssub*gt/m/n}{}
+  \DeclareFontShape{JT1}{gt}{m}{sl}{<->ssub*gt/m/n}{}
+  \DeclareFontShape{JT1}{mc}{bx}{it}{<->ssub*gt/m/n}{}
+  \DeclareFontShape{JT1}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
 \fi
 
 \emergencystretch 3\zw

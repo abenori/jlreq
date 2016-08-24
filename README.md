@@ -1,7 +1,7 @@
 # jlreq
 
 ## これは何？
-[日本語組版処理の要件](https://www.w3.org/TR/jlreq/ja/)の実装を試みる[LuaTeX-ja](https://osdn.jp/projects/luatex-ja/wiki/FrontPage)用のクラスファイルと，それに必要なJFMの組み合わせです．
+[日本語組版処理の要件](https://www.w3.org/TR/jlreq/ja/)の実装を試みる[LuaTeX-ja](https://osdn.jp/projects/luatex-ja/wiki/FrontPage) / pLaTeX用のクラスファイルと，それに必要なJFMの組み合わせです．
 
 ## 提供されるもの
 現在は以下が提供されています．

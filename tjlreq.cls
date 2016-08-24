@@ -1,4 +1,5 @@
 %#main jlreqtest.tex
+%#! uplatex
 %%#! lualatex
 %%#! lualatex jlreqtest.tex ; pdftk jlreqtest.pdf multistamp onlya.pdf output out.pdf
 %%#PDF out.pdf
@@ -10,11 +11,26 @@
 % 表
 \showboxdepth=100
 \showboxbreadth=100
+\ifx\luatexversion\@undefined
+  \epTeXinputencoding "utf8"
+  \def\zw{zw}\def\zh{zh}
+  \ifx\ucs\@undefined
+    \let\jlreq@engine=p
+  \else
+    \let\jlreq@engine=u
+  \fi
+\else
+  \let\jlreq@engine=l
+\fi
+
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{tjlreq}[2016/01/01 tjlreq]
-\RequirePackage{luatexja}
+
+\ifx l\jlreq@engine
+  \RequirePackage{luatexja}
+  \directlua{jlreq = {}}
+\fi
 \RequirePackage{xkeyval}
-\directlua{jlreq = {}}
 
 %. helper
 \def\jlreq@once@expand#1{\expandafter\unexpanded\expandafter{#1}}
@@ -28,21 +44,52 @@
 \newdimen\jlreq@resultdimen
 \newbox\jlreq@resultbox
 
+\def\jlreq@do{\long\global\def\jlreq@ifydir##1##2{\ifydir##1\else##2\fi}}
+\ifx l\jlreq@engine
+  \long\global\def\jlreq@ifydir#1#2{\ifnum\ltjgetparameter{direction}=4 #1\else#2\fi}
+\else
+  \jlreq@do
+\fi
+
 % 現在行の残りを得る．
 \RequirePackage[savepos]{zref}
 \newcount\jlreq@rest@linewidth@count
 \jlreq@rest@linewidth@count=0
 
-% 以下のコードはおかしい．
-\newcommand*{\jlreq@current@linewidth}{%
-  \dimexpr\zposx{jlreq@rest@width.pos.\the\jlreq@rest@linewidth@count} sp - \@totalleftmargin -
-  \ifodd\zref@extractdefault{jlreq@rest@width.page.\the\jlreq@rest@linewidth@count}{page}{\c@page}%
-    \oddsidemargin
-  \else
-    \evensidemargin
-  \fi
-  - 1in - \hoffset\relax
-}
+\ifx l\jlreq@engine
+  % 以下のコードはおかしい．
+  \newcommand*{\jlreq@current@linewidth}{%
+    \dimexpr\zposx{jlreq@rest@width.pos.\the\jlreq@rest@linewidth@count} sp - \@totalleftmargin -
+    \ifodd\zref@extractdefault{jlreq@rest@width.page.\the\jlreq@rest@linewidth@count}{page}{\c@page}%
+      \oddsidemargin
+    \else
+      \evensidemargin
+    \fi
+    - 1in - \hoffset\relax
+  }
+\else
+  \newcommand*{\jlreq@current@linewidth}{%
+    \dimexpr
+      \jlreq@ifydir{%
+        \zposx{jlreq@rest@width.pos.\the\jlreq@rest@linewidth@count} sp - \hoffset
+        \ifodd\zref@extractdefault{jlreq@rest@width.page.\the\jlreq@rest@linewidth@count}{page}{\c@page}%
+          - \oddsidemargin
+        \else
+          - \evensidemargin
+        \fi
+      }{%
+        \ifdim\pdfpagewidth=0pt
+          \paperheight
+        \else
+          \pdfpageheight
+        \fi
+        - \topmargin - \headheight - \headsep - \voffset
+        - \zposy{jlreq@rest@width.pos.\the\jlreq@rest@linewidth@count} sp
+      }%
+      - \@totalleftmargin - 1in
+    \relax
+  }
+\fi
 \newcommand*{\jlreq@rest@linewidth}{\dimexpr\linewidth - \jlreq@current@linewidth\relax}
 
 % この命令以降，次にこの命令を実行する前まで\jlreq@rest@linewidthで
@@ -68,236 +115,270 @@
 
 %. 基本設定
 % 和文文字，欧文文字の設定（とりあえずLuaTeX-jaのデフォルトのまま）
-\ltjsetparameter{jacharrange={-1, +2, +3, -4, -5, +6, +7, -8}}
+\ifx l\jlreq@engine
+  \ltjsetparameter{jacharrange={-1, +2, +3, -4, -5, +6, +7, -8}}
+  % kanjiskip, xkanjiskipはjfmのものを使う
+  \ltjsetparameter{kanjiskip=\maxdimen}
+  \ltjsetparameter{xkanjiskip=\maxdimen}
+\fi
 
-% kanjiskip, xkanjiskipはjfmのものを使う
-\ltjsetparameter{kanjiskip=\maxdimen}
-\ltjsetparameter{xkanjiskip=\maxdimen}
 % 禁則処理，表1,2に従う
 % 行末
 % 初め括弧類
-\ltjsetparameter{postbreakpenalty={`（,10000}}
-\ltjsetparameter{postbreakpenalty={`〔,10000}}
-\ltjsetparameter{postbreakpenalty={`［,10000}}
-\ltjsetparameter{postbreakpenalty={`｛,10000}}
-\ltjsetparameter{postbreakpenalty={`〈,10000}}
-\ltjsetparameter{postbreakpenalty={`《,10000}}
-\ltjsetparameter{postbreakpenalty={`「,10000}}
-\ltjsetparameter{postbreakpenalty={`『,10000}}
-\ltjsetparameter{postbreakpenalty={`【,10000}}
-\ltjsetparameter{postbreakpenalty={`｟,10000}}
-\ltjsetparameter{postbreakpenalty={`〘,10000}}
-\ltjsetparameter{postbreakpenalty={`〖,10000}}
-\ltjsetparameter{postbreakpenalty={`«,10000}}
-\ltjsetparameter{postbreakpenalty={`〝,10000}}
-\ltjsetparameter{postbreakpenalty={`‘,10000}}
-\ltjsetparameter{postbreakpenalty={`“,10000}}
+\if l\jlreq@engine
+  \newcommand*{\jlreq@setpostbreakpenalty}[2]{\ltjsetparameter{postbreakpenalty={`#1,#2}}}
+  \newcommand*{\jlreq@setprebreakpenalty}[2]{\ltjsetparameter{prebreakpenalty={`#1,#2}}}
+  \newcommand*{\jlreq@setjaxspmode}[2]{\ltjsetparameter{jaxspmode={`#1,preonly}}}
+\else
+  \newcommand*{\jlreq@setpostbreakpenalty}[2]{\postbreakpenalty`#1=#2}
+  \newcommand*{\jlreq@setprebreakpenalty}[2]{\prebreakpenalty`#1=#2}
+  \newcommand*{\jlreq@setjaxspmode}[2]{%
+    \def\@tempa{#2}
+    \def\@tempb{inhibit}
+    \ifx\@tempa\@tempb
+      \inhibitxspcode`#1=0
+    \else
+      \def\@tempb{preonly}
+      \ifx\@tempa\@tempb
+        \inhibitxspcode`#1=1
+      \else
+        \def\@tempb{postonly}
+        \ifx\@tempa\@tempb
+          \inhibitxspcode`#1=2
+        \else
+          \def\@tempb{allow}
+          \ifx\@tempa\@tempb
+            \inhibitxspcode`#1=3
+          \else
+            \inhibitxspcode`#1=#2
+          \fi
+        \fi
+      \fi
+    \fi
+  }
+\fi
+\jlreq@setpostbreakpenalty{（}{10000}
+\jlreq@setpostbreakpenalty{〔}{10000}
+\jlreq@setpostbreakpenalty{［}{10000}
+\jlreq@setpostbreakpenalty{｛}{10000}
+\jlreq@setpostbreakpenalty{〈}{10000}
+\jlreq@setpostbreakpenalty{《}{10000}
+\jlreq@setpostbreakpenalty{「}{10000}
+\jlreq@setpostbreakpenalty{『}{10000}
+\jlreq@setpostbreakpenalty{【}{10000}
+\jlreq@setpostbreakpenalty{｟}{10000}
+\jlreq@setpostbreakpenalty{〘}{10000}
+\jlreq@setpostbreakpenalty{〖}{10000}
+\jlreq@setpostbreakpenalty{«}{10000}
+\jlreq@setpostbreakpenalty{〝}{10000}
+\jlreq@setpostbreakpenalty{‘}{10000}
+\jlreq@setpostbreakpenalty{“}{10000}
 % 前置省略記号
-\ltjsetparameter{postbreakpenalty={`￥,10000}}
-\ltjsetparameter{postbreakpenalty={`＄,10000}}
-\ltjsetparameter{postbreakpenalty={`￡,10000}}
-\ltjsetparameter{postbreakpenalty={`＃,10000}}
-\ltjsetparameter{postbreakpenalty={`€,10000}}
-\ltjsetparameter{postbreakpenalty={`№,10000}}
+\jlreq@setpostbreakpenalty{￥}{10000}
+\jlreq@setpostbreakpenalty{＄}{10000}
+\jlreq@setpostbreakpenalty{￡}{10000}
+\jlreq@setpostbreakpenalty{＃}{10000}
+\jlreq@setpostbreakpenalty{€}{10000}
+\jlreq@setpostbreakpenalty{№}{10000}
 % 行頭
 % 終わり括弧類
-\ltjsetparameter{prebreakpenalty={`）,10000}}
-\ltjsetparameter{prebreakpenalty={`〕,10000}}
-\ltjsetparameter{prebreakpenalty={`］,10000}}
-\ltjsetparameter{prebreakpenalty={`｝,10000}}
-\ltjsetparameter{prebreakpenalty={`〉,10000}}
-\ltjsetparameter{prebreakpenalty={`》,10000}}
-\ltjsetparameter{prebreakpenalty={`」,10000}}
-\ltjsetparameter{prebreakpenalty={`』,10000}}
-\ltjsetparameter{prebreakpenalty={`】,10000}}
-\ltjsetparameter{prebreakpenalty={`｠,10000}}
-\ltjsetparameter{prebreakpenalty={`〙,10000}}
-\ltjsetparameter{prebreakpenalty={`〗,10000}}
-\ltjsetparameter{prebreakpenalty={`»,10000}}
-\ltjsetparameter{prebreakpenalty={`〟,10000}}
-\ltjsetparameter{prebreakpenalty={`’,10000}}
-\ltjsetparameter{prebreakpenalty={`”,10000}}
+\jlreq@setprebreakpenalty{）}{10000}
+\jlreq@setprebreakpenalty{〕}{10000}
+\jlreq@setprebreakpenalty{］}{10000}
+\jlreq@setprebreakpenalty{｝}{10000}
+\jlreq@setprebreakpenalty{〉}{10000}
+\jlreq@setprebreakpenalty{》}{10000}
+\jlreq@setprebreakpenalty{」}{10000}
+\jlreq@setprebreakpenalty{』}{10000}
+\jlreq@setprebreakpenalty{】}{10000}
+\jlreq@setprebreakpenalty{｠}{10000}
+\jlreq@setprebreakpenalty{〙}{10000}
+\jlreq@setprebreakpenalty{〗}{10000}
+\jlreq@setprebreakpenalty{»}{10000}
+\jlreq@setprebreakpenalty{〟}{10000}
+\jlreq@setprebreakpenalty{’}{10000}
+\jlreq@setprebreakpenalty{”}{10000}
 % ハイフン類
-\ltjsetparameter{prebreakpenalty={`‐,10000}}
-\ltjsetparameter{prebreakpenalty={`゠,10000}}
-\ltjsetparameter{prebreakpenalty={`–,10000}}
-\ltjsetparameter{prebreakpenalty={`〜,10000}}
+\jlreq@setprebreakpenalty{‐}{10000}
+\jlreq@setprebreakpenalty{゠}{10000}
+\jlreq@setprebreakpenalty{–}{10000}
+\jlreq@setprebreakpenalty{〜}{10000}
 % 区切り約物
-\ltjsetparameter{prebreakpenalty={`！,10000}}
-\ltjsetparameter{prebreakpenalty={`？,10000}}
-\ltjsetparameter{prebreakpenalty={`‼,10000}}
-\ltjsetparameter{prebreakpenalty={`⁇,10000}}
-\ltjsetparameter{prebreakpenalty={`⁈,10000}}
-\ltjsetparameter{prebreakpenalty={`⁉,10000}}
+\jlreq@setprebreakpenalty{！}{10000}
+\jlreq@setprebreakpenalty{？}{10000}
+\jlreq@setprebreakpenalty{‼}{10000}
+\jlreq@setprebreakpenalty{⁇}{10000}
+\jlreq@setprebreakpenalty{⁈}{10000}
+\jlreq@setprebreakpenalty{⁉}{10000}
 % 中点類
-\ltjsetparameter{prebreakpenalty={`・,10000}}
-\ltjsetparameter{prebreakpenalty={`：,10000}}
-\ltjsetparameter{prebreakpenalty={`；,10000}}
+\jlreq@setprebreakpenalty{・}{10000}
+\jlreq@setprebreakpenalty{：}{10000}
+\jlreq@setprebreakpenalty{；}{10000}
 % 句点類
-\ltjsetparameter{prebreakpenalty={`。,10000}}
-\ltjsetparameter{prebreakpenalty={`．,10000}}
+\jlreq@setprebreakpenalty{。}{10000}
+\jlreq@setprebreakpenalty{．}{10000}
 % 読点類
-\ltjsetparameter{prebreakpenalty={`、,10000}}
-\ltjsetparameter{prebreakpenalty={`，,10000}}
+\jlreq@setprebreakpenalty{、}{10000}
+\jlreq@setprebreakpenalty{，}{10000}
 % 繰返し記号
-\ltjsetparameter{prebreakpenalty={`ヽ,10000}}
-\ltjsetparameter{prebreakpenalty={`ヾ,10000}}
-\ltjsetparameter{prebreakpenalty={`ゝ,10000}}
-\ltjsetparameter{prebreakpenalty={`ゞ,10000}}
-\ltjsetparameter{prebreakpenalty={`々,10000}}
-\ltjsetparameter{prebreakpenalty={`〻,10000}}
+\jlreq@setprebreakpenalty{ヽ}{10000}
+\jlreq@setprebreakpenalty{ヾ}{10000}
+\jlreq@setprebreakpenalty{ゝ}{10000}
+\jlreq@setprebreakpenalty{ゞ}{10000}
+\jlreq@setprebreakpenalty{々}{10000}
+\jlreq@setprebreakpenalty{〻}{10000}
 % 長音記号
-\ltjsetparameter{prebreakpenalty={`ー,10000}}
+\jlreq@setprebreakpenalty{ー}{10000}
 % 小書きの仮名
-\ltjsetparameter{prebreakpenalty={`ぁ,10000}}
-\ltjsetparameter{prebreakpenalty={`ぃ,10000}}
-\ltjsetparameter{prebreakpenalty={`ぅ,10000}}
-\ltjsetparameter{prebreakpenalty={`ぇ,10000}}
-\ltjsetparameter{prebreakpenalty={`ぉ,10000}}
-\ltjsetparameter{prebreakpenalty={`ァ,10000}}
-\ltjsetparameter{prebreakpenalty={`ィ,10000}}
-\ltjsetparameter{prebreakpenalty={`ゥ,10000}}
-\ltjsetparameter{prebreakpenalty={`ェ,10000}}
-\ltjsetparameter{prebreakpenalty={`ォ,10000}}
-\ltjsetparameter{prebreakpenalty={`っ,10000}}
-\ltjsetparameter{prebreakpenalty={`ゃ,10000}}
-\ltjsetparameter{prebreakpenalty={`ゅ,10000}}
-\ltjsetparameter{prebreakpenalty={`ょ,10000}}
-\ltjsetparameter{prebreakpenalty={`ゎ,10000}}
-\ltjsetparameter{prebreakpenalty={`ゕ,10000}}
-\ltjsetparameter{prebreakpenalty={`ゖ,10000}}
-\ltjsetparameter{prebreakpenalty={`ッ,10000}}
-\ltjsetparameter{prebreakpenalty={`ャ,10000}}
-\ltjsetparameter{prebreakpenalty={`ュ,10000}}
-\ltjsetparameter{prebreakpenalty={`ョ,10000}}
-\ltjsetparameter{prebreakpenalty={`ヮ,10000}}
-\ltjsetparameter{prebreakpenalty={`ヵ,10000}}
-\ltjsetparameter{prebreakpenalty={`ヶ,10000}}
-\ltjsetparameter{prebreakpenalty={`ㇰ,10000}}
-\ltjsetparameter{prebreakpenalty={`ㇱ,10000}}
-\ltjsetparameter{prebreakpenalty={`ㇲ,10000}}
-\ltjsetparameter{prebreakpenalty={`ㇳ,10000}}
-\ltjsetparameter{prebreakpenalty={`ㇴ,10000}}
-\ltjsetparameter{prebreakpenalty={`ㇵ,10000}}
-\ltjsetparameter{prebreakpenalty={`ㇶ,10000}}
-\ltjsetparameter{prebreakpenalty={`ㇷ,10000}}
-\ltjsetparameter{prebreakpenalty={`ㇸ,10000}}
-\ltjsetparameter{prebreakpenalty={`ㇹ,10000}}
-\ltjsetparameter{prebreakpenalty={`ㇺ,10000}}
-\ltjsetparameter{prebreakpenalty={`ㇻ,10000}}
-\ltjsetparameter{prebreakpenalty={`ㇼ,10000}}
-\ltjsetparameter{prebreakpenalty={`ㇽ,10000}}
-\ltjsetparameter{prebreakpenalty={`ㇾ,10000}}
-\ltjsetparameter{prebreakpenalty={`ㇿ,10000}}
+\jlreq@setprebreakpenalty{ぁ}{10000}
+\jlreq@setprebreakpenalty{ぃ}{10000}
+\jlreq@setprebreakpenalty{ぅ}{10000}
+\jlreq@setprebreakpenalty{ぇ}{10000}
+\jlreq@setprebreakpenalty{ぉ}{10000}
+\jlreq@setprebreakpenalty{ァ}{10000}
+\jlreq@setprebreakpenalty{ィ}{10000}
+\jlreq@setprebreakpenalty{ゥ}{10000}
+\jlreq@setprebreakpenalty{ェ}{10000}
+\jlreq@setprebreakpenalty{ォ}{10000}
+\jlreq@setprebreakpenalty{っ}{10000}
+\jlreq@setprebreakpenalty{ゃ}{10000}
+\jlreq@setprebreakpenalty{ゅ}{10000}
+\jlreq@setprebreakpenalty{ょ}{10000}
+\jlreq@setprebreakpenalty{ゎ}{10000}
+\jlreq@setprebreakpenalty{ゕ}{10000}
+\jlreq@setprebreakpenalty{ゖ}{10000}
+\jlreq@setprebreakpenalty{ッ}{10000}
+\jlreq@setprebreakpenalty{ャ}{10000}
+\jlreq@setprebreakpenalty{ュ}{10000}
+\jlreq@setprebreakpenalty{ョ}{10000}
+\jlreq@setprebreakpenalty{ヮ}{10000}
+\jlreq@setprebreakpenalty{ヵ}{10000}
+\jlreq@setprebreakpenalty{ヶ}{10000}
+\jlreq@setprebreakpenalty{ㇰ}{10000}
+\jlreq@setprebreakpenalty{ㇱ}{10000}
+\jlreq@setprebreakpenalty{ㇲ}{10000}
+\jlreq@setprebreakpenalty{ㇳ}{10000}
+\jlreq@setprebreakpenalty{ㇴ}{10000}
+\jlreq@setprebreakpenalty{ㇵ}{10000}
+\jlreq@setprebreakpenalty{ㇶ}{10000}
+\jlreq@setprebreakpenalty{ㇷ}{10000}
+\jlreq@setprebreakpenalty{ㇸ}{10000}
+\jlreq@setprebreakpenalty{ㇹ}{10000}
+\jlreq@setprebreakpenalty{ㇺ}{10000}
+\jlreq@setprebreakpenalty{ㇻ}{10000}
+\jlreq@setprebreakpenalty{ㇼ}{10000}
+\jlreq@setprebreakpenalty{ㇽ}{10000}
+\jlreq@setprebreakpenalty{ㇾ}{10000}
+\jlreq@setprebreakpenalty{ㇿ}{10000}
 
 % xkanjiskip
 % 初め括弧類（二分）
-\ltjsetparameter{jaxspmode={`（,preonly}}
-\ltjsetparameter{jaxspmode={`〔,preonly}}
-\ltjsetparameter{jaxspmode={`［,preonly}}
-\ltjsetparameter{jaxspmode={`｛,preonly}}
-\ltjsetparameter{jaxspmode={`〈,preonly}}
-\ltjsetparameter{jaxspmode={`《,preonly}}
-\ltjsetparameter{jaxspmode={`「,preonly}}
-\ltjsetparameter{jaxspmode={`『,preonly}}
-\ltjsetparameter{jaxspmode={`【,preonly}}
-\ltjsetparameter{jaxspmode={`｟,preonly}}
-\ltjsetparameter{jaxspmode={`〘,preonly}}
-\ltjsetparameter{jaxspmode={`〖,preonly}}
-\ltjsetparameter{jaxspmode={`«,preonly}}
-\ltjsetparameter{jaxspmode={`〝,preonly}}
-\ltjsetparameter{jaxspmode={`‘,preonly}}
-\ltjsetparameter{jaxspmode={`“,preonly}}
+\jlreq@setjaxspmode{（}{preonly}
+\jlreq@setjaxspmode{〔}{preonly}
+\jlreq@setjaxspmode{［}{preonly}
+\jlreq@setjaxspmode{｛}{preonly}
+\jlreq@setjaxspmode{〈}{preonly}
+\jlreq@setjaxspmode{《}{preonly}
+\jlreq@setjaxspmode{「}{preonly}
+\jlreq@setjaxspmode{『}{preonly}
+\jlreq@setjaxspmode{【}{preonly}
+\jlreq@setjaxspmode{｟}{preonly}
+\jlreq@setjaxspmode{〘}{preonly}
+\jlreq@setjaxspmode{〖}{preonly}
+\jlreq@setjaxspmode{«}{preonly}
+\jlreq@setjaxspmode{〝}{preonly}
+\jlreq@setjaxspmode{‘}{preonly}
+\jlreq@setjaxspmode{“}{preonly}
 % 終わり括弧類（二分）
-\ltjsetparameter{jaxspmode={`）,postonly}}
-\ltjsetparameter{jaxspmode={`〕,postonly}}
-\ltjsetparameter{jaxspmode={`］,postonly}}
-\ltjsetparameter{jaxspmode={`｝,postonly}}
-\ltjsetparameter{jaxspmode={`〉,postonly}}
-\ltjsetparameter{jaxspmode={`》,postonly}}
-\ltjsetparameter{jaxspmode={`」,postonly}}
-\ltjsetparameter{jaxspmode={`』,postonly}}
-\ltjsetparameter{jaxspmode={`】,postonly}}
-\ltjsetparameter{jaxspmode={`｠,postonly}}
-\ltjsetparameter{jaxspmode={`〙,postonly}}
-\ltjsetparameter{jaxspmode={`〗,postonly}}
-\ltjsetparameter{jaxspmode={`»,postonly}}
-\ltjsetparameter{jaxspmode={`〟,postonly}}
-\ltjsetparameter{jaxspmode={`’,postonly}}
-\ltjsetparameter{jaxspmode={`”,postonly}}
+\jlreq@setjaxspmode{）}{postonly}
+\jlreq@setjaxspmode{〕}{postonly}
+\jlreq@setjaxspmode{］}{postonly}
+\jlreq@setjaxspmode{｝}{postonly}
+\jlreq@setjaxspmode{〉}{postonly}
+\jlreq@setjaxspmode{》}{postonly}
+\jlreq@setjaxspmode{」}{postonly}
+\jlreq@setjaxspmode{』}{postonly}
+\jlreq@setjaxspmode{】}{postonly}
+\jlreq@setjaxspmode{｠}{postonly}
+\jlreq@setjaxspmode{〙}{postonly}
+\jlreq@setjaxspmode{〗}{postonly}
+\jlreq@setjaxspmode{»}{postonly}
+\jlreq@setjaxspmode{〟}{postonly}
+\jlreq@setjaxspmode{’}{postonly}
+\jlreq@setjaxspmode{”}{postonly}
 % ハイフン類（二分）
-\ltjsetparameter{jaxspmode={`‐,inhibit}}
-\ltjsetparameter{jaxspmode={`゠,inhibit}}
-\ltjsetparameter{jaxspmode={`–,inhibit}}
-\ltjsetparameter{jaxspmode={`〜,inhibit}}
+\jlreq@setjaxspmode{‐}{inhibit}
+\jlreq@setjaxspmode{゠}{inhibit}
+\jlreq@setjaxspmode{–}{inhibit}
+\jlreq@setjaxspmode{〜}{inhibit}
 % 区切り約物
-\ltjsetparameter{jaxspmode={`！,postonly}}
-\ltjsetparameter{jaxspmode={`？,postonly}}
-\ltjsetparameter{jaxspmode={`‼,postonly}}
-\ltjsetparameter{jaxspmode={`⁇,postonly}}
-\ltjsetparameter{jaxspmode={`⁈,postonly}}
-\ltjsetparameter{jaxspmode={`⁉,postonly}}
+\jlreq@setjaxspmode{！}{postonly}
+\jlreq@setjaxspmode{？}{postonly}
+\jlreq@setjaxspmode{‼}{postonly}
+\jlreq@setjaxspmode{⁇}{postonly}
+\jlreq@setjaxspmode{⁈}{postonly}
+\jlreq@setjaxspmode{⁉}{postonly}
 % 中点類
-\ltjsetparameter{jaxspmode={`・,postonly}}
-\ltjsetparameter{jaxspmode={`：,postonly}}
-\ltjsetparameter{jaxspmode={`；,postonly}}
+\jlreq@setjaxspmode{・}{postonly}
+\jlreq@setjaxspmode{：}{postonly}
+\jlreq@setjaxspmode{；}{postonly}
 % 句点類（二分）
-\ltjsetparameter{jaxspmode={`。,postonly}}
-\ltjsetparameter{jaxspmode={`．,postonly}}
+\jlreq@setjaxspmode{。}{postonly}
+\jlreq@setjaxspmode{．}{postonly}
 % 読点類（二分）
-\ltjsetparameter{jaxspmode={`、,postonly}}
-\ltjsetparameter{jaxspmode={`，,postonly}}
+\jlreq@setjaxspmode{、}{postonly}
+\jlreq@setjaxspmode{，}{postonly}
 % 分離禁止文字
-\ltjsetparameter{jaxspmode={`—,inhibit}}
-\ltjsetparameter{jaxspmode={`…,inhibit}}
-\ltjsetparameter{jaxspmode={`‥,inhibit}}
-\ltjsetparameter{jaxspmode={`〳,inhibit}}
-\ltjsetparameter{jaxspmode={`〴,inhibit}}
-\ltjsetparameter{jaxspmode={`〵,inhibit}}
+\jlreq@setjaxspmode{—}{inhibit}
+\jlreq@setjaxspmode{…}{inhibit}
+\jlreq@setjaxspmode{‥}{inhibit}
+\jlreq@setjaxspmode{〳}{inhibit}
+\jlreq@setjaxspmode{〴}{inhibit}
+\jlreq@setjaxspmode{〵}{inhibit}
 % 前置省略記号
-\ltjsetparameter{jaxspmode={`￥,inhibit}}
-\ltjsetparameter{jaxspmode={`＄,inhibit}}
-\ltjsetparameter{jaxspmode={`￡,inhibit}}
-\ltjsetparameter{jaxspmode={`＃,inhibit}}
-\ltjsetparameter{jaxspmode={`€,inhibit}}
-\ltjsetparameter{jaxspmode={`№,inhibit}}
+\jlreq@setjaxspmode{￥}{inhibit}
+\jlreq@setjaxspmode{＄}{inhibit}
+\jlreq@setjaxspmode{￡}{inhibit}
+\jlreq@setjaxspmode{＃}{inhibit}
+\jlreq@setjaxspmode{€}{inhibit}
+\jlreq@setjaxspmode{№}{inhibit}
 % 後置省略記号
-\ltjsetparameter{jaxspmode={`°,inhibit}}
-\ltjsetparameter{jaxspmode={`′,inhibit}}
-\ltjsetparameter{jaxspmode={`″,inhibit}}
-\ltjsetparameter{jaxspmode={`℃,inhibit}}
-\ltjsetparameter{jaxspmode={`￠,inhibit}}
-\ltjsetparameter{jaxspmode={`％,inhibit}}
-\ltjsetparameter{jaxspmode={`‰,inhibit}}
-\ltjsetparameter{jaxspmode={`㏋,inhibit}}
-\ltjsetparameter{jaxspmode={`ℓ,inhibit}}
-\ltjsetparameter{jaxspmode={`㌃,inhibit}}
-\ltjsetparameter{jaxspmode={`㌍,inhibit}}
-\ltjsetparameter{jaxspmode={`㌔,inhibit}}
-\ltjsetparameter{jaxspmode={`㌘,inhibit}}
-\ltjsetparameter{jaxspmode={`㌢,inhibit}}
-\ltjsetparameter{jaxspmode={`㌣,inhibit}}
-\ltjsetparameter{jaxspmode={`㌦,inhibit}}
-\ltjsetparameter{jaxspmode={`㌧,inhibit}}
-\ltjsetparameter{jaxspmode={`㌫,inhibit}}
-\ltjsetparameter{jaxspmode={`㌶,inhibit}}
-\ltjsetparameter{jaxspmode={`㌻,inhibit}}
-\ltjsetparameter{jaxspmode={`㍉,inhibit}}
-\ltjsetparameter{jaxspmode={`㍊,inhibit}}
-\ltjsetparameter{jaxspmode={`㍍,inhibit}}
-\ltjsetparameter{jaxspmode={`㍑,inhibit}}
-\ltjsetparameter{jaxspmode={`㍗,inhibit}}
-\ltjsetparameter{jaxspmode={`㎎,inhibit}}
-\ltjsetparameter{jaxspmode={`㎏,inhibit}}
-\ltjsetparameter{jaxspmode={`㎜,inhibit}}
-\ltjsetparameter{jaxspmode={`㎝,inhibit}}
-\ltjsetparameter{jaxspmode={`㎞,inhibit}}
-\ltjsetparameter{jaxspmode={`㎡,inhibit}}
-\ltjsetparameter{jaxspmode={`㏄,inhibit}}
+\jlreq@setjaxspmode{°}{inhibit}
+\jlreq@setjaxspmode{′}{inhibit}
+\jlreq@setjaxspmode{″}{inhibit}
+\jlreq@setjaxspmode{℃}{inhibit}
+\jlreq@setjaxspmode{￠}{inhibit}
+\jlreq@setjaxspmode{％}{inhibit}
+\jlreq@setjaxspmode{‰}{inhibit}
+\jlreq@setjaxspmode{㏋}{inhibit}
+\jlreq@setjaxspmode{ℓ}{inhibit}
+\jlreq@setjaxspmode{㌃}{inhibit}
+\jlreq@setjaxspmode{㌍}{inhibit}
+\jlreq@setjaxspmode{㌔}{inhibit}
+\jlreq@setjaxspmode{㌘}{inhibit}
+\jlreq@setjaxspmode{㌢}{inhibit}
+\jlreq@setjaxspmode{㌣}{inhibit}
+\jlreq@setjaxspmode{㌦}{inhibit}
+\jlreq@setjaxspmode{㌧}{inhibit}
+\jlreq@setjaxspmode{㌫}{inhibit}
+\jlreq@setjaxspmode{㌶}{inhibit}
+\jlreq@setjaxspmode{㌻}{inhibit}
+\jlreq@setjaxspmode{㍉}{inhibit}
+\jlreq@setjaxspmode{㍊}{inhibit}
+\jlreq@setjaxspmode{㍍}{inhibit}
+\jlreq@setjaxspmode{㍑}{inhibit}
+\jlreq@setjaxspmode{㍗}{inhibit}
+\jlreq@setjaxspmode{㎎}{inhibit}
+\jlreq@setjaxspmode{㎏}{inhibit}
+\jlreq@setjaxspmode{㎜}{inhibit}
+\jlreq@setjaxspmode{㎝}{inhibit}
+\jlreq@setjaxspmode{㎞}{inhibit}
+\jlreq@setjaxspmode{㎡}{inhibit}
+\jlreq@setjaxspmode{㏄}{inhibit}
 % 分割禁止（分離禁止文字は特定の並びで分割禁止だが，とりあえず一括で禁止しておく．）
-\ltjsetparameter{prebreakpenalty={`—,10000}}
-\ltjsetparameter{prebreakpenalty={`…,10000}}
-\ltjsetparameter{prebreakpenalty={`‥,10000}}
+\jlreq@setprebreakpenalty{—}{10000}
+\jlreq@setprebreakpenalty{…}{10000}
+\jlreq@setprebreakpenalty{‥}{10000}
 % ￥100とか70％とか……
 
 %. オプションの定義
@@ -362,17 +443,40 @@
 % フォントサイズ，行長，1ページあたりの行数で基本版面のサイズを決める（2.4.1.a）
 \newdimen\jlreq@fontsize
 \jlreq@fontsize=10pt
-\DeclareOptionX{fontsize}{%
-  \@tempdima=2.5mm\relax
-  \setlength{\jlreq@fontsize}{%
-    \dimexpr\directlua{
-      local yen = string.char(92)
-      local s = [[#1]]
-      s = s:gsub("Q"," * 2.5mm")
-      tex.print(s)
-    }\relax
-  }%
-}
+\ifx l\jlreq@engine
+  \DeclareOptionX{fontsize}{%
+    \@tempdima=2.5mm\relax
+    \setlength{\jlreq@fontsize}{%
+      \dimexpr\directlua{
+        local yen = string.char(92)
+        local s = [[#1]]
+        s = s:gsub("Q"," * 2.5mm")
+        tex.print(s)
+      }\relax
+    }%
+  }
+\else
+  \def\jlreq@replaceQtotempdima#1{%
+    \jlreq@replaceQtotempdima@#1\jlreq@endmark
+  }
+  \def\jlreq@replaceQtotempdima@#1{%
+    \ifx#1\jlreq@endmark\else
+      \ifx#1\@tempa
+        * 2.5mm%
+      \else
+        #1%
+      \fi
+      \expandafter\jlreq@replaceQtotempdima@
+    \fi
+  }
+  \DeclareOptionX{fontsize}{%
+    \let\@tempa=Q\relax
+    \setlength{\jlreq@fontsize}{%
+      \dimexpr\jlreq@replaceQtotempdima{#1}\relax
+    }%
+  }
+\fi
+
 
 % 行の長さ
 \newcommand*{\jlreq@line@length}{}
@@ -458,9 +562,11 @@
 
 %. オプション処理
 % この値は後でjfm-jlreq内で読む
-\directlua{jlreq.open_bracket_pos = [[\jlreq@open@bracket@pos]]}
-\ifjlreq@burasage\directlua{jlreq.burasage = true}
-\else\directlua{jlreq.burasage = false}\fi
+\ifx l\jlreq@engine
+  \directlua{jlreq.open_bracket_pos = [[\jlreq@open@bracket@pos]]}
+  \ifjlreq@burasage\directlua{jlreq.burasage = true}
+  \else\directlua{jlreq.burasage = false}\fi
+\fi
 
 % landscapeの場合縦横をひっくり返す
 \if@landscape
@@ -471,7 +577,7 @@
 
 % スケーリング用
 \newdimen\jlreq@mpt
-\jlreq@mpt=\dimexpr\jlreq@fontsize/10\relax
+\jlreq@mpt=\dimexpr\jlreq@fontsize / 10\relax
 % \baselineskipの計算
 \ifx\jlreq@option@baselineskip\@empty
   \setlength{\jlreq@baselineskip}{\dimexpr 17\jlreq@fontsize/10\relax}%
@@ -498,30 +604,49 @@
   \advance \stockwidth 2in
   \advance \stockheight 2in
 \fi
-\setlength{\pagewidth}{\stockwidth}
-\setlength{\pageheight}{\stockheight}
-
+\ifx l\jlreq@engine
+  \setlength{\pagewidth}{\stockwidth}
+  \setlength{\pageheight}{\stockheight}
+\fi
 
 %. 和文フォント
-\RequirePackage{luatexja-adjust}
-\ltjenableadjust[lineend=extended,priority=true]
-\directlua{
-  luatexja.adjust.make_priority_table(1,0,-1,5)
-  luatexja.adjust.make_priority_table(2,0,-1,5)
-}
+\ifx l\jlreq@engine
+  \RequirePackage{luatexja-adjust}
+  \ltjenableadjust[lineend=extended,priority=true]
+  \directlua{
+    luatexja.adjust.make_priority_table(1,0,-1,5)
+    luatexja.adjust.make_priority_table(2,0,-1,5)
+  }
+\fi
 
-\expandafter\let\csname JT3/mc/m/n/10\endcsname\relax
-\DeclareFontShape{JT3}{mc}{m}{n}{<->\ltj@stdmcfont:jfm=jlreqv;script=latn;-kern}{}
-\DeclareFontShape{JT3}{gt}{m}{n}{<->\ltj@stdgtfont:jfm=jlreqv;script=latn;-kern}{}
-\DeclareFontShape{JT3}{mc}{bx}{n}{<->ssub*gt/m/n}{}
-\DeclareFontShape{JT3}{gt}{bx}{n}{<->ssub*gt/m/n}{}
-\DeclareFontShape{JT3}{mc}{m}{it}{<->ssub*mc/m/n}{}
-\DeclareFontShape{JT3}{mc}{m}{sl}{<->ssub*mc/m/n}{}
-\DeclareFontShape{JT3}{mc}{m}{sc}{<->ssub*mc/m/n}{}
-\DeclareFontShape{JT3}{gt}{m}{it}{<->ssub*gt/m/n}{}
-\DeclareFontShape{JT3}{gt}{m}{sl}{<->ssub*gt/m/n}{}
-\DeclareFontShape{JT3}{mc}{bx}{it}{<->ssub*gt/m/n}{}
-\DeclareFontShape{JT3}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
+\ifx l\jlreq@engine
+  \expandafter\let\csname JT3/mc/m/n/10\endcsname\relax
+  \DeclareFontShape{JT3}{mc}{m}{n}{<->\ltj@stdmcfont:jfm=jlreqv;script=latn;-kern}{}
+  \DeclareFontShape{JT3}{gt}{m}{n}{<->\ltj@stdgtfont:jfm=jlreqv;script=latn;-kern}{}
+  \DeclareFontShape{JT3}{mc}{bx}{n}{<->ssub*gt/m/n}{}
+  \DeclareFontShape{JT3}{gt}{bx}{n}{<->ssub*gt/m/n}{}
+  \DeclareFontShape{JT3}{mc}{m}{it}{<->ssub*mc/m/n}{}
+  \DeclareFontShape{JT3}{mc}{m}{sl}{<->ssub*mc/m/n}{}
+  \DeclareFontShape{JT3}{mc}{m}{sc}{<->ssub*mc/m/n}{}
+  \DeclareFontShape{JT3}{gt}{m}{it}{<->ssub*gt/m/n}{}
+  \DeclareFontShape{JT3}{gt}{m}{sl}{<->ssub*gt/m/n}{}
+  \DeclareFontShape{JT3}{mc}{bx}{it}{<->ssub*gt/m/n}{}
+  \DeclareFontShape{JT3}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
+\fi
+\ifx u\jlreq@engine
+  \expandafter\let\csname JT2/mc/m/n/10\endcsname\relax
+  \DeclareFontShape{JT2}{mc}{m}{n}{<-> ujlreq-v}{}
+  \DeclareFontShape{JT2}{gt}{m}{n}{<-> ujlreq-v}{}
+  \DeclareFontShape{JT2}{mc}{bx}{n}{<->ssub*gt/m/n}{}
+  \DeclareFontShape{JT2}{gt}{bx}{n}{<->ssub*gt/m/n}{}
+  \DeclareFontShape{JT2}{mc}{m}{it}{<->ssub*mc/m/n}{}
+  \DeclareFontShape{JT2}{mc}{m}{sl}{<->ssub*mc/m/n}{}
+  \DeclareFontShape{JT2}{mc}{m}{sc}{<->ssub*mc/m/n}{}
+  \DeclareFontShape{JT2}{gt}{m}{it}{<->ssub*gt/m/n}{}
+  \DeclareFontShape{JT2}{gt}{m}{sl}{<->ssub*gt/m/n}{}
+  \DeclareFontShape{JT2}{mc}{bx}{it}{<->ssub*gt/m/n}{}
+  \DeclareFontShape{JT2}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
+\fi
 
 \emergencystretch 3\zw
 
@@ -533,7 +658,6 @@
   \belowdisplayshortskip \belowdisplayskip
   \let\@listi\@listI}
 
-\kanjiencoding{JT3}
 \mcfamily\selectfont\normalsize
 \setbox0\hbox{　} % 全角スペース
 \setlength\Cht{\ht0}
@@ -574,7 +698,11 @@
 \newcommand{\huge}{\@setfontsize\huge{2\jlreq@fontsize}{\dimexpr 28\jlreq@baselineskip/17\relax}}
 \newcommand{\Huge}{\@setfontsize\Huge{\dimexpr 25\jlreq@fontsize/10\relax}{\dimexpr 33\jlreq@baselineskip/17\relax}}
 
-\RequirePackage{lltjext}
+\ifx l\jlreq@engine
+  \RequirePackage{lltjext}
+\else
+  \RequirePackage{plext}
+\fi
 \renewcommand*{\@Kanji}[1]{\expandafter\kansuji\number #1\relax} % \relax追加
 \rensujiskip=0\zh plus 0.25\zh minus 0\zh
 
@@ -602,30 +730,35 @@
 \newdimen\jlreq@footnoteindent
 
 %. ページレイアウト
-\def\jlreq@expand@speciallength#1{%
-  % zhやzwを\zhや\zwにする．
-  \dimexpr\directlua{
-    local yen = string.char(92)
-    local s = [[#1]]
-    s = s:gsub("zw",yen .. "zw"):gsub("zh",yen .. "zh")
-    tex.print(s)
-  }\relax
-}
+\ifx l\jlreq@engine
+  \def\jlreq@expand@speciallength#1{%
+    % zhやzwを\zhや\zwにする．
+    \dimexpr\directlua{
+      local yen = string.char(92)
+      local s = [[#1]]
+      s = s:gsub("zw",yen .. "zw"):gsub("zh",yen .. "zh")
+      tex.print(s)
+    }\relax
+  }
+\else
+  \def\jlreq@expand@speciallength#1{\dimexpr #1\relax}
+\fi
 
 % デフォルト値は縦が0.768倍，横が0.727倍（JISX4051のA5の例から換算……）．
 % 縦 (\textwidth)
+\@tempdima=1\zh
 \ifx\jlreq@line@length\@empty
   \setlength{\textwidth}{0.768\paperheight}
-  \divide\textwidth\zh
+  \divide\textwidth\@tempdima
 \else
   \setlength{\textwidth}{\jlreq@expand@speciallength{\jlreq@line@length}}
-  \divide\textwidth\zh
+  \divide\textwidth\@tempdima
   % 縦ならば一行52文字以下，横ならば40文字以下が望ましい．2.4.2.c 注2
 %  \ifnum\number\textwidth>52
 %    \ClassWarningNoLine{tjlreq}{JLREQ recommends that the length of the line is less than or equal to that of the 50 characters. The given length is greater than that}
 %  \fi
 \fi
-\multiply\textwidth\zh
+\multiply\textwidth\@tempdima
 
 % 横 (\textheight)
 \ifx\jlreq@number@of@lines\@empty
@@ -861,12 +994,12 @@
   \renewcommand{\@footnotemark}{%
     \leavevmode
     \ifhmode\edef\@x@sf{\the\spacefactor}\nobreak\fi
-    \ifnum\ltjgetparameter{direction}=4\relax
+    \jlreq@ifydir{%
       \hbox{\@textsuperscript{\normalfont\@makefnmark}}%
-    \else
+    }{%
       \setbox\@tempboxa=\hbox{\scriptsize\@makefnmark}%
       \inhibitglue\raise\dimexpr.5\zw - (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa\inhibitglue
-    \fi
+    }  
     \ifhmode\spacefactor\@x@sf\fi
     \relax}
 \else
@@ -895,8 +1028,9 @@
 % インデントの計算：脚注の長さが文字の整数倍になるように字下げする（4.2.5.b）
 {
   \@tempdima=\textwidth
+  \@tempdimb=1\zh
   \footnotesize
-  \divide\@tempdima\zh \multiply\@tempdima\zh
+  \divide\@tempdima\@tempdimb \multiply\@tempdima\@tempdimb
   \global\jlreq@footnoteindent=\dimexpr\textwidth - \@tempdima\relax
 }
 % 二行目以降の字下げを全角空きにする方にしておく．（オプションで制御できるべき）：4.2.5.d
@@ -952,7 +1086,8 @@
       \footnotesize
       % 後注の長さを文字サイズの整数倍にする（4.2.4.b）
       \@tempdima=\dimexpr\linewidth - \jlreq@endnote@indent - \leftskip\relax
-      \divide\@tempdima\zh\multiply\@tempdima\zh
+      \@tempdimb=1\zh
+      \divide\@tempdima\@tempdimb\multiply\@tempdima\@tempdimb
       \begin{list}{}{%
         \itemsep=0pt\relax
         \parsep=0pt\relax
@@ -1069,12 +1204,9 @@
 \newcommand{\@makecaption}[2]{{%
   \reset@font\small\headfont
   \vskip\abovecaptionskip
-  \ifnum\ltjgetparameter{direction}=3 \sbox\@tempboxa{#1\hskip1\zw#2}%
-    \else\sbox\@tempboxa{#1: #2}%
-  \fi
+  \jlreq@ifydir{\sbox\@tempboxa{#1: #2}}{\sbox\@tempboxa{#1\hskip1\zw#2}}%
   \ifdim \wd\@tempboxa >\hsize
-    \ifnum\ltjgetparameter{direction}=3  #1\hskip1\zw#2\relax\par
-    \else #1: #2\relax\par\fi
+    \jlreq@ifydir{#1: #2\relax\par}{#1\hskip1\zw#2\relax\par}%
   \else
     \global \@minipagefalse
     \hbox to\hsize{\hfil\box\@tempboxa\hfil}%
@@ -1197,8 +1329,7 @@
   \newcommand{\maketitle}{\par
   \begingroup
     \renewcommand{\thefootnote}{\fnsymbol{footnote}}%
-    \def\@makefnmark{\hbox{\unless\ifnum\ltjgetparameter{direction}=3 $\m@th^{\@thefnmark}$
-      \else\hbox{\yoko$\m@th^{\@thefnmark}$}\fi}}%
+    \def\@makefnmark{\hbox{\jlreq@ifydir{$\m@th^{\@thefnmark}$}{\hbox{\yoko$\m@th^{\@thefnmark}$}}}}
     \long\def\@makefntext##1{\parindent 1\zw\noindent
       \hbox to 2\zw{\hss\@makefnmark}##1}%
     \if@twocolumn
@@ -1388,11 +1519,14 @@
 \renewcommand{\theequation}{\@arabic\c@equation}
 
 % 数式フォント設定
-\DeclareSymbolFont{mincho}{JY3}{mc}{m}{n}
-\DeclareSymbolFontAlphabet{\mathmc}{mincho}
-\SetSymbolFont{mincho}{bold}{JY3}{gt}{m}{n}
-\jfam\symmincho
-\DeclareMathAlphabet{\mathgt}{JY3}{gt}{m}{n}
+\ifx l\jlreq@engine
+  \DeclareSymbolFont{mincho}{JY3}{mc}{m}{n}
+  \DeclareSymbolFontAlphabet{\mathmc}{mincho}
+  \SetSymbolFont{mincho}{bold}{JY3}{gt}{m}{n}
+  \jfam\symmincho
+  \DeclareMathAlphabet{\mathgt}{JY3}{gt}{m}{n}
+\else
+\fi
 
 % あれば読み込む．
 \IfFileExists{bxoldfontcmd.sty}{\RequirePackage[praised]{bxoldfontcmd}}{}
@@ -1565,6 +1699,7 @@
 \def\和暦{\西暦false}
 \newcount\heisei \heisei\year \advance\heisei-1988\relax
 \def\today{{%
+  \jlreq@ifydir{%
   \ifnum\ltjgetparameter{direction}=3
     \if西暦
       \kansuji\year 年
@@ -1575,7 +1710,7 @@
       \kansuji\month 月
       \kansuji\day 日
     \fi
-  \else
+  }{%
     \if西暦
       \number\year~年
       \number\month~月
@@ -1585,10 +1720,14 @@
       \number\month~月
       \number\day~日
     \fi
-  \fi}}
+  }}}
 
 % ルビ
-\RequirePackage{luatexja-ruby}
+\ifx l\jlreq@engine
+  \RequirePackage{luatexja-ruby}
+\else
+  \RequirePackage{pxrubrica}
+\fi
 
 % 割注: 3.4
 \newcommand{\jlreq@warichu@kakkofontsize}{%

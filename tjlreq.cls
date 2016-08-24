@@ -1016,7 +1016,7 @@
 \fi
 \edef\@defhook{\unexpanded{\global\def\jlreq@hook@beforeheadings#1}{\jlreq@once@expand{\@tempc{#1}}}}
 \@defhook
-%\AtEndDocument{\theendnotes}
+\AtEndDocument{\theendnotes}
 
 % 傍注はこれではうまく行かないはず．
 \setlength{\marginparwidth}{0.333\textwidth} % 根拠無しの1/3：15--20文字らしい

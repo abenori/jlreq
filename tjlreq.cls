@@ -58,7 +58,7 @@
 
 \ifx l\jlreq@engine
   % 以下のコードはおかしい．
-  \newcommand*{\jlreq@current@linewidth}{%
+  \newcommand*{\jlreq@calc@current@linewidth}{%
     \dimexpr\zposx{jlreq@rest@width.pos.\the\jlreq@rest@linewidth@count} sp - \@totalleftmargin -
     \ifodd\zref@extractdefault{jlreq@rest@width.page.\the\jlreq@rest@linewidth@count}{page}{\c@page}%
       \oddsidemargin
@@ -68,7 +68,7 @@
     - 1in - \hoffset\relax
   }
 \else
-  \newcommand*{\jlreq@current@linewidth}{%
+  \newcommand*{\jlreq@calc@current@linewidth}{%
     \dimexpr
       \jlreq@ifydir{%
         \zposx{jlreq@rest@width.pos.\the\jlreq@rest@linewidth@count} sp - \hoffset
@@ -90,14 +90,17 @@
     \relax
   }
 \fi
-\newcommand*{\jlreq@rest@linewidth}{\dimexpr\linewidth - \jlreq@current@linewidth\relax}
 
-% この命令以降，次にこの命令を実行する前まで\jlreq@rest@linewidthで
+\newdimen\jlreq@current@linewidth
+\newdimen\jlreq@rest@linewidth
+% この命令以降，次にこの命令を実行する前まで\jlreq@rest@linewidth/\jlreq@rest@linewidthで
 % この場所における残り長さが取得できる．
 \newcommand*{\jlreq@savepos@for@rest@linewidth}{%
   \advance\jlreq@rest@linewidth@count by 1\relax
   \zsavepos{jlreq@rest@width.pos.\the\jlreq@rest@linewidth@count}%
   \zref@labelbyprops{jlreq@rest@width.page.\the\jlreq@rest@linewidth@count}{page}%
+  \jlreq@current@linewidth=\jlreq@calc@current@linewidth
+  \jlreq@rest@linewidth=\dimexpr\linewidth - \jlreq@current@linewidth\relax
 }
 
 % vbox #1の最後を\jlreq@resultboxに入れる
@@ -120,6 +123,9 @@
   % kanjiskip, xkanjiskipはjfmのものを使う
   \ltjsetparameter{kanjiskip=\maxdimen}
   \ltjsetparameter{xkanjiskip=\maxdimen}
+\else
+  \kanjiskip=0pt plus 0.25zh minus 0pt
+  \xkanjiskip=0.25zh plus 0.25zh minus 0.125zh
 \fi
 
 % 禁則処理，表1,2に従う
@@ -607,6 +613,9 @@
 \ifx l\jlreq@engine
   \setlength{\pagewidth}{\stockwidth}
   \setlength{\pageheight}{\stockheight}
+\else
+  \setlength{\pdfpagewidth}{\stockwidth}
+  \setlength{\pdfpageheight}{\stockheight}
 \fi
 
 %. 和文フォント
@@ -992,22 +1001,22 @@
 \def\@tempa{inline}
 \ifx\jlreq@referencemark\@tempa
   \renewcommand{\@footnotemark}{%
-    \leavevmode
-    \ifhmode\edef\@x@sf{\the\spacefactor}\nobreak\fi
-    \jlreq@ifydir{%
-      \hbox{\@textsuperscript{\normalfont\@makefnmark}}%
-    }{%
-      \setbox\@tempboxa=\hbox{\scriptsize\@makefnmark}%
-      \inhibitglue\raise\dimexpr.5\zw - (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa\inhibitglue
-    }  
-    \ifhmode\spacefactor\@x@sf\fi
+%    \leavevmode
+%    \ifhmode\edef\@x@sf{\the\spacefactor}\nobreak\fi
+%    \jlreq@ifydir{%
+%      \hbox{\@textsuperscript{\normalfont\@makefnmark}}%
+%    }{%
+%      \setbox\@tempboxa=\hbox{\scriptsize\@makefnmark}%
+%      \raise\dimexpr.5\zw - (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa
+%    }%
+%    \ifhmode\spacefactor\@x@sf\fi
     \relax}
 \else
   \renewcommand{\@footnotemark}{%
     \leavevmode
     \ifhmode\edef\@x@sf{\the\spacefactor}\nobreak\fi
     \setbox\@tempboxa=\hbox{\scriptsize\@makefnmark}%
-    % 行頭に来たときに頭を天にそろえる処理．
+%    % 行頭に来たときに頭を天にそろえる処理．
     \jlreq@savepos@for@rest@linewidth
     \ifdim\jlreq@current@linewidth<\wd\@tempboxa
       \@tempdima=\jlreq@current@linewidth
@@ -1045,7 +1054,7 @@
     \leavevmode\@makefnmark\hskip 1\zh#1}% 見出し出力と一文字分の空き
 \fi
 % 図4.61のようにする
-\renewcommand{\@makefnmark}{\hbox{（\@thefnmark）}}
+\renewcommand{\@makefnmark}{\hbox{\inhibitglue（\@thefnmark）\inhibitglue}}
 \renewcommand{\thefootnote}{\rensuji{\@arabic\c@footnote}}
 
 %.. 後注（4.2.4）
@@ -1329,7 +1338,7 @@
   \newcommand{\maketitle}{\par
   \begingroup
     \renewcommand{\thefootnote}{\fnsymbol{footnote}}%
-    \def\@makefnmark{\hbox{\jlreq@ifydir{$\m@th^{\@thefnmark}$}{\hbox{\yoko$\m@th^{\@thefnmark}$}}}}
+    \def\@makefnmark{\hbox{\jlreq@ifydir{$\m@th^{\@thefnmark}$}{\hbox{\yoko$\m@th^{\@thefnmark}$}}}}%
     \long\def\@makefntext##1{\parindent 1\zw\noindent
       \hbox to 2\zw{\hss\@makefnmark}##1}%
     \if@twocolumn
@@ -1805,7 +1814,7 @@
     \edef\jlreq@parshapearg{\jlreq@parshapearg 0pt \the\jlreq@tempdimb 0pt \the\jlreq@tempdimb}%
   }%
   \ifvoid\jlreq@resultbox
-    \ClassWarning{tjlreq}{\string\warichu\space failed, may be a bug}%
+    \ClassWarning{tjlreq}{\string\warichu\space failed, maybe a bug}%
   \else
     \@tempcnta=0\relax
     \splittopskip=0pt\relax
@@ -1834,19 +1843,22 @@
         \setbox\jlreq@tempboxa=\box\jlreq@resultbox
         \ifx\jlreq@warichu@autolinebreak\\\relax
           \ifdim\jlreq@tempdima>0pt\relax
-            \raise-.5\zw\hbox to \jlreq@tempdima{\vbox{%
+            \setbox\jlreq@tempboxa=\vbox{%
               \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxa}%
-              \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxb}}}%
+              \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxb}}%
           \else
-            \raise-.5\zw\hbox{\vbox{%
+            \setbox\jlreq@tempboxa=\vbox{%
               \hbox{\unhbox\jlreq@tempboxa}%
-              \hbox{\unhbox\jlreq@tempboxb}}}%
+              \hbox{\unhbox\jlreq@tempboxb}}%
           \fi
         \else
-          \raise-.5\zw\hbox to \jlreq@tempdima{\vbox{%
-            \hbox{\unhbox\jlreq@tempboxa}%
-            \hbox{\unhbox\jlreq@tempboxb}}}%
+          \setbox\jlreq@tempboxa=\vbox{%
+            \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxa}%
+            \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxb}}%
         \fi
+        \ht\jlreq@tempboxa=\dimexpr(\ht\jlreq@tempboxa + \dp\jlreq@tempboxa)/2\relax
+        \dp\jlreq@tempboxa=\ht\jlreq@tempboxa
+        \hbox{\box\jlreq@tempboxa}%
       }%
       \advance\@tempcnta by 2\relax
     }%
@@ -1857,9 +1869,7 @@
 \newcommand*{\jlreq@warichu@noauto}[1]{%
   {\jlreq@warichu@kakkofontsize
   \inhibitglue （}%
-  \tracingmacros=1\relax
   \jlreq@warichu@noauto@#1\\\jlreq@endmark\jlreq@endmark
-  \tracingmacros=0\relax
   \jlreq@warichu@endwarichu
 }
 

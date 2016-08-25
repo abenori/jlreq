@@ -3,13 +3,23 @@ kpse.set_program_name("texlua","lualatex")
 no_jis_chars = {'｟', '〘', '〖', '«','〝','‘','“','｠', '〙', '〗', '»', '〟', '’', '”','゠', '–','‼', '⁇', '⁈', '⁉','—','〳', '〴', '〵','〻','ゕ', 'ゖ', 'ッ', 'ャ', 'ュ', 'ョ', 'ヮ', 'ヵ', 'ヶ', 'ㇰ', 'ㇱ', 'ㇲ', 'ㇳ', 'ㇴ', 'ㇵ', 'ㇶ', 'ㇷ', 'ㇸ', 'ㇹ', 'ㇺ', 'ㇻ', 'ㇼ', 'ㇽ', 'ㇾ', 'ㇿ','€','№','㌃','㌍','㌔','㌘','㌢','㌣','㌦','㌧','㌫','㌶','㌻','㍉','㍊','㍍','㍑','㍗','㎎','㎏','㎜','㎝','㎞','㎡','㏄','㏋', 'ℓ','ゔ','ヷ', 'ヸ', 'ヹ', 'ヺ','≃','≅', '≈','≢','≶', '≷', '⋚', '⋛','⌅', '⌆','⊄', '⊅','⊊', '⊋','∉','∦','↔','⊕', '⊗','∓','℧', 'Å', '−'}
 
 if arg[1] == nil then
-	print('Usage: texlua luajfm2pl.lua <JFM for LuaTeX-ja> [<PL file name>]')
+	print('Usage: texlua luajfm2pl.lua [--noutf] <JFM for LuaTeX-ja> [<PL file name>]')
 	os.exit(0)
 end
 
-local jfmfile = kpse.find_file("jfm-" .. arg[1] .. ".lua")
+local luajfm
+if arg[1] ~= "--noutf" then
+	no_jis_chars = {}
+	luajfm = arg[1]
+	outputfile = arg[2]
+else
+	luajfm = arg[2]
+	outputfile = arg[3]
+end
+
+local jfmfile = kpse.find_file("jfm-" .. luajfm .. ".lua")
 if jfmfile == nil then
-	print("JFM " .. arg[1] .. " is not found")
+	print("JFM " .. luajfm .. " is not found")
 	os.exit(1)
 end
 
@@ -25,11 +35,11 @@ end
 dofile(jfmfile)
 
 local fp = nil
-if arg[2] == nil then
+if outputfile == nil then
 	fp = io.stdout
 else
 	local msg
-	fp,msg = io.open(arg[2],"w")
+	fp,msg = io.open(outputfile,"w")
 	if fp == nil then
 		print(msg)
 		os.exit(1)
@@ -80,10 +90,10 @@ function stable_sort(list,comp)
 end
 
 local function array_uniq(t)
-	local n = 2
-	for i = 2,#t do
+	local n = 1
+	for i = 1,#t do
 		local newone = true
-		for j = 1,n do
+		for j = 1,n - 1 do
 			if t[i] == t[j] then
 				newone = false
 				break
@@ -98,7 +108,6 @@ local function array_uniq(t)
 	for i = n,m do table.remove(t) end
 	return t
 end
-
 
 local function exists(t,v)
 	for _,val in pairs(t) do 
@@ -150,7 +159,7 @@ for class,val in pairs(jfm) do
 	chars = array_uniq(chars)
  	-- charsが空になった場合は消しておく
 	if isempty(chars) == true then
-		print("Class " .. class .. " has no chars, so we omit it")
+		io.stderr:write("Class " .. class .. " has no chars, so we omit it\n")
 		jfm[class] = nil
 	else jfm[class].chars = table.concat(chars," ") end
 	::continue::
@@ -265,7 +274,7 @@ end
 
 
 
-fp:write("(COMMENT JPL file from jfm-" .. arg[1] .. ".lua)\n")
+fp:write("(COMMENT JPL file from jfm-" .. luajfm .. ".lua)\n")
 fp:write("(CODINGSCHEME TEX KANJI TEXT)\n")
 fp:write("(DIRECTION " .. string.upper(jfm.dir) .. ")\n")
 -- fp:write("(DESIGNSIZE R 10.0)\n")

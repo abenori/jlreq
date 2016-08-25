@@ -1,5 +1,6 @@
 %#main jlreqtest.tex
-%#! platex
+%#T2D uplatex
+%#! $(C:TeXToDVI) ; $(C:DVIToPDF)
 %%#! lualatex
 %%#! lualatex jlreqtest.tex ; pdftk jlreqtest.pdf multistamp onlya.pdf output out.pdf
 %%#PDF out.pdf
@@ -11,6 +12,7 @@
 % 表
 \showboxdepth=100
 \showboxbreadth=100
+\tracingonline=1
 \ifx\luatexversion\@undefined
   \epTeXinputencoding "utf8"
   \def\zw{zw}\def\zh{zh}
@@ -30,7 +32,7 @@
   \RequirePackage{luatexja}
   \directlua{jlreq = {}}
 \fi
-\RequirePackage{xkeyval}
+\RequirePackage{xkeyval,everyhook}
 
 %. helper
 \def\jlreq@once@expand#1{\expandafter\unexpanded\expandafter{#1}}
@@ -96,7 +98,7 @@
 % この命令以降，次にこの命令を実行する前まで\jlreq@rest@linewidth/\jlreq@rest@linewidthで
 % この場所における残り長さが取得できる．
 \newcommand*{\jlreq@savepos@for@rest@linewidth}{%
-  \advance\jlreq@rest@linewidth@count by 1\relax
+  \global\advance\jlreq@rest@linewidth@count by 1\relax
   \zsavepos{jlreq@rest@width.pos.\the\jlreq@rest@linewidth@count}%
   \zref@labelbyprops{jlreq@rest@width.page.\the\jlreq@rest@linewidth@count}{page}%
   \jlreq@current@linewidth=\jlreq@calc@current@linewidth
@@ -497,11 +499,8 @@
   }
   \def\jlreq@replaceQtotempdima@#1{%
     \ifx#1\jlreq@endmark\else
-      \ifx#1\@tempa
-        * 2.5mm%
-      \else
-        #1%
-      \fi
+      \ifx#1\@tempa * 2.5mm%
+      \else #1\fi
       \expandafter\jlreq@replaceQtotempdima@
     \fi
   }
@@ -539,7 +538,7 @@
 % 行頭に括弧が来たときの配置：3.1.5
 % 段落頭指定_折り返し行頭指定 で与える．
 \newcommand*{\jlreq@open@bracket@pos}{zenkaku_tentsuki}
-\define@choicekey{tjlreq.cls}{open_bracket_pos}{zenkaku_tentsuki,zenkakunibu_nibu,nibu_tentsuki}{\renewcommand{\jlreq@open@bracket@pos}{#1}}
+\define@choicekey{tjlreq.cls}{open_bracket_pos}{zenkaku_tentsuki,zenkakunibu_nibu,nibu_tentsuki}{\renewcommand*{\jlreq@open@bracket@pos}{#1}}
 % ぶら下げ組みをするか：3.8.2 注1
 \newif\ifjlreq@burasage
 \jlreq@DeclareOption{hanging_punctuation}{\jlreq@burasagetrue}
@@ -602,8 +601,46 @@
   \directlua{jlreq.open_bracket_pos = [[\jlreq@open@bracket@pos]]}
   \ifjlreq@burasage\directlua{jlreq.burasage = true}
   \else\directlua{jlreq.burasage = false}\fi
+\else
+  \def\jlreq@jfmname{}
+  \def\jlreq@openbreackets@list{{（} {〔} {［} {｛} {〈} {《} {「} {『} {【}}
+  \ifx u\jlreq@engine\edef\jlreq@openbreackets@list{\jlreq@openbreackets@list {｟} {〘} {〖} {«} {〝}{‘} {“}}
+  \ifjlreq@burasage\edef\jlreq@jfmname{b\jlreq@jfmname}\fi
+  \def\@tempa{zenkakunibu_nibu}
+  \ifx\jlreq@open@bracket@pos\@tempa\edef\jlreq@jfmname{\jlreq@jfmname z}\fi
+  \edef\jlreq@jfmname{\jlreq@jfmname jlreq-v}
+  \ifx u\jlreq@engine
+    \edef\jlreq@jfmname{u\jlreq@jfmname}
+  \fi
+  % #1が#2のリストに入っていれば#3を実行する
+  % #2は完全展開される
+  \def\jlreq@ifinlist#1#2#3{%
+    \edef\@tempa{#2}%
+    \expandafter\jlreq@ifinlist@\expandafter{\@tempa}{#1}{#3}%
+  }
+  \def\jlreq@ifinlist@#1#2#3{%
+    \jlreq@ifinlist@@{#2}{#3}#1\jlreq@endmark
+  }
+  \def\jlreq@ifinlist@@#1#2#3{%
+    \ifx\jlreq@endmark#3\def\jlreq@next{}%
+    \else
+      \ifx#1#3\relax #2\def\jlreq@next{\jlreq@deleteuntileendmark}%
+      \else\def\jlreq@next{\jlreq@ifinlist@@{#1}{#2}}\fi
+    \fi
+    \jlreq@next
+  }
+  \def\jlreq@deleteuntileendmark#1\jlreq@endmark{}
+  \def\@tempa{zenkaku_tentsuki}
+  \ifx\@tempa\jlreq@open@bracket@pos
+    \def\jlreq@openbracket@hook{\jlreq@ifinlist{\jlreq@nextchar}{\jlreq@openbreackets@list}{\inhibitglue}}
+    \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
+  \fi
+  \def\@tempa{nibu_tentsuki}
+  \ifx\@tempa\jlreq@open@bracket@pos
+    \def\jlreq@openbracket@hook{\jlreq@ifinlist{\jlreq@nextchar}{\jlreq@openbreackets@list}{\hskip -1\zh}}
+    \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
+  \fi
 \fi
-
 % landscapeの場合縦横をひっくり返す
 \if@landscape
   \setlength\@tempdima  {\paperheight}
@@ -618,14 +655,18 @@
 \ifx\jlreq@option@baselineskip\@empty
   \setlength{\jlreq@baselineskip}{\dimexpr 17\jlreq@fontsize/10\relax}%
 \else
-  \setlength{\jlreq@baselineskip}{%
-    \dimexpr\directlua{
-      local yen = string.char(92)
-      local s = [[\jlreq@option@baselineskip]]
-      s = s:gsub("Q"," * 2.5mm"):gsub("z[hw]",yen .. "jlreq@fontsize")
-      tex.print(s)
-    }\relax
-  }%
+  \ifx l\jlreq@engine
+    \setlength{\jlreq@baselineskip}{%
+      \dimexpr\directlua{
+        local yen = string.char(92)
+        local s = [[\jlreq@option@baselineskip]]
+        s = s:gsub("Q"," * 2.5mm"):gsub("z[hw]",yen .. "jlreq@fontsize")
+        tex.print(s)
+      }\relax
+    }%
+  \else
+    \setlengh{{\jlreq@baselineskip}{\expandafter\jlreq@replaceQtotempdima\expandafter{\jlreq@option@baselineskip}}
+  \fi
 \fi
 \ifdim\jlreq@fontsize>\jlreq@baselineskip
   \ClassError{tjlreq}{The baselineskip is less than fontsize}{\@ehc}%
@@ -658,48 +699,31 @@
   }
 \fi
 
+\ifx u\jlreq@engine
+  \def\jlreq@tatekanjiencoding{JT2}
+\fi
+\ifx p\jlreq@engine
+  \def\jlreq@tatekanjiencoding{JT1}
+\fi
 \ifx l\jlreq@engine
+  \def\jlreq@tatekanjiencoding{JT3}
   \expandafter\let\csname JT3/mc/m/n/10\endcsname\relax
   \DeclareFontShape{JT3}{mc}{m}{n}{<->\ltj@stdmcfont:jfm=jlreqv;script=latn;-kern}{}
   \DeclareFontShape{JT3}{gt}{m}{n}{<->\ltj@stdgtfont:jfm=jlreqv;script=latn;-kern}{}
-  \DeclareFontShape{JT3}{mc}{bx}{n}{<->ssub*gt/m/n}{}
-  \DeclareFontShape{JT3}{gt}{bx}{n}{<->ssub*gt/m/n}{}
-  \DeclareFontShape{JT3}{mc}{m}{it}{<->ssub*mc/m/n}{}
-  \DeclareFontShape{JT3}{mc}{m}{sl}{<->ssub*mc/m/n}{}
-  \DeclareFontShape{JT3}{mc}{m}{sc}{<->ssub*mc/m/n}{}
-  \DeclareFontShape{JT3}{gt}{m}{it}{<->ssub*gt/m/n}{}
-  \DeclareFontShape{JT3}{gt}{m}{sl}{<->ssub*gt/m/n}{}
-  \DeclareFontShape{JT3}{mc}{bx}{it}{<->ssub*gt/m/n}{}
-  \DeclareFontShape{JT3}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
+\else
+  \expandafter\let\csname \jlreq@tatekanjiencoding/mc/m/n/10\endcsname\relax
+  \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{n}{<-> \jlreq@jfmname}{}
+  \DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{n}{<-> \jlreq@jfmname}{}
 \fi
-\ifx u\jlreq@engine
-  \expandafter\let\csname JT2/mc/m/n/10\endcsname\relax
-  \DeclareFontShape{JT2}{mc}{m}{n}{<-> ujlreq-v}{}
-  \DeclareFontShape{JT2}{gt}{m}{n}{<-> ujlreq-v}{}
-  \DeclareFontShape{JT2}{mc}{bx}{n}{<->ssub*gt/m/n}{}
-  \DeclareFontShape{JT2}{gt}{bx}{n}{<->ssub*gt/m/n}{}
-  \DeclareFontShape{JT2}{mc}{m}{it}{<->ssub*mc/m/n}{}
-  \DeclareFontShape{JT2}{mc}{m}{sl}{<->ssub*mc/m/n}{}
-  \DeclareFontShape{JT2}{mc}{m}{sc}{<->ssub*mc/m/n}{}
-  \DeclareFontShape{JT2}{gt}{m}{it}{<->ssub*gt/m/n}{}
-  \DeclareFontShape{JT2}{gt}{m}{sl}{<->ssub*gt/m/n}{}
-  \DeclareFontShape{JT2}{mc}{bx}{it}{<->ssub*gt/m/n}{}
-  \DeclareFontShape{JT2}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
-\fi
-\ifx p\jlreq@engine
-  \expandafter\let\csname JT1/mc/m/n/10\endcsname\relax
-  \DeclareFontShape{JT1}{mc}{m}{n}{<-> jlreq-v}{}
-  \DeclareFontShape{JT1}{gt}{m}{n}{<-> jlreq-v}{}
-  \DeclareFontShape{JT1}{mc}{bx}{n}{<->ssub*gt/m/n}{}
-  \DeclareFontShape{JT1}{gt}{bx}{n}{<->ssub*gt/m/n}{}
-  \DeclareFontShape{JT1}{mc}{m}{it}{<->ssub*mc/m/n}{}
-  \DeclareFontShape{JT1}{mc}{m}{sl}{<->ssub*mc/m/n}{}
-  \DeclareFontShape{JT1}{mc}{m}{sc}{<->ssub*mc/m/n}{}
-  \DeclareFontShape{JT1}{gt}{m}{it}{<->ssub*gt/m/n}{}
-  \DeclareFontShape{JT1}{gt}{m}{sl}{<->ssub*gt/m/n}{}
-  \DeclareFontShape{JT1}{mc}{bx}{it}{<->ssub*gt/m/n}{}
-  \DeclareFontShape{JT1}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
-\fi
+\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{bx}{n}{<->ssub*gt/m/n}{}
+\DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{bx}{n}{<->ssub*gt/m/n}{}
+\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{it}{<->ssub*mc/m/n}{}
+\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{sl}{<->ssub*mc/m/n}{}
+\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{sc}{<->ssub*mc/m/n}{}
+\DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{it}{<->ssub*gt/m/n}{}
+\DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{sl}{<->ssub*gt/m/n}{}
+\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{bx}{it}{<->ssub*gt/m/n}{}
+\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
 
 \emergencystretch 3\zw
 
@@ -1045,15 +1069,15 @@
 \def\@tempa{inline}
 \ifx\jlreq@referencemark\@tempa
   \renewcommand{\@footnotemark}{%
-%    \leavevmode
-%    \ifhmode\edef\@x@sf{\the\spacefactor}\nobreak\fi
-%    \jlreq@ifydir{%
-%      \hbox{\@textsuperscript{\normalfont\@makefnmark}}%
-%    }{%
-%      \setbox\@tempboxa=\hbox{\scriptsize\@makefnmark}%
-%      \raise\dimexpr.5\zw - (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa
-%    }%
-%    \ifhmode\spacefactor\@x@sf\fi
+    \leavevmode
+    \ifhmode\edef\@x@sf{\the\spacefactor}\nobreak\fi
+    \jlreq@ifydir{%
+      \hbox{\@textsuperscript{\normalfont\@makefnmark}}%
+    }{%
+      \setbox\@tempboxa=\hbox{\scriptsize\@makefnmark}%
+      \raise\dimexpr.5\zw - (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa
+    }%
+    \ifhmode\spacefactor\@x@sf\fi
     \relax}
 \else
   \renewcommand{\@footnotemark}{%
@@ -1072,7 +1096,8 @@
     \relax}
 \fi
 
-%.. 脚注（縦書きの時は傍注，4.2.5）
+%.. 脚注
+% （縦書きの時は傍注，4.2.5）
 {\footnotesize\global\setlength{\footnotesep}{.7\baselineskip}} % 何でかわからん……
 % 罫線の前は行間分，最大＋文字サイズ分伸びる（4.2.5.g）
 \setlength{\skip\footins}{\dimexpr\baselineskip - 1\zw\relax plus 1\zw}
@@ -1086,19 +1111,19 @@
   \divide\@tempdima\@tempdimb \multiply\@tempdima\@tempdimb
   \global\jlreq@footnoteindent=\dimexpr\textwidth - \@tempdima\relax
 }
-% 二行目以降の字下げを全角空きにする方にしておく．（オプションで制御できるべき）：4.2.5.d
+% 4.2.5.d
 \def\@tempa{one}
 \ifx\jlreq@footnotetext@indent\@tempa
   \newcommand\@makefntext[1]{\parindent 1\zh
     \addtolength{\leftskip}{\dimexpr \jlreq@footnoteindent + 1\zh\relax} %全体をインデント+1文字分下げる
-    \noindent\llap{\@makefnmark}\hskip 1\zh#1}% 見出し出力と一文字分の空き
+    \noindent\hskip -1\zh\@makefnmark\hskip 1\zh#1}% 見出し出力と一文字分の空き
 \else
   \newcommand\@makefntext[1]{\parindent 1\zh
     \addtolength{\leftskip}{\jlreq@footnoteindent} %全体をインデント
-    \leavevmode\@makefnmark\hskip 1\zh#1}% 見出し出力と一文字分の空き
+    \noindent\hskip 1\zh\@makefnmark\hskip 1\zh#1}% 見出し出力と一文字分の空き
 \fi
 % 図4.61のようにする
-\renewcommand{\@makefnmark}{\hbox{\inhibitglue（\@thefnmark）\inhibitglue}}
+\renewcommand{\@makefnmark}{\inhibitglue（\@thefnmark）\inhibitglue}
 \renewcommand{\thefootnote}{\rensuji{\@arabic\c@footnote}}
 
 %.. 後注（4.2.4）
@@ -1156,10 +1181,10 @@
 }
 
 \jlreq@endnote@indent=2\zh
-% 二行目以降を二文字分下げる
-{\footnotesize\global\advance\jlreq@endnote@indent by 2\zh}
+% 二行目以降を全角分下げる
+{\footnotesize\global\advance\jlreq@endnote@indent by 1\zh}
 \newcommand{\@makeentext}[1]{\parindent 1\zh
-    \leavevmode\hskip-2\zh\@makeenmark\hskip 1\zh#1}% 見出し出力と一文字分の空き
+    \hskip-1\zh\@makeenmark\hskip 1\zh#1}% 見出し出力と一文字分の空き
 \renewcommand{\theendnote}{\rensuji{\@arabic\c@endnote}}
 
 \let\@makeenmark=\@makefnmark

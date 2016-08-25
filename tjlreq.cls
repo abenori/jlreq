@@ -133,7 +133,7 @@
 % 禁則処理，表1,2に従う
 % 行末
 % 初め括弧類
-\if l\jlreq@engine
+\ifx l\jlreq@engine
   \newcommand*{\jlreq@setpostbreakpenalty}[2]{\ltjsetparameter{postbreakpenalty={`#1,#2}}}
   \newcommand*{\jlreq@setprebreakpenalty}[2]{\ltjsetparameter{prebreakpenalty={`#1,#2}}}
   \newcommand*{\jlreq@setjaxspmode}[2]{\ltjsetparameter{jaxspmode={`#1,preonly}}}
@@ -165,6 +165,7 @@
     \fi
   }
 \fi
+
 \jlreq@setpostbreakpenalty{（}{10000}
 \jlreq@setpostbreakpenalty{〔}{10000}
 \jlreq@setpostbreakpenalty{［}{10000}
@@ -604,7 +605,7 @@
 \else
   \def\jlreq@jfmname{}
   \def\jlreq@openbreackets@list{{（} {〔} {［} {｛} {〈} {《} {「} {『} {【}}
-  \ifx u\jlreq@engine\edef\jlreq@openbreackets@list{\jlreq@openbreackets@list {｟} {〘} {〖} {«} {〝}{‘} {“}}
+  \ifx u\jlreq@engine\edef\jlreq@openbreackets@list{\jlreq@openbreackets@list {｟} {〘} {〖} {«} {〝}{‘} {“}}\fi
   \ifjlreq@burasage\edef\jlreq@jfmname{b\jlreq@jfmname}\fi
   \def\@tempa{zenkakunibu_nibu}
   \ifx\jlreq@open@bracket@pos\@tempa\edef\jlreq@jfmname{\jlreq@jfmname z}\fi
@@ -641,6 +642,14 @@
     \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
   \fi
 \fi
+% 開き括弧の幅が全角の場合は，べた書きにするために補正が必要
+\def\@tempa{zenkakunibu_nibu}
+\ifx\jlreq@open@bracket@pos\@tempa
+  \def\jlreq@open@bracket@before@space{\hskip -.5\zh}
+\else
+  \def\jlreq@open@bracket@before@space{}
+\fi
+
 % landscapeの場合縦横をひっくり返す
 \if@landscape
   \setlength\@tempdima  {\paperheight}
@@ -1091,7 +1100,7 @@
     \else
       \@tempdima=\wd\@tempboxa
     \fi
-    \hbox to\z@{\hskip-\@tempdima\raise\dimexpr.5\zw + (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa}%
+    \hbox to\z@{\hskip-\@tempdima\raise\dimexpr.5\zw + (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa\hss}%
     \ifhmode\spacefactor\@x@sf\fi
     \relax}
 \fi
@@ -1123,7 +1132,7 @@
     \noindent\hskip 1\zh\@makefnmark\hskip 1\zh#1}% 見出し出力と一文字分の空き
 \fi
 % 図4.61のようにする
-\renewcommand{\@makefnmark}{\inhibitglue（\@thefnmark）\inhibitglue}
+\renewcommand{\@makefnmark}{\inhibitglue\jlreq@open@bracket@before@space（\@thefnmark）\inhibitglue}
 \renewcommand{\thefootnote}{\rensuji{\@arabic\c@footnote}}
 
 %.. 後注（4.2.4）
@@ -1776,9 +1785,9 @@
 \def\西暦{\西暦true}
 \def\和暦{\西暦false}
 \newcount\heisei \heisei\year \advance\heisei-1988\relax
+
 \def\today{{%
   \jlreq@ifydir{%
-  \ifnum\ltjgetparameter{direction}=3
     \if西暦
       \kansuji\year 年
       \kansuji\month 月
@@ -1837,9 +1846,9 @@
   % \jlreq@tempdimbに，現在行の残り長さを入れる
   \jlreq@tempdimb=\jlreq@rest@linewidth
   % 括弧の分を引いたものが，割注の使える長さ
-  \setbox\@tempboxa=\hbox{\jlreq@warichu@kakkofontsize\inhibitglue（\inhibitglue}%
+  \setbox\@tempboxa=\hbox{\jlreq@warichu@kakkofontsize\inhibitglue\jlreq@open@bracket@before@space（\inhibitglue}%
   \addtolength{\jlreq@tempdimb}{-\wd\@tempboxa}%
-  {\jlreq@warichu@kakkofontsize\inhibitglue （}%
+  {\jlreq@warichu@kakkofontsize\inhibitglue \jlreq@open@bracket@before@space（}%
   % 普通に並べた長さを計測し，その半分から始める
   \setbox\@tempboxa=\hbox{\jlreq@warichu@fontsize #1}%
   \jlreq@tempdimc=\wd\@tempboxa
@@ -1890,7 +1899,7 @@
     \splitmaxdepth=\maxdimen
     % 現在行の残り長さを思い出す
     \jlreq@tempdimb=\jlreq@rest@linewidth
-    \setbox\@tempboxa=\hbox{\jlreq@warichu@kakkofontsize\inhibitglue（\inhibitglue}%
+    \setbox\@tempboxa=\hbox{\jlreq@warichu@kakkofontsize\inhibitglue\jlreq@open@bracket@before@space（\inhibitglue}%
     \addtolength{\jlreq@tempdimb}{-\wd\@tempboxa}%
     \setbox\@tempboxa=\box\jlreq@resultbox
     \@whilenum\@tempcnta<\jlreq@warichu@lines\do{%
@@ -1937,7 +1946,7 @@
 
 \newcommand*{\jlreq@warichu@noauto}[1]{%
   {\jlreq@warichu@kakkofontsize
-  \inhibitglue （}%
+  \inhibitglue \jlreq@open@bracket@before@space（}%
   \jlreq@warichu@noauto@#1\\\jlreq@endmark\jlreq@endmark
   \jlreq@warichu@endwarichu
 }

@@ -1,4 +1,4 @@
-all: ujlreq-v.pl ujlreq-v.tfm ujlreq-v.vf ubjlreq-v.pl ubjlreq-v.tfm ubjlreq-v.vf uzjlreq-v.pl uzjlreq-v.tfm uzjlreq-v.vf ubzjlreq-v.pl ubzjlreq-v.tfm ubzjlreq-v.vf jlreq-v.pl jlreq-v.tfm jlreq-v.vf bjlreq-v.pl bjlreq-v.tfm bjlreq-v.vf zjlreq-v.pl zjlreq-v.tfm zjlreq-v.vf bzjlreq-v.pl bzjlreq-v.tfm bzjlreq-v.vf
+all: ujlreq-v.tfm ujlreq-v.vf ubjlreq-v.tfm ubjlreq-v.vf uzjlreq-v.tfm uzjlreq-v.vf ubzjlreq-v.tfm ubzjlreq-v.vf jlreq-v.tfm jlreq-v.vf bjlreq-v.tfm bjlreq-v.vf zjlreq-v.tfm zjlreq-v.vf bzjlreq-v.tfm bzjlreq-v.vf
 
 %v.tfm: %v.pl
 	ppltotf $< $@

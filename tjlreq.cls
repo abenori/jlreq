@@ -13,28 +13,12 @@
 \showboxdepth=100
 \showboxbreadth=100
 \tracingonline=1
-\ifx\luatexversion\@undefined
-  \epTeXinputencoding "utf8"
-  \def\zw{zw}\def\zh{zh}
-  \ifx\ucs\@undefined
-    \let\jlreq@engine=p
-  \else
-    \let\jlreq@engine=u
-  \fi
-\else
-  \let\jlreq@engine=l
-\fi
 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{tjlreq}[2016/01/01 tjlreq]
-
-\ifx l\jlreq@engine
-  \RequirePackage{luatexja}
-  \directlua{jlreq = {}}
-\fi
 \RequirePackage{xkeyval,everyhook}
 
-%. helper
+%. helper1
 \def\jlreq@once@expand#1{\expandafter\unexpanded\expandafter{#1}}
 \newdimen\jlreq@tempdima
 \newdimen\jlreq@tempdimb
@@ -46,6 +30,279 @@
 \newdimen\jlreq@resultdimen
 \newbox\jlreq@resultbox
 
+% #1内の#2を#3に変換し#4に入れる
+\def\jlreq@replace#1#2#3#4{%
+  \def\@tempb##1#2##2\jlreq@endmark{%
+    \ifx\jlreq@endmark##2\jlreq@endmark##1\else##1#3\@tempb##2\jlreq@endmark\fi
+  }%
+  \edef#4{\@tempb#1#2\jlreq@endmark}%
+}
+
+% @removeelementの括弧があっても動くかもしれない版
+\def\jlreq@helper@removefirstcomma,#1\jlreq@endmark#2{\def#2{#1}}
+% 次の変数を使う：\@tempa：消したいやつ，\@tempb：今処理している部分．
+\def\jlreq@helper@removeelement#1#2#3{%
+  \def\@tempb{}%
+  \def\@tempa{#1}%
+  \def#3{}%
+  \jlreq@helper@removeelement@{#3}#2{\jlreq@endmark}%
+  \expandafter\jlreq@helper@removefirstcomma#3\jlreq@endmark{#3}
+}
+% 最初のグルーピングの前までを取得し，@@に回す．グルーピング以降は@@@で処理する
+\def\jlreq@helper@removeelement@#1#2#{%
+  \jlreq@helper@removeelement@@{#1}{#2}%
+  \jlreq@helper@removeelement@@@{#1}
+}
+% #1をカンマで区切り，既に得ていた\@tempbと併せて一つの部分を作る．
+\def\jlreq@helper@removeelement@@#1#2{%
+  \jlreq@helper@dividebycomma{#2}%
+  \edef\@tempb{\jlreq@once@expand{\@tempb}\jlreq@once@expand{\@tempc}}%
+  \ifjlreq@tempa
+    \ifx\@tempa\@tempb\else
+      \edef#1{\jlreq@once@expand{#1},\jlreq@once@expand{\@tempb}}%
+    \fi
+    \def\@tempb{}%
+    \expandafter\jlreq@helper@removeelement@@\expandafter#1\expandafter{\@tempd}%
+  \fi
+}
+% グルーピング部分を\@tempbに加え，@に戻る
+\def\jlreq@helper@removeelement@@@#1#2{
+  \ifx\jlreq@endmark#2
+    % 全体の解釈が終わった
+    \ifx\@tempa\@tempb\else
+      \edef#1{\jlreq@once@expand{#1},\jlreq@once@expand{\@tempb}}%
+    \fi
+  \else
+    \edef\@tempb{\jlreq@once@expand{\@tempb}{#2}}%
+    \def\jlreq@next{\jlreq@helper@removeelement@{#1}}
+    \expandafter\jlreq@next
+  \fi
+}
+% \@tempc,\@tempdと入れる
+% もしカンマがない場合は\ifjlreq@tempaがfalseになる．
+\def\jlreq@helper@dividebycomma#1{\jlreq@helper@dividebycomma@#1,\jlreq@endmark}
+\def\jlreq@helper@dividebycomma@#1,#2\jlreq@endmark{
+  \def\@tempc{#1}%
+  \def\@tempd{#2}%
+  \ifx\@tempd\@empty\jlreq@tempafalse\else\jlreq@tempatrue\expandafter\def\expandafter\@tempd\expandafter{\jlreq@helper@removelastcomma#2\jlreq@endmark}\fi
+}
+\def\jlreq@helper@removelastcomma#1,\jlreq@endmark{#1}
+
+% #1が#2のリストに入っていれば#3を，入っていなければ#4を実行する
+% #2は完全展開されてから評価される
+\def\jlreq@ifinlist#1#2#3#4{%
+  \edef\@tempa{#2}%
+  \expandafter\jlreq@ifinlist@\expandafter{\@tempa}{#1}{#3}{#4}%
+}
+\def\jlreq@ifinlist@#1#2#3#4{%
+  \jlreq@ifinlist@@{#2}{#3}{#4}#1\jlreq@endmark
+}
+\def\jlreq@ifinlist@@#1#2#3#4{%
+  \ifx\jlreq@endmark#4\def\jlreq@next{}%
+  \else
+    \def\@tempa{#1}%
+    \def\@tempb{#4}%
+    \ifx\@tempa\@tempb\relax #2\def\jlreq@next{\jlreq@deleteuntileendmark}%
+    \else #3\def\jlreq@next{\jlreq@ifinlist@@{#1}{#2}{#3}}\fi
+  \fi
+  \jlreq@next
+}
+
+% vbox #1の最後を\jlreq@resultboxに入れる
+% #1の最後の行は消える
+\newcommand{\jlreq@getlastbox}[1]{%
+  \setbox#1=\vbox{\unvbox#1\relax
+    \unskip\unskip\unpenalty\global\setbox\jlreq@resultbox=\lastbox}%
+  \ifhbox\jlreq@resultbox
+    \global\setbox\jlreq@resultbox=\hbox{%
+      \unhbox\jlreq@resultbox\unskip\unskip\unpenalty}%
+  \else
+    \global\setbox\jlreq@resultbox=\box\voidb@x
+  \fi
+}
+
+%. オプションの定義
+% オプション処理の際にしか使わない変数（後でそれを元に別の変数を調整する）
+% ものは\jlreq@option@<key>に格納する．
+% _とかは@に変換する．
+\newcommand*{\jlreq@checkempty}[2]{%
+  \def\@tempa{#2}
+  \ifx\@tempa\@empty\else\ClassError{jlreq}{The option #1 should have no value}{\@ehc}\fi
+}
+% 引数無しの\DeclareOptionX
+\newcommand*{\jlreq@DeclareOption}[2]{%
+  \DeclareOptionX{#1}{\jlreq@checkempty{#1}{##1}#2}
+}
+% エンジン類
+\jlreq@DeclareOption{uplatex}{\let\jlreq@engine=u}
+\jlreq@DeclareOption{platex}{\let\jlreq@engine=p}
+\jlreq@DeclareOption{lualatex}{\let\jlreq@engine=l}
+
+%.. 基本版面．まずは紙サイズ．
+\jlreq@DeclareOption{a3paper}{%
+  \setlength\paperheight {420mm}%
+  \setlength\paperwidth  {297mm}}
+\jlreq@DeclareOption{a4paper}{%
+  \setlength\paperheight {297mm}%
+  \setlength\paperwidth  {210mm}}
+\jlreq@DeclareOption{a5paper}{%
+  \setlength\paperheight {210mm}%
+  \setlength\paperwidth  {148mm}}
+\jlreq@DeclareOption{a6paper}{%
+  \setlength\paperheight {148mm}%
+  \setlength\paperwidth  {105mm}}
+\jlreq@DeclareOption{b4paper}{%
+  \setlength\paperheight {364mm}%
+  \setlength\paperwidth  {257mm}}
+\jlreq@DeclareOption{b5paper}{%
+  \setlength\paperheight {257mm}%
+  \setlength\paperwidth  {182mm}}
+\jlreq@DeclareOption{b6paper}{%
+  \setlength\paperheight {182mm}%
+  \setlength\paperwidth  {128mm}}
+\jlreq@DeclareOption{a4j}{%
+  \setlength\paperheight {297mm}%
+  \setlength\paperwidth  {210mm}}
+\jlreq@DeclareOption{a5j}{%
+  \setlength\paperheight {210mm}%
+  \setlength\paperwidth  {148mm}}
+\jlreq@DeclareOption{b4j}{%
+  \setlength\paperheight {364mm}%
+  \setlength\paperwidth  {257mm}}
+\jlreq@DeclareOption{b5j}{%
+  \setlength\paperheight {257mm}%
+  \setlength\paperwidth  {182mm}}
+\jlreq@DeclareOption{a4var}{%
+  \setlength\paperheight {283mm}%
+  \setlength\paperwidth  {210mm}}
+\jlreq@DeclareOption{b5var}{%
+  \setlength\paperheight {230mm}%
+  \setlength\paperwidth  {182mm}}
+\jlreq@DeclareOption{letterpaper}{%
+  \setlength\paperheight {11in}%
+  \setlength\paperwidth  {8.5in}}
+\jlreq@DeclareOption{legalpaper}{%
+  \setlength\paperheight {14in}%
+  \setlength\paperwidth  {8.5in}}
+\jlreq@DeclareOption{executivepaper}{%
+  \setlength\paperheight {10.5in}%
+  \setlength\paperwidth  {7.25in}}
+
+%.. フォントサイズ，行長，1ページあたりの行数で基本版面のサイズを決める（2.4.1.a）
+\newcommand*{\jlreq@option@fontsize}{9pt}
+\DeclareOptionX{fontsize}{\renewcommand*{\jlreq@option@fontsize}{#1}}
+
+%.. 行の長さ
+\newcommand*{\jlreq@option@line@length}{}
+\DeclareOptionX{line_length}{\renewcommand*{\jlreq@option@line@length}{#1}}
+%.. 1ページあたりの行数
+\newcommand*{\jlreq@option@number@of@lines}{}
+\DeclareOptionX{number_of_lines}{\renewcommand*{\jlreq@option@number@of@lines}{#1}}
+
+% 地の空き量，のどの空き量で配置位置を決める（2.4.1.b）省略されたら中央配置．
+%.. 地
+\newcommand*{\jlreq@option@foot@space}{}
+\DeclareOptionX{foot_space}{\renewcommand*{\jlreq@option@foot@space}{#1}}
+%.. のど
+\newcommand*{\jlreq@option@gutter}{}
+\DeclareOptionX{gutter}{\renewcommand*{\jlreq@option@gutter}{#1}}
+
+%.. 行送り，指定無しの場合は文字サイズの1.7倍とする．（1.5から2倍が好ましい：2.4.2.d 注3）
+\newcommand*{\jlreq@option@baselineskip}{}
+\DeclareOptionX{baselineskip}{\def\jlreq@option@baselineskip{#1}}
+\DeclareOptionX{linegap}{\def\jlreq@option@baselineskip{1zh + #1}}
+
+%.. 組み方系
+% 行頭に括弧が来たときの配置：3.1.5
+% 段落頭指定_折り返し行頭指定 で与える．
+\newcommand*{\jlreq@open@bracket@pos}{zenkaku_tentsuki}
+\define@choicekey{tjlreq.cls}{open_bracket_pos}{zenkaku_tentsuki,zenkakunibu_nibu,nibu_tentsuki}{\renewcommand*{\jlreq@open@bracket@pos}{#1}}
+% ぶら下げ組みをするか：3.8.2 注1
+\newif\ifjlreq@burasage\jlreq@burasagefalse
+\jlreq@DeclareOption{hanging_punctuation}{\jlreq@burasagetrue}
+
+%.. 注
+% 合印の場所（4.2.3）行間に入れるか否か
+\newcommand*{\jlreq@referencemark}{inline}
+\define@choicekey{tjlreq.cls}{reference_mark}{inline,interlinear}{\renewcommand*{\jlreq@referencemark}{#1}}
+% 脚注の字下げ，一行目を下げるならばone，二行目以降ならばtwo．ちょっと酷いので後で考える．
+\newcommand*{\jlreq@footnotetext@indent}{one}
+\define@choicekey{tjlreq.cls}{footnotetext_indent}{one,two}{\renewcommand*{\jlreq@footnotetext@indent}{#1}}
+% 後注をどこに配置するか．_headings（全ての見出し）,_paragraph（段落後）,_で始まらないやつ（その名前の見出し）．カンマ区切り
+\newcommand*{\jlreq@endnote@position}{_headings}
+\DeclareOptionX{endnote_position}{\renewcommand*{\jlreq@endnote@position}{#1}}
+
+\newif\if@restonecol \@restonecolfalse
+\newif\if@titlepage \@titlepagefalse
+\newif\if@landscape \@landscapefalse
+\newif\if@tate \@tatefalse
+\jlreq@DeclareOption{landscape}{\@landscapetrue}
+\jlreq@DeclareOption{tombo}{%
+  \tombowtrue \tombowdatefalse
+  \setlength{\@tombowwidth}{.1\p@}%
+  \maketombowbox}
+\jlreq@DeclareOption{mentuke}{%
+  \tombowtrue \tombowdatefalse
+  \setlength{\@tombowwidth}{\z@}%
+  \maketombowbox}
+\jlreq@DeclareOption{tate}{\@tatetrue%
+  \AtBeginDocument{\tate\message{《縦組モード》}\adjustbaseline}%
+}
+\jlreq@DeclareOption{oneside}{\@twosidefalse \@mparswitchfalse}
+\jlreq@DeclareOption{twoside}{\@twosidetrue \@mparswitchtrue}
+\jlreq@DeclareOption{vartwoside}{\@twosidetrue \@mparswitchfalse}
+\jlreq@DeclareOption{onecolumn}{\@twocolumnfalse}
+\jlreq@DeclareOption{twocolumn}{\@twocolumntrue}
+\jlreq@DeclareOption{titlepage}{\@titlepagetrue}
+\jlreq@DeclareOption{notitlepage}{\@titlepagefalse}
+\jlreq@DeclareOption{draft}{\setlength\overfullrule{5pt}}
+\jlreq@DeclareOption{final}{\setlength\overfullrule{0pt}}
+
+\ExecuteOptionsX{a4paper,fontsize=9pt,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=_headings,twoside,onecolumn,final,tate}
+
+% \@removeelementを一旦置き換えてから対処する
+\let\jlreq@original@@removeelement=\@removeelement
+\let\@removeelement=\jlreq@helper@removeelement
+\ProcessOptionsX*\relax
+\let\@removeelement=\jlreq@original@@removeelement
+
+% エンジンの設定
+\ifx\jlreq@engine\@undefined
+  \ifx\luatexversion\@undefined
+    \epTeXinputencoding "utf8"
+    \def\zw{zw}\def\zh{zh}
+    \ifx\ucs\@undefined
+      \let\jlreq@engine=p
+    \else
+      \let\jlreq@engine=u
+    \fi
+  \else
+    \let\jlreq@engine=l
+  \fi
+\fi
+
+% \jlreq@gol(Gyo Okuri Length), \jlreq@mol (Moji Okuri Length)を定義
+\if@tate
+  \ifx l\jlreq@engine
+    \def\jlreq@gol{\zw}\def\jlreq@mol{\zh}
+  \else
+    \def\jlreq@gol{zw}\def\jlreq@mol{zh}  
+  \fi
+\else
+  \ifx l\jlreq@engine
+    \def\jlreq@gol{\zh}\def\jlreq@mol{\zw}
+  \else
+    \def\jlreq@gol{zh}\def\jlreq@mol{zw}
+  \fi
+\fi
+
+\ifx l\jlreq@engine
+  \RequirePackage{luatexja}
+  \directlua{jlreq = {}}
+\fi
+
+%. helper2（エンジン依存系）
+% 横組か判定
 \def\jlreq@do{\long\global\def\jlreq@ifydir##1##2{\ifydir##1\else##2\fi}}
 \ifx l\jlreq@engine
   \long\global\def\jlreq@ifydir#1#2{\ifnum\ltjgetparameter{direction}=4 #1\else#2\fi}
@@ -103,19 +360,6 @@
   \zref@labelbyprops{jlreq@rest@width.page.\the\jlreq@rest@linewidth@count}{page}%
   \jlreq@current@linewidth=\jlreq@calc@current@linewidth
   \jlreq@rest@linewidth=\dimexpr\linewidth - \jlreq@current@linewidth\relax
-}
-
-% vbox #1の最後を\jlreq@resultboxに入れる
-% #1の最後の行は消える
-\newcommand{\jlreq@getlastbox}[1]{%
-  \setbox#1=\vbox{\unvbox#1\relax
-    \unskip\unskip\unpenalty\global\setbox\jlreq@resultbox=\lastbox}%
-  \ifhbox\jlreq@resultbox
-    \global\setbox\jlreq@resultbox=\hbox{%
-      \unhbox\jlreq@resultbox\unskip\unskip\unpenalty}%
-  \else
-    \global\setbox\jlreq@resultbox=\box\voidb@x
-  \fi
 }
 
 %. 基本設定
@@ -420,229 +664,52 @@
 \jlreq@setprebreakpenalty{‥}{10000}
 % ￥100とか70％とか……
 
-%. オプションの定義
-\newcommand*{\jlreq@checkempty}[2]{%
-  \def\@tempa{#2}
-  \ifx\@tempa\@empty\else\ClassError{jlreq}{The option #1 should have no value}{\@ehc}\fi
-}
-% 引数無しの\DeclareOptionX
-\newcommand*{\jlreq@DeclareOption}[2]{%
-  \DeclareOptionX{#1}{\jlreq@checkempty{#1}{##1}#2}
-}
-%.. 基本版面．まずは紙サイズ．
-\jlreq@DeclareOption{a3paper}{%
-  \setlength\paperheight {420mm}%
-  \setlength\paperwidth  {297mm}}
-\jlreq@DeclareOption{a4paper}{%
-  \setlength\paperheight {297mm}%
-  \setlength\paperwidth  {210mm}}
-\jlreq@DeclareOption{a5paper}{%
-  \setlength\paperheight {210mm}%
-  \setlength\paperwidth  {148mm}}
-\jlreq@DeclareOption{a6paper}{%
-  \setlength\paperheight {148mm}%
-  \setlength\paperwidth  {105mm}}
-\jlreq@DeclareOption{b4paper}{%
-  \setlength\paperheight {364mm}%
-  \setlength\paperwidth  {257mm}}
-\jlreq@DeclareOption{b5paper}{%
-  \setlength\paperheight {257mm}%
-  \setlength\paperwidth  {182mm}}
-\jlreq@DeclareOption{b6paper}{%
-  \setlength\paperheight {182mm}%
-  \setlength\paperwidth  {128mm}}
-\jlreq@DeclareOption{a4j}{%
-  \setlength\paperheight {297mm}%
-  \setlength\paperwidth  {210mm}}
-\jlreq@DeclareOption{a5j}{%
-  \setlength\paperheight {210mm}%
-  \setlength\paperwidth  {148mm}}
-\jlreq@DeclareOption{b4j}{%
-  \setlength\paperheight {364mm}%
-  \setlength\paperwidth  {257mm}}
-\jlreq@DeclareOption{b5j}{%
-  \setlength\paperheight {257mm}%
-  \setlength\paperwidth  {182mm}}
-\jlreq@DeclareOption{a4var}{%
-  \setlength\paperheight {283mm}%
-  \setlength\paperwidth  {210mm}}
-\jlreq@DeclareOption{b5var}{%
-  \setlength\paperheight {230mm}%
-  \setlength\paperwidth  {182mm}}
-\jlreq@DeclareOption{letterpaper}{%
-  \setlength\paperheight {11in}%
-  \setlength\paperwidth  {8.5in}}
-\jlreq@DeclareOption{legalpaper}{%
-  \setlength\paperheight {14in}%
-  \setlength\paperwidth  {8.5in}}
-\jlreq@DeclareOption{executivepaper}{%
-  \setlength\paperheight {10.5in}%
-  \setlength\paperwidth  {7.25in}}
-
-% フォントサイズ，行長，1ページあたりの行数で基本版面のサイズを決める（2.4.1.a）
-\newdimen\jlreq@fontsize
-\jlreq@fontsize=10pt
-\ifx l\jlreq@engine
-  \DeclareOptionX{fontsize}{%
-    \@tempdima=2.5mm\relax
-    \setlength{\jlreq@fontsize}{%
-      \dimexpr\directlua{
-        local yen = string.char(92)
-        local s = [[#1]]
-        s = s:gsub("Q"," * 2.5mm")
-        tex.print(s)
-      }\relax
-    }%
-  }
-\else
-  \def\jlreq@replaceQtotempdima#1{%
-    \jlreq@replaceQtotempdima@#1\jlreq@endmark
-  }
-  \def\jlreq@replaceQtotempdima@#1{%
-    \ifx#1\jlreq@endmark\else
-      \ifx#1\@tempa * 2.5mm%
-      \else #1\fi
-      \expandafter\jlreq@replaceQtotempdima@
-    \fi
-  }
-  \DeclareOptionX{fontsize}{%
-    \let\@tempa=Q\relax
-    \setlength{\jlreq@fontsize}{%
-      \dimexpr\jlreq@replaceQtotempdima{#1}\relax
-    }%
-  }
-\fi
-
-
-% 行の長さ
-\newcommand*{\jlreq@line@length}{}
-\DeclareOptionX{line_length}{\renewcommand*{\jlreq@line@length}{#1}}
-% 1ページあたりの行数
-\newcommand*{\jlreq@number@of@lines}{}
-\DeclareOptionX{number_of_lines}{\renewcommand*{\jlreq@number@of@lines}{#1}}
-
-% 地の空き量，のどの空き量で配置位置を決める（2.4.1.b）省略されたら中央配置．
-% 地
-\newcommand*{\jlreq@foot@space}{}
-\DeclareOptionX{foot_space}{\renewcommand*{\jlreq@foot@space}{#1}}
-% のど
-\newcommand*{\jlreq@nodo}{}
-\DeclareOptionX{gutter}{\renewcommand*{\jlreq@nodo}{#1}}
-
-% 行送り，指定無しの場合は文字サイズの1.7倍とする．（1.5から2倍が好ましい：2.4.2.d 注3）
-\newdimen\jlreq@baselineskip
-\newcommand*{\jlreq@option@baselineskip}{}
-\DeclareOptionX{baselineskip}{\def\jlreq@option@baselineskip{#1}}
-\DeclareOptionX{linegap}{\def\jlreq@option@baselineskip{1zh + #1}}
-
-%.. 組み方系
-% 行頭に括弧が来たときの配置：3.1.5
-% 段落頭指定_折り返し行頭指定 で与える．
-\newcommand*{\jlreq@open@bracket@pos}{zenkaku_tentsuki}
-\define@choicekey{tjlreq.cls}{open_bracket_pos}{zenkaku_tentsuki,zenkakunibu_nibu,nibu_tentsuki}{\renewcommand*{\jlreq@open@bracket@pos}{#1}}
-% ぶら下げ組みをするか：3.8.2 注1
-\newif\ifjlreq@burasage
-\jlreq@DeclareOption{hanging_punctuation}{\jlreq@burasagetrue}
-
-%.. 注
-% 合印の場所（4.2.3）行間に入れるか否か
-\newcommand*{\jlreq@referencemark}{inline}
-\define@choicekey{tjlreq.cls}{reference_mark}{inline,interlinear}{\renewcommand*{\jlreq@referencemark}{#1}}
-% 脚注の字下げ，一行目を下げるならばone，二行目以降ならばtwo．ちょっと酷いので後で考える．
-\newcommand*{\jlreq@footnotetext@indent}{one}
-\define@choicekey{tjlreq.cls}{footnotetext_indent}{one,two}{\renewcommand*{\jlreq@footnotetext@indent}{#1}}
-% 後注をどこに配置するか．_headings（全ての見出し）,_paragraph（段落後）,_で始まらないやつ（その名前の見出し）．カンマ区切り
-\newcommand*{\jlreq@endnote@position}{_headings}
-\DeclareOptionX{endnote_position}{\renewcommand*{\jlreq@endnote@position}{#1}}
-
-\newif\if@restonecol \@restonecolfalse
-\newif\if@titlepage \@titlepagefalse
-\newif\if@landscape \@landscapefalse
-\jlreq@DeclareOption{landscape}{\@landscapetrue}
-\jlreq@DeclareOption{tombo}{%
-  \tombowtrue \tombowdatefalse
-  \setlength{\@tombowwidth}{.1\p@}%
-  \maketombowbox}
-\jlreq@DeclareOption{mentuke}{%
-  \tombowtrue \tombowdatefalse
-  \setlength{\@tombowwidth}{\z@}%
-  \maketombowbox}
-\jlreq@DeclareOption{tate}{%
-  \AtBeginDocument{\tate\message{《縦組モード》}\adjustbaseline}%
-}
-\jlreq@DeclareOption{oneside}{\@twosidefalse \@mparswitchfalse}
-\jlreq@DeclareOption{twoside}{\@twosidetrue \@mparswitchtrue}
-\jlreq@DeclareOption{vartwoside}{\@twosidetrue \@mparswitchfalse}
-\jlreq@DeclareOption{onecolumn}{\@twocolumnfalse}
-\jlreq@DeclareOption{twocolumn}{\@twocolumntrue}
-\jlreq@DeclareOption{titlepage}{\@titlepagetrue}
-\jlreq@DeclareOption{notitlepage}{\@titlepagefalse}
-\jlreq@DeclareOption{draft}{\setlength\overfullrule{5pt}}
-\jlreq@DeclareOption{final}{\setlength\overfullrule{0pt}}
-
-\ExecuteOptionsX{a4paper,fontsize=9pt,twoside,onecolumn,final,tate}
-
-% {}は\ProcessOptionsXで処理させることはできないが，\setkeys*ならばできる．
-\edef\@curroptions{\@ptionlist{\@currname.\@currext}}%
-\let\jlreq@original@classsoptions=\@curroptions
-\def\@tempa#1{\setkeys{\@currname.\@currext}{#1}}
-\expandafter\@tempa\expandafter{\@curroptions}
-% 残ったオプションをセットし，ProcessOptionsXで処理させる．
-% （単に\@unusedoptionlistをセットするだけでもよいだろうか？）
-\expandafter\let\csname opt@\@currname.\@currext\endcsname=\XKV@rm
-\let\XKV@classoptionslist=\XKV@rm
-\edef\@curroptions{\@ptionlist{\@currname.\@currext}}%
-\ProcessOptionsX*\relax
-\expandafter\let\csname opt@\@currname.\@currext\endcsname=\jlreq@originalclsoptions
-\let\XKV@classoptionslist=\jlreq@originalclsoptions
 
 %. オプション処理
+\newdimen\jlreq@fontsize
+\ifx l\jlreq@engine
+  \setlength{\jlreq@fontsize}{%
+    \dimexpr\directlua{
+      local yen = string.char(92)
+      local s = [[\jlreq@option@fontsize]]
+      s = s:gsub("Q"," * 2.5mm")
+      tex.print(s)
+    }\relax
+  }%
+\else
+  \expandafter\jlreq@replace\expandafter{\jlreq@option@fontsize}{Q}{*2.5m}{\@tempa}
+  \setlength{\jlreq@fontsize}{\dimexpr\@tempa\relax}
+\fi
+
 % この値は後でjfm-jlreq内で読む
 \ifx l\jlreq@engine
   \directlua{jlreq.open_bracket_pos = [[\jlreq@open@bracket@pos]]}
   \ifjlreq@burasage\directlua{jlreq.burasage = true}
   \else\directlua{jlreq.burasage = false}\fi
 \else
+  % 非LuaTeXの場合はJFMの入れ替えと\everyparでの処理で対処．
   \def\jlreq@jfmname{}
   \def\jlreq@openbreackets@list{{（} {〔} {［} {｛} {〈} {《} {「} {『} {【}}
   \ifx u\jlreq@engine\edef\jlreq@openbreackets@list{\jlreq@openbreackets@list {｟} {〘} {〖} {«} {〝}{‘} {“}}\fi
+  % \jlreq@jfmnameにJFMの名前を入れる
   \ifjlreq@burasage\edef\jlreq@jfmname{b\jlreq@jfmname}\fi
   \def\@tempa{zenkakunibu_nibu}
   \ifx\jlreq@open@bracket@pos\@tempa\edef\jlreq@jfmname{\jlreq@jfmname z}\fi
   \edef\jlreq@jfmname{\jlreq@jfmname jlreq-v}
-  \ifx u\jlreq@engine
-    \edef\jlreq@jfmname{u\jlreq@jfmname}
-  \fi
-  % #1が#2のリストに入っていれば#3を実行する
-  % #2は完全展開される
-  \def\jlreq@ifinlist#1#2#3{%
-    \edef\@tempa{#2}%
-    \expandafter\jlreq@ifinlist@\expandafter{\@tempa}{#1}{#3}%
-  }
-  \def\jlreq@ifinlist@#1#2#3{%
-    \jlreq@ifinlist@@{#2}{#3}#1\jlreq@endmark
-  }
-  \def\jlreq@ifinlist@@#1#2#3{%
-    \ifx\jlreq@endmark#3\def\jlreq@next{}%
-    \else
-      \ifx#1#3\relax #2\def\jlreq@next{\jlreq@deleteuntileendmark}%
-      \else\def\jlreq@next{\jlreq@ifinlist@@{#1}{#2}}\fi
-    \fi
-    \jlreq@next
-  }
+  \ifx u\jlreq@engine\edef\jlreq@jfmname{u\jlreq@jfmname}\fi
   \def\jlreq@deleteuntileendmark#1\jlreq@endmark{}
   \def\@tempa{zenkaku_tentsuki}
   \ifx\@tempa\jlreq@open@bracket@pos
-    \def\jlreq@openbracket@hook{\jlreq@ifinlist{\jlreq@nextchar}{\jlreq@openbreackets@list}{\inhibitglue}}
+    \def\jlreq@openbracket@hook{\jlreq@ifinlist{\jlreq@nextchar}{\jlreq@openbreackets@list}{\inhibitglue}{}}
     \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
   \fi
   \def\@tempa{nibu_tentsuki}
   \ifx\@tempa\jlreq@open@bracket@pos
-    \def\jlreq@openbracket@hook{\jlreq@ifinlist{\jlreq@nextchar}{\jlreq@openbreackets@list}{\hskip -1\zh}}
+    \def\jlreq@openbracket@hook{\jlreq@ifinlist{\jlreq@nextchar}{\jlreq@openbreackets@list}{\hskip -1\zh}{}}
     \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
   \fi
 \fi
-% 開き括弧の幅が全角の場合は，べた書きにするために補正が必要
+% 開き括弧の幅が全角の場合は，ベタ組にするために補正が必要
 \def\@tempa{zenkakunibu_nibu}
 \ifx\jlreq@open@bracket@pos\@tempa
   \def\jlreq@open@bracket@before@space{\hskip -.5\zh}
@@ -661,6 +728,7 @@
 \newdimen\jlreq@mpt
 \jlreq@mpt=\dimexpr\jlreq@fontsize / 10\relax
 % \baselineskipの計算
+\newdimen\jlreq@baselineskip
 \ifx\jlreq@option@baselineskip\@empty
   \setlength{\jlreq@baselineskip}{\dimexpr 17\jlreq@fontsize/10\relax}%
 \else
@@ -734,7 +802,7 @@
 \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{bx}{it}{<->ssub*gt/m/n}{}
 \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
 
-\emergencystretch 3\zw
+\emergencystretch 3\jlreq@mol
 
 \renewcommand{\normalsize}{%
   \@setfontsize\normalsize{\jlreq@fontsize}{\jlreq@baselineskip}%
@@ -751,7 +819,7 @@
 \setlength\Cwd{\wd0}
 \setlength\Cvs{\baselineskip}
 \setlength\Chs{\wd0}
-\tate % ここで発行しておく
+\if@tate\tate\fi % ここで発行しておく
 
 % 4.1.3.a
 % 2.5.2 \baselineskipは一定の方がよい？
@@ -833,11 +901,11 @@
 % デフォルト値は縦が0.768倍，横が0.727倍（JISX4051のA5の例から換算……）．
 % 縦 (\textwidth)
 \@tempdima=1\zh
-\ifx\jlreq@line@length\@empty
+\ifx\jlreq@option@line@length\@empty
   \setlength{\textwidth}{0.768\paperheight}
   \divide\textwidth\@tempdima
 \else
-  \setlength{\textwidth}{\jlreq@expand@speciallength{\jlreq@line@length}}
+  \setlength{\textwidth}{\jlreq@expand@speciallength{\jlreq@option@line@length}}
   \divide\textwidth\@tempdima
   % 縦ならば一行52文字以下，横ならば40文字以下が望ましい．2.4.2.c 注2
 %  \ifnum\number\textwidth>52
@@ -847,10 +915,10 @@
 \multiply\textwidth\@tempdima
 
 % 横 (\textheight)
-\ifx\jlreq@number@of@lines\@empty
+\ifx\jlreq@option@number@of@lines\@empty
   \setlength{\textheight}{0.727\paperwidth}
 \else
-  \setlength{\textwidth}{\jlreq@expand@speciallength{\jlreq@number@of@lines\baselineskip}}
+  \setlength{\textwidth}{\jlreq@expand@speciallength{\jlreq@option@number@of@lines\baselineskip}}
 \fi
 \divide\textheight\baselineskip \multiply\textheight\baselineskip
 
@@ -859,7 +927,7 @@
 \setlength{\headsep}{1\zh}
 \setlength{\headheight}{2\zh}
 % 横
-\ifx\jlreq@nodo\@empty
+\ifx\jlreq@option@gutter\@empty
   % 中央配置
   \setlength{\oddsidemargin}{\paperwidth}
   \addtolength{\oddsidemargin}{-\textheight}
@@ -867,7 +935,7 @@
   \addtolength{\oddsidemargin}{-1in}
   \setlength{\evensidemargin}{\oddsidemargin}
 \else
-  \setlength{\oddsidemargin}{\jlreq@expand@speciallength{\jlreq@nodo}}
+  \setlength{\oddsidemargin}{\jlreq@expand@speciallength{\jlreq@option@gutter}}
   \setlength{\evensidemargin}{\dimexpr\paperwidth - \textheight - \oddsidemargin\relax}
   \addtolength{\oddsidemargin}{-1in}
   \addtolength{\evensidemargin}{-1in}
@@ -875,11 +943,11 @@
 % 縦
 \setlength{\topmargin}{\paperheight}
 \addtolength{\topmargin}{-\textwidth}
-\ifx\jlreq@foot@space\@empty
+\ifx\jlreq@option@foot@space\@empty
   % 中央配置
   \setlength{\topmargin}{0.5\topmargin}
 \else
-  \addtolength{\topmargin}{-\jlreq@expand@speciallength{\jlreq@foot@space}}
+  \addtolength{\topmargin}{-\jlreq@expand@speciallength{\jlreq@option@foot@space}}
 \fi
 \addtolength{\topmargin}{-\headsep}
 \addtolength{\topmargin}{-\headheight}
@@ -1084,7 +1152,7 @@
       \hbox{\@textsuperscript{\normalfont\@makefnmark}}%
     }{%
       \setbox\@tempboxa=\hbox{\scriptsize\@makefnmark}%
-      \raise\dimexpr.5\zw - (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa
+      \raise\dimexpr.5\jlreq@gol - (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa
     }%
     \ifhmode\spacefactor\@x@sf\fi
     \relax}
@@ -1100,7 +1168,7 @@
     \else
       \@tempdima=\wd\@tempboxa
     \fi
-    \hbox to\z@{\hskip-\@tempdima\raise\dimexpr.5\zw + (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa\hss}%
+    \hbox to\z@{\hskip-\@tempdima\raise\dimexpr.5\jlreq@gol + (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa\hss}%
     \ifhmode\spacefactor\@x@sf\fi
     \relax}
 \fi
@@ -1109,7 +1177,7 @@
 % （縦書きの時は傍注，4.2.5）
 {\footnotesize\global\setlength{\footnotesep}{.7\baselineskip}} % 何でかわからん……
 % 罫線の前は行間分，最大＋文字サイズ分伸びる（4.2.5.g）
-\setlength{\skip\footins}{\dimexpr\baselineskip - 1\zw\relax plus 1\zw}
+\setlength{\skip\footins}{\dimexpr\baselineskip - 1\jlreq@gol\relax plus 1\jlreq@gol}
 % 脚注の前の罫線は表罫で，長さは行長の1/3位（4.2.6.f）
 \renewcommand{\footnoterule}{\hrule width .333\textwidth height \jlreq@omotekeiwidth}
 % インデントの計算：脚注の長さが文字の整数倍になるように字下げする（4.2.5.b）
@@ -1139,7 +1207,7 @@
 % 文字サイズは\footnotesizeを使う
 \newdimen\jlreq@endnote@prepostspace
 % 前の分との間は行間分空ける（4.2.4.f）
-\jlreq@endnote@prepostspace=\dimexpr\baselineskip - 1\zw\relax
+\jlreq@endnote@prepostspace=\dimexpr\baselineskip - 1\jlreq@gol\relax
 \newdimen\jlreq@endnote@indent
 \newcounter{endnote}
 \def\endnote{\@ifnextchar[{\jlreq@endnote}{\stepcounter{endnote}\jlreq@endnote[\theendnote]}}
@@ -1244,7 +1312,7 @@
 \setlength{\marginparwidth}{0.333\textwidth} % 根拠無しの1/3：15--20文字らしい
 \setlength{\marginparsep}{20\jlreq@mpt} % フォントサイズ×2（4.2.7：特に問題に～e）
 {%
-  \footnotesize\@tempdima=1\zw
+  \footnotesize\@tempdima=1\jlreq@gol
   \global\divide\marginparwidth\@tempdima \global\multiply\marginparwidth\@tempdima
   \global\setlength{\marginparpush}{.5\@tempdima} % 同上：c
 }
@@ -1252,12 +1320,21 @@
 %. ページスタイル．
 % ページ番号は下の端．左右が本文と揃わない……
 % 他のも要調整
+% とりあえず脇に配置するのは無視する．
+% メモ：
+% 基本版面との空きは全角以上（2.6.1.a）
+% ノンブル：左ページならば左は基本版面にぴったりあわせるか全角あける（2.6.1.b）右ページは右
+% ノンブルと柱を同じ位置に出す場合は1.5/2空け（2.6.1.c）
+% 2.6.1.cの後半が前半と整合的でないように見える……
+% 柱：両柱と片柱（2.6.3）
+
+
 \def\ps@plain{\let\@mkboth\@gobbletwo
   \let\ps@jpl@in\ps@plain
   \let\@oddhead\@empty
   \let\@evenhead\@empty
-  \def\@oddfoot{\kern 1\zw\thepage\hfil}%
-  \def\@evenfoot{\hfil\thepage\kern 1\zw}}
+  \def\@oddfoot{\thepage\hfil}%
+  \def\@evenfoot{\hfil\thepage \kern\dimexpr\topskip - .5\zw\relax}}
 % ページ番号は上の端．
 \def\ps@headings{\let\ps@jpl@in\ps@headnombre
   \let\@oddfoot\@empty
@@ -1694,7 +1771,7 @@
     \parindent\z@\rightskip\@pnumwidth
     \parfillskip-\@pnumwidth
     {\leavevmode\bfseries
-    \setlength\@lnumwidth{2\zw}%
+    \setlength\@lnumwidth{2\jlreq@gol}%
     #1\hfil\nobreak
     \hbox to\@pnumwidth{\hss#2}}\par
     \nobreak
@@ -1720,10 +1797,10 @@
       #1\nobreak\hfil\nobreak\hbox to\@pnumwidth{\hss#2}\par
     \endgroup
   \fi}
-\newcommand*{\l@subsection}   {\jlreq@set@top@contents{3}\@dottedtocline{2}{0\zh}{2\zw}}
-\newcommand*{\l@subsubsection}{\jlreq@set@top@contents{4}\@dottedtocline{3}{0\zh}{2\zw}}
-\newcommand*{\l@paragraph}    {\jlreq@set@top@contents{5}\@dottedtocline{4}{0\zh}{2\zw}}
-\newcommand*{\l@subparagraph} {\jlreq@set@top@contents{6}\@dottedtocline{5}{0\zh}{2\zw}}
+\newcommand*{\l@subsection}   {\jlreq@set@top@contents{3}\@dottedtocline{2}{0\zh}{2\jlreq@gol}}
+\newcommand*{\l@subsubsection}{\jlreq@set@top@contents{4}\@dottedtocline{3}{0\zh}{2\jlreq@gol}}
+\newcommand*{\l@paragraph}    {\jlreq@set@top@contents{5}\@dottedtocline{4}{0\zh}{2\jlreq@gol}}
+\newcommand*{\l@subparagraph} {\jlreq@set@top@contents{6}\@dottedtocline{5}{0\zh}{2\jlreq@gol}}
 
 % listoffigures
 \newcommand{\listoffigures}{%
@@ -1732,7 +1809,7 @@
   \@mkboth{\listfigurename}{\listfigurename}}%
   \@starttoc{lof}%
 }
-\newcommand*{\l@figure}{\@dottedtocline{1}{0\zw}{2\zw}}
+\newcommand*{\l@figure}{\@dottedtocline{1}{0\jlreq@gol}{2\jlreq@gol}}
 \newcommand{\listoftables}{%
     \jlreq@top@contents=1\relax
     \section*{\listtablename
@@ -1965,7 +2042,10 @@
     \jlreq@warichu@determinelength{#1}{\jlreq@warichu@fontsize}{}{2}{2}{\jlreq@tempdimc}{\maxdimen}%
     \ifvoid\jlreq@resultbox\else
       {%
-        \jlreq@warichu@fontsize\raise-.5\zw\hbox{\box\jlreq@resultbox}%
+        \jlreq@tempboxa=\hbox{\jlreq@warichu@fontsize\box\jlreq@resultbox}%
+        \ht\jlreq@tempboxa=\dimexpr(\ht\jlreq@tempboxa + \dp\jlreq@tempboxa)/2\relax
+        \dp\jlreq@tempboxa=\ht\jlreq@tempboxa
+        \box\jlreq@tempboxa
       }%
     \fi
     \def\jlreq@next{}%
@@ -1976,7 +2056,12 @@
 }
 
 \def\jlreq@warichu@noauto@@@#1#2&\jlreq@endmark{%
-  {\jlreq@warichu@fontsize\raise-.5\zw\hbox{\vbox{\hbox{#1}\hbox{#2}}}}%
+  {%
+    \setbox\@tempboxa=\hbox{\vbox{\hbox{#1}\hbox{#2}}}%
+    \ht\tempboxa=\dimexpr(\ht\@tempboxa + \dp\@tempboxa)/2\relax
+    \dp\tempboxa=\dimexpr(\ht\@tempboxa + \dp\@tempboxa)/2\relax
+    \box\@tempboxa
+  }%
 }
 
 \newcommand{\jlreq@warichu@endwarichu}{%

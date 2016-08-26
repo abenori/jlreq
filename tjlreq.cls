@@ -695,8 +695,7 @@
   \ifx u\jlreq@engine\edef\jlreq@openbreackets@list{\jlreq@openbreackets@list {｟} {〘} {〖} {«} {〝}{‘} {“}}\fi
   % \jlreq@jfmnameにJFMの名前を入れる
   \ifjlreq@burasage\edef\jlreq@jfmname{b\jlreq@jfmname}\fi
-  \def\@tempa{zenkakunibu_nibu}
-  \ifx\jlreq@open@bracket@pos\@tempa\edef\jlreq@jfmname{\jlreq@jfmname z}\fi
+  \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{\edef\jlreq@jfmname{\jlreq@jfmname z}}{}
   \edef\jlreq@jfmname{\jlreq@jfmname jlreq-v}
   \ifx u\jlreq@engine\edef\jlreq@jfmname{u\jlreq@jfmname}\fi
   \def\jlreq@deleteuntileendmark#1\jlreq@endmark{}
@@ -1015,6 +1014,7 @@
         \edef\jlreq@before@space{\jlreq@once@expand{\jlreq@lines} - \jlreq@once@expand{\jlreq@after@space} - \baselineskip}%
       \fi
     \fi
+    % \@startsection{#1}{#2}{<indent>*fontsize}{<before_space>}{<after_space>}{<font>}
     \global\edef\@tempa{{\unexpanded{#1}}{\unexpanded{#2}}{\jlreq@once@expand{\jlreq@indent}\jlreq@fontsize}{\dimexpr\jlreq@once@expand{\jlreq@before@space}\relax}{\noexpand\jlreq@absdimenmodoki{\dimexpr\jlreq@once@expand{\jlreq@after@space}\relax}}{\jlreq@tempdima=\baselineskip\noexpand\reset@font\jlreq@once@expand{\jlreq@fontcommand}\baselineskip=\jlreq@tempdima}}
   \endgroup
   \expandafter\edef\csname #1\endcsname{\noexpand\jlreq@hook@beforeheadings{#1}%
@@ -1045,6 +1045,7 @@
     \def\jlreq@indent{1}%
     \define@key{jlreq@key}{indent}{\def\jlreq@indent{##1}}%
     \setkeys{jlreq@key}{#3}%
+    % \@startsection{#1}{#2}{<indent>*fontsize}{0pt}{-fontsize}{font}
     \global\edef\@tempa{{\unexpanded{#1}}{\unexpanded{#2}}{\jlreq@once@expand{\jlreq@indent}\jlreq@fontsize}{0pt}{-1\jlreq@fontsize}{\jlreq@tempdima=\baselineskip\noexpand\reset@font\jlreq@once@expand{\jlreq@fontcommand}\baselineskip=\jlreq@tempdima}}%
   \endgroup
   \expandafter\edef\csname #1\endcsname{\noexpand\jlreq@hook@beforeheadings{#1}%
@@ -1077,12 +1078,16 @@
 % 1 = 書式指定，2 = インデント, 3 = 見出しと本文の間, 4 = これを越えたら二行以上，5 = これを越えたら三行以上，6 = テキスト
 \def\jlreq@CutinHeading@@start#1#2#3#4#5#6{%
   \par\leavevmode
+  % 一行で処理したときの見出し長さを計測
   \setbox\@tempboxa=\hbox{#1#6}%
   \@tempdima=\wd\@tempboxa
+  % 何行必要かを\jlreq@CutinHeading@linecountに入れる
   \ifdim\@tempdima>#5\def\jlreq@CutinHeading@linecount{3}%
   \else\ifdim\@tempdima>#4\def\jlreq@CutinHeading@linecount{2}%
   \else\def\jlreq@CutinHeading@linecount{1}\fi\fi
+  % \@tempdimaが実際の一行の長さに近い
   \divide\@tempdima by \jlreq@CutinHeading@linecount
+  % \jlreq@resultboxに見出し部分を，\jlreq@CutinHeading@linecountに何行使うかを入れる
   \ifnum\jlreq@CutinHeading@linecount=1\relax
     \setbox\jlreq@resultbox=\vbox{\parindent=0pt\rightskip=0pt\leftskip=0pt\hbox{#1#6}}%
     \def\jlreq@CutinHeading@linecount{2}%
@@ -1090,16 +1095,21 @@
     \jlreq@warichu@determinelength{#6}{#1}{}{\jlreq@CutinHeading@linecount}{\jlreq@CutinHeading@linecount}{\@tempdima}{\linewidth}%
     \def\jlreq@CutinHeading@linecount{3}%
   \fi
+  % 普通の一行の高さ/深さに合わせて見出しのボックスを出力
   \setbox\@tempboxa=\vtop to \dimexpr\jlreq@CutinHeading@linecount\baselineskip\relax{\vskip 0pt plus 1fill minus 1fill \box\jlreq@resultbox\vskip 0pt plus 1fill minus 1fill}%
   \ht\@tempboxa=\Cht
   \dp\@tempboxa=\Cdp
   \@tempdima=\wd\@tempboxa
+  % \hang****を設定
   \hangindent=\dimexpr#2\zh + \@tempdima + #3\relax\hangafter=-\jlreq@CutinHeading@linecount
   \jlreq@hangindent=\hangindent\jlreq@wraplinecount=\hangafter
   \hspace*{#2\zh}%
   \kern-\dimexpr\@tempdima + #3 + \parindent\relax
   \box\@tempboxa
   \hspace*{#3}%
+  % 改段落が起こっても\hang****をキープするように\parを書き換えておく（終わったら元に戻す）．
+  % \jlreq@hangindent/\jlreq@wraplinecountにそれぞれ\hangindent/\hangafterに対応する値を入れて
+  % \parのたびにそこから代入する．
   \let\jlreq@original@par=\par
   \def\par{%
     \ifvmode\jlreq@original@par\else
@@ -1164,8 +1174,7 @@
 %. 注
 % 合印：4.2.3
 % 文字サイズは6ポイントくらい（4.2.3.a）とりあえす\scriptsize
-\def\@tempa{inline}
-\ifx\jlreq@referencemark\@tempa
+\ifthenelse{\equal{\jlreq@referencemark}{inline}}{
   \renewcommand{\@footnotemark}{%
     \leavevmode
     \ifhmode\edef\@x@sf{\the\spacefactor}\nobreak\fi
@@ -1177,7 +1186,7 @@
     }%
     \ifhmode\spacefactor\@x@sf\fi
     \relax}
-\else
+}{
   \renewcommand{\@footnotemark}{%
     \leavevmode
     \ifhmode\edef\@x@sf{\the\spacefactor}\nobreak\fi
@@ -1192,7 +1201,7 @@
     \hbox to\z@{\hskip-\@tempdima\raise\dimexpr.5\jlreq@gol + (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa\hss}%
     \ifhmode\spacefactor\@x@sf\fi
     \relax}
-\fi
+}
 
 %.. 脚注
 % （縦書きの時は傍注，4.2.5）
@@ -1210,16 +1219,15 @@
   \global\jlreq@footnoteindent=\dimexpr\textwidth - \@tempdima\relax
 }
 % 4.2.5.d
-\def\@tempa{one}
-\ifx\jlreq@footnotetext@indent\@tempa
+\ifthenelse{\equal{\jlreq@footnotetext@indent}{one}}{
   \newcommand\@makefntext[1]{\parindent 1\zh
     \addtolength{\leftskip}{\dimexpr \jlreq@footnoteindent + 1\zh\relax} %全体をインデント+1文字分下げる
     \noindent\hskip -1\zh\@makefnmark\hskip 1\zh#1}% 見出し出力と一文字分の空き
-\else
+}{
   \newcommand\@makefntext[1]{\parindent 1\zh
     \addtolength{\leftskip}{\jlreq@footnoteindent} %全体をインデント
     \noindent\hskip 1\zh\@makefnmark\hskip 1\zh#1}% 見出し出力と一文字分の空き
-\fi
+}
 % 図4.61のようにする
 \renewcommand{\@makefnmark}{\inhibitglue\jlreq@open@bracket@before@space（\@thefnmark）\inhibitglue}
 \renewcommand{\thefootnote}{\rensuji{\@arabic\c@footnote}}

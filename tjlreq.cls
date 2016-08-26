@@ -16,7 +16,7 @@
 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{tjlreq}[2016/01/01 tjlreq]
-\RequirePackage{xkeyval,everyhook}
+\RequirePackage{xkeyval,everyhook,ifthen}
 
 %. helper1
 \def\jlreq@once@expand#1{\expandafter\unexpanded\expandafter{#1}}
@@ -207,6 +207,17 @@
 \newcommand*{\jlreq@option@gutter}{}
 \DeclareOptionX{gutter}{\renewcommand*{\jlreq@option@gutter}{#1}}
 
+%.. 柱とノンブル
+\newcommand*{\jlreq@option@headfoot@verticalpos}{1zh}
+\DeclareOptionX{headfoot_verticalposition}{\renewcommand*{\jlreq@option@headfoot@verticalpos}{#1}}
+\newcommand*{\jlreq@option@headfoot@sidemargin}{0pt}
+\DeclareOptionX{headfoot_sidemarging}{\renewcommand*{\jlreq@option@headfoot@sidemargin}{#1}}
+\newcommand*{\jlreq@running@head@position}{top-left}
+\DeclareOptionX{running_head_position}{\renewcommand*{\jlreq@running@head@position}{#1}}
+\tracingmacros=0
+\newcommand*{\jlreq@nombre@position}{bottom-left}
+\DeclareOptionX{nombre_position}{\renewcommand*{\jlreq@nombre@position}{#1}}
+
 %.. 行送り，指定無しの場合は文字サイズの1.7倍とする．（1.5から2倍が好ましい：2.4.2.d 注3）
 \newcommand*{\jlreq@option@baselineskip}{}
 \DeclareOptionX{baselineskip}{\def\jlreq@option@baselineskip{#1}}
@@ -386,28 +397,20 @@
   \newcommand*{\jlreq@setprebreakpenalty}[2]{\prebreakpenalty`#1=#2}
   \newcommand*{\jlreq@setjaxspmode}[2]{%
     \def\@tempa{#2}
-    \def\@tempb{inhibit}
-    \ifx\@tempa\@tempb
+    \ifthenelse{\equal{#2}{inhibit}}{
       \inhibitxspcode`#1=0
-    \else
-      \def\@tempb{preonly}
-      \ifx\@tempa\@tempb
+    }{
+      \ifthenelse{\equal{#2}{preonly}}{
         \inhibitxspcode`#1=1
-      \else
-        \def\@tempb{postonly}
-        \ifx\@tempa\@tempb
+      }{
+        \ifthenelse{\equal{#2}{postonly}}{
           \inhibitxspcode`#1=2
-        \else
-          \def\@tempb{allow}
-          \ifx\@tempa\@tempb
+        }{
+          \ifthenelse{\equal{#2}{allow}}{
             \inhibitxspcode`#1=3
-          \else
+          }{
             \inhibitxspcode`#1=#2
-          \fi
-        \fi
-      \fi
-    \fi
-  }
+  }}}}}
 \fi
 
 \jlreq@setpostbreakpenalty{（}{10000}
@@ -698,24 +701,21 @@
   \edef\jlreq@jfmname{\jlreq@jfmname jlreq-v}
   \ifx u\jlreq@engine\edef\jlreq@jfmname{u\jlreq@jfmname}\fi
   \def\jlreq@deleteuntileendmark#1\jlreq@endmark{}
-  \def\@tempa{zenkaku_tentsuki}
-  \ifx\@tempa\jlreq@open@bracket@pos
+  \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkaku_tentsuki}}{
     \def\jlreq@openbracket@hook{\jlreq@ifinlist{\jlreq@nextchar}{\jlreq@openbreackets@list}{\inhibitglue}{}}
     \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
-  \fi
-  \def\@tempa{nibu_tentsuki}
-  \ifx\@tempa\jlreq@open@bracket@pos
+  }{}
+  \ifthenelse{\equal{\jlreq@open@bracket@pos}{nibu_tentsuki}}{
     \def\jlreq@openbracket@hook{\jlreq@ifinlist{\jlreq@nextchar}{\jlreq@openbreackets@list}{\hskip -1\zh}{}}
     \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
-  \fi
+  }{}
 \fi
 % 開き括弧の幅が全角の場合は，ベタ組にするために補正が必要
-\def\@tempa{zenkakunibu_nibu}
-\ifx\jlreq@open@bracket@pos\@tempa
+\ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{
   \def\jlreq@open@bracket@before@space{\hskip -.5\zh}
-\else
+}{
   \def\jlreq@open@bracket@before@space{}
-\fi
+}
 
 % landscapeの場合縦横をひっくり返す
 \if@landscape
@@ -887,16 +887,17 @@
 \ifx l\jlreq@engine
   \def\jlreq@expand@speciallength#1{%
     % zhやzwを\zhや\zwにする．
-    \dimexpr\directlua{
+    \directlua{
       local yen = string.char(92)
       local s = [[#1]]
       s = s:gsub("zw",yen .. "zw"):gsub("zh",yen .. "zh")
       tex.print(s)
-    }\relax
+    }%
   }
 \else
-  \def\jlreq@expand@speciallength#1{\dimexpr #1\relax}
+  \def\jlreq@expand@speciallength#1{#1}
 \fi
+\def\jlreq@speciallength#1{\dimexpr\jlreq@expand@speciallength{#1}}
 
 % デフォルト値は縦が0.768倍，横が0.727倍（JISX4051のA5の例から換算……）．
 % 縦 (\textwidth)
@@ -905,7 +906,7 @@
   \setlength{\textwidth}{0.768\paperheight}
   \divide\textwidth\@tempdima
 \else
-  \setlength{\textwidth}{\jlreq@expand@speciallength{\jlreq@option@line@length}}
+  \setlength{\textwidth}{\jlreq@speciallength{\jlreq@option@line@length}}
   \divide\textwidth\@tempdima
   % 縦ならば一行52文字以下，横ならば40文字以下が望ましい．2.4.2.c 注2
 %  \ifnum\number\textwidth>52
@@ -918,14 +919,13 @@
 \ifx\jlreq@option@number@of@lines\@empty
   \setlength{\textheight}{0.727\paperwidth}
 \else
-  \setlength{\textwidth}{\jlreq@expand@speciallength{\jlreq@option@number@of@lines\baselineskip}}
+  \setlength{\textwidth}{\jlreq@speciallength{\jlreq@option@number@of@lines\baselineskip}}
 \fi
 \divide\textheight\baselineskip \multiply\textheight\baselineskip
 
 \setlength{\topskip}{1\zw} % フォントサイズと一致させる
-% ヘッダ：本文から1文字分離す．ヘッダの高さはjsarticleに習ってその二倍
-\setlength{\headsep}{1\zh}
-\setlength{\headheight}{2\zh}
+\setlength{\headsep}{\jlreq@speciallength{\jlreq@option@headfoot@verticalpos}}
+\setlength{\headheight}{1\zh}
 % 横
 \ifx\jlreq@option@gutter\@empty
   % 中央配置
@@ -935,7 +935,7 @@
   \addtolength{\oddsidemargin}{-1in}
   \setlength{\evensidemargin}{\oddsidemargin}
 \else
-  \setlength{\oddsidemargin}{\jlreq@expand@speciallength{\jlreq@option@gutter}}
+  \setlength{\oddsidemargin}{\jlreq@speciallength{\jlreq@option@gutter}}
   \setlength{\evensidemargin}{\dimexpr\paperwidth - \textheight - \oddsidemargin\relax}
   \addtolength{\oddsidemargin}{-1in}
   \addtolength{\evensidemargin}{-1in}
@@ -947,7 +947,7 @@
   % 中央配置
   \setlength{\topmargin}{0.5\topmargin}
 \else
-  \addtolength{\topmargin}{-\jlreq@expand@speciallength{\jlreq@option@foot@space}}
+  \addtolength{\topmargin}{-\jlreq@speciallength{\jlreq@option@foot@space}}
 \fi
 \addtolength{\topmargin}{-\headsep}
 \addtolength{\topmargin}{-\headheight}
@@ -1328,13 +1328,101 @@
 % 2.6.1.cの後半が前半と整合的でないように見える……
 % 柱：両柱と片柱（2.6.3）
 
+% bottom-leftみたいなのを解釈する．入力の順番はどっちでも良いが，出力は<top/bottom><left/right>の順番
+% #1にセットする．
+\def\jlreq@parse@position@#1-#2\jlreq@endmark{\def\@tempa{#1}\def\@tempb{#2}}
+\newcommand*\jlreq@parse@position@@[1]{%
+  \ifthenelse{\equal{#1}{top} \or \equal{#1}{bottom}}{\def\@tempc{#1}}{
+    \ifthenelse{\equal{#1}{left} \or \equal{#1}{right}}{\def\@tempd{#1}}{
+      \ClassError{tjlreq}{Invalid position: #1}{\@ehc}
+    }
+  }
+}
+\newcommand*{\jlreq@parse@position}[2]{
+  \jlreq@parse@position@#2\jlreq@endmark
+  % \@tempcに縦方向を，\@tempdに横方向を入れる
+  \def\@tempc{}\def\@tempd{}
+  \jlreq@parse@position@@{\@tempa}\jlreq@parse@position@@{\@tempb}
+  \ifx\@tempc\@empty\edef\@tempc{\expandafter\@firstoftwo#1}\fi
+  \ifx\@tempd\@empty\edef\@tempd{\expandafter\@secondoftwo#1}\fi
+  \edef#1{{\@tempc}{\@tempd}}
+}
+% 公開すべきかよくわからないのでとりあえず隠しにしておく
+\newcommand*{\jlreq@DeclarePageStyle}[2]{%
+  \begingroup
+    \def\nombre@position{{bottom}{left}}
+    \define@key{jlreq@key}{nombre_position}{\jlreq@parse@position{\nombre@position}{##1}}
+    \def\running@head@position{{top}{left}}
+    \define@key{jlreq@key}{running_head_position}{\jlreq@parse@position{\running@head@position}{##1}}
+    \def\nombre{\thepage}
+    \define@key{jlreq@key}{nombre}{\def\nombre{##1}}
+    \def\running@head{\rightmark}
+    \define@key{jlreq@key}{running_head}{\def\running@head{##1}}
+    \def\running@head@type{double}
+    \define@choicekey{jlreq@key}{running_head_type}{simple,double}{\def\running@head@type{##1}}
+    % 柱とノンブルの間
+    \def\gap{1\zw}
+    \define@key{jlreq@key}{gap}{\def\gap{##1}}
+    \setkeys{jlreq@key}{#2}
+    \gdef\@tempa{}\gdef\@tempb{}\gdef\@tempc{}\gdef\@tempd{}
+    % \@tempa = \@oddhead, \@tempb = \@oddfoot, \@tempc = \@evenhead, \@tempd = \@evenfoot
+    \edef\def@make@left{
+      \unexpanded{\def\@make@left#1}{\noexpand\hspace*{\jlreq@expand@speciallength{\jlreq@option@headfoot@sidemargin}\unexpanded{#1}\hfil}}
+    }
+    \edef\leftofleft{\noexpand\hfil}
+    \edef\rightofleft{\noexpand\hspace*{\dimexpr\jlreq@expand@speciallength{\jlreq@option@headfoot@sidemargin} + \topskip - .5\zw\relax}}
+    \edef\leftofright{\noexpand\hspace*{\jlreq@expand@speciallength{\jlreq@option@headfoot@sidemargin}}}
+    \edef\rightofright{\noexpand\hfil}
+    % まず柱を配置→ノンブルを配置とする．
+    % \ifjlreq@tempaがfalseならばevenは設定しない
+    % \jlreq@set@headfoot{top}{left}{右に入れる物}{左に入れる物}
+    \def\jlreq@set@headfoot##1##2##3##4{
+      \edef\@tempe{\jlreq@once@expand{\leftofleft}##3\jlreq@once@expand{\rightofleft}}% 左
+      \edef\@tempf{\jlreq@once@expand{\leftofright}##4\jlreq@once@expand{\rightofright}}% 右
+      \ifthenelse{\equal{##1}{top}}{
+        \ifthenelse{\equal{##2}{left}}
+          {\global\let\@tempa\@tempe\ifjlreq@tempa\global\let\@tempc\@tempf\fi}
+          {\global\let\@tempa\@tempf\ifjlreq@tempa\global\let\@tempc\@tempe\fi}
+      }{
+        \ifthenelse{\equal{##2}{left}}
+          {\global\let\@tempb\@tempe\ifjlreq@tempa\global\let\@tempd\@tempf\fi}
+          {\global\let\@tempb\@tempf\ifjlreq@tempa\global\let\@tempd\@tempe\fi}
+      }
+    }
+    \ifthenelse{\equal{\running@head@type}{double}}{\jlreq@tempatrue}{\jlreq@tempafalse}
+    \ifx\running@head\@empty\else
+      \expandafter\jlreq@set@headfoot\running@head@position{\jlreq@once@expand{\running@head}}{\jlreq@once@expand{\running@head}}
+    \fi
+    \ifx\nombre\@empty\else
+      \expandafter\jlreq@set@headfoot\nombre@position{\jlreq@once@expand{\nombre}}{\jlreq@once@expand{\nombre}}
+    \fi
+    % もし両者が同じ位置にあれば，補正する．
+    \ifx\nombre\@empty\else\ifx\running@head\@empty\else
+      \ifthenelse{\equal{\nombre@position}{\running@head@position}}{
+        \ifthenelse{\equal{\running@head@type}{double}}{\jlreq@tempatrue}{\jlreq@tempafalse}
+        \expandafter\jlreq@set@headfoot\nombre@position{\jlreq@once@expand{\nombre}\hspace*{\gap}\jlreq@once@expand{\running@head}}{\jlreq@once@expand{\running@head}\hspace*{\gap}\jlreq@once@expand{\nombre}}
+      }{}
+    \fi\fi
+  \endgroup
+  \edef\jlreq@do{%
+    \unexpanded{\expandafter\def\csname ps@#1\endcsname}{%
+      \unexpanded{\def\@oddhead}{\jlreq@once@expand{\@tempa}}%
+      \unexpanded{\def\@oddfoot}{\jlreq@once@expand{\@tempb}}%
+      \unexpanded{\def\@evenhead}{\jlreq@once@expand{\@tempc}}%
+      \unexpanded{\def\@evenfoot}{\jlreq@once@expand{\@tempd}}%
+    }%
+  }
+  \jlreq@do
+}
+\jlreq@DeclarePageStyle{plain}{running_head={}}
 
-\def\ps@plain{\let\@mkboth\@gobbletwo
-  \let\ps@jpl@in\ps@plain
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{\thepage\hfil}%
-  \def\@evenfoot{\hfil\thepage \kern\dimexpr\topskip - .5\zw\relax}}
+
+%\def\ps@plain{\let\@mkboth\@gobbletwo
+%  \let\ps@jpl@in\ps@plain
+%  \let\@oddhead\@empty
+%  \let\@evenhead\@empty
+%  \def\@oddfoot{\thepage\hfil}%
+%  \def\@evenfoot{\hfil\thepage \kern\dimexpr\topskip - .5\zw\relax}}
 % ページ番号は上の端．
 \def\ps@headings{\let\ps@jpl@in\ps@headnombre
   \let\@oddfoot\@empty

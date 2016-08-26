@@ -214,7 +214,6 @@
 \DeclareOptionX{headfoot_sidemarging}{\renewcommand*{\jlreq@option@headfoot@sidemargin}{#1}}
 \newcommand*{\jlreq@running@head@position}{top-left}
 \DeclareOptionX{running_head_position}{\renewcommand*{\jlreq@running@head@position}{#1}}
-\tracingmacros=0
 \newcommand*{\jlreq@nombre@position}{bottom-left}
 \DeclareOptionX{nombre_position}{\renewcommand*{\jlreq@nombre@position}{#1}}
 
@@ -271,7 +270,7 @@
 
 \ExecuteOptionsX{a4paper,fontsize=9pt,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=_headings,twoside,onecolumn,final,tate}
 
-% \@removeelementを一旦置き換えてから対処する
+% \@removeelementを一旦置き換えてから\ProcessOptionsXを実行する
 \let\jlreq@original@@removeelement=\@removeelement
 \let\@removeelement=\jlreq@helper@removeelement
 \ProcessOptionsX*\relax
@@ -1030,6 +1029,10 @@
 \newcommand*{\ProvideBlockHeading}[3]{%
   \@ifundefined{#1}{\DeclareBlockHeading{#1}{#2}{#3}}{}%
 }
+\@onlypreamble\DeclareBlockHeading
+\@onlypreamble\NewBlockHeading
+\@onlypreamble\RenewBlockHeading
+\@onlypreamble\ProvideBlockHeading
 
 % 同行見出し
 % \DeclareRuninHeading{命令名}{レベル}{書体変更命令}
@@ -1056,6 +1059,10 @@
 \newcommand*{\ProvideRuninHeading}[3]{%
   \@ifundefined{#1}{\DeclareRuninHeading{#1}{#2}{#3}}{}%
 }
+\@onlypreamble\DeclareRuninHeading
+\@onlypreamble\NewRuninHeading
+\@onlypreamble\RenewRuninHeading
+\@onlypreamble\ProvideRuninHeading
 
 % 窓見出し
 \newcount\jlreq@wraplinecount
@@ -1127,6 +1134,20 @@
   \expandafter\edef\csname #1\endcsname{\noexpand\jlreq@hook@beforeheadings{#1}%
     \noexpand\jlreq@CutinHeading@start\jlreq@once@expand{\@tempa}}
 }
+\newcommand*{\NewCutinHeading}[3]{%
+  \expandafter\@ifdefinable\csname #1\endcsname{\DeclareCutinHeading{#1}{#2}{#3}}%
+}
+\newcommand*{\RenewCutinHeading}[3]{%
+  \@ifundefined{#1}{\@latex@error{\expandafter\string\csname#1\endcsname\space undefined}\@ehc}{\DeclareCutinHeading{#1}{#2}{#3}}%
+}
+\newcommand*{\ProvideCutinHeading}[3]{%
+  \@ifundefined{#1}{\DeclareCutinHeading{#1}{#2}{#3}}{}%
+}
+\@onlypreamble\DeclareCutinHeading
+\@onlypreamble\NewCutinHeading
+\@onlypreamble\RenewCutinHeading
+\@onlypreamble\ProvideCutinHeading
+
 
 \NewBlockHeading{part}{0}{font={\LARGE\headfont},indent=4,lines=4}
 \NewBlockHeading{section}{1}{font={\Large\headfont},indent=6,lines=3}

@@ -39,19 +39,17 @@
 }
 
 % @removeelementの括弧があっても動くかもしれない版
-\def\jlreq@helper@removefirstcomma,#1\jlreq@endmark#2{\def#2{#1}}
 % 次の変数を使う：\@tempa：消したいやつ，\@tempb：今処理している部分．
 \def\jlreq@helper@removeelement#1#2#3{%
   \def\@tempb{}%
   \def\@tempa{#1}%
   \def#3{}%
   \jlreq@helper@removeelement@{#3}#2{\jlreq@endmark}%
-  \expandafter\jlreq@helper@removefirstcomma#3\jlreq@endmark{#3}
 }
 % 最初のグルーピングの前までを取得し，@@に回す．グルーピング以降は@@@で処理する
 \def\jlreq@helper@removeelement@#1#2#{%
   \jlreq@helper@removeelement@@{#1}{#2}%
-  \jlreq@helper@removeelement@@@{#1}
+  \jlreq@helper@removeelement@@@{#1}%
 }
 % #1をカンマで区切り，既に得ていた\@tempbと併せて一つの部分を作る．
 \def\jlreq@helper@removeelement@@#1#2{%
@@ -59,29 +57,31 @@
   \edef\@tempb{\jlreq@once@expand{\@tempb}\jlreq@once@expand{\@tempc}}%
   \ifjlreq@tempa
     \ifx\@tempa\@tempb\else
-      \edef#1{\jlreq@once@expand{#1},\jlreq@once@expand{\@tempb}}%
+      \ifx#1\@empty\edef#1{\jlreq@once@expand{\@tempb}}%
+      \else\edef#1{\jlreq@once@expand{#1},\jlreq@once@expand{\@tempb}}\fi
     \fi
     \def\@tempb{}%
     \expandafter\jlreq@helper@removeelement@@\expandafter#1\expandafter{\@tempd}%
   \fi
 }
 % グルーピング部分を\@tempbに加え，@に戻る
-\def\jlreq@helper@removeelement@@@#1#2{
-  \ifx\jlreq@endmark#2
+\def\jlreq@helper@removeelement@@@#1#2{%
+  \ifx\jlreq@endmark#2%
     % 全体の解釈が終わった
     \ifx\@tempa\@tempb\else
-      \edef#1{\jlreq@once@expand{#1},\jlreq@once@expand{\@tempb}}%
+      \ifx#1\@empty\edef#1{\jlreq@once@expand{\@tempb}}%
+      \else\edef#1{\jlreq@once@expand{#1},\jlreq@once@expand{\@tempb}}\fi
     \fi
   \else
     \edef\@tempb{\jlreq@once@expand{\@tempb}{#2}}%
-    \def\jlreq@next{\jlreq@helper@removeelement@{#1}}
+    \def\jlreq@next{\jlreq@helper@removeelement@{#1}}%
     \expandafter\jlreq@next
   \fi
 }
 % \@tempc,\@tempdと入れる
 % もしカンマがない場合は\ifjlreq@tempaがfalseになる．
 \def\jlreq@helper@dividebycomma#1{\jlreq@helper@dividebycomma@#1,\jlreq@endmark}
-\def\jlreq@helper@dividebycomma@#1,#2\jlreq@endmark{
+\def\jlreq@helper@dividebycomma@#1,#2\jlreq@endmark{%
   \def\@tempc{#1}%
   \def\@tempd{#2}%
   \ifx\@tempd\@empty\jlreq@tempafalse\else\jlreq@tempatrue\expandafter\def\expandafter\@tempd\expandafter{\jlreq@helper@removelastcomma#2\jlreq@endmark}\fi
@@ -108,6 +108,11 @@
   \jlreq@next
 }
 
+% 与えられたトークン列が空か（展開はしないでチェック）
+\def\jlreq@ifempty#1#2#3{%
+  \def\@tempa{#1}%
+  \ifx\@tempa\@empty#2\else#3\fi
+}
 % vbox #1の最後を\jlreq@resultboxに入れる
 % #1の最後の行は消える
 \newcommand{\jlreq@getlastbox}[1]{%
@@ -120,6 +125,8 @@
     \global\setbox\jlreq@resultbox=\box\voidb@x
   \fi
 }
+
+\newcommand*{\jlreq@debug@output}[1]{\message{\detokenize{#1}}}
 
 %. オプションの定義
 % オプション処理の際にしか使わない変数（後でそれを元に別の変数を調整する）
@@ -210,12 +217,8 @@
 %.. 柱とノンブル
 \newcommand*{\jlreq@option@headfoot@verticalpos}{1zh}
 \DeclareOptionX{headfoot_verticalposition}{\renewcommand*{\jlreq@option@headfoot@verticalpos}{#1}}
-\newcommand*{\jlreq@option@headfoot@sidemargin}{0pt}
-\DeclareOptionX{headfoot_sidemarging}{\renewcommand*{\jlreq@option@headfoot@sidemargin}{#1}}
-\newcommand*{\jlreq@running@head@position}{top-left}
-\DeclareOptionX{running_head_position}{\renewcommand*{\jlreq@running@head@position}{#1}}
-\newcommand*{\jlreq@nombre@position}{bottom-left}
-\DeclareOptionX{nombre_position}{\renewcommand*{\jlreq@nombre@position}{#1}}
+\newcommand*{\jlreq@headfoot@sidemargin}{0pt}
+\DeclareOptionX{headfoot_sidemargin}{\renewcommand*{\jlreq@headfoot@sidemargin}{#1}}
 
 %.. 行送り，指定無しの場合は文字サイズの1.7倍とする．（1.5から2倍が好ましい：2.4.2.d 注3）
 \newcommand*{\jlreq@option@baselineskip}{}
@@ -395,7 +398,6 @@
   \newcommand*{\jlreq@setpostbreakpenalty}[2]{\postbreakpenalty`#1=#2}
   \newcommand*{\jlreq@setprebreakpenalty}[2]{\prebreakpenalty`#1=#2}
   \newcommand*{\jlreq@setjaxspmode}[2]{%
-    \def\@tempa{#2}
     \ifthenelse{\equal{#2}{inhibit}}{
       \inhibitxspcode`#1=0
     }{
@@ -683,8 +685,8 @@
   \setlength{\jlreq@fontsize}{\dimexpr\@tempa\relax}
 \fi
 
-% この値は後でjfm-jlreq内で読む
 \ifx l\jlreq@engine
+  % この値は後でjfm-jlreq内で読む
   \directlua{jlreq.open_bracket_pos = [[\jlreq@open@bracket@pos]]}
   \ifjlreq@burasage\directlua{jlreq.burasage = true}
   \else\directlua{jlreq.burasage = false}\fi
@@ -740,7 +742,7 @@
       }\relax
     }%
   \else
-    \setlengh{{\jlreq@baselineskip}{\expandafter\jlreq@replaceQtotempdima\expandafter{\jlreq@option@baselineskip}}
+    \setlengh{\jlreq@baselineskip}{\expandafter\jlreq@replaceQtotempdima\expandafter{\jlreq@option@baselineskip}}
   \fi
 \fi
 \ifdim\jlreq@fontsize>\jlreq@baselineskip
@@ -895,7 +897,7 @@
 \else
   \def\jlreq@expand@speciallength#1{#1}
 \fi
-\def\jlreq@speciallength#1{\dimexpr\jlreq@expand@speciallength{#1}}
+\def\jlreq@speciallength#1{\dimexpr\jlreq@expand@speciallength{#1}\relax}
 
 % デフォルト値は縦が0.768倍，横が0.727倍（JISX4051のA5の例から換算……）．
 % 縦 (\textwidth)
@@ -917,7 +919,7 @@
 \ifx\jlreq@option@number@of@lines\@empty
   \setlength{\textheight}{0.727\paperwidth}
 \else
-  \setlength{\textwidth}{\jlreq@speciallength{\jlreq@option@number@of@lines\baselineskip}}
+  \setlength{\textheight}{\jlreq@speciallength{\jlreq@option@number@of@lines\baselineskip}}
 \fi
 \divide\textheight\baselineskip \multiply\textheight\baselineskip
 
@@ -1359,25 +1361,26 @@
 
 % bottom-leftみたいなのを解釈する．入力の順番はどっちでも良いが，出力は<top/bottom><left/right>の順番
 % #1にセットする．
-\def\jlreq@parse@position@#1-#2\jlreq@endmark{\def\@tempa{#1}\def\@tempb{#2}}
+\def\jlreq@parse@position@#1-#2\jlreq@endmark{\def\jlreq@tempa{#1}\def\jlreq@tempb{#2}}
 \newcommand*\jlreq@parse@position@@[1]{%
-  \ifthenelse{\equal{#1}{top} \or \equal{#1}{bottom}}{\def\@tempc{#1}}{
-    \ifthenelse{\equal{#1}{left} \or \equal{#1}{right}}{\def\@tempd{#1}}{
+  \ifthenelse{\equal{#1}{top} \OR \equal{#1}{bottom}}{\def\jlreq@tempc{#1}}{
+    \ifthenelse{\equal{#1}{left} \OR \equal{#1}{right} \OR \equal{#1}{center}}{\def\jlreq@tempd{#1}}{
       \ClassError{tjlreq}{Invalid position: #1}{\@ehc}
     }
   }
 }
 \newcommand*{\jlreq@parse@position}[2]{
   \jlreq@parse@position@#2\jlreq@endmark
-  % \@tempcに縦方向を，\@tempdに横方向を入れる
-  \def\@tempc{}\def\@tempd{}
-  \jlreq@parse@position@@{\@tempa}\jlreq@parse@position@@{\@tempb}
-  \ifx\@tempc\@empty\edef\@tempc{\expandafter\@firstoftwo#1}\fi
-  \ifx\@tempd\@empty\edef\@tempd{\expandafter\@secondoftwo#1}\fi
-  \edef#1{{\@tempc}{\@tempd}}
+  % \jlreq@tempcに縦方向を，\jlreq@tempdに横方向を入れる
+  \def\jlreq@tempc{}\def\jlreq@tempd{}
+  \expandafter\jlreq@parse@position@@\expandafter{\jlreq@tempa}
+  \expandafter\jlreq@parse@position@@\expandafter{\jlreq@tempb}
+  \ifx\jlreq@tempc\@empty\edef\jlreq@tempc{\expandafter\@firstoftwo#1}\fi
+  \ifx\jlreq@tempd\@empty\edef\jlreq@tempd{\expandafter\@secondoftwo#1}\fi
+  \edef#1{{\jlreq@tempc}{\jlreq@tempd}}
 }
-% 公開すべきかよくわからないのでとりあえず隠しにしておく
-\newcommand*{\jlreq@DeclarePageStyle}[2]{%
+
+\newcommand*{\DeclarePageStyle}[2]{%
   \begingroup
     \def\nombre@position{{bottom}{left}}
     \define@key{jlreq@key}{nombre_position}{\jlreq@parse@position{\nombre@position}{##1}}
@@ -1385,66 +1388,101 @@
     \define@key{jlreq@key}{running_head_position}{\jlreq@parse@position{\running@head@position}{##1}}
     \def\nombre{\thepage}
     \define@key{jlreq@key}{nombre}{\def\nombre{##1}}
-    \def\running@head{\rightmark}
-    \define@key{jlreq@key}{running_head}{\def\running@head{##1}}
-    \def\running@head@type{double}
-    \define@choicekey{jlreq@key}{running_head_type}{simple,double}{\def\running@head@type{##1}}
+    \def\odd@running@head{}
+    \define@key{jlreq@key}{odd_running_head}{\def\odd@running@head{##1}}
+    \def\even@running@head{}
+    \define@key{jlreq@key}{even_running_head}{\def\even@running@head{##1}}
     % 柱とノンブルの間
     \def\gap{1\zw}
     \define@key{jlreq@key}{gap}{\def\gap{##1}}
     \setkeys{jlreq@key}{#2}
-    \gdef\@tempa{}\gdef\@tempb{}\gdef\@tempc{}\gdef\@tempd{}
-    % \@tempa = \@oddhead, \@tempb = \@oddfoot, \@tempc = \@evenhead, \@tempd = \@evenfoot
-    \edef\def@make@left{
-      \unexpanded{\def\@make@left#1}{\noexpand\hspace*{\jlreq@expand@speciallength{\jlreq@option@headfoot@sidemargin}\unexpanded{#1}\hfil}}
-    }
-    \edef\leftofleft{\noexpand\hfil}
-    \edef\rightofleft{\noexpand\hspace*{\dimexpr\jlreq@expand@speciallength{\jlreq@option@headfoot@sidemargin} + \topskip - .5\zw\relax}}
-    \edef\leftofright{\noexpand\hspace*{\jlreq@expand@speciallength{\jlreq@option@headfoot@sidemargin}}}
-    \edef\rightofright{\noexpand\hfil}
-    % まず柱を配置→ノンブルを配置とする．
-    % \ifjlreq@tempaがfalseならばevenは設定しない
-    % \jlreq@set@headfoot{top}{left}{右に入れる物}{左に入れる物}
-    \def\jlreq@set@headfoot##1##2##3##4{
-      \edef\@tempe{\jlreq@once@expand{\leftofleft}##3\jlreq@once@expand{\rightofleft}}% 左
-      \edef\@tempf{\jlreq@once@expand{\leftofright}##4\jlreq@once@expand{\rightofright}}% 右
-      \ifthenelse{\equal{##1}{top}}{
-        \ifthenelse{\equal{##2}{left}}
-          {\global\let\@tempa\@tempe\ifjlreq@tempa\global\let\@tempc\@tempf\fi}
-          {\global\let\@tempa\@tempf\ifjlreq@tempa\global\let\@tempc\@tempe\fi}
+    % \jlreq@tempa = \@oddhead, \jlreq@tempb = \@oddfoot, \jlreq@tempc = \@evenhead, \jlreq@tempd = \@evenfoot
+    \gdef\jlreq@tempa{}\gdef\jlreq@tempb{}\gdef\jlreq@tempc{}\gdef\jlreq@tempd{}
+    % ##1 ##2 ##3と並んだヘッダを作る，戻り値は\jlreq@result
+    \def\setheadfoot@##1##2##3{%
+      \jlreq@ifempty{##1}{\def\jlreq@left{}}{\edef\jlreq@left{\noexpand\hspace*{\jlreq@expand@speciallength{\jlreq@headfoot@sidemargin}}\unexpanded{##1}}}
+      \jlreq@ifempty{##3}{\def\jlreq@right{}}{\edef\jlreq@right{\unexpanded{##3}\noexpand\hspace*{\dimexpr\jlreq@expand@speciallength{\jlreq@headfoot@sidemargin} + \topskip - .5\zw\relax}}}
+      \jlreq@ifempty{##2}{
+        \ifx\jlreq@right\@empty\let\jlreq@result=\jlreq@left
+        \else\edef\jlreq@result{\jlreq@once@expand{\jlreq@left}\hfil\jlreq@once@expand{\jlreq@right}}\fi
       }{
-        \ifthenelse{\equal{##2}{left}}
-          {\global\let\@tempb\@tempe\ifjlreq@tempa\global\let\@tempd\@tempf\fi}
-          {\global\let\@tempb\@tempf\ifjlreq@tempa\global\let\@tempd\@tempe\fi}
+        \ifx\jlreq@left\@empty\else\edef\jlreq@left{\noexpand\hbox to 0pt{\jlreq@once@expand{\jlreq@left}}}\fi
+        \ifx\jlreq@right\@empty\else\edef\jlreq@right{\noexpand\hbox to 0pt{\jlreq@once@expand{\jlreq@right}}}\fi
+        \edef\jlreq@result{\jlreq@once@expand{\jlreq@left}\hfil\unexpanded{##2}\hfil\jlreq@once@expand{\jlreq@right}}
       }
     }
-    \ifthenelse{\equal{\running@head@type}{double}}{\jlreq@tempatrue}{\jlreq@tempafalse}
-    \ifx\running@head\@empty\else
-      \expandafter\jlreq@set@headfoot\running@head@position{\jlreq@once@expand{\running@head}}{\jlreq@once@expand{\running@head}}
-    \fi
-    \ifx\nombre\@empty\else
-      \expandafter\jlreq@set@headfoot\nombre@position{\jlreq@once@expand{\nombre}}{\jlreq@once@expand{\nombre}}
-    \fi
-    % もし両者が同じ位置にあれば，補正する．
-    \ifx\nombre\@empty\else\ifx\running@head\@empty\else
-      \ifthenelse{\equal{\nombre@position}{\running@head@position}}{
-        \ifthenelse{\equal{\running@head@type}{double}}{\jlreq@tempatrue}{\jlreq@tempafalse}
-        \expandafter\jlreq@set@headfoot\nombre@position{\jlreq@once@expand{\nombre}\hspace*{\gap}\jlreq@once@expand{\running@head}}{\jlreq@once@expand{\running@head}\hspace*{\gap}\jlreq@once@expand{\nombre}}
-      }{}
-    \fi\fi
+    % ##2を##1 = left/center/rightの場所，##4を##3の場所に置く．被った場合は##2を外側にする．
+    % 戻り値は\jlreq@result
+    \def\setheadfoot##1##2##3##4{%
+      \def\jlreq@left{}\def\jlreq@center{}\def\jlreq@right{}
+      % \jlreq@tempb = if(##1 == ##3 && ##2 != "" && ##4 != "")
+      % 展開できるかわからないものが含まれるので，\ifthenelseでは駄目な気がする．
+      \jlreq@tempatrue
+      \jlreq@ifempty{##2}{\jlreq@tempafalse}{}
+      \jlreq@ifempty{##4}{\jlreq@tempafalse}{}
+      \ifthenelse{\equal{##1}{##3}}{}{\jlreq@tempafalse}
+      \ifjlreq@tempa
+        \ifthenelse{\equal{##1}{right}}{
+          \edef\jlreq@right{\unexpanded{##4}\noexpand\hspace*{\gap}\unexpanded{##2}}
+        }{
+          \expandafter\edef\csname jlreq@##1\endcsname{\unexpanded{##2}\noexpand\hspace{\gap}\unexpanded{##4}}
+        }
+      \else
+        \jlreq@ifempty{##2}{}{\expandafter\def\csname jlreq@##1\endcsname{##2}}
+        \jlreq@ifempty{##4}{}{\expandafter\def\csname jlreq@##3\endcsname{##4}}
+      \fi
+      \edef\jlreq@do{\noexpand\setheadfoot@{\jlreq@once@expand{\jlreq@left}}{\jlreq@once@expand{\jlreq@center}}{\jlreq@once@expand{\jlreq@right}}}
+      \jlreq@do
+    }
+    % \nombre@<top/bottom>を定義
+    \def\nombre@top{}\def\nombre@bottom{}
+    \expandafter\edef\csname nombre@\expandafter\@firstoftwo\nombre@position\endcsname{\jlreq@once@expand{\nombre}}
+    % \odd@running@head@<top/bottom>を定義
+    \def\odd@running@head@top{}\def\odd@running@head@bottom{}
+    \expandafter\edef\csname odd@running@head@\expandafter\@firstoftwo\running@head@position\endcsname{\jlreq@once@expand{\odd@running@head}}
+    % \@oddheadを定義
+    \edef\jlreq@do{\unexpanded{\setheadfoot{\expandafter\@secondoftwo\nombre@position}}{\jlreq@once@expand{\nombre@top}}\unexpanded{{\expandafter\@secondoftwo\running@head@position}}{\jlreq@once@expand{\odd@running@head@top}}}
+    \jlreq@do\global\let\jlreq@tempa=\jlreq@result
+    % \@oddfootを定義
+    \edef\jlreq@do{\unexpanded{\setheadfoot{\expandafter\@secondoftwo\nombre@position}}{\jlreq@once@expand{\nombre@bottom}}\unexpanded{{\expandafter\@secondoftwo\running@head@position}}{\jlreq@once@expand{\odd@running@head@bottom}}}
+    \jlreq@do\global\let\jlreq@tempb=\jlreq@result
+    % ##1 = {}{}の後ろを逆にする
+    \def\getoppositeposition##1{
+      \ifthenelse{\equal{\expandafter\@secondoftwo##1}{center}}{\def\jlreq@tempe{center}}{
+        \ifthenelse{\equal{\expandafter\@secondoftwo##1}{right}}{\def\jlreq@tempe{left}}{
+          \ifthenelse{\equal{\expandafter\@secondoftwo##1}{left}}{\def\jlreq@tempe{right}}{}}}
+      \edef##1{{\expandafter\@firstoftwo##1}{\jlreq@tempe}}
+    }
+    \getoppositeposition\nombre@position
+    \getoppositeposition\running@head@position
+    % 上と同じことをする
+    % \nombre@<top/bottom>を定義
+    \def\nombre@top{}\def\nombre@bottom{}
+    \expandafter\edef\csname nombre@\expandafter\@firstoftwo\nombre@position\endcsname{\jlreq@once@expand{\nombre}}
+    % \even@running@head@<top/bottom>を定義
+    \def\even@running@head@top{}\def\even@running@head@bottom{}
+    \expandafter\edef\csname even@running@head@\expandafter\@firstoftwo\running@head@position\endcsname{\jlreq@once@expand{\even@running@head}}
+    % \@evenheadを定義
+    \edef\jlreq@do{\unexpanded{\setheadfoot{\expandafter\@secondoftwo\nombre@position}}{\jlreq@once@expand{\nombre@top}}\unexpanded{{\expandafter\@secondoftwo\running@head@position}}{\jlreq@once@expand{\even@running@head@top}}}
+    \jlreq@do\global\let\jlreq@tempc=\jlreq@result
+    % \@evenfootを定義
+    \edef\jlreq@do{\unexpanded{\setheadfoot{\expandafter\@secondoftwo\nombre@position}}{\jlreq@once@expand{\nombre@bottom}}\unexpanded{{\expandafter\@secondoftwo\running@head@position}}{\jlreq@once@expand{\even@running@head@bottom}}}
+    \jlreq@do\global\let\jlreq@tempd=\jlreq@result
   \endgroup
   \edef\jlreq@do{%
     \unexpanded{\expandafter\def\csname ps@#1\endcsname}{%
-      \unexpanded{\def\@oddhead}{\jlreq@once@expand{\@tempa}}%
-      \unexpanded{\def\@oddfoot}{\jlreq@once@expand{\@tempb}}%
-      \unexpanded{\def\@evenhead}{\jlreq@once@expand{\@tempc}}%
-      \unexpanded{\def\@evenfoot}{\jlreq@once@expand{\@tempd}}%
+      \unexpanded{\def\@oddhead}{\jlreq@once@expand{\jlreq@tempa}}%
+      \unexpanded{\def\@oddfoot}{\jlreq@once@expand{\jlreq@tempb}}%
+      \unexpanded{\def\@evenhead}{\jlreq@once@expand{\jlreq@tempc}}%
+      \unexpanded{\def\@evenfoot}{\jlreq@once@expand{\jlreq@tempd}}%
     }%
   }
   \jlreq@do
 }
-\jlreq@DeclarePageStyle{plain}{running_head={}}
+\@onlypreamble\DeclarePageStyle
 
+\DeclarePageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},nombre_position={top-left}}
+\DeclarePageStyle{empty}{nombre={},odd_running_head={},even_running_head={}}
 
 %\def\ps@plain{\let\@mkboth\@gobbletwo
 %  \let\ps@jpl@in\ps@plain

@@ -1380,6 +1380,8 @@
   \edef#1{{\jlreq@tempc}{\jlreq@tempd}}
 }
 
+% odd_running_head_header=sectionみたいなのを用意して，\sectionmark=\markrightみたいにするとよいだろうか？
+% odd_running_headには\rightmarkを設定するということで．
 \newcommand*{\DeclarePageStyle}[2]{%
   \begingroup
     \def\nombre@position{{bottom}{left}}
@@ -1406,8 +1408,8 @@
         \ifx\jlreq@right\@empty\let\jlreq@result=\jlreq@left
         \else\edef\jlreq@result{\jlreq@once@expand{\jlreq@left}\hfil\jlreq@once@expand{\jlreq@right}}\fi
       }{
-        \ifx\jlreq@left\@empty\else\edef\jlreq@left{\noexpand\hbox to 0pt{\jlreq@once@expand{\jlreq@left}}}\fi
-        \ifx\jlreq@right\@empty\else\edef\jlreq@right{\noexpand\hbox to 0pt{\jlreq@once@expand{\jlreq@right}}}\fi
+        \ifx\jlreq@left\@empty\else\edef\jlreq@left{\noexpand\hbox to 0pt{\jlreq@once@expand{\jlreq@left}\hss}}\fi
+        \ifx\jlreq@right\@empty\else\edef\jlreq@right{\noexpand\hbox to 0pt{\hss\jlreq@once@expand{\jlreq@right}}}\fi
         \edef\jlreq@result{\jlreq@once@expand{\jlreq@left}\hfil\unexpanded{##2}\hfil\jlreq@once@expand{\jlreq@right}}
       }
     }
@@ -1416,7 +1418,6 @@
     \def\setheadfoot##1##2##3##4{%
       \def\jlreq@left{}\def\jlreq@center{}\def\jlreq@right{}
       % \jlreq@tempb = if(##1 == ##3 && ##2 != "" && ##4 != "")
-      % 展開できるかわからないものが含まれるので，\ifthenelseでは駄目な気がする．
       \jlreq@tempatrue
       \jlreq@ifempty{##2}{\jlreq@tempafalse}{}
       \jlreq@ifempty{##4}{\jlreq@tempafalse}{}

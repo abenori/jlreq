@@ -16,7 +16,9 @@
 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{tjlreq}[2016/01/01 tjlreq]
-\RequirePackage{xkeyval,everyhook,ifthen}
+% \define@keyを使う時は，使う部分を極力グルーピングしてあまりマクロを定義しないようにする．
+\RequirePackage{xkeyval}
+\RequirePackage{everyhook,ifthen}
 
 %. helper1
 \def\jlreq@once@expand#1{\expandafter\unexpanded\expandafter{#1}}
@@ -89,7 +91,7 @@
 \def\jlreq@helper@removelastcomma#1,\jlreq@endmark{#1}
 
 % #1が#2のリストに入っていれば#3を，入っていなければ#4を実行する
-% #2は完全展開されてから評価される
+% #2は\edefで展開されてから評価される
 \def\jlreq@ifinlist#1#2#3#4{%
   \edef\@tempa{#2}%
   \expandafter\jlreq@ifinlist@\expandafter{\@tempa}{#1}{#3}{#4}%
@@ -271,7 +273,7 @@
 \jlreq@DeclareOption{draft}{\setlength\overfullrule{5pt}}
 \jlreq@DeclareOption{final}{\setlength\overfullrule{0pt}}
 
-\ExecuteOptionsX{a4paper,fontsize=9pt,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=_headings,twoside,onecolumn,final,tate}
+\ExecuteOptionsX{a4paper,fontsize=9pt,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=_headings,onecolumn,final,tate}
 
 % \@removeelementを一旦置き換えてから\ProcessOptionsXを実行する
 \let\jlreq@original@@removeelement=\@removeelement
@@ -1380,8 +1382,9 @@
   \edef#1{{\jlreq@tempc}{\jlreq@tempd}}
 }
 
-% odd_running_head_header=sectionみたいなのを用意して，\sectionmark=\markrightみたいにするとよいだろうか？
-% odd_running_headには\rightmarkを設定するということで．
+% odd_running_head=_sectionのように下線から始まる場合，その値の見出し命令を柱に出すようにする．
+% 要するに\ps@***に\sectionmarkを定義するように仕込む．
+% 場所指定は奇数ページの方．偶数ページは反対になる．
 \newcommand*{\DeclarePageStyle}[2]{%
   \begingroup
     \def\nombre@position{{bottom}{left}}
@@ -1394,15 +1397,43 @@
     \define@key{jlreq@key}{odd_running_head}{\def\odd@running@head{##1}}
     \def\even@running@head{}
     \define@key{jlreq@key}{even_running_head}{\def\even@running@head{##1}}
+    \def\command{}
+    \define@key{jlreq@key}{command}{\def\command{##1}}
     % 柱とノンブルの間
     \def\gap{1\zw}
     \define@key{jlreq@key}{gap}{\def\gap{##1}}
     \setkeys{jlreq@key}{#2}
+    % 見出しを出す場合：evenに章などの高いレベルの見出しを出す（2.6.3.a）
+    \def\@tempa##1##2\jlreq@endmark{%
+      \ifx_##1%
+        \def\even@running@head{\leftmark}%
+        \edef\command{\jlreq@once@expand{\command}%
+          % これで\commandの中身は\def\**mark##1{...}みたいになるはず
+          \noexpand\def\jlreq@once@expand{\csname ##2mark\endcsname}\unexpanded{########1}{%
+            \noexpand\markboth{\jlreq@once@expand{\csname the##2\endcsname}\quad\unexpanded{########1}}{}%
+          }}%
+      \fi
+      \ifx\jlreq@endmark##1\else\expandafter\@gobble\fi
+    }
+    \expandafter\@tempa\even@running@head\jlreq@endmark\jlreq@endmark
+    \def\@tempa##1##2\jlreq@endmark{%
+      \ifx_##1%
+        \def\odd@running@head{\rightmark}%
+        \edef\command{\jlreq@once@expand{\command}%
+          \noexpand\def\jlreq@once@expand{\csname ##2mark\endcsname}\unexpanded{########1}{
+            \noexpand\markright{\jlreq@once@expand{\csname the##2\endcsname}\quad\unexpanded{########1}}%
+          }}
+      \fi
+      \ifx\jlreq@endmark##1\else\expandafter\@gobble\fi
+    }
+    \expandafter\@tempa\odd@running@head\jlreq@endmark\jlreq@endmark
+    
     % \jlreq@tempa = \@oddhead, \jlreq@tempb = \@oddfoot, \jlreq@tempc = \@evenhead, \jlreq@tempd = \@evenfoot
     \gdef\jlreq@tempa{}\gdef\jlreq@tempb{}\gdef\jlreq@tempc{}\gdef\jlreq@tempd{}
     % ##1 ##2 ##3と並んだヘッダを作る，戻り値は\jlreq@result
     \def\setheadfoot@##1##2##3{%
       \jlreq@ifempty{##1}{\def\jlreq@left{}}{\edef\jlreq@left{\noexpand\hspace*{\jlreq@expand@speciallength{\jlreq@headfoot@sidemargin}}\unexpanded{##1}}}
+      % +\topskip - .5\zwは\jlreq@headfoot@sidemargin = 0ptの時に本文の右に一致させるための補正．
       \jlreq@ifempty{##3}{\def\jlreq@right{}}{\edef\jlreq@right{\unexpanded{##3}\noexpand\hspace*{\dimexpr\jlreq@expand@speciallength{\jlreq@headfoot@sidemargin} + \topskip - .5\zw\relax}}}
       \jlreq@ifempty{##2}{
         \ifx\jlreq@right\@empty\let\jlreq@result=\jlreq@left
@@ -1424,7 +1455,7 @@
       \ifthenelse{\equal{##1}{##3}}{}{\jlreq@tempafalse}
       \ifjlreq@tempa
         \ifthenelse{\equal{##1}{right}}{
-          \edef\jlreq@right{\unexpanded{##4}\noexpand\hspace*{\gap}\unexpanded{##2}}
+          \edef\jlreq@right{\unexpanded{##4}\noexpand\hspace{\gap}\unexpanded{##2}}
         }{
           \expandafter\edef\csname jlreq@##1\endcsname{\unexpanded{##2}\noexpand\hspace{\gap}\unexpanded{##4}}
         }
@@ -1469,13 +1500,16 @@
     % \@evenfootを定義
     \edef\jlreq@do{\unexpanded{\setheadfoot{\expandafter\@secondoftwo\nombre@position}}{\jlreq@once@expand{\nombre@bottom}}\unexpanded{{\expandafter\@secondoftwo\running@head@position}}{\jlreq@once@expand{\even@running@head@bottom}}}
     \jlreq@do\global\let\jlreq@tempd=\jlreq@result
+    \global\let\jlreq@tempe=\command
   \endgroup
   \edef\jlreq@do{%
-    \unexpanded{\expandafter\def\csname ps@#1\endcsname}{%
+    \noexpand\def\jlreq@once@expand{\csname ps@#1\endcsname}{%
+      \unexpanded{\let\@mkboth=\markboth}
       \unexpanded{\def\@oddhead}{\jlreq@once@expand{\jlreq@tempa}}%
       \unexpanded{\def\@oddfoot}{\jlreq@once@expand{\jlreq@tempb}}%
       \unexpanded{\def\@evenhead}{\jlreq@once@expand{\jlreq@tempc}}%
       \unexpanded{\def\@evenfoot}{\jlreq@once@expand{\jlreq@tempd}}%
+      \jlreq@once@expand{\jlreq@tempe}%
     }%
   }
   \jlreq@do
@@ -1484,31 +1518,12 @@
 
 \DeclarePageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},nombre_position={top-left}}
 \DeclarePageStyle{empty}{nombre={},odd_running_head={},even_running_head={}}
-
-%\def\ps@plain{\let\@mkboth\@gobbletwo
-%  \let\ps@jpl@in\ps@plain
-%  \let\@oddhead\@empty
-%  \let\@evenhead\@empty
-%  \def\@oddfoot{\thepage\hfil}%
-%  \def\@evenfoot{\hfil\thepage \kern\dimexpr\topskip - .5\zw\relax}}
-% ページ番号は上の端．
-\def\ps@headings{\let\ps@jpl@in\ps@headnombre
-  \let\@oddfoot\@empty
-  \def\@oddhead{\thepage\quad\rightmark}%
-  \def\@evenhead{\hfil\rightmark\quad\thepage}%
-  \let\@mkboth\markboth
-\def\sectionmark##1{\markright{%
-  \ifnum \c@secnumdepth >\m@ne \thesection.\hskip1\zw\fi
-  ##1}}%
-}
-\def\ps@myheadings{\let\ps@jpl@in\ps@plain%
-  \let\@oddfoot\@empty\let\@evenfoot\@empty
-  \def\@evenhead{\thepage\quad{\leftmark}\hfil}%
-  \def\@oddhead{\hfil\thepage\quad\rightmark}%
-  \let\@mkboth\@gobbletwo
-  \let\sectionmark\@gobble
-  \let\subsectionmark\@gobble
-}
+\if@twoside
+  \DeclarePageStyle{headings}{nombre=\thepage,nombre_position=top-left,running_head_position=top-right,odd_running_head={_subsection},even_running_head={_section}}
+\else
+  \DeclarePageStyle{headings}{nombre=\thepage,nombre_position=top-left,running_head_position=top-right,odd_running_head={_section},even_running_head={}}
+\fi
+\DeclarePageStyle{myheadings}{nombre=\thepage,nombre_position=top-left,running_head_position=top-right,odd_running_head=\rightmark,even_running_head=\leftmark}
 
 
 % フロート関連

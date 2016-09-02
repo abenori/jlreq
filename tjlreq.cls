@@ -1,9 +1,10 @@
 %#main jlreqtest.tex
-%#T2D uplatex
-%#! $(C:TeXToDVI) ; $(C:DVIToPDF)
+%%#T2D uplatex
+%%#! $(C:TeXToDVI) ; $(C:DVIToPDF)
 %%#! lualatex
-%%#! lualatex jlreqtest.tex ; pdftk jlreqtest.pdf multistamp onlya.pdf output out.pdf
-%%#PDF out.pdf
+%%#! lualatex -synctex=-1 jlreqtest.tex ; pdftk jlreqtest.pdf multistamp onlya.pdf output out.pdf
+%#! uplatex -synctex=-1 jlreqtest.tex ; dvipdfmx -p a5 jlreqtest.dvi ; pdftk jlreqtest.pdf multistamp onlya.pdf output out.pdf
+%#PDF out.pdf
 % memo
 % 欧文文字の向きについて (2.3.2.b.1)
 % 割注
@@ -998,11 +999,62 @@
   (\rensuji{\@arabic\c@subparagraph})}
 
 \renewcommand*{\@seccntformat}[1]{\csname the#1\endcsname\hspace{1\jlreq@fontsize}}
-\newcommand*{\jlreq@absdimenmodoki}[1]{\ifdim#1=0pt 0.001pt\else\ifnum#1<0pt -#1\else#1\fi\fi}
+\newcommand*{\jlreq@absdimenmodoki}[1]{\ifdim#1=0pt 0.001pt\else\ifdim#1<0pt -#1\else#1\fi\fi}
 % 見出しの直前に実行される
 \newcommand*{\jlreq@hook@beforeheadings}[1]{}
 % 別行見出し
-% \DeclareBlockHeading{命令名}{レベル}{lines=何行取りか,before_space=前のスペース,after_space=後ろのスペース,indent=インデント,font=書式変更命令}
+
+% #2は{1:*付きはT，そうでなければF}[2:running head]{3:題}[4:副題]で呼び出される．
+\newcommand{\jlreq@BlockHeading@defineHeading}[2]{%
+  \expandafter\long\expandafter\def\csname #1\endcsname{\@ifstar{\csname jlreq@BlockHeading@define@#1\endcsname{T}}{\@dblarg{\csname jlreq@BlockHeading@define@#1\endcsname{F}}}}%
+  \expandafter\long\expandafter\def\csname jlreq@BlockHeading@define@#1\endcsname##1[##2]##3{\@ifnextchar[{\csname jlreq@BlockHeading@define@#1@\endcsname{##1}[##2]{##3}}{\csname jlreq@BlockHeading@define@#1@\endcsname{##1}[##2]{##3}[]}}%
+  \expandafter\long\expandafter\def\csname jlreq@BlockHeading@define@#1@\endcsname##1[##2]##3[##4]{#2}%
+}
+
+
+% \jlreq@BlockHeading{1:命令名}{2:レベル}{3:インデント}{4:前開き}{5:後ろ開き}{6:書体変更}{7:副題との空き}{8:副題の書体}
+\newcommand*{\jlreq@DefineBlockHeading@wadjust}[8]{%
+  % * headrunning
+  \jlreq@BlockHeading@defineHeading{#1}{%
+    \ifx##1T\relax
+      \ifnum #2>\c@secnumdepth
+        \addcontentsline{toc}{#1}{##2}%
+      \else
+        \refstepcounter{#1}%
+        \addcontentsline{toc}{#1}{\protect\numberline{\csname the#1\endcsname}##2}%
+      \fi
+    \fi
+    \@tempdima=\baselineskip
+    \if@noskipsec\leavevmode\fi\par
+    \setbox\@tempboxa=\vtop{\hsize=\dimexpr\hsize - #3\relax\parindent=0pt\relax\leftskip=0pt\relax\rightskip=0pt\relax
+      #6\baselineskip=\@tempdima##3\par
+      \jlreq@ifempty{##4}{}{#8\baselineskip=\@tempdima##4}%
+    }%
+    \@tempdima=\dimexpr#4 - \baselineskip + (\prevdepth + \ht\@tempboxa) - \parsep\relax
+    \ifdim\@tempdima=0pt\relax\else\vskip\@tempdima\fi
+    \ifdim\@tempdima<0pt\relax\vskip 0pt\relax\fi
+    \@tempdima=\dimexpr\baselineskip - (\dp\@tempboxa + \ht\@tempboxa)\relax
+    \noindent \hskip #3\hbox{\box\@tempboxa}%
+    \csname #1mark\endcsname{##2}%
+    \par\nobreak
+    \ifdim\@tempdima<0pt\relax\@tempdima=0pt\relax\fi
+    \ifdim\@tempdima>\lineskiplimit\else\@tempdima=\lineskip\fi
+    \@tempdima=\dimexpr\@tempdima - \parsep\relax
+    \@tempdima=\dimexpr#5 - \@tempdima\relax
+    \ifdim\@tempdima=0pt\else\vskip\@tempdima\fi
+    \ifdim\@tempdima<0pt\vskip 0pt\relax\fi
+    \@afterheading
+  }%
+}
+
+% \DeclareBlockHeading{命令名}{レベル}{設定}
+% 行取り（4.1.6）
+% a: lines=<何行取りか>
+% b,d: before_lines, after_lines
+% c: before_space, after_space
+% f: beforeやafterを省略する
+% font=<見出しフォント>, labelfont=<ラベルフォント>, subtitle_font=<副題フォント>
+% indent=<全体のインデント>
 % before/after_spaceが両方定義されていた場合はlinesは無視される．
 % TODO: 改ページするかなど，4.1.4
 \newcommand*{\DeclareBlockHeading}[3]{%
@@ -1022,22 +1074,33 @@
     \setkeys{jlreq@key}{#3}%
     % \jlreq@linesを長さに直す
     \edef\jlreq@lines{\jlreq@once@expand{\jlreq@lines}\baselineskip}%
-    % after@spaceとbefore@spaceが空なら値を入れる
+    % after@spaceやbefore@spaceが空なら値を入れる
     \ifx\jlreq@after@space\@empty
       \ifx\jlreq@before@space\@empty
-        \edef\jlreq@before@space{(\jlreq@once@expand{\jlreq@lines} - \baselineskip)/2}%
+        \edef\jlreq@before@space{(\jlreq@once@expand{\jlreq@lines})/2}%
       \fi
-      \edef\jlreq@after@space{\jlreq@once@expand{\jlreq@lines} - \jlreq@once@expand{\jlreq@before@space} - \baselineskip}%
+      \edef\jlreq@after@space{\jlreq@once@expand{\jlreq@lines} - \jlreq@once@expand{\jlreq@before@space} + 1\jlreq@gol}%
     \else
       \ifx\jlreq@before@space\@empty
-        \edef\jlreq@before@space{\jlreq@once@expand{\jlreq@lines} - \jlreq@once@expand{\jlreq@after@space} - \baselineskip}%
+        \edef\jlreq@before@space{\jlreq@once@expand{\jlreq@lines} - \jlreq@once@expand{\jlreq@after@space} + 1\jlreq@gol}%
       \fi
     \fi
     % \@startsection{#1}{#2}{<indent>*fontsize}{<before_space>}{<after_space>}{<font>}
-    \global\edef\@tempa{{\unexpanded{#1}}{\unexpanded{#2}}{\jlreq@once@expand{\jlreq@indent}\jlreq@fontsize}{\dimexpr\jlreq@once@expand{\jlreq@before@space}\relax}{\noexpand\jlreq@absdimenmodoki{\dimexpr\jlreq@once@expand{\jlreq@after@space}\relax}}{\jlreq@tempdima=\baselineskip\noexpand\reset@font\jlreq@once@expand{\jlreq@fontcommand}\baselineskip=\jlreq@tempdima}}
+    \global\edef\jlreq@tempa{\jlreq@once@expand{\jlreq@indent}\jlreq@mol}
+    \global\edef\jlreq@tempb{\jlreq@once@expand{\jlreq@before@space} - \noexpand\baselineskip + 1\noexpand\jlreq@gol}
+    \global\edef\jlreq@tempc{\jlreq@once@expand{\jlreq@after@space} - \noexpand\baselineskip + 1\noexpand\jlreq@gol}
+    \global\let\jlreq@tempd=\jlreq@fontcommand
   \endgroup
-  \expandafter\edef\csname #1\endcsname{\noexpand\jlreq@hook@beforeheadings{#1}%
-    \noexpand\@startsection\jlreq@once@expand{\@tempa}}%
+  \expandafter\edef\csname #1\endcsname{%
+    \unexpanded{\edef\jlreq@tempa}{\unexpanded{\the\dimexpr}\jlreq@once@expand{\jlreq@tempa}\unexpanded{\relax}}%
+    \unexpanded{\edef\jlreq@tempb}{\unexpanded{\the\dimexpr}\jlreq@once@expand{\jlreq@tempb}\unexpanded{\relax}}%
+    \unexpanded{\edef\jlreq@tempc}{\unexpanded{\the\dimexpr}\jlreq@once@expand{\jlreq@tempc}\unexpanded{\relax}}%
+    \unexpanded{\edef\@tempa{{\unexpanded{#1}}{\unexpanded{#2}}{\jlreq@once@expand{\jlreq@tempa}}{\jlreq@once@expand{\jlreq@tempb}}{\noexpand\jlreq@absdimenmodoki{\jlreq@once@expand{\jlreq@tempc}}}{\unexpanded{\jlreq@tempdima=\baselineskip\reset@font}\jlreq@once@expand{\jlreq@tempd}\unexpanded{\baselineskip=\jlreq@tempdima}}}}%
+    
+%    \unexpanded{\show\@tempa}%
+\unexpanded{\par\vskip\dimexpr1\zh - \baselineskip\relax\vskip0pt\relax}%
+    \unexpanded{\expandafter\@startsection\@tempa}%
+  }
 }
 \newcommand*{\NewBlockHeading}[3]{%
   \expandafter\@ifdefinable\csname #1\endcsname{\DeclareBlockHeading{#1}{#2}{#3}}%
@@ -1063,9 +1126,11 @@
     \define@key{jlreq@key}{font}{\def\jlreq@fontcommand{##1}}%
     \def\jlreq@indent{1}%
     \define@key{jlreq@key}{indent}{\def\jlreq@indent{##1}}%
+    \def\jlreq@mark{}%
+    \define@key{jlreq@key}{mark}{\def\jlreq@mark{##1}}%
     \setkeys{jlreq@key}{#3}%
     % \@startsection{#1}{#2}{<indent>*fontsize}{0pt}{-fontsize}{font}
-    \global\edef\@tempa{{\unexpanded{#1}}{\unexpanded{#2}}{\jlreq@once@expand{\jlreq@indent}\jlreq@fontsize}{0pt}{-1\jlreq@fontsize}{\jlreq@tempdima=\baselineskip\noexpand\reset@font\jlreq@once@expand{\jlreq@fontcommand}\baselineskip=\jlreq@tempdima}}%
+    \global\edef\@tempa{{\unexpanded{#1}}{\unexpanded{#2}}{\jlreq@once@expand{\jlreq@indent}\jlreq@fontsize}{0pt}{-1\jlreq@fontsize}{\jlreq@tempdima=\baselineskip\noexpand\reset@font\jlreq@once@expand{\jlreq@fontcommand}\baselineskip=\jlreq@tempdima\jlreq@once@expand{\jlreq@mark}}}%
   \endgroup
   \expandafter\edef\csname #1\endcsname{\noexpand\jlreq@hook@beforeheadings{#1}%
     \noexpand\@startsection\jlreq@once@expand{\@tempa}}%
@@ -1237,11 +1302,11 @@
 % 4.2.5.d
 \ifthenelse{\equal{\jlreq@footnotetext@indent}{one}}{
   \newcommand\@makefntext[1]{\parindent 1\zh
-    \addtolength{\leftskip}{\dimexpr \jlreq@footnoteindent + 1\zh\relax} %全体をインデント+1文字分下げる
+    \addtolength{\leftskip}{\dimexpr \jlreq@footnoteindent + 1\zh\relax}% 全体をインデント+1文字分下げる
     \noindent\hskip -1\zh\@makefnmark\hskip 1\zh#1}% 見出し出力と一文字分の空き
 }{
   \newcommand\@makefntext[1]{\parindent 1\zh
-    \addtolength{\leftskip}{\jlreq@footnoteindent} %全体をインデント
+    \addtolength{\leftskip}{\jlreq@footnoteindent}% 全体をインデント
     \noindent\hskip 1\zh\@makefnmark\hskip 1\zh#1}% 見出し出力と一文字分の空き
 }
 % 図4.61のようにする
@@ -1256,7 +1321,7 @@
 \newdimen\jlreq@endnote@indent
 \newcounter{endnote}
 \def\endnote{\@ifnextchar[{\jlreq@endnote}{\stepcounter{endnote}\jlreq@endnote[\theendnote]}}
-% 現在の後注一覧を保持する
+% 現在の後注一覧を，{{合印1}{後注1}}{{合印2}{後注2}}...の形で保持する
 \def\jlreq@endnote@texts{}
 \def\jlreq@endnote@addtext#1#2{%
   \expandafter\gdef\expandafter\jlreq@endnote@texts\expandafter{\jlreq@endnote@texts{{#1}{#2}}}}
@@ -1365,11 +1430,12 @@
 %. ページスタイル．
 % とりあえず脇に縦書きで配置するのは無視する．
 % メモ：
-% 基本版面との空きは全角以上（2.6.1.a）
-% ノンブル：左ページならば左は基本版面にぴったりあわせるか全角あける（2.6.1.b）右ページは右
-% ノンブルと柱を同じ位置に出す場合は1.5/2空け（2.6.1.c）
 % 2.6.1.cの後半が前半と整合的でないように見える……
 % 柱：両柱と片柱（2.6.3）
+\@tempdima=\dimexpr\jlreq@expand@speciallength{\jlreq@headfoot@sidemargin}\relax
+\ifthenelse{\lengthtest{\@tempdima=0pt} \OR \(\lengthtest{0.99\zw < \@tempdima} \AND \lengthtest{\@tempdima < 1.01\zw}\)}{}{
+  \jlreq@warning{ノンブルまたは柱は，基本版面の左右にそろえるか，全角アキだけ寄せた位置に配置する (2.6.1.b)}
+}
 
 % bottom-leftみたいなのを解釈する．入力の順番はどっちでも良いが，出力は<top/bottom><left/right>の順番
 % #1にセットする．

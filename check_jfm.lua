@@ -37,20 +37,25 @@ end
 local function array_check(val,key,position,size)
 	if type(val) ~= "table" then
 		print_error(key .. " should be array, but it has the type " .. type(val) .. position_msg(position))
+		return false
 	else
 		local num = 0
 		for k,_v in pairs(val) do
 			if type(k) ~= "number" then
 				print_error(key .. " should be array, but it has a key of type " .. type(k) .. position_msg(position))
+				return false
 			end
 			num = num + 1
 		end
 		if num ~= #val then
 			print_error(key .. " should be array but it is not an array.")
+			return false
 		elseif size ~= nil and #val ~= size then
 			print_error("The size of " .. key " should be " .. tostring(size) .. ", but it is " .. tostring(#val) .. position_msg(position))
+			return false
 		end
 	end
+	return true
 end
 
 local function type_check(val,t,key,position) 
@@ -105,10 +110,20 @@ local function each_glue_check(gluetable,version,position)
 			if k == "kanjiskip_natural" or k == "kanjiskip_stretch" or k == "kanjiskip_shrink" then
 				type_check(v,"number",k,position)
 			elseif k == "priority" then
-				if type_check(v,"number",k,position) == true then
-					if v ~= -2 and v ~= -1 and v ~= 0 and v ~= 1 and v ~= 2 then
-						print_error("priority should be in -2,-1,0,1,2" .. position_msg(position))
+				if type(v) == "number" then
+					if v ~= -4 and v ~= -3 and v ~= -2 and v ~= -1 and v ~= 0 and v ~= 1 and v ~= 2 and v ~= 2 then
+						print_error("priority should be in -4,-3,-2,-1,0,1,2,3" .. position_msg(position))
 					end
+				elseif version == 2 and type(v) == "table"then
+					if array_check(v,k,position,2) == true then
+						for ind in ipairs({1,2}) do
+							if v[ind] ~= -4 and v[ind] ~= -3 and v[ind] ~= -2 and v[ind] ~= -1 and v[ind] ~= 0 and v[ind] ~= 1 and v[ind] ~= 2 and v[ind] ~= 2 then
+								print_error("priority should be in -4,-3,-2,-1,0,1,2,3" .. position_msg(position))
+							end
+						end
+					end
+				else
+					print_error("priority should be a number or an array (version 2)" .. position_msg(position))
 				end
 			elseif k == "ratio" then
 				if type_check(v,"number",k,position) == true then

@@ -1073,9 +1073,11 @@
       \par
       \jlreq@tempdima=\prevdepth
       % \jlreq@tempdimcにセクション上部に\baselineskipから入るスペースを入れる
-      \setbox\jlreq@tempboxa=\vtop{\jlreq@once@expand{\jlreq@font}\jlreq@inside@startsection}%
-      {\jlreq@once@expand{\jlreq@font}\global\jlreq@tempdimc=\baselineskip}%
-      \jlreq@tempdimc=\dimexpr\jlreq@tempdimc - \jlreq@tempdima - \ht\jlreq@tempboxa\relax
+      \ifnum0\ifjlreq@tempa1\fi\ifx\jlreq@before@lines\@empty1\fi\ifx\jlreq@after@lines\@empty1\fi>0\relax
+        \setbox\jlreq@tempboxa=\vtop{\jlreq@once@expand{\jlreq@font}\jlreq@inside@startsection}%
+        {\jlreq@once@expand{\jlreq@font}\global\jlreq@tempdimc=\baselineskip}%
+        \jlreq@tempdimc=\dimexpr\jlreq@tempdimc - \jlreq@tempdima - \ht\jlreq@tempboxa\relax
+      \fi
       \ifjlreq@tempa
         \ifx\jlreq@before@space\@empty
           \jlreq@tempskipa=\glueexpr\noexpand\baselineskip*(\jlreq@once@expand{\jlreq@lines}) - \dp\jlreq@tempboxa - \ht\jlreq@tempboxa - \jlreq@once@expand{\jlreq@after@space}\relax

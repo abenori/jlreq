@@ -26,9 +26,15 @@
 \newdimen\jlreq@tempdima
 \newdimen\jlreq@tempdimb
 \newdimen\jlreq@tempdimc
+\newskip\jlreq@tempskipa
+\newskip\jlreq@tempskipb
+\newskip\jlreq@tempskipc
 \newif\ifjlreq@tempa
 \newif\ifjlreq@tempb
 \newif\ifjlreq@tempc
+\newbox\jlreq@tempboxa
+\newbox\jlreq@tempboxb
+\newbox\jlreq@tempboxc
 % 計算結果を返すための変数
 \newdimen\jlreq@resultdimen
 \newbox\jlreq@resultbox
@@ -112,7 +118,7 @@
 }
 
 % 与えられたトークン列が空か（展開はしないでチェック）
-\def\jlreq@ifempty#1#2#3{%
+\long\def\jlreq@ifempty#1#2#3{%
   \def\@tempa{#1}%
   \ifx\@tempa\@empty#2\else#3\fi
 }
@@ -321,10 +327,18 @@
 \fi
 
 %. helper2（エンジン依存系）
-% 横組か判定
-\def\jlreq@do{\long\global\def\jlreq@ifydir##1##2{\ifydir##1\else##2\fi}}
+% 組方向を判定
+\def\jlreq@do{%
+  \long\def\jlreq@ifydir##1##2{\ifydir##1\else##2\fi}
+  \long\def\jlreq@iftdir##1##2{\iftdir##1\else##2\fi}
+  \long\def\jlreq@ifybox##1##2##3{\ifybox##1\relax##2\else##3\fi}
+  \long\def\jlreq@iftbox##1##2##3{\ifybox##1\relax##2\else##3\fi}
+}
 \ifx l\jlreq@engine
-  \long\global\def\jlreq@ifydir#1#2{\ifnum\ltjgetparameter{direction}=4 #1\else#2\fi}
+  \long\def\jlreq@ifydir#1#2{\ifnum\ltjgetparameter{direction}=4\relax#1\else#2\fi}
+  \long\def\jlreq@iftdir#1#2{\ifnum\numexpr\ltjgetparameter{direction}-(\ltjgetparameter{direction}/8)*8=3\relax##1\else##2\fi}
+  \long\def\jlreq@ifybox#1#2#3{\ifnum\ltjgetparameter{boxdir}{#1}=4\relax#2\else#3\fi}
+  \long\def\jlreq@iftbox#1#2#3{\ifnum\numexpr\ltjgetparameter{boxdir}{#1}-(\ltjgetparameter{boxdir}{#1}/8)*8=3\relax\relax#2\else#3\fi}
 \else
   \jlreq@do
 \fi
@@ -1004,48 +1018,21 @@
 \newcommand*{\jlreq@hook@beforeheadings}[1]{}
 % 別行見出し
 
-% #2は{1:*付きはT，そうでなければF}[2:running head]{3:題}[4:副題]で呼び出される．
+% #2は{1:*または空}[2:running head]{3:題}[4:副題]で呼び出される．
 \newcommand{\jlreq@BlockHeading@defineHeading}[2]{%
-  \expandafter\long\expandafter\def\csname #1\endcsname{\@ifstar{\csname jlreq@BlockHeading@define@#1\endcsname{T}}{\@dblarg{\csname jlreq@BlockHeading@define@#1\endcsname{F}}}}%
+  \expandafter\long\expandafter\def\csname #1\endcsname{\@ifstar{\csname jlreq@BlockHeading@define@#1\endcsname{*}}{\@dblarg{\csname jlreq@BlockHeading@define@#1\endcsname{}}}}%
   \expandafter\long\expandafter\def\csname jlreq@BlockHeading@define@#1\endcsname##1[##2]##3{\@ifnextchar[{\csname jlreq@BlockHeading@define@#1@\endcsname{##1}[##2]{##3}}{\csname jlreq@BlockHeading@define@#1@\endcsname{##1}[##2]{##3}[]}}%
   \expandafter\long\expandafter\def\csname jlreq@BlockHeading@define@#1@\endcsname##1[##2]##3[##4]{#2}%
 }
 
-
-% \jlreq@BlockHeading{1:命令名}{2:レベル}{3:インデント}{4:前開き}{5:後ろ開き}{6:書体変更}{7:副題との空き}{8:副題の書体}
-\newcommand*{\jlreq@DefineBlockHeading@wadjust}[8]{%
-  % * headrunning
-  \jlreq@BlockHeading@defineHeading{#1}{%
-    \ifx##1T\relax
-      \ifnum #2>\c@secnumdepth
-        \addcontentsline{toc}{#1}{##2}%
-      \else
-        \refstepcounter{#1}%
-        \addcontentsline{toc}{#1}{\protect\numberline{\csname the#1\endcsname}##2}%
-      \fi
-    \fi
-    \@tempdima=\baselineskip
-    \if@noskipsec\leavevmode\fi\par
-    \setbox\@tempboxa=\vtop{\hsize=\dimexpr\hsize - #3\relax\parindent=0pt\relax\leftskip=0pt\relax\rightskip=0pt\relax
-      #6\baselineskip=\@tempdima##3\par
-      \jlreq@ifempty{##4}{}{#8\baselineskip=\@tempdima##4}%
-    }%
-    \@tempdima=\dimexpr#4 - \baselineskip + (\prevdepth + \ht\@tempboxa) - \parsep\relax
-    \ifdim\@tempdima=0pt\relax\else\vskip\@tempdima\fi
-    \ifdim\@tempdima<0pt\relax\vskip 0pt\relax\fi
-    \@tempdima=\dimexpr\baselineskip - (\dp\@tempboxa + \ht\@tempboxa)\relax
-    \noindent \hskip #3\hbox{\box\@tempboxa}%
-    \csname #1mark\endcsname{##2}%
-    \par\nobreak
-    \ifdim\@tempdima<0pt\relax\@tempdima=0pt\relax\fi
-    \ifdim\@tempdima>\lineskiplimit\else\@tempdima=\lineskip\fi
-    \@tempdima=\dimexpr\@tempdima - \parsep\relax
-    \@tempdima=\dimexpr#5 - \@tempdima\relax
-    \ifdim\@tempdima=0pt\else\vskip\@tempdima\fi
-    \ifdim\@tempdima<0pt\vskip 0pt\relax\fi
-    \@afterheading
-  }%
+% #1 = 後ろのボックスのheight
+\newcommand*{\jlreq@SkipBetweenLines}[1]{%
+  \jlreq@resultdimen=\dimexpr\baselineskip - #1 - \prevdepth\relax
+  \ifdim\jlreq@resultdimen<0pt\relax\jlreq@resultdimen=0pt\relax\fi
+  \ifdim\jlreq@resultdimen<\lineskiplimit\else\jlreq@resultdimen=\lineskip\fi
 }
+
+
 
 % \DeclareBlockHeading{命令名}{レベル}{設定}
 % 行取り（4.1.6）
@@ -1055,7 +1042,6 @@
 % f: beforeやafterを省略する
 % font=<見出しフォント>, labelfont=<ラベルフォント>, subtitle_font=<副題フォント>
 % indent=<全体のインデント>
-% before/after_spaceが両方定義されていた場合はlinesは無視される．
 % TODO: 改ページするかなど，4.1.4
 \newcommand*{\DeclareBlockHeading}[3]{%
   \@ifundefined{c@#1}{\newcounter{#1}}{}%
@@ -1067,40 +1053,70 @@
     \define@key{jlreq@key}{before_space}{\def\jlreq@before@space{##1}}%
     \def\jlreq@after@space{}%
     \define@key{jlreq@key}{after_space}{\def\jlreq@after@space{##1}}%
-    \def\jlreq@fontcommand{\normalsize}%
-    \define@key{jlreq@key}{font}{\def\jlreq@fontcommand{##1}}%
+    \def\jlreq@before@lines{}%
+    \define@key{jlreq@key}{before_lines}{\def\jlreq@before@lines{##1}}%
+    \def\jlreq@after@lines{}%
+    \define@key{jlreq@key}{after_lines}{\def\jlreq@after@lines{##1}}%
+    \def\jlreq@font{\normalsize}%
+    \define@key{jlreq@key}{font}{\def\jlreq@font{##1}}%
+    \def\jlreq@subtitle@font{\normalsize}%
+    \define@key{jlreq@key}{subtitle_font}{\def\jlreq@subtitle@font{##1}}%
     \def\jlreq@indent{0}%
     \define@key{jlreq@key}{indent}{\def\jlreq@indent{##1}}%
     \setkeys{jlreq@key}{#3}%
-    % \jlreq@linesを長さに直す
-    \edef\jlreq@lines{\jlreq@once@expand{\jlreq@lines}\baselineskip}%
-    % after@spaceやbefore@spaceが空なら値を入れる
-    \ifx\jlreq@after@space\@empty
-      \ifx\jlreq@before@space\@empty
-        \edef\jlreq@before@space{(\jlreq@once@expand{\jlreq@lines})/2}%
+    % spaceを使う場合は\ifjlreq@tempaをtrueにする．
+    \jlreq@tempatrue
+    \ifx\jlreq@before@space\@empty\ifx\jlreq@after@space\@empty\jlreq@tempafalse\fi\fi
+%    \def\jlreq@tempa##1##2{\noexpand\@startsection{#1}{#2}{\jlreq@once@expand{\jlreq@indent}\baselineskip}{##1}{##2}{\jlreq@once@expand{\jlreq@font}}########1[########2]{########3\noexpand\jlreq@ifempty{########4}{}{\noexpand\\\jlreq@once@expand{\jlreq@subtitle@font}########4}}}
+    \def\jlreq@inside@startsection{########3}
+    \def\jlreq@tempa##1##2{\noexpand\@startsection{#1}{#2}{\jlreq@once@expand{\jlreq@indent}\baselineskip}{##1}{##2}{\jlreq@once@expand{\jlreq@font}}########1[########2]{\jlreq@inside@startsection}}
+    \global\edef\@tempa{%
+      % \jlreq@tempskipaに前空きを，\jlreq@tempskipbに後ろ空きを入れる
+      \par
+      \jlreq@tempdima=\prevdepth
+      % \jlreq@tempdimcにセクション上部に\baselineskipから入るスペースを入れる
+      \setbox\jlreq@tempboxa=\vtop{\jlreq@once@expand{\jlreq@font}\jlreq@inside@startsection}%
+      {\jlreq@once@expand{\jlreq@font}\global\jlreq@tempdimc=\baselineskip}%
+      \jlreq@tempdimc=\dimexpr\jlreq@tempdimc - \jlreq@tempdima - \ht\jlreq@tempboxa\relax
+      \ifjlreq@tempa
+        \ifx\jlreq@before@space\@empty
+          \jlreq@tempskipa=\glueexpr\noexpand\baselineskip*(\jlreq@once@expand{\jlreq@lines}) - \dp\jlreq@tempboxa - \ht\jlreq@tempboxa - \jlreq@once@expand{\jlreq@after@space}\relax
+        \else
+          \jlreq@tempskipa=\glueexpr\jlreq@once@expand{\jlreq@before@space}\relax
+        \fi
+        \ifx\jlreq@after@space\@empty
+          \jlreq@tempskipb=\glueexpr\noexpand\baselineskip*(\jlreq@once@expand{\jlreq@lines}) - \dp\jlreq@tempboxa - \ht\jlreq@tempboxa - \jlreq@once@expand{\jlreq@before@space}\relax
+        \else
+          \jlreq@tempskipb=\glueexpr\jlreq@once@expand{\jlreq@after@space}\relax
+        \fi
+        \jlreq@tempskipa=\glueexpr\jlreq@tempskipa - \jlreq@tempdima\relax
+        \jlreq@tempskipb=\glueexpr\jlreq@tempskipb - \baselineskip + 1\jlreq@gol\relax
+      \else
+        \unexpanded{\message{Box size: \the\dimexpr\dp\jlreq@tempboxa + \ht\jlreq@tempboxa\relax}}%
+        \ifx\jlreq@before@lines\@empty
+          \ifx\jlreq@after@lines\@empty
+            \jlreq@tempskipa=\glueexpr(\baselineskip*(\jlreq@once@expand{\jlreq@lines} + 1) - 1\jlreq@gol - \dp\jlreq@tempboxa - \ht\jlreq@tempboxa)/2 - \jlreq@tempdimc\relax
+          \else
+            \jlreq@tempskipa=\glueexpr\baselineskip*(\jlreq@once@expand{\jlreq@lines} - \jlreq@once@expand{\jlreq@after@lines}) - \dp\jlreq@tempboxa - \ht\jlreq@tempboxa - \jlreq@tempdimc\relax
+          \fi
+        \else
+          \jlreq@tempskipa=\glueexpr\baselineskip*(\jlreq@once@expand{\jlreq@before@lines})\relax
+        \fi
+        \ifx\jlreq@after@lines\@empty
+          \jlreq@tempskipb=\glueexpr\baselineskip*(\jlreq@once@expand{\jlreq@lines}) - \dp\jlreq@tempboxa - \ht\jlreq@tempboxa - \jlreq@tempdimc - \jlreq@tempskipa\relax
+        \else
+          \jlreq@tempskipb=\glueexpr\baselineskip*(\jlreq@once@expand{\jlreq@after@lines})\relax
+        \fi
       \fi
-      \edef\jlreq@after@space{\jlreq@once@expand{\jlreq@lines} - \jlreq@once@expand{\jlreq@before@space} + 1\jlreq@gol}%
-    \else
-      \ifx\jlreq@before@space\@empty
-        \edef\jlreq@before@space{\jlreq@once@expand{\jlreq@lines} - \jlreq@once@expand{\jlreq@after@space} + 1\jlreq@gol}%
+      \noexpand\message{#1: before space = \noexpand\the\jlreq@tempskipa, after space = \noexpand\the\jlreq@tempskipb}%
+      \jlreq@tempa{\jlreq@tempskipa}{\jlreq@tempskipb}%
+      \ifnum0\ifjlreq@tempa1\fi\ifx\jlreq@before@lines\@empty1\fi\ifx\jlreq@after@lines\@empty1\fi>0\relax
+        \prevdepth=\jlreq@tempdima
       \fi
-    \fi
-    % \@startsection{#1}{#2}{<indent>*fontsize}{<before_space>}{<after_space>}{<font>}
-    \global\edef\jlreq@tempa{\jlreq@once@expand{\jlreq@indent}\jlreq@mol}
-    \global\edef\jlreq@tempb{\jlreq@once@expand{\jlreq@before@space} - \noexpand\baselineskip + 1\noexpand\jlreq@gol}
-    \global\edef\jlreq@tempc{\jlreq@once@expand{\jlreq@after@space} - \noexpand\baselineskip + 1\noexpand\jlreq@gol}
-    \global\let\jlreq@tempd=\jlreq@fontcommand
+    }
   \endgroup
-  \expandafter\edef\csname #1\endcsname{%
-    \unexpanded{\edef\jlreq@tempa}{\unexpanded{\the\dimexpr}\jlreq@once@expand{\jlreq@tempa}\unexpanded{\relax}}%
-    \unexpanded{\edef\jlreq@tempb}{\unexpanded{\the\dimexpr}\jlreq@once@expand{\jlreq@tempb}\unexpanded{\relax}}%
-    \unexpanded{\edef\jlreq@tempc}{\unexpanded{\the\dimexpr}\jlreq@once@expand{\jlreq@tempc}\unexpanded{\relax}}%
-    \unexpanded{\edef\@tempa{{\unexpanded{#1}}{\unexpanded{#2}}{\jlreq@once@expand{\jlreq@tempa}}{\jlreq@once@expand{\jlreq@tempb}}{\noexpand\jlreq@absdimenmodoki{\jlreq@once@expand{\jlreq@tempc}}}{\unexpanded{\jlreq@tempdima=\baselineskip\reset@font}\jlreq@once@expand{\jlreq@tempd}\unexpanded{\baselineskip=\jlreq@tempdima}}}}%
-    
-%    \unexpanded{\show\@tempa}%
-\unexpanded{\par\vskip\dimexpr1\zh - \baselineskip\relax\vskip0pt\relax}%
-    \unexpanded{\expandafter\@startsection\@tempa}%
-  }
+  \def\@tempb{\jlreq@BlockHeading@defineHeading{#1}}
+  \expandafter\@tempb\expandafter{\@tempa}
 }
 \newcommand*{\NewBlockHeading}[3]{%
   \expandafter\@ifdefinable\csname #1\endcsname{\DeclareBlockHeading{#1}{#2}{#3}}%
@@ -1181,13 +1197,14 @@
   \fi
   % 普通の一行の高さ/深さに合わせて見出しのボックスを出力
   \setbox\@tempboxa=\vtop to \dimexpr\jlreq@CutinHeading@linecount\baselineskip\relax{\vskip 0pt plus 1fill minus 1fill \box\jlreq@resultbox\vskip 0pt plus 1fill minus 1fill}%
-  \ht\@tempboxa=\Cht
-  \dp\@tempboxa=\Cdp
+  \setbox\jlreq@tempboxa=\hbox{あ}%
+  \ht\@tempboxa=\ht\jlreq@tempboxa
+  \dp\@tempboxa=\dp\jlreq@tempboxa
   \@tempdima=\wd\@tempboxa
   % \hang****を設定
-  \hangindent=\dimexpr#2\zh + \@tempdima + #3\relax\hangafter=-\jlreq@CutinHeading@linecount
+  \hangindent=\dimexpr#2\jlreq@mol + \@tempdima + #3\relax\hangafter=-\jlreq@CutinHeading@linecount
   \jlreq@hangindent=\hangindent\jlreq@wraplinecount=\hangafter
-  \hspace*{#2\zh}%
+  \hspace*{#2\jlrqe@mol}%
   \kern-\dimexpr\@tempdima + #3 + \parindent\relax
   \box\@tempboxa
   \hspace*{#3}%
@@ -1197,9 +1214,9 @@
   \def\par{%
     \@@par
     \ifnum\jlreq@wraplinecount>1\relax
-      \advance\jlreq@wraplinecount by -\prevgraf\prevgraf=0\hangindent=\jlreq@hangindent\hangafter=\numexpr\jlreq@wraplinecount\relax
+      \advance\jlreq@wraplinecount by -\prevgraf\prevgraf=0\hangindent=\jlreq@hangindent\hangafter=\jlreq@wraplinecount
     \else\ifnum\jlreq@wraplinecount<-1\relax
-      \advance\jlreq@wraplinecount by \prevgraf\prevgraf=0\hangindent=\jlreq@hangindent\hangafter=\numexpr\jlreq@wraplinecount\relax
+      \advance\jlreq@wraplinecount by \prevgraf\prevgraf=0\hangindent=\jlreq@hangindent\hangafter=\jlreq@wraplinecount
     \else
       \jlreq@wraplinecount=1\jlreq@hangindent=0pt\relax
       \@restorepar
@@ -2323,8 +2340,6 @@
   {\jlreq@warichu@kakkofontsize\hbox to .5\zh{）}\inhibitglue}%
 }
 
-\newbox\jlreq@tempboxa
-\newbox\jlreq@tempboxb
 % \jlreq@warichu@determinelength{テキスト(1)}{書式指定(2)}{\parshape指定(3)}{調整に使う行数(4)}{成功行数(5)}{最小長さ(6)}{最大長さ(7)}
 % \jlreq@resultboxに整形結果を返す．見つからなかったらvoid
 \newcommand{\jlreq@warichu@determinelength}[7]{%

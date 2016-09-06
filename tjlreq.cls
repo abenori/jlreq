@@ -795,10 +795,8 @@
 \ifx l\jlreq@engine
   \RequirePackage{luatexja-adjust}
   \ltjenableadjust[lineend=extended,priority=true]
-  \directlua{
-    luatexja.adjust.make_priority_table(1,0,-1,5)
-    luatexja.adjust.make_priority_table(2,0,-1,5)
-  }
+  \ltjsetparameter{stretch_priority={kanjiskip=10,xkanjiskip=-30}}
+  \ltjsetparameter{stretch_priority={kanjiskip=0,xkanjiskip=0}}
 \fi
 
 \ifx u\jlreq@engine

@@ -717,14 +717,15 @@
   \else\directlua{jlreq.burasage = false}\fi
 \else
   % 非LuaTeXの場合はJFMの入れ替えと\everyparでの処理で対処．
-  \def\jlreq@jfmname{}
+  \def\jlreq@jfmname@prefix{}
   \def\jlreq@openbreackets@list{{（} {〔} {［} {｛} {〈} {《} {「} {『} {【}}
   \ifx u\jlreq@engine\edef\jlreq@openbreackets@list{\jlreq@openbreackets@list {｟} {〘} {〖} {«} {〝}{‘} {“}}\fi
   % \jlreq@jfmnameにJFMの名前を入れる
-  \ifjlreq@burasage\edef\jlreq@jfmname{b\jlreq@jfmname}\fi
-  \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{\edef\jlreq@jfmname{\jlreq@jfmname z}}{}
-  \edef\jlreq@jfmname{\jlreq@jfmname jlreq-v}
-  \ifx u\jlreq@engine\edef\jlreq@jfmname{u\jlreq@jfmname}\fi
+  \ifjlreq@burasage\edef\jlreq@jfmname@prefix{b\jlreq@jfmname@prefix}\fi
+  \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{\edef\jlreq@jfmname@prefix{\jlreq@jfmname@prefix z}}{}
+  \ifx u\jlreq@engine\edef\jlreq@jfmname@prefix{u\jlreq@jfmname@prefix}\fi
+  \edef\jlreq@jfmname{\jlreq@jfmname@prefix jlreq-v}
+  \edef\jlreq@jfmnameg{\jlreq@jfmname@prefix jlreqg-v}
   \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkaku_tentsuki}}{
     \def\jlreq@openbracket@hook{\jlreq@ifinlist{\jlreq@nextchar}{\jlreq@openbreackets@list}{\inhibitglue}{}}
     \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
@@ -777,7 +778,6 @@
   \jlreq@warning{行間は二分以上全角以下が望ましい (2.4.2.d 注3)}
 }{}
 
-
 % \pdfpagewidthとか設定
 \newlength{\stockwidth}
 \newlength{\stockheight}
@@ -817,7 +817,7 @@
 \else
   \expandafter\let\csname \jlreq@tatekanjiencoding/mc/m/n/10\endcsname\relax
   \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{n}{<-> \jlreq@jfmname}{}
-  \DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{n}{<-> \jlreq@jfmname}{}
+  \DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{n}{<-> \jlreq@jfmnameg}{}
 \fi
 \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{bx}{n}{<->ssub*gt/m/n}{}
 \DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{bx}{n}{<->ssub*gt/m/n}{}
@@ -1147,15 +1147,15 @@
   \@ifundefined{c@#1}{\newcounter{#1}}{}%
   \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}%
   \begingroup
-    \def\jlreq@fontcommand{\normalfont\normalsize}%
-    \define@key{jlreq@key}{font}{\def\jlreq@fontcommand{##1}}%
+    \def\jlreq@font{\normalfont\normalsize}%
+    \define@key{jlreq@key}{font}{\def\jlreq@font{##1}}%
     \def\jlreq@indent{1}%
     \define@key{jlreq@key}{indent}{\def\jlreq@indent{##1}}%
     \def\jlreq@mark{}%
     \define@key{jlreq@key}{mark}{\def\jlreq@mark{##1}}%
     \setkeys{jlreq@key}{#3}%
     % \@startsection{#1}{#2}{<indent>*fontsize}{0pt}{-fontsize}{font}
-    \global\edef\@tempa{{\unexpanded{#1}}{\unexpanded{#2}}{\jlreq@once@expand{\jlreq@indent}\jlreq@mol}{0pt}{-1\jlreq@fontsize}{\jlreq@tempdima=\baselineskip\noexpand\reset@font\jlreq@once@expand{\jlreq@fontcommand}\baselineskip=\jlreq@tempdima\jlreq@once@expand{\jlreq@mark}}}%
+    \global\edef\@tempa{{\unexpanded{#1}}{\unexpanded{#2}}{\jlreq@once@expand{\jlreq@indent}\jlreq@mol}{0pt}{-1\jlreq@fontsize}{\jlreq@once@expand{\jlreq@font}\jlreq@once@expand{\jlreq@mark}}}%
   \endgroup
   \expandafter\edef\csname #1\endcsname{\noexpand\jlreq@hook@beforeheadings{#1}%
     \noexpand\@startsection\jlreq@once@expand{\@tempa}}%
@@ -1271,7 +1271,7 @@
 \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},indent=6,lines=3}
 \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},indent=8,lines=2}
 \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=10,lines=2,before_lines=1}
-\NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\bfseries}}}
+\NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\bfseries\gtfamily}}}
 \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
 
 \newcommand{\appendix}{\par

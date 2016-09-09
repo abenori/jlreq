@@ -39,6 +39,8 @@
 \newdimen\jlreq@resultdimen
 \newbox\jlreq@resultbox
 
+\def\jlreq@uniqtoken{\jlreq@uniqtoken}
+
 % #1内の#2を#3に変換し#4に入れる
 \def\jlreq@replace#1#2#3#4{%
   \def\@tempb##1#2##2\jlreq@endmark{%
@@ -97,7 +99,9 @@
 }
 \def\jlreq@helper@removelastcomma#1,\jlreq@endmark{#1}
 
-% #1が#2のリストに入っていれば#3を，入っていなければ#4を実行する
+\def\jlreq@deleteuntileendmark#1\jlreq@endmark{}
+
+% #1が#2のリスト（{list1}{list2}...{listn}の形）に入っていれば#3を，入っていなければ#4を実行する
 % #2は\edefで展開されてから評価される
 \def\jlreq@ifinlist#1#2#3#4{%
   \edef\@tempa{#2}%
@@ -118,10 +122,8 @@
 }
 
 % 与えられたトークン列が空か（展開はしないでチェック）
-\long\def\jlreq@ifempty#1#2#3{%
-  \def\@tempa{#1}%
-  \ifx\@tempa\@empty#2\else#3\fi
-}
+\long\def\jlreq@ifempty#1#2#3{\ifx\jlreq@uniqtoken#1\jlreq@uniqtoken#2\else#3\fi}
+
 % vbox #1の最後を\jlreq@resultboxに入れる
 % #1の最後の行は消える
 \newcommand{\jlreq@getlastbox}[1]{%
@@ -267,8 +269,8 @@
   \tombowtrue \tombowdatefalse
   \setlength{\@tombowwidth}{\z@}%
   \maketombowbox}
-\jlreq@DeclareOption{tate}{\@tatetrue%
-  \AtBeginDocument{\tate\message{《縦組モード》}\adjustbaseline}%
+\jlreq@DeclareOption{tate}{\@tatetrue
+  \AtBeginDocument{\tate\message{\jlreq@tategumi@message}\adjustbaseline}%
 }
 \jlreq@DeclareOption{oneside}{\@twosidefalse \@mparswitchfalse}
 \jlreq@DeclareOption{twoside}{\@twosidetrue \@mparswitchtrue}
@@ -292,6 +294,8 @@
 \let\@removeelement=\jlreq@original@@removeelement
 
 % エンジンの設定
+% (u)pLaTeXの場合ここで初めて\epTeXinputencodingが発行されるので，
+% これ以前には和文は使えない．
 \ifx\jlreq@engine\@undefined
   \ifx\luatexversion\@undefined
     \epTeXinputencoding "utf8"
@@ -305,6 +309,7 @@
     \let\jlreq@engine=l
   \fi
 \fi
+\def\jlreq@tategumi@message{《縦組モード》}
 
 % \jlreq@gol(Gyo Okuri Length), \jlreq@mol (Moji Okuri Length)を定義
 \if@tate
@@ -720,7 +725,6 @@
   \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{\edef\jlreq@jfmname{\jlreq@jfmname z}}{}
   \edef\jlreq@jfmname{\jlreq@jfmname jlreq-v}
   \ifx u\jlreq@engine\edef\jlreq@jfmname{u\jlreq@jfmname}\fi
-  \def\jlreq@deleteuntileendmark#1\jlreq@endmark{}
   \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkaku_tentsuki}}{
     \def\jlreq@openbracket@hook{\jlreq@ifinlist{\jlreq@nextchar}{\jlreq@openbreackets@list}{\inhibitglue}{}}
     \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
@@ -796,7 +800,7 @@
   \RequirePackage{luatexja-adjust}
   \ltjenableadjust[lineend=extended,priority=true]
   \ltjsetparameter{stretch_priority={kanjiskip=10,xkanjiskip=-30}}
-  \ltjsetparameter{stretch_priority={kanjiskip=0,xkanjiskip=0}}
+  \ltjsetparameter{shrink_priority={kanjiskip=0,xkanjiskip=0}}
 \fi
 
 \ifx u\jlreq@engine
@@ -1014,23 +1018,20 @@
 \newcommand*{\jlreq@absdimenmodoki}[1]{\ifdim#1=0pt 0.001pt\else\ifdim#1<0pt -#1\else#1\fi\fi}
 % 見出しの直前に実行される
 \newcommand*{\jlreq@hook@beforeheadings}[1]{}
+
 % 別行見出し
-
-% #2は{1:*または空}[2:running head]{3:題}[4:副題]で呼び出される．
+% \#1を定義する．書式は\#1*{題}[副題]または\#1[running head]{題}[副題]
+% 最終的に\#1*のときは1=*，2=空，3=題，4=副題
+% \#1の時は1=空，2=[running head]（括弧もつく），3 = 題，4 = 副題で#2が呼び出されるので，
+% \@startsection*****#1#2としておけば良い．
 \newcommand{\jlreq@BlockHeading@defineHeading}[2]{%
-  \expandafter\long\expandafter\def\csname #1\endcsname{\@ifstar{\csname jlreq@BlockHeading@define@#1\endcsname{*}}{\@dblarg{\csname jlreq@BlockHeading@define@#1\endcsname{}}}}%
-  \expandafter\long\expandafter\def\csname jlreq@BlockHeading@define@#1\endcsname##1[##2]##3{\@ifnextchar[{\csname jlreq@BlockHeading@define@#1@\endcsname{##1}[##2]{##3}}{\csname jlreq@BlockHeading@define@#1@\endcsname{##1}[##2]{##3}[]}}%
-  \expandafter\long\expandafter\def\csname jlreq@BlockHeading@define@#1@\endcsname##1[##2]##3[##4]{#2}%
+  \expandafter\long\expandafter\def\csname #1\endcsname{\@ifstar{\csname jlreq@BlockHeading@define@wstar@#1\endcsname}{\@dblarg{\csname jlreq@BlockHeading@define@wostar@#1\endcsname}}}%
+  \expandafter\long\expandafter\def\csname jlreq@BlockHeading@define@wstar@#1\endcsname##1{\@ifnextchar[{\csname jlreq@BlockHeading@define@wstar@#1@\endcsname{##1}}{\csname jlreq@BlockHeading@define@wstar@#1@\endcsname{##1}[]}}
+  \expandafter\long\expandafter\def\csname jlreq@BlockHeading@define@wstar@#1@\endcsname##1[##2]{\csname jlreq@BlockHeading@define@#1@\endcsname{*}{}{##1}{##2}}
+  \expandafter\long\expandafter\def\csname jlreq@BlockHeading@define@wostar@#1\endcsname[##1]##2{\@ifnextchar[{\csname jlreq@BlockHeading@define@wostar@#1\endcsname{##1}{##2}}{\csname jlreq@BlockHeading@define@wostar@#1\endcsname{##1}{##2}[]}}
+  \expandafter\long\expandafter\def\csname jlreq@BlockHeading@define@wostar@#1\endcsname##1##2[##3]{\csname jlreq@BlockHeading@define@#1@\endcsname{}{[##1]}{##2}{##3}}
+  \expandafter\long\expandafter\def\csname jlreq@BlockHeading@define@#1@\endcsname##1##2##3##4{#2}
 }
-
-% #1 = 後ろのボックスのheight
-\newcommand*{\jlreq@SkipBetweenLines}[1]{%
-  \jlreq@resultdimen=\dimexpr\baselineskip - #1 - \prevdepth\relax
-  \ifdim\jlreq@resultdimen<0pt\relax\jlreq@resultdimen=0pt\relax\fi
-  \ifdim\jlreq@resultdimen<\lineskiplimit\else\jlreq@resultdimen=\lineskip\fi
-}
-
-
 
 % \DeclareBlockHeading{命令名}{レベル}{設定}
 % 行取り（4.1.6）
@@ -1065,14 +1066,14 @@
     % spaceを使う場合は\ifjlreq@tempaをtrueにする．
     \jlreq@tempatrue
     \ifx\jlreq@before@space\@empty\ifx\jlreq@after@space\@empty\jlreq@tempafalse\fi\fi
-%    \def\jlreq@tempa##1##2{\noexpand\@startsection{#1}{#2}{\jlreq@once@expand{\jlreq@indent}\baselineskip}{##1}{##2}{\jlreq@once@expand{\jlreq@font}}########1[########2]{########3\noexpand\jlreq@ifempty{########4}{}{\noexpand\\\jlreq@once@expand{\jlreq@subtitle@font}########4}}}
+%    \def\jlreq@tempa##1##2{\noexpand\@startsection{#1}{#2}{\jlreq@once@expand{\jlreq@indent}\baselineskip}{##1}{##2}{\jlreq@once@expand{\jlreq@font}}########1########2{########3\noexpand\jlreq@ifempty{########4}{}{\noexpand\\\jlreq@once@expand{\jlreq@subtitle@font}########4}}}
     \def\jlreq@inside@startsection{########3}
-    \def\jlreq@tempa##1##2{\noexpand\@startsection{#1}{#2}{\jlreq@once@expand{\jlreq@indent}\baselineskip}{##1}{##2}{\jlreq@once@expand{\jlreq@font}}########1[########2]{\jlreq@inside@startsection}}
-    \global\edef\@tempa{%
+    \def\jlreq@tempa##1##2{\noexpand\@startsection{#1}{#2}{\jlreq@once@expand{\jlreq@indent}\baselineskip}{##1}{##2}{\jlreq@once@expand{\jlreq@font}}########1########2{\jlreq@inside@startsection}}
+    \global\edef\jlreq@do{\unexpanded{\jlreq@BlockHeading@defineHeading{#1}}{%
       % \jlreq@tempskipaに前空きを，\jlreq@tempskipbに後ろ空きを入れる
       \par
       \jlreq@tempdima=\prevdepth
-      % \jlreq@tempdimcにセクション上部に\baselineskipから入るスペースを入れる
+      % \jlreq@tempdimcにセクション上部に\baselineskipから入るスペースを代入
       \ifnum0\ifjlreq@tempa1\fi\ifx\jlreq@before@lines\@empty1\fi\ifx\jlreq@after@lines\@empty1\fi>0\relax
         \setbox\jlreq@tempboxa=\vtop{\jlreq@once@expand{\jlreq@font}\jlreq@inside@startsection}%
         {\jlreq@once@expand{\jlreq@font}\global\jlreq@tempdimc=\baselineskip}%
@@ -1080,19 +1081,18 @@
       \fi
       \ifjlreq@tempa
         \ifx\jlreq@before@space\@empty
-          \jlreq@tempskipa=\glueexpr\noexpand\baselineskip*(\jlreq@once@expand{\jlreq@lines}) - \dp\jlreq@tempboxa - \ht\jlreq@tempboxa - \jlreq@once@expand{\jlreq@after@space}\relax
+          \jlreq@tempskipa=\glueexpr\noexpand\baselineskip*(\jlreq@once@expand{\jlreq@lines} + 1) - 1\jlreq@gol - \dp\jlreq@tempboxa - \ht\jlreq@tempboxa - \jlreq@once@expand{\jlreq@after@space}\relax
         \else
           \jlreq@tempskipa=\glueexpr\jlreq@once@expand{\jlreq@before@space}\relax
         \fi
         \ifx\jlreq@after@space\@empty
-          \jlreq@tempskipb=\glueexpr\noexpand\baselineskip*(\jlreq@once@expand{\jlreq@lines}) - \dp\jlreq@tempboxa - \ht\jlreq@tempboxa - \jlreq@once@expand{\jlreq@before@space}\relax
+          \jlreq@tempskipb=\glueexpr\noexpand\baselineskip*(\jlreq@once@expand{\jlreq@lines} + 1) - 1\jlreq@gol - \dp\jlreq@tempboxa - \ht\jlreq@tempboxa - \jlreq@once@expand{\jlreq@before@space}\relax
         \else
           \jlreq@tempskipb=\glueexpr\jlreq@once@expand{\jlreq@after@space}\relax
         \fi
-        \jlreq@tempskipa=\glueexpr\jlreq@tempskipa - \jlreq@tempdima\relax
+        \jlreq@tempskipa=\glueexpr\jlreq@tempskipa - \jlreq@tempdimc\relax
         \jlreq@tempskipb=\glueexpr\jlreq@tempskipb - \baselineskip + 1\jlreq@gol\relax
       \else
-        \unexpanded{\message{Box size: \the\dimexpr\dp\jlreq@tempboxa + \ht\jlreq@tempboxa\relax}}%
         \ifx\jlreq@before@lines\@empty
           \ifx\jlreq@after@lines\@empty
             \jlreq@tempskipa=\glueexpr(\baselineskip*(\jlreq@once@expand{\jlreq@lines} + 1) - 1\jlreq@gol - \dp\jlreq@tempboxa - \ht\jlreq@tempboxa)/2 - \jlreq@tempdimc\relax
@@ -1108,15 +1108,24 @@
           \jlreq@tempskipb=\glueexpr\baselineskip*(\jlreq@once@expand{\jlreq@after@lines})\relax
         \fi
       \fi
-      \noexpand\message{#1: before space = \noexpand\the\jlreq@tempskipa, after space = \noexpand\the\jlreq@tempskipb}%
+      \noexpand\ifdim\jlreq@tempskipa>0pt\noexpand\else
+        \vskip\glueexpr\jlreq@tempskipa - 0.00001pt\relax\vskip0pt\relax
+        \jlreq@tempskipa=0.00001pt\relax
+      \noexpand\fi
+      \noexpand\ifdim\jlreq@tempskipb>0pt\relax\noexpand\jlreq@tempbfalse\noexpand\else
+        \noexpand\jlreq@tempbtrue
+        \jlreq@tempskipb=\glueexpr\jlreq@tempskipb + \baselineskip - 1\jlreq@gol\relax
+        \noexpand\ifdim\jlreq@tempskipb>0pt\noexpand\else\jlreq@tempskipb=0.00001pt\noexpand\fi
+      \noexpand\fi
       \jlreq@tempa{\jlreq@tempskipa}{\jlreq@tempskipb}%
-      \ifnum0\ifjlreq@tempa1\fi\ifx\jlreq@before@lines\@empty1\fi\ifx\jlreq@after@lines\@empty1\fi>0\relax
-        \prevdepth=\jlreq@tempdima
-      \fi
-    }
+      \noexpand\ifjlreq@tempb\prevdepth=-10000pt\noexpand\else
+        \ifnum0\ifjlreq@tempa1\fi\ifx\jlreq@before@lines\@empty1\fi\ifx\jlreq@after@lines\@empty1\fi>0\relax
+          \prevdepth=\jlreq@tempdima
+        \fi
+      \noexpand\fi
+    }}
   \endgroup
-  \def\@tempb{\jlreq@BlockHeading@defineHeading{#1}}
-  \expandafter\@tempb\expandafter{\@tempa}
+  \jlreq@do
 }
 \newcommand*{\NewBlockHeading}[3]{%
   \expandafter\@ifdefinable\csname #1\endcsname{\DeclareBlockHeading{#1}{#2}{#3}}%
@@ -1133,7 +1142,7 @@
 \@onlypreamble\ProvideBlockHeading
 
 % 同行見出し
-% \DeclareRuninHeading{命令名}{レベル}{書体変更命令}
+% \DeclareRuninHeading{命令名}{レベル}{設定}
 \newcommand*{\DeclareRuninHeading}[3]{%
   \@ifundefined{c@#1}{\newcounter{#1}}{}%
   \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}%
@@ -1146,7 +1155,7 @@
     \define@key{jlreq@key}{mark}{\def\jlreq@mark{##1}}%
     \setkeys{jlreq@key}{#3}%
     % \@startsection{#1}{#2}{<indent>*fontsize}{0pt}{-fontsize}{font}
-    \global\edef\@tempa{{\unexpanded{#1}}{\unexpanded{#2}}{\jlreq@once@expand{\jlreq@indent}\jlreq@fontsize}{0pt}{-1\jlreq@fontsize}{\jlreq@tempdima=\baselineskip\noexpand\reset@font\jlreq@once@expand{\jlreq@fontcommand}\baselineskip=\jlreq@tempdima\jlreq@once@expand{\jlreq@mark}}}%
+    \global\edef\@tempa{{\unexpanded{#1}}{\unexpanded{#2}}{\jlreq@once@expand{\jlreq@indent}\jlreq@mol}{0pt}{-1\jlreq@fontsize}{\jlreq@tempdima=\baselineskip\noexpand\reset@font\jlreq@once@expand{\jlreq@fontcommand}\baselineskip=\jlreq@tempdima\jlreq@once@expand{\jlreq@mark}}}%
   \endgroup
   \expandafter\edef\csname #1\endcsname{\noexpand\jlreq@hook@beforeheadings{#1}%
     \noexpand\@startsection\jlreq@once@expand{\@tempa}}%
@@ -1256,13 +1265,14 @@
 \@onlypreamble\RenewCutinHeading
 \@onlypreamble\ProvideCutinHeading
 
+\newcommand*{\jlreq@keepbaselineskip}[1]{\jlreq@tempdima=\baselineskip#1\baselineskip=\jlreq@tempdima}
 
-\NewBlockHeading{part}{0}{font={\LARGE\headfont},indent=4,lines=4}
-\NewBlockHeading{section}{1}{font={\Large\headfont},indent=6,lines=3}
-\NewBlockHeading{subsection}{2}{font={\large\headfont},indent=8,lines=2}
-\NewBlockHeading{subsubsection}{3}{font={\normalsize\headfont},indent=10,lines=2,before_space=\baselineskip}
-\NewRuninHeading{paragraph}{4}{font={\normalsize\bfseries}}
-\NewRuninHeading{subparagraph}{5}{font={\normalsize\headfont}}
+\NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},indent=4,lines=4}
+\NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},indent=6,lines=3}
+\NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},indent=8,lines=2}
+\NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=10,lines=2,before_lines=1}
+\NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\bfseries}}}
+\NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
 
 \newcommand{\appendix}{\par
   \setcounter{section}{0}%

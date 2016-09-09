@@ -16,7 +16,7 @@
 \tracingonline=1
 
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{tjlreq}[2016/01/01 tjlreq]
+\ProvidesClass{jlreq}[2016/01/01 jlreq]
 % \define@keyを使う時は，使う部分を極力グルーピングしてあまりマクロ定義を残さないようにする
 \RequirePackage{xkeyval}
 \RequirePackage{everyhook,ifthen}
@@ -126,15 +126,21 @@
 
 % vbox #1の最後を\jlreq@resultboxに入れる
 % #1の最後の行は消える
-\newcommand{\jlreq@getlastbox}[1]{%
+\newcommand*{\jlreq@getlastbox}[1]{%
   \setbox#1=\vbox{\unvbox#1\relax
     \unskip\unskip\unpenalty\global\setbox\jlreq@resultbox=\lastbox}%
   \ifhbox\jlreq@resultbox
     \global\setbox\jlreq@resultbox=\hbox{%
       \unhbox\jlreq@resultbox\unskip\unskip\unpenalty}%
   \else
-    \global\setbox\jlreq@resultbox=\box\voidb@x
+    \global\setbox\jlreq@resultbox=\copy\voidb@x
   \fi
+}
+
+% vbox #1の最初を\jlreq@resultboxに入れる
+% #1は消える
+\newcommand*{\jlreq@getfirstbox}[1]{%
+  \loop\ifdim\dimexpr\dp#1+\ht#1=0pt\relax\else\jlreq@getlastbox{#1}\repeat
 }
 
 \newcommand*{\jlreq@debug@output}[1]{\message{\detokenize{#1}}}
@@ -240,7 +246,7 @@
 % 行頭に括弧が来たときの配置：3.1.5
 % 段落頭指定_折り返し行頭指定 で与える．
 \newcommand*{\jlreq@open@bracket@pos}{zenkaku_tentsuki}
-\define@choicekey{tjlreq.cls}{open_bracket_pos}{zenkaku_tentsuki,zenkakunibu_nibu,nibu_tentsuki}{\renewcommand*{\jlreq@open@bracket@pos}{#1}}
+\define@choicekey{jlreq.cls}{open_bracket_pos}{zenkaku_tentsuki,zenkakunibu_nibu,nibu_tentsuki}{\renewcommand*{\jlreq@open@bracket@pos}{#1}}
 % ぶら下げ組みをするか：3.8.2 注1
 \newif\ifjlreq@burasage\jlreq@burasagefalse
 \jlreq@DeclareOption{hanging_punctuation}{\jlreq@burasagetrue}
@@ -248,10 +254,10 @@
 %.. 注
 % 合印の場所（4.2.3）行間に入れるか否か
 \newcommand*{\jlreq@referencemark}{inline}
-\define@choicekey{tjlreq.cls}{reference_mark}{inline,interlinear}{\renewcommand*{\jlreq@referencemark}{#1}}
+\define@choicekey{jlreq.cls}{reference_mark}{inline,interlinear}{\renewcommand*{\jlreq@referencemark}{#1}}
 % 脚注の字下げ，一行目を下げるならばone，二行目以降ならばtwo．ちょっと酷いので後で考える．
 \newcommand*{\jlreq@footnotetext@indent}{one}
-\define@choicekey{tjlreq.cls}{footnotetext_indent}{one,two}{\renewcommand*{\jlreq@footnotetext@indent}{#1}}
+\define@choicekey{jlreq.cls}{footnotetext_indent}{one,two}{\renewcommand*{\jlreq@footnotetext@indent}{#1}}
 % 後注をどこに配置するか．_headings（全ての見出し）,_paragraph（段落後）,_で始まらないやつ（その名前の見出し）．カンマ区切り
 \newcommand*{\jlreq@endnote@position}{_headings}
 \DeclareOptionX{endnote_position}{\renewcommand*{\jlreq@endnote@position}{#1}}
@@ -283,9 +289,9 @@
 \jlreq@DeclareOption{final}{\setlength\overfullrule{0pt}}
 
 \newcommand*{\jlreq@warning}[1]{}
-\jlreq@DeclareOption{jlreq_warnings}{\renewcommand*{\jlreq@warning}[1]{\ClassWarningNoLine{tjlreq}{(JLREQ warning) ##1}}}
+\jlreq@DeclareOption{jlreq_warnings}{\renewcommand*{\jlreq@warning}[1]{\ClassWarningNoLine{jlreq}{(JLREQ warning) ##1}}}
 
-\ExecuteOptionsX{a4paper,fontsize=9pt,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=_headings,onecolumn,final,tate}
+\ExecuteOptionsX{a4paper,fontsize=9pt,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=_headings,onecolumn,final}
 
 % \@removeelementを一旦置き換えてから\ProcessOptionsXを実行する
 \let\jlreq@original@@removeelement=\@removeelement
@@ -724,8 +730,8 @@
   \ifjlreq@burasage\edef\jlreq@jfmname@prefix{b\jlreq@jfmname@prefix}\fi
   \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{\edef\jlreq@jfmname@prefix{\jlreq@jfmname@prefix z}}{}
   \ifx u\jlreq@engine\edef\jlreq@jfmname@prefix{u\jlreq@jfmname@prefix}\fi
-  \edef\jlreq@jfmname{\jlreq@jfmname@prefix jlreq-v}
-  \edef\jlreq@jfmnameg{\jlreq@jfmname@prefix jlreqg-v}
+  \edef\jlreq@jfmname{\jlreq@jfmname@prefix jlreq}
+  \edef\jlreq@jfmnameg{\jlreq@jfmname@prefix jlreqg}
   \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkaku_tentsuki}}{
     \def\jlreq@openbracket@hook{\jlreq@ifinlist{\jlreq@nextchar}{\jlreq@openbreackets@list}{\inhibitglue}{}}
     \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
@@ -772,7 +778,7 @@
   \fi
 \fi
 \ifdim\jlreq@fontsize>\jlreq@baselineskip
-  \ClassError{tjlreq}{The baselineskip is less than fontsize}{\@ehc}%
+  \ClassError{jlreq}{The baselineskip is less than fontsize}{\@ehc}%
 \fi
 \ifthenelse{\lengthtest{\jlreq@baselineskip<1.5\jlreq@fontsize} \OR \lengthtest{\jlreq@baselineskip>2\jlreq@fontsize}}{
   \jlreq@warning{行間は二分以上全角以下が望ましい (2.4.2.d 注3)}
@@ -804,21 +810,38 @@
 \fi
 
 \ifx u\jlreq@engine
+  \def\jlreq@yokokanjiencoding{JY2}
   \def\jlreq@tatekanjiencoding{JT2}
 \fi
 \ifx p\jlreq@engine
+  \def\jlreq@yokokanjiencoding{JY1}
   \def\jlreq@tatekanjiencoding{JT1}
 \fi
 \ifx l\jlreq@engine
+  \def\jlreq@yokokanjiencoding{JY3}
   \def\jlreq@tatekanjiencoding{JT3}
+  \expandafter\let\csname JY3/mc/m/n/10\endcsname\relax
   \expandafter\let\csname JT3/mc/m/n/10\endcsname\relax
+  \DeclareFontShape{JY3}{mc}{m}{n}{<->\ltj@stdmcfont:jfm=jlreq;script=latn;-kern}{}
+  \DeclareFontShape{JY3}{gt}{m}{n}{<->\ltj@stdgtfont:jfm=jlreq;script=latn;-kern}{}
   \DeclareFontShape{JT3}{mc}{m}{n}{<->\ltj@stdmcfont:jfm=jlreqv;script=latn;-kern}{}
   \DeclareFontShape{JT3}{gt}{m}{n}{<->\ltj@stdgtfont:jfm=jlreqv;script=latn;-kern}{}
 \else
   \expandafter\let\csname \jlreq@tatekanjiencoding/mc/m/n/10\endcsname\relax
-  \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{n}{<-> \jlreq@jfmname}{}
-  \DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{n}{<-> \jlreq@jfmnameg}{}
+  \DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{m}{n}{<-> \jlreq@jfmname}{}
+  \DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{m}{n}{<-> \jlreq@jfmnameg}{}
+  \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{n}{<-> \jlreq@jfmname-v}{}
+  \DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{n}{<-> \jlreq@jfmnameg-v}{}
 \fi
+\DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{bx}{n}{<->ssub*gt/m/n}{}
+\DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{bx}{n}{<->ssub*gt/m/n}{}
+\DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{m}{it}{<->ssub*mc/m/n}{}
+\DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{m}{sl}{<->ssub*mc/m/n}{}
+\DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{m}{sc}{<->ssub*mc/m/n}{}
+\DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{m}{it}{<->ssub*gt/m/n}{}
+\DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{m}{sl}{<->ssub*gt/m/n}{}
+\DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{bx}{it}{<->ssub*gt/m/n}{}
+\DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
 \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{bx}{n}{<->ssub*gt/m/n}{}
 \DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{bx}{n}{<->ssub*gt/m/n}{}
 \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{it}{<->ssub*mc/m/n}{}
@@ -1028,8 +1051,8 @@
   \expandafter\long\expandafter\def\csname #1\endcsname{\@ifstar{\csname jlreq@BlockHeading@define@wstar@#1\endcsname}{\@dblarg{\csname jlreq@BlockHeading@define@wostar@#1\endcsname}}}%
   \expandafter\long\expandafter\def\csname jlreq@BlockHeading@define@wstar@#1\endcsname##1{\@ifnextchar[{\csname jlreq@BlockHeading@define@wstar@#1@\endcsname{##1}}{\csname jlreq@BlockHeading@define@wstar@#1@\endcsname{##1}[]}}
   \expandafter\long\expandafter\def\csname jlreq@BlockHeading@define@wstar@#1@\endcsname##1[##2]{\csname jlreq@BlockHeading@define@#1@\endcsname{*}{}{##1}{##2}}
-  \expandafter\long\expandafter\def\csname jlreq@BlockHeading@define@wostar@#1\endcsname[##1]##2{\@ifnextchar[{\csname jlreq@BlockHeading@define@wostar@#1\endcsname{##1}{##2}}{\csname jlreq@BlockHeading@define@wostar@#1\endcsname{##1}{##2}[]}}
-  \expandafter\long\expandafter\def\csname jlreq@BlockHeading@define@wostar@#1\endcsname##1##2[##3]{\csname jlreq@BlockHeading@define@#1@\endcsname{}{[##1]}{##2}{##3}}
+  \expandafter\long\expandafter\def\csname jlreq@BlockHeading@define@wostar@#1\endcsname[##1]##2{\@ifnextchar[{\csname jlreq@BlockHeading@define@wostar@#1@\endcsname{##1}{##2}}{\csname jlreq@BlockHeading@define@wostar@#1@\endcsname{##1}{##2}[]}}
+  \expandafter\long\expandafter\def\csname jlreq@BlockHeading@define@wostar@#1@\endcsname##1##2[##3]{\csname jlreq@BlockHeading@define@#1@\endcsname{}{[##1]}{##2}{##3}}
   \expandafter\long\expandafter\def\csname jlreq@BlockHeading@define@#1@\endcsname##1##2##3##4{#2}
 }
 
@@ -1066,19 +1089,24 @@
     % spaceを使う場合は\ifjlreq@tempaをtrueにする．
     \jlreq@tempatrue
     \ifx\jlreq@before@space\@empty\ifx\jlreq@after@space\@empty\jlreq@tempafalse\fi\fi
-%    \def\jlreq@tempa##1##2{\noexpand\@startsection{#1}{#2}{\jlreq@once@expand{\jlreq@indent}\baselineskip}{##1}{##2}{\jlreq@once@expand{\jlreq@font}}########1########2{########3\noexpand\jlreq@ifempty{########4}{}{\noexpand\\\jlreq@once@expand{\jlreq@subtitle@font}########4}}}
-    \def\jlreq@inside@startsection{########3}
+    \def\jlreq@inside@startsection{########3%
+      \noexpand\jlreq@ifempty{########4}{}{\noexpand\\\jlreq@once@expand{\jlreq@subtitle@font}########4}}
+    \def\jlreq@test@startsection{%
+      \addtocounter{#1}{1}%
+      \jlreq@once@expand{\jlreq@font}%
+      \hskip\jlreq@once@expand{\jlreq@indent}\baselineskip
+      \noexpand\jlreq@ifempty{########1}{\noexpand\@seccntformat{#1}\relax}{}\jlreq@inside@startsection
+      \addtocounter{#1}{-1}%
+    }
     \def\jlreq@tempa##1##2{\noexpand\@startsection{#1}{#2}{\jlreq@once@expand{\jlreq@indent}\baselineskip}{##1}{##2}{\jlreq@once@expand{\jlreq@font}}########1########2{\jlreq@inside@startsection}}
     \global\edef\jlreq@do{\unexpanded{\jlreq@BlockHeading@defineHeading{#1}}{%
       % \jlreq@tempskipaに前空きを，\jlreq@tempskipbに後ろ空きを入れる
       \par
       \jlreq@tempdima=\prevdepth
       % \jlreq@tempdimcにセクション上部に\baselineskipから入るスペースを代入
-      \ifnum0\ifjlreq@tempa1\fi\ifx\jlreq@before@lines\@empty1\fi\ifx\jlreq@after@lines\@empty1\fi>0\relax
-        \setbox\jlreq@tempboxa=\vtop{\jlreq@once@expand{\jlreq@font}\jlreq@inside@startsection}%
-        {\jlreq@once@expand{\jlreq@font}\global\jlreq@tempdimc=\baselineskip}%
-        \jlreq@tempdimc=\dimexpr\jlreq@tempdimc - \jlreq@tempdima - \ht\jlreq@tempboxa\relax
-      \fi
+      \setbox\jlreq@tempboxa=\vtop{\jlreq@test@startsection}%
+      {\jlreq@once@expand{\jlreq@font}\global\jlreq@tempdimc=\baselineskip}%
+      \jlreq@tempdimc=\dimexpr\jlreq@tempdimc - \jlreq@tempdima - \ht\jlreq@tempboxa\relax
       \ifjlreq@tempa
         \ifx\jlreq@before@space\@empty
           \jlreq@tempskipa=\glueexpr\noexpand\baselineskip*(\jlreq@once@expand{\jlreq@lines} + 1) - 1\jlreq@gol - \dp\jlreq@tempboxa - \ht\jlreq@tempboxa - \jlreq@once@expand{\jlreq@after@space}\relax
@@ -1093,21 +1121,16 @@
         \jlreq@tempskipa=\glueexpr\jlreq@tempskipa - \jlreq@tempdimc\relax
         \jlreq@tempskipb=\glueexpr\jlreq@tempskipb - \baselineskip + 1\jlreq@gol\relax
       \else
-        \ifx\jlreq@before@lines\@empty
-          \ifx\jlreq@after@lines\@empty
-            \jlreq@tempskipa=\glueexpr(\baselineskip*(\jlreq@once@expand{\jlreq@lines} + 1) - 1\jlreq@gol - \dp\jlreq@tempboxa - \ht\jlreq@tempboxa)/2 - \jlreq@tempdimc\relax
-          \else
-            \jlreq@tempskipa=\glueexpr\baselineskip*(\jlreq@once@expand{\jlreq@lines} - \jlreq@once@expand{\jlreq@after@lines}) - \dp\jlreq@tempboxa - \ht\jlreq@tempboxa - \jlreq@tempdimc\relax
-          \fi
-        \else
-          \jlreq@tempskipa=\glueexpr\baselineskip*(\jlreq@once@expand{\jlreq@before@lines})\relax
+        \jlreq@tempskipa=\glueexpr(\baselineskip*(\jlreq@once@expand{\jlreq@lines} + 1) - 1\jlreq@gol - \dp\jlreq@tempboxa - \ht\jlreq@tempboxa)/2 - \jlreq@tempdimc\relax
+        \jlreq@tempskipb=\glueexpr\baselineskip*(\jlreq@once@expand{\jlreq@lines}) - \dp\jlreq@tempboxa - \ht\jlreq@tempboxa - \jlreq@tempdimc - \jlreq@tempskipa\relax
+        \ifx\jlreq@before@lines\@empty\else
+          \jlreq@tempskipa=\glueexpr\jlreq@tempskipa + \jlreq@once@expand{\jlreq@before@lines}\baselineskip\relax
         \fi
-        \ifx\jlreq@after@lines\@empty
-          \jlreq@tempskipb=\glueexpr\baselineskip*(\jlreq@once@expand{\jlreq@lines}) - \dp\jlreq@tempboxa - \ht\jlreq@tempboxa - \jlreq@tempdimc - \jlreq@tempskipa\relax
-        \else
-          \jlreq@tempskipb=\glueexpr\baselineskip*(\jlreq@once@expand{\jlreq@after@lines})\relax
+        \ifx\jlreq@after@lines\@empty\else
+          \jlreq@tempskipb=\glueexpr\jlreq@tempskipb + \jlreq@once@expand{\jlreq@after@lines}\baselineskip\relax
         \fi
       \fi
+      \unexpanded{\message{前空き：\the\jlreq@tempskipa , 後空き：\the\jlreq@tempskipb}}%
       \noexpand\ifdim\jlreq@tempskipa>0pt\noexpand\else
         \vskip\glueexpr\jlreq@tempskipa - 0.00001pt\relax\vskip0pt\relax
         \jlreq@tempskipa=0.00001pt\relax
@@ -1118,11 +1141,7 @@
         \noexpand\ifdim\jlreq@tempskipb>0pt\noexpand\else\jlreq@tempskipb=0.00001pt\noexpand\fi
       \noexpand\fi
       \jlreq@tempa{\jlreq@tempskipa}{\jlreq@tempskipb}%
-      \noexpand\ifjlreq@tempb\prevdepth=-10000pt\noexpand\else
-        \ifnum0\ifjlreq@tempa1\fi\ifx\jlreq@before@lines\@empty1\fi\ifx\jlreq@after@lines\@empty1\fi>0\relax
-          \prevdepth=\jlreq@tempdima
-        \fi
-      \noexpand\fi
+      \noexpand\ifjlreq@tempb\prevdepth=-10000pt\noexpand\else\prevdepth=\jlreq@tempdima\noexpand\fi
     }}
   \endgroup
   \jlreq@do
@@ -1378,7 +1397,7 @@
       \footnotesize
       % 後注の長さを文字サイズの整数倍にする（4.2.4.b）
       \@tempdima=\dimexpr\linewidth - \jlreq@endnote@indent - \leftskip\relax
-      \@tempdimb=1\zh
+      \@tempdimb=1\jlreq@mol
       \divide\@tempdima\@tempdimb\multiply\@tempdima\@tempdimb
       \begin{list}{}{%
         \itemsep=0pt\relax
@@ -1386,19 +1405,19 @@
         \partopsep=0pt\relax
         \topsep=\dimexpr\jlreq@endnote@prepostspace - \parskip\relax
         \leftmargin=\dimexpr\linewidth - \@tempdima\relax
-      }
+      }%
       \expandafter\jlreq@theendnotes\jlreq@tempa\jlreq@endmark
-      \end{list}%
+      \end{list}
     \endgroup
     \par\vskip\dimexpr\jlreq@fontsize - \jlreq@baselineskip\relax
   \fi
 }
 
-\jlreq@endnote@indent=2\zh
+\jlreq@endnote@indent=2\jlreq@mol
 % 二行目以降を全角分下げる
-{\footnotesize\global\advance\jlreq@endnote@indent by 1\zh}
-\newcommand{\@makeentext}[1]{\parindent 1\zh
-    \hskip-1\zh\@makeenmark\hskip 1\zh#1}% 見出し出力と一文字分の空き
+{\footnotesize\global\advance\jlreq@endnote@indent by 1\jlreq@mol}
+\newcommand{\@makeentext}[1]{\parindent 1\jlreq@mol
+    \hskip-1\jlreq@mol\@makeenmark\hskip 1\jlreq@mol#1}% 見出し出力と一文字分の空き
 \renewcommand{\theendnote}{\rensuji{\@arabic\c@endnote}}
 
 \let\@makeenmark=\@makefnmark
@@ -1423,7 +1442,7 @@
       \ifx\jlreq@endnote@texts\@empty\else
         % なんかうまくいってそう
         \vskip\dimexpr-\baselineskip\relax
-        \vskip\dimexpr-\baselineskip\relax
+        \vskip\dimexpr0pt\relax
         \theendnotes
       \fi
     }%
@@ -1441,8 +1460,8 @@
 \ifjlreq@tempa
   \def\@tempc#1{\theendnotes}
 \fi
-\edef\@defhook{\unexpanded{\global\def\jlreq@hook@beforeheadings#1}{\jlreq@once@expand{\@tempc{#1}}}}
-\@defhook
+\edef\jlreq@do{\unexpanded{\global\def\jlreq@hook@beforeheadings#1}{\jlreq@once@expand{\@tempc{#1}}}}
+\jlreq@do
 \AtEndDocument{\theendnotes}
 
 % 傍注はこれではうまく行かないはず．
@@ -1469,7 +1488,7 @@
 \def\jlreq@parse@position@#1-#2\jlreq@endmark{%
   \def\jlreq@tempa{#1}\def\jlreq@tempb{#2}%
   \jlreq@ifempty{#2}{%
-    \ifx\jlreq@tempb\@empty\ClassError{tjlreq}{Invalid position: #1}{\@ehc}\fi
+    \ifx\jlreq@tempb\@empty\ClassError{jlreq}{Invalid position: #1}{\@ehc}\fi
   }{%
     \def\@tempa##1-{\def\jlreq@tempb{##1}}%
     \@tempa#2\relax
@@ -1478,7 +1497,7 @@
 \newcommand*\jlreq@parse@position@@[1]{%
   \ifthenelse{\equal{#1}{top} \OR \equal{#1}{bottom}}{\def\jlreq@tempc{#1}}{
     \ifthenelse{\equal{#1}{left} \OR \equal{#1}{right} \OR \equal{#1}{center}}{\def\jlreq@tempd{#1}}{
-      \ClassError{tjlreq}{Invalid position: #1}{\@ehc}
+      \ClassError{jlreq}{Invalid position: #1}{\@ehc}
     }
   }
 }
@@ -2194,7 +2213,7 @@
 \newif\ifjlreq@inwarichu
 \jlreq@inwarichufalse
 \newcommand*{\warichu}{%
-  \ifjlreq@inwarichu\ClassError{tjlreq}{\string\warichu\space can't be nested}{\@ehc}\fi
+  \ifjlreq@inwarichu\ClassError{jlreq}{\string\warichu\space can't be nested}{\@ehc}\fi
   \jlreq@inwarichutrue
   \@ifstar\jlreq@warichu@noauto\jlreq@warichu@auto}
 
@@ -2250,7 +2269,7 @@
     \edef\jlreq@parshapearg{\jlreq@parshapearg 0pt \the\jlreq@tempdimb 0pt \the\jlreq@tempdimb}%
   }%
   \ifvoid\jlreq@resultbox
-    \ClassWarning{tjlreq}{\string\warichu\space failed, maybe a bug}%
+    \ClassWarning{jlreq}{\string\warichu\space failed, maybe a bug}%
   \else
     \@tempcnta=0\relax
     \splittopskip=0pt\relax

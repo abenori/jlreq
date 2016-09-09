@@ -50,7 +50,7 @@ local hyphen_glue = {
 
 
 local jfm = {
-	dir = 'tate',
+	dir = 'yoko',
 	zw = 1.0,
 	zh = 1.0,
 	version = 2,
@@ -1213,7 +1213,7 @@ if jlreq ~= nil then
 
 	-- ぶら下げ組を有効にする．
 	if jlreq.burasage == true then
-		for dummy,class in ipairs({6,7}) do
+		for _,class in ipairs({6,7}) do
 			table.insert(jfm[class].end_adjust,-0.5)
 		end
 	end

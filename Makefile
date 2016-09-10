@@ -65,7 +65,7 @@ u%g.vf: u%g.tfm
 u%g-v.vf: u%g-v.tfm
 	makejvf -i -u jis $< ugbmv.tfm
 
-jfm-%.lua: make_variant_jfm.lua
+jfm-%v.lua jfm-b%,lua jfm-z%.lua: make_variant_jfm.lua
 	texlua make_variant_jfm.lua
 
 clean:

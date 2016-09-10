@@ -1038,7 +1038,6 @@
   (\rensuji{\@arabic\c@subparagraph})}
 
 \renewcommand*{\@seccntformat}[1]{\csname the#1\endcsname\hspace{1\jlreq@fontsize}}
-\newcommand*{\jlreq@absdimenmodoki}[1]{\ifdim#1=0pt 0.001pt\else\ifdim#1<0pt -#1\else#1\fi\fi}
 % 見出しの直前に実行される
 \newcommand*{\jlreq@hook@beforeheadings}[1]{}
 
@@ -1104,8 +1103,7 @@
       \par
       \jlreq@tempdima=\prevdepth
       % \jlreq@tempdimcにセクション上部に\baselineskipから入るスペースを代入
-      \setbox\jlreq@tempboxa=\vtop{\jlreq@test@startsection}%
-      {\jlreq@once@expand{\jlreq@font}\global\jlreq@tempdimc=\baselineskip}%
+      \setbox\jlreq@tempboxa=\vtop{\jlreq@test@startsection\global\jlreq@tempdimc=\baselineskip}%
       \jlreq@tempdimc=\dimexpr\jlreq@tempdimc - \jlreq@tempdima - \ht\jlreq@tempboxa\relax
       \ifjlreq@tempa
         \ifx\jlreq@before@space\@empty
@@ -1289,7 +1287,7 @@
 \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},indent=4,lines=4}
 \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},indent=6,lines=3}
 \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},indent=8,lines=2}
-\NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=10,lines=2,before_lines=1}
+\NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=10,lines=1,before_lines=1}
 \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\bfseries\gtfamily}}}
 \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
 

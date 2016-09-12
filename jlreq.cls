@@ -424,7 +424,7 @@
 \ifx l\jlreq@engine
   \newcommand*{\jlreq@setpostbreakpenalty}[2]{\ltjsetparameter{postbreakpenalty={`#1,#2}}}
   \newcommand*{\jlreq@setprebreakpenalty}[2]{\ltjsetparameter{prebreakpenalty={`#1,#2}}}
-  \newcommand*{\jlreq@setjaxspmode}[2]{\ltjsetparameter{jaxspmode={`#1,preonly}}}
+  \newcommand*{\jlreq@setjaxspmode}[2]{\ltjsetparameter{jaxspmode={`#1,#2}}}
 \else
   \newcommand*{\jlreq@setpostbreakpenalty}[2]{\postbreakpenalty`#1=#2}
   \newcommand*{\jlreq@setprebreakpenalty}[2]{\prebreakpenalty`#1=#2}
@@ -1425,7 +1425,7 @@
 \long\def\jlreq@do#1#2{%
   \def\@tempb{#1}%
   \ifjlreq@tempb\else
-    \ifx\@tempa\@tempb #2 \jlreq@tempbtrue\fi
+    \ifx\@tempa\@tempb#2\jlreq@tempbtrue\fi
   \fi
 }
 \jlreq@tempafalse

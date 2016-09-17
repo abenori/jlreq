@@ -224,6 +224,10 @@
 \DeclareOptionX{number_of_lines}{\renewcommand*{\jlreq@option@number@of@lines}{#1}}
 
 % 地の空き量，のどの空き量で配置位置を決める（2.4.1.b）省略されたら中央配置．
+%.. 天
+\newcommand*{\jlreq@option@head@space}{}
+\DeclareOptionX{head_space}{\renewcommand*{\jlreq@option@head@space}{#1}}
+
 %.. 地
 \newcommand*{\jlreq@option@foot@space}{}
 \DeclareOptionX{foot_space}{\renewcommand*{\jlreq@option@foot@space}{#1}}
@@ -300,12 +304,8 @@
 \let\@removeelement=\jlreq@original@@removeelement
 
 % エンジンの設定
-% (u)pLaTeXの場合ここで初めて\epTeXinputencodingが発行されるので，
-% これ以前には和文は使えない．
 \ifx\jlreq@engine\@undefined
   \ifx\luatexversion\@undefined
-    \epTeXinputencoding "utf8"
-    \def\zw{zw}\def\zh{zh}
     \ifx\ucs\@undefined
       \let\jlreq@engine=p
     \else
@@ -314,6 +314,18 @@
   \else
     \let\jlreq@engine=l
   \fi
+\fi
+
+\ifx l\jlreq@engine
+  \RequirePackage{luatexja}
+  \directlua{jlreq = {}}
+\fi
+
+% (u)pLaTeXの場合ここで初めて\epTeXinputencodingが発行されるので，
+% これ以前には和文は使えない．
+\ifx l\jlreq@engine\else
+  \epTeXinputencoding "utf8"
+  \def\zw{zw}\def\zh{zh}
 \fi
 \def\jlreq@tategumi@message{《縦組モード》}
 
@@ -330,11 +342,6 @@
   \else
     \def\jlreq@gol{zh}\def\jlreq@mol{zw}
   \fi
-\fi
-
-\ifx l\jlreq@engine
-  \RequirePackage{luatexja}
-  \directlua{jlreq = {}}
 \fi
 
 %. helper2（エンジン依存系）
@@ -998,14 +1005,31 @@
   \addtolength{\evensidemargin}{-1in}
 \fi
 % 縦
-\setlength{\topmargin}{\paperheight}
-\addtolength{\topmargin}{-\textwidth}
-\ifx\jlreq@option@foot@space\@empty
-  % 中央配置
-  \setlength{\topmargin}{0.5\topmargin}
+\ifx\jlreq@option@head@space\@empty
+  \setlength{\topmargin}{\paperheight}
+  \addtolength{\topmargin}{-\textwidth}
+  \ifx\jlreq@option@foot@space\@empty
+    % 中央配置
+    \setlength{\topmargin}{0.5\topmargin}
+  \else
+    \addtolength{\topmargin}{-\jlreq@speciallength{\jlreq@option@foot@space}}
+  \fi
 \else
-  \addtolength{\topmargin}{-\jlreq@speciallength{\jlreq@option@foot@space}}
+  \ifx\jlreq@option@foot@space\@empty
+    \setlength{\topmargin}{\jlreq@speciallength{\jlrqe@option@head@space}}
+  \else
+    % 両方指定されていたら，縦書きは地を，横書きは天を使う
+    \if@tate
+      \setlength{\topmargin}{\paperheight}
+      \addtolength{\topmargin}{-\textwidth}
+      \addtolength{\topmargin}{-\jlreq@speciallength{\jlreq@option@foot@space}}
+    \else
+      \setlength{\topmargin}{\jlreq@speciallength{\jlrqe@option@head@space}}
+    \fi
+  \fi
 \fi
+
+
 \addtolength{\topmargin}{-\headsep}
 \addtolength{\topmargin}{-\headheight}
 \addtolength{\topmargin}{-1in}
@@ -1436,14 +1460,14 @@
   \jlreq@do{_headings}{\jlreq@tempatrue}
   \jlreq@do{_paragraph}{
     \jlreq@tempatrue% _paragraphの時は_headingsも有効にする
-    \PushPostHook{par}{%
-      \ifx\jlreq@endnote@texts\@empty\else
-        % なんかうまくいってそう
-        \vskip\dimexpr-\baselineskip\relax
-        \vskip\dimexpr0pt\relax
-        \theendnotes
-      \fi
-    }%
+%    \PushPostHook{par}{%
+%      \ifx\jlreq@endnote@texts\@empty\else
+%        % なんかうまくいってそう
+%        \vskip\dimexpr-\baselineskip\relax
+%        \vskip\dimexpr0pt\relax
+%        \theendnotes
+%      \fi
+%    }%
   }
   \ifjlreq@tempb\else
     \edef\@deftempc{%
@@ -1476,7 +1500,7 @@
 % メモ：
 % 2.6.1.cの後半が前半と整合的でないように見える……
 % 柱：両柱と片柱（2.6.3）
-\@tempdima=\dimexpr\jlreq@expand@speciallength{\jlreq@headfoot@sidemargin}\relax
+\@tempdima=\jlreq@speciallength{\jlreq@headfoot@sidemargin}
 \ifthenelse{\lengthtest{\@tempdima=0pt} \OR \(\lengthtest{0.99\zw < \@tempdima} \AND \lengthtest{\@tempdima < 1.01\zw}\)}{}{
   \jlreq@warning{ノンブルまたは柱は，基本版面の左右にそろえるか，全角アキだけ寄せた位置に配置する (2.6.1.b)}
 }
@@ -1641,16 +1665,30 @@
   \endgroup
   \jlreq@do
 }
+\newcommand*{\NewPageStyle}[2]{%
+  \expandafter\@ifdefinable\csname ps@#1\endcsname{\DeclarePageStyle{#1}{#2}}%
+}
+\newcommand*{\RenewPageStyle}[2]{%
+  \@ifundefined{ps@#1}{\@latex@error{\expandafter\string\csname#1\endcsname\space undefined}\@ehc}{\DeclarePageStyle{#1}{#2}}%
+}
+\newcommand*{\ProvidePageStyle}[2]{%
+  \@ifundefined{ps@#1}{\DeclarePageStyle{#1}{#2}}{}%
+}
 \@onlypreamble\DeclarePageStyle
+\@onlypreamble\NewPageStyle
+\@onlypreamble\RenewPageStyle
+\@onlypreamble\ProvidePageStyle
 
-\DeclarePageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},nombre_position={top-left}}
-\DeclarePageStyle{empty}{nombre={},odd_running_head={},even_running_head={}}
+\RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},nombre_position={top-left}}
+\RenewPageStyle{empty}{nombre={},odd_running_head={},even_running_head={}}
 \if@twoside
-  \DeclarePageStyle{headings}{nombre=\thepage,nombre_position=top-left,running_head_position=top-right,odd_running_head={_subsection},even_running_head={_section}}
+  \NewPageStyle{headings}{nombre=\thepage,nombre_position=top-left,running_head_position=top-right,odd_running_head={_subsection},even_running_head={_section}}
 \else
-  \DeclarePageStyle{headings}{nombre=\thepage,nombre_position=top-left,running_head_position=top-right,odd_running_head={_section},even_running_head={}}
+  \NewPageStyle{headings}{nombre=\thepage,nombre_position=top-left,running_head_position=top-right,odd_running_head={_section},even_running_head={}}
 \fi
-\DeclarePageStyle{myheadings}{nombre=\thepage,nombre_position=top-left,running_head_position=top-right,odd_running_head=\rightmark,even_running_head=\leftmark}
+\NewPageStyle{myheadings}{nombre=\thepage,nombre_position=top-left,running_head_position=top-right,odd_running_head=\rightmark,even_running_head=\leftmark}
+
+
 
 
 % フロート関連
@@ -2436,8 +2474,11 @@
 \newcommand{\abstractname}{概 要}
 \pagestyle{plain}
 \pagenumbering{arabic}
-\raggedbottom
-\onecolumn
+\if@twocolumn
+  \twocolumn
+\else
+  \onecolumn
+\fi
 \normalmarginpar
 \@mparswitchfalse
 \endinput

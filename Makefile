@@ -42,22 +42,22 @@ u%.tfm: u%.pl
 	cp $< $@
 
 %.vf: %.tfm
-	makejvf -i -u jis $< rml.tfm
+	makejvf -i $< rml.tfm
+
+%-v.vf: %-v.tfm
+	makejvf -i $< rmlv.tfm
 
 u%.vf: u%.tfm
 	makejvf -i -u jis $< urml.tfm
-
-%-v.vf: %-v.tfm
-	makejvf -i -u jis $< rmlv.tfm
 
 u%-v.vf: u%-v.tfm
 	makejvf -i -u jis $< urmlv.tfm
 
 %g.vf: %g.tfm
-	makejvf -i -u jis $< gbm.tfm
+	makejvf -i $< gbm.tfm
 
 %g-v.vf: %g-v.tfm
-	makejvf -i -u jis $< gbmv.tfm
+	makejvf -i $< gbmv.tfm
 
 u%g.vf: u%g.tfm
 	makejvf -i -u jis $< ugbm.tfm
@@ -65,7 +65,7 @@ u%g.vf: u%g.tfm
 u%g-v.vf: u%g-v.tfm
 	makejvf -i -u jis $< ugbmv.tfm
 
-jfm-%v.lua jfm-b%,lua jfm-z%.lua: make_variant_jfm.lua
+jfm-%v.lua jfm-b%,lua jfm-z%.lua: make_variant_jfm.lua jfm-jlreq.lua
 	texlua make_variant_jfm.lua
 
 clean:

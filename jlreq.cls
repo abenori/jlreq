@@ -149,9 +149,8 @@
 % オプション処理の際にしか使わない変数（後でそれを元に別の変数を調整する）
 % ものは\jlreq@option@<key>に格納する．
 % _とかは@に変換する．
-\newcommand*{\jlreq@checkempty}[2]{%
-  \def\@tempa{#2}
-  \ifx\@tempa\@empty\else\ClassError{jlreq}{The option #1 should have no value}{\@ehc}\fi
+\newcommand*{\jlreq@checkempty}[2]{
+  \jlreq@ifempty{#2}{}{\ClassError{jlreq}{The option #1 should have no value}{\@ehc}}%
 }
 % 引数無しの\DeclareOptionX
 \newcommand*{\jlreq@DeclareOption}[2]{%
@@ -834,6 +833,7 @@
   \DeclareFontShape{JT3}{mc}{m}{n}{<->\ltj@stdmcfont:jfm=jlreqv;script=latn;-kern}{}
   \DeclareFontShape{JT3}{gt}{m}{n}{<->\ltj@stdgtfont:jfm=jlreqv;script=latn;-kern}{}
 \else
+  \expandafter\let\csname \jlreq@yokokanjiencoding/mc/m/n/10\endcsname\relax
   \expandafter\let\csname \jlreq@tatekanjiencoding/mc/m/n/10\endcsname\relax
   \DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{m}{n}{<-> \jlreq@jfmname}{}
   \DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{m}{n}{<-> \jlreq@jfmnameg}{}
@@ -1152,7 +1152,7 @@
           \jlreq@tempskipb=\glueexpr\jlreq@tempskipb + \jlreq@once@expand{\jlreq@after@lines}\baselineskip\relax
         \fi
       \fi
-      \unexpanded{\message{前空き：\the\jlreq@tempskipa , 後空き：\the\jlreq@tempskipb}}%
+%      \unexpanded{\message{前空き：\the\jlreq@tempskipa , 後空き：\the\jlreq@tempskipb}}%
       \noexpand\ifdim\jlreq@tempskipa>0pt\noexpand\else
         \vskip\glueexpr\jlreq@tempskipa - 0.00001pt\relax\vskip0pt\relax
         \jlreq@tempskipa=0.00001pt\relax
@@ -1460,14 +1460,14 @@
   \jlreq@do{_headings}{\jlreq@tempatrue}
   \jlreq@do{_paragraph}{
     \jlreq@tempatrue% _paragraphの時は_headingsも有効にする
-%    \PushPostHook{par}{%
-%      \ifx\jlreq@endnote@texts\@empty\else
-%        % なんかうまくいってそう
-%        \vskip\dimexpr-\baselineskip\relax
-%        \vskip\dimexpr0pt\relax
-%        \theendnotes
-%      \fi
-%    }%
+    \PushPostHook{par}{%
+      \ifx\jlreq@endnote@texts\@empty\else
+        % なんかうまくいってそう
+        \vskip\dimexpr-\baselineskip\relax
+        \vskip\dimexpr0pt\relax
+        \theendnotes
+      \fi
+    }%
   }
   \ifjlreq@tempb\else
     \edef\@deftempc{%

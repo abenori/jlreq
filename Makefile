@@ -1,5 +1,7 @@
-all: \
-	jfm-jlreqv.lua \
+all: jfm doc
+
+jfm: \
+	jfm-jlreqv.lua jfm-bjlreq.lua jfm-bjlreqv.lua jfm-bzjlreq.lua jfm-bzjlreqv.lua \
 	jlreq.tfm bjlreq.tfm zjlreq.tfm bzjlreq.tfm \
 	jlreq.vf bjlreq.vf zjlreq.vf bzjlreq.vf \
 	ujlreq.tfm ubjlreq.tfm uzjlreq.tfm ubzjlreq.tfm \
@@ -17,32 +19,32 @@ all: \
 	ujlreqg-v.tfm ubjlreqg-v.tfm uzjlreqg-v.tfm ubzjlreqg-v.tfm \
 	ujlreqg-v.vf ubjlreqg-v.vf uzjlreqg-v.vf ubzjlreqg-v.vf \
 
-%.pl: jfm-%.lua luajfm2pl.lua
-	texlua luajfm2pl.lua --noutf $* $@
-
-u%.pl: jfm-%.lua luajfm2pl.lua
-	texlua luajfm2pl.lua $* $@
+u%-v.pl: jfm-%v.lua luajfm2pl.lua
+	texlua luajfm2pl.lua $*v $@
 
 %-v.pl: jfm-%v.lua luajfm2pl.lua
 	texlua luajfm2pl.lua --noutf $*v $@
 
-u%-v.pl: jfm-%v.lua luajfm2pl.lua
-	texlua luajfm2pl.lua $*v $@
+u%.pl: jfm-%.lua luajfm2pl.lua
+	texlua luajfm2pl.lua $* $@
 
-%.tfm: %.pl
-	ppltotf $< $@
+%.pl: jfm-%.lua luajfm2pl.lua
+	texlua luajfm2pl.lua --noutf $* $@
 
-u%.tfm: u%.pl
-	uppltotf $< $@
+u%g-v.vf: u%g-v.tfm
+	makejvf -i -u jis $< ugbmv.tfm
 
-%g-v.tfm: %-v.tfm
-	cp $< $@
+u%g.vf: u%g.tfm
+	makejvf -i -u jis $< ugbm.tfm
 
-%g.tfm: %.tfm
-	cp $< $@
+%g-v.vf: %g-v.tfm
+	makejvf -i $< gbmv.tfm
 
-%.vf: %.tfm
-	makejvf -i $< rml.tfm
+%g.vf: %g.tfm
+	makejvf -i $< gbm.tfm
+
+u%-v.vf: u%-v.tfm
+	makejvf -i -u jis $< urmlv.tfm
 
 %-v.vf: %-v.tfm
 	makejvf -i $< rmlv.tfm
@@ -50,20 +52,21 @@ u%.tfm: u%.pl
 u%.vf: u%.tfm
 	makejvf -i -u jis $< urml.tfm
 
-u%-v.vf: u%-v.tfm
-	makejvf -i -u jis $< urmlv.tfm
+%.vf: %.tfm
+	makejvf -i $< rml.tfm
 
-%g.vf: %g.tfm
-	makejvf -i $< gbm.tfm
+u%.tfm: u%.pl
+	uppltotf $< $@
 
-%g-v.vf: %g-v.tfm
-	makejvf -i $< gbmv.tfm
+%.tfm: %.pl
+	ppltotf $< $@
 
-u%g.vf: u%g.tfm
-	makejvf -i -u jis $< ugbm.tfm
+%g-v.tfm: %-v.tfm
+	cp $< $@
 
-u%g-v.vf: u%g-v.tfm
-	makejvf -i -u jis $< ugbmv.tfm
+%g.tfm: %.tfm
+	cp $< $@
+
 
 jfm-%v.lua jfm-b%,lua jfm-z%.lua: make_variant_jfm.lua jfm-jlreq.lua
 	texlua make_variant_jfm.lua
@@ -71,4 +74,10 @@ jfm-%v.lua jfm-b%,lua jfm-z%.lua: make_variant_jfm.lua jfm-jlreq.lua
 clean:
 	rm -f *.tfm *.pl *.vf
 	rm -f jfm-jlreqv.lua
+	rm -f jfm-bjlreq.lua jfm-bjlreqv.lua jfm-bzjlreq.lua jfm-bzjlreqv.lua
 
+doc:
+	pandoc --verbose -f markdown_github README.md -o README.pdf -V documentclass=jlreq --latex-engine=lualatex
+
+latexdoc:
+	pandoc --verbose -f markdown_github README.md -o README.tex -V documentclass=jlreq --latex-engine=lualatex

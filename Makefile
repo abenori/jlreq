@@ -1,4 +1,9 @@
-all: jfm doc
+TEXMF=$(shell kpsewhich -var-value=TEXMFHOME)
+
+
+
+
+all: jfm
 
 jfm: \
 	jfm-jlreqv.lua jfm-bjlreq.lua jfm-bjlreqv.lua jfm-bzjlreq.lua jfm-bzjlreqv.lua \
@@ -71,13 +76,24 @@ u%.tfm: u%.pl
 jfm-%v.lua jfm-b%,lua jfm-z%.lua: make_variant_jfm.lua jfm-jlreq.lua
 	texlua make_variant_jfm.lua
 
+doc:
+	pandoc --verbose -f markdown_github README.md -o README.pdf -V documentclass=jlreq --latex-engine=lualatex
+
+latexdoc:
+	pandoc --verbose --standalone -f markdown_github README.md -o README.tex -V documentclass=jlreq --latex-engine=lualatex
+
+install: jfm
+	mkdir -p ${TEXMF}/fonts/tfm/public/jlreq
+	mv -f *.tfm ${TEXMF}/fonts/tfm/public/jlreq
+	mkdir -p ${TEXMF}/fonts/vf/public/jlreq
+	mv -f *.vf ${TEXMF}/fonts/vf/public/jlreq
+
+uninstall:
+	rm -rf ${TEXMF}/fonts/tfm/public/jlreq
+	rm -rf ${TEXMF}/fonts/vf/public/jlreq
+
 clean:
 	rm -f *.tfm *.pl *.vf
 	rm -f jfm-jlreqv.lua
 	rm -f jfm-bjlreq.lua jfm-bjlreqv.lua jfm-bzjlreq.lua jfm-bzjlreqv.lua
 
-doc:
-	pandoc --verbose -f markdown_github README.md -o README.pdf -V documentclass=jlreq --latex-engine=lualatex
-
-latexdoc:
-	pandoc --verbose -f markdown_github README.md -o README.tex -V documentclass=jlreq --latex-engine=lualatex

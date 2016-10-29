@@ -84,9 +84,12 @@ latexdoc:
 
 install: jfm
 	mkdir -p ${TEXMF}/fonts/tfm/public/jlreq
-	mv -f *.tfm ${TEXMF}/fonts/tfm/public/jlreq
+	cp -f *.tfm ${TEXMF}/fonts/tfm/public/jlreq
 	mkdir -p ${TEXMF}/fonts/vf/public/jlreq
-	mv -f *.vf ${TEXMF}/fonts/vf/public/jlreq
+	cp -f *.vf ${TEXMF}/fonts/vf/public/jlreq
+	mkdir -p ${TEXMF}/tex/lualatex/jlreq
+	cp jfm-jlreq.lua ${TEXMF}/tex/lualatex/jlreq
+	cp jfm-jlreqv.lua ${TEXMF}/tex/lualatex/jlreq
 
 uninstall:
 	rm -rf ${TEXMF}/fonts/tfm/public/jlreq

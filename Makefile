@@ -98,5 +98,5 @@ uninstall:
 clean:
 	rm -f *.tfm *.pl *.vf
 	rm -f jfm-jlreqv.lua
-	rm -f jfm-bjlreq.lua jfm-bjlreqv.lua jfm-bzjlreq.lua jfm-bzjlreqv.lua
+	rm -f jfm-bjlreq.lua jfm-bjlreqv.lua jfm-bzjlreq.lua jfm-bzjlreqv.lua jfm-zjlreq.lua jfm-zjlreqv.lua
 

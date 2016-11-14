@@ -1030,7 +1030,7 @@
   \fi
 \else
   \ifx\jlreq@option@foot@space\@empty
-    \setlength{\topmargin}{\jlreq@speciallength{\jlrqe@option@head@space}}
+    \setlength{\topmargin}{\jlreq@speciallength{\jlreq@option@head@space}}
   \else
     % 両方指定されていたら，縦書きは地を，横書きは天を使う
     \if@tate
@@ -1038,7 +1038,7 @@
       \addtolength{\topmargin}{-\textwidth}
       \addtolength{\topmargin}{-\jlreq@speciallength{\jlreq@option@foot@space}}
     \else
-      \setlength{\topmargin}{\jlreq@speciallength{\jlrqe@option@head@space}}
+      \setlength{\topmargin}{\jlreq@speciallength{\jlreq@option@head@space}}
     \fi
   \fi
 \fi
@@ -1057,25 +1057,6 @@
 \setlength{\columnseprule}{0\jlreq@mpt}
 
 %. 見出し関係 (4.1)
-\newcommand{\headfont}{\gtfamily\sffamily}
-\setcounter{secnumdepth}{3}
-\newcounter{part}
-\newcounter{section}
-\newcounter{subsection}[section]
-\newcounter{subsubsection}[subsection]
-\newcounter{paragraph}[subsubsection]
-\newcounter{subparagraph}[paragraph]
-\renewcommand{\thepart}{\Kanji{part}}
-\renewcommand{\thesection}{\rensuji{\@arabic\c@section}}
-\renewcommand{\thesubsection}{\rensuji{\@alph\c@subsection}}
-\renewcommand{\thesubsubsection}{%
-  \rensuji{\@arabic\c@subsubsection}}
-\renewcommand{\theparagraph}{%
-  (\rensuji{\@arabic\c@paragraph})}
-\renewcommand{\thesubparagraph}{%
-  (\rensuji{\@arabic\c@subparagraph})}
-
-\renewcommand*{\@seccntformat}[1]{\csname the#1\endcsname\hspace{1\jlreq@fontsize}}
 % 見出しの直前に実行される
 \newcommand*{\jlreq@hook@beforeheadings}[1]{}
 
@@ -1115,7 +1096,7 @@
         #5}%
     }%
   \fi
-  \def\jlreq@do{\jlreq@startBlockHeading@@@@{#1}{#2}#3{#4}}%
+  \def\jlreq@do{\jlreq@startBlockHeading@@@@#3}%
   \expandafter\jlreq@do\expandafter{\jlreq@tempa}%
 }
 \def\jlreq@startBlockHeading@removecolumn#1:{#1}
@@ -1130,23 +1111,24 @@
   }%
 }
 
-% {1 = 命令名}{2 = レベル}{3 = 字下げ}{4 = 前空き}{5 = 後ろ空き}{6 = トータル行数}{7 =  *}{8 = 出力}
-\long\def\jlreq@startBlockHeading@@@@#1#2#3#4#5#6#7#8{%
+% {1 = 字下げ}{2 = 前空き}{3 = 後ろ空き}{4 = トータル行数}{5 = 出力}
+\long\def\jlreq@startBlockHeading@@@@#1#2#3#4#5{%
   \if@noskipsec\leavevmode\fi
   \setbox\jlreq@tempboxa=\vbox{%
-    \jlreq@ifempty{#3}{}{\hsize=\dimexpr\hsize - #3\relax}\noindent #8}%
+    \jlreq@ifempty{#1}{}{\hsize=\dimexpr\hsize - #1\relax}%
+    \noindent #5}%
   \par
   \@afterindenttrue
   % \jlreq@tempskip(a/b)に前/後ろに入れるべき値を入れる
-  \jlreq@startBlockHeading@analyzespace#4:\jlreq@endmark
+  \jlreq@startBlockHeading@analyzespace#2:\jlreq@endmark
   \setbox\jlreq@tempboxb=\vbox{　}%
-  \jlreq@ifempty{#6}{%
+  \jlreq@ifempty{#4}{%
     \ifx\jlreq@startBlockHeading@space\@empty\else
       \jlreq@tempskipa=\glueexpr\jlreq@startBlockHeading@space\relax
     \fi
     \jlreq@tempskipb=0pt\relax
   }{%
-    \jlreq@tempskipb=\glueexpr(\baselineskip*(#6 + 1) - \ht\jlreq@tempboxb - \dp\jlreq@tempboxb - \ht\jlreq@tempboxa - \dp\jlreq@tempboxa)/2\relax
+    \jlreq@tempskipb=\glueexpr(\baselineskip*(#4 + 1) - \ht\jlreq@tempboxb - \dp\jlreq@tempboxb - \ht\jlreq@tempboxa - \dp\jlreq@tempboxa)/2\relax
     \ifx\jlreq@startBlockHeading@space\@empty
       \jlreq@tempskipa=\jlreq@tempskipb
     \else
@@ -1154,7 +1136,7 @@
         \jlreq@tempskipa=\glueexpr\jlreq@tempskipb + \jlreq@startBlockHeading@space\relax
       \else
         \jlreq@tempskipa=\glueexpr\jlreq@startBlockHeading@space\relax%
-        \jlreq@tempskipb=\glueexpr(\baselineskip*(#6 + 1) - \ht\jlreq@tempboxb - \dp\jlreq@tempboxb - \ht\jlreq@tempboxa - \dp\jlreq@tempboxa) - \jlreq@startBlockHeading@space\relax
+        \jlreq@tempskipb=\glueexpr(\baselineskip*(#4 + 1) - \ht\jlreq@tempboxb - \dp\jlreq@tempboxb - \ht\jlreq@tempboxa - \dp\jlreq@tempboxa) - \jlreq@startBlockHeading@space\relax
       \fi
     \fi
   }%
@@ -1163,13 +1145,14 @@
   \jlreq@startBlockHeading@addtocontentsline
   \setbox\jlreq@tempboxa=\vbox{%
     \ifdim\jlreq@tempskipa=0pt\else\vskip\jlreq@tempskipa\fi
-    \jlreq@ifempty{#3}{}{\hskip #3}%
+    \noindent
+    \jlreq@ifempty{#1}{}{\hskip #1}%
     \box\jlreq@tempboxa}%
   \dp\jlreq@tempboxa=\dimexpr\dp\jlreq@tempboxa + \ht\jlreq@tempboxa\relax
   \ht\jlreq@tempboxa=0pt
   \box\jlreq@tempboxa
   \par\prevdepth=0pt
-  \jlreq@startBlockHeading@analyzespace#5:\jlreq@endmark
+  \jlreq@startBlockHeading@analyzespace#3:\jlreq@endmark
   \jlreq@tempskipb=\glueexpr\jlreq@tempskipb + \ht\jlreq@tempboxb - \baselineskip\relax
   \ifx\jlreq@startBlockHeading@space\@empty\else
     \ifx a\jlreq@startBlockHeading@spacetype
@@ -1190,9 +1173,10 @@
 % font=<見出しフォント>, labelfont=<ラベルフォント>, subtitle_font=<副題フォント>
 % indent=<全体のインデント>
 % TODO: 改ページするかなど，4.1.4
-\newcommand*{\DeclareBlockHeading}[3]{%
-  \@ifundefined{c@#1}{\newcounter{#1}}{}%
-  \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}%
+\newcommand*{\DeclareBlockHeading}[3]{
+  \@ifundefined{c@#1}{\newcounter{#1}}{}
+  \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}
+  \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\jlreq@set@top@contents{#2}\@dottedtocline{#2}{0\jlreq@mol}{2\jlreq@gol}}}{}
   \begingroup
     \def\jlreq@lines{1}
     \define@key{jlreq@key}{lines}{\def\jlreq@lines{##1}}
@@ -1211,12 +1195,14 @@
     \def\jlreq@indent{0}
     \define@key{jlreq@key}{indent}{\def\jlreq@indent{##1}}
     \def\jlreq@format{}
+    \define@key{jlreq@key}{format}{\edef\jlreq@format{\unexpanded{##1}}}
     \setkeys{jlreq@key}{#3}
+    % before/after_lines優先
     \ifx\jlreq@before@space\@empty\else\edef\jlreq@before@space{r:\expandonce{\jlreq@before@space}}\fi
     \ifx\jlreq@before@lines\@empty\else\edef\jlreq@before@space{a:\expandonce{\jlreq@before@lines}\baselineskip}\fi
     \ifx\jlreq@after@space\@empty\else\edef\jlreq@after@space{r:\expandonce{\jlreq@after@space}}\fi
     \ifx\jlreq@after@lines\@empty\else\edef\jlreq@after@space{a:\expandonce{\jlreq@after@lines}\baselineskip}\fi
-    \ifx\jlreq@indent\@empty\else\edef\jlreq@indent{\expandonce{\jlreq@indent}\baselineskip}\fi
+    \ifx\jlreq@indent\@empty\else\edef\jlreq@indent{\expandonce{\jlreq@indent}\jlreq@mol}\fi
     \ifx\jlreq@format\@empty
       \edef\jlreq@format{%
         \expandonce{\jlreq@font} \unexpanded{##1} \unexpanded{##2}%
@@ -1227,7 +1213,7 @@
        \unexpanded{\jlreq@startBlockHeading{#1}{#2}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@before@space}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@lines}}{\expandonce{\jlreq@format}}%
     }
   \endgroup
-  \expandafter\edef\csname #1\endcsname{\expandonce{\jlreq@tempa}}
+  \expandafter\edef\csname #1\endcsname{\noexpand\jlreq@hook@beforeheadings{#1}\expandonce{\jlreq@tempa}}
 }
 
 \newcommand*{\NewBlockHeading}[3]{
@@ -1249,6 +1235,7 @@
 \newcommand*{\DeclareRuninHeading}[3]{%
   \@ifundefined{c@#1}{\newcounter{#1}}{}%
   \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}%
+  \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\jlreq@set@top@contents{#2}\@dottedtocline{#2}{0\jlreq@mol}{2\jlreq@gol}}}{}
   \begingroup
     \def\jlreq@font{\normalfont\normalsize}%
     \define@key{jlreq@key}{font}{\def\jlreq@font{##1}}%
@@ -1316,7 +1303,7 @@
   % \hang****を設定
   \hangindent=\dimexpr#2\jlreq@mol + \@tempdima + #3\relax\hangafter=-\jlreq@CutinHeading@linecount
   \jlreq@hangindent=\hangindent\jlreq@wraplinecount=\hangafter
-  \hspace*{#2\jlrqe@mol}%
+  \hspace*{#2\jlreq@mol}%
   \kern-\dimexpr\@tempdima + #3 + \parindent\relax
   \box\@tempboxa
   \hspace*{#3}%
@@ -1370,6 +1357,16 @@
 
 \newcommand*{\jlreq@keepbaselineskip}[1]{\jlreq@tempdima=\baselineskip#1\baselineskip=\jlreq@tempdima}
 
+\setcounter{secnumdepth}{3}
+\newcounter{part}
+\newcounter{section}
+\newcounter{subsection}[section]
+\newcounter{subsubsection}[subsection]
+\newcounter{paragraph}[subsubsection]
+\newcounter{subparagraph}[paragraph]
+\renewcommand*{\@seccntformat}[1]{\csname the#1\endcsname\hspace{1\jlreq@fontsize}}
+\newcommand*{\headfont}{\gtfamily\sffamily}
+
 \if@tate
   \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},indent=4,lines=4}
   \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},indent=6,lines=3}
@@ -1377,6 +1374,19 @@
   \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=10,lines=1,before_lines=1}
   \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\bfseries\gtfamily}}}
   \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
+  \renewcommand{\thepart}{\Kanji{part}}
+  \renewcommand{\thesection}{\rensuji{\@arabic\c@section}}
+  \renewcommand{\thesubsection}{\rensuji{\@alph\c@subsection}}
+  \renewcommand{\thesubsubsection}{%
+    \rensuji{\@arabic\c@subsubsection}}
+  \renewcommand{\theparagraph}{%
+    (\rensuji{\@arabic\c@paragraph})}
+  \renewcommand{\thesubparagraph}{%
+    (\rensuji{\@arabic\c@subparagraph})}
+  \newcommand{\appendix}{\par
+    \setcounter{section}{0}%
+    \setcounter{subsection}{0}%
+    \renewcommand{\thesection}{\rensuji{\@Alph\c@section}}}
 \else
   \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},lines=4}
   \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},lines=3}
@@ -1384,11 +1394,20 @@
   \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},lines=1,before_lines=1}
   \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\bfseries\gtfamily}}}
   \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
+  \renewcommand{\thepart}{\@Roman\c@part}
+  \renewcommand{\thesection}{\@arabic\c@section}
+  \renewcommand{\thesubsection}{\@alph\c@subsection}
+  \renewcommand{\thesubsubsection}{%
+    \@arabic\c@subsubsection}
+  \renewcommand{\theparagraph}{%
+    (\@arabic\c@paragraph)}
+  \renewcommand{\thesubparagraph}{%
+    (\@arabic\c@subparagraph)}
+  \newcommand{\appendix}{\par
+    \setcounter{section}{0}%
+    \setcounter{subsection}{0}%
+    \renewcommand{\thesection}{\@Alph\c@section}}
 \fi
-\newcommand{\appendix}{\par
-  \setcounter{section}{0}%
-  \setcounter{subsection}{0}%
-  \renewcommand{\thesection}{\rensuji{\@Alph\c@section}}}
 
 %. 注
 % 合印：4.2.3
@@ -1754,9 +1773,9 @@
 \@onlypreamble\RenewPageStyle
 \@onlypreamble\ProvidePageStyle
 
+\RenewPageStyle{empty}{nombre={},odd_running_head={},even_running_head={}}
 \if@tate
   \RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},nombre_position={top-left}}
-  \RenewPageStyle{empty}{nombre={},odd_running_head={},even_running_head={}}
   \if@twoside
     \NewPageStyle{headings}{nombre=\thepage,nombre_position=top-left,running_head_position=top-right,odd_running_head={_subsection},even_running_head={_section}}
   \else
@@ -1765,7 +1784,6 @@
   \NewPageStyle{myheadings}{nombre=\thepage,nombre_position=top-left,running_head_position=top-right,odd_running_head=\rightmark,even_running_head=\leftmark}
 \else
   \RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},nombre_position={bottom-center}}
-  \RenewPageStyle{empty}{nombre={},odd_running_head={},even_running_head={}}
   \if@twoside
     \NewPageStyle{headings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center,odd_running_head={_subsection},even_running_head={_section}}
   \else
@@ -2146,8 +2164,9 @@
 }
 
 \newcount\jlreq@top@contents % トップ見出しを入れる．\partから1,2,...
+\jlreq@top@contents=-1
 \newcommand*{\jlreq@set@top@contents}[1]{%
-  \ifnum\jlreq@top@contents=0\relax
+  \ifnum\jlreq@top@contents=-1
     \jlreq@top@contents=#1\relax
   \fi
 }
@@ -2172,20 +2191,19 @@
     \leavevmode
     \@lnumwidth #3\relax
       \@tempcnta=#1\relax
-      \advance\@tempcnta by 1\relax
-      \advance\@tempcnta by -\jlreq@top@contents\relax
+      \advance\@tempcnta by -\jlreq@top@contents
       \@tempdima=1\zh
       \multiply \@tempdima by \@tempcnta
     \advance\leftskip \@lnumwidth \hbox{}\hskip -\leftskip
       \advance\leftskip\@tempdima
     {#4}\nobreak
-    \leaders\hbox{$・\mkern \@dotsep mu \m@th \mkern \@dotsep mu$}%
+    \leaders\hbox{$\hbox{・}\mkern \@dotsep mu \m@th \mkern \@dotsep mu$}%
     \hfill\nobreak
     \hb@xt@\@pnumwidth{\hss\normalfont \normalcolor #5}%
     \par}%
   \fi}
-\newcommand*{\l@part}[2]{%
-  \jlreq@set@top@contents{1}%
+\renewcommand*{\l@part}[2]{%
+  \jlreq@set@top@contents{0}%
   \ifnum \c@tocdepth >-2\relax
     \addpenalty{\@secpenalty}%
     \begingroup
@@ -2199,8 +2217,8 @@
     \endgroup
   \fi}
 
-\newcommand*{\l@section}[2]{%
-  \jlreq@set@top@contents{2}%
+\renewcommand*{\l@section}[2]{%
+  \jlreq@set@top@contents{1}%
   \ifnum \c@tocdepth >\z@
     \addpenalty{\@secpenalty}%
     \begingroup
@@ -2218,21 +2236,17 @@
       #1\nobreak\hfil\nobreak\hbox to\@pnumwidth{\hss#2}\par
     \endgroup
   \fi}
-\newcommand*{\l@subsection}   {\jlreq@set@top@contents{3}\@dottedtocline{2}{0\zh}{2\jlreq@gol}}
-\newcommand*{\l@subsubsection}{\jlreq@set@top@contents{4}\@dottedtocline{3}{0\zh}{2\jlreq@gol}}
-\newcommand*{\l@paragraph}    {\jlreq@set@top@contents{5}\@dottedtocline{4}{0\zh}{2\jlreq@gol}}
-\newcommand*{\l@subparagraph} {\jlreq@set@top@contents{6}\@dottedtocline{5}{0\zh}{2\jlreq@gol}}
 
 % listoffigures
 \newcommand{\listoffigures}{%
-    \jlreq@top@contents=1\relax
+    \jlreq@top@contents=0\relax
     \section*{\listfigurename
   \@mkboth{\listfigurename}{\listfigurename}}%
   \@starttoc{lof}%
 }
 \newcommand*{\l@figure}{\@dottedtocline{1}{0\jlreq@gol}{2\jlreq@gol}}
 \newcommand{\listoftables}{%
-    \jlreq@top@contents=1\relax
+    \jlreq@top@contents=0\relax
     \section*{\listtablename
   \@mkboth{\listtablename}{\listtablename}}%
   \@starttoc{lot}%

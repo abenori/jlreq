@@ -955,14 +955,14 @@
 \fi
 \def\jlreq@speciallength#1{\dimexpr\jlreq@expand@speciallength{#1}\relax}
 
-% デフォルト値は縦が0.768倍，横が0.727倍（JISX4051のA5の例から換算……）．
+% デフォルト値は縦横ともにが0.5倍．
 % \textwidth：縦書きは縦，横書きは横
 \@tempdima=1\zh
 \ifx\jlreq@option@line@length\@empty
   \if@tate
-    \setlength{\textwidth}{0.768\paperheight}
+    \setlength{\textwidth}{0.75\paperheight}
   \else
-    \setlength{\textwidth}{0.727\paperwidth}
+    \setlength{\textwidth}{0.75\paperwidth}
   \fi
   \divide\textwidth\@tempdima
 \else
@@ -983,9 +983,9 @@
 % \textheight：縦書きは横，横書きは縦
 \ifx\jlreq@option@number@of@lines\@empty
   \if@tate
-    \setlength{\textheight}{0.727\paperwidth}
+    \setlength{\textheight}{0.75\paperwidth}
   \else
-    \setlength{\textheight}{0.768\paperheight}
+    \setlength{\textheight}{0.75\paperheight}
   \fi
 \else
   \setlength{\textheight}{\jlreq@speciallength{\jlreq@option@number@of@lines\baselineskip}}
@@ -1062,7 +1062,7 @@
 
 % 別行見出し
 % \jlreq@startBlockHeading{1 = 命令名}{2 = レベル}{3 = 字下げ}{4 = 前空き}{5 = 後ろ空き}{6 = トータル行数}{7 =  フォーマット}*{見出し}[副題]
-% 字下げはa:**だと追加する値，s:**だとその値に強制する．
+% 字下げはa:**だと追加する値，r:**だとその値に強制する．
 \newcommand{\jlreq@startBlockHeading}[7]{%
   \edef\jlreq@startBlockHeading@format{\unexpanded{#7}}%
   \jlreq@startBlockHeading@{#1}{#2}{{#3}{#4}{#5}{#6}}%
@@ -1364,7 +1364,7 @@
 \newcounter{subsubsection}[subsection]
 \newcounter{paragraph}[subsubsection]
 \newcounter{subparagraph}[paragraph]
-\renewcommand*{\@seccntformat}[1]{\csname the#1\endcsname\hspace{1\jlreq@fontsize}}
+\renewcommand*{\@seccntformat}[1]{\csname the#1\endcsname\hspace{1\jlreq@mol}}
 \newcommand*{\headfont}{\gtfamily\sffamily}
 
 \if@tate
@@ -1588,6 +1588,50 @@
   \global\divide\marginparwidth\@tempdima \global\multiply\marginparwidth\@tempdima
   \global\setlength{\marginparpush}{.5\@tempdima} % 同上：c
 }
+% 傍注（4.2.7）
+% \sidenote[]{}: \footnoteと同じ．
+% 
+\def\jlreq@sidenotecounter{footnote}
+\def\jlreq@sidenotemarkname{@thefnmark}
+\def\sidenote{\@ifnextchar[{\jlreq@sidenote}{\jlreq@sidenote[]}}
+\def\sidenotemark{\@ifnextchar[{\jlreq@sidenotemark}{\jlreq@sidenotemark[]}}
+\def\sidenotetext{\@ifnextchar[{\jlrqe@sidenotetext}{\jlreq@sidenotetext[]}}
+\long\def\jlreq@sidenote[#1]#2{\jlreq@sidenotemark[#1]\@sidenotetext{#2}}
+\def\jlreq@sidenotemark[#1]{%
+  \jlreq@ifempty{#1}{%
+    \stepcounter{\jlreq@sidenotecounter}%
+    \expandafter\protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
+  }{%
+    \begingroup
+      \csname c@\jlreq@sidenotecounter\endcsname #1\relax
+      \expandafter\unrestored@protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
+   \endgroup
+  }%
+  \@sidenotemark
+}
+\long\def\jlreq@sidenotetext[#1]#2{%
+  \jlreq@ifempty{#1}{%
+    \expandafter\protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
+  }{%
+   \begingroup
+     \csname c@\jlreq@sidenotecounter\endcsname#1\relax
+     \expandafter\unrestored@protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
+   \endgroup
+  }%
+  \@sidenotetext{#2}%
+}
+\def\@sidenotetext#1{%
+  \marginpar{%
+    \color@begingroup
+    \@makesidetext{#1}%
+    \color@endgroup
+  }%
+}
+
+\let\@sidenotemark=\@footnotemark
+\let\@makesidetext=\@makefntext
+
+
 
 %. ページスタイル．
 % とりあえず脇に縦書きで配置するのは無視する．
@@ -1746,7 +1790,7 @@
     % \@evenfootを定義
     \edef\jlreq@do{\unexpanded{\jlreq@setheadfoot{\expandafter\@secondoftwo\jlreq@nombre@position}}{\expandonce{\jlreq@nombre@bottom}}\unexpanded{{\expandafter\@secondoftwo\jlreq@running@head@position}}{\expandonce{\jlreq@even@running@head@bottom}}}
     \jlreq@do\let\jlreq@evenfoot=\jlreq@result
-    \global\edef\jlreq@do{%
+    \edef\jlreq@do{%
       \noexpand\def\expandonce{\csname ps@#1\endcsname}{%
         \unexpanded{\let\@mkboth=\markboth}%
         \unexpanded{\def\@oddhead}{\expandonce{\jlreq@oddhead}}%
@@ -1756,8 +1800,7 @@
         \expandonce{\jlreq@command}%
       }%
     }
-  \endgroup
-  \jlreq@do
+  \expandafter\endgroup\jlreq@do
 }
 \newcommand*{\NewPageStyle}[2]{%
   \expandafter\@ifdefinable\csname ps@#1\endcsname{\DeclarePageStyle{#1}{#2}}%

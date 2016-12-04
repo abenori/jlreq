@@ -263,6 +263,10 @@
 % 後注をどこに配置するか．_headings（全ての見出し）,_paragraph（段落後）,_で始まらないやつ（その名前の見出し）．カンマ区切り
 \newcommand*{\jlreq@endnote@position}{_headings}
 \DeclareOptionX{endnote_position}{\renewcommand*{\jlreq@endnote@position}{#1}}
+% 傍注のタイプ
+\newcommand*{\jlreq@sidenote@type}{number}
+\define@choicekey{jlreq.cls}{sidenote_type}{number,mark,font,none}{\renewcommand*{\jlreq@sidenote@type}{#1}}
+
 
 \newif\if@restonecol \@restonecolfalse
 \newif\if@titlepage \@titlepagefalse
@@ -1413,22 +1417,22 @@
 % 合印：4.2.3
 % 文字サイズは6ポイントくらい（4.2.3.a）とりあえす\scriptsize
 \ifthenelse{\equal{\jlreq@referencemark}{inline}}{
-  \renewcommand{\@footnotemark}{%
+  \newcommand*{\jlreq@notemark}[1]{%
     \leavevmode
     \ifhmode\edef\@x@sf{\the\spacefactor}\nobreak\fi
     \jlreq@ifydir{%
-      \hbox{\@textsuperscript{\normalfont\@makefnmark}}%
+      \hbox{\@textsuperscript{\normalfont#1}}%
     }{%
-      \setbox\@tempboxa=\hbox{\scriptsize\@makefnmark}%
+      \setbox\@tempboxa=\hbox{\scriptsize#1}%
       \raise\dimexpr.5\jlreq@gol - (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa
     }%
     \ifhmode\spacefactor\@x@sf\fi
     \relax}
 }{
-  \renewcommand{\@footnotemark}{%
+  \newcommand*{\jlreq@notemark}[1]{%
     \leavevmode
     \ifhmode\edef\@x@sf{\the\spacefactor}\nobreak\fi
-    \setbox\@tempboxa=\hbox{\scriptsize\@makefnmark}%
+    \setbox\@tempboxa=\hbox{\scriptsize#1}%
 %    % 行頭に来たときに頭を天にそろえる処理．
     \jlreq@savepos@for@rest@linewidth
     \ifdim\jlreq@current@linewidth<\wd\@tempboxa
@@ -1440,7 +1444,6 @@
     \ifhmode\spacefactor\@x@sf\fi
     \relax}
 }
-
 %.. 脚注
 % （縦書きの時は傍注，4.2.5）
 {\footnotesize\global\setlength{\footnotesep}{.7\baselineskip}} % 何でかわからん……
@@ -1466,9 +1469,14 @@
     \addtolength{\leftskip}{\jlreq@footnoteindent}% 全体をインデント
     \noindent\hskip 1\zh\@makefnmark\hskip 1\zh#1}% 見出し出力と一文字分の空き
 }
+% 合印
+\def\@footnotemark{\jlreq@notemark{\@makefnmark}}
 % 図4.61のようにする
 \renewcommand{\@makefnmark}{\inhibitglue\jlreq@open@bracket@before@space（\@thefnmark）\inhibitglue}
-\renewcommand{\thefootnote}{\rensuji{\@arabic\c@footnote}}
+\if@tate
+  \renewcommand{\thefootnote}{\rensuji{\@arabic\c@footnote}}
+\else
+\fi
 
 %.. 後注（4.2.4）
 % 文字サイズは\footnotesizeを使う
@@ -1580,7 +1588,8 @@
 \fi
 \AtEndDocument{\theendnotes}
 
-% 傍注はこれではうまく行かないはず．
+%.. 傍注（4.2.7）
+% 傍注はこれではうまく行かない．
 \setlength{\marginparwidth}{0.333\textwidth} % 根拠無しの1/3：15--20文字らしい
 \setlength{\marginparsep}{20\jlreq@mpt} % フォントサイズ×2（4.2.7：特に問題に～e）
 {%
@@ -1588,50 +1597,94 @@
   \global\divide\marginparwidth\@tempdima \global\multiply\marginparwidth\@tempdima
   \global\setlength{\marginparpush}{.5\@tempdima} % 同上：c
 }
-% 傍注（4.2.7）
-% \sidenote[]{}: \footnoteと同じ．
-% 
-\def\jlreq@sidenotecounter{footnote}
-\def\jlreq@sidenotemarkname{@thefnmark}
-\def\sidenote{\@ifnextchar[{\jlreq@sidenote}{\jlreq@sidenote[]}}
-\def\sidenotemark{\@ifnextchar[{\jlreq@sidenotemark}{\jlreq@sidenotemark[]}}
-\def\sidenotetext{\@ifnextchar[{\jlrqe@sidenotetext}{\jlreq@sidenotetext[]}}
-\long\def\jlreq@sidenote[#1]#2{\jlreq@sidenotemark[#1]\@sidenotetext{#2}}
-\def\jlreq@sidenotemark[#1]{%
-  \jlreq@ifempty{#1}{%
-    \stepcounter{\jlreq@sidenotecounter}%
-    \expandafter\protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
-  }{%
-    \begingroup
-      \csname c@\jlreq@sidenotecounter\endcsname #1\relax
-      \expandafter\unrestored@protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
-   \endgroup
-  }%
-  \@sidenotemark
-}
-\long\def\jlreq@sidenotetext[#1]#2{%
-  \jlreq@ifempty{#1}{%
-    \expandafter\protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
-  }{%
-   \begingroup
-     \csname c@\jlreq@sidenotecounter\endcsname#1\relax
-     \expandafter\unrestored@protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
-   \endgroup
-  }%
-  \@sidenotetext{#2}%
-}
-\def\@sidenotetext#1{%
-  \marginpar{%
-    \color@begingroup
-    \@makesidetext{#1}%
-    \color@endgroup
-  }%
-}
 
-\let\@sidenotemark=\@footnotemark
-\let\@makesidetext=\@makefntext
+\def\jlreq@sidenotemarkname{@thefnmark}% 合印用番号を一時的に入れるマクロ名
 
+% (1) \footnoteとかと同じ形式 sidenote_type=number
+% (2) 文中にマークを入れて，傍注には見出しが入る sidenote_type=mark
+% (3) 文中は強調文字列，傍注には見出しが入る sidenote_type=font
+% (4) 文中は何も無し，傍注には見出しが入る sidenote_type=none
 
+% (1) では\sidenote[]{}を定義
+% (2) では\sidenote{見出し}{注中身}を定義
+\ifthenelse{\equal{\jlreq@sidenote@type}{number}}{
+  \def\jlreq@sidenotecounter{footnote}% 傍注用のカウンタ名
+  \def\sidenote{\@ifnextchar[{\jlreq@sidenote}{\jlreq@sidenote[]}}
+  \def\sidenotemark{\@ifnextchar[{\jlreq@sidenotemark}{\jlreq@sidenotemark[]}}
+  \def\sidenotetext{\@ifnextchar[{\jlrqe@sidenotetext}{\jlreq@sidenotetext[]}}
+  \def\@sidenotetext#1{%
+    \marginpar{\reset@font\footnotesize
+      \color@begingroup
+      \@makesidetext{#1}%
+      \color@endgroup
+    }%
+  }
+  \long\def\jlreq@sidenote[#1]#2{\jlreq@sidenotemark[#1]\@sidenotetext{#2}}
+  \def\jlreq@sidenotemark[#1]{%
+    \jlreq@ifempty{#1}{%
+      \stepcounter{\jlreq@sidenotecounter}%
+      \expandafter\protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
+    }{%
+      \begingroup
+        \csname c@\jlreq@sidenotecounter\endcsname #1\relax
+        \expandafter\unrestored@protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
+     \endgroup
+    }%
+    \@sidenotemark
+  }
+  \long\def\jlreq@sidenotetext[#1]#2{%
+    \jlreq@ifempty{#1}{%
+      \expandafter\protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
+    }{%
+     \begingroup
+       \csname c@\jlreq@sidenotecounter\endcsname#1\relax
+       \expandafter\unrestored@protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
+     \endgroup
+    }%
+    \@sidenotetext{#2}%
+  }
+  \def\@sidenotemark{\jlreq@notemark{\@makesidemark}}
+  \def\@makesidetext#1{\@makefnmark\hspace{0.5\jlreq@mol}#1}
+  \def\@makesidemark{\@makefnmark}
+}{
+  \def\sidenote{\jlreq@sidenote}
+  \def\sidenotemark{\jlreq@sidenotemark}
+  \def\sidenotetext{\jlreq@sidenotetext}
+  \def\jlreq@sidenote#1#2{\jlreq@sidenotemark{#1}\jlreq@sidenotetext{#1}{#2}}
+  \def\jlreq@sidenotemark#1{%
+    \ifx\jlreq@sidenote@keywordfont\@empty #1\else{\jlreq@sidenote@keywordfont #1}\fi
+    \ifx\jlreq@sidenote@defaultmark\@empty\else
+      \expandafter\edef\csname\jlreq@sidenotemarkname\endcsname{\jlreq@sidenote@defaultmark}%
+      \@sidenotemark
+    \fi
+  }
+  \def\@sidenotemark{\jlreq@notemark{\@makesidemark}}
+  \def\jlreq@sidenotetext#1#2{%
+    \expandafter\def\csname\jlreq@sidenotemarkname\endcsname{{\jlreq@sidenote@defaultmark #1}}%
+    \@sidenotetext{#2}
+  }
+  \def\@sidenotetext#1{%
+    \marginpar{\reset@font\footnotesize
+      \color@begingroup
+      \@makesidetext{#1}%
+      \color@endgroup
+    }%
+  }
+  \ifthenelse{\equal{\jlreq@sidenote@type}{mark}}{
+    \def\jlreq@sidenote@defaultmark{＊}
+    \def\jlreq@sidenote@keywordfont{}
+  }{}
+  \ifthenelse{\equal{\jlreq@sidenote@type}{font}}{
+    \def\jlreq@sidenote@defaultmark{}
+    \def\jlreq@sidenote@keywordfont{\bfseries\gtfamily}
+  }{}
+  \ifthenelse{\equal{\jlreq@sidenote@type}{none}}{
+    \def\jlreq@sidenote@defaultmark{}
+    \def\jlreq@sidenote@keywordfont{}
+  }{}
+  \def\@makesidetext#1{{\bfseries\gtfamily\csname\jlreq@sidenotemarkname\endcsname}\hspace*{1\jlreq@mol}#1}
+  \def\@makesidemark{\@makefnmark}
+}
 
 %. ページスタイル．
 % とりあえず脇に縦書きで配置するのは無視する．

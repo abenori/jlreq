@@ -266,7 +266,8 @@
 % 傍注のタイプ
 \newcommand*{\jlreq@sidenote@type}{number}
 \define@choicekey{jlreq.cls}{sidenote_type}{number,mark,font,none}{\renewcommand*{\jlreq@sidenote@type}{#1}}
-
+\newcommand*{\jlreq@option@sidenote@width}{}
+\DeclareOptionX{sidenote_width}{\renewcommand*{\jlreq@option@sidenote@width}{#1}}
 
 \newif\if@restonecol \@restonecolfalse
 \newif\if@titlepage \@titlepagefalse
@@ -1589,13 +1590,26 @@
 \AtEndDocument{\theendnotes}
 
 %.. 傍注（4.2.7）
-% 傍注はこれではうまく行かない．
-\setlength{\marginparwidth}{0.333\textwidth} % 根拠無しの1/3：15--20文字らしい
-\setlength{\marginparsep}{20\jlreq@mpt} % フォントサイズ×2（4.2.7：特に問題に～e）
+\setlength{\marginparsep}{2\jlreq@mol} % フォントサイズ×2（4.2.7：特に問題に～e）
 {%
-  \footnotesize\@tempdima=1\jlreq@gol
-  \global\divide\marginparwidth\@tempdima \global\multiply\marginparwidth\@tempdima
-  \global\setlength{\marginparpush}{.5\@tempdima} % 同上：c
+  \footnotesize
+  \setlength{\jlreq@tempdima}{\dimexpr \paperwidth - \textwidth - 1in - \oddsidemargin - \marginparsep\relax}
+  \ifx\jlreq@option@sidenote@width\@empty
+    \setlength{\marginparwidth}{\dimexpr\jlreq@tempdima-2\jlreq@fontsize\relax}
+  \else
+    \setlength{\marginparwidth}{\jlreq@speciallength{\jlreq@option@sidenote@width}}
+    \ifnum\marginparwidth>\jlreq@tempdima
+      \ClassWarningNoLine{jlreq}{sidenote_width is greater than the width of the margin}
+    \fi
+  \fi
+  \ifdim\marginparwidth>18\jlreq@mol
+    \global\marginparwidth=18\jlreq@mol
+  \else
+    \@tempdima=1\jlreq@mol
+    \global\divide\marginparwidth\@tempdima
+    \global\multiply\marginparwidth\@tempdima
+  \fi
+  \global\setlength{\marginparpush}{.5\@tempdima} % 同上：g
 }
 
 \def\jlreq@sidenotemarkname{@thefnmark}% 合印用番号を一時的に入れるマクロ名
@@ -1607,18 +1621,18 @@
 
 % (1) では\sidenote[]{}を定義
 % (2) では\sidenote{見出し}{注中身}を定義
+\def\@sidenotetext#1{%
+  \marginpar{\reset@font\footnotesize
+    \color@begingroup
+    \@makesidetext{#1}%
+    \color@endgroup
+  }%
+}
 \ifthenelse{\equal{\jlreq@sidenote@type}{number}}{
   \def\jlreq@sidenotecounter{footnote}% 傍注用のカウンタ名
   \def\sidenote{\@ifnextchar[{\jlreq@sidenote}{\jlreq@sidenote[]}}
   \def\sidenotemark{\@ifnextchar[{\jlreq@sidenotemark}{\jlreq@sidenotemark[]}}
   \def\sidenotetext{\@ifnextchar[{\jlrqe@sidenotetext}{\jlreq@sidenotetext[]}}
-  \def\@sidenotetext#1{%
-    \marginpar{\reset@font\footnotesize
-      \color@begingroup
-      \@makesidetext{#1}%
-      \color@endgroup
-    }%
-  }
   \long\def\jlreq@sidenote[#1]#2{\jlreq@sidenotemark[#1]\@sidenotetext{#2}}
   \def\jlreq@sidenotemark[#1]{%
     \jlreq@ifempty{#1}{%
@@ -1662,13 +1676,6 @@
   \def\jlreq@sidenotetext#1#2{%
     \expandafter\def\csname\jlreq@sidenotemarkname\endcsname{{\jlreq@sidenote@defaultmark #1}}%
     \@sidenotetext{#2}
-  }
-  \def\@sidenotetext#1{%
-    \marginpar{\reset@font\footnotesize
-      \color@begingroup
-      \@makesidetext{#1}%
-      \color@endgroup
-    }%
   }
   \ifthenelse{\equal{\jlreq@sidenote@type}{mark}}{
     \def\jlreq@sidenote@defaultmark{＊}

@@ -1360,7 +1360,7 @@
 \@onlypreamble\RenewCutinHeading
 \@onlypreamble\ProvideCutinHeading
 
-\newcommand*{\jlreq@keepbaselineskip}[1]{\jlreq@tempdima=\baselineskip#1\baselineskip=\jlreq@tempdima}
+\newcommand*{\jlreq@keepbaselineskip}[1]{\jlreq@tempdima=\baselineskip\relax#1\baselineskip=\jlreq@tempdima}
 
 \setcounter{secnumdepth}{3}
 \newcounter{part}
@@ -1480,23 +1480,48 @@
 \fi
 
 %.. 後注（4.2.4）
+\def\jlreq@endnotemarkname{@thefnmark}% 合印用番号を一時的に入れるマクロ名
+\def\jlreq@endnotecounter{footnote}% 後注用のカウンタ名
 % 文字サイズは\footnotesizeを使う
 \newdimen\jlreq@endnote@prepostspace
 % 前の分との間は行間分空ける（4.2.4.f）
 \jlreq@endnote@prepostspace=\dimexpr\baselineskip - 1\jlreq@gol\relax
 \newdimen\jlreq@endnote@indent
-\newcounter{endnote}
-\def\endnote{\@ifnextchar[{\jlreq@endnote}{\stepcounter{endnote}\jlreq@endnote[\theendnote]}}
 % 現在の後注一覧を，{{合印1}{後注1}}{{合印2}{後注2}}...の形で保持する
 \def\jlreq@endnote@texts{}
 \def\jlreq@endnote@addtext#1#2{%
   \expandafter\gdef\expandafter\jlreq@endnote@texts\expandafter{\jlreq@endnote@texts{{#1}{#2}}}}
-\def\jlreq@endnote[#1]#2{%
-  \begingroup
-   \protected@xdef\@thefnmark{#1}%
-   \@endnotemark
-   \expandafter\jlreq@endnote@addtext\expandafter{\@thefnmark}{#2}%
-  \endgroup
+\def\endnote{\@ifnextchar[{\jlreq@endnote}{\jlreq@endnote[]}}
+\def\endnotemark{\@ifnextchar[{\jlreq@endnotemark}{\jlreq@endnotemark[]}}
+\def\endnotetext{\@ifnextchar[{\jlreq@endnotetext}{\jlreq@endnotetext[]}}
+\def\jlreq@endnote[#1]#2{\jlreq@endnotemark[#1]\@endnotetext{#2}}
+\def\jlreq@endnotemark[#1]{%
+  \jlreq@ifempty{#1}{%
+    \stepcounter{\jlreq@endnotecounter}%
+    \expandafter\protected@xdef\csname\jlreq@endnotemarkname\endcsname{\csname the\jlreq@endnotecounter\endcsname}%
+  }{%
+    \begingroup
+      \csname c@\jlreq@endnotecounter\endcsname #1\relax
+      \expandafter\unrestored@protected@xdef\csname\jlreq@endnotemarkname\endcsname{\csname \jlreq@endnotecounter\endcsname}%
+    \endgroup
+  }%
+  \@endnotemark
+}
+\def\@endnotemark{\jlreq@notemark{\@makeendmark}}
+\long\def\jlreq@endnotetext[#1]#2{%
+  \jlreq@ifempty{#1}{%
+    \expandafter\protected@xdef\csname\jlreq@endnotemarkname\endcsname{\csname the\jlreq@endnotecounter\endcsname}%
+  }{%
+    \begingroup
+      \csname c@\jlreq@endnotecounter\endcsname #1\relax
+      \expandafter\unrestored@protected@xdef\csname\jlreq@endnotemarkname\endcsname{\csname \jlreq@endnotecounter\endcsname}%
+    \endgroup
+  }%
+  \@endnotetext{#2}%
+}
+\def\@endnotetext#1{%
+  \expandafter\let\expandafter\jlreq@tempa\expandafter=\csname\jlreq@endnotemarkname\endcsname
+  \expandafter\jlreq@endnote@addtext\expandafter{\jlreq@tempa}{#1}%
 }
 \def\jlreq@theendnotes#1{%
   \ifx\jlreq@endmark#1\else
@@ -1505,13 +1530,14 @@
   \fi
 }
 \def\jlreq@output@endnotes#1#2{%
-  \protected@xdef\@thefnmark{#1}%
-  \item\@makeentext{#2}
+  \expandafter\def\csname\jlreq@endnotemarkname\endcsname{#1}%
+  \item\@makeendtext{#2}%
 }
 
 % もう少し考えた方がよさそう．
 % \sectionとかがあとに来ると行取りがずれる
 \newcommand*{\theendnotes}{%
+  \tracingmacros=1
   \ifx\jlreq@endnote@texts\@empty\else
     \let\jlreq@tempa=\jlreq@endnote@texts
     \gdef\jlreq@endnote@texts{}%
@@ -1540,12 +1566,9 @@
 \jlreq@endnote@indent=2\jlreq@mol
 % 二行目以降を全角分下げる
 {\footnotesize\global\advance\jlreq@endnote@indent by 1\jlreq@mol}
-\newcommand{\@makeentext}[1]{\parindent 1\jlreq@mol
-    \hskip-1\jlreq@mol\@makeenmark\hskip 1\jlreq@mol#1}% 見出し出力と一文字分の空き
-\renewcommand{\theendnote}{\rensuji{\@arabic\c@endnote}}
-
-\let\@makeenmark=\@makefnmark
-\let\@endnotemark=\@footnotemark
+\newcommand{\@makeendtext}[1]{\parindent 1\jlreq@mol
+    \hskip-1\jlreq@mol\@makeendmark\hskip 1\jlreq@mol#1}% 見出し出力と一文字分の空き
+\def\@makeendmark{\@makefnmark}
 
 % \theendnoteの出力を仕込む
 \jlreq@tempafalse
@@ -1633,7 +1656,7 @@
   \def\sidenote{\@ifnextchar[{\jlreq@sidenote}{\jlreq@sidenote[]}}
   \def\sidenotemark{\@ifnextchar[{\jlreq@sidenotemark}{\jlreq@sidenotemark[]}}
   \def\sidenotetext{\@ifnextchar[{\jlrqe@sidenotetext}{\jlreq@sidenotetext[]}}
-  \long\def\jlreq@sidenote[#1]#2{\jlreq@sidenotemark[#1]\@sidenotetext{#2}}
+  \long\def\jlreq@sidenote[#1]#2{\jlreq@sidenotemark[#1]\@sidenotetext[#1]{#2}}
   \def\jlreq@sidenotemark[#1]{%
     \jlreq@ifempty{#1}{%
       \stepcounter{\jlreq@sidenotecounter}%

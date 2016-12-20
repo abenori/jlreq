@@ -1494,7 +1494,7 @@
 \def\endnote{\@ifnextchar[{\jlreq@endnote}{\jlreq@endnote[]}}
 \def\endnotemark{\@ifnextchar[{\jlreq@endnotemark}{\jlreq@endnotemark[]}}
 \def\endnotetext{\@ifnextchar[{\jlreq@endnotetext}{\jlreq@endnotetext[]}}
-\def\jlreq@endnote[#1]#2{\jlreq@endnotemark[#1]\@endnotetext{#2}}
+\long\def\jlreq@endnote[#1]#2{\jlreq@endnotemark[#1]\@endnotetext{#2}}
 \def\jlreq@endnotemark[#1]{%
   \jlreq@ifempty{#1}{%
     \stepcounter{\jlreq@endnotecounter}%
@@ -1534,38 +1534,35 @@
   \item\@makeendtext{#2}%
 }
 
-% もう少し考えた方がよさそう．
-% \sectionとかがあとに来ると行取りがずれる
 \newcommand*{\theendnotes}{%
-  \tracingmacros=1
   \ifx\jlreq@endnote@texts\@empty\else
     \let\jlreq@tempa=\jlreq@endnote@texts
     \gdef\jlreq@endnote@texts{}%
     \begingroup
       \par
-      \jlreq@keepbaselineskip{\footnotesize}%
+      \footnotesize
       % 後注の長さを文字サイズの整数倍にする（4.2.4.b）
-      \@tempdima=\dimexpr\linewidth - \jlreq@endnote@indent - \leftskip\relax
+      \jlreq@tempdima=\dimexpr\linewidth - \jlreq@endnote@indent - \leftskip\relax
       \@tempdimb=1\jlreq@mol
-      \divide\@tempdima\@tempdimb\multiply\@tempdima\@tempdimb
+      \divide\jlreq@tempdima\@tempdimb\multiply\jlreq@tempdima\@tempdimb
       \begin{list}{}{%
         \itemsep=0pt\relax
         \parsep=0pt\relax
         \partopsep=0pt\relax
-        \topsep=\dimexpr\jlreq@endnote@prepostspace - \parskip\relax
-        \leftmargin=\dimexpr\linewidth - \@tempdima\relax
+        \topsep=0pt\relax
+        \leftmargin=\dimexpr\linewidth - \jlreq@tempdima\relax
+        \itemindent=0pt\relax
+        \topsep=0pt plus \baselineskip
       }%
       \expandafter\jlreq@theendnotes\jlreq@tempa\jlreq@endmark
       \end{list}
     \endgroup
     \par
-    \vskip\dimexpr\jlreq@fontsize - \jlreq@baselineskip\relax\vskip 0pt\relax
   \fi
 }
 
 \jlreq@endnote@indent=2\jlreq@mol
 % 二行目以降を全角分下げる
-{\footnotesize\global\advance\jlreq@endnote@indent by 1\jlreq@mol}
 \newcommand{\@makeendtext}[1]{\parindent 1\jlreq@mol
     \hskip-1\jlreq@mol\@makeendmark\hskip 1\jlreq@mol#1}% 見出し出力と一文字分の空き
 \def\@makeendmark{\@makefnmark}
@@ -1580,7 +1577,6 @@
     \jlreq@tempatrue% _paragraphの時は_headingsも有効にする
     \PushPostHook{par}{%
       \ifx\jlreq@endnote@texts\@empty\else
-        % なんかうまくいってそう
         \vskip\dimexpr-\baselineskip\relax
         \vskip\dimexpr0pt\relax
         \theendnotes
@@ -1656,7 +1652,7 @@
   \def\sidenote{\@ifnextchar[{\jlreq@sidenote}{\jlreq@sidenote[]}}
   \def\sidenotemark{\@ifnextchar[{\jlreq@sidenotemark}{\jlreq@sidenotemark[]}}
   \def\sidenotetext{\@ifnextchar[{\jlrqe@sidenotetext}{\jlreq@sidenotetext[]}}
-  \long\def\jlreq@sidenote[#1]#2{\jlreq@sidenotemark[#1]\@sidenotetext[#1]{#2}}
+  \long\def\jlreq@sidenote[#1]#2{\jlreq@sidenotemark[#1]\@sidenotetext{#2}}
   \def\jlreq@sidenotemark[#1]{%
     \jlreq@ifempty{#1}{%
       \stepcounter{\jlreq@sidenotecounter}%

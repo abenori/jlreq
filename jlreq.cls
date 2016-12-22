@@ -1441,7 +1441,8 @@
     \else
       \@tempdima=\wd\@tempboxa
     \fi
-    \hbox to\z@{\hskip-\@tempdima\raise\dimexpr.5\jlreq@gol + (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa\hss}%
+    \setbox\jlreq@tempboxa=\hbox to\z@{\hskip-\@tempdima\raise\dimexpr.5\jlreq@gol + (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa\hss}%
+    \dp\jlreq@tempboxa=0pt\ht\jlreq@tempboxa=0pt\box\jlreq@tempboxa
     \ifhmode\spacefactor\@x@sf\fi
     \relax}
 }

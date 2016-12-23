@@ -1417,23 +1417,18 @@
 %. 注
 % 合印：4.2.3
 % 文字サイズは6ポイントくらい（4.2.3.a）とりあえす\scriptsize
+\newcommand*\jlreq@referencemark@format[1]{#1}
 \ifthenelse{\equal{\jlreq@referencemark}{inline}}{
   \newcommand*{\jlreq@notemark}[1]{%
-    \leavevmode
-    \ifhmode\edef\@x@sf{\the\spacefactor}\nobreak\fi
     \jlreq@ifydir{%
-      \hbox{\@textsuperscript{\normalfont#1}}%
+      \hbox{}\hbox{\@textsuperscript{\normalfont\jlreq@referencemark@format{#1}}}\hbox{}%
     }{%
-      \setbox\@tempboxa=\hbox{\scriptsize#1}%
+      \setbox\@tempboxa=\hbox{\scriptsize\jlreq@referencemark@format{#1}}%
       \raise\dimexpr.5\jlreq@gol - (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa
-    }%
-    \ifhmode\spacefactor\@x@sf\fi
-    \relax}
+    }}%
 }{
   \newcommand*{\jlreq@notemark}[1]{%
-    \leavevmode
-    \ifhmode\edef\@x@sf{\the\spacefactor}\nobreak\fi
-    \setbox\@tempboxa=\hbox{\scriptsize#1}%
+    \setbox\@tempboxa=\hbox{\scriptsize\jlreq@referencemark@format{#1}}%
 %    % 行頭に来たときに頭を天にそろえる処理．
     \jlreq@savepos@for@rest@linewidth
     \ifdim\jlreq@current@linewidth<\wd\@tempboxa
@@ -1442,9 +1437,7 @@
       \@tempdima=\wd\@tempboxa
     \fi
     \setbox\jlreq@tempboxa=\hbox to\z@{\hskip-\@tempdima\raise\dimexpr.5\jlreq@gol + (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa\hss}%
-    \dp\jlreq@tempboxa=0pt\ht\jlreq@tempboxa=0pt\box\jlreq@tempboxa
-    \ifhmode\spacefactor\@x@sf\fi
-    \relax}
+    \dp\jlreq@tempboxa=0pt\ht\jlreq@tempboxa=0pt\box\jlreq@tempboxa}%
 }
 %.. 脚注
 % （縦書きの時は傍注，4.2.5）
@@ -1472,12 +1465,12 @@
     \noindent\hskip 1\zh\@makefnmark\hskip 1\zh#1}% 見出し出力と一文字分の空き
 }
 % 合印
-\def\@footnotemark{\jlreq@notemark{\@makefnmark}}
+\renewcommand*{\@makefnmark}{\jlreq@notemark{\@thefnmark}}
 % 図4.61のようにする
-\renewcommand{\@makefnmark}{\inhibitglue\jlreq@open@bracket@before@space（\@thefnmark）\inhibitglue}
 \if@tate
-  \renewcommand{\thefootnote}{\rensuji{\@arabic\c@footnote}}
+  \renewcommand*{\thefootnote}{\jlreq@open@bracket@before@space（\rensuji{\@arabic\c@footnote}）}
 \else
+  \renewcommand*{\thefootnote}{\jlreq@open@bracket@before@space（\arabic{footnote}）}
 \fi
 
 %.. 後注（4.2.4）

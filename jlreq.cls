@@ -1231,24 +1231,25 @@
   \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\jlreq@set@top@contents{#2}\@dottedtocline{#2}{0\jlreq@mol}{2\jlreq@gol}}}{}
   \begingroup
     \def\jlreq@lines{1}
-    \define@key{jlreq@key}{lines}{\def\jlreq@lines{##1}}
     \def\jlreq@before@space{}
-    \define@key{jlreq@key}{before_space}{\def\jlreq@before@space{##1}}
     \def\jlreq@after@space{}
-    \define@key{jlreq@key}{after_space}{\def\jlreq@after@space{##1}}
     \def\jlreq@before@lines{}
-    \define@key{jlreq@key}{before_lines}{\def\jlreq@before@lines{##1}}
     \def\jlreq@after@lines{}
-    \define@key{jlreq@key}{after_lines}{\def\jlreq@after@lines{##1}}
     \def\jlreq@font{\normalsize}
-    \define@key{jlreq@key}{font}{\def\jlreq@font{##1}}
     \def\jlreq@subtitle@font{\normalsize}
-    \define@key{jlreq@key}{subtitle_font}{\def\jlreq@subtitle@font{##1}}
     \def\jlreq@indent{0}
-    \define@key{jlreq@key}{indent}{\def\jlreq@indent{##1}}
     \def\jlreq@format{}
-    \define@key{jlreq@key}{format}{\edef\jlreq@format{\unexpanded{##1}}}
-    \setkeys{jlreq@key}{#3}
+    \jlreq@parsekeyval{
+      {lines}{\def\jlreq@lines{##1}}
+      {before_space}{\def\jlreq@before@space{##1}}
+      {after_space}{\def\jlreq@after@space{##1}}
+      {before_lines}{\def\jlreq@before@lines{##1}}
+      {after_lines}{\def\jlreq@after@lines{##1}}
+      {font}{\def\jlreq@font{##1}}
+      {subtitle_font}{\def\jlreq@subtitle@font{##1}}
+      {indent}{\def\jlreq@indent{##1}}
+      {format}{\edef\jlreq@format{\unexpanded{##1}}}
+    }{#3}
     % before/after_lines優先
     \ifx\jlreq@before@space\@empty\else\edef\jlreq@before@space{r:\expandonce{\jlreq@before@space}}\fi
     \ifx\jlreq@before@lines\@empty\else\edef\jlreq@before@space{a:\expandonce{\jlreq@before@lines}\baselineskip}\fi
@@ -1290,12 +1291,13 @@
   \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\jlreq@set@top@contents{#2}\@dottedtocline{#2}{0\jlreq@mol}{2\jlreq@gol}}}{}
   \begingroup
     \def\jlreq@font{\normalfont\normalsize}%
-    \define@key{jlreq@key}{font}{\def\jlreq@font{##1}}%
     \def\jlreq@indent{1}%
-    \define@key{jlreq@key}{indent}{\def\jlreq@indent{##1}}%
     \def\jlreq@mark{}%
-    \define@key{jlreq@key}{mark}{\def\jlreq@mark{##1}}%
-    \setkeys{jlreq@key}{#3}%
+    \jlreq@parsekeyval{
+      {font}{\def\jlreq@font{##1}}%
+      {indent}{\def\jlreq@indent{##1}}%
+      {mark}{\def\jlreq@mark{##1}}%
+    }{#3}%
     % \@startsection{#1}{#2}{<indent>*fontsize}{0pt}{-fontsize}{font}
     \global\edef\@tempa{{\unexpanded{#1}}{\unexpanded{#2}}{\expandonce{\jlreq@indent}\jlreq@mol}{0pt}{-1\jlreq@fontsize}{\expandonce{\jlreq@font}\expandonce{\jlreq@mark}}}%
   \endgroup
@@ -1378,16 +1380,17 @@
 \newcommand*{\DeclareCutinHeading}[3]{%
   \begingroup
     \def\jlreq@fontcommand{\bfseries\gtfamily}%
-    \define@key{jlreq@key}{font}{\def\jlreq@fontcommand{##1}}%
     \def\jlreq@onelinemax{6\jlreq@fontsize}%
-    \define@key{jlreq@key}{onelinemax}{\def\jlreq@onelinemax{##1}}%
     \def\jlreq@twolinemax{20\jlreq@fontsize}%
-    \define@key{jlreq@key}{twolinemax}{\def\jlreq@twolinemax{##1}}%
     \def\jlreq@indent{0}%
-    \define@key{jlreq@key}{indent}{\def\jlreq@indent{##1}}%
     \def\jlreq@afterindent{1\zh}%
-    \define@key{jlreq@key}{afterindent}{\def\jlreq@afterindent{##1}}%
-    \setkeys*{jlreq@key}{#3}%
+    \jlreq@parsekeyval{
+      {font}{\def\jlreq@fontcommand{##1}}%
+      {onelinemax}{\def\jlreq@onelinemax{##1}}%
+      {twolinemax}{\def\jlreq@twolinemax{##1}}%
+      {indent}{\def\jlreq@indent{##1}}%
+      {afterindent}{\def\jlreq@afterindent{##1}}%
+    }{#3}%
     \global\edef\@tempa{{#1}{\expandonce{\jlreq@fontcommand}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@afterindent}}{\expandonce{\jlreq@onelinemax}}{\expandonce{\jlreq@twolinemax}}}
   \endgroup
   \expandafter\edef\csname #1\endcsname{\noexpand\jlreq@hook@beforeheadings{#1}%
@@ -1789,21 +1792,22 @@
 \newcommand*{\DeclarePageStyle}[2]{%
   \begingroup
     \def\jlreq@nombre@position{{bottom}{left}}
-    \define@key{jlreq@key}{nombre_position}{\jlreq@parse@position{\jlreq@nombre@position}{##1}}
     \def\jlreq@running@head@position{{top}{left}}
-    \define@key{jlreq@key}{running_head_position}{\jlreq@parse@position{\jlreq@running@head@position}{##1}}
     \def\jlreq@nombre{\thepage}
-    \define@key{jlreq@key}{nombre}{\def\jlreq@nombre{##1}}
     \def\jlreq@odd@running@head{}
-    \define@key{jlreq@key}{odd_running_head}{\def\jlreq@odd@running@head{##1}}
     \def\jlreq@even@running@head{}
-    \define@key{jlreq@key}{even_running_head}{\def\jlreq@even@running@head{##1}}
     \def\jlreq@command{}
-    \define@key{jlreq@key}{command}{\def\jlreq@command{##1}}
     % 柱とノンブルの間
     \def\jlreq@gap{1.5\zw}
-    \define@key{jlreq@key}{gap}{\def\jlreq@gap{##1}}
-    \setkeys{jlreq@key}{#2}
+    \jlreq@parsekeyval{
+      {nombre_position}{\jlreq@parse@position{\jlreq@nombre@position}{##1}}
+      {running_head_position}{\jlreq@parse@position{\jlreq@running@head@position}{##1}}
+      {nombre}{\def\jlreq@nombre{##1}}
+      {odd_running_head}{\def\jlreq@odd@running@head{##1}}
+      {even_running_head}{\def\jlreq@even@running@head{##1}}
+      {command}{\def\jlreq@command{##1}}
+      {gap}{\def\jlreq@gap{##1}}
+    }{#2}
     \ifthenelse{\lengthtest{\jlreq@gap < 1.49\zw} \OR \( \lengthtest{\jlreq@gap > 1.51\zw} \AND \lengthtest{\jlreq@gap < 1.99\zw} \) \OR \lengthtest{\jlreq@gap > 2.01\zw}}{\jlreq@warning{ノンブルと柱との空き量は文字サイズの2倍又は1.5倍とする（ページスタイル #1 内，2.6.1.c）}}{}
     
     % 見出しを出す場合：evenに章などの高いレベルの見出しを出す（2.6.3.a）

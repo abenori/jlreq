@@ -17,7 +17,6 @@
 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{jlreq}[2016/01/01 jlreq]
-% \define@keyを使う時は，使う部分を極力グルーピングしてあまりマクロ定義を残さないようにする
 \RequirePackage{xkeyval}
 \RequirePackage{everyhook,etoolbox,ifthen}
 
@@ -144,6 +143,42 @@
 
 \newcommand*{\jlreq@debug@output}[1]{\message{\detokenize{#1}}}
 
+% keyvalのパースはこれを使う
+% \jlreq@parsekeyval{
+%  {key}{\def\val{#1}}
+%  {key}[choices]{\def\val{#1}}
+%}{parse対象}
+\def\jlreq@parsekeyval#1#2{
+  \begingroup
+  \def\jlreq@do{}%
+  \jlreq@@parsekeyval#1\jlreq@uniqtoken
+  \setkeys{jlreq@key}{#2}%
+  \tracingmacros=1
+  \expandafter\endgroup
+  \jlreq@do
+  \tracingmacros=0
+}
+\def\jlreq@@parsekeyval#1{%
+  \def\jlreq@tempa{#1}%
+  \def\jlreq@tempb{\jlreq@uniqtoken}
+  \ifx\jlreq@tempa\jlreq@tempb
+    \def\@tempa{}%
+  \else
+    \def\@tempa{%
+      \@ifnextchar[{\jlreq@@parsekeyval@choicekey{#1}}{\jlreq@@parsekeyval@definekey{#1}}%
+    }%
+  \fi
+  \@tempa
+}
+\def\jlreq@@parsekeyval@choicekey#1[#2]#3{%
+  \define@choicekey{jlreq@key}{#1}{#2}{\appto\jlreq@do{#3}}%
+  \jlreq@@parsekeyval
+}
+\def\jlreq@@parsekeyval@definekey#1#2{%
+  \define@key{jlreq@key}{#1}{\appto\jlreq@do{#2}}%
+  \jlreq@@parsekeyval
+}
+
 %. オプションの定義
 % オプション処理の際にしか使わない変数（後でそれを元に別の変数を調整する）
 % ものは\jlreq@option@<key>に格納する．
@@ -265,7 +300,7 @@
 \DeclareOptionX{endnote_position}{\renewcommand*{\jlreq@endnote@position}{#1}}
 % 傍注のタイプ
 \newcommand*{\jlreq@sidenote@type}{number}
-\define@choicekey{jlreq.cls}{sidenote_type}{number,mark,font,none}{\renewcommand*{\jlreq@sidenote@type}{#1}}
+\DeclareOptionX{sidenote_type}{\renewcommand*{\jlreq@sidenote@type}{#1}}
 \newcommand*{\jlreq@option@sidenote@width}{}
 \DeclareOptionX{sidenote_width}{\renewcommand*{\jlreq@option@sidenote@width}{#1}}
 
@@ -299,6 +334,18 @@
 \jlreq@DeclareOption{jlreq_warnings}{\renewcommand*{\jlreq@warning}[1]{\ClassWarningNoLine{jlreq}{(JLREQ warning) ##1}}}
 
 \ExecuteOptionsX{a4paper,fontsize=9pt,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=_headings,onecolumn,final}
+\newcommand{\jlreqsetup}[1]{
+  \jlreq@parsekeyval{
+    {sidenote_mark}{
+      \jlreq@parsekeyval{
+        {headingfont}{\def\jlreq@sidenote@keywordfont{####1}}
+        {mark}{\def\jlreq@sidenote@defaultmark{####1}}
+      }{##1}
+    }
+  }{#1}%
+}
+%\@onlypreamble\jlreqsetup
+
 
 % \@removeelementを一旦置き換えてから\ProcessOptionsXを実行する
 \let\jlreq@original@@removeelement=\@removeelement
@@ -753,7 +800,7 @@
 \fi
 % 開き括弧の幅が全角の場合は，ベタ組にするために補正が必要
 \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{
-  \def\jlreq@open@bracket@before@space{\hskip -.5\zh}
+  \def\jlreq@open@bracket@before@space{\hskip -.5\jlreq@mol}
 }{
   \def\jlreq@open@bracket@before@space{}
 }
@@ -1641,7 +1688,8 @@
     \color@endgroup
   }%
 }
-\ifthenelse{\equal{\jlreq@sidenote@type}{number}}{
+\def\jlreq@tempa{number}
+\ifx\jlreq@sidenote@type\jlreq@tempa
   \def\jlreq@sidenotecounter{footnote}% 傍注用のカウンタ名
   \def\sidenote{\@ifnextchar[{\jlreq@sidenote}{\jlreq@sidenote[]}}
   \def\sidenotemark{\@ifnextchar[{\jlreq@sidenotemark}{\jlreq@sidenotemark[]}}
@@ -1673,13 +1721,15 @@
   \def\@sidenotemark{\jlreq@notemark{\@makesidemark}}
   \def\@makesidetext#1{\@makefnmark\hspace{0.5\jlreq@mol}#1}
   \def\@makesidemark{\@makefnmark}
-}{
+\else
+  \def\jlreq@sidenote@keywordfont{}
+  \def\jlreq@sidenote@defaultmark{＊}
   \def\sidenote{\jlreq@sidenote}
   \def\sidenotemark{\jlreq@sidenotemark}
   \def\sidenotetext{\jlreq@sidenotetext}
   \def\jlreq@sidenote#1#2{\jlreq@sidenotemark{#1}\jlreq@sidenotetext{#1}{#2}}
   \def\jlreq@sidenotemark#1{%
-    \ifx\jlreq@sidenote@keywordfont\@empty #1\else{\jlreq@sidenote@keywordfont #1}\fi
+    {\jlreq@sidenote@keywordfont #1}%
     \ifx\jlreq@sidenote@defaultmark\@empty\else
       \expandafter\edef\csname\jlreq@sidenotemarkname\endcsname{\jlreq@sidenote@defaultmark}%
       \@sidenotemark
@@ -1688,23 +1738,11 @@
   \def\@sidenotemark{\jlreq@notemark{\@makesidemark}}
   \def\jlreq@sidenotetext#1#2{%
     \expandafter\def\csname\jlreq@sidenotemarkname\endcsname{{\jlreq@sidenote@defaultmark #1}}%
-    \@sidenotetext{#2}
+    \@sidenotetext{#2}%
   }
-  \ifthenelse{\equal{\jlreq@sidenote@type}{mark}}{
-    \def\jlreq@sidenote@defaultmark{＊}
-    \def\jlreq@sidenote@keywordfont{}
-  }{}
-  \ifthenelse{\equal{\jlreq@sidenote@type}{font}}{
-    \def\jlreq@sidenote@defaultmark{}
-    \def\jlreq@sidenote@keywordfont{\bfseries\gtfamily}
-  }{}
-  \ifthenelse{\equal{\jlreq@sidenote@type}{none}}{
-    \def\jlreq@sidenote@defaultmark{}
-    \def\jlreq@sidenote@keywordfont{}
-  }{}
   \def\@makesidetext#1{{\bfseries\gtfamily\csname\jlreq@sidenotemarkname\endcsname}\hspace*{1\jlreq@mol}#1}
   \def\@makesidemark{\@makefnmark}
-}
+\fi
 
 %. ページスタイル．
 % とりあえず脇に縦書きで配置するのは無視する．

@@ -50,10 +50,14 @@
 % @removeelementの括弧があっても動くかもしれない版
 % 次の変数を使う：\@tempa：消したいやつ，\@tempb：今処理している部分．
 \def\jlreq@helper@removeelement#1#2#3{%
-  \def\@tempb{}%
-  \def\@tempa{#1}%
-  \def#3{}%
-  \jlreq@helper@removeelement@{#3}#2{\jlreq@endmark}%
+  \begingroup
+    \def\@tempb{}%
+    \def\@tempa{#1}%
+    \def#3{}%
+    \jlreq@helper@removeelement@#3#2{\jlreq@endmark}%
+    \edef\jlreq@do{\unexpanded{\def#3}{\expandonce{#3}}}%
+  \expandafter\endgroup
+  \jlreq@do
 }
 % 最初のグルーピングの前までを取得し，@@に回す．グルーピング以降は@@@で処理する
 \def\jlreq@helper@removeelement@#1#2#{%
@@ -102,8 +106,10 @@
 % #1が#2のリスト（{list1}{list2}...{listn}の形）に入っていれば#3を，入っていなければ#4を実行する
 % #2は\edefで展開されてから評価される
 \def\jlreq@ifinlist#1#2#3#4{%
-  \edef\@tempa{#2}%
-  \expandafter\jlreq@ifinlist@\expandafter{\@tempa}{#1}{#3}{#4}%
+  \begingroup
+    \edef\jlreq@do{\noexpand\jlreq@ifinlist@{#2}\unexpanded{{#1}{#3}{#4}}}%
+  \expandafter\endgroup
+  \jlreq@do
 }
 \def\jlreq@ifinlist@#1#2#3#4{%
   \jlreq@ifinlist@@{#2}{#3}{#4}#1\jlreq@endmark
@@ -148,19 +154,17 @@
 %  {key}{\def\val{#1}}
 %  {key}[choices]{\def\val{#1}}
 %}{parse対象}
-\def\jlreq@parsekeyval#1#2{
+\def\jlreq@parsekeyval#1#2{%
   \begingroup
-  \def\jlreq@do{}%
-  \jlreq@@parsekeyval#1\jlreq@uniqtoken
-  \setkeys{jlreq@key}{#2}%
-  \tracingmacros=1
+    \def\jlreq@do{}%
+    \jlreq@@parsekeyval#1\jlreq@uniqtoken
+    \setkeys{jlreq@key}{#2}%
   \expandafter\endgroup
   \jlreq@do
-  \tracingmacros=0
 }
 \def\jlreq@@parsekeyval#1{%
   \def\jlreq@tempa{#1}%
-  \def\jlreq@tempb{\jlreq@uniqtoken}
+  \def\jlreq@tempb{\jlreq@uniqtoken}%
   \ifx\jlreq@tempa\jlreq@tempb
     \def\@tempa{}%
   \else
@@ -300,7 +304,7 @@
 \DeclareOptionX{endnote_position}{\renewcommand*{\jlreq@endnote@position}{#1}}
 % 傍注のタイプ
 \newcommand*{\jlreq@sidenote@type}{number}
-\DeclareOptionX{sidenote_type}{\renewcommand*{\jlreq@sidenote@type}{#1}}
+\define@choicekey{jlreq.cls}{sidenote_type}{number,mark}{\renewcommand*{\jlreq@sidenote@type}{#1}}
 \newcommand*{\jlreq@option@sidenote@width}{}
 \DeclareOptionX{sidenote_width}{\renewcommand*{\jlreq@option@sidenote@width}{#1}}
 
@@ -334,17 +338,17 @@
 \jlreq@DeclareOption{jlreq_warnings}{\renewcommand*{\jlreq@warning}[1]{\ClassWarningNoLine{jlreq}{(JLREQ warning) ##1}}}
 
 \ExecuteOptionsX{a4paper,fontsize=9pt,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=_headings,onecolumn,final}
-\newcommand{\jlreqsetup}[1]{
-  \jlreq@parsekeyval{
-    {sidenote_mark}{
-      \jlreq@parsekeyval{
-        {headingfont}{\def\jlreq@sidenote@keywordfont{####1}}
-        {mark}{\def\jlreq@sidenote@defaultmark{####1}}
-      }{##1}
-    }
+\newcommand{\jlreqsetup}[1]{%
+  \jlreq@parsekeyval{%
+    {sidenote_mark}{%
+      \jlreq@parsekeyval{%
+        {mark}{\def\jlreq@sidenote@defaultmark{####1}}%
+        {headingfont}{\def\jlreq@sidenote@keywordfont{####1}}%
+      }{##1}%
+    }%
   }{#1}%
 }
-%\@onlypreamble\jlreqsetup
+\@onlypreamble\jlreqsetup
 
 
 % \@removeelementを一旦置き換えてから\ProcessOptionsXを実行する
@@ -1725,14 +1729,14 @@
   \def\@makesidetext#1{\@makefnmark\hspace{0.5\jlreq@mol}#1}
   \def\@makesidemark{\@makefnmark}
 \else
-  \def\jlreq@sidenote@keywordfont{}
+  \def\jlreq@sidenote@keywordfont{\bfseries\gtfamily}
   \def\jlreq@sidenote@defaultmark{＊}
   \def\sidenote{\jlreq@sidenote}
   \def\sidenotemark{\jlreq@sidenotemark}
   \def\sidenotetext{\jlreq@sidenotetext}
   \def\jlreq@sidenote#1#2{\jlreq@sidenotemark{#1}\jlreq@sidenotetext{#1}{#2}}
   \def\jlreq@sidenotemark#1{%
-    {\jlreq@sidenote@keywordfont #1}%
+    {\reset@font\jlreq@sidenote@keywordfont #1}%
     \ifx\jlreq@sidenote@defaultmark\@empty\else
       \expandafter\edef\csname\jlreq@sidenotemarkname\endcsname{\jlreq@sidenote@defaultmark}%
       \@sidenotemark
@@ -1740,7 +1744,7 @@
   }
   \def\@sidenotemark{\jlreq@notemark{\@makesidemark}}
   \def\jlreq@sidenotetext#1#2{%
-    \expandafter\def\csname\jlreq@sidenotemarkname\endcsname{{\jlreq@sidenote@defaultmark #1}}%
+    \expandafter\def\csname\jlreq@sidenotemarkname\endcsname{\jlreq@sidenote@defaultmark\inhibitglue\null{\reset@font\jlreq@sidenote@keywordfont\inhibitglue #1}}%
     \@sidenotetext{#2}%
   }
   \def\@makesidetext#1{{\bfseries\gtfamily\csname\jlreq@sidenotemarkname\endcsname}\hspace*{1\jlreq@mol}#1}
@@ -2102,7 +2106,7 @@
       \global\@topnum\z@   % Prevents figures from going at top of page.
       \@maketitle
     \fi
-    \thispagestyle{jpl@in}\@thanks
+    \thispagestyle{plain}\@thanks
   \endgroup
   \setcounter{footnote}{0}%
   \global\let\thanks\relax

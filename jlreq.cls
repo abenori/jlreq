@@ -107,20 +107,23 @@
 % #2は\edefで展開されてから評価される
 \def\jlreq@ifinlist#1#2#3#4{%
   \begingroup
-    \edef\jlreq@do{\noexpand\jlreq@ifinlist@{#2}\unexpanded{{#1}{#3}{#4}}}%
+    \edef\@tempa{#2}%
+    \jlreq@tempafalse
+    \expandafter\jlreq@ifinlist@\expandafter{\@tempa}{#1}%
+    \ifjlreq@tempa\def\jlreq@do{#3}\else\def\jlreq@do{#4}\fi
   \expandafter\endgroup
   \jlreq@do
 }
-\def\jlreq@ifinlist@#1#2#3#4{%
-  \jlreq@ifinlist@@{#2}{#3}{#4}#1\jlreq@endmark
+\def\jlreq@ifinlist@#1#2{%
+  \jlreq@ifinlist@@{#2}#1\jlreq@endmark
 }
-\def\jlreq@ifinlist@@#1#2#3#4{%
-  \ifx\jlreq@endmark#4\def\jlreq@next{}%
+\def\jlreq@ifinlist@@#1#2{%
+  \ifx\jlreq@endmark#2\def\jlreq@next{}%
   \else
     \def\@tempa{#1}%
-    \def\@tempb{#4}%
-    \ifx\@tempa\@tempb\relax #2\def\jlreq@next{\jlreq@deleteuntileendmark}%
-    \else #3\def\jlreq@next{\jlreq@ifinlist@@{#1}{#2}{#3}}\fi
+    \def\@tempb{#2}%
+    \ifx\@tempa\@tempb\relax\jlreq@tempatrue\def\jlreq@next{\jlreq@deleteuntileendmark}%
+    \else\def\jlreq@next{\jlreq@ifinlist@@{#1}}\fi
   \fi
   \jlreq@next
 }

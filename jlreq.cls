@@ -2232,10 +2232,12 @@
   \setlength{\leftmargin}{\leftmarginv}%
 }
 % レベル1だけはJISX 4051から．後はそのまま．
-\renewcommand{\theenumi}{\Kanji{enumi}}
-\renewcommand{\theenumii}{\rensuji{\@arabic\c@enumii}}
-\renewcommand{\theenumiii}{\rensuji{\@arabic\c@enumiii}}
-\renewcommand{\theenumiv}{\rensuji{\@arabc\c@enumiv}}
+\if@tate
+  \renewcommand{\theenumi}{\Kanji{enumi}}
+  \renewcommand{\theenumii}{\rensuji{\@arabic\c@enumii}}
+  \renewcommand{\theenumiii}{\rensuji{\@arabic\c@enumiii}}
+  \renewcommand{\theenumiv}{\rensuji{\@arabc\c@enumiv}}
+\fi
 \newcommand{\labelenumi}{\theenumi}
 \newcommand{\labelenumii}{\theenumii}
 \newcommand{\labelenumiii}{\theenumiii}
@@ -2425,6 +2427,7 @@
       {\settowidth\labelwidth{\@biblabel{#1}}%
       \leftmargin\labelwidth
       \advance\leftmargin\labelsep
+      \itemindent=0pt
       \@openbib@code
       \usecounter{enumiv}%
       \let\p@enumiv\@empty

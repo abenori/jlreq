@@ -12,13 +12,13 @@
 % 振分け処理
 % 表
 \showboxdepth=100
-\showboxbreadth=100
+\showboxbreadth=1000
 %\tracingonline=1
 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{jlreq}[2016/01/01 jlreq]
 \RequirePackage{xkeyval}
-\RequirePackage{everyhook,etoolbox,ifthen}
+\RequirePackage{everyhook,filehook,etoolbox,ifthen}
 
 %. helper1
 \newdimen\jlreq@tempdima
@@ -1754,6 +1754,238 @@
   \def\@makesidemark{\@makefnmark}
 \fi
 
+%.. 割注（3.4）
+\newcommand{\jlreq@warichu@kakkofontsize}{%
+  \fontsize{\numexpr \warichusize * 2\relax\jlreq@mpt}{\numexpr \warichusize * 2\relax\jlreq@mpt}%
+  \selectfont
+}
+
+\newcommand{\jlreq@warichu@fontsize}{%
+  \fontsize{\warichusize\jlreq@mpt}{\warichusize\jlreq@mpt}%
+  \selectfont
+}
+
+\newcommand{\warichusize}{6} % 割注の文字サイズ
+\let\jlreq@warichu@autolinebreak=\\% 計測時は\linebreakより\\の方が安定する．悩ましい……．
+
+% 割注を入れるための命令．\warichu{割注}で使う．
+% 改行位置は自動で計算されるが，常に正しいとは限らない．
+% \warichu*は自動で改行されない．\\で改行位置を指定する．
+\newif\ifjlreq@inwarichu
+\jlreq@inwarichufalse
+\newcommand*{\warichu}{%
+  \ifjlreq@inwarichu\ClassError{jlreq}{\string\warichu\space can't be nested}{\@ehc}\fi
+  \jlreq@inwarichutrue
+  \@ifstar\jlreq@warichu@noauto\jlreq@warichu@auto}
+
+\newcommand*{\jlreq@warichu@auto}[1]{%
+  % 割注初め括弧の前の場所を保存
+  \jlreq@savepos@for@rest@linewidth
+  % \jlreq@tempdimbに，現在行の残り長さを入れる
+  \jlreq@tempdimb=\jlreq@rest@linewidth
+  % 括弧の分を引いたものが，割注の使える長さ
+  \setbox\@tempboxa=\hbox{\jlreq@warichu@kakkofontsize\inhibitglue\jlreq@open@bracket@before@space（\inhibitglue}%
+  \addtolength{\jlreq@tempdimb}{-\wd\@tempboxa}%
+  {\jlreq@warichu@kakkofontsize\inhibitglue \jlreq@open@bracket@before@space（}%
+  % 普通に並べた長さを計測し，その半分から始める
+  \setbox\@tempboxa=\hbox{\jlreq@warichu@fontsize #1}%
+  \jlreq@tempdimc=\wd\@tempboxa
+  \divide\jlreq@tempdimc by 2\relax
+  % \@tempcntbに，この長さで計測した場合の行数を入れる
+  \ifdim\jlreq@tempdimc<\jlreq@tempdimb\@tempcntb=2\relax
+  \else
+    \jlreq@tempdima=\dimexpr\jlreq@tempdimc - \jlreq@tempdimb\relax
+    \divide\jlreq@tempdima\linewidth
+    \@tempcntb=\number\jlreq@tempdima
+    \multiply\@tempcntb by 2\relax
+    \advance\@tempcntb by 4\relax
+  \fi
+  % \jlreq@parshapeargに\parshapeに指定する書式の最後以外を入れる．
+  \ifnum\@tempcntb>2\relax
+    \edef\jlreq@parshapearg{0pt \the\jlreq@tempdimb\space 0pt \the\jlreq@tempdimb}%
+    \@tempcnta=4\relax
+    \@whilenum\@tempcnta<\@tempcntb\do{%
+      \edef\jlreq@parshapearg{\jlreq@parshapearg\space 0pt \the\linewidth\space 0pt \the\linewidth}%
+      \advance\@tempcnta by 2\relax
+    }%
+    \setlength{\jlreq@tempdimc}{\dimexpr\jlreq@tempdimc - \jlreq@tempdimb - \linewidth * \numexpr(\@tempcntb - 4)/2\relax\relax}%
+  \else
+    \def\jlreq@parshapearg{}%
+  \fi
+  % 行数を伸ばしつつ良いところを探していく
+  \@whilenum\@tempcntb<1001\do{%
+    \ifnum\@tempcntb>2\jlreq@tempdimb=\linewidth\fi
+    \edef\@tempb{\the\@tempcntb}%
+    \jlreq@warichu@determinelength{#1}{\jlreq@warichu@fontsize}{\jlreq@parshapearg}{2}{\@tempb}{\jlreq@tempdimc}{\jlreq@tempdimb}%
+    \@tempcntb=\@tempb
+    \ifnum\@tempcntb>999\relax% ループが長すぎる
+      \global\setbox\jlreq@resultbox=\voidb@x%
+      \@tempcntb=1001\relax
+    \fi
+    \ifvoid\jlreq@resultbox\else% 成功
+      \edef\jlreq@warichu@lines{\the\@tempcntb}% 行数を保存
+      \@tempcntb=1001\relax
+    \fi
+    \advance\@tempcntb by 2\relax
+    \edef\jlreq@parshapearg{\jlreq@parshapearg 0pt \the\jlreq@tempdimb 0pt \the\jlreq@tempdimb}%
+  }%
+  \ifvoid\jlreq@resultbox
+    \ClassWarning{jlreq}{\string\warichu\space failed, maybe a bug}%
+  \else
+    \@tempcnta=0\relax
+    \splittopskip=0pt\relax
+    \splitmaxdepth=\maxdimen
+    % 現在行の残り長さを思い出す
+    \jlreq@tempdimb=\jlreq@rest@linewidth
+    \setbox\@tempboxa=\hbox{\jlreq@warichu@kakkofontsize\inhibitglue\jlreq@open@bracket@before@space（\inhibitglue}%
+    \addtolength{\jlreq@tempdimb}{-\wd\@tempboxa}%
+    \setbox\@tempboxa=\box\jlreq@resultbox
+    \@whilenum\@tempcnta<\jlreq@warichu@lines\do{%
+      \ifnum\@tempcnta>0\relax\jlreq@warichu@autolinebreak\fi
+      % \jlreq@tempdimaに今の行の長さを入れる
+      \ifnum\@tempcnta<\numexpr\jlreq@warichu@lines - 2\relax
+        \ifnum\@tempcnta=0\jlreq@tempdima=\jlreq@tempdimb
+        \else\jlreq@tempdima=\linewidth\fi
+      \else
+        \jlreq@tempdima=-1pt\relax
+      \fi
+      {%
+        \jlreq@warichu@fontsize
+        \setbox\jlreq@tempboxa=\vsplit\@tempboxa to \dimexpr 2\baselineskip - 0.001pt\relax
+        % 改行を\\でしている場合には，割注の長さを計測した物に長さに強制する
+        \jlreq@getlastbox{\jlreq@tempboxa}%
+        \setbox\jlreq@tempboxb=\box\jlreq@resultbox
+        \jlreq@getlastbox{\jlreq@tempboxa}%
+        \setbox\jlreq@tempboxa=\box\jlreq@resultbox
+        \ifx\jlreq@warichu@autolinebreak\\\relax
+          \ifdim\jlreq@tempdima>0pt\relax
+            \setbox\jlreq@tempboxa=\vbox{%
+              \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxa}%
+              \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxb}}%
+          \else
+            \setbox\jlreq@tempboxa=\vbox{%
+              \hbox{\unhbox\jlreq@tempboxa}%
+              \hbox{\unhbox\jlreq@tempboxb}}%
+          \fi
+        \else
+          \setbox\jlreq@tempboxa=\vbox{%
+            \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxa}%
+            \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxb}}%
+        \fi
+        \ht\jlreq@tempboxa=\dimexpr(\ht\jlreq@tempboxa + \dp\jlreq@tempboxa)/2\relax
+        \dp\jlreq@tempboxa=\ht\jlreq@tempboxa
+        \hbox{\box\jlreq@tempboxa}%
+      }%
+      \advance\@tempcnta by 2\relax
+    }%
+  \fi
+  \jlreq@warichu@endwarichu
+}
+
+\newcommand*{\jlreq@warichu@noauto}[1]{%
+  {\jlreq@warichu@kakkofontsize
+  \inhibitglue \jlreq@open@bracket@before@space（}%
+  \jlreq@warichu@noauto@#1\\\jlreq@endmark\jlreq@endmark
+  \jlreq@warichu@endwarichu
+}
+
+\def\jlreq@warichu@noauto@#1\\#2#3\jlreq@endmark{%
+  \jlreq@warichu@noauto@@#1&\jlreq@endmark\jlreq@endmark
+  \ifx#2\jlreq@endmark\def\jlreq@next{}\else\linebreak\def\jlreq@next{\jlreq@warichu@noauto@#2#3\jlreq@endmark}\fi
+  \jlreq@next
+}
+
+\def\jlreq@warichu@noauto@@#1&#2#3\jlreq@endmark{%
+  \ifx#2\jlreq@endmark
+    \setbox\@tempboxa=\hbox{\jlreq@warichu@fontsize #1}%
+    \jlreq@tempdimc=\wd\@tempboxa
+    \divide\jlreq@tempdimc by 2\relax
+    \jlreq@warichu@determinelength{#1}{\jlreq@warichu@fontsize}{}{2}{2}{\jlreq@tempdimc}{\maxdimen}%
+    \ifvoid\jlreq@resultbox\else
+      {%
+        \jlreq@tempboxa=\hbox{\jlreq@warichu@fontsize\box\jlreq@resultbox}%
+        \ht\jlreq@tempboxa=\dimexpr(\ht\jlreq@tempboxa + \dp\jlreq@tempboxa)/2\relax
+        \dp\jlreq@tempboxa=\ht\jlreq@tempboxa
+        \box\jlreq@tempboxa
+      }%
+    \fi
+    \def\jlreq@next{}%
+  \else
+    \def\jlreq@next{\jlreq@warichu@noauto@@@{#1}#2#3}%
+  \fi
+  \jlreq@next
+}
+
+\def\jlreq@warichu@noauto@@@#1#2&\jlreq@endmark{%
+  {%
+    \setbox\@tempboxa=\hbox{\vbox{\hbox{#1}\hbox{#2}}}%
+    \ht\tempboxa=\dimexpr(\ht\@tempboxa + \dp\@tempboxa)/2\relax
+    \dp\tempboxa=\dimexpr(\ht\@tempboxa + \dp\@tempboxa)/2\relax
+    \box\@tempboxa
+  }%
+}
+
+\newcommand{\jlreq@warichu@endwarichu}{%
+  \jlreq@inwarichufalse
+  {\jlreq@warichu@kakkofontsize\hbox to .5\zh{）}\inhibitglue}%
+}
+
+% \jlreq@warichu@determinelength{テキスト(1)}{書式指定(2)}{\parshape指定(3)}{調整に使う行数(4)}{成功行数(5)}{最小長さ(6)}{最大長さ(7)}
+% \jlreq@resultboxに整形結果を返す．見つからなかったらvoid
+\newcommand{\jlreq@warichu@determinelength}[7]{%
+%  \message{#1 の試行開始，行数 = #5, \the#6 から \the#7まで}%
+  \@tempcnta=1\relax
+  \def\@tempa{}%
+  \@whilenum\@tempcnta<#4\do{%
+    \expandafter\def\expandafter\@tempa\expandafter{\@tempa 0pt \the\jlreq@tempdima}%
+    \advance\@tempcnta by 1\relax
+  }%
+  \@tempcnta=0\relax
+  \jlreq@tempdima=#6\relax
+  % 最後の行を少しずつ伸ばしていく
+  \@whilenum\@tempcnta<1000\do{%
+    \ifnum\@tempcnta>999\relax% ループが長すぎる
+      \global\setbox\jlreq@resultbox=\voidb@x%
+      \@tempcnta=1001\relax
+    \else
+      \setbox\@tempboxa=\vbox{#2%
+        \vbadness=10000\hbadness=10000\vfuzz=\maxdimen\hfuzz=\maxdimen
+        \parindent=0pt\leftskip=0pt\rightskip=0pt\relax
+        \parshape #5 #3 \@tempa 0pt \the\maxdimen
+        #1\par\global\@tempcntb=\prevgraf}%
+%      \message{\string\jlreq@tempdima = \the\jlreq@tempdima で試行，行数は\the\@tempcntb , 書式 #5 #3 \@tempa 0pt \the\maxdimen}%
+    \fi
+    \jlreq@getlastbox{\@tempboxa}%
+    \setbox\jlreq@tempboxa=\box\jlreq@resultbox
+    \ifnum\@tempcntb<#5\relax% 行数が達していないならOK
+%      \message{行数 = \the\@tempcntb により確定}
+      \global\setbox\jlreq@resultbox=\vbox{#2%
+        \unvbox\@tempboxa\hbox{\unhbox\jlreq@tempboxa\unskip\unskip\unpenalty}%
+        \@whilenum\@tempcntb<#5\do{\hbox{}\advance\@tempcntb by 1}}%
+      \@tempcnta=1001\relax
+    \else
+      % そうでない場合は最後の二行の長さを比較する
+      \jlreq@getlastbox{\@tempboxa}%
+      \setbox\jlreq@tempboxb=\box\jlreq@resultbox
+%      \message{最終行の長さ \the\wd\jlreq@tempboxa, その前の長さ \the\wd\jlreq@tempboxb}%
+      \ifdim\wd\jlreq@tempboxa>\wd\jlreq@tempboxb
+        \advance\jlreq@tempdima by 0.3pt\relax
+      \else
+        % 後ろが短いのでOK
+        \global\setbox\jlreq@resultbox=\vbox{#2\unvbox\@tempboxa\box\jlreq@tempboxb\box\jlreq@tempboxa}%
+        \jlreq@resultdimen=\jlreq@tempdima
+        \@tempcnta=1001\relax
+      \fi
+    \fi
+    \ifdim\jlreq@tempdima>#7\relax
+      \global\setbox\jlreq@resultbox=\box\voidb@x
+      \@tempcnta=1001\relax
+    \fi
+    \advance\@tempcnta by 1\relax
+  }%
+}
+
+
 %. ページスタイル．
 % とりあえず脇に縦書きで配置するのは無視する．
 % メモ：
@@ -2489,243 +2721,26 @@
     \fi
   }}}
 
-% ルビ
+%. ルビ
 \ifx l\jlreq@engine
   \RequirePackage{luatexja-ruby}
 \else
   \RequirePackage{pxrubrica}
 \fi
 
-% 割注: 3.4
-\newcommand{\jlreq@warichu@kakkofontsize}{%
-  \fontsize{\numexpr \warichusize * 2\relax\jlreq@mpt}{\numexpr \warichusize * 2\relax\jlreq@mpt}%
-  \selectfont
+%. 定理環境
+\def\@begintheorem#1#2{\topsep=1\baselineskip %とりあえず前後に一行分のアキ
+  \trivlist\labelsep=1\jlreq@mol
+   \item[\hskip \labelsep{\gtfamily\bfseries #1\ #2}]}
+\def\@opargbegintheorem#1#2#3{\topsep=1\baselineskip
+  \trivlist\labelsep=1\jlreq@mol
+  \item[\hskip \labelsep{\gtfamily\bfseries #1\ #2（#3）}]}
+
+\AtEndOfPackageFile*{amsthm}{%
+  \newtheoremstyle{jlreq}{1\baselineskip}{1\baselineskip}{\normalfont}{}{\bfseries\gtfamily\sffamily}{}{1\zw}{\thmname{#1}\thmnumber{\ #2}\thmnote{ (#3)}}
+  \theoremstyle{jlreq}
 }
 
-\newcommand{\jlreq@warichu@fontsize}{%
-  \fontsize{\warichusize\jlreq@mpt}{\warichusize\jlreq@mpt}%
-  \selectfont
-}
-
-\newcommand{\warichusize}{6} % 割注の文字サイズ
-\let\jlreq@warichu@autolinebreak=\\% 計測時は\linebreakより\\の方が安定する．悩ましい……．
-
-% 割注を入れるための命令．\warichu{割注}で使う．
-% 改行位置は自動で計算されるが，常に正しいとは限らない．
-% \warichu*は自動で改行されない．\\で改行位置を指定する．
-\newif\ifjlreq@inwarichu
-\jlreq@inwarichufalse
-\newcommand*{\warichu}{%
-  \ifjlreq@inwarichu\ClassError{jlreq}{\string\warichu\space can't be nested}{\@ehc}\fi
-  \jlreq@inwarichutrue
-  \@ifstar\jlreq@warichu@noauto\jlreq@warichu@auto}
-
-\newcommand*{\jlreq@warichu@auto}[1]{%
-  % 割注初め括弧の前の場所を保存
-  \jlreq@savepos@for@rest@linewidth
-  % \jlreq@tempdimbに，現在行の残り長さを入れる
-  \jlreq@tempdimb=\jlreq@rest@linewidth
-  % 括弧の分を引いたものが，割注の使える長さ
-  \setbox\@tempboxa=\hbox{\jlreq@warichu@kakkofontsize\inhibitglue\jlreq@open@bracket@before@space（\inhibitglue}%
-  \addtolength{\jlreq@tempdimb}{-\wd\@tempboxa}%
-  {\jlreq@warichu@kakkofontsize\inhibitglue \jlreq@open@bracket@before@space（}%
-  % 普通に並べた長さを計測し，その半分から始める
-  \setbox\@tempboxa=\hbox{\jlreq@warichu@fontsize #1}%
-  \jlreq@tempdimc=\wd\@tempboxa
-  \divide\jlreq@tempdimc by 2\relax
-  % \@tempcntbに，この長さで計測した場合の行数を入れる
-  \ifdim\jlreq@tempdimc<\jlreq@tempdimb\@tempcntb=2\relax
-  \else
-    \jlreq@tempdima=\dimexpr\jlreq@tempdimc - \jlreq@tempdimb\relax
-    \divide\jlreq@tempdima\linewidth
-    \@tempcntb=\number\jlreq@tempdima
-    \multiply\@tempcntb by 2\relax
-    \advance\@tempcntb by 4\relax
-  \fi
-  % \jlreq@parshapeargに\parshapeに指定する書式の最後以外を入れる．
-  \ifnum\@tempcntb>2\relax
-    \edef\jlreq@parshapearg{0pt \the\jlreq@tempdimb\space 0pt \the\jlreq@tempdimb}%
-    \@tempcnta=4\relax
-    \@whilenum\@tempcnta<\@tempcntb\do{%
-      \edef\jlreq@parshapearg{\jlreq@parshapearg\space 0pt \the\linewidth\space 0pt \the\linewidth}%
-      \advance\@tempcnta by 2\relax
-    }%
-    \setlength{\jlreq@tempdimc}{\dimexpr\jlreq@tempdimc - \jlreq@tempdimb - \linewidth * \numexpr(\@tempcntb - 4)/2\relax\relax}%
-  \else
-    \def\jlreq@parshapearg{}%
-  \fi
-  % 行数を伸ばしつつ良いところを探していく
-  \@whilenum\@tempcntb<1001\do{%
-    \ifnum\@tempcntb>2\jlreq@tempdimb=\linewidth\fi
-    \edef\@tempb{\the\@tempcntb}%
-    \jlreq@warichu@determinelength{#1}{\jlreq@warichu@fontsize}{\jlreq@parshapearg}{2}{\@tempb}{\jlreq@tempdimc}{\jlreq@tempdimb}%
-    \@tempcntb=\@tempb
-    \ifnum\@tempcntb>999\relax% ループが長すぎる
-      \global\setbox\jlreq@resultbox=\voidb@x%
-      \@tempcntb=1001\relax
-    \fi
-    \ifvoid\jlreq@resultbox\else% 成功
-      \edef\jlreq@warichu@lines{\the\@tempcntb}% 行数を保存
-      \@tempcntb=1001\relax
-    \fi
-    \advance\@tempcntb by 2\relax
-    \edef\jlreq@parshapearg{\jlreq@parshapearg 0pt \the\jlreq@tempdimb 0pt \the\jlreq@tempdimb}%
-  }%
-  \ifvoid\jlreq@resultbox
-    \ClassWarning{jlreq}{\string\warichu\space failed, maybe a bug}%
-  \else
-    \@tempcnta=0\relax
-    \splittopskip=0pt\relax
-    \splitmaxdepth=\maxdimen
-    % 現在行の残り長さを思い出す
-    \jlreq@tempdimb=\jlreq@rest@linewidth
-    \setbox\@tempboxa=\hbox{\jlreq@warichu@kakkofontsize\inhibitglue\jlreq@open@bracket@before@space（\inhibitglue}%
-    \addtolength{\jlreq@tempdimb}{-\wd\@tempboxa}%
-    \setbox\@tempboxa=\box\jlreq@resultbox
-    \@whilenum\@tempcnta<\jlreq@warichu@lines\do{%
-      \ifnum\@tempcnta>0\relax\jlreq@warichu@autolinebreak\fi
-      % \jlreq@tempdimaに今の行の長さを入れる
-      \ifnum\@tempcnta<\numexpr\jlreq@warichu@lines - 2\relax
-        \ifnum\@tempcnta=0\jlreq@tempdima=\jlreq@tempdimb
-        \else\jlreq@tempdima=\linewidth\fi
-      \else
-        \jlreq@tempdima=-1pt\relax
-      \fi
-      {%
-        \jlreq@warichu@fontsize
-        \setbox\jlreq@tempboxa=\vsplit\@tempboxa to \dimexpr 2\baselineskip - 0.001pt\relax
-        % 改行を\\でしている場合には，割注の長さを計測した物に長さに強制する
-        \jlreq@getlastbox{\jlreq@tempboxa}%
-        \setbox\jlreq@tempboxb=\box\jlreq@resultbox
-        \jlreq@getlastbox{\jlreq@tempboxa}%
-        \setbox\jlreq@tempboxa=\box\jlreq@resultbox
-        \ifx\jlreq@warichu@autolinebreak\\\relax
-          \ifdim\jlreq@tempdima>0pt\relax
-            \setbox\jlreq@tempboxa=\vbox{%
-              \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxa}%
-              \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxb}}%
-          \else
-            \setbox\jlreq@tempboxa=\vbox{%
-              \hbox{\unhbox\jlreq@tempboxa}%
-              \hbox{\unhbox\jlreq@tempboxb}}%
-          \fi
-        \else
-          \setbox\jlreq@tempboxa=\vbox{%
-            \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxa}%
-            \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxb}}%
-        \fi
-        \ht\jlreq@tempboxa=\dimexpr(\ht\jlreq@tempboxa + \dp\jlreq@tempboxa)/2\relax
-        \dp\jlreq@tempboxa=\ht\jlreq@tempboxa
-        \hbox{\box\jlreq@tempboxa}%
-      }%
-      \advance\@tempcnta by 2\relax
-    }%
-  \fi
-  \jlreq@warichu@endwarichu
-}
-
-\newcommand*{\jlreq@warichu@noauto}[1]{%
-  {\jlreq@warichu@kakkofontsize
-  \inhibitglue \jlreq@open@bracket@before@space（}%
-  \jlreq@warichu@noauto@#1\\\jlreq@endmark\jlreq@endmark
-  \jlreq@warichu@endwarichu
-}
-
-\def\jlreq@warichu@noauto@#1\\#2#3\jlreq@endmark{%
-  \jlreq@warichu@noauto@@#1&\jlreq@endmark\jlreq@endmark
-  \ifx#2\jlreq@endmark\def\jlreq@next{}\else\linebreak\def\jlreq@next{\jlreq@warichu@noauto@#2#3\jlreq@endmark}\fi
-  \jlreq@next
-}
-
-\def\jlreq@warichu@noauto@@#1&#2#3\jlreq@endmark{%
-  \ifx#2\jlreq@endmark
-    \setbox\@tempboxa=\hbox{\jlreq@warichu@fontsize #1}%
-    \jlreq@tempdimc=\wd\@tempboxa
-    \divide\jlreq@tempdimc by 2\relax
-    \jlreq@warichu@determinelength{#1}{\jlreq@warichu@fontsize}{}{2}{2}{\jlreq@tempdimc}{\maxdimen}%
-    \ifvoid\jlreq@resultbox\else
-      {%
-        \jlreq@tempboxa=\hbox{\jlreq@warichu@fontsize\box\jlreq@resultbox}%
-        \ht\jlreq@tempboxa=\dimexpr(\ht\jlreq@tempboxa + \dp\jlreq@tempboxa)/2\relax
-        \dp\jlreq@tempboxa=\ht\jlreq@tempboxa
-        \box\jlreq@tempboxa
-      }%
-    \fi
-    \def\jlreq@next{}%
-  \else
-    \def\jlreq@next{\jlreq@warichu@noauto@@@{#1}#2#3}%
-  \fi
-  \jlreq@next
-}
-
-\def\jlreq@warichu@noauto@@@#1#2&\jlreq@endmark{%
-  {%
-    \setbox\@tempboxa=\hbox{\vbox{\hbox{#1}\hbox{#2}}}%
-    \ht\tempboxa=\dimexpr(\ht\@tempboxa + \dp\@tempboxa)/2\relax
-    \dp\tempboxa=\dimexpr(\ht\@tempboxa + \dp\@tempboxa)/2\relax
-    \box\@tempboxa
-  }%
-}
-
-\newcommand{\jlreq@warichu@endwarichu}{%
-  \jlreq@inwarichufalse
-  {\jlreq@warichu@kakkofontsize\hbox to .5\zh{）}\inhibitglue}%
-}
-
-% \jlreq@warichu@determinelength{テキスト(1)}{書式指定(2)}{\parshape指定(3)}{調整に使う行数(4)}{成功行数(5)}{最小長さ(6)}{最大長さ(7)}
-% \jlreq@resultboxに整形結果を返す．見つからなかったらvoid
-\newcommand{\jlreq@warichu@determinelength}[7]{%
-%  \message{#1 の試行開始，行数 = #5, \the#6 から \the#7まで}%
-  \@tempcnta=1\relax
-  \def\@tempa{}%
-  \@whilenum\@tempcnta<#4\do{%
-    \expandafter\def\expandafter\@tempa\expandafter{\@tempa 0pt \the\jlreq@tempdima}%
-    \advance\@tempcnta by 1\relax
-  }%
-  \@tempcnta=0\relax
-  \jlreq@tempdima=#6\relax
-  % 最後の行を少しずつ伸ばしていく
-  \@whilenum\@tempcnta<1000\do{%
-    \ifnum\@tempcnta>999\relax% ループが長すぎる
-      \global\setbox\jlreq@resultbox=\voidb@x%
-      \@tempcnta=1001\relax
-    \else
-      \setbox\@tempboxa=\vbox{#2%
-        \vbadness=10000\hbadness=10000\vfuzz=\maxdimen\hfuzz=\maxdimen
-        \parindent=0pt\leftskip=0pt\rightskip=0pt\relax
-        \parshape #5 #3 \@tempa 0pt \the\maxdimen
-        #1\par\global\@tempcntb=\prevgraf}%
-%      \message{\string\jlreq@tempdima = \the\jlreq@tempdima で試行，行数は\the\@tempcntb , 書式 #5 #3 \@tempa 0pt \the\maxdimen}%
-    \fi
-    \jlreq@getlastbox{\@tempboxa}%
-    \setbox\jlreq@tempboxa=\box\jlreq@resultbox
-    \ifnum\@tempcntb<#5\relax% 行数が達していないならOK
-%      \message{行数 = \the\@tempcntb により確定}
-      \global\setbox\jlreq@resultbox=\vbox{#2%
-        \unvbox\@tempboxa\hbox{\unhbox\jlreq@tempboxa\unskip\unskip\unpenalty}%
-        \@whilenum\@tempcntb<#5\do{\hbox{}\advance\@tempcntb by 1}}%
-      \@tempcnta=1001\relax
-    \else
-      % そうでない場合は最後の二行の長さを比較する
-      \jlreq@getlastbox{\@tempboxa}%
-      \setbox\jlreq@tempboxb=\box\jlreq@resultbox
-%      \message{最終行の長さ \the\wd\jlreq@tempboxa, その前の長さ \the\wd\jlreq@tempboxb}%
-      \ifdim\wd\jlreq@tempboxa>\wd\jlreq@tempboxb
-        \advance\jlreq@tempdima by 0.3pt\relax
-      \else
-        % 後ろが短いのでOK
-        \global\setbox\jlreq@resultbox=\vbox{#2\unvbox\@tempboxa\box\jlreq@tempboxb\box\jlreq@tempboxa}%
-        \jlreq@resultdimen=\jlreq@tempdima
-        \@tempcnta=1001\relax
-      \fi
-    \fi
-    \ifdim\jlreq@tempdima>#7\relax
-      \global\setbox\jlreq@resultbox=\box\voidb@x
-      \@tempcnta=1001\relax
-    \fi
-    \advance\@tempcnta by 1\relax
-  }%
-}
 
 % デフォルト設定
 \newcommand{\prepartname}{第}
@@ -2745,6 +2760,7 @@
   \twocolumn
 \else
   \onecolumn
+  \raggedbottom
 \fi
 \normalmarginpar
 \@mparswitchfalse

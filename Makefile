@@ -61,10 +61,10 @@ u%.vf: u%.tfm
 	makejvf -i $< rml.tfm
 
 u%.tfm: u%.pl
-	uppltotf $< $@
+	uppltotf -kanji=uptex $< $@
 
 %.tfm: %.pl
-	ppltotf $< $@
+	ppltotf -kanji=utf8 $< $@
 
 %g-v.tfm: %-v.tfm
 	cp $< $@

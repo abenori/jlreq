@@ -38,6 +38,7 @@
 \newbox\jlreq@resultbox
 
 \def\jlreq@uniqtoken{\jlreq@uniqtoken}
+\def\jlreq@endmark{\jlreq@endmark}
 
 % #1内の#2を#3に変換し#4に入れる
 \def\jlreq@replace#1#2#3#4{%
@@ -160,14 +161,14 @@
 \def\jlreq@parsekeyval#1#2{%
   \begingroup
     \def\jlreq@do{}%
-    \jlreq@@parsekeyval#1\jlreq@uniqtoken
+    \jlreq@@parsekeyval#1\jlreq@endmark
     \setkeys{jlreq@key}{#2}%
   \expandafter\endgroup
   \jlreq@do
 }
 \def\jlreq@@parsekeyval#1{%
   \def\jlreq@tempa{#1}%
-  \def\jlreq@tempb{\jlreq@uniqtoken}%
+  \def\jlreq@tempb{\jlreq@endmark}%
   \ifx\jlreq@tempa\jlreq@tempb
     \def\@tempa{}%
   \else
@@ -383,6 +384,8 @@
 \ifx l\jlreq@engine\else
   \epTeXinputencoding utf8
   \def\zw{zw}\def\zh{zh}
+  % http://oku.edu.mie-u.ac.jp/tex/mod/forum/discuss.php?d=1508&parent=8435
+  \if@tate\AtEndPreamble{\par}\fi
 \fi
 \def\jlreq@tategumi@message{《縦組モード》}
 
@@ -1016,7 +1019,7 @@
 
 % デフォルト値は縦横ともにが0.5倍．
 % \textwidth：縦書きは縦，横書きは横
-\@tempdima=1\zh
+\@tempdima=1\jlreq@mol
 \ifx\jlreq@option@line@length\@empty
   \if@tate
     \setlength{\textwidth}{0.75\paperheight}
@@ -1386,7 +1389,7 @@
 
 \newcommand*{\DeclareCutinHeading}[3]{%
   \begingroup
-    \def\jlreq@fontcommand{\bfseries\gtfamily}%
+    \def\jlreq@fontcommand{\headfont}%
     \def\jlreq@onelinemax{6\jlreq@fontsize}%
     \def\jlreq@twolinemax{20\jlreq@fontsize}%
     \def\jlreq@indent{0}%
@@ -1434,7 +1437,7 @@
   \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},indent=6,lines=3}
   \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},indent=8,lines=2}
   \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=10,lines=1,before_lines=1}
-  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\bfseries\gtfamily}}}
+  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
   \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
   \renewcommand{\thepart}{\Kanji{part}}
   \renewcommand{\thesection}{\rensuji{\@arabic\c@section}}
@@ -1454,7 +1457,7 @@
   \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},lines=3}
   \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},lines=2}
   \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},lines=1,before_lines=1}
-  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\bfseries\gtfamily}}}
+  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
   \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
   \renewcommand{\thepart}{\@Roman\c@part}
   \renewcommand{\thesection}{\@arabic\c@section}
@@ -1732,7 +1735,7 @@
   \def\@makesidetext#1{\@makefnmark\hspace{0.5\jlreq@mol}#1}
   \def\@makesidemark{\@makefnmark}
 \else
-  \def\jlreq@sidenote@keywordfont{\bfseries\gtfamily}
+  \def\jlreq@sidenote@keywordfont{\headfont}
   \def\jlreq@sidenote@defaultmark{＊}
   \def\sidenote{\jlreq@sidenote}
   \def\sidenotemark{\jlreq@sidenotemark}
@@ -1750,7 +1753,7 @@
     \expandafter\def\csname\jlreq@sidenotemarkname\endcsname{\jlreq@sidenote@defaultmark\inhibitglue\null{\reset@font\jlreq@sidenote@keywordfont\inhibitglue #1}}%
     \@sidenotetext{#2}%
   }
-  \def\@makesidetext#1{{\bfseries\gtfamily\csname\jlreq@sidenotemarkname\endcsname}\hspace*{1\jlreq@mol}#1}
+  \def\@makesidetext#1{{\headfont\csname\jlreq@sidenotemarkname\endcsname}\hspace*{1\jlreq@mol}#1}
   \def\@makesidemark{\@makefnmark}
 \fi
 
@@ -2189,34 +2192,31 @@
   \NewPageStyle{myheadings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center,odd_running_head=\rightmark,even_running_head=\leftmark}
 \fi
 
-
-
-% フロート関連
-% 4.3.3.d
-\setlength{\floatsep}{1\zh plus 1\zh}
-\setlength{\textfloatsep}{1\zw plus \baselineskip}
-\setlength{\intextsep}{\floatsep}
-\setlength{\dblfloatsep}{\floatsep}
-\setlength{\dbltextfloatsep}{\textfloatsep}
+%. フロート関連
+% 4.3.3.dの例，縦組みの時だけど横にも適用……
+\setlength{\floatsep}{1\jlreq@gol plus 1\jlreq@gol}
+\setlength{\textfloatsep}{1\jlreq@gol plus \baselineskip}
+\intextsep=\textfloatsep
+\dblfloatsep=\floatsep
+\dbltextfloatsep=\textfloatsep
 % 残りはデフォルトにしておく．
 
 % 4.3.1 注4
+\newlength\abovecaptionskip
+\newlength\belowcaptionskip
 \newcommand{\@makecaption}[2]{{%
   \reset@font\small\headfont
   \vskip\abovecaptionskip
-  \jlreq@ifydir{\sbox\@tempboxa{#1: #2}}{\sbox\@tempboxa{#1\hskip1\zw#2}}%
+  \sbox\@tempboxa{#1\hskip 1\jlreq@mol#2}%
   \ifdim \wd\@tempboxa >\hsize
-    \jlreq@ifydir{#1: #2\relax\par}{#1\hskip1\zw#2\relax\par}%
+    #1\hskip1\jlreq@mol#2\relax\par
   \else
-    \global \@minipagefalse
+    \global\@minipagefalse
     \hbox to\hsize{\hfil\box\@tempboxa\hfil}%
   \fi
   \vskip\belowcaptionskip}}
-% この値はjsclassesから
-\newlength\abovecaptionskip
-\newlength\belowcaptionskip
-\setlength\abovecaptionskip{5\jlreq@mpt}
-\setlength\belowcaptionskip{5\jlreq@mpt}
+\setlength\abovecaptionskip{.5\jlreq@gol}
+\setlength\belowcaptionskip{0pt}
 
 
 % \begin{figure}***\caption{???}\end{figure}を
@@ -2254,35 +2254,40 @@
 %  }
 %}
 
-% figure環境
+%.. figure環境
 \newcounter{figure}
-\renewcommand{\thefigure}{\rensuji{\@arabic\c@figure}}
-\newcommand{\fps@figure}{tbp}
-\newcommand{\ftype@figure}{1}
-\newcommand{\ext@figure}{lof}
-\newcommand{\fnum@figure}{\figurename\thefigure}
-\newenvironment{figure}
-  {\@float{figure}}
-  {\end@float}
-\newenvironment{figure*}
-  {\@dblfloat{figure}}
-  {\end@dblfloat}
+\if@tate
+  \renewcommand*{\thefigure}{\arabic{figure}}
+\else
+  \renewcommand*{\thefigure}{\arabic{figure}}
+\fi
+\newcommand*{\fps@figure}{h}
+\newcommand*{\ftype@figure}{1}
+\newcommand*{\ext@figure}{lof}
+\newcommand*{\fnum@figure}{\figurename\thefigure}
+\newenvironment{figure}{\@float{figure}}{\end@float}
+\newenvironment{figure*}{\@dblfloat{figure}}{\end@dblfloat}
+\newcommand*{\listfigurename}{図目次}
+\newcommand{\figurename}{図}
 \DeclareLayoutCaption{figure}<y>(\floatwidth)[cr]
 %\jlreq@modify@float{figure}
 %\jlreq@modify@float{figure*}
-% table環境
+
+%.. table環境
 \newcounter{table}
-\renewcommand{\thetable}{\rensuji{\@arabic\c@table}}
-\newcommand{\fps@table}{tbp}
-\newcommand{\ftype@table}{2}
-\newcommand{\ext@table}{lot}
-\newcommand{\fnum@table}{\tablename\thetable}
-\newenvironment{table}
-  {\@float{table}}
-  {\end@float}
-\newenvironment{table*}
-  {\@dblfloat{table}}
-  {\end@dblfloat}
+\if@tate
+  \renewcommand*{\thefigure}{\arabic{table}}
+\else
+  \renewcommand*{\thefigure}{\arabic{table}}
+\fi
+\newcommand*{\fps@table}{h}
+\newcommand*{\ftype@table}{2}
+\newcommand*{\ext@table}{lot}
+\newcommand*{\fnum@table}{\tablename\thetable}
+\newenvironment{table}{\@float{table}}{\end@float}
+\newenvironment{table*}{\@dblfloat{table}}{\end@dblfloat}
+\newcommand{\listtablename}{表目次}
+\newcommand{\tablename}{表}
 \DeclareLayoutCaption{table}<y>(\floatwidth)[cr]
 %\jlreq@modify@float{table}
 %\jlreq@modify@float{table*}
@@ -2729,20 +2734,21 @@
 \fi
 
 %. 定理環境
-\def\@begintheorem#1#2{\topsep=1\baselineskip %とりあえず前後に一行分のアキ
+\def\jlreq@theorem@abovebelowspace{1\baselineskip}
+\def\@begintheorem#1#2{\topsep=\jlreq@theorem@abovebelowspace %とりあえず前後に一行分のアキ
   \trivlist\labelsep=1\jlreq@mol
-   \item[\hskip \labelsep{\gtfamily\bfseries #1\ #2}]}
-\def\@opargbegintheorem#1#2#3{\topsep=1\baselineskip
+   \item[\hskip \labelsep{\headfont #1\ #2}]}
+\def\@opargbegintheorem#1#2#3{\topsep=\jlreq@theorem@abovebelowspace
   \trivlist\labelsep=1\jlreq@mol
-  \item[\hskip \labelsep{\gtfamily\bfseries #1\ #2（#3）}]}
+  \item[\hskip \labelsep{\headfont #1\ #2（#3）}]}
 
 \AtEndOfPackageFile*{amsthm}{%
-  \newtheoremstyle{jlreq}{1\baselineskip}{1\baselineskip}{\normalfont}{}{\bfseries\gtfamily\sffamily}{}{1\zw}{\thmname{#1}\thmnumber{\ #2}\thmnote{ (#3)}}
+  \newtheoremstyle{jlreq}{\jlreq@theorem@abovebelowspace}{\jlreq@theorem@abovebelowspace}{\normalfont}{}{\headfont}{}{1\zw}{\thmname{#1}\thmnumber{\ #2}\thmnote{ (#3)}}
   \theoremstyle{jlreq}
   \let\jlreq@original@proof=\proof
   \let\jlreq@original@endproof=\endproof
   \def\proof{\@ifnextchar[{\jlreq@proof}{\jlreq@proof[\proofname]}}
-  \def\jlreq@proof[#1]{\labelsep=1\jlreq@mol\jlreq@original@proof[{\bfseries\gtfamily #1\inhibitglue}\nopunct]}
+  \def\jlreq@proof[#1]{\labelsep=1\jlreq@mol\jlreq@original@proof[{\headfont #1\inhibitglue}\nopunct]}
   \renewcommand{\proofname}{証明}
 }
 
@@ -2751,12 +2757,8 @@
 \newcommand{\prepartname}{第}
 \newcommand{\postpartname}{部}
 \newcommand{\contentsname}{目 次}
-\newcommand{\listfigurename}{図 目 次}
-\newcommand{\listtablename}{表 目 次}
 \newcommand{\refname}{参考文献}
 \newcommand{\indexname}{索 引}
-\newcommand{\figurename}{図}
-\newcommand{\tablename}{表}
 \newcommand{\appendixname}{付 録}
 \newcommand{\abstractname}{概 要}
 \pagestyle{plain}

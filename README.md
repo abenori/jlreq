@@ -6,12 +6,29 @@
 ## 提供されるもの
 クラスファイルjlreq.clsと，横書きLuaTeX-ja用のJFMであるlua-jlreq.luaが用意されています．また，縦書きのJFMやpLaTeX / upLaTeX 用のJFMを生成するいくつかのスクリプトがあります．
 
+## インストール
+`make install`で必要なJFMが生成され，`~/texmf`以下に配置されます．
+
+## `\jlreqsetup`
+いろいろな設定はクラスファイルへのオプションで指定することができますが，一部は`\jlreqsetup`マクロで指定します．keyval形式を受け入れ，例えば
+
+````
+\jlreqsetup{
+  sidenote_mark={
+    mark={＊},
+    headingfont={\gtfamily\bfseries}
+  }
+}
+````
+
+のように指定します．設定できる各項目については以下をご覧ください．
+
 ## 基本版面の設計
 クラスファイルへのオプション（keyval形式）として
 
 * `tate`：縦書き．
-* `line_length` : 一行の長さ（デフォルトは紙の縦幅の0.768倍）実際の値は一文字の長さの整数倍になるように補正されます．
-* `number_of_lines` : 一ページにおける行数（デフォルトは紙の横幅の0.727倍になるような値）．
+* `line_length` : 一行の長さ（デフォルトは紙の縦幅の0.75倍）実際の値は一文字の長さの整数倍になるように補正されます．
+* `number_of_lines` : 一ページにおける行数（デフォルトは紙の横幅の0.75倍になるような値）．
 * `gutter` : 奇数ページにおける右余白，偶数ページにおける左余白（デフォルトは中央寄せになるような値）
 * `head_space` : 天の空き量（デフォルトは中央寄せになるような値）
 * `foot_space` : 地の空き量（デフォルトは中央寄せになるような値）
@@ -68,7 +85,11 @@
 * `odd_running_head`，`even_running_head`：それぞれ奇数ページ，偶数ページの柱を指定します．`_section`のように`_`から始まる名前を指定すると，対応する見出しを出力します．（`_section`だと現在の`\section`を出力する．）
 
 
-## 後注
+## 注
+合印の位置はクラスファイルへのオプションで指定できます．
+`reference_mark=interlinear`とすると行間に，`reference_mark=inline`とすると行中に配置します．デフォルトは`reference_mark=inline`です．
+
+### 後注
 後注は`\endnote`で指定します．`\footnote`と同様の書式です．後注自身の出力はドキュメントクラスへの`endnote_position`オプションにより制御されます．
 
 * `endnote_position=_headings`：（デフォルト）見出しの直前に出力する．
@@ -77,7 +98,27 @@
 
 ``\theendnotes``により明示的に出力を行うこともできます．
 
-## 割注
+### 傍注
+傍注（縦書きでは脚注）は`\sidenote`で指定します．注と本文との対応の方法はドキュメントクラスのオプションで指定します．
+
+* `sidenote_type=number`: 注の番号により対応させる．`\sidenote`の書式は`\footnote`と同様．
+* `sidenote_type=mark`: 見出し文字で対応させる．`\sidenote`の書式は`\sidenote{見出し}{注}`となる．
+
+`sidenote_type=mark`の場合，見出し文字などへの装飾は`\jlreqsetup`に，キー`sidenote_mark`により指定します．指定方法は更にkeyval形式で，次のようになります．
+
+* `mark`: 合印を指定します．
+* `headingfont`: 見出し文字のフォントを指定します．
+
+デフォルトは
+````
+sidenote_mark={
+  mark={＊},
+  headingfont={\gtfamily\bfseries}
+}
+````
+です．
+
+### 割注
 `\warichu`により割注を指定します．行分割位置などは自動で計算されます．`\warichu*`ではこれらの位置を手動で指定できます．書式は
 
 ``\warichu*{(一行目前) & (一行目後)\\ (二行目前) & (二行目後)...}``

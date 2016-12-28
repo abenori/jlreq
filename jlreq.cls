@@ -2739,6 +2739,11 @@
 \AtEndOfPackageFile*{amsthm}{%
   \newtheoremstyle{jlreq}{1\baselineskip}{1\baselineskip}{\normalfont}{}{\bfseries\gtfamily\sffamily}{}{1\zw}{\thmname{#1}\thmnumber{\ #2}\thmnote{ (#3)}}
   \theoremstyle{jlreq}
+  \let\jlreq@original@proof=\proof
+  \let\jlreq@original@endproof=\endproof
+  \def\proof{\@ifnextchar[{\jlreq@proof}{\jlreq@proof[\proofname]}}
+  \def\jlreq@proof[#1]{\labelsep=1\jlreq@mol\jlreq@original@proof[{\bfseries\gtfamily #1\inhibitglue}\nopunct]}
+  \renewcommand{\proofname}{証明}
 }
 
 

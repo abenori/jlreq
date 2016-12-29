@@ -1019,7 +1019,7 @@
 
 % デフォルト値は縦横ともにが0.5倍．
 % \textwidth：縦書きは縦，横書きは横
-\@tempdima=1\jlreq@mol
+\@tempdima=1\jlreq@fontsize
 \ifx\jlreq@option@line@length\@empty
   \if@tate
     \setlength{\textwidth}{0.75\paperheight}
@@ -1355,7 +1355,7 @@
     \setbox\jlreq@resultbox=\vbox{\parindent=0pt\rightskip=0pt\leftskip=0pt\hbox{#1#6}}%
     \def\jlreq@CutinHeading@linecount{2}%
   \else
-    \jlreq@warichu@determinelength{#6}{#1}{}{\jlreq@CutinHeading@linecount}{\jlreq@CutinHeading@linecount}{\@tempdima}{\linewidth}%
+    \jlreq@inlinenote@determinelength{#6}{#1}{}{\jlreq@CutinHeading@linecount}{\jlreq@CutinHeading@linecount}{\@tempdima}{\linewidth}%
     \def\jlreq@CutinHeading@linecount{3}%
   \fi
   % 普通の一行の高さ/深さに合わせて見出しのボックスを出力
@@ -1420,7 +1420,13 @@
 \@onlypreamble\RenewCutinHeading
 \@onlypreamble\ProvideCutinHeading
 
-\newcommand*{\jlreq@keepbaselineskip}[1]{\jlreq@tempdima=\baselineskip\relax#1\baselineskip=\jlreq@tempdima}
+\newcommand*{\jlreq@keepbaselineskip}[1]{%
+  \begingroup
+    \jlreq@tempdima=\baselineskip
+    \edef\jlreq@do{\unexpanded{#1}\noexpand\baselineskip=\the\jlreq@tempdima}%
+  \expandafter\endgroup
+  \jlreq@do
+}
 
 \setcounter{secnumdepth}{3}
 \newcounter{part}
@@ -1678,7 +1684,7 @@
   \ifdim\marginparwidth>18\jlreq@mol
     \global\marginparwidth=18\jlreq@mol
   \else
-    \@tempdima=1\jlreq@mol
+    \@tempdima=1zw% 1\jlreq@mol
     \global\divide\marginparwidth\@tempdima
     \global\multiply\marginparwidth\@tempdima
   \fi
@@ -1758,40 +1764,40 @@
 \fi
 
 %.. 割注（3.4）
-\newcommand{\jlreq@warichu@kakkofontsize}{%
-  \fontsize{\numexpr \warichusize * 2\relax\jlreq@mpt}{\numexpr \warichusize * 2\relax\jlreq@mpt}%
+\newcommand{\jlreq@inlinenote@kakkofontsize}{%
+  \fontsize{\numexpr \inlinenotesize * 2\relax\jlreq@mpt}{\numexpr \inlinenotesize * 2\relax\jlreq@mpt}%
   \selectfont
 }
 
-\newcommand{\jlreq@warichu@fontsize}{%
-  \fontsize{\warichusize\jlreq@mpt}{\warichusize\jlreq@mpt}%
+\newcommand{\jlreq@inlinenote@fontsize}{%
+  \fontsize{\inlinenotesize\jlreq@mpt}{\inlinenotesize\jlreq@mpt}%
   \selectfont
 }
 
-\newcommand{\warichusize}{6} % 割注の文字サイズ
-\let\jlreq@warichu@autolinebreak=\\% 計測時は\linebreakより\\の方が安定する．悩ましい……．
+\newcommand{\inlinenotesize}{6} % 割注の文字サイズ
+\let\jlreq@inlinenote@autolinebreak=\\% 計測時は\linebreakより\\の方が安定する．悩ましい……．
 
-% 割注を入れるための命令．\warichu{割注}で使う．
+% 割注を入れるための命令．\inlinenote{割注}で使う．
 % 改行位置は自動で計算されるが，常に正しいとは限らない．
-% \warichu*は自動で改行されない．\\で改行位置を指定する．
-\newif\ifjlreq@inwarichu
-\jlreq@inwarichufalse
-\newcommand*{\warichu}{%
-  \ifjlreq@inwarichu\ClassError{jlreq}{\string\warichu\space can't be nested}{\@ehc}\fi
-  \jlreq@inwarichutrue
-  \@ifstar\jlreq@warichu@noauto\jlreq@warichu@auto}
+% \inlinenote*は自動で改行されない．\\で改行位置を指定する．
+\newif\ifjlreq@in@inlinenote
+\jlreq@in@inlinenotefalse
+\newcommand*{\inlinenote}{%
+  \ifjlreq@in@inlinenote\ClassError{jlreq}{\string\inlinenote\space can't be nested}{\@ehc}\fi
+  \jlreq@in@inlinenotetrue
+  \@ifstar\jlreq@inlinenote@noauto\jlreq@inlinenote@auto}
 
-\newcommand*{\jlreq@warichu@auto}[1]{%
+\newcommand*{\jlreq@inlinenote@auto}[1]{%
   % 割注初め括弧の前の場所を保存
   \jlreq@savepos@for@rest@linewidth
   % \jlreq@tempdimbに，現在行の残り長さを入れる
   \jlreq@tempdimb=\jlreq@rest@linewidth
   % 括弧の分を引いたものが，割注の使える長さ
-  \setbox\@tempboxa=\hbox{\jlreq@warichu@kakkofontsize\inhibitglue\jlreq@open@bracket@before@space（\inhibitglue}%
+  \setbox\@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\inhibitglue\jlreq@open@bracket@before@space（\inhibitglue}%
   \addtolength{\jlreq@tempdimb}{-\wd\@tempboxa}%
-  {\jlreq@warichu@kakkofontsize\inhibitglue \jlreq@open@bracket@before@space（}%
+  {\jlreq@inlinenote@kakkofontsize\inhibitglue \jlreq@open@bracket@before@space（}%
   % 普通に並べた長さを計測し，その半分から始める
-  \setbox\@tempboxa=\hbox{\jlreq@warichu@fontsize #1}%
+  \setbox\@tempboxa=\hbox{\jlreq@inlinenote@fontsize #1}%
   \jlreq@tempdimc=\wd\@tempboxa
   \divide\jlreq@tempdimc by 2\relax
   % \@tempcntbに，この長さで計測した場合の行数を入れる
@@ -1819,48 +1825,48 @@
   \@whilenum\@tempcntb<1001\do{%
     \ifnum\@tempcntb>2\jlreq@tempdimb=\linewidth\fi
     \edef\@tempb{\the\@tempcntb}%
-    \jlreq@warichu@determinelength{#1}{\jlreq@warichu@fontsize}{\jlreq@parshapearg}{2}{\@tempb}{\jlreq@tempdimc}{\jlreq@tempdimb}%
+    \jlreq@inlinenote@determinelength{#1}{\jlreq@inlinenote@fontsize}{\jlreq@parshapearg}{2}{\@tempb}{\jlreq@tempdimc}{\jlreq@tempdimb}%
     \@tempcntb=\@tempb
     \ifnum\@tempcntb>999\relax% ループが長すぎる
       \global\setbox\jlreq@resultbox=\voidb@x%
       \@tempcntb=1001\relax
     \fi
     \ifvoid\jlreq@resultbox\else% 成功
-      \edef\jlreq@warichu@lines{\the\@tempcntb}% 行数を保存
+      \edef\jlreq@inlinenote@lines{\the\@tempcntb}% 行数を保存
       \@tempcntb=1001\relax
     \fi
     \advance\@tempcntb by 2\relax
     \edef\jlreq@parshapearg{\jlreq@parshapearg 0pt \the\jlreq@tempdimb 0pt \the\jlreq@tempdimb}%
   }%
   \ifvoid\jlreq@resultbox
-    \ClassWarning{jlreq}{\string\warichu\space failed, maybe a bug}%
+    \ClassWarning{jlreq}{\string\inlinenote\space failed, maybe a bug}%
   \else
     \@tempcnta=0\relax
     \splittopskip=0pt\relax
     \splitmaxdepth=\maxdimen
     % 現在行の残り長さを思い出す
     \jlreq@tempdimb=\jlreq@rest@linewidth
-    \setbox\@tempboxa=\hbox{\jlreq@warichu@kakkofontsize\inhibitglue\jlreq@open@bracket@before@space（\inhibitglue}%
+    \setbox\@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\inhibitglue\jlreq@open@bracket@before@space（\inhibitglue}%
     \addtolength{\jlreq@tempdimb}{-\wd\@tempboxa}%
     \setbox\@tempboxa=\box\jlreq@resultbox
-    \@whilenum\@tempcnta<\jlreq@warichu@lines\do{%
-      \ifnum\@tempcnta>0\relax\jlreq@warichu@autolinebreak\fi
+    \@whilenum\@tempcnta<\jlreq@inlinenote@lines\do{%
+      \ifnum\@tempcnta>0\relax\jlreq@inlinenote@autolinebreak\fi
       % \jlreq@tempdimaに今の行の長さを入れる
-      \ifnum\@tempcnta<\numexpr\jlreq@warichu@lines - 2\relax
+      \ifnum\@tempcnta<\numexpr\jlreq@inlinenote@lines - 2\relax
         \ifnum\@tempcnta=0\jlreq@tempdima=\jlreq@tempdimb
         \else\jlreq@tempdima=\linewidth\fi
       \else
         \jlreq@tempdima=-1pt\relax
       \fi
       {%
-        \jlreq@warichu@fontsize
+        \jlreq@inlinenote@fontsize
         \setbox\jlreq@tempboxa=\vsplit\@tempboxa to \dimexpr 2\baselineskip - 0.001pt\relax
         % 改行を\\でしている場合には，割注の長さを計測した物に長さに強制する
         \jlreq@getlastbox{\jlreq@tempboxa}%
         \setbox\jlreq@tempboxb=\box\jlreq@resultbox
         \jlreq@getlastbox{\jlreq@tempboxa}%
         \setbox\jlreq@tempboxa=\box\jlreq@resultbox
-        \ifx\jlreq@warichu@autolinebreak\\\relax
+        \ifx\jlreq@inlinenote@autolinebreak\\\relax
           \ifdim\jlreq@tempdima>0pt\relax
             \setbox\jlreq@tempboxa=\vbox{%
               \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxa}%
@@ -1882,31 +1888,31 @@
       \advance\@tempcnta by 2\relax
     }%
   \fi
-  \jlreq@warichu@endwarichu
+  \jlreq@inlinenote@endnote
 }
 
-\newcommand*{\jlreq@warichu@noauto}[1]{%
-  {\jlreq@warichu@kakkofontsize
+\newcommand*{\jlreq@inlinenote@noauto}[1]{%
+  {\jlreq@inlinenote@kakkofontsize
   \inhibitglue \jlreq@open@bracket@before@space（}%
-  \jlreq@warichu@noauto@#1\\\jlreq@endmark\jlreq@endmark
-  \jlreq@warichu@endwarichu
+  \jlreq@inlinenote@noauto@#1\\\jlreq@endmark\jlreq@endmark
+  \jlreq@inlinenote@endnote
 }
 
-\def\jlreq@warichu@noauto@#1\\#2#3\jlreq@endmark{%
-  \jlreq@warichu@noauto@@#1&\jlreq@endmark\jlreq@endmark
-  \ifx#2\jlreq@endmark\def\jlreq@next{}\else\linebreak\def\jlreq@next{\jlreq@warichu@noauto@#2#3\jlreq@endmark}\fi
+\def\jlreq@inlinenote@noauto@#1\\#2#3\jlreq@endmark{%
+  \jlreq@inlinenote@noauto@@#1&\jlreq@endmark\jlreq@endmark
+  \ifx#2\jlreq@endmark\def\jlreq@next{}\else\linebreak\def\jlreq@next{\jlreq@inlinenote@noauto@#2#3\jlreq@endmark}\fi
   \jlreq@next
 }
 
-\def\jlreq@warichu@noauto@@#1&#2#3\jlreq@endmark{%
+\def\jlreq@inlinenote@noauto@@#1&#2#3\jlreq@endmark{%
   \ifx#2\jlreq@endmark
-    \setbox\@tempboxa=\hbox{\jlreq@warichu@fontsize #1}%
+    \setbox\@tempboxa=\hbox{\jlreq@inlinenote@fontsize #1}%
     \jlreq@tempdimc=\wd\@tempboxa
     \divide\jlreq@tempdimc by 2\relax
-    \jlreq@warichu@determinelength{#1}{\jlreq@warichu@fontsize}{}{2}{2}{\jlreq@tempdimc}{\maxdimen}%
+    \jlreq@inlinenote@determinelength{#1}{\jlreq@inlinenote@fontsize}{}{2}{2}{\jlreq@tempdimc}{\maxdimen}%
     \ifvoid\jlreq@resultbox\else
       {%
-        \jlreq@tempboxa=\hbox{\jlreq@warichu@fontsize\box\jlreq@resultbox}%
+        \jlreq@tempboxa=\hbox{\jlreq@inlinenote@fontsize\box\jlreq@resultbox}%
         \ht\jlreq@tempboxa=\dimexpr(\ht\jlreq@tempboxa + \dp\jlreq@tempboxa)/2\relax
         \dp\jlreq@tempboxa=\ht\jlreq@tempboxa
         \box\jlreq@tempboxa
@@ -1914,12 +1920,12 @@
     \fi
     \def\jlreq@next{}%
   \else
-    \def\jlreq@next{\jlreq@warichu@noauto@@@{#1}#2#3}%
+    \def\jlreq@next{\jlreq@inlinenote@noauto@@@{#1}#2#3}%
   \fi
   \jlreq@next
 }
 
-\def\jlreq@warichu@noauto@@@#1#2&\jlreq@endmark{%
+\def\jlreq@inlinenote@noauto@@@#1#2&\jlreq@endmark{%
   {%
     \setbox\@tempboxa=\hbox{\vbox{\hbox{#1}\hbox{#2}}}%
     \ht\tempboxa=\dimexpr(\ht\@tempboxa + \dp\@tempboxa)/2\relax
@@ -1928,14 +1934,14 @@
   }%
 }
 
-\newcommand{\jlreq@warichu@endwarichu}{%
-  \jlreq@inwarichufalse
-  {\jlreq@warichu@kakkofontsize\hbox to .5\zh{）}\inhibitglue}%
+\newcommand{\jlreq@inlinenote@endnote}{%
+  \jlreq@in@inlinenotefalse
+  {\jlreq@inlinenote@kakkofontsize\hbox to .5\zh{）}\inhibitglue}%
 }
 
-% \jlreq@warichu@determinelength{テキスト(1)}{書式指定(2)}{\parshape指定(3)}{調整に使う行数(4)}{成功行数(5)}{最小長さ(6)}{最大長さ(7)}
+% \jlreq@inlinenote@determinelength{テキスト(1)}{書式指定(2)}{\parshape指定(3)}{調整に使う行数(4)}{成功行数(5)}{最小長さ(6)}{最大長さ(7)}
 % \jlreq@resultboxに整形結果を返す．見つからなかったらvoid
-\newcommand{\jlreq@warichu@determinelength}[7]{%
+\newcommand{\jlreq@inlinenote@determinelength}[7]{%
 %  \message{#1 の試行開始，行数 = #5, \the#6 から \the#7まで}%
   \@tempcnta=1\relax
   \def\@tempa{}%
@@ -2215,6 +2221,7 @@
     \hbox to\hsize{\hfil\box\@tempboxa\hfil}%
   \fi
   \vskip\belowcaptionskip}}
+% 特に根拠のない値
 \setlength\abovecaptionskip{.5\jlreq@gol}
 \setlength\belowcaptionskip{0pt}
 
@@ -2292,62 +2299,70 @@
 %\jlreq@modify@float{table}
 %\jlreq@modify@float{table*}
 
+%. タイトル周り
+\newenvironment{titlepage}{%
+  \if@twocolumn
+    \@restonecoltrue\onecolumn
+  \else
+    \@restonecolfalse\newpage
+  \fi
+  \thispagestyle{empty}%
+  \setcounter{page}\@ne
+}{%
+  \if@restonecol\twocolumn\else\newpage\fi
+  \if@twoside\else
+    \setcounter{page}\@ne
+  \fi
+}
 
-% \maketitleとかabstractとか．tarticleから．
-\if@titlepage
-  \newcommand{\maketitle}{\begin{titlepage}%
-  \let\footnotesize\small
-  \let\footnoterule\relax
-  \let\thanks\p@thanks
-  \let\footnote\thanks
-  \vbox to\textheight\bgroup\tate\hsize\textwidth
-  \null\vfil
-  \vskip 60\jlreq@mpt
-  \begin{center}%
-    {\LARGE \@title \par}%
-    \vskip 3em%
-    {\Large
-     \lineskip .75em%
+\newcommand{\maketitle}{%
+  \if@titlepage
+    % jarticleとかからあまり変更していない
+    \begin{titlepage}%
+    \let\footnotesize\small
+    \let\footnoterule\relax
+    \let\footnote\thanks
+    \null\vfil
+    \vskip 4\baselineskip
+    \begin{center}%
+      {\LARGE \@title \par}%
+      \vskip\baselineskip%
+      {\Large
+      \lineskip .75em%
       \begin{tabular}[t]{c}%
         \@author
       \end{tabular}\par}%
-      \vskip 1.5em%
-    {\large \@date \par}%       % Set date in \large size.
-  \end{center}\par
-  \vfil{\centering\@thanks}\vfil\null
-  \egroup
-  \end{titlepage}%
-  \setcounter{footnote}{0}%
-  \global\let\thanks\relax
-  \global\let\maketitle\relax
-  \global\let\p@thanks\relax
-  \global\let\@thanks\@empty
-  \global\let\@author\@empty
-  \global\let\@date\@empty
-  \global\let\@title\@empty
-  \global\let\title\relax
-  \global\let\author\relax
-  \global\let\date\relax
-  \global\let\and\relax
-  }%
-\else
-  \newcommand{\maketitle}{\par
-  \begingroup
-    \renewcommand{\thefootnote}{\fnsymbol{footnote}}%
-    \def\@makefnmark{\hbox{\jlreq@ifydir{$\m@th^{\@thefnmark}$}{\hbox{\yoko$\m@th^{\@thefnmark}$}}}}%
-    \long\def\@makefntext##1{\parindent 1\zw\noindent
-      \hbox to 2\zw{\hss\@makefnmark}##1}%
-    \if@twocolumn
-      \ifnum \col@number=\@ne \@maketitle
-      \else \twocolumn[\@maketitle]%
+      \vskip\baselineskip
+      {\large\@date\par}%
+    \end{center}\par
+    \vfil{\centering\@thanks}\vfil\null
+    \end{titlepage}%
+  \else
+    \par
+    \begingroup
+      \renewcommand{\thefootnote}{\fnsymbol{footnote}}%
+      \renewcommand{\@makefnmark}{\hbox{%
+        \jlreq@iftdir{\yoko}{}%
+        \rlap{\@textsuperscript{\normalfont\@thefnmark}}%
+      }}%
+      \if@twocolumn
+        \ifnum\col@number=\@ne
+          \@maketitle
+        \else
+          \twocolumn[\@maketitle]%
+        \fi
+      \else
+        \newpage
+        \global\@topnum\z@
+        \@maketitle
       \fi
-    \else
-      \newpage
-      \global\@topnum\z@   % Prevents figures from going at top of page.
-      \@maketitle
-    \fi
-    \thispagestyle{plain}\@thanks
-  \endgroup
+      % \pagestyle{empty}の時はそのまま．
+      \ifnum0\ifx\@oddhead\@empty\else1\fi\ifx\@evenhead\@empty\else1\fi>0
+        \thispagestyle{plain}%
+      \fi
+      \@thanks
+    \endgroup
+  \fi
   \setcounter{footnote}{0}%
   \global\let\thanks\relax
   \global\let\maketitle\relax
@@ -2360,25 +2375,26 @@
   \global\let\author\relax
   \global\let\date\relax
   \global\let\and\relax
-  }
-  % いい加減……一応行送りを整数倍に．
-  \def\@maketitle{%
+}%
+% \vskipを\baselineskipにしてみた．
+\def\@maketitle{%
   \newpage\null
   \vskip 2\baselineskip%
   \begin{center}%
-  \let\footnote\p@thanks
-    {\@tempdima=\baselineskip\LARGE\baselineskip=\@tempdima \@title \par}%
-    \vskip \baselineskip
-    {\@tempdima=\baselineskip\large\baselineskip=\@tempdima
-      \lineskip .5\zw%
-      \begin{tabular}[t]{c}%
-        \@author
-      \end{tabular}\par}%
-    \vskip \baselineskip
-    {\@tempdima=\baselineskip\large\baselineskip=\@tempdima \@date}%
+  {\jlreq@keepbaselineskip{\LARGE}\@title\par}%
+  \vskip\baselineskip
+  {\jlreq@keepbaselineskip{\large}%
+    \lineskip .5\jlreq@mol
+    \begin{tabular}[t]{c}%
+      \@author
+    \end{tabular}%
+    \par
+  }%
+  \vskip\baselineskip
+  {\jlreq@keepbaselineskip{\large}\@date}%
   \end{center}%
-  \par\vskip \baselineskip}
-\fi
+  \par\vskip\baselineskip}
+
 \if@titlepage
   \newenvironment{abstract}{%
       \titlepage
@@ -2394,7 +2410,7 @@
     \if@twocolumn
       \section*{\abstractname}%
     \else
-      \@tempdima=\baselineskip\small\baselineskip=\@tempdima
+      \jlreq@keepbaselineskip{\small}%
       \begin{center}%
         {\bfseries\abstractname\vspace{-.5\zw}\vspace{\z@}}%
       \end{center}%
@@ -2402,7 +2418,7 @@
     \fi}{\if@twocolumn\else\endquotation\fi}
 \fi
 
-% 箇条書き．cf. JISX4051 8.4
+%. 箇条書き．cf. JISX4051 8.4
 % 用語定義型
 \newenvironment{description}{\list{}{%
   \setlength{\leftmargin}{0\zh}% 下げない
@@ -2698,13 +2714,13 @@
 \newcommand{\indexspace}{\par \vskip 10\jlreq@mpt \@plus5\jlreq@mpt \@minus3\jlreq@mpt\relax}
 
 % なんかいろいろ
-\newif\if西暦 \西暦false
+\newif\if西暦 \西暦true
 \def\西暦{\西暦true}
 \def\和暦{\西暦false}
 \newcount\heisei \heisei\year \advance\heisei-1988\relax
 
 \def\today{{%
-  \jlreq@ifydir{%
+  \jlreq@iftdir{%
     \if西暦
       \kansuji\year 年
       \kansuji\month 月

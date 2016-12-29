@@ -47,6 +47,7 @@ function zenkaku_kakko(t)
 end
 
 function tate(t)
+	t = table.fastcopy(t)
 	t.dir = 'tate'
 	for key,_ in ipairs(t) do
 		if type(key) == "number" then

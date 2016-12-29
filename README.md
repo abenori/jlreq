@@ -4,7 +4,7 @@
 [日本語組版処理の要件](https://www.w3.org/TR/jlreq/ja/)の実装を試みる[LuaTeX-ja](https://osdn.jp/projects/luatex-ja/wiki/FrontPage) / pLaTeX / upLaTeX用のクラスファイルと，それに必要なJFMの組み合わせです．
 
 ## 提供されるもの
-クラスファイルjlreq.clsと，横書きLuaTeX-ja用のJFMであるlua-jlreq.luaが用意されています．また，縦書きのJFMやpLaTeX / upLaTeX 用のJFMを生成するいくつかのスクリプトがあります．
+クラスファイルjlreq.clsと，横書きLuaTeX-ja用のJFMであるjfm-jlreq.luaが用意されています．また，縦書きのJFMやpLaTeX / upLaTeX 用のJFMを生成するいくつかのスクリプトがあります．
 
 ## インストール
 `make install`で必要なJFMが生成され，`~/texmf`以下に配置されます．
@@ -119,9 +119,9 @@ sidenote_mark={
 です．
 
 ### 割注
-`\warichu`により割注を指定します．行分割位置などは自動で計算されます．`\warichu*`ではこれらの位置を手動で指定できます．書式は
+`\inlinenote`により割注を指定します．行分割位置などは自動で計算されます．`\inlinenote*`ではこれらの位置を手動で指定できます．書式は
 
-``\warichu*{(一行目前) & (一行目後)\\ (二行目前) & (二行目後)...}``
+``\inlinenote*{(一行目前) & (一行目後)\\ (二行目前) & (二行目後)...}``
 
 です．`&`が省略されている場合は自動で調整されます．
 

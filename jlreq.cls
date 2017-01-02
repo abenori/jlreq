@@ -195,7 +195,6 @@
     \edef\jlreq@do{%
       \noexpand\lower\the\dimexpr(\jlreq@tempdima - (\ht\jlreq@tempboxa - \dp\jlreq@tempboxa)/2)\relax\unexpanded{\box#1}%
     }%
-    \message{\jlreq@do}%
   \expandafter\endgroup
   \jlreq@do
 }

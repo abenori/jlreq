@@ -49,7 +49,7 @@ end
 function tate(t)
 	t = table.fastcopy(t)
 	t.dir = 'tate'
-	for key,_ in ipairs(t) do
+	for key,_ in pairs(t) do
 		if type(key) == "number" then
 			t[key].height = 0.5
 			t[key].depth = 0.5

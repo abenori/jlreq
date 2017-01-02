@@ -161,30 +161,43 @@
 \def\jlreq@parsekeyval#1#2{%
   \begingroup
     \def\jlreq@do{}%
-    \jlreq@@parsekeyval#1\jlreq@endmark
+    \jlreq@helper@parsekeyval#1\jlreq@endmark
     \setkeys{jlreq@key}{#2}%
   \expandafter\endgroup
   \jlreq@do
 }
-\def\jlreq@@parsekeyval#1{%
+\def\jlreq@helper@parsekeyval#1{%
   \def\jlreq@tempa{#1}%
   \def\jlreq@tempb{\jlreq@endmark}%
   \ifx\jlreq@tempa\jlreq@tempb
     \def\@tempa{}%
   \else
     \def\@tempa{%
-      \@ifnextchar[{\jlreq@@parsekeyval@choicekey{#1}}{\jlreq@@parsekeyval@definekey{#1}}%
+      \@ifnextchar[{\jlreq@helper@parsekeyval@choicekey{#1}}{\jlreq@helper@parsekeyval@definekey{#1}}%
     }%
   \fi
   \@tempa
 }
-\def\jlreq@@parsekeyval@choicekey#1[#2]#3{%
+\def\jlreq@helper@parsekeyval@choicekey#1[#2]#3{%
   \define@choicekey{jlreq@key}{#1}{#2}{\appto\jlreq@do{#3}}%
   \jlreq@@parsekeyval
 }
-\def\jlreq@@parsekeyval@definekey#1#2{%
+\def\jlreq@helper@parsekeyval@definekey#1#2{%
   \define@key{jlreq@key}{#1}{\appto\jlreq@do{#2}}%
-  \jlreq@@parsekeyval
+  \jlreq@helper@parsekeyval
+}
+
+% #1のboxを今の真ん中に配置する．
+\def\jlreq@box@putcenter#1{%
+  \begingroup
+    \jlreq@tempdima=\dimexpr(\ht#1 - \dp#1)/2\relax
+    \setbox\jlreq@tempboxa=\hbox{あ}%
+    \edef\jlreq@do{%
+      \noexpand\lower\the\dimexpr(\jlreq@tempdima - (\ht\jlreq@tempboxa - \dp\jlreq@tempboxa)/2)\relax\unexpanded{\box#1}%
+    }%
+    \message{\jlreq@do}%
+  \expandafter\endgroup
+  \jlreq@do
 }
 
 %. オプションの定義
@@ -406,17 +419,18 @@
 
 %. helper2（エンジン依存系）
 % 組方向を判定
+% \jlreq@if(y|t)(dir|box)を定義する．
 \def\jlreq@do{%
-  \long\def\jlreq@ifydir##1##2{\ifydir##1\else##2\fi}
-  \long\def\jlreq@iftdir##1##2{\iftdir##1\else##2\fi}
-  \long\def\jlreq@ifybox##1##2##3{\ifybox##1\relax##2\else##3\fi}
-  \long\def\jlreq@iftbox##1##2##3{\ifybox##1\relax##2\else##3\fi}
+  \long\def\jlreq@ifydir{\ifydir\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+  \long\def\jlreq@iftdir{\iftdir\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+  \long\def\jlreq@ifybox##1{\ifybox##1\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+  \long\def\jlreq@iftbox##1{\iftbox##1\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
 }
 \ifx l\jlreq@engine
-  \long\def\jlreq@ifydir#1#2{\ifnum\ltjgetparameter{direction}=4\relax#1\else#2\fi}
-  \long\def\jlreq@iftdir#1#2{\ifnum\numexpr\ltjgetparameter{direction}-(\ltjgetparameter{direction}/8)*8=3\relax##1\else##2\fi}
-  \long\def\jlreq@ifybox#1#2#3{\ifnum\ltjgetparameter{boxdir}{#1}=4\relax#2\else#3\fi}
-  \long\def\jlreq@iftbox#1#2#3{\ifnum\numexpr\ltjgetparameter{boxdir}{#1}-(\ltjgetparameter{boxdir}{#1}/8)*8=3\relax\relax#2\else#3\fi}
+  \long\def\jlreq@ifydir{\ifnum\ltjgetparameter{direction}=4\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+  \long\def\jlreq@iftdir{\ifnum\numexpr\ltjgetparameter{direction}-(\ltjgetparameter{direction}/8)*8=3\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+  \long\def\jlreq@ifybox#1{\ifnum\ltjgetparameter{boxdir}{#1}=4\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+  \long\def\jlreq@iftbox#1{\ifnum\numexpr\ltjgetparameter{boxdir}{#1}-(\ltjgetparameter{boxdir}{#1}/8)*8=3\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
 \else
   \jlreq@do
 \fi
@@ -772,7 +786,6 @@
 \ifx l\jlreq@engine
   \setlength{\jlreq@fontsize}{%
     \dimexpr\directlua{
-      local yen = string.char(92)
       local s = [[\jlreq@option@fontsize]]
       s = s:gsub("Q"," * 2.5mm")
       tex.print(s)
@@ -783,6 +796,7 @@
   \setlength{\jlreq@fontsize}{\dimexpr\@tempa\relax}
 \fi
 
+% JFMに関連する設定
 \ifx l\jlreq@engine
   % この値は後でjfm-jlreq内で読む
   \directlua{jlreq.open_bracket_pos = [[\jlreq@open@bracket@pos]]}
@@ -833,9 +847,9 @@
   \ifx l\jlreq@engine
     \setlength{\jlreq@baselineskip}{%
       \dimexpr\directlua{
-        local yen = string.char(92)
+        local act = string.char(92)
         local s = [[\jlreq@option@baselineskip]]
-        s = s:gsub("Q"," * 2.5mm"):gsub("z[hw]",yen .. "jlreq@fontsize")
+        s = s:gsub("Q"," * 2.5mm"):gsub("z[hw]",act .. "jlreq@fontsize")
         tex.print(s)
       }\relax
     }%
@@ -868,7 +882,10 @@
   \setlength{\pdfpageheight}{\stockheight}
 \fi
 
-%. 和文フォント
+%. フォント
+\RequirePackage{lmodern}
+
+%.. 和文
 \ifx l\jlreq@engine
   \RequirePackage{luatexja-adjust}
   \ltjenableadjust[lineend=extended,priority=true]
@@ -930,6 +947,7 @@
   \belowdisplayshortskip \belowdisplayskip
   \let\@listi\@listI}
 
+\if@tate\tate\fi % ここで発行しておく
 \mcfamily\selectfont\normalsize
 \setbox0\hbox{　} % 全角スペース
 \setlength\Cht{\ht0}
@@ -937,7 +955,6 @@
 \setlength\Cwd{\wd0}
 \setlength\Cvs{\baselineskip}
 \setlength\Chs{\wd0}
-\if@tate\tate\fi % ここで発行しておく
 
 % 4.1.3.a
 % 2.5.2 \baselineskipは一定の方がよい？
@@ -1006,9 +1023,9 @@
   \def\jlreq@expand@speciallength#1{%
     % zhやzwを\zhや\zwにする．
     \directlua{
-      local yen = string.char(92)
+      local act = string.char(92)
       local s = [[#1]]
-      s = s:gsub("zw",yen .. "zw"):gsub("zh",yen .. "zh")
+      s = s:gsub("zw",act .. "zw"):gsub("zh",act .. "zh")
       tex.print(s)
     }%
   }
@@ -1514,29 +1531,30 @@
 \renewcommand{\footnoterule}{\hrule width .333\textwidth height \jlreq@omotekeiwidth}
 % インデントの計算：脚注の長さが文字の整数倍になるように字下げする（4.2.5.b）
 {
-  \@tempdima=\textwidth
-  \@tempdimb=1\zh
   \footnotesize
+  \jlreq@footnoteindent=1\zw
+  \@tempdima=\dimexpr\textwidth - \jlreq@footnoteindent\relax
+  \@tempdimb=1\zw
   \divide\@tempdima\@tempdimb \multiply\@tempdima\@tempdimb
   \global\jlreq@footnoteindent=\dimexpr\textwidth - \@tempdima\relax
 }
 % 4.2.5.d
 \ifthenelse{\equal{\jlreq@footnotetext@indent}{one}}{
   \newcommand\@makefntext[1]{\parindent 1\zh
-    \addtolength{\leftskip}{\dimexpr \jlreq@footnoteindent + 1\zh\relax}% 全体をインデント+1文字分下げる
-    \noindent\hskip -1\zh\@makefnmark\hskip 1\zh#1}% 見出し出力と一文字分の空き
+    \addtolength{\leftskip}{\dimexpr \jlreq@footnoteindent + 1\jlreq@mol\relax}% 全体をインデント+1文字分下げる
+    \noindent\hskip -1\jlreq@mol\@makefnmark\hskip 1\zh#1}% 見出し出力と一文字分の空き
 }{
-  \newcommand\@makefntext[1]{\parindent 1\zh
+  \newcommand\@makefntext[1]{\parindent 1\jlreq@mol
     \addtolength{\leftskip}{\jlreq@footnoteindent}% 全体をインデント
-    \noindent\hskip 1\zh\@makefnmark\hskip 1\zh#1}% 見出し出力と一文字分の空き
+    \noindent\hskip 1\jlreq@mol\@makefnmark\hskip 1\jlreq@mol#1}% 見出し出力と一文字分の空き
 }
 % 合印
-\renewcommand*{\@makefnmark}{\jlreq@notemark{\@thefnmark}}
+\renewcommand*{\@makefnmark}{\hbox{\jlreq@notemark{\@thefnmark}}}
 % 図4.61のようにする
 \if@tate
-  \renewcommand*{\thefootnote}{\jlreq@open@bracket@before@space（\rensuji{\@arabic\c@footnote}）}
+  \renewcommand*{\thefootnote}{\jlreq@open@bracket@before@space\inhibitglue（\rensuji{\@arabic\c@footnote}）}
 \else
-  \renewcommand*{\thefootnote}{\jlreq@open@bracket@before@space（\arabic{footnote}）}
+  \renewcommand*{\thefootnote}{\jlreq@open@bracket@before@space\inhibitglue（\arabic{footnote}）}
 \fi
 
 %.. 後注（4.2.4）
@@ -1684,7 +1702,7 @@
   \ifdim\marginparwidth>18\jlreq@mol
     \global\marginparwidth=18\jlreq@mol
   \else
-    \@tempdima=1zw% 1\jlreq@mol
+    \@tempdima=1\zw% 1\jlreq@mol
     \global\divide\marginparwidth\@tempdima
     \global\multiply\marginparwidth\@tempdima
   \fi
@@ -1764,18 +1782,18 @@
 \fi
 
 %.. 割注（3.4）
+\newcommand{\inlinenotesize}{.6\jlreq@fontsize} % 割注の文字サイズ
+\let\jlreq@inlinenote@autolinebreak=\\% 計測時は\linebreakより\\の方が安定する．悩ましい……．
+
 \newcommand{\jlreq@inlinenote@kakkofontsize}{%
-  \fontsize{\numexpr \inlinenotesize * 2\relax\jlreq@mpt}{\numexpr \inlinenotesize * 2\relax\jlreq@mpt}%
+  \fontsize{\dimexpr\inlinenotesize * 2\relax}{\dimexpr \inlinenotesize * 2\relax}%
   \selectfont
 }
 
 \newcommand{\jlreq@inlinenote@fontsize}{%
-  \fontsize{\inlinenotesize\jlreq@mpt}{\inlinenotesize\jlreq@mpt}%
+  \fontsize{\inlinenotesize}{\inlinenotesize}%
   \selectfont
 }
-
-\newcommand{\inlinenotesize}{6} % 割注の文字サイズ
-\let\jlreq@inlinenote@autolinebreak=\\% 計測時は\linebreakより\\の方が安定する．悩ましい……．
 
 % 割注を入れるための命令．\inlinenote{割注}で使う．
 % 改行位置は自動で計算されるが，常に正しいとは限らない．
@@ -1786,6 +1804,7 @@
   \ifjlreq@in@inlinenote\ClassError{jlreq}{\string\inlinenote\space can't be nested}{\@ehc}\fi
   \jlreq@in@inlinenotetrue
   \@ifstar\jlreq@inlinenote@noauto\jlreq@inlinenote@auto}
+\let\warichu=\inlinenote
 
 \newcommand*{\jlreq@inlinenote@auto}[1]{%
   % 割注初め括弧の前の場所を保存
@@ -1795,7 +1814,10 @@
   % 括弧の分を引いたものが，割注の使える長さ
   \setbox\@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\inhibitglue\jlreq@open@bracket@before@space（\inhibitglue}%
   \addtolength{\jlreq@tempdimb}{-\wd\@tempboxa}%
-  {\jlreq@inlinenote@kakkofontsize\inhibitglue \jlreq@open@bracket@before@space（}%
+  {%
+    \setbox\jlreq@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\inhibitglue \jlreq@open@bracket@before@space（}%
+    \jlreq@box@putcenter\jlreq@tempboxa
+  }%
   % 普通に並べた長さを計測し，その半分から始める
   \setbox\@tempboxa=\hbox{\jlreq@inlinenote@fontsize #1}%
   \jlreq@tempdimc=\wd\@tempboxa
@@ -1859,31 +1881,29 @@
         \jlreq@tempdima=-1pt\relax
       \fi
       {%
-        \jlreq@inlinenote@fontsize
+%        \jlreq@inlinenote@fontsize
         \setbox\jlreq@tempboxa=\vsplit\@tempboxa to \dimexpr 2\baselineskip - 0.001pt\relax
-        % 改行を\\でしている場合には，割注の長さを計測した物に長さに強制する
+        % 改行を\jlreq@inlinenote@autolinebreak=\\の場合には，割注の長さを計測した物に長さに強制する
         \jlreq@getlastbox{\jlreq@tempboxa}%
         \setbox\jlreq@tempboxb=\box\jlreq@resultbox
         \jlreq@getlastbox{\jlreq@tempboxa}%
         \setbox\jlreq@tempboxa=\box\jlreq@resultbox
         \ifx\jlreq@inlinenote@autolinebreak\\\relax
           \ifdim\jlreq@tempdima>0pt\relax
-            \setbox\jlreq@tempboxa=\vbox{%
+            \setbox\jlreq@tempboxa=\vbox{\jlreq@inlinenote@fontsize%
               \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxa}%
               \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxb}}%
           \else
-            \setbox\jlreq@tempboxa=\vbox{%
+            \setbox\jlreq@tempboxa=\vbox{\jlreq@inlinenote@fontsize%
               \hbox{\unhbox\jlreq@tempboxa}%
               \hbox{\unhbox\jlreq@tempboxb}}%
           \fi
         \else
-          \setbox\jlreq@tempboxa=\vbox{%
+          \setbox\jlreq@tempboxa=\vbox{\jlreq@inlinenote@fontsize%
             \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxa}%
             \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxb}}%
         \fi
-        \ht\jlreq@tempboxa=\dimexpr(\ht\jlreq@tempboxa + \dp\jlreq@tempboxa)/2\relax
-        \dp\jlreq@tempboxa=\ht\jlreq@tempboxa
-        \hbox{\box\jlreq@tempboxa}%
+        \jlreq@box@putcenter\jlreq@tempboxa
       }%
       \advance\@tempcnta by 2\relax
     }%
@@ -1892,8 +1912,8 @@
 }
 
 \newcommand*{\jlreq@inlinenote@noauto}[1]{%
-  {\jlreq@inlinenote@kakkofontsize
-  \inhibitglue \jlreq@open@bracket@before@space（}%
+  \jlreq@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\jlreq@open@bracket@before@space（}%
+  \inhibitglue\jlreq@box@putcenter\jlreq@tempboxa
   \jlreq@inlinenote@noauto@#1\\\jlreq@endmark\jlreq@endmark
   \jlreq@inlinenote@endnote
 }
@@ -1936,7 +1956,13 @@
 
 \newcommand{\jlreq@inlinenote@endnote}{%
   \jlreq@in@inlinenotefalse
-  {\jlreq@inlinenote@kakkofontsize\hbox to .5\zh{）}\inhibitglue}%
+  {%
+%    \jlreq@inlinenote@kakkofontsize
+%    \hbox{）}\inhibitglue
+    \setbox\jlreq@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize）}%
+    \jlreq@box@putcenter\jlreq@tempboxa
+    \inhibitglue
+  }%
 }
 
 % \jlreq@inlinenote@determinelength{テキスト(1)}{書式指定(2)}{\parshape指定(3)}{調整に使う行数(4)}{成功行数(5)}{最小長さ(6)}{最大長さ(7)}
@@ -2024,14 +2050,17 @@
   }
 }
 \newcommand*{\jlreq@parse@position}[2]{
-  \jlreq@parse@position@#2-\jlreq@endmark
-  % \jlreq@tempcに縦方向を，\jlreq@tempdに横方向を入れる
-  \def\jlreq@tempc{}\def\jlreq@tempd{}
-  \expandafter\jlreq@parse@position@@\expandafter{\jlreq@tempa}
-  \expandafter\jlreq@parse@position@@\expandafter{\jlreq@tempb}
-  \ifx\jlreq@tempc\@empty\edef\jlreq@tempc{\expandafter\@firstoftwo#1}\fi
-  \ifx\jlreq@tempd\@empty\edef\jlreq@tempd{\expandafter\@secondoftwo#1}\fi
-  \edef#1{{\jlreq@tempc}{\jlreq@tempd}}
+  \begingroup
+    \jlreq@parse@position@#2-\jlreq@endmark
+    % \jlreq@tempcに縦方向を，\jlreq@tempdに横方向を入れる
+    \def\jlreq@tempc{}\def\jlreq@tempd{}
+    \expandafter\jlreq@parse@position@@\expandafter{\jlreq@tempa}
+    \expandafter\jlreq@parse@position@@\expandafter{\jlreq@tempb}
+    \ifx\jlreq@tempc\@empty\edef\jlreq@tempc{\expandafter\@firstoftwo#1}\fi
+    \ifx\jlreq@tempd\@empty\edef\jlreq@tempd{\expandafter\@secondoftwo#1}\fi
+    \edef\jlreq@do{\unexpanded{\def#1}{{\jlreq@tempc}{\jlreq@tempd}}}
+  \expandafter\endgroup
+  \jlreq@do
 }
 
 % odd_running_head=_sectionのように下線から始まる場合，その値の見出し命令を柱に出すようにする．
@@ -2101,7 +2130,7 @@
     % 戻り値は\jlreq@result
     \def\jlreq@setheadfoot##1##2##3##4{%
       \def\jlreq@left{}\def\jlreq@center{}\def\jlreq@right{}
-      % \jlreq@tempb = if(##1 == ##3 && ##2 != "" && ##4 != "")
+      % \jlreq@tempa = if(##1 == ##3 && ##2 != "" && ##4 != "")
       \jlreq@tempatrue
       \jlreq@ifempty{##2}{\jlreq@tempafalse}{}
       \jlreq@ifempty{##4}{\jlreq@tempafalse}{}
@@ -2163,7 +2192,8 @@
         \expandonce{\jlreq@command}%
       }%
     }
-  \expandafter\endgroup\jlreq@do
+  \expandafter\endgroup
+  \jlreq@do
 }
 \newcommand*{\NewPageStyle}[2]{%
   \expandafter\@ifdefinable\csname ps@#1\endcsname{\DeclarePageStyle{#1}{#2}}%

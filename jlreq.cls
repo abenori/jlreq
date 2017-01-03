@@ -956,6 +956,12 @@
 \setlength\Chs{\wd0}
 
 % 4.1.3.a
+\let\jlreq@original@@setfontsize=\@setfontsize
+\renewcommand*{\@setfontsize}[3]{%
+  \jlreq@original@@setfontsize{#1}{#2}{#3}%
+  \setlength{\parindent}{1\jlreq@mol}%
+}
+
 % 2.5.2 \baselineskipは一定の方がよい？
 \newcommand{\footnotesize}{%
   \@setfontsize\footnotesize{.8\jlreq@fontsize}{\dimexpr 95\jlreq@baselineskip/170\relax}% 脚注文字サイズの二分より少し小さい値を行間に: 4.2.5.e
@@ -2344,8 +2350,8 @@
   \fi
 }
 
-\newcommand{\maketitle}{%
-  \if@titlepage
+\if@titlepage
+  \newcommand{\maketitle}{%
     % jarticleとかからあまり変更していない
     \begin{titlepage}%
     \let\footnotesize\small
@@ -2366,7 +2372,10 @@
     \end{center}\par
     \vfil{\centering\@thanks}\vfil\null
     \end{titlepage}%
-  \else
+  \jlreq@endofmaketitle
+  }
+\else
+  \newcommand{\maketitle}{%
     \par
     \begingroup
       \renewcommand{\thefootnote}{\fnsymbol{footnote}}%
@@ -2391,7 +2400,14 @@
       \fi
       \@thanks
     \endgroup
-  \fi
+    \ifvoid\jlreq@abstractbox\else
+      \centerline{\box\jlreq@abstractbox}
+    \fi
+    \jlreq@endofmaketitle
+  }
+\fi
+% いろいろクリアする．
+\def\jlreq@endofmaketitle{%
   \setcounter{footnote}{0}%
   \global\let\thanks\relax
   \global\let\maketitle\relax
@@ -2413,7 +2429,7 @@
   {\jlreq@keepbaselineskip{\LARGE}\@title\par}%
   \vskip\baselineskip
   {\jlreq@keepbaselineskip{\large}%
-    \lineskip .5\jlreq@mol
+    \lineskip .5\jlreq@gol
     \begin{tabular}[t]{c}%
       \@author
     \end{tabular}%
@@ -2424,27 +2440,38 @@
   \end{center}%
   \par\vskip\baselineskip}
 
+%.. abstract
+\newbox\jlreq@abstractbox
+\newcommand*{\abstractname}{概要}
 \if@titlepage
+  % articleとかjarticleとかと同じ
   \newenvironment{abstract}{%
-      \titlepage
-      \null\vfil
-      \@beginparpenalty\@lowpenalty
-      \begin{center}%
-        {\bfseries\abstractname}%
-        \@endparpenalty\@M
-      \end{center}}%
-      {\par\vfil\null\endtitlepage}
+    \titlepage
+    \null\vfil
+    \@beginparpenalty\@lowpenalty
+    \begin{center}%
+      {\bfseries\gtfamily\abstractname}%
+      \@endparpenalty\@M
+    \end{center}%
+  }{%
+    \par\vfil\null\endtitlepage
+  }
 \else
   \newenvironment{abstract}{%
     \if@twocolumn
-      \section*{\abstractname}%
+      \ifx\maketitle\relax
+        \section*{\abstractname}%
+      \else
+      \fi
     \else
-      \jlreq@keepbaselineskip{\small}%
-      \begin{center}%
-        {\bfseries\abstractname\vspace{-.5\zw}\vspace{\z@}}%
-      \end{center}%
-      \quotation
-    \fi}{\if@twocolumn\else\endquotation\fi}
+      \global\setbox\jlreq@abstractbox=\vtop\bgroup\bgroup
+        \small
+        \begin{center}%
+          {\bfseries\abstractname}%
+        \end{center}%
+        \quotation
+    \fi
+    }{\if@twocolumn\else\endquotation\egroup\vspace{2\baselineskip}\egroup\fi}
 \fi
 
 %. 箇条書き．cf. JISX4051 8.4
@@ -2556,7 +2583,11 @@
     \parsep\z@ \@plus\jlreq@mpt}%
     \item\relax}{\endlist}
 \newenvironment{quote}
-  {\list{}{\rightmargin\leftmargin\labelwidth\z@\leftmargin=2\zh\listparindent\z@}%
+  {\list{}{%
+    \rightmargin\leftmargin
+    \labelwidth\z@
+    \leftmargin=2\zh
+    \listparindent\z@}%
     \item\relax}{\endlist}
 
 % tarticleから変えていない．
@@ -2805,7 +2836,6 @@
 \newcommand{\refname}{参考文献}
 \newcommand{\indexname}{索 引}
 \newcommand{\appendixname}{付 録}
-\newcommand{\abstractname}{概 要}
 \pagestyle{plain}
 \pagenumbering{arabic}
 \if@twocolumn

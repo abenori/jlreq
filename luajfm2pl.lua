@@ -243,35 +243,25 @@ for _,from in pairs(classes) do
 	end
 end
 
---. 255を越えるクラス番号の処理
+-- 番号を連続的にする．
 -- classmaptable[JFM内クラス番号] = JPL内クラス番号
+classes = {}
+for k,_ in pairs(jfm) do if type(k) == "number" then table.insert(classes,k) end end
+classes = stable_sort(classes)
 local classmaptable = {}
-for class,val in pairs(jfm) do
-	if type(class) == "number" then classmaptable[class] = class end
-end
--- 255を越える番号は別の番号にマップする．
-local function getpossiblevalue(t)
-	for i = 0,255 do
-		if exists(t,i) == false then return i end
-	end
-	io.stderr:write("too much classes...\n")
-	os.exit(1)
-end
-
-local cont = true
-while cont do
-	cont = false
-	for class,val in pairs(classmaptable) do
-		if val > 255 then
-			local m = getpossiblevalue(classmaptable)
-			io.stderr:write("Class " .. tostring(class) .. " is mapped to Class " .. tostring(m) .. ".\n")
-			classmaptable[class] = m
-			cont = true
-			break
+local jplclass = 1
+for _,class in ipairs(classes) do
+	if type(class) == "number" then
+		if class == 0 then classmaptable[class] = 0
+		else
+			if class ~= jplclass then
+				io.stderr:write("Class " .. tostring(class) .. " is mapped to Class " .. tostring(jplclass) .. "\n")
+			end
+			classmaptable[class] = jplclass
+			jplclass = jplclass + 1
 		end
 	end
 end
-
 
 
 fp:write("(COMMENT JPL file from jfm-" .. luajfm .. ".lua)\n")

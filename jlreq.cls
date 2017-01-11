@@ -110,27 +110,27 @@
   \begingroup
     \edef\@tempa{#2}%
     \jlreq@tempafalse
-    \expandafter\jlreq@ifinlist@\expandafter{\@tempa}{#1}%
+    \expandafter\jlreq@helper@ifinlist@\expandafter{\@tempa}{#1}%
     \ifjlreq@tempa\def\jlreq@do{#3}\else\def\jlreq@do{#4}\fi
   \expandafter\endgroup
   \jlreq@do
 }
-\def\jlreq@ifinlist@#1#2{%
-  \jlreq@ifinlist@@{#2}#1\jlreq@endmark
+\def\jlreq@helper@ifinlist@#1#2{%
+  \jlreq@helper@ifinlist@@{#2}#1\jlreq@endmark
 }
-\def\jlreq@ifinlist@@#1#2{%
+\def\jlreq@helper@ifinlist@@#1#2{%
   \ifx\jlreq@endmark#2\def\jlreq@next{}%
   \else
     \def\@tempa{#1}%
     \def\@tempb{#2}%
     \ifx\@tempa\@tempb\relax\jlreq@tempatrue\def\jlreq@next{\jlreq@deleteuntileendmark}%
-    \else\def\jlreq@next{\jlreq@ifinlist@@{#1}}\fi
+    \else\def\jlreq@next{\jlreq@helper@ifinlist@@{#1}}\fi
   \fi
   \jlreq@next
 }
 
 % 与えられたトークン列が空か（展開はしないでチェック）
-\long\def\jlreq@ifempty#1#2#3{\ifx\jlreq@uniqtoken#1\jlreq@uniqtoken#2\else#3\fi}
+\long\def\jlreq@ifempty#1{\ifx\jlreq@uniqtoken#1\jlreq@uniqtoken\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
 
 % vbox #1の最後を\jlreq@resultboxに入れる
 % #1の最後の行は消える
@@ -153,7 +153,7 @@
 
 \newcommand*{\jlreq@debug@output}[1]{\message{\detokenize{#1}}}
 
-% keyvalのパースはこれを使う
+% 簡易なkeyvalのパース．
 % \jlreq@parsekeyval{
 %  {key}{\def\val{#1}}
 %  {key}[choices]{\def\val{#1}}
@@ -167,9 +167,7 @@
   \jlreq@do
 }
 \def\jlreq@helper@parsekeyval#1{%
-  \def\jlreq@tempa{#1}%
-  \def\jlreq@tempb{\jlreq@endmark}%
-  \ifx\jlreq@tempa\jlreq@tempb
+  \ifx\jlreq@endmark#1%
     \def\@tempa{}%
   \else
     \def\@tempa{%
@@ -180,10 +178,10 @@
 }
 \def\jlreq@helper@parsekeyval@choicekey#1[#2]#3{%
   \define@choicekey{jlreq@key}{#1}{#2}{\appto\jlreq@do{#3}}%
-  \jlreq@@parsekeyval
+  \jlreq@helper@parsekeyval
 }
 \def\jlreq@helper@parsekeyval@definekey#1#2{%
-  \define@key{jlreq@key}{#1}{\appto\jlreq@do{#2}}%
+  \define@key{jlreq@key}{#1}[]{\appto\jlreq@do{#2}}%
   \jlreq@helper@parsekeyval
 }
 
@@ -198,6 +196,10 @@
   \expandafter\endgroup
   \jlreq@do
 }
+
+\def\jlreq@currentline#1{\message{#1: at line \the\inputlineno}}
+
+
 
 %. オプションの定義
 % オプション処理の際にしか使わない変数（後でそれを元に別の変数を調整する）
@@ -354,6 +356,12 @@
 \jlreq@DeclareOption{jlreq_warnings}{\renewcommand*{\jlreq@warning}[1]{\ClassWarningNoLine{jlreq}{(JLREQ warning) ##1}}}
 
 \ExecuteOptionsX{a4paper,fontsize=9pt,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=_headings,onecolumn,final}
+% \@removeelementを一旦置き換えてから\ProcessOptionsXを実行する
+\let\jlreq@original@@removeelement=\@removeelement
+\let\@removeelement=\jlreq@helper@removeelement
+\ProcessOptionsX*\relax
+\let\@removeelement=\jlreq@original@@removeelement
+
 \newcommand{\jlreqsetup}[1]{%
   \jlreq@parsekeyval{%
     {sidenote_mark}{%
@@ -365,13 +373,6 @@
   }{#1}%
 }
 \@onlypreamble\jlreqsetup
-
-
-% \@removeelementを一旦置き換えてから\ProcessOptionsXを実行する
-\let\jlreq@original@@removeelement=\@removeelement
-\let\@removeelement=\jlreq@helper@removeelement
-\ProcessOptionsX*\relax
-\let\@removeelement=\jlreq@original@@removeelement
 
 % エンジンの設定
 \ifx\jlreq@engine\@undefined
@@ -884,6 +885,30 @@
 %. フォント
 \RequirePackage{lmodern}
 
+% 数式フォント設定
+\ifx l\jlreq@engine
+  \DeclareSymbolFont{mincho}{JY3}{mc}{m}{n}
+  \DeclareSymbolFontAlphabet{\mathmc}{mincho}
+  \SetSymbolFont{mincho}{bold}{JY3}{gt}{m}{n}
+  \jfam\symmincho
+  \DeclareMathAlphabet{\mathgt}{JY3}{gt}{m}{n}
+\else
+\fi
+
+% あれば読み込む．
+\IfFileExists{bxoldfontcmd.sty}{\RequirePackage[praised]{bxoldfontcmd}}{}
+%\DeclareOldFontCommand{\mc}{\normalfont\mcfamily}{\mathmc}
+%\DeclareOldFontCommand{\gt}{\normalfont\gtfamily}{\mathgt}
+%\DeclareOldFontCommand{\rm}{\normalfont\rmfamily}{\mathrm}
+%\DeclareOldFontCommand{\sf}{\normalfont\sffamily}{\mathsf}
+%\DeclareOldFontCommand{\tt}{\normalfont\ttfamily}{\mathtt}
+%\DeclareOldFontCommand{\bf}{\normalfont\bfseries}{\mathbf}
+%\DeclareOldFontCommand{\it}{\normalfont\itshape}{\mathit}
+%\DeclareOldFontCommand{\sl}{\normalfont\slshape}{\@nomath\sl}
+%\DeclareOldFontCommand{\sc}{\normalfont\scshape}{\@nomath\sc}
+%\DeclareRobustCommand*{\cal}{\@fontswitch\relax\mathcal}
+%\DeclareRobustCommand*{\mit}{\@fontswitch\relax\mathnormal}
+
 %.. 和文
 \ifx l\jlreq@engine
   \RequirePackage{luatexja-adjust}
@@ -1022,6 +1047,8 @@
 \jlreq@urakeiwidth=0.4mm
 % 脚注のインデント
 \newdimen\jlreq@footnoteindent
+
+%\RequirePackage{jlreq-debug}
 
 %. ページレイアウト
 \ifx l\jlreq@engine
@@ -1787,7 +1814,7 @@
 \fi
 
 %.. 割注（3.4）
-\newcommand{\inlinenotesize}{.6\jlreq@fontsize} % 割注の文字サイズ
+\def\inlinenotesize{.6\jlreq@fontsize} % 割注の文字サイズ
 \let\jlreq@inlinenote@autolinebreak=\\% 計測時は\linebreakより\\の方が安定する．悩ましい……．
 
 \newcommand{\jlreq@inlinenote@kakkofontsize}{%
@@ -1808,6 +1835,7 @@
 \newcommand*{\inlinenote}{%
   \ifjlreq@in@inlinenote\ClassError{jlreq}{\string\inlinenote\space can't be nested}{\@ehc}\fi
   \jlreq@in@inlinenotetrue
+  \ifvmode\leavevmode\fi
   \@ifstar\jlreq@inlinenote@noauto\jlreq@inlinenote@auto}
 \let\warichu=\inlinenote
 
@@ -2490,22 +2518,22 @@
 
 % enumerateとitemize
 % 見出しが一つ上のレベルからどのくらいずれているかを入れる．
-% （見出しは2\zhの箱に下詰めで入る．）
-\setlength\leftmargini{0\zh}
-\setlength\leftmarginii{1\zh}
-\setlength\leftmarginiii{1\zh}
-\setlength\leftmarginiv{1\zh}
-\setlength\leftmarginv{1\zh}
-\setlength\leftmarginvi{1\zh}
+% （見出しは2\zhの箱に右/下詰めで入る．）
+\setlength\leftmargini{0\jlreq@mol}
+\setlength\leftmarginii{1\jlreq@mol}
+\setlength\leftmarginiii{1\jlreq@mol}
+\setlength\leftmarginiv{1\jlreq@mol}
+\setlength\leftmarginv{1\jlreq@mol}
+\setlength\leftmarginvi{1\jlreq@mol}
 
 % enumerate, itemize用初期化
 \def\jlreq@init@list{%
-  \setlength{\labelwidth}{2\zh}%
+  \setlength{\labelwidth}{2\jlreq@mol}%
   \setlength{\topsep}{0pt}%
   \setlength{\partopsep}{0pt}%
   \setlength{\itemsep}{0pt}%
   \setlength{\parsep}{0pt}%
-  \setlength{\listparindent}{1\zh}%
+  \setlength{\listparindent}{\parindent}%
 % itemizeは直後ベタ，enumerateは直後全角空き．
   \ifx\@currenvir\jlreq@itemizename
     \setlength{\labelsep}{0\zh}%
@@ -2558,10 +2586,11 @@
 \renewcommand{\p@enumiii}{\theenumi(\theenumii)}
 \renewcommand{\p@enumiv}{\p@enumiii\theenumiii}
 
-\newcommand{\labelitemi}{•}
-\newcommand{\labelitemii}{\textcircled{~}}
-\newcommand{\labelitemiii}{\textasteriskcentered}
-\newcommand{\labelitemiv}{\textperiodcentered}
+\newcommand{\labelitemi}{\hbox to 1\jlreq@mol{\hss\textbullet\hss}}
+%\newcommand{\labelitemi}{•}
+\newcommand{\labelitemii}{○}
+\newcommand{\labelitemiii}{＊}
+\newcommand{\labelitemiv}{\hbox to 1\jlreq@mol{\hss・\hss}}
 
 % 引用系．1.5em→1\zh，字下げを二文字にした．3.5.2の例．
 \newenvironment{verse}
@@ -2600,31 +2629,6 @@
 \setlength\fboxsep{3\jlreq@mpt}
 \setlength\fboxrule{.4\jlreq@mpt}
 \renewcommand{\theequation}{\@arabic\c@equation}
-
-% 数式フォント設定
-\ifx l\jlreq@engine
-  \DeclareSymbolFont{mincho}{JY3}{mc}{m}{n}
-  \DeclareSymbolFontAlphabet{\mathmc}{mincho}
-  \SetSymbolFont{mincho}{bold}{JY3}{gt}{m}{n}
-  \jfam\symmincho
-  \DeclareMathAlphabet{\mathgt}{JY3}{gt}{m}{n}
-\else
-\fi
-
-% あれば読み込む．
-\IfFileExists{bxoldfontcmd.sty}{\RequirePackage[praised]{bxoldfontcmd}}{}
-%\DeclareOldFontCommand{\mc}{\normalfont\mcfamily}{\mathmc}
-%\DeclareOldFontCommand{\gt}{\normalfont\gtfamily}{\mathgt}
-%\DeclareOldFontCommand{\rm}{\normalfont\rmfamily}{\mathrm}
-%\DeclareOldFontCommand{\sf}{\normalfont\sffamily}{\mathsf}
-%\DeclareOldFontCommand{\tt}{\normalfont\ttfamily}{\mathtt}
-%\DeclareOldFontCommand{\bf}{\normalfont\bfseries}{\mathbf}
-%\DeclareOldFontCommand{\it}{\normalfont\itshape}{\mathit}
-%\DeclareOldFontCommand{\sl}{\normalfont\slshape}{\@nomath\sl}
-%\DeclareOldFontCommand{\sc}{\normalfont\scshape}{\@nomath\sc}
-%\DeclareRobustCommand*{\cal}{\@fontswitch\relax\mathcal}
-%\DeclareRobustCommand*{\mit}{\@fontswitch\relax\mathnormal}
-
 
 % 目次
 \setcounter{tocdepth}{3}
@@ -2810,15 +2814,15 @@
 \fi
 
 %. 定理環境
-\def\jlreq@theorem@abovebelowspace{1\baselineskip}
-\def\@begintheorem#1#2{\topsep=\jlreq@theorem@abovebelowspace %とりあえず前後に一行分のアキ
+\def\jlreq@theorem@abovebelowspace{1\baselineskip}%とりあえず前後に一行分のアキ
+\def\@begintheorem#1#2{\topsep=\jlreq@theorem@abovebelowspace
   \trivlist\labelsep=1\jlreq@mol
    \item[\hskip \labelsep{\headfont #1\ #2}]}
 \def\@opargbegintheorem#1#2#3{\topsep=\jlreq@theorem@abovebelowspace
   \trivlist\labelsep=1\jlreq@mol
   \item[\hskip \labelsep{\headfont #1\ #2（#3）}]}
 
-\AtEndOfPackageFile*{amsthm}{%
+\AtEndOfPackageFile*{amsthm}{
   \newtheoremstyle{jlreq}{\jlreq@theorem@abovebelowspace}{\jlreq@theorem@abovebelowspace}{\normalfont}{}{\headfont}{}{1\zw}{\thmname{#1}\thmnumber{\ #2}\thmnote{ (#3)}}
   \theoremstyle{jlreq}
   \let\jlreq@original@proof=\proof

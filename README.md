@@ -7,7 +7,7 @@
 クラスファイルjlreq.clsと，横書きLuaTeX-ja用のJFMであるjfm-jlreq.luaが用意されています．また，縦書きのJFMやpLaTeX / upLaTeX 用のJFMを生成するいくつかのスクリプトがあります．
 
 ## インストール
-`make install`で必要なJFMが生成され，`~/texmf`以下に配置されます．jlreq.clsを適当な場所（例えば`~texmf/tex/latex/jlreq/jlreq.cls`）におきます．
+`make install`で必要なJFMが生成され，`~/texmf`以下に配置されます．jlreq.clsを適当な場所（例えば`~/texmf/tex/latex/jlreq/jlreq.cls`）におきます．
 
 ## `\jlreqsetup`
 いろいろな設定はクラスファイルへのオプションで指定することができますが，一部は`\jlreqsetup`マクロで指定します．keyval形式を受け入れ，例えば

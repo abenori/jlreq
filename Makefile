@@ -24,8 +24,7 @@ jfm: \
 	ujlreqg-v.tfm ubjlreqg-v.tfm uzjlreqg-v.tfm ubzjlreqg-v.tfm \
 	ujlreqg-v.vf ubjlreqg-v.vf uzjlreqg-v.vf ubzjlreqg-v.vf \
 	
-	rm jfm-bjlreq.lua jfm-bjlreqv.lua jfm-bzjlreq.lua jfm-bzjlreqv.lua
-	rm ugbmv.tfm ugbm.tfm gbmv.tfm gbm.tfm urmlv.tfm rmlv.tfm urml.tfm rml.tfm
+	rm -f ugbmv.tfm ugbm.tfm gbmv.tfm gbm.tfm urmlv.tfm rmlv.tfm urml.tfm rml.tfm
 
 u%-v.pl: jfm-%v.lua luajfm2pl.lua
 	texlua luajfm2pl.lua $*v $@

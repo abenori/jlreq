@@ -156,7 +156,7 @@
 % 簡易なkeyvalのパース．
 % \jlreq@parsekeyval{
 %  {key}{\def\val{#1}}
-%  {key}[choices]{\def\val{#1}}
+%  {key}[choices]{\def\valchoice{#1}}
 %}{parse対象}
 \def\jlreq@parsekeyval#1#2{%
   \begingroup
@@ -199,6 +199,49 @@
 
 \def\jlreq@currentline#1{\message{#1: at line \the\inputlineno}}
 
+% \jlreq@switch{str}{
+%   {str}{abcd}
+%   {str1}{xyz}
+%}[default: input = #1] -> abcd
+%または
+%
+% \jlreq@switch{str}{
+%   {str}{abcd}
+%   {str1}{xyz}
+%   {default: input = #1}
+%} -> abcd
+\def\jlreq@switch#1#2{%
+  \@ifnextchar[{\jlreq@helper@switch{#1}{#2}}{\jlreq@helper@switch{#1}{#2}[]}%
+}
+\def\jlreq@helper@switch#1#2[#3]{%
+  \begingroup
+    \def\jlreq@do##1{#3}%
+    \jlreq@helper@switch@{#1}#2\jlreq@endmark
+  \expandafter\endgroup
+  \jlreq@do{#1}%
+}
+\def\jlreq@helper@switch@#1#2{%
+  \ifx\jlreq@endmark#2%
+    \def\jlreq@next{}%
+  \else
+    \def\jlreq@next{\jlreq@helper@switch@@{#1}{#2}}%
+  \fi
+  \jlreq@next
+}
+\def\jlreq@helper@switch@@#1#2#3{%
+  \ifx\jlreq@endmark#2%
+    \def\jlreq@do##1{#2}%
+    \def\jlreq@next{}%
+  \else
+    \ifthenelse{\equal{#1}{#2}}{%
+      \def\jlreq@do##1{#3}%
+      \def\jlreq@next{\jlreq@deleteuntileendmark}%
+    }{%
+      \def\jlreq@next{\jlreq@helper@switch@{#1}}%
+    }%
+  \fi
+  \jlreq@next
+}
 
 
 %. オプションの定義
@@ -495,8 +538,8 @@
   \ltjsetparameter{kanjiskip=\maxdimen}
   \ltjsetparameter{xkanjiskip=\maxdimen}
 \else
-  \kanjiskip=0pt plus 0.25zh minus 0pt
-  \xkanjiskip=0.25zh plus 0.25zh minus 0.125zh
+  \kanjiskip=0pt plus 0.25zw minus 0pt
+  \xkanjiskip=0.25zw plus 0.25zw minus 0.125zw
 \fi
 
 % 禁則処理，表1,2に従う
@@ -510,20 +553,14 @@
   \newcommand*{\jlreq@setpostbreakpenalty}[2]{\postbreakpenalty`#1=#2}
   \newcommand*{\jlreq@setprebreakpenalty}[2]{\prebreakpenalty`#1=#2}
   \newcommand*{\jlreq@setjaxspmode}[2]{%
-    \ifthenelse{\equal{#2}{inhibit}}{
-      \inhibitxspcode`#1=0
-    }{
-      \ifthenelse{\equal{#2}{preonly}}{
-        \inhibitxspcode`#1=1
-      }{
-        \ifthenelse{\equal{#2}{postonly}}{
-          \inhibitxspcode`#1=2
-        }{
-          \ifthenelse{\equal{#2}{allow}}{
-            \inhibitxspcode`#1=3
-          }{
-            \inhibitxspcode`#1=#2
-  }}}}}
+    \jlreq@switch{#2}{
+      {inhibit}{\inhibitxspcode`#1=0}
+      {preonly}{\inhibitxspcode`#1=1}
+      {postonly}{\inhibitxspcode`#1=2}
+      {allow}{\inhibitxspcode`#1=3}
+      {\inhibitxspcode`#1=#2}
+    }
+  }
 \fi
 
 \jlreq@setpostbreakpenalty{（}{10000}
@@ -1682,20 +1719,22 @@
 % \jlreq@tempcにセクション名たちを入れていく
 \def\jlreq@tempc{}
 \@for\jlreq@tempa:=\jlreq@endnote@position\do{
-  \ifthenelse{\equal{\jlreq@tempa}{_headings}}{\jlreq@tempatrue}{
-  \ifthenelse{\equal{\jlreq@tempa}{_paragraph}}{
-    \jlreq@tempatrue% _paragraphの時は_headingsも有効にする
-    \PushPostHook{par}{%
-      \ifx\jlreq@endnote@texts\@empty\else
-        \vskip\dimexpr-\baselineskip\relax
-        \vskip\dimexpr0pt\relax
-        \theendnotes
-      \fi
+  \jlreq@switch{\jlreq@tempa}{
+    {_headings}{\jlreq@tempatrue}
+    {_paragraph}{
+      \jlreq@tempatrue% _paragraphの時は_headingsも有効にする
+      \PushPostHook{par}{%
+        \ifx\jlreq@endnote@texts\@empty\else
+          \vskip\dimexpr-\baselineskip\relax
+          \vskip\dimexpr0pt\relax
+          \theendnotes
+        \fi
+      }
     }
-  }{
-    \edef\jlreq@tempc{\jlreq@tempc,\jlreq@tempa}
-  }}
+    {\edef\jlreq@tempc{\jlreq@tempc,\jlreq@tempa}}
+  }
 }
+
 \ifjlreq@tempa
   \edef\jlreq@do{%
     \unexpanded{\def\jlreq@hook@beforeheadings#1}{\expandonce{\jlreq@hook@beforeheadings{#1}}%
@@ -2505,8 +2544,8 @@
 %. 箇条書き．cf. JISX4051 8.4
 % 用語定義型
 \newenvironment{description}{\list{}{%
-  \setlength{\leftmargin}{0\zh}% 下げない
-  \setlength{\labelwidth}{0\zh}%
+  \setlength{\leftmargin}{0\jlreq@mol}% 下げない
+  \setlength{\labelwidth}{0\jlreq@mol}%
   \addtolength{\leftmargin}{\leftskip}%
   \addtolength{\leftmargin}{\labelsep}%
   \let\makelabel=\descriptionlabel
@@ -2519,7 +2558,7 @@
 % enumerateとitemize
 % 見出しが一つ上のレベルからどのくらいずれているかを入れる．
 % （見出しは2\zhの箱に右/下詰めで入る．）
-\setlength\leftmargini{0\jlreq@mol}
+\setlength\leftmargini{2\jlreq@mol}
 \setlength\leftmarginii{1\jlreq@mol}
 \setlength\leftmarginiii{1\jlreq@mol}
 \setlength\leftmarginiv{1\jlreq@mol}
@@ -2535,24 +2574,18 @@
   \setlength{\parsep}{0pt}%
   \setlength{\listparindent}{\parindent}%
 % itemizeは直後ベタ，enumerateは直後全角空き．
-  \ifx\@currenvir\jlreq@itemizename
-    \setlength{\labelsep}{0\zh}%
-  \else
-    \setlength{\labelsep}{1\zh}%
-  \fi
+  \ifthenelse{\equal{\@currenvir}{itemize}}{
+    \setlength{\labelsep}{0\jlreq@mol}%
+  }{%
+    \setlength{\labelsep}{1\jlreq@mol}%
+  }%
   % \labelsepだけあけるのは一つ目（ラベルの直後）のみ
   \setlength{\itemindent}{\labelsep}%
 }
-\def\jlreq@itemizename{itemize}
 
 \def\@listi{%
   \jlreq@init@list
   \setlength{\leftmargin}{\leftmargini}%
-  % 最初だけ\leftmarginを調整する
-  \addtolength{\leftmargin}{\leftskip}%
-  \addtolength{\leftmargin}{\labelsep}%
-  \addtolength{\leftmargin}{\labelwidth}%
-  \addtolength{\leftmargin}{-\itemindent}%
 }
 \let\@listI\@listi
 \def\@listii{%
@@ -2590,12 +2623,12 @@
 %\newcommand{\labelitemi}{•}
 \newcommand{\labelitemii}{○}
 \newcommand{\labelitemiii}{＊}
-\newcommand{\labelitemiv}{\hbox to 1\jlreq@mol{\hss・\hss}}
+\newcommand{\labelitemiv}{\hbox to 1\jlreq@mol{\hss ・\hss}}
 
 % 引用系．1.5em→1\zh，字下げを二文字にした．3.5.2の例．
 \newenvironment{verse}
   {\let\\\@centercr
-  \list{}{\itemsep\z@ \itemindent -2\zh%
+  \list{}{\itemsep\z@ \itemindent -2\jlreq@mol%
     \listparindent\itemindent
     \labelwidth\z@
     \labelsep\z@

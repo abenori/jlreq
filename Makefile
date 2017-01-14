@@ -89,9 +89,9 @@ install: jfm
 	cp -f *.tfm ${TEXMF}/fonts/tfm/public/jlreq
 	mkdir -p ${TEXMF}/fonts/vf/public/jlreq
 	cp -f *.vf ${TEXMF}/fonts/vf/public/jlreq
-	mkdir -p ${TEXMF}/tex/lualatex/jlreq
-	cp jfm-jlreq.lua ${TEXMF}/tex/lualatex/jlreq
-	cp jfm-jlreqv.lua ${TEXMF}/tex/lualatex/jlreq
+	mkdir -p ${TEXMF}/tex/luatex/jlreq
+	cp jfm-jlreq.lua ${TEXMF}/tex/luatex/jlreq
+	cp jfm-jlreqv.lua ${TEXMF}/tex/luatex/jlreq
 
 uninstall:
 	rm -rf ${TEXMF}/fonts/tfm/public/jlreq

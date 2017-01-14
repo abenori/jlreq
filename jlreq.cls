@@ -42,18 +42,21 @@
 
 % #1内の#2を#3に変換し#4に入れる
 \def\jlreq@replace#1#2#3#4{%
-  \def\@tempb##1#2##2\jlreq@endmark{%
-    \ifx\jlreq@endmark##2\jlreq@endmark##1\else##1#3\@tempb##2\jlreq@endmark\fi
-  }%
-  \edef#4{\@tempb#1#2\jlreq@endmark}%
+  \begingroup
+    \def\jlreq@do##1#2##2\jlreq@endmark{%
+      \ifx\jlreq@endmark##2\jlreq@endmark##1\else##1#3\jlreq@do##2\jlreq@endmark\fi
+    }%
+    \edef\jlreq@do{\unexpanded{\def#4}{\jlreq@do#1#2\jlreq@endmark}}%
+  \expandafter\endgroup
+  \jlreq@do
 }
 
 % @removeelementの括弧があっても動くかもしれない版
-% 次の変数を使う：\@tempa：消したいやつ，\@tempb：今処理している部分．
+% 次の変数を使う：\jlreq@tempa：消したいやつ，\jlreq@tempb：今処理している部分．
 \def\jlreq@helper@removeelement#1#2#3{%
   \begingroup
-    \def\@tempb{}%
-    \def\@tempa{#1}%
+    \def\jlreq@tempb{}%
+    \def\jlreq@tempa{#1}%
     \def#3{}%
     \jlreq@helper@removeelement@#3#2{\jlreq@endmark}%
     \edef\jlreq@do{\unexpanded{\def#3}{\expandonce{#3}}}%
@@ -65,40 +68,40 @@
   \jlreq@helper@removeelement@@{#1}{#2}%
   \jlreq@helper@removeelement@@@{#1}%
 }
-% #1をカンマで区切り，既に得ていた\@tempbと併せて一つの部分を作る．
+% #1をカンマで区切り，既に得ていた\jlreq@tempbと併せて一つの部分を作る．
 \def\jlreq@helper@removeelement@@#1#2{%
   \jlreq@helper@dividebycomma{#2}%
-  \edef\@tempb{\expandonce{\@tempb}\expandonce{\@tempc}}%
+  \edef\jlreq@tempb{\expandonce{\jlreq@tempb}\expandonce{\jlreq@tempc}}%
   \ifjlreq@tempa
-    \ifx\@tempa\@tempb\else
-      \ifx#1\@empty\edef#1{\expandonce{\@tempb}}%
-      \else\edef#1{\expandonce{#1},\expandonce{\@tempb}}\fi
+    \ifx\jlreq@tempa\jlreq@tempb\else
+      \ifx#1\@empty\edef#1{\expandonce{\jlreq@tempb}}%
+      \else\edef#1{\expandonce{#1},\expandonce{\jlreq@tempb}}\fi
     \fi
-    \def\@tempb{}%
-    \expandafter\jlreq@helper@removeelement@@\expandafter#1\expandafter{\@tempd}%
+    \def\jlreq@tempb{}%
+    \expandafter\jlreq@helper@removeelement@@\expandafter#1\expandafter{\jlreq@tempd}%
   \fi
 }
-% グルーピング部分を\@tempbに加え，@に戻る
+% グルーピング部分を\jlreq@tempbに加え，@に戻る
 \def\jlreq@helper@removeelement@@@#1#2{%
   \ifx\jlreq@endmark#2%
     % 全体の解釈が終わった
-    \ifx\@tempa\@tempb\else
-      \ifx#1\@empty\edef#1{\expandonce{\@tempb}}%
-      \else\edef#1{\expandonce{#1},\expandonce{\@tempb}}\fi
+    \ifx\jlreq@tempa\@tempb\else
+      \ifx#1\@empty\edef#1{\expandonce{\jlreq@tempb}}%
+      \else\edef#1{\expandonce{#1},\expandonce{\jlreq@tempb}}\fi
     \fi
   \else
-    \edef\@tempb{\expandonce{\@tempb}{#2}}%
+    \edef\jlreq@tempb{\expandonce{\jlreq@tempb}{#2}}%
     \def\jlreq@next{\jlreq@helper@removeelement@{#1}}%
     \expandafter\jlreq@next
   \fi
 }
-% \@tempc,\@tempdと入れる
+% カンマで区切って，その前と後ろを\jlreq@tempc,\jlreq@tempdに入れる
 % もしカンマがない場合は\ifjlreq@tempaがfalseになる．
 \def\jlreq@helper@dividebycomma#1{\jlreq@helper@dividebycomma@#1,\jlreq@endmark}
 \def\jlreq@helper@dividebycomma@#1,#2\jlreq@endmark{%
-  \def\@tempc{#1}%
-  \def\@tempd{#2}%
-  \ifx\@tempd\@empty\jlreq@tempafalse\else\jlreq@tempatrue\expandafter\def\expandafter\@tempd\expandafter{\jlreq@helper@removelastcomma#2\jlreq@endmark}\fi
+  \def\jlreq@tempc{#1}%
+  \def\jlreq@tempd{#2}%
+  \ifx\jlreq@tempd\@empty\jlreq@tempafalse\else\jlreq@tempatrue\expandafter\def\expandafter\jlreq@tempd\expandafter{\jlreq@helper@removelastcomma#2\jlreq@endmark}\fi
 }
 \def\jlreq@helper@removelastcomma#1,\jlreq@endmark{#1}
 
@@ -121,10 +124,11 @@
 \def\jlreq@helper@ifinlist@@#1#2{%
   \ifx\jlreq@endmark#2\def\jlreq@next{}%
   \else
-    \def\@tempa{#1}%
-    \def\@tempb{#2}%
-    \ifx\@tempa\@tempb\relax\jlreq@tempatrue\def\jlreq@next{\jlreq@deleteuntileendmark}%
-    \else\def\jlreq@next{\jlreq@helper@ifinlist@@{#1}}\fi
+    \ifthenelse{\equal{#1}{#2}}{%
+      \jlreq@tempatrue\def\jlreq@next{\jlreq@deleteuntileendmark}%
+    }{%
+      \def\jlreq@next{\jlreq@helper@ifinlist@@{#1}}%
+    }%
   \fi
   \jlreq@next
 }
@@ -2604,7 +2608,7 @@
   \jlreq@init@list
   \setlength{\leftmargin}{\leftmarginv}%
 }
-% レベル1だけはJISX 4051から．後はそのまま．
+
 \if@tate
   \renewcommand{\theenumi}{\Kanji{enumi}}
   \renewcommand{\theenumii}{\rensuji{\@arabic\c@enumii}}

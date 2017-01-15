@@ -237,16 +237,18 @@
   \jlreq@next
 }
 \def\jlreq@helper@switch@@#1#2#3{%
-  \ifx\jlreq@endmark#2%
+  \ifx\jlreq@endmark#3%
     \def\jlreq@do##1{#2}%
     \def\jlreq@next{}%
   \else
-    \ifthenelse{\equal{#1}{#2}}{%
+    \def\jlreq@tempa{#1}%
+    \def\jlreq@tempb{#2}%
+    \ifx\jlreq@tempa\jlreq@tempb
       \def\jlreq@do##1{#3}%
       \def\jlreq@next{\jlreq@deleteuntileendmark}%
-    }{%
+    \else
       \def\jlreq@next{\jlreq@helper@switch@{#1}}%
-    }%
+    \fi
   \fi
   \jlreq@next
 }
@@ -269,58 +271,51 @@
 \jlreq@DeclareOption{lualatex}{\let\jlreq@engine=l}
 
 %.. 基本版面．まずは紙サイズ．
-\jlreq@DeclareOption{a3paper}{%
-  \setlength\paperheight {420mm}%
-  \setlength\paperwidth  {297mm}}
-\jlreq@DeclareOption{a4paper}{%
-  \setlength\paperheight {297mm}%
-  \setlength\paperwidth  {210mm}}
-\jlreq@DeclareOption{a5paper}{%
-  \setlength\paperheight {210mm}%
-  \setlength\paperwidth  {148mm}}
-\jlreq@DeclareOption{a6paper}{%
-  \setlength\paperheight {148mm}%
-  \setlength\paperwidth  {105mm}}
-\jlreq@DeclareOption{b4paper}{%
-  \setlength\paperheight {364mm}%
-  \setlength\paperwidth  {257mm}}
-\jlreq@DeclareOption{b5paper}{%
-  \setlength\paperheight {257mm}%
-  \setlength\paperwidth  {182mm}}
-\jlreq@DeclareOption{b6paper}{%
-  \setlength\paperheight {182mm}%
-  \setlength\paperwidth  {128mm}}
-\jlreq@DeclareOption{a4j}{%
-  \setlength\paperheight {297mm}%
-  \setlength\paperwidth  {210mm}}
-\jlreq@DeclareOption{a5j}{%
-  \setlength\paperheight {210mm}%
-  \setlength\paperwidth  {148mm}}
-\jlreq@DeclareOption{b4j}{%
-  \setlength\paperheight {364mm}%
-  \setlength\paperwidth  {257mm}}
-\jlreq@DeclareOption{b5j}{%
-  \setlength\paperheight {257mm}%
-  \setlength\paperwidth  {182mm}}
-\jlreq@DeclareOption{a4var}{%
-  \setlength\paperheight {283mm}%
-  \setlength\paperwidth  {210mm}}
-\jlreq@DeclareOption{b5var}{%
-  \setlength\paperheight {230mm}%
-  \setlength\paperwidth  {182mm}}
-\jlreq@DeclareOption{letterpaper}{%
-  \setlength\paperheight {11in}%
-  \setlength\paperwidth  {8.5in}}
-\jlreq@DeclareOption{legalpaper}{%
-  \setlength\paperheight {14in}%
-  \setlength\paperwidth  {8.5in}}
-\jlreq@DeclareOption{executivepaper}{%
-  \setlength\paperheight {10.5in}%
-  \setlength\paperwidth  {7.25in}}
+\def\jlreq@switchpapersize{}
+\newcommand*\jlreq@addpapersize[3]{%
+  \DeclareOptionX{#1}{\jlreq@setpaper{#1}}
+  \appto\jlreq@switchpapersize{{#1}{\setlength\paperheight{#2}\setlength\paperwidth{#3}}}
+}
+\newcommand*\jlreq@setpaper[1]{%
+  \edef\jlreq@do{%
+    \unexpanded{\jlreq@switch{#1}}{\expandonce{\jlreq@switchpapersize}%
+    {\unexpanded{%
+      \jlreq@helper@dividebycomma{#1}%
+      \ifjlreq@tempa
+        \setlength{\paperheight}{\dimexpr\jlreq@tempc\relax}%
+        \setlength{\paperwidth}{\dimexpr\jlreq@tempd\relax}%
+      \else
+        \ClassError{jlreq}{The paper #1 is unknown}{\@ehc}%
+      \fi
+    }}}%
+  }%
+  \jlreq@do
+}
+\DeclareOptionX{paper}{\jlreq@setpaper{#1}}
+% 紙サイズ一覧
+\jlreq@addpapersize{a3paper}{420mm}{297mm}
+\jlreq@addpapersize{a4paper}{297mm}{210mm}
+\jlreq@addpapersize{a5paper}{210mm}{148mm}
+\jlreq@addpapersize{a6paper}{148mm}{105mm}
+\jlreq@addpapersize{b4paper}{364mm}{257mm}
+\jlreq@addpapersize{b5paper}{257mm}{182mm}
+\jlreq@addpapersize{b6paper}{182mm}{128mm}
+\jlreq@addpapersize{a4j}{297mm}{210mm}
+\jlreq@addpapersize{a5j}{210mm}{148mm}
+\jlreq@addpapersize{b4j}{364mm}{257mm}
+\jlreq@addpapersize{b5j}{257mm}{182mm}
+\jlreq@addpapersize{a4var}{283mm}{210mm}
+\jlreq@addpapersize{b5var}{230mm}{182mm}
+\jlreq@addpapersize{letterpaper}{11in}{8.5in}
+\jlreq@addpapersize{legalpaper}{14in}{8.5in}
+\jlreq@addpapersize{executivepaper}{10.5in}{7.25in}
 
 %.. フォントサイズ，行長，1ページあたりの行数で基本版面のサイズを決める（2.4.1.a）
-\newcommand*{\jlreq@option@fontsize}{9pt}
+\newcommand*{\jlreq@option@fontsize}{}
 \DeclareOptionX{fontsize}{\renewcommand*{\jlreq@option@fontsize}{#1}}
+\jlreq@DeclareOption{10pt}{\renewcommand*{\jlreq@option@fontsize}{10pt}}
+\jlreq@DeclareOption{11pt}{\renewcommand*{\jlreq@option@fontsize}{11pt}}
+\jlreq@DeclareOption{12pt}{\renewcommand*{\jlreq@option@fontsize}{12pt}}
 
 %.. 行の長さ
 \newcommand*{\jlreq@option@line@length}{}
@@ -406,7 +401,7 @@
 \newcommand*{\jlreq@warning}[1]{}
 \jlreq@DeclareOption{jlreq_warnings}{\renewcommand*{\jlreq@warning}[1]{\ClassWarningNoLine{jlreq}{(JLREQ warning) ##1}}}
 
-\ExecuteOptionsX{a4paper,fontsize=9pt,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=_headings,onecolumn,final}
+\ExecuteOptionsX{paper=a4paper,fontsize=10pt,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=_headings,onecolumn,final}
 % \@removeelementを一旦置き換えてから\ProcessOptionsXを実行する
 \let\jlreq@original@@removeelement=\@removeelement
 \let\@removeelement=\jlreq@helper@removeelement
@@ -881,9 +876,6 @@
   \setlength\paperwidth {\@tempdima}
 \fi
 
-% スケーリング用
-\newdimen\jlreq@mpt
-\jlreq@mpt=\dimexpr\jlreq@fontsize / 10\relax
 % \baselineskipの計算
 \newdimen\jlreq@baselineskip
 \ifx\jlreq@option@baselineskip\@empty
@@ -1040,23 +1032,23 @@
 % 2.5.2 \baselineskipは一定の方がよい？
 \newcommand{\footnotesize}{%
   \@setfontsize\footnotesize{.8\jlreq@fontsize}{\dimexpr 115\jlreq@baselineskip/170\relax}% 脚注文字サイズの二分より少し小さい値を行間に: 4.2.5.e
-  \abovedisplayskip 6\jlreq@mpt \@plus2\jlreq@mpt \@minus4\jlreq@mpt
-  \abovedisplayshortskip \z@ \@plus\jlreq@mpt
-  \belowdisplayshortskip 3\jlreq@mpt \@plus\jlreq@mpt \@minus2\jlreq@mpt
+  \abovedisplayskip .6\jlreq@gol \@plus.2\jlreq@gol \@minus.4\jlreq@gol
+  \abovedisplayshortskip \z@ \@plus.1\jlreq@gol
+  \belowdisplayshortskip .3\jlreq@gol \@plus.1\jlreq@gol \@minus.2\jlreq@gol
   \def\@listi{\leftmargin\leftmargini
-    \topsep 3\jlreq@mpt \@plus\jlreq@mpt \@minus\jlreq@mpt
-    \parsep 2\jlreq@mpt \@plus\jlreq@mpt \@minus\jlreq@mpt
+    \topsep .3\jlreq@gol \@plus.1\jlreq@gol \@minus.1\jlreq@gol
+    \parsep .2\jlreq@gol \@plus.1\jlreq@gol \@minus.1\jlreq@gol
     \itemsep \parsep}%
   \belowdisplayskip \abovedisplayskip}
 % tsize10.cloの引数を，そのまま\jlreq@fontsize/\jlreq@baselineskipでスケーリングしているだけ．
 \newcommand{\small}{%
   \@setfontsize\small{.9\jlreq@fontsize}{\dimexpr 11\jlreq@baselineskip/17\relax}%
-  \abovedisplayskip 8.5\jlreq@mpt \@plus3\jlreq@mpt \@minus4\jlreq@mpt
-  \abovedisplayshortskip \z@ \@plus2\jlreq@mpt
-  \belowdisplayshortskip 4\jlreq@mpt \@plus2\jlreq@mpt \@minus2\jlreq@mpt
+  \abovedisplayskip .85\jlreq@gol \@plus.3\jlreq@gol \@minus.4\jlreq@gol
+  \abovedisplayshortskip \z@ \@plus.2\jlreq@gol
+  \belowdisplayshortskip .4\jlreq@gol \@plus.2\jlreq@gol \@minus.2\jlreq@gol
   \def\@listi{\leftmargin\leftmargini
-    \topsep 4\jlreq@mpt \@plus2\jlreq@mpt \@minus2\jlreq@mpt
-    \parsep 2\jlreq@mpt \@plus\jlreq@mpt \@minus\jlreq@mpt
+    \topsep .4\jlreq@gol \@plus.2\jlreq@gol \@minus.2\jlreq@gol
+    \parsep .2\jlreq@gol \@plus.1\jlreq@gol \@minus.1\jlreq@gol
     \itemsep \parsep}%
   \belowdisplayskip \abovedisplayskip}
 \newcommand{\scriptsize}{\@setfontsize\scriptsize{\dimexpr 7\jlreq@fontsize/10\relax}{\dimexpr 8\jlreq@baselineskip/17\relax}}
@@ -1078,10 +1070,10 @@
 \fi
 
 % このあたりはtarticleと同じ
-\setlength\lineskip{1\jlreq@mpt}
-\setlength\normallineskip{1\jlreq@mpt}
-%\setlength\lineskiplimit{1\jlreq@mpt}% jsarticleではこう
-%\setlength\normallineskiplimit{1\jlreq@mpt}% jsarticleではこう
+\setlength\lineskip{.1\jlreq@gol}
+\setlength\normallineskip{.1\jlreq@gol}
+%\setlength\lineskiplimit{1pt}% jsarticleではこう
+%\setlength\normallineskiplimit{1pt}% jsarticleではこう
 \renewcommand{\baselinestretch}{}
 \setlength\parskip{0\p@ \@plus \p@}
 \setlength\parindent{1\jlreq@mol}
@@ -1213,7 +1205,7 @@
 % 下：本文から一文字分離すつもり
 \setlength{\footskip}{2\zh}
 % \maxdepth + \topskip = フォントサイズ×1.5
-\setlength{\maxdepth}{15\jlreq@mpt}
+\setlength{\maxdepth}{1.5\jlreq@fontsize}
 \addtolength{\maxdepth}{-\topskip}
 % columnsep/columnseprule 二段組み用
 \setlength{\columnsep}{2\jlreq@mol} % フォントサイズ×2
@@ -2665,7 +2657,7 @@
     \labelsep\z@
     \leftmargin=2\jlreq@mol
     \rightmargin\leftmargin
-    \parsep\z@ \@plus\jlreq@mpt}%
+    \parsep\z@ \@plus.1\jlreq@gol}%
     \item\relax}{\endlist}
 \newenvironment{quote}
   {\list{}{%

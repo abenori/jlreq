@@ -1035,11 +1035,11 @@
   \jlreq@setfontsizehook
 }
 \def\jlreq@setfontsizehook{}
-\appto\jlreq@setfontsizehook{\setlength{\parindent}{1\jlreq@mol}}
+\appto\jlreq@setfontsizehook{\ifdim\parindent>0pt\setlength{\parindent}{1\jlreq@mol}\fi}
 
 % 2.5.2 \baselineskipは一定の方がよい？
 \newcommand{\footnotesize}{%
-  \@setfontsize\footnotesize{.8\jlreq@fontsize}{\dimexpr 95\jlreq@baselineskip/170\relax}% 脚注文字サイズの二分より少し小さい値を行間に: 4.2.5.e
+  \@setfontsize\footnotesize{.8\jlreq@fontsize}{\dimexpr 115\jlreq@baselineskip/170\relax}% 脚注文字サイズの二分より少し小さい値を行間に: 4.2.5.e
   \abovedisplayskip 6\jlreq@mpt \@plus2\jlreq@mpt \@minus4\jlreq@mpt
   \abovedisplayshortskip \z@ \@plus\jlreq@mpt
   \belowdisplayshortskip 3\jlreq@mpt \@plus\jlreq@mpt \@minus2\jlreq@mpt
@@ -1084,7 +1084,7 @@
 %\setlength\normallineskiplimit{1\jlreq@mpt}% jsarticleではこう
 \renewcommand{\baselinestretch}{}
 \setlength\parskip{0\p@ \@plus \p@}
-\setlength\parindent{1\zh}
+\setlength\parindent{1\jlreq@mol}
 \@lowpenalty   51
 \@medpenalty  151
 \@highpenalty 301
@@ -1292,9 +1292,6 @@
     \jlreq@tempskipb=0pt\relax
   }{%
     \jlreq@tempskipb=\glueexpr(\baselineskip*(#4 + 1) - \ht\jlreq@tempboxb - \dp\jlreq@tempboxb - \ht\jlreq@tempboxa - \dp\jlreq@tempboxa)/2\relax
-    \message{a = \the\dimexpr\ht\jlreq@tempboxa + \dp\jlreq@tempboxa}%
-    \message{b = \the\dimexpr\ht\jlreq@tempboxb + \dp\jlreq@tempboxb}%
-    \message{baselineskip = \the\baselineskip}%
     \ifx\jlreq@startBlockHeading@space\@empty
       \jlreq@tempskipa=\jlreq@tempskipb
     \else
@@ -1609,13 +1606,25 @@
     \setbox\jlreq@tempboxa=\hbox to\z@{\hskip-\@tempdima\raise\dimexpr.5\jlreq@gol + (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa\hss}%
     \dp\jlreq@tempboxa=0pt\ht\jlreq@tempboxa=0pt\box\jlreq@tempboxa}%
 }
-%.. 脚注
-% （縦書きの時は傍注，4.2.5）
-{\footnotesize\global\setlength{\footnotesep}{.7\baselineskip}} % 何でかわからん……
+%.. 脚注  （縦書きの時は傍注，4.2.5）
+{%
+  \footnotesize\global\setlength{\footnotesep}{.7\baselineskip} % 何でかわからん……
+  % \jlreq@tempdimaに罫線と脚注との間の長さを入れる
+  % 脚注の行間よりやや広くする（4.2.5.f）
+  \global\jlreq@tempdima=1.5\dimexpr\baselineskip - 1\jlreq@gol\relax
+}
 % 罫線の前は行間分，最大＋文字サイズ分伸びる（4.2.5.g）
-\setlength{\skip\footins}{\dimexpr\baselineskip - 1\jlreq@gol\relax plus 1\jlreq@gol}
-% 脚注の前の罫線は表罫で，長さは行長の1/3位（4.2.6.f）
-\renewcommand{\footnoterule}{\hrule width .333\textwidth height \jlreq@omotekeiwidth}
+\setlength{\skip\footins}{\dimexpr\baselineskip - 1\jlreq@gol \relax plus 1\jlreq@gol}
+%\setlength{\skip\footins}{0pt}
+% 脚注の前の罫線は表罫で，長さは行長の1/3位（4.2.5.f）
+\edef\jlreq@do{
+  \unexpanded{\renewcommand{\footnoterule}}{%
+    \unexpanded{\hrule width .333\textwidth height \jlreq@omotekeiwidth}%
+    \noexpand\kern\the\jlreq@tempdima
+  }
+}
+\jlreq@do
+
 % インデントの計算：脚注の長さが文字の整数倍になるように字下げする（4.2.5.b）
 {
   \footnotesize
@@ -1627,7 +1636,7 @@
 }
 % 4.2.5.d
 \ifthenelse{\equal{\jlreq@footnotetext@indent}{one}}{
-  \newcommand\@makefntext[1]{\parindent 1\zh
+  \newcommand\@makefntext[1]{\parindent 1\jlreq@mol
     \addtolength{\leftskip}{\dimexpr \jlreq@footnoteindent + 1\jlreq@mol\relax}% 全体をインデント+1文字分下げる
     \noindent\hskip -1\jlreq@mol\@makefnmark\hskip 1\zh#1}% 見出し出力と一文字分の空き
 }{

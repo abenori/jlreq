@@ -1594,14 +1594,14 @@
   \newcommand*{\jlreq@notemark}[1]{%
     \jlreq@ifydir{%
       \hbox{}\hbox{\@textsuperscript{\normalfont\jlreq@referencemark@format{#1}}}\hbox{}%
-    }{%
+    }{{%
       \setbox\@tempboxa=\hbox{\scriptsize\jlreq@referencemark@format{#1}}%
       \raise\dimexpr.5\jlreq@gol - (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa
-    }}%
+    }}}%
 }{
-  \newcommand*{\jlreq@notemark}[1]{%
+  \newcommand*{\jlreq@notemark}[1]{{%
     \setbox\@tempboxa=\hbox{\scriptsize\jlreq@referencemark@format{#1}}%
-%    % 行頭に来たときに頭を天にそろえる処理．
+    % 行頭に来たときに頭を天にそろえる処理．
     \jlreq@savepos@for@rest@linewidth
     \ifdim\jlreq@current@linewidth<\wd\@tempboxa
       \@tempdima=\jlreq@current@linewidth
@@ -1609,7 +1609,7 @@
       \@tempdima=\wd\@tempboxa
     \fi
     \setbox\jlreq@tempboxa=\hbox to\z@{\hskip-\@tempdima\raise\dimexpr.5\jlreq@gol + (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa\hss}%
-    \dp\jlreq@tempboxa=0pt\ht\jlreq@tempboxa=0pt\box\jlreq@tempboxa}%
+    \dp\jlreq@tempboxa=0pt\ht\jlreq@tempboxa=0pt\box\jlreq@tempboxa}}%
 }
 %.. 脚注  （縦書きの時は傍注，4.2.5）
 {%
@@ -1653,9 +1653,9 @@
 \renewcommand*{\@makefnmark}{\jlreq@notemark{\@thefnmark}}
 % 図4.61のようにする
 \if@tate
-  \renewcommand*{\thefootnote}{\jlreq@open@bracket@before@space\inhibitglue（\rensuji{\@arabic\c@footnote}）}
+  \renewcommand*{\thefootnote}{\jlreq@open@bracket@before@space\inhibitglue（\rensuji{\@arabic\c@footnote}）\inhibitglue}
 \else
-  \renewcommand*{\thefootnote}{\jlreq@open@bracket@before@space\inhibitglue（\arabic{footnote}）}
+  \renewcommand*{\thefootnote}{\jlreq@open@bracket@before@space\inhibitglue（\arabic{footnote}）\inhibitglue}
 \fi
 
 %.. 後注（4.2.4）

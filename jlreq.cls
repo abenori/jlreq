@@ -2681,24 +2681,30 @@
 \setlength\fboxrule{\jlreq@omotekeiwidth} % 根拠はない
 \renewcommand{\theequation}{\@arabic\c@equation}
 
-% 目次
+%. 目次
 \setcounter{tocdepth}{3}
-\newcommand{\@pnumwidth}{2\zh}
+\newcommand{\@pnumwidth}{2\jlreq@mol}
 \newcommand{\@tocrmarg}{2.55em}
 \newcommand{\@dotsep}{2} % 狭くしてみた
-\newdimen\toclineskip
-\setlength\toclineskip{0\jlreq@mpt}
+\newskip\toclineskip
+\setlength\toclineskip{0\jlreq@gol plus .02\jlreq@gol}
+% tarticleから
 \newdimen\@lnumwidth
 \def\numberline#1{\hbox to\@lnumwidth{#1\hfil}}
 \def\addcontentsline#1#2#3{%
   \protected@write\@auxout
     {\let\label\@gobble \let\index\@gobble \let\glossary\@gobble
-\@temptokena{\rensuji{\thepage}}}%
+      \if@tate
+        \@temptokena{\rensuji{\thepage}}%
+      \else
+        \@temptokena{\thepage}%
+      \fi
+    }%
     {\string\@writefile{#1}%
       {\protect\contentsline{#2}{#3}{\the\@temptokena}}}%
 }
 
-\newcount\jlreq@top@contents % トップ見出しを入れる．\partから1,2,...
+\newcount\jlreq@top@contents % トップ見出しを入れる．レベルと同じ値．
 \jlreq@top@contents=-1
 \newcommand*{\jlreq@set@top@contents}[1]{%
   \ifnum\jlreq@top@contents=-1
@@ -2706,7 +2712,7 @@
   \fi
 }
 \newcommand{\tableofcontents}{%
-  \jlreq@top@contents=0\relax
+  \jlreq@top@contents=-1\relax
   \section*{\contentsname
     \@mkboth{\contentsname}{\contentsname}%
   }\@starttoc{toc}%
@@ -2714,12 +2720,14 @@
 
 % JIS X 4051自身の目次に近づけようかと……なりきれてないけど．
 % 文字の大きさは全て同じ（\normalsize）にする．
-% 見出しのレベルがあがると1\zhずつ字下げしていく．
+% 見出しのレベルがあがると1文字分ずつ字下げしていく．
 % 第三引数は，上からの幅に加え更にトップの見出しからの差による補正（プラス）が入る．
+% 補正には\jlreq@top@contentsを使う．
+% 「トップ」というか，一番最初に現れた見出しを入れる．
 % リーダーは.から・に変更しました．更に直後から出るように．
 \def\@dottedtocline#1#2#3#4#5{%
   \ifnum #1>\c@tocdepth \else
-    \vskip\toclineskip \@plus.2\jlreq@mpt
+    \vskip\toclineskip
     {\leftskip #2\relax \rightskip \@tocrmarg \parfillskip -\rightskip
     \parindent #2\relax\@afterindenttrue
     \interlinepenalty\@M
@@ -2744,31 +2752,11 @@
     \begingroup
     \parindent\z@\rightskip\@pnumwidth
     \parfillskip-\@pnumwidth
-    {\leavevmode\bfseries
+    {\leavevmode\bfseries\gtfamily
     \setlength\@lnumwidth{2\jlreq@gol}%
     #1\hfil\nobreak
     \hbox to\@pnumwidth{\hss#2}}\par
     \nobreak
-    \endgroup
-  \fi}
-
-\renewcommand*{\l@section}[2]{%
-  \jlreq@set@top@contents{1}%
-  \ifnum \c@tocdepth >\z@
-    \addpenalty{\@secpenalty}%
-    \begingroup
-      \setlength\@lnumwidth{2\zh}%
-      \@tempcnta=2\relax
-      \advance \@tempcnta by -\jlreq@top@contents\relax
-      \@tempdima=1\jlreq@mol
-      \multiply \@tempdima by \@tempcnta
-      \parindent\z@ \rightskip\@pnumwidth
-      \parfillskip-\rightskip
-      \leavevmode\bfseries
-      \advance\leftskip\@lnumwidth
-      \hskip-\leftskip
-      \advance\leftskip\@tempdima
-      #1\nobreak\hfil\nobreak\hbox to\@pnumwidth{\hss #2}\par
     \endgroup
   \fi}
 

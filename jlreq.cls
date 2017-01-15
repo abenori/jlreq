@@ -278,8 +278,8 @@
 }
 \newcommand*\jlreq@setpaper[1]{%
   \edef\jlreq@do{%
-    \unexpanded{\jlreq@switch{#1}}{\expandonce{\jlreq@switchpapersize}%
-    {\unexpanded{%
+    \unexpanded{\jlreq@switch{#1}}{\expandonce{\jlreq@switchpapersize}}%
+    [\unexpanded{%
       \jlreq@helper@dividebycomma{#1}%
       \ifjlreq@tempa
         \setlength{\paperheight}{\dimexpr\jlreq@tempc\relax}%
@@ -287,7 +287,7 @@
       \else
         \ClassError{jlreq}{The paper #1 is unknown}{\@ehc}%
       \fi
-    }}}%
+    }]%
   }%
   \jlreq@do
 }
@@ -337,10 +337,14 @@
 \DeclareOptionX{gutter}{\renewcommand*{\jlreq@option@gutter}{#1}}
 
 %.. 柱とノンブル
-\newcommand*{\jlreq@option@headfoot@verticalpos}{1zh}
+\newcommand*{\jlreq@option@headfoot@verticalpos}{1zw}
 \DeclareOptionX{headfoot_verticalposition}{\renewcommand*{\jlreq@option@headfoot@verticalpos}{#1}}
 \newcommand*{\jlreq@headfoot@sidemargin}{0pt}
 \DeclareOptionX{headfoot_sidemargin}{\renewcommand*{\jlreq@headfoot@sidemargin}{#1}}
+
+%.. 段間
+\newcommand*{\jlreq@option@column@gap}{2zw}
+\DeclareOptionX{column_gap}{\renewcommand*{\jlreq@option@column@gap{#1}}}
 
 %.. 行送り，指定無しの場合は文字サイズの1.7倍とする．（1.5から2倍が好ましい：2.4.2.d 注3）
 \newcommand*{\jlreq@option@baselineskip}{}
@@ -1110,14 +1114,22 @@
 \fi
 \def\jlreq@speciallength#1{\dimexpr\jlreq@expand@speciallength{#1}\relax}
 
+% 二段組み用パラメータ
+\setlength{\columnsep}{\jlreq@speciallength{\jlreq@option@column@gap}}
+\setlength{\columnseprule}{0pt}
+
 % デフォルト値は縦横ともにが0.5倍．
-% \textwidth：縦書きは縦，横書きは横
+%.. \textwidth：縦書きは縦，横書きは横
+% 一度\textwidthに一行の長さの文字数を入れる（段組の場合でも）
 \@tempdima=1\jlreq@fontsize
 \ifx\jlreq@option@line@length\@empty
   \if@tate
     \setlength{\textwidth}{0.75\paperheight}
   \else
     \setlength{\textwidth}{0.75\paperwidth}
+  \fi
+  \if@twocolumn
+    \setlength{\textwidth}{\dimexpr(\textwidth - \columnsep)/2\relax}
   \fi
   \divide\textwidth\@tempdima
 \else
@@ -1134,8 +1146,11 @@
   \fi
 \fi
 \multiply\textwidth\@tempdima
+\if@twocolumn
+  \setlength{\textwidth}{\dimexpr2\textwidth + \columnsep\relax}
+\fi
 
-% \textheight：縦書きは横，横書きは縦
+%.. \textheight：縦書きは横，横書きは縦
 \ifx\jlreq@option@number@of@lines\@empty
   \if@tate
     \setlength{\textheight}{0.75\paperwidth}
@@ -1151,7 +1166,7 @@
 \setlength{\headsep}{\jlreq@speciallength{\jlreq@option@headfoot@verticalpos}}
 \ifdim\headsep<1\zw\jlreq@warning{基本版面との上下方向の最低の空き量を，基本版面の文字サイズの全角アキとする (26.1.a)}\fi
 \setlength{\headheight}{1\zh}
-% 横
+%.. 横
 \ifx\jlreq@option@gutter\@empty
   % 中央配置
   \setlength{\oddsidemargin}{\paperwidth}
@@ -1169,7 +1184,7 @@
   \addtolength{\oddsidemargin}{-1in}
   \addtolength{\evensidemargin}{-1in}
 \fi
-% 縦
+%.. 縦
 \ifx\jlreq@option@head@space\@empty
   \setlength{\topmargin}{\paperheight}
   \if@tate
@@ -1202,14 +1217,12 @@
 \addtolength{\topmargin}{-\headsep}
 \addtolength{\topmargin}{-\headheight}
 \addtolength{\topmargin}{-1in}
-% 下：本文から一文字分離すつもり
+%.. 下
+% 本文から一文字分離すつもり
 \setlength{\footskip}{2\zh}
 % \maxdepth + \topskip = フォントサイズ×1.5
 \setlength{\maxdepth}{1.5\jlreq@fontsize}
 \addtolength{\maxdepth}{-\topskip}
-% columnsep/columnseprule 二段組み用
-\setlength{\columnsep}{2\jlreq@mol} % フォントサイズ×2
-\setlength{\columnseprule}{0pt}
 
 %. 見出し関係 (4.1)
 % 見出しの直前に実行される
@@ -2812,7 +2825,9 @@
 \let\@openbib@code\@empty
 
 %. 索引
+\newif\ifjlreq@resttate
 \newenvironment{theindex}{%
+  \jlreq@iftdir{\clearpage\yoko\jlreq@resttatetrue}{\jlreq@resttatefalse}% 常に横書きにする
   \if@twocolumn\@restonecolfalse\else\@restonecoltrue\fi
   \columnseprule\z@ \columnsep 2\jlreq@mol
   \twocolumn[\section*{\indexname}]%
@@ -2823,6 +2838,7 @@
   \let\item\@idxitem
 }{%
   \if@restonecol\onecolumn\else\clearpage\fi
+  \ifjlreq@resttate\tate\fi
 }
 \newcommand{\@idxitem}{\par\hangindent 4\jlreq@mol}
 \newcommand{\subitem}{\@idxitem \hspace*{2\jlreq@mol}}

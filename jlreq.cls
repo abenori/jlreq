@@ -126,11 +126,13 @@
 \def\jlreq@helper@ifinlist@@#1#2{%
   \ifx\jlreq@endmark#2\def\jlreq@next{}%
   \else
-    \ifthenelse{\equal{#1}{#2}}{%
+    \def\jlreq@helper@ifinlist@tempa{#1}%
+    \def\jlreq@helper@ifinlist@tempb{#2}%
+    \ifx\\jlreq@helper@ifinlist@tempa\jlreq@helper@ifinlist@tempa
       \jlreq@tempatrue\def\jlreq@next{\jlreq@deleteuntileendmark}%
-    }{%
+    \else
       \def\jlreq@next{\jlreq@helper@ifinlist@@{#1}}%
-    }%
+    \fi
   \fi
   \jlreq@next
 }
@@ -2725,14 +2727,14 @@
     \@lnumwidth #3\relax
       \@tempcnta=#1\relax
       \advance\@tempcnta by -\jlreq@top@contents
-      \@tempdima=1\zh
+      \@tempdima=1\jlreq@mol
       \multiply \@tempdima by \@tempcnta
     \advance\leftskip \@lnumwidth \hbox{}\hskip -\leftskip
       \advance\leftskip\@tempdima
     {#4}\nobreak
     \leaders\hbox{$\hbox{・}\mkern \@dotsep mu \m@th \mkern \@dotsep mu$}%
     \hfill\nobreak
-    \hb@xt@\@pnumwidth{\hss\normalfont \normalcolor #5}%
+    \hb@xt@\@pnumwidth{\hss\normalfont\normalcolor #5}%
     \par}%
   \fi}
 \renewcommand*{\l@part}[2]{%
@@ -2758,7 +2760,7 @@
       \setlength\@lnumwidth{2\zh}%
       \@tempcnta=2\relax
       \advance \@tempcnta by -\jlreq@top@contents\relax
-      \@tempdima=1\zh
+      \@tempdima=1\jlreq@mol
       \multiply \@tempdima by \@tempcnta
       \parindent\z@ \rightskip\@pnumwidth
       \parfillskip-\rightskip
@@ -2766,7 +2768,7 @@
       \advance\leftskip\@lnumwidth
       \hskip-\leftskip
       \advance\leftskip\@tempdima
-      #1\nobreak\hfil\nobreak\hbox to\@pnumwidth{\hss#2}\par
+      #1\nobreak\hfil\nobreak\hbox to\@pnumwidth{\hss #2}\par
     \endgroup
   \fi}
 

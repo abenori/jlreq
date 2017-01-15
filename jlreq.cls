@@ -1633,7 +1633,7 @@
 % インデントの計算：脚注の長さが文字の整数倍になるように字下げする（4.2.5.b）
 {
   \footnotesize
-  \jlreq@footnoteindent=1\zw
+  \jlreq@footnoteindent=1\jlreq@mol
   \@tempdima=\dimexpr\textwidth - \jlreq@footnoteindent\relax
   \@tempdimb=1\zw
   \divide\@tempdima\@tempdimb \multiply\@tempdima\@tempdimb
@@ -1642,15 +1642,15 @@
 % 4.2.5.d
 \ifthenelse{\equal{\jlreq@footnotetext@indent}{one}}{
   \newcommand\@makefntext[1]{\parindent 1\jlreq@mol
-    \addtolength{\leftskip}{\dimexpr \jlreq@footnoteindent + 1\jlreq@mol\relax}% 全体をインデント+1文字分下げる
-    \noindent\hskip -1\jlreq@mol\@makefnmark\hskip 1\zh#1}% 見出し出力と一文字分の空き
+    \addtolength{\leftskip}{\dimexpr\jlreq@footnoteindent + 1\jlreq@mol\relax}% 全体をインデント+1文字分下げる
+    \noindent\hskip -1\jlreq@mol\jlreq@referencemark@format{\@thefnmark}\hskip 1\jlreq@mol#1}% 見出し出力と一文字分の空き
 }{
   \newcommand\@makefntext[1]{\parindent 1\jlreq@mol
     \addtolength{\leftskip}{\jlreq@footnoteindent}% 全体をインデント
-    \noindent\hskip 1\jlreq@mol\@makefnmark\hskip 1\jlreq@mol#1}% 見出し出力と一文字分の空き
+    \noindent\hskip 1\jlreq@mol\jlreq@referencemark@format{\@thefnmark}\hskip 1\jlreq@mol#1}% 見出し出力と一文字分の空き
 }
 % 合印
-\renewcommand*{\@makefnmark}{\hbox{\jlreq@notemark{\@thefnmark}}}
+\renewcommand*{\@makefnmark}{\jlreq@notemark{\@thefnmark}}
 % 図4.61のようにする
 \if@tate
   \renewcommand*{\thefootnote}{\jlreq@open@bracket@before@space\inhibitglue（\rensuji{\@arabic\c@footnote}）}

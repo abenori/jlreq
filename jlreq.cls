@@ -87,7 +87,7 @@
 \def\jlreq@helper@removeelement@@@#1#2{%
   \ifx\jlreq@endmark#2%
     % 全体の解釈が終わった
-    \ifx\jlreq@tempa\@tempb\else
+    \ifx\jlreq@tempa\jlreq@tempb\else
       \ifx#1\@empty\edef#1{\expandonce{\jlreq@tempb}}%
       \else\edef#1{\expandonce{#1},\expandonce{\jlreq@tempb}}\fi
     \fi
@@ -1216,8 +1216,8 @@
 \setlength{\maxdepth}{15\jlreq@mpt}
 \addtolength{\maxdepth}{-\topskip}
 % columnsep/columnseprule 二段組み用
-\setlength{\columnsep}{2\zh} % フォントサイズ×2
-\setlength{\columnseprule}{0\jlreq@mpt}
+\setlength{\columnsep}{2\jlreq@mol} % フォントサイズ×2
+\setlength{\columnseprule}{0pt}
 
 %. 見出し関係 (4.1)
 % 見出しの直前に実行される
@@ -1292,6 +1292,9 @@
     \jlreq@tempskipb=0pt\relax
   }{%
     \jlreq@tempskipb=\glueexpr(\baselineskip*(#4 + 1) - \ht\jlreq@tempboxb - \dp\jlreq@tempboxb - \ht\jlreq@tempboxa - \dp\jlreq@tempboxa)/2\relax
+    \message{a = \the\dimexpr\ht\jlreq@tempboxa + \dp\jlreq@tempboxa}%
+    \message{b = \the\dimexpr\ht\jlreq@tempboxb + \dp\jlreq@tempboxb}%
+    \message{baselineskip = \the\baselineskip}%
     \ifx\jlreq@startBlockHeading@space\@empty
       \jlreq@tempskipa=\jlreq@tempskipb
     \else
@@ -2664,7 +2667,11 @@
     \item\relax}{\endlist}
 
 %. 表関係 4.4
-\appto\@arrayparboxrestore{\baselineskip=0pt\lineskip=0pt} % 表内の行間を0にする（4.4.3.f）
+% 表内の行間を0にする（4.4.3.f）
+\let\jlreq@original@tabular=\tabular
+\let\jlreq@original@endtabular=\endtabular
+\preto\tabular{\begingroup\appto\@arrayparboxrestore{\baselineskip=0pt\lineskip=0pt}}
+\appto\endtabular{\endgroup}
 % 4.4.3.e
 \setlength\tabcolsep{.5\jlreq@gol}
 \setlength\arraycolsep{.5\jlreq@mol}
@@ -2776,12 +2783,12 @@
 }
 \let\l@table\l@figure
 
-% 文献
+%. 文献，そのまま
 \newdimen\bibindent
-\setlength\bibindent{1.5em}
+\setlength\bibindent{2\jlreq@mol}
 \newcommand{\newblock}{\hskip .11em\@plus.33em\@minus.07em}
-\newenvironment{thebibliography}[1]
-{\section*{\refname\@mkboth{\refname}{\refname}}%
+\newenvironment{thebibliography}[1]{%
+  \section*{\refname\@mkboth{\refname}{\refname}}%
   \list{\@biblabel{\@arabic\c@enumiv}}%
       {\settowidth\labelwidth{\@biblabel{#1}}%
       \leftmargin\labelwidth
@@ -2795,26 +2802,31 @@
   \clubpenalty4000
   \@clubpenalty\clubpenalty
   \widowpenalty4000%
-  \sfcode`\.\@m}
-  {\def\@noitemerr
+  \sfcode`\.\@m
+}{%
+  \def\@noitemerr
     {\@latex@warning{Empty `thebibliography' environment}}%
-  \endlist}
+  \endlist
+}
 \let\@openbib@code\@empty
 
-% 索引
-\newenvironment{theindex}
-  {\if@twocolumn\@restonecolfalse\else\@restonecoltrue\fi
-   \columnseprule\z@ \columnsep 35\jlreq@mpt
-   \twocolumn[\section*{\indexname}]%
-   \@mkboth{\indexname}{\indexname}%
-   \thispagestyle{jpl@in}\parindent\z@
-   \parskip\z@ \@plus .3\jlreq@mpt\relax
-   \let\item\@idxitem}
-  {\if@restonecol\onecolumn\else\clearpage\fi}
-\newcommand{\@idxitem}{\par\hangindent 40\jlreq@mpt}
-\newcommand{\subitem}{\@idxitem \hspace*{20\jlreq@mpt}}
-\newcommand{\subsubitem}{\@idxitem \hspace*{30\jlreq@mpt}}
-\newcommand{\indexspace}{\par \vskip 10\jlreq@mpt \@plus5\jlreq@mpt \@minus3\jlreq@mpt\relax}
+%. 索引
+\newenvironment{theindex}{%
+  \if@twocolumn\@restonecolfalse\else\@restonecoltrue\fi
+  \columnseprule\z@ \columnsep 2\jlreq@mol
+  \twocolumn[\section*{\indexname}]%
+  \@mkboth{\indexname}{\indexname}%
+  \thispagestyle{plain}%
+  \parindent\z@
+  \parskip\z@ \@plus .03\jlreq@gol\relax
+  \let\item\@idxitem
+}{%
+  \if@restonecol\onecolumn\else\clearpage\fi
+}
+\newcommand{\@idxitem}{\par\hangindent 4\jlreq@mol}
+\newcommand{\subitem}{\@idxitem \hspace*{2\jlreq@mol}}
+\newcommand{\subsubitem}{\@idxitem \hspace*{3\jlreq@mol}}
+\newcommand{\indexspace}{\par \vskip 1\jlreq@gol \@plus .5\jlreq@gol \@minus .3\jlreq@gol\relax}
 
 % なんかいろいろ
 \newif\if西暦 \西暦true

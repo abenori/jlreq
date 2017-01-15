@@ -1,3 +1,5 @@
+% JLREQ 20120403 https://www.w3.org/TR/2012/NOTE-jlreq-20120403/ja/ に基づく
+
 %#main jlreqtest.tex
 %%#T2D uplatex
 %%#! $(C:TeXToDVI) ; $(C:DVIToPDF)
@@ -1022,11 +1024,16 @@
 \setlength\Chs{\wd0}
 
 % 4.1.3.a
+% 文字サイズを基準としているような寸法に対しては，
+% \@setfontsizeが実行されるたびに追随して値を変える
+% その処理は\jlreq@setfontsizehookに入れる
 \let\jlreq@original@@setfontsize=\@setfontsize
 \renewcommand*{\@setfontsize}[3]{%
   \jlreq@original@@setfontsize{#1}{#2}{#3}%
-  \setlength{\parindent}{1\jlreq@mol}%
+  \jlreq@setfontsizehook
 }
+\def\jlreq@setfontsizehook{}
+\appto\jlreq@setfontsizehook{\setlength{\parindent}{1\jlreq@mol}}
 
 % 2.5.2 \baselineskipは一定の方がよい？
 \newcommand{\footnotesize}{%
@@ -1058,13 +1065,15 @@
 \newcommand{\huge}{\@setfontsize\huge{2\jlreq@fontsize}{\dimexpr 28\jlreq@baselineskip/17\relax}}
 \newcommand{\Huge}{\@setfontsize\Huge{\dimexpr 25\jlreq@fontsize/10\relax}{\dimexpr 33\jlreq@baselineskip/17\relax}}
 
-\ifx l\jlreq@engine
-  \RequirePackage{lltjext}
-\else
-  \RequirePackage{plext}
+\if@tate
+  \ifx l\jlreq@engine
+    \RequirePackage{lltjext}
+  \else
+    \RequirePackage{plext}
+  \fi
+  \renewcommand*{\@Kanji}[1]{\expandafter\kansuji\number #1\relax} % \relax追加
+  \rensujiskip=0\zh plus 0.25\zh minus 0\zh
 \fi
-\renewcommand*{\@Kanji}[1]{\expandafter\kansuji\number #1\relax} % \relax追加
-\rensujiskip=0\zh plus 0.25\zh minus 0\zh
 
 % このあたりはtarticleと同じ
 \setlength\lineskip{1\jlreq@mpt}
@@ -2369,11 +2378,7 @@
 
 %.. figure環境
 \newcounter{figure}
-\if@tate
-  \renewcommand*{\thefigure}{\arabic{figure}}
-\else
-  \renewcommand*{\thefigure}{\arabic{figure}}
-\fi
+\renewcommand*{\thefigure}{\arabic{figure}}
 \newcommand*{\fps@figure}{h}
 \newcommand*{\ftype@figure}{1}
 \newcommand*{\ext@figure}{lof}
@@ -2382,17 +2387,15 @@
 \newenvironment{figure*}{\@dblfloat{figure}}{\end@dblfloat}
 \newcommand*{\listfigurename}{図目次}
 \newcommand{\figurename}{図}
-\DeclareLayoutCaption{figure}<y>(\floatwidth)[cr]
+\if@tate
+  \DeclareLayoutCaption{figure}<y>(\floatwidth)[cr]
+\fi
 %\jlreq@modify@float{figure}
 %\jlreq@modify@float{figure*}
 
 %.. table環境
 \newcounter{table}
-\if@tate
-  \renewcommand*{\thefigure}{\arabic{table}}
-\else
-  \renewcommand*{\thefigure}{\arabic{table}}
-\fi
+\renewcommand*{\thetable}{\arabic{table}}
 \newcommand*{\fps@table}{h}
 \newcommand*{\ftype@table}{2}
 \newcommand*{\ext@table}{lot}
@@ -2401,7 +2404,9 @@
 \newenvironment{table*}{\@dblfloat{table}}{\end@dblfloat}
 \newcommand{\listtablename}{表目次}
 \newcommand{\tablename}{表}
-\DeclareLayoutCaption{table}<y>(\floatwidth)[cr]
+\if@tate
+  \DeclareLayoutCaption{table}<y>(\floatwidth)[cr]
+\fi
 %\jlreq@modify@float{table}
 %\jlreq@modify@float{table*}
 
@@ -2636,15 +2641,15 @@
     \listparindent\itemindent
     \labelwidth\z@
     \labelsep\z@
-    \leftmargin=2\zh
-    \rightmargin\leftmargin \advance\leftmargin 2\zh}%
+    \leftmargin=2\jlreq@mol
+    \rightmargin\leftmargin \advance\leftmargin 2\jlreq@mol}%
     \item\relax}{\endlist}
 \newenvironment{quotation}
   {\list{}{\listparindent\parindent
     \itemindent\listparindent
     \labelwidth\z@
     \labelsep\z@
-    \leftmargin=2\zh
+    \leftmargin=2\jlreq@mol
     \rightmargin\leftmargin
     \parsep\z@ \@plus\jlreq@mpt}%
     \item\relax}{\endlist}
@@ -2652,19 +2657,26 @@
   {\list{}{%
     \rightmargin\leftmargin
     \labelwidth\z@
-    \leftmargin=2\zh
+    \leftmargin=2\jlreq@mol
     \listparindent\z@}%
     \item\relax}{\endlist}
 
-% tarticleから変えていない．
-\setlength\arraycolsep{5\jlreq@mpt}
-\setlength\tabcolsep{6\jlreq@mpt}
-\setlength\arrayrulewidth{.4\jlreq@mpt}
-\setlength\doublerulesep{2\jlreq@mpt}
+%. 表関係 4.4
+\appto\@arrayparboxrestore{\baselineskip=0pt\lineskip=0pt} % 表内の行間を0にする（4.4.3.f）
+% 4.4.3.e
+\setlength\tabcolsep{.5\jlreq@gol}
+\setlength\arraycolsep{.5\jlreq@mol}
+% 4.4.3.j
+%\RequirePackage{tabls} % plextと整合的でない
+%\setlength\extrarulesep{.25\jlreq@gol}
+%\setlength\tablinesep{.25\jlreq@gol}
+%\renewcommand{\arraystretch}{0}
+\setlength\arrayrulewidth{\jlreq@omotekeiwidth} % 4.4.3.c
+\setlength\doublerulesep{2pt}
 \setlength\tabbingsep{\labelsep}
-\skip\@mpfootins = \skip\footins
-\setlength\fboxsep{3\jlreq@mpt}
-\setlength\fboxrule{.4\jlreq@mpt}
+\skip\@mpfootins=\skip\footins
+\setlength\fboxsep{.3\jlreq@mol}
+\setlength\fboxrule{\jlreq@omotekeiwidth} % 根拠はない
 \renewcommand{\theequation}{\@arabic\c@equation}
 
 % 目次
@@ -2860,7 +2872,7 @@
   \item[\hskip \labelsep{\headfont #1\ #2（#3）}]}
 
 \AtEndOfPackageFile*{amsthm}{
-  \newtheoremstyle{jlreq}{\jlreq@theorem@abovebelowspace}{\jlreq@theorem@abovebelowspace}{\normalfont}{}{\headfont}{}{1\zw}{\thmname{#1}\thmnumber{\ #2}\thmnote{ (#3)}}
+  \newtheoremstyle{jlreq}{\jlreq@theorem@abovebelowspace}{\jlreq@theorem@abovebelowspace}{\normalfont}{}{\headfont}{}{1\jlreq@mol}{\thmname{#1}\thmnumber{\ #2}\thmnote{ (#3)}}
   \theoremstyle{jlreq}
   \let\jlreq@original@proof=\proof
   \let\jlreq@original@endproof=\endproof

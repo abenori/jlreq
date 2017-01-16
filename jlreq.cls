@@ -272,9 +272,12 @@
 
 %.. 基本版面．まずは紙サイズ．
 \def\jlreq@switchpapersize{}
-\newcommand*\jlreq@addpapersize[3]{%
-  \DeclareOptionX{#1}{\jlreq@setpaper{#1}}
-  \appto\jlreq@switchpapersize{{#1}{\setlength\paperheight{#2}\setlength\paperwidth{#3}}}
+\newcommand*\jlreq@addpapersize[4][]{%
+  \DeclareOptionX{#2}{\jlreq@setpaper{#2}}
+  \appto\jlreq@switchpapersize{{#2}{\setlength\paperheight{#3}\setlength\paperwidth{#4}}}
+  \jlreq@ifempty{#1}{}{
+    \appto\jlreq@switchpapersize{{#1}{\setlength\paperheight{#3}\setlength\paperwidth{#4}}}
+  }
 }
 \newcommand*\jlreq@setpaper[1]{%
   \edef\jlreq@do{%
@@ -293,22 +296,23 @@
 }
 \DeclareOptionX{paper}{\jlreq@setpaper{#1}}
 % 紙サイズ一覧
-\jlreq@addpapersize{a3paper}{420mm}{297mm}
-\jlreq@addpapersize{a4paper}{297mm}{210mm}
-\jlreq@addpapersize{a5paper}{210mm}{148mm}
-\jlreq@addpapersize{a6paper}{148mm}{105mm}
-\jlreq@addpapersize{b4paper}{364mm}{257mm}
-\jlreq@addpapersize{b5paper}{257mm}{182mm}
-\jlreq@addpapersize{b6paper}{182mm}{128mm}
+% [オプショナルにpaper=で指定できるようにするもの]{紙サイズ名}{縦}{横}
+\jlreq@addpapersize[a3]{a3paper}{420mm}{297mm}
+\jlreq@addpapersize[a4]{a4paper}{297mm}{210mm}
+\jlreq@addpapersize[a5]{a5paper}{210mm}{148mm}
+\jlreq@addpapersize[a6]{a6paper}{148mm}{105mm}
+\jlreq@addpapersize[b4]{b4paper}{364mm}{257mm}
+\jlreq@addpapersize[b5]{b5paper}{257mm}{182mm}
+\jlreq@addpapersize[b6]{b6paper}{182mm}{128mm}
 \jlreq@addpapersize{a4j}{297mm}{210mm}
 \jlreq@addpapersize{a5j}{210mm}{148mm}
 \jlreq@addpapersize{b4j}{364mm}{257mm}
 \jlreq@addpapersize{b5j}{257mm}{182mm}
 \jlreq@addpapersize{a4var}{283mm}{210mm}
 \jlreq@addpapersize{b5var}{230mm}{182mm}
-\jlreq@addpapersize{letterpaper}{11in}{8.5in}
-\jlreq@addpapersize{legalpaper}{14in}{8.5in}
-\jlreq@addpapersize{executivepaper}{10.5in}{7.25in}
+\jlreq@addpapersize[letter]{letterpaper}{11in}{8.5in}
+\jlreq@addpapersize[legal]{legalpaper}{14in}{8.5in}
+\jlreq@addpapersize[executive]{executivepaper}{10.5in}{7.25in}
 
 %.. フォントサイズ，行長，1ページあたりの行数で基本版面のサイズを決める（2.4.1.a）
 \newcommand*{\jlreq@option@fontsize}{}
@@ -1228,7 +1232,7 @@
 % 見出しの直前に実行される
 \newcommand*{\jlreq@hook@beforeheadings}[1]{}
 
-% 別行見出し
+%.. 別行見出し
 % \jlreq@startBlockHeading{1 = 命令名}{2 = レベル}{3 = 字下げ}{4 = 前空き}{5 = 後ろ空き}{6 = トータル行数}{7 =  フォーマット}*{見出し}[副題]
 % 字下げはa:**だと追加する値，r:**だとその値に強制する．
 \newcommand{\jlreq@startBlockHeading}[7]{%
@@ -1315,11 +1319,12 @@
     \ifdim\jlreq@tempskipa=0pt\else\vskip\jlreq@tempskipa\fi
     \noindent
     \jlreq@ifempty{#1}{}{\hskip #1}%
-    \box\jlreq@tempboxa}%
+    \box\jlreq@tempboxa\nopagebreak}%
   \dp\jlreq@tempboxa=\dimexpr\dp\jlreq@tempboxa + \ht\jlreq@tempboxa\relax
   \ht\jlreq@tempboxa=0pt
   \box\jlreq@tempboxa
-  \par\prevdepth=0pt
+  \par\nopagebreak
+  \prevdepth=0pt
   \jlreq@startBlockHeading@analyzespace#3:\jlreq@endmark
   \jlreq@tempskipb=\glueexpr\jlreq@tempskipb + \ht\jlreq@tempboxb - \baselineskip\relax
   \ifx\jlreq@startBlockHeading@space\@empty\else
@@ -1399,7 +1404,7 @@
 \@onlypreamble\RenewBlockHeading
 \@onlypreamble\ProvideBlockHeading
 
-% 同行見出し
+%.. 同行見出し
 % \DeclareRuninHeading{命令名}{レベル}{設定}
 \newcommand*{\DeclareRuninHeading}[3]{%
   \@ifundefined{c@#1}{\newcounter{#1}}{}%
@@ -1434,7 +1439,7 @@
 \@onlypreamble\RenewRuninHeading
 \@onlypreamble\ProvideRuninHeading
 
-% 窓見出し
+%.. 窓見出し
 \newcount\jlreq@wraplinecount
 \newdimen\jlreq@hangindent
 \def\jlreq@CutinHeading@start#1#2#3#4#5#6#7{%
@@ -1544,6 +1549,7 @@
 \renewcommand*{\@seccntformat}[1]{\csname the#1\endcsname\hspace{1\jlreq@mol}}
 \newcommand*{\headfont}{\gtfamily\sffamily}
 
+%.. 各種定義
 \if@tate
   \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},indent=4,lines=4}
   \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},indent=6,lines=3}
@@ -1571,15 +1577,12 @@
   \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},lines=1,before_lines=1}
   \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
   \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
-  \renewcommand{\thepart}{\@Roman\c@part}
-  \renewcommand{\thesection}{\@arabic\c@section}
-  \renewcommand{\thesubsection}{\@alph\c@subsection}
-  \renewcommand{\thesubsubsection}{%
-    \@arabic\c@subsubsection}
-  \renewcommand{\theparagraph}{%
-    (\@arabic\c@paragraph)}
-  \renewcommand{\thesubparagraph}{%
-    (\@arabic\c@subparagraph)}
+  \renewcommand{\thepart}{\Roman{part}}
+  \renewcommand{\thesection}{\arabic{section}}
+  \renewcommand{\thesubsection}{\thesection .\arabic{subsection}}
+  \renewcommand{\thesubsubsection}{\thesubsection .\arabic{subsubsection}}
+  \renewcommand{\theparagraph}{\thesubsubsection .\arabic{paragraph}}
+  \renewcommand{\thesubparagraph}{\theparagraph .\arabic{subparagraph}}
   \newcommand{\appendix}{\par
     \setcounter{section}{0}%
     \setcounter{subsection}{0}%

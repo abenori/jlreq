@@ -19,8 +19,7 @@
 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{jlreq}[2016/01/01 jlreq]
-\RequirePackage{xkeyval}
-\RequirePackage{everyhook,filehook,etoolbox,ifthen}
+\RequirePackage{xkeyval,everyhook,filehook,etoolbox,ifthen}
 
 %. helper1
 \newdimen\jlreq@tempdima
@@ -396,9 +395,9 @@
 \jlreq@DeclareOption{tate}{\@tatetrue
   \AtBeginDocument{\tate\message{\jlreq@tategumi@message}\adjustbaseline}%
 }
-\jlreq@DeclareOption{oneside}{\@twosidefalse \@mparswitchfalse}
-\jlreq@DeclareOption{twoside}{\@twosidetrue \@mparswitchtrue}
-\jlreq@DeclareOption{vartwoside}{\@twosidetrue \@mparswitchfalse}
+\jlreq@DeclareOption{oneside}{\@twosidefalse\@mparswitchfalse}
+\jlreq@DeclareOption{twoside}{\@twosidetrue\@mparswitchtrue}
+\jlreq@DeclareOption{vartwoside}{\@twosidetrue\@mparswitchfalse}
 \jlreq@DeclareOption{onecolumn}{\@twocolumnfalse}
 \jlreq@DeclareOption{twocolumn}{\@twocolumntrue}
 \jlreq@DeclareOption{titlepage}{\@titlepagetrue}
@@ -475,16 +474,16 @@
 % 組方向を判定
 % \jlreq@if(y|t)(dir|box)を定義する．
 \def\jlreq@do{%
-  \long\def\jlreq@ifydir{\ifydir\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-  \long\def\jlreq@iftdir{\iftdir\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-  \long\def\jlreq@ifybox##1{\ifybox##1\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-  \long\def\jlreq@iftbox##1{\iftbox##1\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+  \def\jlreq@ifydir{\ifydir\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+  \def\jlreq@iftdir{\iftdir\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+  \def\jlreq@ifybox##1{\ifybox##1\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+  \def\jlreq@iftbox##1{\iftbox##1\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
 }
 \ifx l\jlreq@engine
-  \long\def\jlreq@ifydir{\ifnum\ltjgetparameter{direction}=4\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-  \long\def\jlreq@iftdir{\ifnum\numexpr\ltjgetparameter{direction}-(\ltjgetparameter{direction}/8)*8=3\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-  \long\def\jlreq@ifybox#1{\ifnum\ltjgetparameter{boxdir}{#1}=4\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-  \long\def\jlreq@iftbox#1{\ifnum\numexpr\ltjgetparameter{boxdir}{#1}-(\ltjgetparameter{boxdir}{#1}/8)*8=3\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+  \def\jlreq@ifydir{\ifnum\ltjgetparameter{direction}=4\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+  \def\jlreq@iftdir{\ifnum\numexpr\ltjgetparameter{direction}-(\ltjgetparameter{direction}/8)*8=3\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+  \def\jlreq@ifybox#1{\ifnum\ltjgetparameter{boxdir}{#1}=4\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+  \def\jlreq@iftbox#1{\ifnum\numexpr\ltjgetparameter{boxdir}{#1}-(\ltjgetparameter{boxdir}{#1}/8)*8=3\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
 \else
   \jlreq@do
 \fi
@@ -911,20 +910,18 @@
 }{}
 
 % \pdfpagewidthとか設定
-\newlength{\stockwidth}
-\newlength{\stockheight}
-\setlength{\stockwidth}{\paperwidth}
-\setlength{\stockheight}{\paperheight}
-\iftombow
-  \advance \stockwidth 2in
-  \advance \stockheight 2in
-\fi
 \ifx l\jlreq@engine
-  \setlength{\pagewidth}{\stockwidth}
-  \setlength{\pageheight}{\stockheight}
+  \let\jlreq@pagewidth=\pagewidth
+  \let\jlreq@pageheight=\pageheight
 \else
-  \setlength{\pdfpagewidth}{\stockwidth}
-  \setlength{\pdfpageheight}{\stockheight}
+  \let\jlreq@pagewidth=\pdfpagewidth
+  \let\jlreq@pageheight=\pdfpageheight
+\fi
+\setlength{\jlreq@pagewidth}{\paperwidth}
+\setlength{\jlreq@pageheight}{\paperheight}
+\iftombow
+  \addtolength{\jlreq@pagewidth}{2in}
+  \addtolength{\jlreq@pageheight}{2in}
 \fi
 
 %. フォント
@@ -941,18 +938,40 @@
 \fi
 
 % あれば読み込む．
-\IfFileExists{bxoldfontcmd.sty}{\RequirePackage[praised]{bxoldfontcmd}}{}
-%\DeclareOldFontCommand{\mc}{\normalfont\mcfamily}{\mathmc}
-%\DeclareOldFontCommand{\gt}{\normalfont\gtfamily}{\mathgt}
-%\DeclareOldFontCommand{\rm}{\normalfont\rmfamily}{\mathrm}
-%\DeclareOldFontCommand{\sf}{\normalfont\sffamily}{\mathsf}
-%\DeclareOldFontCommand{\tt}{\normalfont\ttfamily}{\mathtt}
-%\DeclareOldFontCommand{\bf}{\normalfont\bfseries}{\mathbf}
-%\DeclareOldFontCommand{\it}{\normalfont\itshape}{\mathit}
-%\DeclareOldFontCommand{\sl}{\normalfont\slshape}{\@nomath\sl}
-%\DeclareOldFontCommand{\sc}{\normalfont\scshape}{\@nomath\sc}
-%\DeclareRobustCommand*{\cal}{\@fontswitch\relax\mathcal}
-%\DeclareRobustCommand*{\mit}{\@fontswitch\relax\mathnormal}
+\DeclareOldFontCommand{\jlreq@oldfontcommand@mc}{\normalfont\mcfamily}{\mathmc}
+\DeclareOldFontCommand{\jlreq@oldfontcommand@gt}{\normalfont\gtfamily}{\mathgt}
+\DeclareOldFontCommand{\jlreq@oldfontcommand@rm}{\normalfont\rmfamily}{\mathrm}
+\DeclareOldFontCommand{\jlreq@oldfontcommand@sf}{\normalfont\sffamily}{\mathsf}
+\DeclareOldFontCommand{\jlreq@oldfontcommand@tt}{\normalfont\ttfamily}{\mathtt}
+\DeclareOldFontCommand{\jlreq@oldfontcommand@bf}{\normalfont\bfseries}{\mathbf}
+\DeclareOldFontCommand{\jlreq@oldfontcommand@it}{\normalfont\itshape}{\mathit}
+\DeclareOldFontCommand{\jlreq@oldfontcommand@sl}{\normalfont\slshape}{\@nomath\sl}
+\DeclareOldFontCommand{\jlreq@oldfontcommand@sc}{\normalfont\scshape}{\@nomath\sc}
+\newcommand*{\jlreq@oldfontcommand@enable}{%
+  \let\mc=\jlreq@oldfontcommand@mc
+  \let\gt=\jlreq@oldfontcommand@gt
+  \let\rm=\jlreq@oldfontcommand@rm
+  \let\sf=\jlreq@oldfontcommand@sf
+  \let\tt=\jlreq@oldfontcommand@tt
+  \let\bf=\jlreq@oldfontcommand@bf
+  \let\it=\jlreq@oldfontcommand@it
+  \let\sl=\jlreq@oldfontcommand@sl
+  \let\sc=\jlreq@oldfontcommand@sc
+}
+\newcommand*{\jlreq@oldfontcommand@disable}{%
+  \let\mc=\@undefined
+  \let\gt=\@undefined
+  \let\rm=\@undefined
+  \let\sf=\@undefined
+  \let\tt=\@undefined
+  \let\bf=\@undefined
+  \let\it=\@undefined
+  \let\sl=\@undefinedc
+  \let\sc=\@undefined
+}
+
+\DeclareRobustCommand*{\cal}{\@fontswitch\relax\mathcal}
+\DeclareRobustCommand*{\mit}{\@fontswitch\relax\mathnormal}
 
 %.. 和文
 \ifx l\jlreq@engine
@@ -2440,11 +2459,11 @@
     \@restonecolfalse\newpage
   \fi
   \thispagestyle{empty}%
-  \setcounter{page}\@ne
+  \setcounter{page}{1}%
 }{%
   \if@restonecol\twocolumn\else\newpage\fi
   \if@twoside\else
-    \setcounter{page}\@ne
+    \setcounter{page}{1}%
   \fi
 }
 
@@ -2786,15 +2805,15 @@
 
 % listoffigures
 \newcommand{\listoffigures}{%
-    \jlreq@top@contents=0\relax
-    \section*{\listfigurename
+  \jlreq@top@contents=0\relax
+  \section*{\listfigurename
   \@mkboth{\listfigurename}{\listfigurename}}%
   \@starttoc{lof}%
 }
 \newcommand*{\l@figure}{\@dottedtocline{1}{0\jlreq@gol}{2\jlreq@gol}}
 \newcommand{\listoftables}{%
-    \jlreq@top@contents=0\relax
-    \section*{\listtablename
+  \jlreq@top@contents=0\relax
+  \section*{\listtablename
   \@mkboth{\listtablename}{\listtablename}}%
   \@starttoc{lot}%
 }
@@ -2805,6 +2824,7 @@
 \setlength\bibindent{2\jlreq@mol}
 \newcommand{\newblock}{\hskip .11em\@plus.33em\@minus.07em}
 \newenvironment{thebibliography}[1]{%
+  \jlreq@oldfontcommand@enable
   \section*{\refname\@mkboth{\refname}{\refname}}%
   \list{\@biblabel{\@arabic\c@enumiv}}%
       {\settowidth\labelwidth{\@biblabel{#1}}%
@@ -2830,6 +2850,7 @@
 %. 索引
 \newif\ifjlreq@resttate
 \newenvironment{theindex}{%
+  \jlreq@oldfontcommand@enable
   \jlreq@iftdir{\clearpage\yoko\jlreq@resttatetrue}{\jlreq@resttatefalse}% 常に横書きにする
   \if@twocolumn\@restonecolfalse\else\@restonecoltrue\fi
   \columnseprule\z@ \columnsep 2\jlreq@mol
@@ -2848,7 +2869,7 @@
 \newcommand{\subsubitem}{\@idxitem \hspace*{3\jlreq@mol}}
 \newcommand{\indexspace}{\par \vskip 1\jlreq@gol \@plus .5\jlreq@gol \@minus .3\jlreq@gol\relax}
 
-% なんかいろいろ
+% 日にち
 \newif\if西暦 \西暦true
 \def\西暦{\西暦true}
 \def\和暦{\西暦false}
@@ -2915,6 +2936,8 @@
 \pagenumbering{arabic}
 \if@twocolumn
   \twocolumn
+  \sloppy
+  \flushbottom
 \else
   \onecolumn
   \raggedbottom

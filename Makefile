@@ -79,10 +79,10 @@ jfm-%v.lua jfm-b%,lua jfm-z%.lua: make_variant_jfm.lua jfm-jlreq.lua
 	texlua make_variant_jfm.lua
 
 doc:
-	pandoc --verbose -f markdown_github README.md -o README.pdf -V documentclass=jlreq --latex-engine=lualatex
+	pandoc --verbose -f markdown_github -t latex --latex-engine=lualatex --template README-template.tex README.md -o README.pdf
 
 latexdoc:
-	pandoc --verbose --standalone -f markdown_github README.md -o README.tex -V documentclass=jlreq --latex-engine=lualatex
+	pandoc --verbose -f markdown_github -t latex --latex-engine=lualatex --template README-template.tex README.md -o README.tex
 
 install: jfm
 	mkdir -p ${TEXMF}/fonts/tfm/public/jlreq

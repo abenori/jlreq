@@ -937,7 +937,7 @@
 \else
 \fi
 
-% あれば読み込む．
+% 古いフォントコマンド
 \DeclareOldFontCommand{\jlreq@oldfontcommand@mc}{\normalfont\mcfamily}{\mathmc}
 \DeclareOldFontCommand{\jlreq@oldfontcommand@gt}{\normalfont\gtfamily}{\mathgt}
 \DeclareOldFontCommand{\jlreq@oldfontcommand@rm}{\normalfont\rmfamily}{\mathrm}
@@ -1616,23 +1616,34 @@
   \newcommand*{\jlreq@notemark}[1]{%
     \jlreq@ifydir{%
       \hbox{}\hbox{\@textsuperscript{\normalfont\jlreq@referencemark@format{#1}}}\hbox{}%
-    }{{%
+    }{%
       \setbox\@tempboxa=\hbox{\scriptsize\jlreq@referencemark@format{#1}}%
       \raise\dimexpr.5\jlreq@gol - (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa
-    }}}%
+    }}%
 }{
   \newcommand*{\jlreq@notemark}[1]{{%
     \setbox\@tempboxa=\hbox{\scriptsize\jlreq@referencemark@format{#1}}%
     % 行頭に来たときに頭を天にそろえる処理．
+    % うまく動いていないみたい
     \jlreq@savepos@for@rest@linewidth
     \ifdim\jlreq@current@linewidth<\wd\@tempboxa
       \@tempdima=\jlreq@current@linewidth
     \else
       \@tempdima=\wd\@tempboxa
     \fi
-    \setbox\jlreq@tempboxa=\hbox to\z@{\hskip-\@tempdima\raise\dimexpr.5\jlreq@gol + (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa\hss}%
+    \setbox\jlreq@tempboxa=\hbox to\z@{\hskip-\@tempdima\raise\dimexpr.5\zw + (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa\hss}%
     \dp\jlreq@tempboxa=0pt\ht\jlreq@tempboxa=0pt\box\jlreq@tempboxa}}%
 }
+% \@footnotemarkをシンプルなものにする
+\def\jlreq@setdefaultnotemark#1#2{%
+  \def#1{%
+    \leavevmode
+    \ifhmode\edef\@x@sf{\the\spacefactor}\nobreak\fi
+    #2%
+    \ifhmode\spacefactor\@x@sf\fi
+    \relax}
+}
+\jlreq@setdefaultnotemark\@footnotemark\@makefnmark
 %.. 脚注  （縦書きの時は傍注，4.2.5）
 {%
   \footnotesize\global\setlength{\footnotesep}{.7\baselineskip} % 何でかわからん……
@@ -1672,7 +1683,9 @@
     \noindent\hskip 1\jlreq@mol\jlreq@referencemark@format{\@thefnmark}\hskip 1\jlreq@mol#1}% 見出し出力と一文字分の空き
 }
 % 合印
-\renewcommand*{\@makefnmark}{\jlreq@notemark{\@thefnmark}}
+\renewcommand*{\@makefnmark}{%
+  \jlreq@ifydir{\jlreq@notemark{\@thefnmark}}{\hbox{\jlreq@notemark{\@thefnmark}}}%
+}
 % 図4.61のようにする
 \if@tate
   \renewcommand*{\thefootnote}{\jlreq@open@bracket@before@space\inhibitglue（\rensuji{\@arabic\c@footnote}）\inhibitglue}
@@ -1708,7 +1721,7 @@
   }%
   \@endnotemark
 }
-\def\@endnotemark{\jlreq@notemark{\@makeendmark}}
+\jlreq@setdefaultnotemark\@endnotemark\@makeendmark
 \long\def\jlreq@endnotetext[#1]#2{%
   \jlreq@ifempty{#1}{%
     \expandafter\protected@xdef\csname\jlreq@endnotemarkname\endcsname{\csname the\jlreq@endnotecounter\endcsname}%
@@ -1765,7 +1778,7 @@
 \jlreq@endnote@indent=2\jlreq@mol
 % 二行目以降を全角分下げる
 \newcommand{\@makeendtext}[1]{\parindent 1\jlreq@mol
-    \hskip-1\jlreq@mol\@makeendmark\hskip 1\jlreq@mol#1}% 見出し出力と一文字分の空き
+    \hskip-1\jlreq@mol\csname\jlreq@endnotemarkname\endcsname\hskip 1\jlreq@mol#1}% 見出し出力と一文字分の空き
 \def\@makeendmark{\@makefnmark}
 
 % \theendnoteの出力を仕込む
@@ -1850,8 +1863,8 @@
     \color@endgroup
   }%
 }
-\def\jlreq@tempa{number}
-\ifx\jlreq@sidenote@type\jlreq@tempa
+\jlreq@setdefaultnotemark\@sidenotemark\@makesidemark
+\ifthenelse{\equal{\jlreq@sidenote@type}{number}}{
   \def\jlreq@sidenotecounter{footnote}% 傍注用のカウンタ名
   \def\sidenote{\@ifnextchar[{\jlreq@sidenote}{\jlreq@sidenote[]}}
   \def\sidenotemark{\@ifnextchar[{\jlreq@sidenotemark}{\jlreq@sidenotemark[]}}
@@ -1880,10 +1893,15 @@
     }%
     \@sidenotetext{#2}%
   }
-  \def\@sidenotemark{\jlreq@notemark{\@makesidemark}}
-  \def\@makesidetext#1{\@makefnmark\hspace{0.5\jlreq@mol}#1}
+  \def\@sidenotemark{\@makesidemark}
+  \ifx l\jlreq@engine
+    \def\@makesidetext#1{\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
+  \else
+    % thefootnote = \inhibitglue （...だと\inhibitglueが効かない
+    \def\@makesidetext#1{　\kern-1\zw\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
+  \fi
   \def\@makesidemark{\@makefnmark}
-\else
+}{
   \def\jlreq@sidenote@keywordfont{\headfont}
   \def\jlreq@sidenote@defaultmark{＊}
   \def\sidenote{\jlreq@sidenote}
@@ -1897,14 +1915,14 @@
       \@sidenotemark
     \fi
   }
-  \def\@sidenotemark{\jlreq@notemark{\@makesidemark}}
+  \def\@sidenotemark{\@makesidemark}
   \def\jlreq@sidenotetext#1#2{%
     \expandafter\def\csname\jlreq@sidenotemarkname\endcsname{\jlreq@sidenote@defaultmark\inhibitglue\null{\reset@font\jlreq@sidenote@keywordfont\inhibitglue #1}}%
     \@sidenotetext{#2}%
   }
   \def\@makesidetext#1{{\headfont\csname\jlreq@sidenotemarkname\endcsname}\hspace*{1\jlreq@mol}#1}
   \def\@makesidemark{\@makefnmark}
-\fi
+}
 
 %.. 割注（3.4）
 \def\inlinenotesize{.6\jlreq@fontsize} % 割注の文字サイズ

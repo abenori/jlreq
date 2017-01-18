@@ -1273,6 +1273,7 @@
     \unexpanded{\def\jlreq@tempa##1##2##3}{\expandonce{\jlreq@startBlockHeading@format}}%
   }%
   \jlreq@do
+  % 後で呼び出す\jlreq@startBlockHeading@addtocontentslineを定義する
   \ifnum0\jlreq@ifempty{#4}{}{1}\ifnum #2>\c@secnumdepth1\fi>0
     \expandafter\def\expandafter\jlreq@tempa\expandafter{\jlreq@tempa{}{#6}{#7}}%
     \def\jlreq@startBlockHeading@addtocontentsline{}%
@@ -1619,12 +1620,12 @@
     }{%
       \setbox\@tempboxa=\hbox{\scriptsize\jlreq@referencemark@format{#1}}%
       \raise\dimexpr.5\jlreq@gol - (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa
-    }}%
+    }%
+  }
 }{
   \newcommand*{\jlreq@notemark}[1]{{%
     \setbox\@tempboxa=\hbox{\scriptsize\jlreq@referencemark@format{#1}}%
     % 行頭に来たときに頭を天にそろえる処理．
-    % うまく動いていないみたい
     \jlreq@savepos@for@rest@linewidth
     \ifdim\jlreq@current@linewidth<\wd\@tempboxa
       \@tempdima=\jlreq@current@linewidth
@@ -1701,7 +1702,7 @@
 % 前の分との間は行間分空ける（4.2.4.f）
 \jlreq@endnote@prepostspace=\dimexpr\baselineskip - 1\jlreq@gol\relax
 \newdimen\jlreq@endnote@indent
-% 現在の後注一覧を，{{合印1}{後注1}}{{合印2}{後注2}}...の形で保持する
+% 現在の後注一覧を，\jlreq@endnote@textsに{{合印1}{後注1}}{{合印2}{後注2}}...の形で保持する
 \def\jlreq@endnote@texts{}
 \def\jlreq@endnote@addtext#1#2{%
   \expandafter\gdef\expandafter\jlreq@endnote@texts\expandafter{\jlreq@endnote@texts{{#1}{#2}}}}
@@ -1752,6 +1753,7 @@
   \ifx\jlreq@endnote@texts\@empty\else
     \let\jlreq@tempa=\jlreq@endnote@texts
     \gdef\jlreq@endnote@texts{}%
+    \edef\jlreq@endnote@beforeafterspace{\the\dimexpr\baselineskip - 1\jlreq@gol\relax plus \the\dimexpr 1\jlreq@gol\relax}%
     \begingroup
       \par
       \footnotesize
@@ -1766,7 +1768,7 @@
         \topsep=0pt\relax
         \leftmargin=\dimexpr\linewidth - \jlreq@tempdima\relax
         \itemindent=0pt\relax
-        \topsep=0pt plus \baselineskip
+        \topsep=\jlreq@endnote@beforeafterspace
       }%
       \expandafter\jlreq@theendnotes\jlreq@tempa\jlreq@endmark
       \end{list}
@@ -1958,10 +1960,13 @@
   % 括弧の分を引いたものが，割注の使える長さ
   \setbox\@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\inhibitglue\jlreq@open@bracket@before@space（\inhibitglue}%
   \addtolength{\jlreq@tempdimb}{-\wd\@tempboxa}%
+  \ifdim\jlreq@tempdimb<0pt\jlreq@tempdimb=\linewidth\fi
   {%
     \setbox\jlreq@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\inhibitglue \jlreq@open@bracket@before@space（}%
     \jlreq@box@putcenter\jlreq@tempboxa
   }%
+  % 割注内の\baselineskipを保存（後で使う）．
+  {\jlreq@inlinenote@fontsize\xdef\jlreq@inlinenote@baselineskip{\the\baselineskip}}%
   % 普通に並べた長さを計測し，その半分から始める
   \setbox\@tempboxa=\hbox{\jlreq@inlinenote@fontsize #1}%
   \jlreq@tempdimc=\wd\@tempboxa
@@ -2026,7 +2031,7 @@
       \fi
       {%
 %        \jlreq@inlinenote@fontsize
-        \setbox\jlreq@tempboxa=\vsplit\@tempboxa to \dimexpr 2\baselineskip - 0.001pt\relax
+        \setbox\jlreq@tempboxa=\vsplit\@tempboxa to \dimexpr\jlreq@inlinenote@baselineskip*2 - 0.001pt\relax
         % 改行を\jlreq@inlinenote@autolinebreak=\\の場合には，割注の長さを計測した物に長さに強制する
         \jlreq@getlastbox{\jlreq@tempboxa}%
         \setbox\jlreq@tempboxb=\box\jlreq@resultbox
@@ -2056,7 +2061,7 @@
 }
 
 \newcommand*{\jlreq@inlinenote@noauto}[1]{%
-  \jlreq@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\jlreq@open@bracket@before@space（}%
+  \setbox\jlreq@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\jlreq@open@bracket@before@space（}%
   \inhibitglue\jlreq@box@putcenter\jlreq@tempboxa
   \jlreq@inlinenote@noauto@#1\\\jlreq@endmark\jlreq@endmark
   \jlreq@inlinenote@endnote
@@ -2076,10 +2081,8 @@
     \jlreq@inlinenote@determinelength{#1}{\jlreq@inlinenote@fontsize}{}{2}{2}{\jlreq@tempdimc}{\maxdimen}%
     \ifvoid\jlreq@resultbox\else
       {%
-        \jlreq@tempboxa=\hbox{\jlreq@inlinenote@fontsize\box\jlreq@resultbox}%
-        \ht\jlreq@tempboxa=\dimexpr(\ht\jlreq@tempboxa + \dp\jlreq@tempboxa)/2\relax
-        \dp\jlreq@tempboxa=\ht\jlreq@tempboxa
-        \box\jlreq@tempboxa
+        \setbox\jlreq@tempboxa=\hbox{\jlreq@inlinenote@fontsize\box\jlreq@resultbox}%
+        \jlreq@box@putcenter\jlreq@tempboxa
       }%
     \fi
     \def\jlreq@next{}%
@@ -2091,10 +2094,8 @@
 
 \def\jlreq@inlinenote@noauto@@@#1#2&\jlreq@endmark{%
   {%
-    \setbox\@tempboxa=\hbox{\vbox{\hbox{#1}\hbox{#2}}}%
-    \ht\tempboxa=\dimexpr(\ht\@tempboxa + \dp\@tempboxa)/2\relax
-    \dp\tempboxa=\dimexpr(\ht\@tempboxa + \dp\@tempboxa)/2\relax
-    \box\@tempboxa
+    \setbox\@tempboxa=\hbox{\jlreq@inlinenote@fontsize\vbox{\hbox{#1}\hbox{#2}}}%
+    \jlreq@box@putcenter\@tempboxa
   }%
 }
 
@@ -2112,7 +2113,7 @@
 % \jlreq@inlinenote@determinelength{テキスト(1)}{書式指定(2)}{\parshape指定(3)}{調整に使う行数(4)}{成功行数(5)}{最小長さ(6)}{最大長さ(7)}
 % \jlreq@resultboxに整形結果を返す．見つからなかったらvoid
 \newcommand{\jlreq@inlinenote@determinelength}[7]{%
-%  \message{#1 の試行開始，行数 = #5, \the#6 から \the#7まで}%
+  \message{#1 の試行開始，行数 = #5, \the#6 から \the#7まで}%
   \@tempcnta=1\relax
   \def\@tempa{}%
   \@whilenum\@tempcnta<#4\do{%
@@ -2132,12 +2133,12 @@
         \parindent=0pt\leftskip=0pt\rightskip=0pt\relax
         \parshape #5 #3 \@tempa 0pt \the\maxdimen
         #1\par\global\@tempcntb=\prevgraf}%
-%      \message{\string\jlreq@tempdima = \the\jlreq@tempdima で試行，行数は\the\@tempcntb , 書式 #5 #3 \@tempa 0pt \the\maxdimen}%
+      \message{\string\jlreq@tempdima = \the\jlreq@tempdima で試行，行数は\the\@tempcntb , 書式 #5 #3 \@tempa 0pt \the\maxdimen}%
     \fi
     \jlreq@getlastbox{\@tempboxa}%
     \setbox\jlreq@tempboxa=\box\jlreq@resultbox
     \ifnum\@tempcntb<#5\relax% 行数が達していないならOK
-%      \message{行数 = \the\@tempcntb により確定}
+      \message{行数 = \the\@tempcntb により確定}
       \global\setbox\jlreq@resultbox=\vbox{#2%
         \unvbox\@tempboxa\hbox{\unhbox\jlreq@tempboxa\unskip\unskip\unpenalty}%
         \@whilenum\@tempcntb<#5\do{\hbox{}\advance\@tempcntb by 1}}%
@@ -2146,7 +2147,7 @@
       % そうでない場合は最後の二行の長さを比較する
       \jlreq@getlastbox{\@tempboxa}%
       \setbox\jlreq@tempboxb=\box\jlreq@resultbox
-%      \message{最終行の長さ \the\wd\jlreq@tempboxa, その前の長さ \the\wd\jlreq@tempboxb}%
+      \message{最終行の長さ \the\wd\jlreq@tempboxa, その前の長さ \the\wd\jlreq@tempboxb}%
       \ifdim\wd\jlreq@tempboxa>\wd\jlreq@tempboxb
         \advance\jlreq@tempdima by 0.3pt\relax
       \else

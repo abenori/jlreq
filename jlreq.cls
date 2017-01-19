@@ -539,6 +539,7 @@
   \jlreq@current@linewidth=\jlreq@calc@current@linewidth
   \jlreq@rest@linewidth=\dimexpr\linewidth - \jlreq@current@linewidth\relax
 }
+\def\jlreq@savepos@iflabelundefined{\@ifundefined{\ZREF@RefPrefix @jlreq@rest@width.pos.\the\jlreq@rest@linewidth@count}}
 
 %. 基本設定
 % 和文文字，欧文文字の設定（とりあえずLuaTeX-jaのデフォルトのまま）
@@ -1965,6 +1966,8 @@
     \setbox\jlreq@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\inhibitglue \jlreq@open@bracket@before@space（}%
     \jlreq@box@putcenter\jlreq@tempboxa
   }%
+  % 「初回」時はここに強制改行を入れる．これにより現在位置の取得がより正しくなる
+  \jlreq@savepos@iflabelundefined{\message{linebreak inserted}\\}{}%
   % 割注内の\baselineskipを保存（後で使う）．
   {\jlreq@inlinenote@fontsize\xdef\jlreq@inlinenote@baselineskip{\the\baselineskip}}%
   % 普通に並べた長さを計測し，その半分から始める
@@ -2113,7 +2116,7 @@
 % \jlreq@inlinenote@determinelength{テキスト(1)}{書式指定(2)}{\parshape指定(3)}{調整に使う行数(4)}{成功行数(5)}{最小長さ(6)}{最大長さ(7)}
 % \jlreq@resultboxに整形結果を返す．見つからなかったらvoid
 \newcommand{\jlreq@inlinenote@determinelength}[7]{%
-  \message{#1 の試行開始，行数 = #5, \the#6 から \the#7まで}%
+%  \message{#1 の試行開始，行数 = #5, \the#6 から \the#7まで}%
   \@tempcnta=1\relax
   \def\@tempa{}%
   \@whilenum\@tempcnta<#4\do{%
@@ -2133,12 +2136,12 @@
         \parindent=0pt\leftskip=0pt\rightskip=0pt\relax
         \parshape #5 #3 \@tempa 0pt \the\maxdimen
         #1\par\global\@tempcntb=\prevgraf}%
-      \message{\string\jlreq@tempdima = \the\jlreq@tempdima で試行，行数は\the\@tempcntb , 書式 #5 #3 \@tempa 0pt \the\maxdimen}%
+%      \message{\string\jlreq@tempdima = \the\jlreq@tempdima で試行，行数は\the\@tempcntb , 書式 #5 #3 \@tempa 0pt \the\maxdimen}%
     \fi
     \jlreq@getlastbox{\@tempboxa}%
     \setbox\jlreq@tempboxa=\box\jlreq@resultbox
     \ifnum\@tempcntb<#5\relax% 行数が達していないならOK
-      \message{行数 = \the\@tempcntb により確定}
+%      \message{行数 = \the\@tempcntb により確定}
       \global\setbox\jlreq@resultbox=\vbox{#2%
         \unvbox\@tempboxa\hbox{\unhbox\jlreq@tempboxa\unskip\unskip\unpenalty}%
         \@whilenum\@tempcntb<#5\do{\hbox{}\advance\@tempcntb by 1}}%
@@ -2147,7 +2150,7 @@
       % そうでない場合は最後の二行の長さを比較する
       \jlreq@getlastbox{\@tempboxa}%
       \setbox\jlreq@tempboxb=\box\jlreq@resultbox
-      \message{最終行の長さ \the\wd\jlreq@tempboxa, その前の長さ \the\wd\jlreq@tempboxb}%
+%      \message{最終行の長さ \the\wd\jlreq@tempboxa, その前の長さ \the\wd\jlreq@tempboxb}%
       \ifdim\wd\jlreq@tempboxa>\wd\jlreq@tempboxb
         \advance\jlreq@tempdima by 0.3pt\relax
       \else

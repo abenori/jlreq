@@ -272,13 +272,15 @@
 %.. 基本版面．まずは紙サイズ．
 \def\jlreq@switchpapersize{}
 \newcommand*\jlreq@addpapersize[4][]{%
-  \DeclareOptionX{#2}{\jlreq@setpaper{#2}}
-  \appto\jlreq@switchpapersize{{#2}{\setlength\paperheight{#3}\setlength\paperwidth{#4}}}
+  \jlreq@ifempty{#2}{}{
+    \DeclareOptionX{#2}{\setlength\paperheight{#3}\setlength\paperwidth{#4}}
+    \appto\jlreq@switchpapersize{{#2}{\setlength\paperheight{#3}\setlength\paperwidth{#4}}}
+  }
   \jlreq@ifempty{#1}{}{
     \appto\jlreq@switchpapersize{{#1}{\setlength\paperheight{#3}\setlength\paperwidth{#4}}}
   }
 }
-\newcommand*\jlreq@setpaper[1]{%
+\DeclareOptionX{paper}{
   \edef\jlreq@do{%
     \unexpanded{\jlreq@switch{#1}}{\expandonce{\jlreq@switchpapersize}}%
     [\unexpanded{%
@@ -293,9 +295,8 @@
   }%
   \jlreq@do
 }
-\DeclareOptionX{paper}{\jlreq@setpaper{#1}}
-% 紙サイズ一覧
-% [オプショナルにpaper=で指定できるようにするもの]{紙サイズ名}{縦}{横}
+% 紙サイズ一覧．b*はJIS B．
+% [paper=で指定できるようにするもの]{オプション名}{縦}{横}
 \jlreq@addpapersize[a3]{a3paper}{420mm}{297mm}
 \jlreq@addpapersize[a4]{a4paper}{297mm}{210mm}
 \jlreq@addpapersize[a5]{a5paper}{210mm}{148mm}
@@ -312,6 +313,31 @@
 \jlreq@addpapersize[letter]{letterpaper}{11in}{8.5in}
 \jlreq@addpapersize[legal]{legalpaper}{14in}{8.5in}
 \jlreq@addpapersize[executive]{executivepaper}{10.5in}{7.25in}
+% 追加
+\jlreq@addpapersize[a0]{}{1189mm}{841mm}
+\jlreq@addpapersize[a1]{}{841mm}{594mm}
+\jlreq@addpapersize[a2]{}{420mm}{594mm}
+\jlreq@addpapersize[a7]{}{74mm}{105mm}
+\jlreq@addpapersize[a8]{}{52mm}{74mm}
+\jlreq@addpapersize[a9]{}{37mm}{52mm}
+\jlreq@addpapersize[a10]{}{26mm}{37mm}
+
+\jlreq@addpapersize[b0]{}{1030mm}{1456mm}
+\jlreq@addpapersize[b1]{}{728mm}{1030mm}
+\jlreq@addpapersize[b2]{}{515mm}{728mm}
+\jlreq@addpapersize[b3]{}{364mm}{515mm}
+\jlreq@addpapersize[b7]{}{91mm}{128mm}
+\jlreq@addpapersize[b8]{}{64mm}{91mm}
+\jlreq@addpapersize[b9]{}{45mm}{64mm}
+\jlreq@addpapersize[b10]{}{32mm}{45mm}
+
+\jlreq@addpapersize[c2]{}{458mm}{648mm}
+\jlreq@addpapersize[c3]{}{324mm}{458mm}
+\jlreq@addpapersize[c4]{}{229mm}{354mm}
+\jlreq@addpapersize[c5]{}{162mm}{229mm}
+\jlreq@addpapersize[c6]{}{114mm}{162mm}
+\jlreq@addpapersize[c7]{}{81mm}{114mm}
+\jlreq@addpapersize[c8]{}{57mm}{81mm}
 
 %.. フォントサイズ，行長，1ページあたりの行数で基本版面のサイズを決める（2.4.1.a）
 \newcommand*{\jlreq@option@fontsize}{}
@@ -1671,6 +1697,7 @@
     \ifhmode\spacefactor\@x@sf\fi
     \relax}
 }
+\let\jlreq@original@@footnotemark=\@footnotemark
 \jlreq@setdefaultnotemark\@footnotemark\@makefnmark
 %.. 脚注  （縦書きの時は傍注，4.2.5）
 {%

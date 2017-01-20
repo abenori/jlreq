@@ -967,7 +967,7 @@
   \let\tt=\@undefined
   \let\bf=\@undefined
   \let\it=\@undefined
-  \let\sl=\@undefinedc
+  \let\sl=\@undefined
   \let\sc=\@undefined
 }
 
@@ -1442,9 +1442,9 @@
     \def\jlreq@indent{1}%
     \def\jlreq@mark{}%
     \jlreq@parsekeyval{
-      {font}{\def\jlreq@font{##1}}%
-      {indent}{\def\jlreq@indent{##1}}%
-      {mark}{\def\jlreq@mark{##1}}%
+      {font}{\def\jlreq@font{##1}}
+      {indent}{\def\jlreq@indent{##1}}
+      {mark}{\def\jlreq@mark{##1}}
     }{#3}%
     % \@startsection{#1}{#2}{<indent>*fontsize}{0pt}{-fontsize}{font}
     \global\edef\@tempa{{\unexpanded{#1}}{\unexpanded{#2}}{\expandonce{\jlreq@indent}\jlreq@mol}{0pt}{-1\jlreq@fontsize}{\expandonce{\jlreq@font}\expandonce{\jlreq@mark}}}%
@@ -1516,15 +1516,19 @@
   % \parのたびにそこから代入する．
   \def\par{%
     \@@par
-    \ifnum\jlreq@wraplinecount>1\relax
-      \advance\jlreq@wraplinecount by -\prevgraf\prevgraf=0\hangindent=\jlreq@hangindent\hangafter=\jlreq@wraplinecount
-    \else\ifnum\jlreq@wraplinecount<-1\relax
-      \advance\jlreq@wraplinecount by \prevgraf\prevgraf=0\hangindent=\jlreq@hangindent\hangafter=\jlreq@wraplinecount
+    \ifnum\jlreq@wraplinecount<-1\relax
+      \ifnum\jlreq@wraplinecount<-\prevgraf
+        \advance\jlreq@wraplinecount by \prevgraf\hangindent=\jlreq@hangindent\hangafter=\jlreq@wraplinecount
+      \else
+        \jlreq@wraplinecount=1\jlreq@hangindent=0pt\relax
+        \@restorepar
+      \fi
     \else
       \jlreq@wraplinecount=1\jlreq@hangindent=0pt\relax
       \@restorepar
-    \fi\fi
+    \fi
   }%
+  \ignorespaces
 }
 
 \newcommand*{\DeclareCutinHeading}[3]{%
@@ -2055,9 +2059,11 @@
         \jlreq@tempdima=-1pt\relax
       \fi
       {%
-%        \jlreq@inlinenote@fontsize
-        \setbox\jlreq@tempboxa=\vsplit\@tempboxa to \dimexpr\jlreq@inlinenote@baselineskip*2 - 0.001pt\relax
-        % 改行を\jlreq@inlinenote@autolinebreak=\\の場合には，割注の長さを計測した物に長さに強制する
+        \edef\@tempa{\the\vbadness}%
+        \vbadness=10000\relax
+        \setbox\jlreq@tempboxa=\vsplit\@tempboxa to \dimexpr\jlreq@inlinenote@baselineskip*2\relax
+        \vbadness=\@tempa\relax
+        % \jlreq@inlinenote@autolinebreak=\\の場合には，割注の長さを計測した物に長さに強制する
         \jlreq@getlastbox{\jlreq@tempboxa}%
         \setbox\jlreq@tempboxb=\box\jlreq@resultbox
         \jlreq@getlastbox{\jlreq@tempboxa}%

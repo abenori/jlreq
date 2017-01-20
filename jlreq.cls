@@ -1368,6 +1368,9 @@
 % indent=<全体のインデント>
 % TODO: 改ページするかなど，4.1.4
 \newcommand*{\DeclareBlockHeading}[3]{
+  \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}
+  \expandafter\def\csname jlreq@heading@setting@#1\endcsname{#3}
+  \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewBlockHeading}
   \@ifundefined{c@#1}{\newcounter{#1}}{}
   \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}
   \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\jlreq@set@top@contents{#2}\@dottedtocline{#2}{0\jlreq@mol}{2\jlreq@gol}}}{}
@@ -1428,6 +1431,9 @@
 %.. 同行見出し
 % \DeclareRuninHeading{命令名}{レベル}{設定}
 \newcommand*{\DeclareRuninHeading}[3]{%
+  \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}%
+  \expandafter\def\csname jlreq@heading@setting@#1\endcsname{#3}%
+  \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewRuninHeading}
   \@ifundefined{c@#1}{\newcounter{#1}}{}%
   \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}%
   \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\jlreq@set@top@contents{#2}\@dottedtocline{#2}{0\jlreq@mol}{2\jlreq@gol}}}{}
@@ -1455,10 +1461,12 @@
 \newcommand*{\ProvideRuninHeading}[3]{%
   \@ifundefined{#1}{\DeclareRuninHeading{#1}{#2}{#3}}{}%
 }
+
 \@onlypreamble\DeclareRuninHeading
 \@onlypreamble\NewRuninHeading
 \@onlypreamble\RenewRuninHeading
 \@onlypreamble\ProvideRuninHeading
+
 
 %.. 窓見出し
 \newcount\jlreq@wraplinecount
@@ -1520,6 +1528,9 @@
 }
 
 \newcommand*{\DeclareCutinHeading}[3]{%
+  \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}
+  \expandafter\def\csname jlreq@heading@setting@#1\endcsname{#3}
+  \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewCutinHeading}
   \begingroup
     \def\jlreq@fontcommand{\headfont}%
     \def\jlreq@onelinemax{6\jlreq@fontsize}%
@@ -1551,6 +1562,17 @@
 \@onlypreamble\NewCutinHeading
 \@onlypreamble\RenewCutinHeading
 \@onlypreamble\ProvideCutinHeading
+
+\newcommand*{\ModifyHeading}[2]{
+  \begingroup
+    \expandafter\let\expandafter\level\expandafter=\csname jlreq@heading@level@#1\endcsname
+    \expandafter\let\expandafter\setting\expandafter=\csname jlreq@heading@setting@#1\endcsname
+    \expandafter\let\expandafter\macroname\expandafter=\csname jlreq@heading@type@#1\endcsname
+    \edef\jlreq@do{\expandonce{\macroname}{#1}{\expandonce{\level}}{\expandonce{\setting},#2}}
+  \expandafter\endgroup
+  \jlreq@do
+}
+\@onlypreamble\ModifyHeading
 
 \newcommand*{\jlreq@keepbaselineskip}[1]{%
   \begingroup

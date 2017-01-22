@@ -161,35 +161,38 @@
 \newcommand*{\jlreq@debug@output}[1]{\message{\detokenize{#1}}}
 
 % 簡易なkeyvalのパース．
-% \jlreq@parsekeyval{
+% \jlreq@parsekeyval[family]{
 %  {key}{\def\val{#1}}
-%  {key}[choices]{\def\valchoice{#1}}
+%  {key}[choice1,choice2]{\def\valchoice{#1}}
 %}{parse対象}
-\def\jlreq@parsekeyval#1#2{%
+\long\def\jlreq@parsekeyval{%
+  \@ifnextchar[{\jlreq@helper@parsekeyval}{\jlreq@helper@parsekeyval[jlreq@key]}%
+}
+\long\def\jlreq@helper@parsekeyval[#1]#2#3{%
   \begingroup
     \def\jlreq@do{}%
-    \jlreq@helper@parsekeyval#1\jlreq@endmark
-    \setkeys{jlreq@key}{#2}%
+    \jlreq@helper@parsekeyval@{#1}#2\jlreq@endmark
+    \setkeys{#1}{#3}%
   \expandafter\endgroup
   \jlreq@do
 }
-\def\jlreq@helper@parsekeyval#1{%
-  \ifx\jlreq@endmark#1%
+\long\def\jlreq@helper@parsekeyval@#1#2{%
+  \ifx\jlreq@endmark#2%
     \def\@tempa{}%
   \else
     \def\@tempa{%
-      \@ifnextchar[{\jlreq@helper@parsekeyval@choicekey{#1}}{\jlreq@helper@parsekeyval@definekey{#1}}%
+      \@ifnextchar[{\jlreq@helper@parsekeyval@@choicekey{#1}{#2}}{\jlreq@helper@parsekeyval@@definekey{#1}{#2}}%
     }%
   \fi
   \@tempa
 }
-\def\jlreq@helper@parsekeyval@choicekey#1[#2]#3{%
-  \define@choicekey{jlreq@key}{#1}{#2}{\appto\jlreq@do{#3}}%
-  \jlreq@helper@parsekeyval
+\long\def\jlreq@helper@parsekeyval@@choicekey#1#2[#3]#4{%
+  \define@choicekey{#1}{#2}{#3}{\appto\jlreq@do{#4}}%
+  \jlreq@helper@parsekeyval@{#1}%
 }
-\def\jlreq@helper@parsekeyval@definekey#1#2{%
-  \define@key{jlreq@key}{#1}[]{\appto\jlreq@do{#2}}%
-  \jlreq@helper@parsekeyval
+\long\def\jlreq@helper@parsekeyval@@definekey#1#2#3{%
+  \define@key{#1}{#2}[]{\appto\jlreq@do{#3}}%
+  \jlreq@helper@parsekeyval@{#1}%
 }
 
 % #1のboxを今の真ん中に配置する．
@@ -273,7 +276,7 @@
 \def\jlreq@switchpapersize{}
 \newcommand*\jlreq@addpapersize[4][]{%
   \jlreq@ifempty{#2}{}{
-    \DeclareOptionX{#2}{\setlength\paperheight{#3}\setlength\paperwidth{#4}}
+    \jlreq@DeclareOption{#2}{\setlength\paperheight{#3}\setlength\paperwidth{#4}}
     \appto\jlreq@switchpapersize{{#2}{\setlength\paperheight{#3}\setlength\paperwidth{#4}}}
   }
   \jlreq@ifempty{#1}{}{
@@ -338,6 +341,12 @@
 \jlreq@addpapersize[c6]{}{114mm}{162mm}
 \jlreq@addpapersize[c7]{}{81mm}{114mm}
 \jlreq@addpapersize[c8]{}{57mm}{81mm}
+
+\newcommand*\jlreq@article@type{article}
+\define@choicekey{jlreq.cls}{article_type}{article,report,book}{\renewcommand*{\jlreq@article@type}{#1}}
+\jlreq@DeclareOption{article}{\renewcommand*{\jlreq@article@type}{article}}
+\jlreq@DeclareOption{report}{\renewcommand*{\jlreq@article@type}{report}}
+\jlreq@DeclareOption{book}{\renewcommand*{\jlreq@article@type}{book}}
 
 %.. フォントサイズ，行長，1ページあたりの行数で基本版面のサイズを決める（2.4.1.a）
 \newcommand*{\jlreq@option@fontsize}{}
@@ -434,7 +443,7 @@
 \newcommand*{\jlreq@warning}[1]{}
 \jlreq@DeclareOption{jlreq_warnings}{\renewcommand*{\jlreq@warning}[1]{\ClassWarningNoLine{jlreq}{(JLREQ warning) ##1}}}
 
-\ExecuteOptionsX{paper=a4paper,fontsize=10pt,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=_headings,onecolumn,final}
+\ExecuteOptionsX{article_type=article,paper=a4,fontsize=10pt,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=_headings,onecolumn,final}
 % \@removeelementを一旦置き換えてから\ProcessOptionsXを実行する
 \let\jlreq@original@@removeelement=\@removeelement
 \let\@removeelement=\jlreq@helper@removeelement
@@ -442,9 +451,9 @@
 \let\@removeelement=\jlreq@original@@removeelement
 
 \newcommand{\jlreqsetup}[1]{%
-  \jlreq@parsekeyval{%
+  \jlreq@parsekeyval[jlreqsetup]{%
     {sidenote_mark}{%
-      \jlreq@parsekeyval{%
+      \jlreq@parsekeyval[sidenote_mark]{%
         {mark}{\def\jlreq@sidenote@defaultmark{####1}}%
         {headingfont}{\def\jlreq@sidenote@keywordfont{####1}}%
       }{##1}%
@@ -1392,8 +1401,10 @@
 % f: beforeやafterを省略する
 % font=<見出しフォント>, labelfont=<ラベルフォント>, subtitle_font=<副題フォント>
 % indent=<全体のインデント>
-% TODO: 改ページするかなど，4.1.4
-\newcommand*{\DeclareBlockHeading}[3]{
+% pagebreak=\clearpage/\cleardoublepage/\newpage/（無し）
+% なお，これ以外に見出しの前後に記号を付ける，あるいは罫線を見出しの前後に配置する，罫線で見出しを囲むなどといったことも行われている．
+% 縦組の偶数ページの場合は，ページ末に見出しを配置する．
+\newcommand{\DeclareBlockHeading}[3]{
   \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}
   \expandafter\def\csname jlreq@heading@setting@#1\endcsname{#3}
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewBlockHeading}
@@ -1410,7 +1421,8 @@
     \def\jlreq@subtitle@font{\normalsize}
     \def\jlreq@indent{0}
     \def\jlreq@format{}
-    \jlreq@parsekeyval{
+    \def\jlreq@pagebreak{}
+    \jlreq@parsekeyval[BlockHeading]{
       {lines}{\def\jlreq@lines{##1}}
       {before_space}{\def\jlreq@before@space{##1}}
       {after_space}{\def\jlreq@after@space{##1}}
@@ -1420,6 +1432,14 @@
       {subtitle_font}{\def\jlreq@subtitle@font{##1}}
       {indent}{\def\jlreq@indent{##1}}
       {format}{\edef\jlreq@format{\unexpanded{##1}}}
+      {pagebreak}[clearpage,cleardoublepage,clearcolumn,nariyuki]{
+        \jlreq@switch{##1}{
+          {clearpage}{\def\jlreq@pagebreak{\clearpage}}
+          {cleardoublepage}{\def\jlreq@pagebreak{\cleardoublepage}}
+          {clearcolumn}{\if@twocolumn\def\jlreq@pagebreak{\newpage}\else\def\jlreq@pagebreak{}\fi}
+          {nariyuki}{\def\jlreq@pagebreak{}}
+        }
+      }
     }{#3}
     % before/after_lines優先
     \ifx\jlreq@before@space\@empty\else\edef\jlreq@before@space{r:\expandonce{\jlreq@before@space}}\fi
@@ -1434,19 +1454,20 @@
       }
     \fi
     \global\edef\jlreq@tempa{%
-       \unexpanded{\jlreq@startBlockHeading{#1}{#2}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@before@space}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@lines}}{\expandonce{\jlreq@format}}%
+      \expandonce{\jlreq@pagebreak}%
+      \unexpanded{\jlreq@startBlockHeading{#1}{#2}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@before@space}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@lines}}{\expandonce{\jlreq@format}}%
     }
   \endgroup
   \expandafter\edef\csname #1\endcsname{\noexpand\jlreq@hook@beforeheadings{#1}\expandonce{\jlreq@tempa}}
 }
 
-\newcommand*{\NewBlockHeading}[3]{
+\newcommand{\NewBlockHeading}[3]{
   \expandafter\@ifdefinable\csname #1\endcsname{\DeclareBlockHeading{#1}{#2}{#3}}
 }
-\newcommand*{\RenewBlockHeading}[3]{
+\newcommand{\RenewBlockHeading}[3]{
   \@ifundefined{#1}{\@latex@error{\expandafter\string\csname#1\endcsname\space undefined}\@ehc}{\DeclareBlockHeading{#1}{#2}{#3}}%
 }
-\newcommand*{\ProvideBlockHeading}[3]{
+\newcommand{\ProvideBlockHeading}[3]{
   \@ifundefined{#1}{\DeclareBlockHeading{#1}{#2}{#3}}{}
 }
 \@onlypreamble\DeclareBlockHeading
@@ -1467,7 +1488,7 @@
     \def\jlreq@font{\normalfont\normalsize}%
     \def\jlreq@indent{1}%
     \def\jlreq@mark{}%
-    \jlreq@parsekeyval{
+    \jlreq@parsekeyval[RuninHeading]{
       {font}{\def\jlreq@font{##1}}
       {indent}{\def\jlreq@indent{##1}}
       {mark}{\def\jlreq@mark{##1}}
@@ -1492,6 +1513,26 @@
 \@onlypreamble\NewRuninHeading
 \@onlypreamble\RenewRuninHeading
 \@onlypreamble\ProvideRuninHeading
+
+%.. 中扉
+% \DeclareNakaTobiraHeading{名前}{レベル}{いろいろ指定}{中身？}
+% 目次書式
+% 
+%\newcommand{\DeclareNakaTobiraHeading}[3]{
+%  \@ifundefined{c@#1}{\newcounter{#1}}{}
+%  \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}
+%  \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\jlreq@set@top@contents{#2}\@dottedtocline{#2}{0\jlreq@mol}{2\jlreq@gol}}}{}
+%  \expandafter\def\csname jlreq@TobiraHeading@#1\endcsname{%
+%    \ifnum #2>\c@secnumdepth
+%      \refstepcounter{#1}%
+%      \addcontentsline{toc}{#1}{
+%    \fi
+%  }
+%  \expandafter\def\csname jlreq@TobiraHeading@s@#1\endcsname{%
+%    
+%  }
+%}
+
 
 
 %.. 窓見出し
@@ -1567,7 +1608,7 @@
     \def\jlreq@twolinemax{20\jlreq@fontsize}%
     \def\jlreq@indent{0}%
     \def\jlreq@afterindent{1\zh}%
-    \jlreq@parsekeyval{
+    \jlreq@parsekeyval[CutinHeading]{
       {font}{\def\jlreq@fontcommand{##1}}%
       {onelinemax}{\def\jlreq@onelinemax{##1}}%
       {twolinemax}{\def\jlreq@twolinemax{##1}}%
@@ -1598,7 +1639,7 @@
     \expandafter\let\expandafter\level\expandafter=\csname jlreq@heading@level@#1\endcsname
     \expandafter\let\expandafter\setting\expandafter=\csname jlreq@heading@setting@#1\endcsname
     \expandafter\let\expandafter\macroname\expandafter=\csname jlreq@heading@type@#1\endcsname
-    \edef\jlreq@do{\expandonce{\macroname}{#1}{\expandonce{\level}}{\expandonce{\setting},#2}}
+    \edef\jlreq@do{\expandonce{\macroname}{#1}{\expandonce{\level}}{\expandonce{\setting},\unexpanded{#2}}}
   \expandafter\endgroup
   \jlreq@do
 }
@@ -2236,7 +2277,7 @@
 
 % bottom-leftみたいなのを解釈する．入力の順番はどっちでも良いが，出力は<top/bottom><left/right>の順番
 % #1にセットする．
-\def\jlreq@parse@position@#1-#2\jlreq@endmark{%
+\def\jlreq@pagestyle@parse@position@#1-#2\jlreq@endmark{%
   \def\jlreq@tempa{#1}\def\jlreq@tempb{#2}%
   \jlreq@ifempty{#2}{%
     \ifx\jlreq@tempb\@empty\ClassError{jlreq}{Invalid position: #1}{\@ehc}\fi
@@ -2245,20 +2286,20 @@
     \@tempa#2\relax
   }%
 }
-\newcommand*\jlreq@parse@position@@[1]{%
+\newcommand*\jlreq@pagestyle@parse@position@@[1]{%
   \ifthenelse{\equal{#1}{top} \OR \equal{#1}{bottom}}{\def\jlreq@tempc{#1}}{
     \ifthenelse{\equal{#1}{left} \OR \equal{#1}{right} \OR \equal{#1}{center}}{\def\jlreq@tempd{#1}}{
       \ClassError{jlreq}{Invalid position: #1}{\@ehc}
     }
   }
 }
-\newcommand*{\jlreq@parse@position}[2]{
+\newcommand*{\jlreq@pagestyle@parse@position}[2]{
   \begingroup
-    \jlreq@parse@position@#2-\jlreq@endmark
+    \jlreq@pagestyle@parse@position@#2-\jlreq@endmark
     % \jlreq@tempcに縦方向を，\jlreq@tempdに横方向を入れる
     \def\jlreq@tempc{}\def\jlreq@tempd{}
-    \expandafter\jlreq@parse@position@@\expandafter{\jlreq@tempa}
-    \expandafter\jlreq@parse@position@@\expandafter{\jlreq@tempb}
+    \expandafter\jlreq@pagestyle@parse@position@@\expandafter{\jlreq@tempa}
+    \expandafter\jlreq@pagestyle@parse@position@@\expandafter{\jlreq@tempb}
     \ifx\jlreq@tempc\@empty\edef\jlreq@tempc{\expandafter\@firstoftwo#1}\fi
     \ifx\jlreq@tempd\@empty\edef\jlreq@tempd{\expandafter\@secondoftwo#1}\fi
     \edef\jlreq@do{\unexpanded{\def#1}{{\jlreq@tempc}{\jlreq@tempd}}}
@@ -2269,7 +2310,8 @@
 % odd_running_head=_sectionのように下線から始まる場合，その値の見出し命令を柱に出すようにする．
 % 要するに\ps@***に\sectionmarkを定義するように仕込む．
 % 場所指定は奇数ページの方．偶数ページは反対になる．
-\newcommand*{\DeclarePageStyle}[2]{%
+\newcommand*{\DeclarePageStyle}[2]{
+  \expandafter\def\csname jlreq@pagestyle@setting@#1\endcsname{#2}
   \begingroup
     \def\jlreq@nombre@position{{bottom}{left}}
     \def\jlreq@running@head@position{{top}{left}}
@@ -2279,9 +2321,9 @@
     \def\jlreq@command{}
     % 柱とノンブルの間
     \def\jlreq@gap{1.5\zw}
-    \jlreq@parsekeyval{
-      {nombre_position}{\jlreq@parse@position{\jlreq@nombre@position}{##1}}
-      {running_head_position}{\jlreq@parse@position{\jlreq@running@head@position}{##1}}
+    \jlreq@parsekeyval[PageStyle]{
+      {nombre_position}{\jlreq@pagestyle@parse@position{\jlreq@nombre@position}{##1}}
+      {running_head_position}{\jlreq@pagestyle@parse@position{\jlreq@running@head@position}{##1}}
       {nombre}{\def\jlreq@nombre{##1}}
       {odd_running_head}{\def\jlreq@odd@running@head{##1}}
       {even_running_head}{\def\jlreq@even@running@head{##1}}
@@ -2333,7 +2375,7 @@
     % 戻り値は\jlreq@result
     \def\jlreq@setheadfoot##1##2##3##4{%
       \def\jlreq@left{}\def\jlreq@center{}\def\jlreq@right{}
-      % \jlreq@tempa = if(##1 == ##3 && ##2 != "" && ##4 != "")
+      % \ifjlreq@tempa = if(##1 == ##3 && ##2 != "" && ##4 != "")
       \jlreq@tempatrue
       \jlreq@ifempty{##2}{\jlreq@tempafalse}{}
       \jlreq@ifempty{##4}{\jlreq@tempafalse}{}
@@ -2407,10 +2449,18 @@
 \newcommand*{\ProvidePageStyle}[2]{%
   \@ifundefined{ps@#1}{\DeclarePageStyle{#1}{#2}}{}%
 }
+\newcommand*{\ModifyPageStyle}[2]{%
+  \begingroup
+    \expandafter\let\expandafter\setting\expandafter=\csname jlreq@pagestyle@setting@#1\endcsname
+    \edef\jlreq@do{\noexpand\RenewPageStyle{#1}{\expandonce{\setting},\unexpanded{#2}}}
+  \expandafter\endgroup
+  \jlreq@do
+}
 \@onlypreamble\DeclarePageStyle
 \@onlypreamble\NewPageStyle
 \@onlypreamble\RenewPageStyle
 \@onlypreamble\ProvidePageStyle
+\@onlypreamble\ModifyPageStyle
 
 \RenewPageStyle{empty}{nombre={},odd_running_head={},even_running_head={}}
 \if@tate

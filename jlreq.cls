@@ -138,6 +138,7 @@
 
 % 与えられたトークン列が空か（展開はしないでチェック）
 \long\def\jlreq@ifempty#1{\ifx\jlreq@uniqtoken#1\jlreq@uniqtoken\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+\let\IfEmpty=\jlreq@ifempty
 
 % vbox #1の最後を\jlreq@resultboxに入れる
 % #1の最後の行は消える
@@ -1286,6 +1287,85 @@
 %. 見出し関係 (4.1)
 % 見出しの直前に実行される
 \newcommand*{\jlreq@hook@beforeheadings}[1]{}
+\def\jlreq@heading@allheadings{}
+%.. 中/半扉見出し
+% addcontentslineに渡すやつ：番号出すのと出さないの
+\newcommand{\jlreq@DeclareTobiraHeading}[5]{
+  \appto{\jlreq@heading@allheadings}{,#1}
+  \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}
+  \expandafter\def\csname jlreq@heading@setting@#1\endcsname{#3}
+  \expandafter\edef\csname jlreq@heading@format@#1\endcsname{\unexpanded{#4}}
+  \@ifundefined{c@#1}{\newcounter{#1}}{}
+  \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}
+  \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\jlreq@set@top@contents{#2}\@dottedtocline{#2}{0\jlreq@mol}{2\jlreq@gol}}}{}
+  \begingroup
+    \def\jlreq@contents@format##1{##1}
+    \edef\jlreq@contents@label@format{\expandonce{\csname the#1\endcsname}}
+    \jlreq@parsekeyval[DeclareTobiraHeading]{
+      {contentsline_format}{\def\jlreq@contents@format####1{##1}}
+      {contentsline_label_format}{\def\jlreq@contents@label@format{##1}}
+    }{#3}
+    \edef\jlreq@do{
+      \noexpand\def\expandonce{\csname jlreq@TobiraHeading@#1\endcsname}[####1]####2{%
+        \unexpanded{\ifnum#2>\c@secnumdepth}%
+          \unexpanded{\refstepcounter{#1}}%
+          \unexpanded{\addcontentsline{toc}{#1}}{\expandonce{\jlreq@contents@label@format}\expandonce{\jlreq@contents@format{##1}}}%
+        \noexpand\else
+          \expandonce{\csname #1mark\endcsname}{####1}%
+          \unexpanded{\addcontentsline{toc}{#1}}{\expandonce{\jlreq@contents@format{##1}}}%
+        \noexpand\fi
+        \unexpanded{#4}%
+        \noexpand\@afterheading
+        \unexpanded{#5}%
+        \unexpanded{\if@restonecol\twocolumn\fi}%
+      }
+      \noexpand\def\expandonce{\csname jlreq@TobiraHeading@s@#1\endcsname}####1{%
+        \unexpanded{#4}%
+        \noexpand\@afterheading
+        \unexpanded{#5}%
+        \unexpanded{\if@restonecol\twocolumn\fi}%
+      }
+      \noexpand\def\expandonce{\csname #1\endcsname}{%
+        \unexpanded{\if@twocolumn\onecolumn\@restonecoltrue\else\@restonecolfalse\fi\clearpage}%
+        \noexpand\secdef{\expandonce{\csname jlreq@TobiraHeading@#1\endcsname}}{\expandonce{\csname jlreq@TobiraHeading@s@#1\endcsname}}}
+    }
+  \expandafter\endgroup
+  \jlreq@do
+}
+
+\newcommand{\DeclareHanTobiraHeading}[4]{
+  \jlreq@DeclareTobiraHeading{#1}{#2}{#3}{#4}{\clearpage}
+}
+\newcommand{\NewHanTobiraHeading}[4]{
+  \expandafter\@ifdefinable\csname #1\endcsname{\DeclareHanTobiraHeading{#1}{#2}{#3}{#4}}
+}
+\newcommand{\RenewHanTobiraHeading}[4]{
+  \@ifundefined{#1}{\@latex@error{\expandafter\string\csname#1\endcsname\space undefined}\@ehc}{\DeclareHanTobiraHeading{#1}{#2}{#3}{#4}}%
+}
+\newcommand{\ProvideHanTobiraHeading}[4]{
+  \@ifundefined{#1}{\DeclareHanTobiraHeading{#1}{#2}{#3}{#4}}{}
+}
+\@onlypreamble\DeclareHanTobiraHeading
+\@onlypreamble\NewHanTobiraHeading
+\@onlypreamble\RenewHanTobiraHeading
+\@onlypreamble\ProvideHanTobiraHeading
+
+\newcommand{\DeclareNakaTobiraHeading}[4]{
+  \jlreq@DeclareTobiraHeading{#1}{#2}{#3}{#4}{\cleardoublepage}
+}
+\newcommand{\NewNakaTobiraHeading}[4]{
+  \expandafter\@ifdefinable\csname #1\endcsname{\DeclareNakaTobiraHeading{#1}{#2}{#3}{#4}}
+}
+\newcommand{\RenewNakaTobiraHeading}[4]{
+  \@ifundefined{#1}{\@latex@error{\expandafter\string\csname#1\endcsname\space undefined}\@ehc}{\DeclareNakaTobiraHeading{#1}{#2}{#3}{#4}}%
+}
+\newcommand{\ProvideNakaTobiraHeading}[4]{
+  \@ifundefined{#1}{\DeclareNakaTobiraHeading{#1}{#2}{#3}{#4}}{}
+}
+\@onlypreamble\DeclareNakaTobiraHeading
+\@onlypreamble\NewNakaTobiraHeading
+\@onlypreamble\RenewNakaTobiraHeading
+\@onlypreamble\ProvideNakaTobiraHeading
 
 %.. 別行見出し
 % \jlreq@startBlockHeading{1 = 命令名}{2 = レベル}{3 = 字下げ}{4 = 前空き}{5 = 後ろ空き}{6 = トータル行数}{7 =  フォーマット}*{見出し}[副題]
@@ -1405,6 +1485,7 @@
 % なお，これ以外に見出しの前後に記号を付ける，あるいは罫線を見出しの前後に配置する，罫線で見出しを囲むなどといったことも行われている．
 % 縦組の偶数ページの場合は，ページ末に見出しを配置する．
 \newcommand{\DeclareBlockHeading}[3]{
+  \appto{\jlreq@heading@allheadings}{,#1}
   \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}
   \expandafter\def\csname jlreq@heading@setting@#1\endcsname{#3}
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewBlockHeading}
@@ -1478,6 +1559,7 @@
 %.. 同行見出し
 % \DeclareRuninHeading{命令名}{レベル}{設定}
 \newcommand*{\DeclareRuninHeading}[3]{%
+  \appto{\jlreq@heading@allheadings}{,#1}
   \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}%
   \expandafter\def\csname jlreq@heading@setting@#1\endcsname{#3}%
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewRuninHeading}
@@ -1513,27 +1595,6 @@
 \@onlypreamble\NewRuninHeading
 \@onlypreamble\RenewRuninHeading
 \@onlypreamble\ProvideRuninHeading
-
-%.. 中扉
-% \DeclareNakaTobiraHeading{名前}{レベル}{いろいろ指定}{中身？}
-% 目次書式
-% 
-%\newcommand{\DeclareNakaTobiraHeading}[3]{
-%  \@ifundefined{c@#1}{\newcounter{#1}}{}
-%  \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}
-%  \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\jlreq@set@top@contents{#2}\@dottedtocline{#2}{0\jlreq@mol}{2\jlreq@gol}}}{}
-%  \expandafter\def\csname jlreq@TobiraHeading@#1\endcsname{%
-%    \ifnum #2>\c@secnumdepth
-%      \refstepcounter{#1}%
-%      \addcontentsline{toc}{#1}{
-%    \fi
-%  }
-%  \expandafter\def\csname jlreq@TobiraHeading@s@#1\endcsname{%
-%    
-%  }
-%}
-
-
 
 %.. 窓見出し
 \newcount\jlreq@wraplinecount
@@ -2321,6 +2382,7 @@
     \def\jlreq@command{}
     % 柱とノンブルの間
     \def\jlreq@gap{1.5\zw}
+    \newif\ifjlreq@clearmark\jlreq@clearmarktrue
     \jlreq@parsekeyval[PageStyle]{
       {nombre_position}{\jlreq@pagestyle@parse@position{\jlreq@nombre@position}{##1}}
       {running_head_position}{\jlreq@pagestyle@parse@position{\jlreq@running@head@position}{##1}}
@@ -2329,6 +2391,7 @@
       {even_running_head}{\def\jlreq@even@running@head{##1}}
       {command}{\def\jlreq@command{##1}}
       {gap}{\def\jlreq@gap{##1}}
+      {no_clear_mark}{\jlreq@clearmarkfalse}
     }{#2}
     \ifthenelse{\lengthtest{\jlreq@gap < 1.49\zw} \OR \( \lengthtest{\jlreq@gap > 1.51\zw} \AND \lengthtest{\jlreq@gap < 1.99\zw} \) \OR \lengthtest{\jlreq@gap > 2.01\zw}}{\jlreq@warning{ノンブルと柱との空き量は文字サイズの2倍又は1.5倍とする（ページスタイル #1 内，2.6.1.c）}}{}
     
@@ -2429,6 +2492,7 @@
     \jlreq@do\let\jlreq@evenfoot=\jlreq@result
     \edef\jlreq@do{%
       \noexpand\def\expandonce{\csname ps@#1\endcsname}{%
+        \ifjlreq@clearmark\noexpand\jlreq@clearallheadingmarks\fi
         \unexpanded{\let\@mkboth=\markboth}%
         \unexpanded{\def\@oddhead}{\expandonce{\jlreq@oddhead}}%
         \unexpanded{\def\@oddfoot}{\expandonce{\jlreq@oddfoot}}%
@@ -2439,6 +2503,18 @@
     }
   \expandafter\endgroup
   \jlreq@do
+}
+\def\jlreq@clearallheadingmarks{%
+  \ifx\jlreq@heading@allheadings\@undefined
+    \jlreq@clearmarks{chapter,part,section,subsection,subsubsection,paragraph,subparagraph,subsubparagraph}%
+  \else
+    \expandafter\jlreq@clearheadingmarks\expandafter{\jlreq@heading@allheadings}%
+  \fi
+}
+\def\jlreq@clearheadingmarks#1{%
+  \@for\jlreq@tempa:=#1\do{%
+    \expandafter\let\csname\jlreq@tempa mark\endcsname=\@gobble
+  }%
 }
 \newcommand*{\NewPageStyle}[2]{%
   \expandafter\@ifdefinable\csname ps@#1\endcsname{\DeclarePageStyle{#1}{#2}}%
@@ -2470,7 +2546,7 @@
   \else
     \NewPageStyle{headings}{nombre=\thepage,nombre_position=top-left,running_head_position=top-right,odd_running_head={_section},even_running_head={}}
   \fi
-  \NewPageStyle{myheadings}{nombre=\thepage,nombre_position=top-left,running_head_position=top-right,odd_running_head=\rightmark,even_running_head=\leftmark}
+  \NewPageStyle{myheadings}{nombre=\thepage,nombre_position=top-left,running_head_position=top-right,odd_running_head=\rightmark,even_running_head=\leftmark,no_clear_mark}
 \else
   \RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},nombre_position={bottom-center}}
   \if@twoside
@@ -2478,7 +2554,7 @@
   \else
     \NewPageStyle{headings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center,odd_running_head={_section},even_running_head={}}
   \fi
-  \NewPageStyle{myheadings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center,odd_running_head=\rightmark,even_running_head=\leftmark}
+  \NewPageStyle{myheadings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center,odd_running_head=\rightmark,even_running_head=\leftmark,no_clear_mark}
 \fi
 
 %. フロート関連

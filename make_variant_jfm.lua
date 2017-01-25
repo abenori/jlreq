@@ -60,7 +60,7 @@ end
 
 -- jfmのテーブル，ファイル名
 function make_jfmfile(t,f)
-	table.tofile(f,t,"jfm")
+	table.tofile(f,t,"local jfm")
 	local fp = io.open(f,"a")
 	fp:write("luatexja.jfont.define_jfm(jfm)\n")
 end

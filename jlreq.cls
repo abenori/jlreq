@@ -106,7 +106,7 @@
 }
 \def\jlreq@helper@removelastcomma#1,\jlreq@endmark{#1}
 
-\def\jlreq@deleteuntileendmark#1\jlreq@endmark{}
+\long\def\jlreq@deleteuntileendmark#1\jlreq@endmark{}
 
 % #1が#2のリスト（{list1}{list2}...{listn}の形）に入っていれば#3を，入っていなければ#4を実行する
 % #2は\edefで展開されてから評価される
@@ -210,6 +210,8 @@
 
 \def\jlreq@currentline#1{\message{#1: at line \the\inputlineno}}
 
+% #1で{str}を参照できるようにする必要があるかは考え中
+% 使えるようにすると逆に{#1}というトークンを含められなくなる．
 % \jlreq@switch{str}{
 %   {str}{abcd}
 %   {str1}{xyz}
@@ -219,19 +221,29 @@
 % \jlreq@switch{str}{
 %   {str}{abcd}
 %   {str1}{xyz}
-%   {default: input = #1}
+%   {default}
 %} -> abcd
-\def\jlreq@switch#1#2{%
-  \@ifnextchar[{\jlreq@helper@switch{#1}{#2}}{\jlreq@helper@switch{#1}{#2}[]}%
-}
-\def\jlreq@helper@switch#1#2[#3]{%
+% 文字列比較→\edefして比較する
+\long\def\jlreq@helper@switch@executeoption#1[#2]{%
   \begingroup
-    \def\jlreq@do##1{#3}%
-    \jlreq@helper@switch@{#1}#2\jlreq@endmark
+    \def\jlreq@do##1{#2}%
   \expandafter\endgroup
   \jlreq@do{#1}%
 }
-\def\jlreq@helper@switch@#1#2{%
+\long\def\jlreq@helper@removeoption[#1]{}
+\long\def\jlreq@switch#1#2{%
+  \begingroup
+    \let\jlreq@do\@undefined
+    \jlreq@helper@switch@{#1}#2\jlreq@endmark
+    \ifx\jlreq@do\@undefined
+      \def\jlreq@do{\@ifnextchar[{\jlreq@helper@removeoptionbrace}{}}%
+    \else
+      \edef\jlreq@do{\expandonce{\jlreq@do}\unexpanded{\@ifnextchar[{\jlreq@helper@removeoption}{}}}%
+    \fi
+  \expandafter\endgroup
+  \jlreq@do
+}
+\long\def\jlreq@helper@switch@#1#2{%
   \ifx\jlreq@endmark#2%
     \def\jlreq@next{}%
   \else
@@ -239,15 +251,15 @@
   \fi
   \jlreq@next
 }
-\def\jlreq@helper@switch@@#1#2#3{%
+\long\def\jlreq@helper@switch@@#1#2#3{%
   \ifx\jlreq@endmark#3%
-    \def\jlreq@do##1{#2}%
+    \edef\jlreq@do{\unexpanded{#2}}%
     \def\jlreq@next{}%
   \else
-    \def\jlreq@tempa{#1}%
-    \def\jlreq@tempb{#2}%
+    \edef\jlreq@tempa{#1}%
+    \edef\jlreq@tempb{#2}%
     \ifx\jlreq@tempa\jlreq@tempb
-      \def\jlreq@do##1{#3}%
+      \edef\jlreq@do{\unexpanded{#3}}%
       \def\jlreq@next{\jlreq@deleteuntileendmark}%
     \else
       \def\jlreq@next{\jlreq@helper@switch@{#1}}%
@@ -1290,7 +1302,7 @@
 \def\jlreq@heading@allheadings{}
 %.. 中/半扉見出し
 % addcontentslineに渡すやつ：番号出すのと出さないの
-\newcommand{\jlreq@DeclareTobiraHeading}[5]{
+\newcommand{\DeclareTobiraHeading}[4]{
   \appto{\jlreq@heading@allheadings}{,#1}
   \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}
   \expandafter\def\csname jlreq@heading@setting@#1\endcsname{#3}
@@ -1300,72 +1312,70 @@
   \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\jlreq@set@top@contents{#2}\@dottedtocline{#2}{0\jlreq@mol}{2\jlreq@gol}}}{}
   \begingroup
     \def\jlreq@contents@format##1{##1}
-    \edef\jlreq@contents@label@format{\expandonce{\csname the#1\endcsname}}
+    \let\jlreq@contents@label@format=\@undefined
+    \edef\jlreq@label@format{\expandonce{\csname the#1\endcsname}}
+    \def\jlreq@heading@clearpage{\cleardoublepage}
     \jlreq@parsekeyval[DeclareTobiraHeading]{
       {contentsline_format}{\def\jlreq@contents@format####1{##1}}
       {contentsline_label_format}{\def\jlreq@contents@label@format{##1}}
+      {label_format}{\def\jlreq@label@format{##1}}
+      {type}[han,naka]{
+        \jlreq@switch{##1}{
+          {han}{\def\jlreq@heading@clearpage{\clearpage}}
+          {naka}{\def\jlreq@heading@clearpage{\cleardoublepage}}
+        }
+      }
     }{#3}
+    \ifx\jlreq@contents@label@format\@undefined
+      \let\jlreq@contents@label@format=\jlreq@label@format
+    \fi
+    \def\jlreq@format##1##2{#4}
+    \edef\jlreq@formatwlabel{\noexpand\jlreq@format{\expandonce{\jlreq@label@format}}}
     \edef\jlreq@do{
       \noexpand\def\expandonce{\csname jlreq@TobiraHeading@#1\endcsname}[####1]####2{%
-        \unexpanded{\ifnum#2>\c@secnumdepth}%
+        \unexpanded{\ifnum#2>\c@secnumdepth\relax}%
+        % \addcontentslineを入れる？？
+        \noexpand\else
           \unexpanded{\refstepcounter{#1}}%
           \unexpanded{\addcontentsline{toc}{#1}}{\expandonce{\jlreq@contents@label@format}\expandonce{\jlreq@contents@format{##1}}}%
-        \noexpand\else
           \expandonce{\csname #1mark\endcsname}{####1}%
-          \unexpanded{\addcontentsline{toc}{#1}}{\expandonce{\jlreq@contents@format{##1}}}%
         \noexpand\fi
-        \unexpanded{#4}%
+        \ifnum#2>\c@secnumdepth\relax
+          \expandonce{\jlreq@format{}{##1}}%
+        \else
+          \expandafter\expandonce\expandafter{\jlreq@formatwlabel{##2}}%
+        \fi
         \noexpand\@afterheading
-        \unexpanded{#5}%
+        \expandonce{\jlreq@heading@clearpage}%
         \unexpanded{\if@restonecol\twocolumn\fi}%
       }
       \noexpand\def\expandonce{\csname jlreq@TobiraHeading@s@#1\endcsname}####1{%
-        \unexpanded{#4}%
+        \expandonce{\jlreq@format{}{##1}}%
         \noexpand\@afterheading
-        \unexpanded{#5}%
+        \expandonce{\jlreq@heading@clearpage}%
         \unexpanded{\if@restonecol\twocolumn\fi}%
       }
       \noexpand\def\expandonce{\csname #1\endcsname}{%
-        \unexpanded{\if@twocolumn\onecolumn\@restonecoltrue\else\@restonecolfalse\fi\clearpage}%
+        \unexpanded{\if@twocolumn\onecolumn\@restonecoltrue\else\@restonecolfalse\fi\cleardoublepage}%
         \noexpand\secdef{\expandonce{\csname jlreq@TobiraHeading@#1\endcsname}}{\expandonce{\csname jlreq@TobiraHeading@s@#1\endcsname}}}
     }
   \expandafter\endgroup
   \jlreq@do
 }
 
-\newcommand{\DeclareHanTobiraHeading}[4]{
-  \jlreq@DeclareTobiraHeading{#1}{#2}{#3}{#4}{\clearpage}
+\newcommand{\NewTobiraHeading}[4]{
+  \expandafter\@ifdefinable\csname #1\endcsname{\DeclareTobiraHeading{#1}{#2}{#3}{#4}}
 }
-\newcommand{\NewHanTobiraHeading}[4]{
-  \expandafter\@ifdefinable\csname #1\endcsname{\DeclareHanTobiraHeading{#1}{#2}{#3}{#4}}
+\newcommand{\RenewTobiraHeading}[4]{
+  \@ifundefined{#1}{\@latex@error{\expandafter\string\csname#1\endcsname\space undefined}\@ehc}{\DeclareTobiraHeading{#1}{#2}{#3}{#4}}%
 }
-\newcommand{\RenewHanTobiraHeading}[4]{
-  \@ifundefined{#1}{\@latex@error{\expandafter\string\csname#1\endcsname\space undefined}\@ehc}{\DeclareHanTobiraHeading{#1}{#2}{#3}{#4}}%
+\newcommand{\ProvideTobiraHeading}[4]{
+  \@ifundefined{#1}{\DeclareTobiraHeading{#1}{#2}{#3}{#4}}{}
 }
-\newcommand{\ProvideHanTobiraHeading}[4]{
-  \@ifundefined{#1}{\DeclareHanTobiraHeading{#1}{#2}{#3}{#4}}{}
-}
-\@onlypreamble\DeclareHanTobiraHeading
-\@onlypreamble\NewHanTobiraHeading
-\@onlypreamble\RenewHanTobiraHeading
-\@onlypreamble\ProvideHanTobiraHeading
-
-\newcommand{\DeclareNakaTobiraHeading}[4]{
-  \jlreq@DeclareTobiraHeading{#1}{#2}{#3}{#4}{\cleardoublepage}
-}
-\newcommand{\NewNakaTobiraHeading}[4]{
-  \expandafter\@ifdefinable\csname #1\endcsname{\DeclareNakaTobiraHeading{#1}{#2}{#3}{#4}}
-}
-\newcommand{\RenewNakaTobiraHeading}[4]{
-  \@ifundefined{#1}{\@latex@error{\expandafter\string\csname#1\endcsname\space undefined}\@ehc}{\DeclareNakaTobiraHeading{#1}{#2}{#3}{#4}}%
-}
-\newcommand{\ProvideNakaTobiraHeading}[4]{
-  \@ifundefined{#1}{\DeclareNakaTobiraHeading{#1}{#2}{#3}{#4}}{}
-}
-\@onlypreamble\DeclareNakaTobiraHeading
-\@onlypreamble\NewNakaTobiraHeading
-\@onlypreamble\RenewNakaTobiraHeading
-\@onlypreamble\ProvideNakaTobiraHeading
+\@onlypreamble\DeclareTobiraHeading
+\@onlypreamble\NewTobiraHeading
+\@onlypreamble\RenewTobiraHeading
+\@onlypreamble\ProvideTobiraHeading
 
 %.. 別行見出し
 % \jlreq@startBlockHeading{1 = 命令名}{2 = レベル}{3 = 字下げ}{4 = 前空き}{5 = 後ろ空き}{6 = トータル行数}{7 =  フォーマット}*{見出し}[副題]
@@ -1726,12 +1736,25 @@
 
 %.. 各種定義
 \if@tate
-  \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},indent=4,lines=4}
-  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},indent=6,lines=3}
-  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},indent=8,lines=2}
-  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=10,lines=1,before_lines=1}
-  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
-  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
+  \jlreq@switch{\jlreq@article@type}{
+  {book}{
+    \NewTobiraHeading{part}{0}{label_format={第\thepart 章\hspace*{1\jlreq@gol}}}{\null\vfil {\Huge\headfont #1#2}}
+    \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},indent=6,lines=3}
+    \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},indent=8,lines=2}
+    \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=10,lines=1,before_lines=1}
+    \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
+    \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
+  }
+  
+  {article}{
+    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},indent=4,lines=4}
+    \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},indent=6,lines=3}
+    \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},indent=8,lines=2}
+    \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=10,lines=1,before_lines=1}
+    \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
+    \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
+  }
+  }
   \renewcommand{\thepart}{\Kanji{part}}
   \renewcommand{\thesection}{\rensuji{\@arabic\c@section}}
   \renewcommand{\thesubsection}{\rensuji{\@alph\c@subsection}}
@@ -1746,12 +1769,25 @@
     \setcounter{subsection}{0}%
     \renewcommand{\thesection}{\rensuji{\@Alph\c@section}}}
 \else
-  \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},lines=4}
-  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},lines=3}
-  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},lines=2}
-  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},lines=1,before_lines=1}
-  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
-  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
+  \jlreq@switch{\jlreq@article@type}{
+  {book}{
+    \NewTobiraHeading{part}{0}{label_format={第\thepart 部\hspace*{1\jlreq@gol}}}{\null\vfil {\Huge\headfont #1#2}\vfil}
+    \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},lines=3}
+    \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},lines=2}
+    \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},lines=1,before_lines=1}
+    \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
+    \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
+  }
+  
+  {article}{
+    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},lines=4}
+    \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},lines=3}
+    \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},lines=2}
+    \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},lines=1,before_lines=1}
+    \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
+    \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
+  }
+  }
   \renewcommand{\thepart}{\Roman{part}}
   \renewcommand{\thesection}{\arabic{section}}
   \renewcommand{\thesubsection}{\thesection .\arabic{subsection}}
@@ -2513,7 +2549,9 @@
 }
 \def\jlreq@clearheadingmarks#1{%
   \@for\jlreq@tempa:=#1\do{%
-    \expandafter\let\csname\jlreq@tempa mark\endcsname=\@gobble
+	\@ifundefined{\jlreq@tempa}{}{\@ifundefined{\jlreq@tempa mark}{}{%
+	    \expandafter\let\csname\jlreq@tempa mark\endcsname=\@gobble
+	}}%
   }%
 }
 \newcommand*{\NewPageStyle}[2]{%

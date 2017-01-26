@@ -1378,7 +1378,7 @@
 \@onlypreamble\ProvideTobiraHeading
 
 %.. 別行見出し
-% \jlreq@startBlockHeading{1 = 命令名}{2 = レベル}{3 = 字下げ}{4 = 前空き}{5 = 後ろ空き}{6 = トータル行数}{7 =  フォーマット}*{見出し}[副題]
+% \jlreq@startBlockHeading{1 = 命令名}{2 = レベル}{3 = 字下げ}{4 = 前空き}{5 = 後ろ空き}{6 = トータル行数}{7 =  フォーマット関連}*{見出し}[副題]
 % 字下げはa:**だと追加する値，r:**だとその値に強制する．
 \newcommand{\jlreq@startBlockHeading}[7]{%
   \edef\jlreq@startBlockHeading@format{\unexpanded{#7}}%
@@ -1393,6 +1393,24 @@
   \@ifnextchar[{\jlreq@startBlockHeading@@@{#1}{#2}{#3}{#4}{#5}{#6}}{\jlreq@startBlockHeading@@@{#1}{#2}{#3}{#4}{#5}{#6}[]}%
 }
 
+% {1 = レベル}{2 = ラベルフォーマット}{3 = 本体フォーマット}{4 = 副題フォーマット}{5 = *}{6 = 見出し}{7 = 副題}
+\long\def\jlreq@startBlockHeading@setformat#1#2#3#4#5#6#7{%
+  % \jlreq@tempaに{ラベル}{見出し}{副題}という形のものを入れる
+  \ifnum0\jlreq@ifempty{#5}{}{1}\ifnum #1>\c@secnumdepth1\fi>0\relax
+    \def\jlreq@tempa{{}{#6}}%
+  \else
+    \def\jlreq@tempa{{#2}{#6}}%
+  \fi
+  \jlreq@ifempty{#7}{%
+    \appto\jlreq@tempa{{}}%
+  }{%
+    \def\jlreq@tempb##1{#4}%
+    \expandafter\appto\expandafter\jlreq@tempa\expandafter{\expandafter{\jlreq@tempb{#7}}}%
+  }%
+  \def\jlreq@tempb##1##2##3{#3}%
+  \edef\jlreq@tempa{\unexpanded{\expandafter\def\expandafter\jlreq@result\expandafter}{\noexpand\jlreq@tempb\expandonce{\jlreq@tempa}}}%
+  \jlreq@tempa
+}
 % {1 = 命令}{2 = レベル}{3 = スペース関連}{4 = *}{5 = running head}{6 = 見出し}[7 = 副題]
 \def\jlreq@startBlockHeading@@@#1#2#3#4#5#6[#7]{%
   \edef\jlreq@do{%
@@ -1414,8 +1432,10 @@
         #5}%
     }%
   \fi
+  \def\jlreq@do{\jlreq@startBlockHeading@setformat{#2}}%
+  \expandafter\jlreq@do\jlreq@startBlockHeading@format{#4}{#6}{#7}%
   \def\jlreq@do{\jlreq@startBlockHeading@@@@#3}%
-  \expandafter\jlreq@do\expandafter{\jlreq@tempa}%
+  \expandafter\jlreq@do\expandafter{\jlreq@result}%
 }
 \def\jlreq@startBlockHeading@removecolumn#1:{#1}
 
@@ -1512,8 +1532,10 @@
     \def\jlreq@font{\normalsize}
     \def\jlreq@subtitle@font{\normalsize}
     \def\jlreq@indent{0}
-    \def\jlreq@format{}
+    \let\jlreq@format=\@undefined
     \def\jlreq@pagebreak{}
+    \let\jlreq@label@format=\@undefined
+    \let\jlreq@subtitle@format=\@undefined
     \jlreq@parsekeyval[BlockHeading]{
       {lines}{\def\jlreq@lines{##1}}
       {before_space}{\def\jlreq@before@space{##1}}
@@ -1524,6 +1546,8 @@
       {subtitle_font}{\def\jlreq@subtitle@font{##1}}
       {indent}{\def\jlreq@indent{##1}}
       {format}{\edef\jlreq@format{\unexpanded{##1}}}
+      {label_format}{\def\jlreq@label@format{##1}}
+      {subtitle_format}{\def\jlreq@subtitle@format{##1}}
       {pagebreak}[clearpage,cleardoublepage,clearcolumn,nariyuki]{
         \jlreq@switch{##1}{
           {clearpage}{\def\jlreq@pagebreak{\clearpage}}
@@ -1539,17 +1563,23 @@
     \ifx\jlreq@after@space\@empty\else\edef\jlreq@after@space{r:\expandonce{\jlreq@after@space}}\fi
     \ifx\jlreq@after@lines\@empty\else\edef\jlreq@after@space{a:\expandonce{\jlreq@after@lines}\baselineskip}\fi
     \ifx\jlreq@indent\@empty\else\edef\jlreq@indent{\expandonce{\jlreq@indent}\jlreq@mol}\fi
-    \ifx\jlreq@format\@empty
+    \ifx\jlreq@format\@undefined
       \edef\jlreq@format{%
-        \expandonce{\jlreq@font} \unexpanded{##1} \unexpanded{##2}%
-        \unexpanded{\jlreq@ifempty{##3}{}}{\noexpand\nobreak\noexpand\par\expandonce{\jlreq@subtitle@font}\unexpanded{##3}}%
+        \expandonce{\jlreq@font}\unexpanded{##1}\unexpanded{##2}%
+        \unexpanded{##3}%
       }
+    \fi
+    \ifx\jlreq@label@format\@undefined
+      \def\jlreq@label@format{\@seccntformat{#1}}
+    \fi
+    \ifx\jlreq@subtitle@format\@undefined
+      \edef\jlreq@subtitle@format{{\noexpand\nobreak\noexpand\par\expandonce{\jlreq@subtitle@font}\unexpanded{##1}}}
     \fi
     \edef\jlreq@do{%
       \@temptokena={%
         \noexpand\jlreq@hook@beforeheadings{#1}%
         \expandonce{\jlreq@pagebreak}%
-        \unexpanded{\jlreq@startBlockHeading{#1}{#2}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@before@space}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@lines}}{\expandonce{\jlreq@format}}%
+        \unexpanded{\jlreq@startBlockHeading{#1}{#2}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@before@space}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@lines}}{{\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@format}}{\expandonce{\jlreq@subtitle@format}}}%
       }%
       \noexpand\edef\expandonce{\csname #1\endcsname}{\unexpanded{\the\@temptokena}}
     }

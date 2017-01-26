@@ -164,6 +164,7 @@
 % 簡易なkeyvalのパース．
 % \jlreq@parsekeyval[family]{
 %  {key}{\def\val{#1}}
+%  *{key}{\def\val{#1}} % デフォルト値を空文字列にする
 %  {key}[choice1,choice2]{\def\valchoice{#1}}
 %}{parse対象}
 \long\def\jlreq@parsekeyval{%
@@ -172,12 +173,27 @@
 \long\def\jlreq@helper@parsekeyval[#1]#2#3{%
   \begingroup
     \def\jlreq@do{}%
-    \jlreq@helper@parsekeyval@{#1}#2\jlreq@endmark
+    \jlreq@helper@parsekeyval@{#1}#2{\jlreq@endmark}%
     \setkeys{#1}{#3}%
   \expandafter\endgroup
   \jlreq@do
 }
-\long\def\jlreq@helper@parsekeyval@#1#2{%
+\def\jlreq@helper@parsekeyval@#1#2#{\jlreq@helper@parsekeyval@@{#1}#2\jlreq@endmark}%
+\def\jlreq@helper@parsekeyval@@#1#2{%
+  \ifx\jlreq@endmark #2%
+    \def\@tempa{\jlreq@helper@parsekeyval@@@{#1}}%
+  \else
+    \def\@tempa{\expandafter\@tempb\jlreq@deleteuntileendmark}%
+    \ifx *#2%
+      \def\@tempb{\jlreq@helper@parsekeyval@@definekeywithdefault{#1}}%
+    \else
+      \def\@tempb{\jlreq@helper@parsekeyval@@@{#1}}%
+    \fi
+  \fi
+  \@tempa
+}
+
+\long\def\jlreq@helper@parsekeyval@@@#1#2{%
   \ifx\jlreq@endmark#2%
     \def\@tempa{}%
   \else
@@ -191,8 +207,12 @@
   \define@choicekey{#1}{#2}{#3}{\appto\jlreq@do{#4}}%
   \jlreq@helper@parsekeyval@{#1}%
 }
-\long\def\jlreq@helper@parsekeyval@@definekey#1#2#3{%
+\long\def\jlreq@helper@parsekeyval@@definekeywithdefault#1#2#3{%
   \define@key{#1}{#2}[]{\appto\jlreq@do{#3}}%
+  \jlreq@helper@parsekeyval@{#1}%
+}
+\long\def\jlreq@helper@parsekeyval@@definekey#1#2#3{%
+  \define@key{#1}{#2}{\appto\jlreq@do{#3}}%
   \jlreq@helper@parsekeyval@{#1}%
 }
 
@@ -1404,10 +1424,10 @@
   \jlreq@ifempty{#7}{%
     \appto\jlreq@tempa{{}}%
   }{%
-    \def\jlreq@tempb##1{#4}%
+    \long\def\jlreq@tempb##1{#4}%
     \expandafter\appto\expandafter\jlreq@tempa\expandafter{\expandafter{\jlreq@tempb{#7}}}%
   }%
-  \def\jlreq@tempb##1##2##3{#3}%
+  \long\def\jlreq@tempb##1##2##3{#3}%
   \edef\jlreq@tempa{\unexpanded{\expandafter\def\expandafter\jlreq@result\expandafter}{\noexpand\jlreq@tempb\expandonce{\jlreq@tempa}}}%
   \jlreq@tempa
 }
@@ -1518,7 +1538,7 @@
 \newcommand{\DeclareBlockHeading}[3]{
   \appto{\jlreq@heading@allheadings}{,#1}
   \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}
-  \expandafter\def\csname jlreq@heading@setting@#1\endcsname{#3}
+  \expandafter\edef\csname jlreq@heading@setting@#1\endcsname{\unexpanded{#3}}
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewBlockHeading}
   \@ifundefined{c@#1}{\newcounter{#1}}{}
   \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}
@@ -1546,7 +1566,7 @@
       {subtitle_font}{\def\jlreq@subtitle@font{##1}}
       {indent}{\def\jlreq@indent{##1}}
       {format}{\edef\jlreq@format{\unexpanded{##1}}}
-      {label_format}{\def\jlreq@label@format{##1}}
+      {label_format}{\edef\jlreq@label@format{\unexpanded{##1}}}
       {subtitle_format}{\def\jlreq@subtitle@format{##1}}
       {pagebreak}[clearpage,cleardoublepage,clearcolumn,nariyuki]{
         \jlreq@switch{##1}{
@@ -1613,7 +1633,7 @@
   \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\jlreq@set@top@contents{#2}\@dottedtocline{#2}{0\jlreq@mol}{2\jlreq@gol}}}{}
   \begingroup
     \def\jlreq@font{\normalfont\normalsize}%
-    \def\jlreq@indent{1}%
+    \def\jlreq@indent{0}%
     \def\jlreq@mark{}%
     \jlreq@parsekeyval[RuninHeading]{
       {font}{\def\jlreq@font{##1}}
@@ -1784,8 +1804,8 @@
     \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},indent=6,lines=3}
     \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},indent=8,lines=2}
     \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=10,lines=1,before_lines=1}
-    \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
-    \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
+    \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=1}
+    \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=1}
   }
   
   {article}{
@@ -1814,7 +1834,10 @@
   \jlreq@switch{\jlreq@article@type}{
   {book}{
     \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\jlreq@gol}}}{\null\vfil {\Huge\headfont #1#2}\vfil}
-    \NewBlockHeading{chapter}{0}{font={\jlreq@keepbaselineskip{\huge\headfont}},lines=5,pagebreak=clearpage}
+    \NewBlockHeading{chapter}{0}{%
+      format={#1{\jlreq@keepbaselineskip{\huge\headfont}#2}#3},
+      label_format={\jlreq@keepbaselineskip{\huge\headfont}第\thechapter 章\quad},
+      lines=5,pagebreak=clearpage}
   }
   
   {article}{
@@ -1824,8 +1847,8 @@
   \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},lines=3}
   \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},lines=2}
   \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},lines=1,before_lines=1}
-  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
-  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
+  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=1}
+  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=2}
   \renewcommand{\thepart}{\Roman{part}}
   \renewcommand{\thesection}{\arabic{section}}
   \renewcommand{\thesubsection}{\thesection .\arabic{subsection}}
@@ -2465,7 +2488,7 @@
       {even_running_head}{\def\jlreq@even@running@head{##1}}
       {command}{\def\jlreq@command{##1}}
       {gap}{\def\jlreq@gap{##1}}
-      {no_clear_mark}{\jlreq@clearmarkfalse}
+      *{no_clear_mark}{\jlreq@clearmarkfalse}
     }{#2}
     \ifthenelse{\lengthtest{\jlreq@gap < 1.49\zw} \OR \( \lengthtest{\jlreq@gap > 1.51\zw} \AND \lengthtest{\jlreq@gap < 1.99\zw} \) \OR \lengthtest{\jlreq@gap > 2.01\zw}}{\jlreq@warning{ノンブルと柱との空き量は文字サイズの2倍又は1.5倍とする（ページスタイル #1 内，2.6.1.c）}}{}
     

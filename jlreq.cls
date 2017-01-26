@@ -1469,7 +1469,7 @@
   \dp\jlreq@tempboxa=\dimexpr\dp\jlreq@tempboxa + \ht\jlreq@tempboxa\relax
   \ht\jlreq@tempboxa=0pt
   \box\jlreq@tempboxa
-  \par\nopagebreak
+  \par\nobreak
   \prevdepth=0pt
   \jlreq@startBlockHeading@analyzespace#3:\jlreq@endmark
   \jlreq@tempskipb=\glueexpr\jlreq@tempskipb + \ht\jlreq@tempboxb - \baselineskip\relax
@@ -1481,6 +1481,7 @@
     \fi
   \fi
   \ifdim\jlreq@tempskipb=0pt\else\vskip\jlreq@tempskipb\fi
+  \@afterheading
 }
 
 % \DeclareBlockHeading{命令名}{レベル}{設定}
@@ -1544,12 +1545,16 @@
         \unexpanded{\jlreq@ifempty{##3}{}}{\noexpand\nobreak\noexpand\par\expandonce{\jlreq@subtitle@font}\unexpanded{##3}}%
       }
     \fi
-    \global\edef\jlreq@tempa{%
-      \expandonce{\jlreq@pagebreak}%
-      \unexpanded{\jlreq@startBlockHeading{#1}{#2}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@before@space}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@lines}}{\expandonce{\jlreq@format}}%
+    \edef\jlreq@do{%
+      \@temptokena={%
+        \noexpand\jlreq@hook@beforeheadings{#1}%
+        \expandonce{\jlreq@pagebreak}%
+        \unexpanded{\jlreq@startBlockHeading{#1}{#2}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@before@space}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@lines}}{\expandonce{\jlreq@format}}%
+      }%
+      \noexpand\edef\expandonce{\csname #1\endcsname}{\unexpanded{\the\@temptokena}}
     }
-  \endgroup
-  \expandafter\edef\csname #1\endcsname{\noexpand\jlreq@hook@beforeheadings{#1}\expandonce{\jlreq@tempa}}
+  \expandafter\endgroup
+  \jlreq@do
 }
 
 \newcommand{\NewBlockHeading}[3]{
@@ -1586,10 +1591,14 @@
       {mark}{\def\jlreq@mark{##1}}
     }{#3}%
     % \@startsection{#1}{#2}{<indent>*fontsize}{0pt}{-fontsize}{font}
-    \global\edef\@tempa{{\unexpanded{#1}}{\unexpanded{#2}}{\expandonce{\jlreq@indent}\jlreq@mol}{0pt}{-1\jlreq@fontsize}{\expandonce{\jlreq@font}\expandonce{\jlreq@mark}}}%
-  \endgroup
-  \expandafter\edef\csname #1\endcsname{\noexpand\jlreq@hook@beforeheadings{#1}%
-    \noexpand\@startsection\expandonce{\@tempa}}%
+    \edef\jlreq@do{
+      \noexpand\def\expandonce{\csname #1\endcsname}{%
+        \unexpanded{\jlreq@hook@beforeheadings{#1}}%
+        \noexpand\@startsection{\unexpanded{#1}}{\unexpanded{#2}}{\expandonce{\jlreq@indent}\jlreq@mol}{0pt}{-1\jlreq@fontsize}{\expandonce{\jlreq@font}\expandonce{\jlreq@mark}}%
+      }
+    }
+  \expandafter\endgroup
+  \jlreq@do
 }
 \newcommand*{\NewRuninHeading}[3]{%
   \expandafter\@ifdefinable\csname #1\endcsname{\DeclareRuninHeading{#1}{#2}{#3}}%
@@ -1637,7 +1646,7 @@
     \def\jlreq@CutinHeading@linecount{3}%
   \fi
   % 普通の一行の高さ/深さに合わせて見出しのボックスを出力
-  \setbox\@tempboxa=\vtop to \dimexpr\jlreq@CutinHeading@linecount\baselineskip\relax{\vskip 0pt plus 1fill minus 1fill \box\jlreq@resultbox\vskip 0pt plus 1fill minus 1fill}%
+  \setbox\@tempboxa=\vtop to \dimexpr\numexpr\jlreq@CutinHeading@linecount - 1\relax\baselineskip + 1\jlreq@gol\relax{\vskip 0pt plus 1fill minus 1fill \box\jlreq@resultbox\vskip 0pt plus 1fill minus 1fill}%
   \setbox\jlreq@tempboxa=\hbox{あ}%
   \ht\@tempboxa=\ht\jlreq@tempboxa
   \dp\@tempboxa=\dp\jlreq@tempboxa
@@ -1678,7 +1687,7 @@
     \def\jlreq@onelinemax{6\jlreq@fontsize}%
     \def\jlreq@twolinemax{20\jlreq@fontsize}%
     \def\jlreq@indent{0}%
-    \def\jlreq@afterindent{1\zh}%
+    \def\jlreq@afterindent{1\jlreq@mol}%
     \jlreq@parsekeyval[CutinHeading]{
       {font}{\def\jlreq@fontcommand{##1}}%
       {onelinemax}{\def\jlreq@onelinemax{##1}}%
@@ -1686,10 +1695,13 @@
       {indent}{\def\jlreq@indent{##1}}%
       {afterindent}{\def\jlreq@afterindent{##1}}%
     }{#3}%
-    \global\edef\@tempa{{#1}{\expandonce{\jlreq@fontcommand}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@afterindent}}{\expandonce{\jlreq@onelinemax}}{\expandonce{\jlreq@twolinemax}}}
-  \endgroup
-  \expandafter\edef\csname #1\endcsname{\noexpand\jlreq@hook@beforeheadings{#1}%
-    \noexpand\jlreq@CutinHeading@start\expandonce{\@tempa}}
+    \edef\jlreq@do{
+      \noexpand\def\expandonce{\csname #1\endcsname}{%
+        \noexpand\jlreq@CutinHeading@start{#1}{\expandonce{\jlreq@fontcommand}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@afterindent}}{\expandonce{\jlreq@onelinemax}}{\expandonce{\jlreq@twolinemax}}%
+      }
+    }
+  \expandafter\endgroup
+  \jlreq@do
 }
 \newcommand*{\NewCutinHeading}[3]{%
   \expandafter\@ifdefinable\csname #1\endcsname{\DeclareCutinHeading{#1}{#2}{#3}}%
@@ -1771,23 +1783,19 @@
 \else
   \jlreq@switch{\jlreq@article@type}{
   {book}{
-    \NewTobiraHeading{part}{0}{label_format={第\thepart 部\hspace*{1\jlreq@gol}}}{\null\vfil {\Huge\headfont #1#2}\vfil}
-    \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},lines=3}
-    \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},lines=2}
-    \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},lines=1,before_lines=1}
-    \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
-    \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
+    \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\jlreq@gol}}}{\null\vfil {\Huge\headfont #1#2}\vfil}
+    \NewBlockHeading{chapter}{0}{font={\jlreq@keepbaselineskip{\huge\headfont}},lines=5,pagebreak=clearpage}
   }
   
   {article}{
     \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},lines=4}
-    \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},lines=3}
-    \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},lines=2}
-    \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},lines=1,before_lines=1}
-    \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
-    \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
   }
   }
+  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},lines=3}
+  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},lines=2}
+  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},lines=1,before_lines=1}
+  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
+  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
   \renewcommand{\thepart}{\Roman{part}}
   \renewcommand{\thesection}{\arabic{section}}
   \renewcommand{\thesubsection}{\thesection .\arabic{subsection}}

@@ -1322,23 +1322,25 @@
 \def\jlreq@heading@allheadings{}
 %.. 中/半扉見出し
 % addcontentslineに渡すやつ：番号出すのと出さないの
-\newcommand{\DeclareTobiraHeading}[4]{
+\newcommand{\DeclareTobiraHeading}[3]{
   \appto{\jlreq@heading@allheadings}{,#1}
   \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}
-  \expandafter\def\csname jlreq@heading@setting@#1\endcsname{#3}
-  \expandafter\edef\csname jlreq@heading@format@#1\endcsname{\unexpanded{#4}}
+  \expandafter\edef\csname jlreq@heading@setting@#1\endcsname{\unexpanded{#3}}
+  \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewTobiraHeading}
   \@ifundefined{c@#1}{\newcounter{#1}}{}
   \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}
   \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\jlreq@set@top@contents{#2}\@dottedtocline{#2}{0\jlreq@mol}{2\jlreq@gol}}}{}
   \begingroup
     \def\jlreq@contents@format##1{##1}
     \let\jlreq@contents@label@format=\@undefined
+    \let\jlreq@format=\@undefined
     \edef\jlreq@label@format{\expandonce{\csname the#1\endcsname}}
     \def\jlreq@heading@clearpage{\cleardoublepage}
     \jlreq@parsekeyval[DeclareTobiraHeading]{
       {contentsline_format}{\def\jlreq@contents@format####1{##1}}
       {contentsline_label_format}{\def\jlreq@contents@label@format{##1}}
       {label_format}{\def\jlreq@label@format{##1}}
+      {format}{\def\jlreq@format####1####2{##1}}
       {type}[han,naka]{
         \jlreq@switch{##1}{
           {han}{\def\jlreq@heading@clearpage{\clearpage}}
@@ -1349,7 +1351,9 @@
     \ifx\jlreq@contents@label@format\@undefined
       \let\jlreq@contents@label@format=\jlreq@label@format
     \fi
-    \def\jlreq@format##1##2{#4}
+    \ifx\jlreq@format\@undefined
+      \def\jlreq@format##1##2{##1##2}
+    \fi
     \edef\jlreq@formatwlabel{\noexpand\jlreq@format{\expandonce{\jlreq@label@format}}}
     \edef\jlreq@do{
       \noexpand\def\expandonce{\csname jlreq@TobiraHeading@#1\endcsname}[####1]####2{%
@@ -1383,14 +1387,14 @@
   \jlreq@do
 }
 
-\newcommand{\NewTobiraHeading}[4]{
-  \expandafter\@ifdefinable\csname #1\endcsname{\DeclareTobiraHeading{#1}{#2}{#3}{#4}}
+\newcommand{\NewTobiraHeading}[3]{
+  \expandafter\@ifdefinable\csname #1\endcsname{\DeclareTobiraHeading{#1}{#2}{#3}}
 }
-\newcommand{\RenewTobiraHeading}[4]{
-  \@ifundefined{#1}{\@latex@error{\expandafter\string\csname#1\endcsname\space undefined}\@ehc}{\DeclareTobiraHeading{#1}{#2}{#3}{#4}}%
+\newcommand{\RenewTobiraHeading}[3]{
+  \@ifundefined{#1}{\@latex@error{\expandafter\string\csname#1\endcsname\space undefined}\@ehc}{\DeclareTobiraHeading{#1}{#2}{#3}}%
 }
-\newcommand{\ProvideTobiraHeading}[4]{
-  \@ifundefined{#1}{\DeclareTobiraHeading{#1}{#2}{#3}{#4}}{}
+\newcommand{\ProvideTobiraHeading}[3]{
+  \@ifundefined{#1}{\DeclareTobiraHeading{#1}{#2}{#3}}{}
 }
 \@onlypreamble\DeclareTobiraHeading
 \@onlypreamble\NewTobiraHeading
@@ -1626,7 +1630,7 @@
 \newcommand*{\DeclareRuninHeading}[3]{%
   \appto{\jlreq@heading@allheadings}{,#1}
   \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}%
-  \expandafter\def\csname jlreq@heading@setting@#1\endcsname{#3}%
+  \expandafter\edef\csname jlreq@heading@setting@#1\endcsname{\unexpanded{#3}}%
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewRuninHeading}
   \@ifundefined{c@#1}{\newcounter{#1}}{}%
   \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}%
@@ -1800,7 +1804,7 @@
 \if@tate
   \jlreq@switch{\jlreq@article@type}{
   {book}{
-    \NewTobiraHeading{part}{0}{label_format={第\thepart 章\hspace*{1\jlreq@gol}}}{\null\vfil {\Huge\headfont #1#2}}
+    \NewTobiraHeading{part}{0}{label_format={第\thepart 章\hspace*{1\jlreq@gol}},format={\null\vfil {\Huge\headfont #1#2}}}
     \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},indent=6,lines=3}
     \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},indent=8,lines=2}
     \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=10,lines=1,before_lines=1}
@@ -1833,7 +1837,7 @@
 \else
   \jlreq@switch{\jlreq@article@type}{
   {book}{
-    \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\jlreq@gol}}}{\null\vfil {\Huge\headfont #1#2}\vfil}
+    \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\jlreq@gol}},format={\null\vfil {\Huge\headfont #1#2}\vfil}}
     \NewBlockHeading{chapter}{0}{%
       format={#1{\jlreq@keepbaselineskip{\huge\headfont}#2}#3},
       label_format={\jlreq@keepbaselineskip{\huge\headfont}第\thechapter 章\quad},

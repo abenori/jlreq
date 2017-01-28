@@ -1335,11 +1335,13 @@
     \let\jlreq@format=\@undefined
     \edef\jlreq@label@format{\expandonce{\csname the#1\endcsname}}%
     \def\jlreq@heading@clearpage{\cleardoublepage}%
+    \def\jlreq@pagestyle{empty}%
     \jlreq@parsekeyval[DeclareTobiraHeading]{
       {contentsline_format}{\def\jlreq@contents@format####1{##1}}
       {contentsline_label_format}{\def\jlreq@contents@label@format{##1}}
       {label_format}{\def\jlreq@label@format{##1}}
       {format}{\def\jlreq@format####1####2{##1}}
+      {pagestyle}{\def\jlreq@pagestyle{##1}}
       {type}[han,naka]{
         \jlreq@switch{##1}{
           {han}{\def\jlreq@heading@clearpage{\clearpage}}
@@ -1355,7 +1357,7 @@
     \fi
     \edef\jlreq@formatwlabel{\noexpand\jlreq@format{\expandonce{\jlreq@label@format}}}%
     \edef\jlreq@do{%
-      \noexpand\def\expandonce{\csname jlreq@TobiraHeading@#1\endcsname}[####1]####2{%
+      \noexpand\def\expandonce{\csname jlreq@TobiraHeading@start@#1\endcsname}[####1]####2{%
         \unexpanded{\ifnum#2>\c@secnumdepth\relax}%
         % \addcontentslineを入れる？？
         \noexpand\else
@@ -1372,7 +1374,7 @@
         \expandonce{\jlreq@heading@clearpage}%
         \unexpanded{\if@restonecol\twocolumn\fi}%
       }%
-      \noexpand\def\expandonce{\csname jlreq@TobiraHeading@s@#1\endcsname}####1{%
+      \noexpand\def\expandonce{\csname jlreq@TobiraHeading@start@s@#1\endcsname}####1{%
         \expandonce{\jlreq@format{}{##1}}%
         \noexpand\@afterheading
         \expandonce{\jlreq@heading@clearpage}%
@@ -1380,7 +1382,8 @@
       }%
       \noexpand\def\expandonce{\csname #1\endcsname}{%
         \unexpanded{\if@twocolumn\onecolumn\@restonecoltrue\else\@restonecolfalse\fi\cleardoublepage}%
-        \noexpand\secdef{\expandonce{\csname jlreq@TobiraHeading@#1\endcsname}}{\expandonce{\csname jlreq@TobiraHeading@s@#1\endcsname}}}%
+        \ifx\jlreq@pagestyle\@empty\else\noexpand\thispagestyle{\expandonce{\jlreq@pagestyle}}\fi
+        \noexpand\secdef{\expandonce{\csname jlreq@TobiraHeading@start@#1\endcsname}}{\expandonce{\csname jlreq@TobiraHeading@start@s@#1\endcsname}}}%
     }%
   \expandafter\endgroup
   \jlreq@do
@@ -1755,6 +1758,7 @@
 
 \newcommand{\ModifyHeading}[2]{%
   \begingroup
+    \@ifundefined{jlreq@heading@setting@#1}{\ClassError{jlreq}{Unknown heading: #1}{\@ehc}}%
     \expandafter\let\expandafter\level\expandafter=\csname jlreq@heading@level@#1\endcsname
     \expandafter\let\expandafter\setting\expandafter=\csname jlreq@heading@setting@#1\endcsname
     \expandafter\let\expandafter\macroname\expandafter=\csname jlreq@heading@type@#1\endcsname
@@ -2453,31 +2457,32 @@
   }%
 }
 \newcommand*\jlreq@pagestyle@parse@position@@[1]{%
-  \ifthenelse{\equal{#1}{top} \OR \equal{#1}{bottom}}{\def\jlreq@tempc{#1}}{
-    \ifthenelse{\equal{#1}{left} \OR \equal{#1}{right} \OR \equal{#1}{center}}{\def\jlreq@tempd{#1}}{
-      \ClassError{jlreq}{Invalid position: #1}{\@ehc}
-    }
-  }
+  \ifthenelse{\equal{#1}{top} \OR \equal{#1}{bottom}}{\def\jlreq@tempc{#1}}{%
+    \ifthenelse{\equal{#1}{left} \OR \equal{#1}{right} \OR \equal{#1}{center}}{\def\jlreq@tempd{#1}}{%
+      \ClassError{jlreq}{Invalid position: #1}{\@ehc}%
+    }%
+  }%
 }
-\newcommand*{\jlreq@pagestyle@parse@position}[2]{
+\newcommand*{\jlreq@pagestyle@parse@position}[2]{%
   \begingroup
     \jlreq@pagestyle@parse@position@#2-\jlreq@endmark
     % \jlreq@tempcに縦方向を，\jlreq@tempdに横方向を入れる
-    \def\jlreq@tempc{}\def\jlreq@tempd{}
-    \expandafter\jlreq@pagestyle@parse@position@@\expandafter{\jlreq@tempa}
-    \expandafter\jlreq@pagestyle@parse@position@@\expandafter{\jlreq@tempb}
+    \def\jlreq@tempc{}\def\jlreq@tempd{}%
+    \expandafter\jlreq@pagestyle@parse@position@@\expandafter{\jlreq@tempa}%
+    \expandafter\jlreq@pagestyle@parse@position@@\expandafter{\jlreq@tempb}%
     \ifx\jlreq@tempc\@empty\edef\jlreq@tempc{\expandafter\@firstoftwo#1}\fi
     \ifx\jlreq@tempd\@empty\edef\jlreq@tempd{\expandafter\@secondoftwo#1}\fi
-    \edef\jlreq@do{\unexpanded{\def#1}{{\jlreq@tempc}{\jlreq@tempd}}}
+    \edef\jlreq@do{\unexpanded{\def#1}{{\jlreq@tempc}{\jlreq@tempd}}}%
   \expandafter\endgroup
   \jlreq@do
 }
 
 % odd_running_head=_sectionのように下線から始まる場合，その値の見出し命令を柱に出すようにする．
 % 要するに\ps@***に\sectionmarkを定義するように仕込む．
+% 常にodd=rightmark，even=leftmarkになる．
 % 場所指定は奇数ページの方．偶数ページは反対になる．
 \newcommand*{\DeclarePageStyle}[2]{%
-  \expandafter\def\csname jlreq@pagestyle@setting@#1\endcsname{#2}%
+  \expandafter\edef\csname jlreq@pagestyle@setting@#1\endcsname{\unexpanded{#2}}%
   \begingroup
     \def\jlreq@nombre@position{{bottom}{left}}%
     \def\jlreq@running@head@position{{top}{left}}%
@@ -2494,35 +2499,52 @@
       {nombre}{\def\jlreq@nombre{##1}}
       {odd_running_head}{\def\jlreq@odd@running@head{##1}}
       {even_running_head}{\def\jlreq@even@running@head{##1}}
-      {command}{\def\jlreq@command{##1}}
+      {command}{\edef\jlreq@command{\unexpanded{##1}}}
       {gap}{\def\jlreq@gap{##1}}
       *{no_clear_mark}{\jlreq@clearmarkfalse}
     }{#2}%
     \ifthenelse{\lengthtest{\jlreq@gap < 1.49\zw} \OR \( \lengthtest{\jlreq@gap > 1.51\zw} \AND \lengthtest{\jlreq@gap < 1.99\zw} \) \OR \lengthtest{\jlreq@gap > 2.01\zw}}{\jlreq@warning{ノンブルと柱との空き量は文字サイズの2倍又は1.5倍とする（ページスタイル #1 内，2.6.1.c）}}{}%
     % 見出しを出す場合：evenに章などの高いレベルの見出しを出す（2.6.3.a）
+    \def\jlreq@markdefinition{}%
+    \def\jlreq@even@running@head@level{}%
     \def\@tempa##1##2\jlreq@endmark{%
       \ifx_##1%
         \def\jlreq@even@running@head{\leftmark}%
-        \edef\jlreq@command{\expandonce{\jlreq@command}%
+        \@ifundefined{jlreq@heading@setting@##2}{}{%
+          \edef\jlreq@even@running@head@level{\csname jlreq@heading@level@##2\endcsname}%
+        }%
+        \edef\jlreq@markdefinition{%
           % これで\commandの中身は\def\**mark##1{...}みたいになるはず
           \noexpand\def\expandonce{\csname ##2mark\endcsname}\unexpanded{########1}{%
             \noexpand\markboth{\expandonce{\csname the##2\endcsname}\quad\unexpanded{########1}}{}%
-          }}%
+          }%
+        }%
       \fi
       \ifx\jlreq@endmark##1\else\expandafter\@gobble\fi
     }%
     \expandafter\@tempa\jlreq@even@running@head\jlreq@endmark\jlreq@endmark
+    \def\jlreq@odd@running@head@level{}%
     \def\@tempa##1##2\jlreq@endmark{%
       \ifx_##1%
         \def\jlreq@odd@running@head{\rightmark}%
-        \edef\jlreq@command{\expandonce{\jlreq@command}%
+        \@ifundefined{jlreq@heading@setting@##2}{}{%
+          \edef\jlreq@odd@running@head@level{\csname jlreq@heading@level@##2\endcsname}%
+        }%
+        \edef\jlreq@markdefinition{%
           \noexpand\def\expandonce{\csname ##2mark\endcsname}\unexpanded{########1}{%
             \noexpand\markright{\expandonce{\csname the##2\endcsname}\quad\unexpanded{########1}}%
-          }}%
+          }%
+          \expandonce{\jlreq@markdefinition}%
+        }%
       \fi
       \ifx\jlreq@endmark##1\else\expandafter\@gobble\fi
     }%
     \expandafter\@tempa\jlreq@odd@running@head\jlreq@endmark\jlreq@endmark
+    \ifx\jlreq@odd@running@head@level\@empty\else\ifx\jlreq@even@running@head@level\@empty\else
+      \ifnum\jlreq@odd@running@head@level<\jlreq@even@running@head@level
+        \jlreq@warning{偶数ページには奇数ページよりアウトラインレベルの高い見出しを入れる（ページスタイル #1内，2.6.3.a）}%
+      \fi
+    \fi\fi
     % ##1 ##2 ##3と並んだヘッダを作る，戻り値は\jlreq@result
     \def\jlreq@setheadfoot@##1##2##3{%
       \jlreq@ifempty{##1}{\def\jlreq@left{}}{\edef\jlreq@left{\noexpand\hspace*{\jlreq@expand@speciallength{\jlreq@headfoot@sidemargin}}\unexpanded{##1}}}%
@@ -2601,7 +2623,11 @@
         \unexpanded{\def\@oddfoot}{\expandonce{\jlreq@oddfoot}}%
         \unexpanded{\def\@evenhead}{\expandonce{\jlreq@evenhead}}%
         \unexpanded{\def\@evenfoot}{\expandonce{\jlreq@evenfoot}}%
-        \expandonce{\jlreq@command}%
+        \expandonce{\jlreq@markdefinition}%
+      }%
+      \noexpand\edef\expandonce{\csname ps@#1\endcsname}{%
+        \noexpand\expandonce{\expandonce{\csname ps@#1\endcsname}}%
+        \noexpand\unexpanded{\expandonce{\jlreq@command}}%
       }%
     }%
   \expandafter\endgroup
@@ -2632,12 +2658,14 @@
 }
 \newcommand*{\ModifyPageStyle}[2]{%
   \begingroup
+    \@ifundefined{jlreq@pagestyle@setting@#1}{\ClassError{jlreq}{Unknown pagestyle: #1}{\@ehc}}{}%
     \expandafter\let\expandafter\setting\expandafter=\csname jlreq@pagestyle@setting@#1\endcsname
     \edef\jlreq@do{\noexpand\RenewPageStyle{#1}{\expandonce{\setting},\unexpanded{#2}}}%
   \expandafter\endgroup
   \jlreq@do
 }
 
+%.. 各種定義
 \RenewPageStyle{empty}{nombre={},odd_running_head={},even_running_head={}}
 \ifthenelse{\equal{\jlreq@article@type}{article}}{
   \if@twoside
@@ -2647,17 +2675,18 @@
   \fi
 }{% book, article
   \if@twoside
-    \NewPageStyle{headings}{odd_running_head={_section},even_running_head={_chapter}}
+    \NewPageStyle{headings}{odd_running_head={_section},even_running_head=\leftmark}
   \else
-    \NewPageStyle{headings}{odd_running_head={_chapter},even_running_head={}}
+    \NewPageStyle{headings}{odd_running_head=\leftmark,even_running_head={}}
   \fi
+  \ModifyPageStyle{headings}{command={\def\chaptermark#1{\markboth{第\thechapter 章\quad #1}{}}}}
 }
 \if@tate
-  \RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},nombre_position={top-left}}
+  \RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},nombre_position={top-left},no_clear_mark}
   \ModifyPageStyle{headings}{nombre=\thepage,nombre_position=top-left,running_head_position=top-right}
   \NewPageStyle{myheadings}{nombre=\thepage,nombre_position=top-left,running_head_position=top-right,odd_running_head=\rightmark,even_running_head=\leftmark,no_clear_mark}
 \else% yoko
-  \RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},nombre_position={bottom-center}}
+  \RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},nombre_position={bottom-center},no_clear_mark}
   \ModifyHeading{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center}
   \NewPageStyle{myheadings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center,odd_running_head=\rightmark,even_running_head=\leftmark,no_clear_mark}
 \fi
@@ -3031,6 +3060,7 @@
 \skip\@mpfootins=\skip\footins
 \setlength\fboxsep{.3\jlreq@mol}
 \setlength\fboxrule{\jlreq@omotekeiwidth} % 根拠はない
+% 後で
 \renewcommand{\theequation}{\@arabic\c@equation}
 
 %. 目次

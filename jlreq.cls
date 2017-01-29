@@ -162,58 +162,61 @@
 \newcommand*{\jlreq@debug@output}[1]{\message{\detokenize{#1}}}
 
 % 簡易なkeyvalのパース．
-% \jlreq@parsekeyval[family]{
+% \jlreq@parsekeyval*[family]{ % *ありは\setkeys*を使う
 %  {key}{\def\val{#1}}
 %  *{key}{\def\val{#1}} % デフォルト値を空文字列にする
 %  {key}[choice1,choice2]{\def\valchoice{#1}}
 %}{parse対象}
-\long\def\jlreq@parsekeyval{%
-  \@ifnextchar[{\jlreq@helper@parsekeyval}{\jlreq@helper@parsekeyval[jlreq@key]}%
+\def\jlreq@parsekeyval{%
+  \@ifstar{\jlreq@helper@parsekeyval@{*}}{\jlreq@helper@parsekeyval@{}}%
 }
-\long\def\jlreq@helper@parsekeyval[#1]#2#3{%
+\def\jlreq@helper@parsekeyval@#1{%
+  \@ifnextchar[{\jlreq@helper@parsekeyval@{#1}}{\jlreq@helper@parsekeyval@{#1}[jlreq@key]}%
+}
+\long\def\jlreq@helper@parsekeyval@#1[#2]#3#4{%
   \begingroup
     \def\jlreq@do{}%
-    \jlreq@helper@parsekeyval@{#1}#2{\jlreq@endmark}%
-    \setkeys{#1}{#3}%
+    \jlreq@helper@parsekeyval@@{#2}#3{\jlreq@endmark}%
+    \setkeys#1{#2}{#4}%
   \expandafter\endgroup
   \jlreq@do
 }
-\def\jlreq@helper@parsekeyval@#1#2#{\jlreq@helper@parsekeyval@@{#1}#2\jlreq@endmark}%
-\def\jlreq@helper@parsekeyval@@#1#2{%
+\def\jlreq@helper@parsekeyval@@#1#2#{\jlreq@helper@parsekeyval@@@{#1}#2\jlreq@endmark}%
+\def\jlreq@helper@parsekeyval@@@#1#2{%
   \ifx\jlreq@endmark #2%
-    \def\@tempa{\jlreq@helper@parsekeyval@@@{#1}}%
+    \def\@tempa{\jlreq@helper@parsekeyval@@@@{#1}}%
   \else
     \def\@tempa{\expandafter\@tempb\jlreq@deleteuntileendmark}%
     \ifx *#2%
-      \def\@tempb{\jlreq@helper@parsekeyval@@definekeywithdefault{#1}}%
+      \def\@tempb{\jlreq@helper@parsekeyval@@@definekeywithdefault{#1}}%
     \else
-      \def\@tempb{\jlreq@helper@parsekeyval@@@{#1}}%
+      \def\@tempb{\jlreq@helper@parsekeyval@@@@{#1}}%
     \fi
   \fi
   \@tempa
 }
 
-\long\def\jlreq@helper@parsekeyval@@@#1#2{%
+\long\def\jlreq@helper@parsekeyval@@@@#1#2{%
   \ifx\jlreq@endmark#2%
     \def\@tempa{}%
   \else
     \def\@tempa{%
-      \@ifnextchar[{\jlreq@helper@parsekeyval@@choicekey{#1}{#2}}{\jlreq@helper@parsekeyval@@definekey{#1}{#2}}%
+      \@ifnextchar[{\jlreq@helper@parsekeyval@@@choicekey{#1}{#2}}{\jlreq@helper@parsekeyval@@@definekey{#1}{#2}}%
     }%
   \fi
   \@tempa
 }
-\long\def\jlreq@helper@parsekeyval@@choicekey#1#2[#3]#4{%
+\long\def\jlreq@helper@parsekeyval@@@choicekey#1#2[#3]#4{%
   \define@choicekey{#1}{#2}{#3}{\appto\jlreq@do{#4}}%
-  \jlreq@helper@parsekeyval@{#1}%
+  \jlreq@helper@parsekeyval@@{#1}%
 }
-\long\def\jlreq@helper@parsekeyval@@definekeywithdefault#1#2#3{%
+\long\def\jlreq@helper@parsekeyval@@@definekeywithdefault#1#2#3{%
   \define@key{#1}{#2}[]{\appto\jlreq@do{#3}}%
-  \jlreq@helper@parsekeyval@{#1}%
+  \jlreq@helper@parsekeyval@@{#1}%
 }
-\long\def\jlreq@helper@parsekeyval@@definekey#1#2#3{%
+\long\def\jlreq@helper@parsekeyval@@@definekey#1#2#3{%
   \define@key{#1}{#2}{\appto\jlreq@do{#3}}%
-  \jlreq@helper@parsekeyval@{#1}%
+  \jlreq@helper@parsekeyval@@{#1}%
 }
 
 % #1のboxを今の真ん中に配置する．
@@ -2481,6 +2484,8 @@
 % 要するに\ps@***に\sectionmarkを定義するように仕込む．
 % 常にodd=rightmark，even=leftmarkになる．
 % 場所指定は奇数ページの方．偶数ページは反対になる．
+% mark_format={_chapter={第\thechapter 章\quad #1}}のような形．odd=とかeven=とかも仕込めるようにしたけど
+% あまり意味がない気がしてきた．oddやevenが優先される．
 \newcommand*{\DeclarePageStyle}[2]{%
   \expandafter\edef\csname jlreq@pagestyle@setting@#1\endcsname{\unexpanded{#2}}%
   \begingroup
@@ -2490,6 +2495,7 @@
     \def\jlreq@odd@running@head{}%
     \def\jlreq@even@running@head{}%
     \def\jlreq@command{}%
+    \def\jlreq@mark@format{}%
     % 柱とノンブルの間
     \def\jlreq@gap{1.5\zw}%
     \newif\ifjlreq@clearmark\jlreq@clearmarktrue
@@ -2499,6 +2505,7 @@
       {nombre}{\def\jlreq@nombre{##1}}
       {odd_running_head}{\def\jlreq@odd@running@head{##1}}
       {even_running_head}{\def\jlreq@even@running@head{##1}}
+      {mark_format}{\edef\jlreq@mark@format{\unexpanded{##1}}}
       {command}{\edef\jlreq@command{\unexpanded{##1}}}
       {gap}{\def\jlreq@gap{##1}}
       *{no_clear_mark}{\jlreq@clearmarkfalse}
@@ -2507,39 +2514,51 @@
     % 見出しを出す場合：evenに章などの高いレベルの見出しを出す（2.6.3.a）
     \def\jlreq@markdefinition{}%
     \def\jlreq@even@running@head@level{}%
-    \def\@tempa##1##2\jlreq@endmark{%
-      \ifx_##1%
-        \def\jlreq@even@running@head{\leftmark}%
-        \@ifundefined{jlreq@heading@setting@##2}{}{%
-          \edef\jlreq@even@running@head@level{\csname jlreq@heading@level@##2\endcsname}%
+    % **markを作る
+    % \@tempa{odd/even}running_headの中身\jlreq@endmark
+    \def\jlreq@markdefinition{}%
+    \def\jlreq@makemark##1##2##3\jlreq@endmark{%
+      \ifx_##2%
+        \ifthenelse{\equal{##1}{even}}{%
+          \def\jlreq@even@running@head{\leftmark}%
+        }{%
+          \def\jlreq@odd@running@head{\rightmark}%
+        }%
+        \@ifundefined{jlreq@heading@setting@##3}{}{%
+          \expandafter\edef\csname jlreq@##1@running@head@level\endcsname{\csname jlreq@heading@level@##3\endcsname}%
+        }%
+        \def\jlreq@tempa####1{%
+          \jlreq@tempafalse
+          \let\jlreq@result=\@undefined
+          \jlreq@parsekeyval*[DeclarePageStyle:mark_format]{
+            {##1}{\edef\jlreq@result{\unexpanded{########1}}\jlreq@tempatrue}
+            {##2##3}{\ifjlreq@tempa\else\edef\jlreq@result{\unexpanded{########1}}\fi}
+          }{####1}%
+        }%
+        \expandafter\jlreq@tempa\expandafter{\jlreq@mark@format}%
+        \ifx\jlreq@result\@undefined
+          \edef\jlreq@result{\expandonce{\csname the##3\endcsname}\quad\unexpanded{####1}}%
+        \fi
+        \ifthenelse{\equal{##1}{even}}{%
+          \def\jlreq@markcommand{\markboth}%
+          \def\jlreq@markcommandafter{{}}%
+        }{%
+          \def\jlreq@markcommand{\markright}%
+          \def\jlreq@markcommandafter{}%
         }%
         \edef\jlreq@markdefinition{%
-          % これで\commandの中身は\def\**mark##1{...}みたいになるはず
-          \noexpand\def\expandonce{\csname ##2mark\endcsname}\unexpanded{########1}{%
-            \noexpand\markboth{\expandonce{\csname the##2\endcsname}\quad\unexpanded{########1}}{}%
-          }%
-        }%
-      \fi
-      \ifx\jlreq@endmark##1\else\expandafter\@gobble\fi
-    }%
-    \expandafter\@tempa\jlreq@even@running@head\jlreq@endmark\jlreq@endmark
-    \def\jlreq@odd@running@head@level{}%
-    \def\@tempa##1##2\jlreq@endmark{%
-      \ifx_##1%
-        \def\jlreq@odd@running@head{\rightmark}%
-        \@ifundefined{jlreq@heading@setting@##2}{}{%
-          \edef\jlreq@odd@running@head@level{\csname jlreq@heading@level@##2\endcsname}%
-        }%
-        \edef\jlreq@markdefinition{%
-          \noexpand\def\expandonce{\csname ##2mark\endcsname}\unexpanded{########1}{%
-            \noexpand\markright{\expandonce{\csname the##2\endcsname}\quad\unexpanded{########1}}%
-          }%
           \expandonce{\jlreq@markdefinition}%
+          \noexpand\def\expandonce{\csname ##3mark\endcsname}\unexpanded{####1}{\expandonce{\jlreq@markcommand}
+            {\expandonce{\jlreq@result}}\expandonce{\jlreq@markcommandafter}}%
         }%
       \fi
-      \ifx\jlreq@endmark##1\else\expandafter\@gobble\fi
+      \ifx\jlreq@endmark##2\else\expandafter\@gobble\fi
     }%
-    \expandafter\@tempa\jlreq@odd@running@head\jlreq@endmark\jlreq@endmark
+    \def\@tempb{\jlreq@makemark{even}}%
+    \expandafter\@tempb\jlreq@even@running@head\jlreq@endmark\jlreq@endmark
+    \def\jlreq@odd@running@head@level{}%
+    \def\@tempb{\jlreq@makemark{odd}}%
+    \expandafter\@tempb\jlreq@odd@running@head\jlreq@endmark\jlreq@endmark
     \ifx\jlreq@odd@running@head@level\@empty\else\ifx\jlreq@even@running@head@level\@empty\else
       \ifnum\jlreq@odd@running@head@level<\jlreq@even@running@head@level
         \jlreq@warning{偶数ページには奇数ページよりアウトラインレベルの高い見出しを入れる（ページスタイル #1内，2.6.3.a）}%
@@ -2595,9 +2614,11 @@
     \jlreq@do\let\jlreq@oddfoot=\jlreq@result
     % ##1 = {}{}の後ろを逆にする
     \def\getoppositeposition##1{%
-      \ifthenelse{\equal{\expandafter\@secondoftwo##1}{center}}{\def\jlreq@tempe{center}}{%
-        \ifthenelse{\equal{\expandafter\@secondoftwo##1}{right}}{\def\jlreq@tempe{left}}{%
-          \ifthenelse{\equal{\expandafter\@secondoftwo##1}{left}}{\def\jlreq@tempe{right}}{}}}%
+      \jlreq@switch{\expandafter\@secondoftwo##1}{
+        {center}{\def\jlreq@tempe{center}}
+        {right}{\def\jlreq@tempe{left}}
+        {left}{\def\jlreq@tempe{right}}
+      }%
       \edef##1{{\expandafter\@firstoftwo##1}{\jlreq@tempe}}%
     }
     \getoppositeposition\jlreq@nombre@position
@@ -2623,10 +2644,10 @@
         \unexpanded{\def\@oddfoot}{\expandonce{\jlreq@oddfoot}}%
         \unexpanded{\def\@evenhead}{\expandonce{\jlreq@evenhead}}%
         \unexpanded{\def\@evenfoot}{\expandonce{\jlreq@evenfoot}}%
-        \expandonce{\jlreq@markdefinition}%
       }%
       \noexpand\edef\expandonce{\csname ps@#1\endcsname}{%
         \noexpand\expandonce{\expandonce{\csname ps@#1\endcsname}}%
+        \noexpand\unexpanded{\expandonce{\jlreq@markdefinition}}%
         \noexpand\unexpanded{\expandonce{\jlreq@command}}%
       }%
     }%
@@ -2675,11 +2696,11 @@
   \fi
 }{% book, article
   \if@twoside
-    \NewPageStyle{headings}{odd_running_head={_section},even_running_head=\leftmark}
+    \NewPageStyle{headings}{odd_running_head={_section},even_running_head={_chapter}}
   \else
-    \NewPageStyle{headings}{odd_running_head=\leftmark,even_running_head={}}
+    \NewPageStyle{headings}{odd_running_head={_chapter},even_running_head={}}
   \fi
-  \ModifyPageStyle{headings}{command={\def\chaptermark#1{\markboth{第\thechapter 章\quad #1}{}}}}
+  \ModifyPageStyle{headings}{mark_format={_chapter={第\thechapter 章\quad #1}}}
 }
 \if@tate
   \RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},nombre_position={top-left},no_clear_mark}

@@ -233,8 +233,6 @@
 
 \def\jlreq@currentline#1{\message{#1: at line \the\inputlineno}}
 
-% #1で{str}を参照できるようにする必要があるかは考え中
-% 使えるようにすると逆に{#1}というトークンを含められなくなる．
 % \jlreq@switch{str}{
 %   {str}{abcd}
 %   {str1}{xyz}
@@ -244,7 +242,7 @@
 % \jlreq@switch{str}{
 %   {str}{abcd}
 %   {str1}{xyz}
-%   {default}
+%   {default} % ここは#1を受け付けない（パラメータトークンを受け付けたい場合のため）．
 %} -> abcd
 % 文字列比較→\edefして比較する
 \long\def\jlreq@helper@switch@executeoption#1[#2]{%
@@ -259,7 +257,7 @@
     \let\jlreq@do\@undefined
     \jlreq@helper@switch@{#1}#2\jlreq@endmark
     \ifx\jlreq@do\@undefined
-      \def\jlreq@do{\@ifnextchar[{\jlreq@helper@removeoptionbrace}{}}%
+      \def\jlreq@do{\@ifnextchar[{\jlreq@helper@switch@executeoption{#1}}{}}%
     \else
       \edef\jlreq@do{\expandonce{\jlreq@do}\unexpanded{\@ifnextchar[{\jlreq@helper@removeoption}{}}}%
     \fi
@@ -451,6 +449,7 @@
 
 \newif\if@restonecol \@restonecolfalse
 \newif\if@titlepage \@titlepagefalse
+\newif\ifjlreq@option@titlepage \jlreq@option@titlepagefalse % titlepageかnotitlepageかが指定された
 \newif\if@landscape \@landscapefalse
 \newif\if@tate \@tatefalse
 \jlreq@DeclareOption{landscape}{\@landscapetrue}
@@ -467,13 +466,18 @@
 }
 \jlreq@DeclareOption{oneside}{\@twosidefalse\@mparswitchfalse}
 \jlreq@DeclareOption{twoside}{\@twosidetrue\@mparswitchtrue}
-\jlreq@DeclareOption{vartwoside}{\@twosidetrue\@mparswitchfalse}
 \jlreq@DeclareOption{onecolumn}{\@twocolumnfalse}
 \jlreq@DeclareOption{twocolumn}{\@twocolumntrue}
-\jlreq@DeclareOption{titlepage}{\@titlepagetrue}
-\jlreq@DeclareOption{notitlepage}{\@titlepagefalse}
+\jlreq@DeclareOption{titlepage}{\jlreq@option@titlepagetrue\@titlepagetrue}
+\jlreq@DeclareOption{notitlepage}{\jlreq@option@titlepagetrue\@titlepagefalse}
 \jlreq@DeclareOption{draft}{\setlength\overfullrule{5pt}}
 \jlreq@DeclareOption{final}{\setlength\overfullrule{0pt}}
+\newif\if@openright
+\newif\ifjlreq@option@open \jlreq@option@openfalse % openrightかopenanyが指定された
+\jlreq@DeclareOption{openright}{\@openrighttrue\jlreq@option@opentrue}
+\jlreq@DeclareOption{openany}{\@openrightfalse\jlreq@option@opentrue}
+\jlreq@DeclareOption{leqno}{\input{leqno.clo}}
+\jlreq@DeclareOption{fleqn}{\input{fleqn.clo}}
 
 \newcommand*{\jlreq@warning}[1]{}
 \jlreq@DeclareOption{jlreq_warnings}{\renewcommand*{\jlreq@warning}[1]{\ClassWarningNoLine{jlreq}{(JLREQ warning) ##1}}}
@@ -484,6 +488,13 @@
 \let\@removeelement=\jlreq@helper@removeelement
 \ProcessOptionsX*\relax
 \let\@removeelement=\jlreq@original@@removeelement
+
+\ifjlreq@option@titlepage\else
+  \ifthenelse{\equal{\jlreq@article@type}{article}}{\@titlepagetrue}{\@titlepagefalse}
+\fi
+\ifjlreq@option@open\else
+  \ifthenelse{\equal{\jlreq@article@type}{book}}{\@openrighttrue}{\@openrightfalse}
+\fi
 
 \newcommand{\jlreqsetup}[1]{%
   \jlreq@parsekeyval[jlreqsetup]{%
@@ -1346,6 +1357,7 @@
       {format}{\def\jlreq@format####1####2{##1}}
       {pagestyle}{\def\jlreq@pagestyle{##1}}
       {type}[han,naka]{
+        \message{##1!!!!!!!!!}
         \jlreq@switch{##1}{
           {han}{\def\jlreq@heading@clearpage{\clearpage}}
           {naka}{\def\jlreq@heading@clearpage{\cleardoublepage}}
@@ -1815,11 +1827,6 @@
     \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\jlreq@gol}},format={\null\vfill {\Huge\headfont \hspace*{2\jlreq@mol}#1#2}\vspace*{2\jlreq@gol}}}
     \NewBlockHeading{chapter}{0}{indent=2,lines=6,label_format={第\thechapter 章\hspace*{1\jlreq@gol}},font={\huge\headfont}}
     \renewcommand{\thechapter}{\Kanji{chapter}}
-    \ifthenelse{\equal{\jlreq@article@type}{book}}{
-      \ModifyHeading{chapter}{pagebreak=cleardoublepage}
-    }{
-      \ModifyHeading{chapter}{pagebreak=clearpage}
-    }
   }
   \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},indent=6,lines=3}
   \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},indent=8,lines=2}
@@ -1837,10 +1844,6 @@
   \renewcommand{\thesubparagraph}{%
     (\rensuji{\@arabic\c@subparagraph})}
   % bookか否かで変える？
-  \newcommand{\appendix}{\par
-    \setcounter{section}{0}%
-    \setcounter{subsection}{0}%
-    \renewcommand{\thesection}{\rensuji{\@Alph\c@section}}}
 \else
   \ifthenelse{\equal{\jlreq@article@type}{article}}{
     \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},label_format={第\thepart 部\hspace{1\jlreq@mol}},lines=4}
@@ -1870,11 +1873,17 @@
   \renewcommand{\thesubsubsection}{\thesubsection .\arabic{subsubsection}}
   \renewcommand{\theparagraph}{\thesubsubsection .\arabic{paragraph}}
   \renewcommand{\thesubparagraph}{\theparagraph .\arabic{subparagraph}}
-  \newcommand{\appendix}{\par
-    \setcounter{section}{0}%
-    \setcounter{subsection}{0}%
-    \renewcommand{\thesection}{\@Alph\c@section}}
 \fi
+
+\ifthenelse{\equal{\jlreq@article@type}{article}}{}{% book, report
+\if@openright
+  \ModifyHeading{part}{type=naka}
+  \ModifyHeading{chapter}{pagebreak=cleardoublepage}
+\else
+  \ModifyHeading{part}{type=han}
+  \ModifyHeading{chapter}{pagebreak=clearpage}
+\fi
+}
 
 %. 注
 % 合印：4.2.3
@@ -2515,7 +2524,7 @@
     \def\jlreq@markdefinition{}%
     \def\jlreq@even@running@head@level{}%
     % **markを作る
-    % \@tempa{odd/even}running_headの中身\jlreq@endmark
+    % \jlreq@makemark{odd/even}running_headの中身\jlreq@endmark
     \def\jlreq@markdefinition{}%
     \def\jlreq@makemark##1##2##3\jlreq@endmark{%
       \ifx_##2%
@@ -2537,7 +2546,7 @@
         }%
         \expandafter\jlreq@tempa\expandafter{\jlreq@mark@format}%
         \ifx\jlreq@result\@undefined
-          \edef\jlreq@result{\expandonce{\csname the##3\endcsname}\quad\unexpanded{####1}}%
+          \edef\jlreq@result{\expandonce{\csname the##3\endcsname}\noexpand\quad\unexpanded{####1}}%
         \fi
         \ifthenelse{\equal{##1}{even}}{%
           \def\jlreq@markcommand{\markboth}%
@@ -2638,7 +2647,8 @@
     \jlreq@do\let\jlreq@evenfoot=\jlreq@result
     \edef\jlreq@do{%
       \noexpand\def\expandonce{\csname ps@#1\endcsname}{%
-        \ifjlreq@clearmark\noexpand\jlreq@clearallheadingmarks\fi
+        \unexpanded{\def\jlreq@current@pagestyle{#1}}%
+        \ifjlreq@clearmark\noexpand\jlreq@heading@execmacro@toallheadings\noexpand\jlreq@clearheadingmarks\fi
         \unexpanded{\let\@mkboth=\markboth}%
         \unexpanded{\def\@oddhead}{\expandonce{\jlreq@oddhead}}%
         \unexpanded{\def\@oddfoot}{\expandonce{\jlreq@oddfoot}}%
@@ -2654,20 +2664,34 @@
   \expandafter\endgroup
   \jlreq@do
 }
-\def\jlreq@clearallheadingmarks{%
-  \ifx\jlreq@heading@allheadings\@undefined
-    \jlreq@clearmarks{chapter,part,section,subsection,subsubsection,paragraph,subparagraph}%
-  \else
-    \expandafter\jlreq@clearheadingmarks\expandafter{\jlreq@heading@allheadings}%
-  \fi
+
+% 全ての見出しにマクロ#1を適用する．
+\def\jlreq@heading@execmacro@toallheadings#1{%
+  \begingroup
+    \def\jlreq@do{}%
+    \ifx\jlreq@heading@allheadings\@undefined
+      \jlreq@heading@execmacro@toallheadings@{#1}{chapter,part,section,subsection,subsubsection,paragraph,subparagraph}%
+    \else
+      \def\@tempa{\jlreq@heading@execmacro@toallheadings@{#1}}%
+      \expandafter\@tempa\expandafter{\jlreq@heading@allheadings}%
+    \fi
+  \expandafter\endgroup
+  \jlreq@do
 }
-\def\jlreq@clearheadingmarks#1{%
-  \@for\jlreq@tempa:=#1\do{%
-	\@ifundefined{\jlreq@tempa}{}{\@ifundefined{\jlreq@tempa mark}{}{%
-	    \expandafter\let\csname\jlreq@tempa mark\endcsname=\@gobble
-	}}%
+
+\def\jlreq@heading@execmacro@toallheadings@#1#2{
+  \@for\jlreq@tempa:=#2\do{%
+    \@ifundefined{\jlreq@tempa}{}{%
+  	   \eappto\jlreq@do{\noexpand#1{\expandonce{\jlreq@tempa}}}%
+  	}%
   }%
 }
+\def\jlreq@clearheadingmarks#1{%
+	\@ifundefined{#1mark}{}{%
+    \expandafter\let\csname#1mark\endcsname=\@gobble
+	}%
+}
+  
 \newcommand*{\NewPageStyle}[2]{%
   \expandafter\@ifdefinable\csname ps@#1\endcsname{\DeclarePageStyle{#1}{#2}}%
 }
@@ -3229,6 +3253,48 @@
 \newcommand{\subsubitem}{\@idxitem \hspace*{3\jlreq@mol}}
 \newcommand{\indexspace}{\par \vskip 1\jlreq@gol \@plus .5\jlreq@gol \@minus .3\jlreq@gol\relax}
 
+
+%. 前付，後付，付録
+\newif\if@mainmatter
+\@mainmattertrue
+\newcommand*\frontmatter{%
+  \if@openright
+    \cleardoublepage
+  \else
+    \clearpage
+  \fi
+  \@mainmatterfalse
+  \pagenumbering{roman}}
+\newcommand*\mainmatter{%
+  \cleardoublepage
+  \@mainmattertrue
+  \pagenumbering{arabic}}
+\newcommand*\backmatter{%
+  \if@openright
+    \cleardoublepage
+  \else
+    \clearpage
+  \fi
+  \@mainmatterfalse}
+\newcommand*\appendix{%
+  \def\@tempa##1{\setcounter{##1}{0}}%
+  \jlreq@heading@execmacro@toallheadings\@tempa
+}
+\ifthenelse{\equal{\jlreq@article@type}{article}}{
+  \appto\appendix{\def\thesection{\Alph{section}}}
+}{%book, report
+  \appto\appendix{%
+    \def\thechapter{\rensuji{\Alph{chapter}}}%
+    \ModifyHeading{chapter}{label_format={\jlreq@keepbaselineskip{\huge\headfont}付録\thechapter\quad}}%
+    \ifx\jlreq@current@pagestyle\@undefined\else
+      \ifthenelse{\equal{\jlreq@current@pagestyle}{headings}}{%
+      \def\chaptermark#1{\markboth{付録\thechapter\quad #1}{}}%
+      \ModifyPageStyle{headings}{mark_format={_chapter={付録\thechapter\quad #1}}}%
+    }{}%
+  }
+}
+
+
 % 日にち
 \newif\if西暦 \西暦true
 \def\西暦{\西暦true}
@@ -3302,8 +3368,6 @@
   \onecolumn
   \raggedbottom
 \fi
-\normalmarginpar
-\@mparswitchfalse
 \endinput
 
 

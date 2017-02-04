@@ -138,7 +138,6 @@
 
 % 与えられたトークン列が空か（展開はしないでチェック）
 \long\def\jlreq@ifempty#1{\ifx\jlreq@uniqtoken#1\jlreq@uniqtoken\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-\let\IfEmpty=\jlreq@ifempty
 
 % vbox #1の最後を\jlreq@resultboxに入れる
 % #1の最後の行は消える
@@ -162,7 +161,7 @@
 \newcommand*{\jlreq@debug@output}[1]{\message{\detokenize{#1}}}
 
 % 簡易なkeyvalのパース．
-% \jlreq@parsekeyval*[family]{ % *ありは\setkeys*を使う
+% \jlreq@parsekeyval*[family=jlreq@key]{ % *ありは\setkeys*を使う
 %  {key}{\def\val{#1}}
 %  *{key}{\def\val{#1}} % デフォルト値を空文字列にする
 %  {key}[choice1,choice2]{\def\valchoice{#1}}
@@ -464,8 +463,9 @@
 \jlreq@DeclareOption{tate}{\@tatetrue
   \AtBeginDocument{\tate\message{\jlreq@tategumi@message}\adjustbaseline}%
 }
-\jlreq@DeclareOption{oneside}{\@twosidefalse\@mparswitchfalse}
-\jlreq@DeclareOption{twoside}{\@twosidetrue\@mparswitchtrue}
+\newif\ifjlreq@option@twoside\jlreq@option@twosidefalse % onesideかtwosideが指定された
+\jlreq@DeclareOption{oneside}{\@twosidefalse\@mparswitchfalse\jlreq@option@twosidetrue}
+\jlreq@DeclareOption{twoside}{\@twosidetrue\@mparswitchtrue\jlreq@option@twosidetrue}
 \jlreq@DeclareOption{onecolumn}{\@twocolumnfalse}
 \jlreq@DeclareOption{twocolumn}{\@twocolumntrue}
 \jlreq@DeclareOption{titlepage}{\jlreq@option@titlepagetrue\@titlepagetrue}
@@ -490,10 +490,13 @@
 \let\@removeelement=\jlreq@original@@removeelement
 
 \ifjlreq@option@titlepage\else
-  \ifthenelse{\equal{\jlreq@article@type}{article}}{\@titlepagetrue}{\@titlepagefalse}
+  \ifthenelse{\equal{\jlreq@article@type}{article}}{\@titlepagefalse}{\@titlepagetrue}
 \fi
 \ifjlreq@option@open\else
   \ifthenelse{\equal{\jlreq@article@type}{book}}{\@openrighttrue}{\@openrightfalse}
+\fi
+\ifjlreq@option@twoside\else
+  \ifthenelse{\equal{\jlreq@article@type}{book}}{\@twosidetrue}{\@twosidefalse}
 \fi
 
 \newcommand{\jlreqsetup}[1]{%
@@ -1342,7 +1345,7 @@
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewTobiraHeading}%
   \@ifundefined{c@#1}{\newcounter{#1}}{}%
   \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}%
-  \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\jlreq@set@top@contents{#2}\@dottedtocline{#2}{0\jlreq@mol}{2\jlreq@gol}}}{}%
+  \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\jlreq@set@top@contents{#2}\@dottedtocline{#2}{0\jlreq@mol}{\dimexpr 2\jlreq@gol + #2\jlreq@gol\relax}}}{}%
   \begingroup
     \def\jlreq@contents@format##1{##1}%
     \let\jlreq@contents@label@format=\@undefined
@@ -1357,7 +1360,6 @@
       {format}{\def\jlreq@format####1####2{##1}}
       {pagestyle}{\def\jlreq@pagestyle{##1}}
       {type}[han,naka]{
-        \message{##1!!!!!!!!!}
         \jlreq@switch{##1}{
           {han}{\def\jlreq@heading@clearpage{\clearpage}}
           {naka}{\def\jlreq@heading@clearpage{\cleardoublepage}}
@@ -1423,7 +1425,7 @@
 }
 % {1 = 命令}{2 = レベル}{3 = スペース関連}
 \newcommand{\jlreq@startBlockHeading@}[3]{%
-  \@ifstar{\jlreq@startBlockHeading@@{#1}{#2}{#3}{*}[]}{\@dblarg{\jlreq@startBlockHeading@@{#1}{#2}{#3}{}}}%
+  \@ifstar{\@dblarg{\jlreq@startBlockHeading@@{#1}{#2}{#3}{*}}}{\@dblarg{\jlreq@startBlockHeading@@{#1}{#2}{#3}{}}}%
 }
 % {1 = 命令}{2 = レベル}{3 = スペース関連}{4 = *}[5 = running head]{6 = 見出し}
 \long\def\jlreq@startBlockHeading@@#1#2#3#4[#5]#6{%
@@ -1433,7 +1435,7 @@
 % {1 = レベル}{2 = ラベルフォーマット}{3 = 本体フォーマット}{4 = 副題フォーマット}{5 = *}{6 = 見出し}{7 = 副題}
 \long\def\jlreq@startBlockHeading@setformat#1#2#3#4#5#6#7{%
   % \jlreq@tempaに{ラベル}{見出し}{副題}という形のものを入れる
-  \ifnum0\jlreq@ifempty{#5}{}{1}\ifnum #1>\c@secnumdepth1\fi>0\relax
+  \ifnum0\jlreq@ifempty{#5}{}{1}\ifnum #1>\c@secnumdepth 1\fi>0
     \def\jlreq@tempa{{}{#6}}%
   \else
     \def\jlreq@tempa{{#2}{#6}}%
@@ -1450,25 +1452,15 @@
 }
 % {1 = 命令}{2 = レベル}{3 = スペース関連}{4 = *}{5 = running head}{6 = 見出し}[7 = 副題]
 \def\jlreq@startBlockHeading@@@#1#2#3#4#5#6[#7]{%
-  \edef\jlreq@do{%
-    \unexpanded{\def\jlreq@tempa##1##2##3}{\expandonce{\jlreq@startBlockHeading@format}}%
-  }%
-  \jlreq@do
-  % 後で呼び出す\jlreq@startBlockHeading@addtocontentslineを定義する
-  \ifnum0\jlreq@ifempty{#4}{}{1}\ifnum #2>\c@secnumdepth1\fi>0
-    \expandafter\def\expandafter\jlreq@tempa\expandafter{\jlreq@tempa{}{#6}{#7}}%
-    \def\jlreq@startBlockHeading@addtocontentsline{}%
-  \else
+  \ifnum0\jlreq@ifempty{#4}{}{1}\ifnum #2>\c@secnumdepth 1\fi>0\else
     \refstepcounter{#1}%
-    \protected@edef\jlreq@svsec{\@seccntformat{#1}\relax}%
-    \expandafter\def\expandafter\jlreq@tempa\expandafter{\jlreq@tempa{\jlreq@svsec}{#6}{#7}}%
-    \def\jlreq@startBlockHeading@addtocontentsline{%
-      \csname #1mark\endcsname{#5}%
-      \addcontentsline{toc}{#1}{%
-        \protect\numberline{\csname the#1\endcsname}%
-        #5}%
-    }%
   \fi
+  % 後で呼び出す\jlreq@startBlockHeading@addtocontentslineを定義する
+  \long\def\jlreq@tempa##1##2##3{\def\jlreq@tempa{##1}}%
+  \expandafter\jlreq@tempa\jlreq@startBlockHeading@format
+  \edef\jlreq@startBlockHeading@addtocontentsline{%
+    \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{#4}{\expandonce{\jlreq@tempa}}{#5}%
+  }%
   \def\jlreq@do{\jlreq@startBlockHeading@setformat{#2}}%
   \expandafter\jlreq@do\jlreq@startBlockHeading@format{#4}{#6}{#7}%
   \def\jlreq@do{\jlreq@startBlockHeading@@@@#3}%
@@ -1549,7 +1541,7 @@
 % f: beforeやafterを省略する
 % font=<見出しフォント>, labelfont=<ラベルフォント>, subtitle_font=<副題フォント>
 % indent=<全体のインデント>
-% pagebreak=\clearpage/\cleardoublepage/\newpage/（無し）
+% pagebreak=clearpage/cleardoublepage/newcolumn/nariyuki
 % なお，これ以外に見出しの前後に記号を付ける，あるいは罫線を見出しの前後に配置する，罫線で見出しを囲むなどといったことも行われている．
 % 縦組の偶数ページの場合は，ページ末に見出しを配置する．
 \newcommand{\DeclareBlockHeading}[3]{%
@@ -1559,7 +1551,15 @@
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewBlockHeading}%
   \@ifundefined{c@#1}{\newcounter{#1}}{}%
   \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}%
-  \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\jlreq@set@top@contents{#2}\@dottedtocline{#2}{0\jlreq@mol}{2\jlreq@gol}}}{}%
+  \@ifundefined{jlreq@heading@maketoc@#1}{%
+    % {1 = *}{2 = ラベル}{3 = running head}
+    \expandafter\def\csname jlreq@heading@maketoc@#1\endcsname##1##2##3{%
+      \ifnum0\jlreq@ifempty{##1}{}{1}\ifnum #2>\c@secnumdepth 1\fi>0\else
+        \csname #1mark\endcsname{##3}%
+        \addcontentsline{toc}{#1}{\protect\numberline{##2}##3}%
+      \fi
+    }%
+  }{}%
   \begingroup
     \def\jlreq@lines{1}%
     \def\jlreq@before@space{}%
@@ -1594,12 +1594,6 @@
         }
       }
     }{#3}%
-    % before/after_lines優先
-    \ifx\jlreq@before@space\@empty\else\edef\jlreq@before@space{r:\expandonce{\jlreq@before@space}}\fi
-    \ifx\jlreq@before@lines\@empty\else\edef\jlreq@before@space{a:\expandonce{\jlreq@before@lines}\baselineskip}\fi
-    \ifx\jlreq@after@space\@empty\else\edef\jlreq@after@space{r:\expandonce{\jlreq@after@space}}\fi
-    \ifx\jlreq@after@lines\@empty\else\edef\jlreq@after@space{a:\expandonce{\jlreq@after@lines}\baselineskip}\fi
-    \ifx\jlreq@indent\@empty\else\edef\jlreq@indent{\expandonce{\jlreq@indent}\jlreq@mol}\fi
     \ifx\jlreq@format\@undefined
       \edef\jlreq@format{%
         \expandonce{\jlreq@font}\unexpanded{##1}\unexpanded{##2}%
@@ -1612,13 +1606,32 @@
     \ifx\jlreq@subtitle@format\@undefined
       \edef\jlreq@subtitle@format{{\noexpand\nobreak\noexpand\par\expandonce{\jlreq@subtitle@font}\unexpanded{##1}}}%
     \fi
+    \def\jlreq@addtodo{}%
+    \@ifundefined{l@#1}{
+      \edef\jlreq@do{\unexpanded{\setbox\jlreq@tempboxa=\hbox}{\expandonce{\jlreq@label@format}}}%
+      \jlreq@do
+      \jlreq@tempdima=\wd\jlreq@tempboxa
+      \jlreq@tempdimb=1\jlreq@mol
+      \divide\jlreq@tempdima by \jlreq@tempdimb
+      \multiply\jlreq@tempdima by \jlreq@tempdimb
+      \advance\jlreq@tempdima by 1\jlreq@mol
+      \eappto\jlreq@addtodo{%
+        \noexpand\def\expandonce{\csname l@#1\endcsname}{\unexpanded{\@dottedtocline{#2}{0\jlreq@mol}}{\the\jlreq@tempdima}}%
+      }%
+    }{}%
+    % before/after_lines優先
+    \ifx\jlreq@before@space\@empty\else\edef\jlreq@before@space{r:\expandonce{\jlreq@before@space}}\fi
+    \ifx\jlreq@before@lines\@empty\else\edef\jlreq@before@space{a:\expandonce{\jlreq@before@lines}\baselineskip}\fi
+    \ifx\jlreq@after@space\@empty\else\edef\jlreq@after@space{r:\expandonce{\jlreq@after@space}}\fi
+    \ifx\jlreq@after@lines\@empty\else\edef\jlreq@after@space{a:\expandonce{\jlreq@after@lines}\baselineskip}\fi
+    \ifx\jlreq@indent\@empty\else\edef\jlreq@indent{\expandonce{\jlreq@indent}\jlreq@mol}\fi
     \edef\jlreq@do{%
-      \@temptokena={%
+      \expandonce{\jlreq@addtodo}%
+      \noexpand\edef\expandonce{\csname #1\endcsname}{\noexpand\unexpanded{%
         \noexpand\jlreq@hook@beforeheadings{#1}%
         \expandonce{\jlreq@pagebreak}%
-        \unexpanded{\jlreq@startBlockHeading{#1}{#2}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@before@space}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@lines}}{{\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@format}}{\expandonce{\jlreq@subtitle@format}}}%
-      }%
-      \noexpand\edef\expandonce{\csname #1\endcsname}{\unexpanded{\the\@temptokena}}%
+        \unexpanded{\jlreq@startBlockHeading{#1}{#2}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@before@space}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@lines}}{{\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@format}}{\expandonce{\jlreq@subtitle@format}}%
+      }}}%
     }%
   \expandafter\endgroup
   \jlreq@do
@@ -1643,7 +1656,7 @@
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewRuninHeading}%
   \@ifundefined{c@#1}{\newcounter{#1}}{}%
   \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}%
-  \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\jlreq@set@top@contents{#2}\@dottedtocline{#2}{0\jlreq@mol}{2\jlreq@gol}}}{}%
+  \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\@dottedtocline{#2}{0\jlreq@mol}{2\jlreq@gol}}}{}%
   \begingroup
     \def\jlreq@font{\normalfont\normalsize}%
     \def\jlreq@indent{0}%
@@ -1677,7 +1690,7 @@
 \newcount\jlreq@wraplinecount
 \newdimen\jlreq@hangindent
 \def\jlreq@CutinHeading@start#1#2#3#4#5#6#7{%
-  \ifnum0\ifnum\jlreq@wraplinecount<-1 1\fi\ifnum\jlreq@wraplinecount>1 1\fi>0\relax
+  \ifnum0\ifnum\jlreq@wraplinecount<-1 1\fi\ifnum\jlreq@wraplinecount>1 1\fi>0
     \ClassError{jlreq}{Can not use \expandafter\string\csname#1\endcsname\space here}{\@ehc}%
   \else
     \jlreq@CutinHeading@@start{#2}{#3}{#4}{#5}{#6}{#7}%
@@ -1773,11 +1786,26 @@
 
 \newcommand{\ModifyHeading}[2]{%
   \begingroup
-    \@ifundefined{jlreq@heading@setting@#1}{\ClassError{jlreq}{Unknown heading: #1}{\@ehc}}%
+  \@ifundefined{jlreq@heading@setting@#1}{\ClassError{jlreq}{Unknown heading: #1}{\@ehc}}%
     \expandafter\let\expandafter\level\expandafter=\csname jlreq@heading@level@#1\endcsname
     \expandafter\let\expandafter\setting\expandafter=\csname jlreq@heading@setting@#1\endcsname
     \expandafter\let\expandafter\macroname\expandafter=\csname jlreq@heading@type@#1\endcsname
     \edef\jlreq@do{\expandonce{\macroname}{#1}{\expandonce{\level}}{\expandonce{\setting},\unexpanded{#2}}}%
+  \expandafter\endgroup
+  \jlreq@do
+}
+% #1をマクロ#2に保存する
+\newcommand{\SaveHeading}[2]{%
+  \@ifundefined{jlreq@heading@setting@#1}{\ClassError{jlreq}{Unknown heading: #1}{\@ehc}}%
+  \begingroup
+    \edef\jlreq@do{%
+      \unexpanded{\edef#2}{%
+        \noexpand\expandonce{\expandonce{\csname jlreq@heading@type@#1\endcsname}}%
+        \noexpand\unexpanded{\unexpanded{{#1}}}%
+        {\noexpand\expandonce{\expandonce{\csname jlreq@heading@level@#1\endcsname}}}%
+        {\noexpand\expandonce{\expandonce{\csname jlreq@heading@setting@#1\endcsname}}}%
+      }%
+    }%
   \expandafter\endgroup
   \jlreq@do
 }
@@ -1805,7 +1833,7 @@
 
 
 \newcommand*\jlreq@HeadingType[1]{%
-  \expandafter\ifx\csname jlreq@heading@type@#1\endcsname\@undefined UndefinedHeading
+  \expandafter\ifx\csname jlreq@heading@type@#1\endcsname\relax UndefinedHeading
   \else
     \jlerq@HeadingType@{#1}{\RenewTobiraHeading}{TobiraHeading}{%
     \jlerq@HeadingType@{#1}{\RenewBlockHeading}{BlockHeading}{%
@@ -1820,6 +1848,17 @@
 
 %.. 各種定義
 \if@tate
+  \renewcommand{\thepart}{\Kanji{part}}
+  \ifthenelse{\equal{\jlreq@article@type}{article}}{}{\renewcommand{\thechapter}{\Kanji{chapter}}}
+  \renewcommand{\thesection}{\rensuji{\@arabic\c@section}}
+  \renewcommand{\thesubsection}{\rensuji{\@alph\c@subsection}}
+  \renewcommand{\thesubsubsection}{%
+    \rensuji{\@arabic\c@subsubsection}}
+  \renewcommand{\theparagraph}{%
+    (\rensuji{\@arabic\c@paragraph})}
+  \renewcommand{\thesubparagraph}{%
+    (\rensuji{\@arabic\c@subparagraph})}
+
   \ifthenelse{\equal{\jlreq@article@type}{article}}{
     \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},indent=4,lines=4}
   }
@@ -1833,18 +1872,12 @@
   \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=10,lines=1,before_lines=1}
   \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
   \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
-  \renewcommand{\thepart}{\Kanji{part}}
-  \ifthenelse{\equal{\jlreq@article@type}{article}}{}{\renewcommand{\thechapter}{\Kanji{chapter}}}
-  \renewcommand{\thesection}{\rensuji{\@arabic\c@section}}
-  \renewcommand{\thesubsection}{\rensuji{\@alph\c@subsection}}
-  \renewcommand{\thesubsubsection}{%
-    \rensuji{\@arabic\c@subsubsection}}
-  \renewcommand{\theparagraph}{%
-    (\rensuji{\@arabic\c@paragraph})}
-  \renewcommand{\thesubparagraph}{%
-    (\rensuji{\@arabic\c@subparagraph})}
-  % bookか否かで変える？
 \else
+  \renewcommand{\thepart}{\Roman{part}}
+  \renewcommand{\thesubsection}{\thesection .\arabic{subsection}}
+  \renewcommand{\thesubsubsection}{\thesubsection .\arabic{subsubsection}}
+  \renewcommand{\theparagraph}{\thesubsubsection .\arabic{paragraph}}
+  \renewcommand{\thesubparagraph}{\theparagraph .\arabic{subparagraph}}
   \ifthenelse{\equal{\jlreq@article@type}{article}}{
     \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},label_format={第\thepart 部\hspace{1\jlreq@mol}},lines=4}
     \renewcommand{\thesection}{\arabic{section}}
@@ -1852,8 +1885,8 @@
   {% book, report
     \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\jlreq@gol}},format={\null\vfil {\Huge\headfont #1#2}\vfil}}
     \NewBlockHeading{chapter}{0}{%
-      format={#1{\jlreq@keepbaselineskip{\huge\headfont}#2}#3},
-      label_format={\jlreq@keepbaselineskip{\huge\headfont}第\thechapter 章\quad},
+      format={{\jlreq@keepbaselineskip{\huge\headfont} #1#2}#3},
+      label_format={第\thechapter 章\quad},
       lines=5}
     \renewcommand{\thechapter}{\arabic{chapter}}
     \renewcommand{\thesection}{\thechapter.\arabic{section}}
@@ -1868,21 +1901,27 @@
   \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},lines=1,before_lines=1}
   \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=1}
   \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=2}
-  \renewcommand{\thepart}{\Roman{part}}
-  \renewcommand{\thesubsection}{\thesection .\arabic{subsection}}
-  \renewcommand{\thesubsubsection}{\thesubsection .\arabic{subsubsection}}
-  \renewcommand{\theparagraph}{\thesubsubsection .\arabic{paragraph}}
-  \renewcommand{\thesubparagraph}{\theparagraph .\arabic{subparagraph}}
 \fi
 
 \ifthenelse{\equal{\jlreq@article@type}{article}}{}{% book, report
-\if@openright
-  \ModifyHeading{part}{type=naka}
-  \ModifyHeading{chapter}{pagebreak=cleardoublepage}
-\else
-  \ModifyHeading{part}{type=han}
-  \ModifyHeading{chapter}{pagebreak=clearpage}
-\fi
+  \if@openright
+    \ModifyHeading{part}{type=naka}
+    \ModifyHeading{chapter}{pagebreak=cleardoublepage}
+  \else
+    \ModifyHeading{part}{type=han}
+    \ModifyHeading{chapter}{pagebreak=clearpage}
+  \fi
+}
+
+\renewcommand{\jlreq@heading@maketoc@chapter}[3]{%
+  \chaptermark{#3}%
+  \jlreq@ifempty{#1}{%
+    \ifnum0\if@mainmatter\else1\fi\ifnum\jlreq@heading@level@chapter>\c@secnumdepth 1\fi>0
+      \addcontentsline{toc}{chapter}{#3}%
+    \else
+      \addcontentsline{toc}{chapter}{\protect\numberline{#2}#3}%
+    \fi
+  }{}%
 }
 
 %. 注
@@ -2242,8 +2281,8 @@
     \setbox\jlreq@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\inhibitglue \jlreq@open@bracket@before@space（}%
     \jlreq@box@putcenter\jlreq@tempboxa
   }%
-  % 「初回」時はここに強制改行を入れる．これにより現在位置の取得がより正しくなる
-  \jlreq@savepos@iflabelundefined{\message{linebreak inserted}\\}{}%
+  % 「初回」時はここに強制改行を入れる．これにより現在位置の取得がより正しくなる……といいなぁ
+  \jlreq@savepos@iflabelundefined{\\}{}%
   % 割注内の\baselineskipを保存（後で使う）．
   {\jlreq@inlinenote@fontsize\xdef\jlreq@inlinenote@baselineskip{\the\baselineskip}}%
   % 普通に並べた長さを計測し，その半分から始める
@@ -2291,7 +2330,7 @@
   \ifvoid\jlreq@resultbox
     \ClassWarning{jlreq}{\string\inlinenote\space failed, maybe a bug}%
   \else
-    \@tempcnta=0\relax
+    \@tempcnta=0
     \splittopskip=0pt\relax
     \splitmaxdepth=\maxdimen
     % 現在行の残り長さを思い出す
@@ -2300,7 +2339,7 @@
     \addtolength{\jlreq@tempdimb}{-\wd\@tempboxa}%
     \setbox\@tempboxa=\box\jlreq@resultbox
     \@whilenum\@tempcnta<\jlreq@inlinenote@lines\do{%
-      \ifnum\@tempcnta>0\relax\jlreq@inlinenote@autolinebreak\fi
+      \ifnum\@tempcnta>0 \jlreq@inlinenote@autolinebreak\fi
       % \jlreq@tempdimaに今の行の長さを入れる
       \ifnum\@tempcnta<\numexpr\jlreq@inlinenote@lines - 2\relax
         \ifnum\@tempcnta=0\jlreq@tempdima=\jlreq@tempdimb
@@ -2310,7 +2349,7 @@
       \fi
       {%
         \edef\@tempa{\the\vbadness}%
-        \vbadness=10000\relax
+        \vbadness=10000
         \setbox\jlreq@tempboxa=\vsplit\@tempboxa to \dimexpr\jlreq@inlinenote@baselineskip*2\relax
         \vbadness=\@tempa\relax
         % \jlreq@inlinenote@autolinebreak=\\の場合には，割注の長さを計測した物に長さに強制する
@@ -2401,7 +2440,7 @@
     \expandafter\def\expandafter\@tempa\expandafter{\@tempa 0pt \the\jlreq@tempdima}%
     \advance\@tempcnta by 1\relax
   }%
-  \@tempcnta=0\relax
+  \@tempcnta=0
   \jlreq@tempdima=#6\relax
   % 最後の行を少しずつ伸ばしていく
   \@whilenum\@tempcnta<1000\do{%
@@ -2732,7 +2771,7 @@
   \NewPageStyle{myheadings}{nombre=\thepage,nombre_position=top-left,running_head_position=top-right,odd_running_head=\rightmark,even_running_head=\leftmark,no_clear_mark}
 \else% yoko
   \RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},nombre_position={bottom-center},no_clear_mark}
-  \ModifyHeading{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center}
+  \ModifyPageStyle{headings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center}
   \NewPageStyle{myheadings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center,odd_running_head=\rightmark,even_running_head=\leftmark,no_clear_mark}
 \fi
 
@@ -2940,7 +2979,7 @@
   \par\vskip\baselineskip}
 
 %.. abstract
-\ifthenelse{\equal{jlreq@article@type}{book}}{}{
+\ifthenelse{\equal{jlreq@article@type}{book}}{}{% article,report
   \newbox\jlreq@abstractbox
   \newcommand*{\abstractname}{概要}
   \if@titlepage
@@ -3054,8 +3093,13 @@
 
 \newcommand{\labelitemi}{\hbox to 1\jlreq@mol{\hss\textbullet\hss}}
 %\newcommand{\labelitemi}{•}
-\newcommand{\labelitemii}{○}
-\newcommand{\labelitemiii}{＊}
+\if@tate
+  \newcommand{\labelitemii}{○}
+  \newcommand{\labelitemiii}{＊}
+\else
+  \newcommand{\labelitemii}{\hbox to 1\jlreq@mol{\hss\textendash\hss}}
+  \newcommand{\labelitemiii}{\hbox to 1\jlreq@mol{\hss\textasteriskcentered\hss}}
+\fi
 \newcommand{\labelitemiv}{\hbox to 1\jlreq@mol{\hss ・\hss}}
 
 % 引用系．1.5em→1\zh，字下げを二文字にした．3.5.2の例．
@@ -3138,13 +3182,33 @@
     \jlreq@top@contents=#1\relax
   \fi
 }
-\newcommand{\tableofcontents}{%
-  \jlreq@top@contents=-1\relax
-  \section*{\contentsname
+\ifthenelse{\equal{\jlreq@article@type}{article}}{
+  \newcommand{\tableofcontents}{%
+    \jlreq@top@contents=-1\relax
+    \if@twocolumn
+      \@restonecoltrue\onecolumn
+    \else
+      \@restonecolfalse
+    \fi
+    \section*{\contentsname}%
     \@mkboth{\contentsname}{\contentsname}%
-  }\@starttoc{toc}%
+    \@starttoc{toc}%
+    \if@restonecol\twocolumn\fi
+  }
+}{% book, article
+  \newcommand{\tableofcontents}{%
+    \jlreq@top@contents=-1\relax
+    \if@twocolumn
+      \@restonecoltrue\onecolumn
+    \else
+      \@restonecolfalse
+    \fi
+    \chapter*{\contentsname}%
+    \@mkboth{\contentsname}{\contentsname}%
+    \@starttoc{toc}%
+    \if@restonecol\twocolumn\fi
+  }
 }
-
 % JIS X 4051自身の目次に近づけようかと……なりきれてないけど．
 % 文字の大きさは全て同じ（\normalsize）にする．
 % 見出しのレベルがあがると1文字分ずつ字下げしていく．
@@ -3153,6 +3217,7 @@
 % 「トップ」というか，一番最初に現れた見出しを入れる．
 % リーダーは.から・に変更しました．更に直後から出るように．
 \def\@dottedtocline#1#2#3#4#5{%
+  \jlreq@set@top@contents{#1}%
   \ifnum #1>\c@tocdepth \else
     \vskip\toclineskip
     {\leftskip #2\relax \rightskip \@tocrmarg \parfillskip -\rightskip
@@ -3172,33 +3237,19 @@
     \hb@xt@\@pnumwidth{\hss\normalfont\normalcolor #5}%
     \par}%
   \fi}
-\renewcommand*{\l@part}[2]{%
-  \jlreq@set@top@contents{0}%
-  \ifnum \c@tocdepth >-2\relax
-    \addpenalty{\@secpenalty}%
-    \begingroup
-    \parindent\z@\rightskip\@pnumwidth
-    \parfillskip-\@pnumwidth
-    {\leavevmode\bfseries\gtfamily
-    \setlength\@lnumwidth{2\jlreq@gol}%
-    #1\hfil\nobreak
-    \hbox to\@pnumwidth{\hss#2}}\par
-    \nobreak
-    \endgroup
-  \fi}
 
 % listoffigures
 \newcommand{\listoffigures}{%
-  \jlreq@top@contents=0\relax
-  \section*{\listfigurename
-  \@mkboth{\listfigurename}{\listfigurename}}%
+  \jlreq@top@contents=0
+  \section*{\listfigurename}%
+  \@mkboth{\listfigurename}{\listfigurename}%
   \@starttoc{lof}%
 }
 \newcommand*{\l@figure}{\@dottedtocline{1}{0\jlreq@gol}{2\jlreq@gol}}
 \newcommand{\listoftables}{%
-  \jlreq@top@contents=0\relax
-  \section*{\listtablename
-  \@mkboth{\listtablename}{\listtablename}}%
+  \jlreq@top@contents=0
+  \section*{\listtablename}%
+  \@mkboth{\listtablename}{\listtablename}%
   \@starttoc{lot}%
 }
 \let\l@table\l@figure
@@ -3209,7 +3260,8 @@
 \newcommand{\newblock}{\hskip .11em\@plus.33em\@minus.07em}
 \newenvironment{thebibliography}[1]{%
   \jlreq@oldfontcommand@enable
-  \section*{\refname\@mkboth{\refname}{\refname}}%
+  \section*{\refname}%
+  \@mkboth{\refname}{\refname}%
   \list{\@biblabel{\@arabic\c@enumiv}}%
       {\settowidth\labelwidth{\@biblabel{#1}}%
       \leftmargin\labelwidth
@@ -3228,6 +3280,7 @@
   \def\@noitemerr
     {\@latex@warning{Empty `thebibliography' environment}}%
   \endlist
+  \jlreq@oldfontcommand@disable
 }
 \let\@openbib@code\@empty
 
@@ -3264,10 +3317,21 @@
     \clearpage
   \fi
   \@mainmatterfalse
+  \let\jlreq@pagestyle@atmain\jlreq@current@pagestyle
+  \ifthenelse{\equal{jlreq@article@type}{article}}{}{%book, report
+    \SaveHeading{chapter}{\jlreq@heading@chapter@atmain}%
+    \ModifyHeading{chapter}{label_format={}}%
+  }%
+  \pagestyle{plain}%
   \pagenumbering{roman}}
 \newcommand*\mainmatter{%
   \cleardoublepage
   \@mainmattertrue
+  \@ifundefined{jlreq@pagestyle@atmain}{}{%
+    \expandafter\pagestyle\expandafter{\jlreq@pagestyle@atmain}%
+  }%
+  \@ifundefined{jlreq@heading@chapter@atmain}{}{\jlreq@heading@chapter@atmain}%
+  \setcounter{chapter}{0}%
   \pagenumbering{arabic}}
 \newcommand*\backmatter{%
   \if@openright
@@ -3275,22 +3339,39 @@
   \else
     \clearpage
   \fi
-  \@mainmatterfalse}
+  \ifthenelse{\equal{jlreq@article@type}{article}}{}{%book, report
+    \SaveHeading{chapter}{\jlreq@heading@chapter@atmain}%
+    \ModifyHeading{chapter}{label_format={}}%
+  }%
+  \pagestyle{plain}%
+  \@mainmatterfalse
+  \setcounter{chapter}{0}}
 \newcommand*\appendix{%
   \def\@tempa##1{\setcounter{##1}{0}}%
   \jlreq@heading@execmacro@toallheadings\@tempa
 }
 \ifthenelse{\equal{\jlreq@article@type}{article}}{
-  \appto\appendix{\def\thesection{\Alph{section}}}
+  \appto\appendix{%
+    \if@tate
+      \def\thesection{\rensuji{\Alph{section}}}%
+    \else
+      \def\thesection{\Alph{section}}%
+    \fi
+  }
 }{%book, report
   \appto\appendix{%
-    \def\thechapter{\rensuji{\Alph{chapter}}}%
-    \ModifyHeading{chapter}{label_format={\jlreq@keepbaselineskip{\huge\headfont}付録\thechapter\quad}}%
+    \if@tate
+      \def\thechapter{\rensuji{\Alph{chapter}}}%
+    \else
+      \def\thechapter{\Alph{chapter}}%
+    \fi
+    \ModifyHeading{chapter}{label_format={付録\thechapter\quad}}%
     \ifx\jlreq@current@pagestyle\@undefined\else
       \ifthenelse{\equal{\jlreq@current@pagestyle}{headings}}{%
       \def\chaptermark#1{\markboth{付録\thechapter\quad #1}{}}%
       \ModifyPageStyle{headings}{mark_format={_chapter={付録\thechapter\quad #1}}}%
     }{}%
+    \fi
   }
 }
 
@@ -3329,6 +3410,7 @@
   \RequirePackage{luatexja-ruby}
 \else
   \RequirePackage{pxrubrica}
+  \let\ruby=\jruby
 \fi
 
 %. 定理環境
@@ -3346,18 +3428,15 @@
   \let\jlreq@original@proof=\proof
   \let\jlreq@original@endproof=\endproof
   \def\proof{\@ifnextchar[{\jlreq@proof}{\jlreq@proof[\proofname]}}
-  \def\jlreq@proof[#1]{\labelsep=1\jlreq@mol\jlreq@original@proof[{\headfont #1\inhibitglue}\nopunct]}
+  \def\jlreq@proof[#1]{\labelsep=1\jlreq@mol\jlreq@original@proof[{\normalfont\headfont #1\inhibitglue}\nopunct]}
   \renewcommand{\proofname}{証明}
 }
 
 
 % デフォルト設定
-\newcommand{\prepartname}{第}
-\newcommand{\postpartname}{部}
 \newcommand{\contentsname}{目 次}
 \newcommand{\refname}{参考文献}
 \newcommand{\indexname}{索 引}
-\newcommand{\appendixname}{付 録}
 \pagestyle{plain}
 \pagenumbering{arabic}
 \if@twocolumn

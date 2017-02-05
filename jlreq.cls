@@ -1549,6 +1549,8 @@
   \dp\jlreq@tempboxa=\dimexpr\dp\jlreq@tempboxa + \ht\jlreq@tempboxa\relax
   \ht\jlreq@tempboxa=0pt
   \box\jlreq@tempboxa
+  \par\nobreak
+  \prevdepth=0pt
   \jlreq@startBlockHeading@analyzespace#3:\jlreq@endmark
   \jlreq@tempskipb=\glueexpr\jlreq@tempskipb + \ht\jlreq@tempboxb - \baselineskip\relax
   \ifx\jlreq@startBlockHeading@space\@empty\else
@@ -1559,8 +1561,6 @@
     \fi
   \fi
   \ifdim\jlreq@tempskipb=0pt\else\vspace{\jlreq@tempskipb}\fi
-  \par\nobreak
-  \prevdepth=0pt
   \@afterheading
 }
 

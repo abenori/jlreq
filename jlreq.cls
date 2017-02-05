@@ -304,6 +304,13 @@
 \jlreq@DeclareOption{platex}{\let\jlreq@engine=p}
 \jlreq@DeclareOption{lualatex}{\let\jlreq@engine=l}
 
+% 文書のタイプ
+\newcommand*\jlreq@article@type{article}
+\define@choicekey{jlreq.cls}{article_type}{article,report,book}{\renewcommand*{\jlreq@article@type}{#1}}
+\jlreq@DeclareOption{article}{\renewcommand*{\jlreq@article@type}{article}}
+\jlreq@DeclareOption{report}{\renewcommand*{\jlreq@article@type}{report}}
+\jlreq@DeclareOption{book}{\renewcommand*{\jlreq@article@type}{book}}
+
 %.. 基本版面．まずは紙サイズ．
 \def\jlreq@switchpapersize{}
 \newcommand*\jlreq@addpapersize[4][]{%
@@ -373,12 +380,6 @@
 \jlreq@addpapersize[c6]{}{114mm}{162mm}
 \jlreq@addpapersize[c7]{}{81mm}{114mm}
 \jlreq@addpapersize[c8]{}{57mm}{81mm}
-
-\newcommand*\jlreq@article@type{article}
-\define@choicekey{jlreq.cls}{article_type}{article,report,book}{\renewcommand*{\jlreq@article@type}{#1}}
-\jlreq@DeclareOption{article}{\renewcommand*{\jlreq@article@type}{article}}
-\jlreq@DeclareOption{report}{\renewcommand*{\jlreq@article@type}{report}}
-\jlreq@DeclareOption{book}{\renewcommand*{\jlreq@article@type}{book}}
 
 %.. フォントサイズ，行長，1ページあたりの行数で基本版面のサイズを決める（2.4.1.a）
 \newcommand*{\jlreq@option@fontsize}{}
@@ -1012,16 +1013,6 @@
 %. フォント
 \RequirePackage{lmodern}
 
-% 数式フォント設定
-\ifx l\jlreq@engine
-  \DeclareSymbolFont{mincho}{JY3}{mc}{m}{n}
-  \DeclareSymbolFontAlphabet{\mathmc}{mincho}
-  \SetSymbolFont{mincho}{bold}{JY3}{gt}{m}{n}
-  \jfam\symmincho
-  \DeclareMathAlphabet{\mathgt}{JY3}{gt}{m}{n}
-\else
-\fi
-
 % 古いフォントコマンド
 \DeclareOldFontCommand{\jlreq@oldfontcommand@mc}{\normalfont\mcfamily}{\mathmc}
 \DeclareOldFontCommand{\jlreq@oldfontcommand@gt}{\normalfont\gtfamily}{\mathgt}
@@ -1109,6 +1100,19 @@
 \DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{sl}{<->ssub*gt/m/n}{}
 \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{bx}{it}{<->ssub*gt/m/n}{}
 \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
+
+% 数式フォント設定
+\ifx l\jlreq@engine\else
+  \DeclareSymbolFont{mincho}{\jlreq@yokokanjiencoding}{mc}{m}{n}
+  \DeclareSymbolFontAlphabet{\mathmc}{mincho}
+  \SetSymbolFont{mincho}{bold}{\jlreq@yokokanjiencoding}{gt}{m}{n}
+  \jfam\symmincho
+  \DeclareMathAlphabet{\mathgt}{\jlreq@yokokanjiencoding}{gt}{m}{n}
+\fi
+\AtBeginDocument{%
+  \reDeclareMathAlphabet{\mathrm}{\mathrm}{\mathmc}%
+  \reDeclareMathAlphabet{\mathbf}{\mathbf}{\mathgt}%
+}
 
 \emergencystretch 3\jlreq@mol
 

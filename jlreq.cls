@@ -1293,6 +1293,11 @@
 \else
   \setlength{\oddsidemargin}{\jlreq@speciallength{\jlreq@option@gutter}}
   \setlength{\evensidemargin}{\dimexpr\paperwidth - \textheight - \oddsidemargin\relax}
+  \if@tate
+    \setlength{\jlreq@tempdima}{\oddsidemargin}
+    \setlength{\oddsidemargin}{\evensidemargin}
+    \setlength{\evensidemargin}{\jlreq@tempdima}
+  \fi
   \addtolength{\oddsidemargin}{-1in}
   \addtolength{\evensidemargin}{-1in}
 \fi

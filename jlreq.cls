@@ -1948,15 +1948,31 @@
     \ModifyHeading{part}{type=han}
     \ModifyHeading{chapter}{pagebreak=clearpage}
   \fi
-  \renewcommand{\jlreq@heading@maketoc@chapter}[3]{%
-    \chaptermark{#3}%
-    \jlreq@ifempty{#1}{%
-      \ifnum0\if@mainmatter\else1\fi\ifnum\jlreq@heading@level@chapter>\c@secnumdepth 1\fi>0
-        \addcontentsline{toc}{chapter}{#3}%
-      \else
-        \addcontentsline{toc}{chapter}{\protect\numberline{#2}#3}%
-      \fi
-    }{}%
+}
+\jlreq@switch{\jlreq@article@type}{
+  {book}{%
+    \renewcommand{\jlreq@heading@maketoc@chapter}[3]{%
+      \chaptermark{#3}%
+      \jlreq@ifempty{#1}{%
+        \ifnum0\if@mainmatter\else1\fi\ifnum\jlreq@heading@level@chapter>\c@secnumdepth 1\fi>0
+          \addcontentsline{toc}{chapter}{#3}%
+        \else
+          \addcontentsline{toc}{chapter}{\protect\numberline{#2}#3}%
+        \fi
+      }{}%
+    }
+  }
+  {report}{
+    \renewcommand{\jlreq@heading@maketoc@chapter}[3]{%
+      \chaptermark{#3}%
+      \jlreq@ifempty{#1}{%
+        \ifnum0\ifnum\jlreq@heading@level@chapter>\c@secnumdepth 1\fi>0
+          \addcontentsline{toc}{chapter}{#3}%
+        \else
+          \addcontentsline{toc}{chapter}{\protect\numberline{#2}#3}%
+        \fi
+      }{}%
+    }
   }
 }
 
@@ -3365,44 +3381,46 @@
 
 
 %. 前付，後付，付録
-\newif\if@mainmatter
-\@mainmattertrue
-\newcommand*\frontmatter{%
-  \if@openright
-    \cleardoublepage
-  \else
-    \clearpage
-  \fi
-  \@mainmatterfalse
-  \let\jlreq@pagestyle@atmain\jlreq@current@pagestyle
-  \ifthenelse{\equal{jlreq@article@type}{article}}{}{%book, report
-    \SaveHeading{chapter}{\jlreq@heading@chapter@atmain}%
-    \ModifyHeading{chapter}{label_format={}}%
-  }%
-  \pagestyle{plain}%
-  \pagenumbering{roman}}
-\newcommand*\mainmatter{%
-  \cleardoublepage
+\ifthenelse{\equal{\jlreq@article@type}{book}}{
+  \newif\if@mainmatter
   \@mainmattertrue
-  \@ifundefined{jlreq@pagestyle@atmain}{}{%
-    \expandafter\pagestyle\expandafter{\jlreq@pagestyle@atmain}%
-  }%
-  \@ifundefined{jlreq@heading@chapter@atmain}{}{\jlreq@heading@chapter@atmain}%
-  \setcounter{chapter}{0}%
-  \pagenumbering{arabic}}
-\newcommand*\backmatter{%
-  \if@openright
+  \newcommand*\frontmatter{%
+    \if@openright
+      \cleardoublepage
+    \else
+      \clearpage
+    \fi
+    \@mainmatterfalse
+    \let\jlreq@pagestyle@atmain\jlreq@current@pagestyle
+    \ifthenelse{\equal{jlreq@article@type}{article}}{}{%book, report
+      \SaveHeading{chapter}{\jlreq@heading@chapter@atmain}%
+      \ModifyHeading{chapter}{label_format={}}%
+    }%
+    \pagestyle{plain}%
+    \pagenumbering{roman}}
+  \newcommand*\mainmatter{%
     \cleardoublepage
-  \else
-    \clearpage
-  \fi
-  \ifthenelse{\equal{jlreq@article@type}{article}}{}{%book, report
-    \SaveHeading{chapter}{\jlreq@heading@chapter@atmain}%
-    \ModifyHeading{chapter}{label_format={}}%
-  }%
-  \pagestyle{plain}%
-  \@mainmatterfalse
-  \setcounter{chapter}{0}}
+    \@mainmattertrue
+    \@ifundefined{jlreq@pagestyle@atmain}{}{%
+      \expandafter\pagestyle\expandafter{\jlreq@pagestyle@atmain}%
+    }%
+    \@ifundefined{jlreq@heading@chapter@atmain}{}{\jlreq@heading@chapter@atmain}%
+    \setcounter{chapter}{0}%
+    \pagenumbering{arabic}}
+  \newcommand*\backmatter{%
+    \if@openright
+      \cleardoublepage
+    \else
+      \clearpage
+    \fi
+    \ifthenelse{\equal{jlreq@article@type}{article}}{}{%book, report
+      \SaveHeading{chapter}{\jlreq@heading@chapter@atmain}%
+      \ModifyHeading{chapter}{label_format={}}%
+    }%
+    \pagestyle{plain}%
+    \@mainmatterfalse
+    \setcounter{chapter}{0}}
+}{}
 \newcommand*\appendix{%
   \def\@tempa##1{\setcounter{##1}{0}}%
   \jlreq@heading@execmacro@toallheadings\@tempa

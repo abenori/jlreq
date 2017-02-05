@@ -1493,7 +1493,6 @@
 
 \def\jlreq@startBlockHeading@analyzespace#1:#2\jlreq@endmark{%
   \jlreq@ifempty{#1}{%
-    \ClassError{jlreq}{Something is strange, maybe a bug: in \string\jlreq@startBlockHeading@analyzespace}{\@ehc}%
     \def\jlreq@startBlockHeading@spacetype{}%
     \def\jlreq@startBlockHeading@space{}%
   }{%
@@ -1639,7 +1638,7 @@
       \def\jlreq@label@format{\@seccntformat{#1}}%
     \fi
     \ifx\jlreq@subtitle@format\@undefined
-      \edef\jlreq@subtitle@format{{\noexpand\nobreak\noexpand\par\expandonce{\jlreq@subtitle@font}\unexpanded{##1}}}%
+      \edef\jlreq@subtitle@format{{\unexpanded{\nobreak\par\hspace*{4\jlreq@mol}}\expandonce{\jlreq@subtitle@font}---\unexpanded{##1}---}}%
     \fi
     \def\jlreq@addtodo{}%
     \@ifundefined{l@#1}{

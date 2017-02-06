@@ -122,7 +122,8 @@
     \edef\@tempa{#2}%
     \jlreq@tempafalse
     \expandafter\jlreq@helper@ifinlist@\expandafter{\@tempa}{#1}%
-    \ifjlreq@tempa\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{\def\jlreq@do{#3}}{\def\jlreq@do{#4}}
+    \ifjlreq@tempa\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+      {\def\jlreq@do{#3}}{\def\jlreq@do{#4}}%
   \expandafter\endgroup
   \jlreq@do
 }
@@ -921,6 +922,7 @@
 
 
 %. オプション処理
+%.. フォント関連
 \newdimen\jlreq@fontsize
 \jlreq@tempdima=0.25mm
 \expandafter\jlreq@replace\expandafter{\jlreq@option@fontsize}{Q}{\jlreq@tempdima}{\@tempa}
@@ -958,55 +960,6 @@
 }{
   \def\jlreq@open@bracket@before@space{}
 }
-
-% landscapeの場合縦横をひっくり返す
-\if@landscape
-  \setlength\@tempdima  {\paperheight}
-  \setlength\paperheight{\paperwidth}
-  \setlength\paperwidth {\@tempdima}
-\fi
-
-% \baselineskipの計算
-\newdimen\jlreq@baselineskip
-\ifx\jlreq@option@baselineskip\@empty
-  \setlength{\jlreq@baselineskip}{\dimexpr 17\jlreq@fontsize/10\relax}%
-\else
-  \jlreq@tempdima=0.25mm
-  \ifx l\jlreq@engine
-    \setlength{\jlreq@baselineskip}{%
-      \dimexpr\directlua{
-        local act = string.char(92)
-        local s = [[\jlreq@option@baselineskip]]
-        s = s:gsub("Q",act .. "jlreq@tempdima"):gsub("z[hw]",act .. "jlreq@fontsize")
-        tex.print(s)
-      }\relax
-    }%
-  \else
-    \expandafter\jlreq@replace\expandafter{\jlreq@option@baselineskip}{Q}{\jlreq@tempdima}{\@tempa}
-    \setlength{\jlreq@baselineskip}{\dimexpr\@tempa\relax}
-  \fi
-\fi
-\ifdim\jlreq@fontsize>\jlreq@baselineskip
-  \ClassError{jlreq}{The baselineskip is less than fontsize}{\@ehc}%
-\fi
-\ifthenelse{\lengthtest{\jlreq@baselineskip<1.5\jlreq@fontsize} \OR \lengthtest{\jlreq@baselineskip>2\jlreq@fontsize}}{
-  \jlreq@warning{行間は二分以上全角以下が望ましい (2.4.2.d 注3)}
-}{}
-
-% \pdfpagewidthとか設定
-\ifx l\jlreq@engine
-  \let\jlreq@pagewidth=\pagewidth
-  \let\jlreq@pageheight=\pageheight
-\else
-  \let\jlreq@pagewidth=\pdfpagewidth
-  \let\jlreq@pageheight=\pdfpageheight
-\fi
-\setlength{\jlreq@pagewidth}{\paperwidth}
-\setlength{\jlreq@pageheight}{\paperheight}
-\iftombow
-  \addtolength{\jlreq@pagewidth}{2in}
-  \addtolength{\jlreq@pageheight}{2in}
-\fi
 
 %. フォント
 \RequirePackage{lmodern}
@@ -1112,6 +1065,35 @@
   \reDeclareMathAlphabet{\mathbf}{\mathbf}{\mathgt}%
 }
 
+% \baselineskipの計算
+% いったん文字サイズを変更（(u)platexの際にzh/zwをきちんとするため）
+\@setfontsize\normalsize{\jlreq@fontsize}{\jlreq@fontsize}%
+\newdimen\jlreq@baselineskip
+\ifx\jlreq@option@baselineskip\@empty
+  \setlength{\jlreq@baselineskip}{\dimexpr 17\jlreq@fontsize/10\relax}%
+\else
+  \jlreq@tempdima=0.25mm
+  \ifx l\jlreq@engine
+    \setlength{\jlreq@baselineskip}{%
+      \dimexpr\directlua{
+        local act = string.char(92)
+        local s = [[\jlreq@option@baselineskip]]
+        s = s:gsub("Q",act .. "jlreq@tempdima"):gsub("zh",act .. "zh"):gsub("zw",act .. "zw")
+        tex.print(s)
+      }\relax
+    }%
+  \else
+    \expandafter\jlreq@replace\expandafter{\jlreq@option@baselineskip}{Q}{\jlreq@tempdima}{\@tempa}
+    \setlength{\jlreq@baselineskip}{\dimexpr\@tempa\relax}
+  \fi
+\fi
+\ifdim\jlreq@fontsize>\jlreq@baselineskip
+  \ClassError{jlreq}{The baselineskip is less than fontsize}{\@ehc}%
+\fi
+\ifthenelse{\lengthtest{\jlreq@baselineskip<1.5\jlreq@fontsize} \OR \lengthtest{\jlreq@baselineskip>2\jlreq@fontsize}}{
+  \jlreq@warning{行間は二分以上全角以下が望ましい (2.4.2.d 注3)}
+}{}
+
 \emergencystretch 3\jlreq@mol
 
 \renewcommand{\normalsize}{%
@@ -1186,8 +1168,6 @@
 % このあたりはtarticleと同じ
 \setlength\lineskip{.1\jlreq@gol}
 \setlength\normallineskip{.1\jlreq@gol}
-%\setlength\lineskiplimit{1pt}% jsarticleではこう
-%\setlength\normallineskiplimit{1pt}% jsarticleではこう
 \renewcommand{\baselinestretch}{}
 \setlength\parskip{0\p@ \@plus \p@}
 \setlength\parindent{1\jlreq@mol}
@@ -1209,6 +1189,29 @@
 %\RequirePackage{jlreq-debug}
 
 %. ページレイアウト
+% landscapeの場合縦横をひっくり返す
+\if@landscape
+  \setlength\@tempdima  {\paperheight}
+  \setlength\paperheight{\paperwidth}
+  \setlength\paperwidth {\@tempdima}
+\fi
+
+% \pdfpagewidthとか設定
+\ifx l\jlreq@engine
+  \let\jlreq@pagewidth=\pagewidth
+  \let\jlreq@pageheight=\pageheight
+\else
+  \let\jlreq@pagewidth=\pdfpagewidth
+  \let\jlreq@pageheight=\pdfpageheight
+\fi
+\setlength{\jlreq@pagewidth}{\paperwidth}
+\setlength{\jlreq@pageheight}{\paperheight}
+\iftombow
+  \addtolength{\jlreq@pagewidth}{2in}
+  \addtolength{\jlreq@pageheight}{2in}
+\fi
+
+
 \ifx l\jlreq@engine
   \def\jlreq@expand@speciallength#1{%
     % zhやzwを\zhや\zwにする．
@@ -2501,7 +2504,7 @@
     \else
       \setbox\@tempboxa=\vbox{#2%
         \vbadness=10000\hbadness=10000\vfuzz=\maxdimen\hfuzz=\maxdimen
-        \parindent=0pt\leftskip=0pt\rightskip=0pt\relax
+        \parindent=0pt\leftskip=0pt\rightskip=0pt
         \parshape #5 #3 \@tempa 0pt \the\maxdimen
         #1\par\global\@tempcntb=\prevgraf}%
 %      \message{\string\jlreq@tempdima = \the\jlreq@tempdima で試行，行数は\the\@tempcntb , 書式 #5 #3 \@tempa 0pt \the\maxdimen}%

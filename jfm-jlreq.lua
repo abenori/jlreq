@@ -146,29 +146,29 @@ local jfm = {
 	-- [3*]はハイフン類．幅が違うので分ける．
 	[300] = {
 		chars = {'‐'},
-		align = 'middle',
 		width = 0.25,height = 0.88,depth = 0.12,
+		align = 'middle',
 		glue = hyphen_glue,-- 上の方で定義
 	},
 	
 	[301] = {
 		chars = {'゠', '–'},
-		align = 'middle',
 		width = 0.5,height = 0.88,depth = 0.12,
+		align = 'middle',
 		glue = hyphen_glue,
 	},
 
 	[302] = {
 		chars = {'〜'},
-		align = 'middle',
 		width = 1,height = 0.88,depth = 0.12,
+		align = 'middle',
 		glue = hyphen_glue,
 	},
 
 	[4] = { -- 区切り約物
 		chars = {'！', '？', '‼', '⁇', '⁈', '⁉'},
-		align = 'middle',
 		width = 1,height = 0.88,depth = 0.12,
+		align = 'middle',
 		glue = {
 			[1] = {0.5, 0.5, 0.5, ratio = 1, priority = {0,-2}},
 			[2] = {0, 0, 0},
@@ -342,7 +342,8 @@ local jfm = {
 	
 	[8] = { -- 分離禁止文字
 		chars = {'—', '…', '‥', '〳', '〴', '〵'},
-		align = 'middle',height = 0.88,depth = 0.12,
+		width = 1,height = 0.88,depth = 0.12,
+		align = 'middle',
 		glue = {
 			[1] = {0.5, 0, 0.5, ratio = 1, priority = {0,-2}},
 			[2] = {0, 0, 0},

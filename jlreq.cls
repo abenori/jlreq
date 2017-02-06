@@ -41,11 +41,18 @@
 \def\jlreq@uniqtoken{\jlreq@uniqtoken}
 \def\jlreq@endmark{\jlreq@endmark}
 
+% 与えられたトークン列が空か（展開はしないでチェック）
+\long\def\jlreq@helper@ifempty@getfirsttoken#1#2\jlreq@uniqtoken{#1}
+\long\def\jlreq@ifempty#1{\expandafter\ifx\jlreq@helper@ifempty@getfirsttoken#1\jlreq@uniqtoken\jlreq@uniqtoken\jlreq@uniqtoken\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+% #1が\jlreq@endmarkか
+\long\def\jlreq@helper@ifendmark@getfirsttoken#1#2\jlreq@endmark{#1}
+\long\def\jlreq@ifendmark#1{\expandafter\ifx\jlreq@helper@ifendmark@getfirsttoken#1\jlreq@endmark\jlreq@endmark\@empty\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+
 % #1内の#2を#3に変換し#4に入れる
 \def\jlreq@replace#1#2#3#4{%
   \begingroup
     \def\jlreq@do##1#2##2\jlreq@endmark{%
-      \ifx\jlreq@endmark##2\jlreq@endmark##1\else##1#3\jlreq@do##2\jlreq@endmark\fi
+      \jlreq@ifempty{##2}{##1}{##1#3\jlreq@do##2\jlreq@endmark}%
     }%
     \edef\jlreq@do{\unexpanded{\def#4}{\jlreq@do#1#2\jlreq@endmark}}%
   \expandafter\endgroup
@@ -84,17 +91,17 @@
 }
 % グルーピング部分を\jlreq@tempbに加え，@に戻る
 \def\jlreq@helper@removeelement@@@#1#2{%
-  \ifx\jlreq@endmark#2%
+  \jlreq@ifendmark{#2}{%
     % 全体の解釈が終わった
     \ifx\jlreq@tempa\jlreq@tempb\else
       \ifx#1\@empty\edef#1{\expandonce{\jlreq@tempb}}%
       \else\edef#1{\expandonce{#1},\expandonce{\jlreq@tempb}}\fi
     \fi
-  \else
+  }{%
     \edef\jlreq@tempb{\expandonce{\jlreq@tempb}{#2}}%
     \def\jlreq@next{\jlreq@helper@removeelement@{#1}}%
     \expandafter\jlreq@next
-  \fi
+  }%
 }
 % カンマで区切って，その前と後ろを\jlreq@tempc,\jlreq@tempdに入れる
 % もしカンマがない場合は\ifjlreq@tempaがfalseになる．
@@ -115,7 +122,7 @@
     \edef\@tempa{#2}%
     \jlreq@tempafalse
     \expandafter\jlreq@helper@ifinlist@\expandafter{\@tempa}{#1}%
-    \ifjlreq@tempa\def\jlreq@do{#3}\else\def\jlreq@do{#4}\fi
+    \ifjlreq@tempa\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{\def\jlreq@do{#3}}{\def\jlreq@do{#4}}
   \expandafter\endgroup
   \jlreq@do
 }
@@ -123,8 +130,9 @@
   \jlreq@helper@ifinlist@@{#2}#1\jlreq@endmark
 }
 \def\jlreq@helper@ifinlist@@#1#2{%
-  \ifx\jlreq@endmark#2\def\jlreq@next{}%
-  \else
+  \jlreq@ifendmark{#2}{%
+    \def\jlreq@next{}%
+  }{%
     \def\jlreq@helper@ifinlist@tempa{#1}%
     \def\jlreq@helper@ifinlist@tempb{#2}%
     \ifx\\jlreq@helper@ifinlist@tempa\jlreq@helper@ifinlist@tempa
@@ -132,12 +140,9 @@
     \else
       \def\jlreq@next{\jlreq@helper@ifinlist@@{#1}}%
     \fi
-  \fi
+  }%
   \jlreq@next
 }
-
-% 与えられたトークン列が空か（展開はしないでチェック）
-\long\def\jlreq@ifempty#1{\ifx\jlreq@uniqtoken#1\jlreq@uniqtoken\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
 
 % vbox #1の最後を\jlreq@resultboxに入れる
 % #1の最後の行は消える
@@ -182,27 +187,27 @@
 }
 \def\jlreq@helper@parsekeyval@@@#1#2#{\jlreq@helper@parsekeyval@@@@{#1}#2\jlreq@endmark}%
 \def\jlreq@helper@parsekeyval@@@@#1#2{%
-  \ifx\jlreq@endmark #2%
+  \jlreq@ifendmark{#2}{%
     \def\@tempa{\jlreq@helper@parsekeyval@@@@@{#1}}%
-  \else
+  }{%
     \def\@tempa{\expandafter\@tempb\jlreq@deleteuntileendmark}%
     \ifx *#2%
       \def\@tempb{\jlreq@helper@parsekeyval@@@definekeywithdefault{#1}}%
     \else
       \def\@tempb{\jlreq@helper@parsekeyval@@@@@{#1}}%
     \fi
-  \fi
+  }%
   \@tempa
 }
 
 \long\def\jlreq@helper@parsekeyval@@@@@#1#2{%
-  \ifx\jlreq@endmark#2%
+  \jlreq@ifendmark{#2}{%
     \def\@tempa{}%
-  \else
+  }{%
     \def\@tempa{%
       \@ifnextchar[{\jlreq@helper@parsekeyval@@@choicekey{#1}{#2}}{\jlreq@helper@parsekeyval@@@definekey{#1}{#2}}%
     }%
-  \fi
+  }%
   \@tempa
 }
 \long\def\jlreq@helper@parsekeyval@@@choicekey#1#2[#3]#4{%
@@ -264,27 +269,28 @@
   \jlreq@do
 }
 \long\def\jlreq@helper@switch@#1#2{%
-  \ifx\jlreq@endmark#2%
+  \jlreq@ifendmark{#2}{%
     \def\jlreq@next{}%
-  \else
+  }{%
     \edef\jlreq@next{\unexpanded{\jlreq@helper@switch@@{#1}{#2}}}%
-  \fi
+  }%
   \jlreq@next
 }
 \long\def\jlreq@helper@switch@@#1#2#3{%
-  \ifx\jlreq@endmark#3%
+  \jlreq@ifendmark{#3}{%
     \edef\jlreq@do{\unexpanded{#2}}%
     \def\jlreq@next{}%
-  \else
+  }{%
     \edef\jlreq@tempa{#1}%
     \edef\jlreq@tempb{#2}%
-    \ifx\jlreq@tempa\jlreq@tempb
+    \ifx\jlreq@tempa\jlreq@tempb\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+    {%
       \edef\jlreq@do{\unexpanded{#3}}%
       \def\jlreq@next{\jlreq@deleteuntileendmark}%
-    \else
+    }{%
       \def\jlreq@next{\jlreq@helper@switch@{#1}}%
-    \fi
-  \fi
+    }%
+  }%
   \jlreq@next
 }
 
@@ -916,18 +922,9 @@
 
 %. オプション処理
 \newdimen\jlreq@fontsize
-\ifx l\jlreq@engine
-  \setlength{\jlreq@fontsize}{%
-    \dimexpr\directlua{
-      local s = [[\jlreq@option@fontsize]]
-      s = s:gsub("Q"," * 2.5mm")
-      tex.print(s)
-    }\relax
-  }%
-\else
-  \expandafter\jlreq@replace\expandafter{\jlreq@option@fontsize}{Q}{*2.5m}{\@tempa}
-  \setlength{\jlreq@fontsize}{\dimexpr\@tempa\relax}
-\fi
+\jlreq@tempdima=0.25mm
+\expandafter\jlreq@replace\expandafter{\jlreq@option@fontsize}{Q}{\jlreq@tempdima}{\@tempa}
+\setlength{\jlreq@fontsize}{\dimexpr\@tempa\relax}
 
 % JFMに関連する設定
 \ifx l\jlreq@engine
@@ -974,17 +971,18 @@
 \ifx\jlreq@option@baselineskip\@empty
   \setlength{\jlreq@baselineskip}{\dimexpr 17\jlreq@fontsize/10\relax}%
 \else
+  \jlreq@tempdima=0.25mm
   \ifx l\jlreq@engine
     \setlength{\jlreq@baselineskip}{%
       \dimexpr\directlua{
         local act = string.char(92)
         local s = [[\jlreq@option@baselineskip]]
-        s = s:gsub("Q"," * 2.5mm"):gsub("z[hw]",act .. "jlreq@fontsize")
+        s = s:gsub("Q",act .. "jlreq@tempdima"):gsub("z[hw]",act .. "jlreq@fontsize")
         tex.print(s)
       }\relax
     }%
   \else
-    \expandafter\jlreq@replace\expandafter{\jlreq@option@baselineskip}{Q}{*2.5mm}{\@tempa}
+    \expandafter\jlreq@replace\expandafter{\jlreq@option@baselineskip}{Q}{\jlreq@tempdima}{\@tempa}
     \setlength{\jlreq@baselineskip}{\dimexpr\@tempa\relax}
   \fi
 \fi
@@ -2108,10 +2106,10 @@
   \expandafter\jlreq@endnote@addtext\expandafter{\jlreq@tempa}{#1}%
 }
 \def\jlreq@theendnotes#1{%
-  \ifx\jlreq@endmark#1\else
+  \jlreq@ifendmark{#1}{}{%
     \jlreq@output@endnotes#1
-    \expandafter\jlreq@theendnotes
-  \fi
+    \jlreq@theendnotes
+  }%
 }
 \def\jlreq@output@endnotes#1#2{%
   \expandafter\def\csname\jlreq@endnotemarkname\endcsname{#1}%
@@ -2665,7 +2663,7 @@
             {\expandonce{\jlreq@result}}\expandonce{\jlreq@markcommandafter}}%
         }%
       \fi
-      \ifx\jlreq@endmark##2\else\expandafter\@gobble\fi
+      \jlreq@ifendmark{##2}{}{\@gobble}%
     }%
     \def\@tempb{\jlreq@makemark{even}}%
     \expandafter\@tempb\jlreq@even@running@head\jlreq@endmark\jlreq@endmark

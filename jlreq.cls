@@ -48,17 +48,6 @@
 \long\def\jlreq@helper@ifendmark@getfirsttoken#1#2\jlreq@endmark{#1}
 \long\def\jlreq@ifendmark#1{\expandafter\ifx\jlreq@helper@ifendmark@getfirsttoken#1\jlreq@endmark\jlreq@endmark\@empty\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
 
-% #1内の#2を#3に変換し#4に入れる
-\def\jlreq@replace#1#2#3#4{%
-  \begingroup
-    \def\jlreq@do##1#2##2\jlreq@endmark{%
-      \jlreq@ifempty{##2}{##1}{##1#3\jlreq@do##2\jlreq@endmark}%
-    }%
-    \edef\jlreq@do{\unexpanded{\def#4}{\jlreq@do#1#2\jlreq@endmark}}%
-  \expandafter\endgroup
-  \jlreq@do
-}
-
 % @removeelementの括弧があっても動くかもしれない版
 % 次の変数を使う：\jlreq@tempa：消したいやつ，\jlreq@tempb：今処理している部分．
 \def\jlreq@helper@removeelement#1#2#3{%
@@ -427,7 +416,7 @@
 %.. 行送り，指定無しの場合は文字サイズの1.7倍とする．（1.5から2倍が好ましい：2.4.2.d 注3）
 \newcommand*{\jlreq@option@baselineskip}{}
 \DeclareOptionX{baselineskip}{\def\jlreq@option@baselineskip{#1}}
-\DeclareOptionX{linegap}{\def\jlreq@option@baselineskip{1zh + #1}}
+\DeclareOptionX{linegap}{\def\jlreq@option@baselineskip{1zw + #1}}
 
 %.. 組み方系
 % 行頭に括弧が来たときの配置：3.1.5
@@ -503,19 +492,21 @@
 \ifjlreq@option@open\else
   \ifthenelse{\equal{\jlreq@article@type}{book}}{\@openrighttrue}{\@openrightfalse}
 \fi
+% articleではopenrightは効かない．
+\ifthenelse{\equal{\jlreq@article@type}{article}}{\@openrightfalse}{}
 \ifjlreq@option@twoside\else
   \ifthenelse{\equal{\jlreq@article@type}{book}}{\@twosidetrue}{\@twosidefalse}
 \fi
 
 \newcommand{\jlreqsetup}[1]{%
-  \jlreq@parsekeyval[jlreqsetup]{%
-    {sidenote_mark}{%
-      \jlreq@parsekeyval[sidenote_mark]{%
-        {mark}{\def\jlreq@sidenote@defaultmark{####1}}%
-        {headingfont}{\def\jlreq@sidenote@keywordfont{####1}}%
-      }{##1}%
-    }%
-  }{#1}%
+  \jlreq@parsekeyval[jlreqsetup]{
+    {sidenote_mark}{
+      \jlreq@parsekeyval[sidenote_mark]{
+        {mark}{\def\jlreq@sidenote@defaultmark{####1}}
+        {headingfont}{\def\jlreq@sidenote@keywordfont{####1}}
+      }{##1}
+    }
+  }{#1}
 }
 \@onlypreamble\jlreqsetup
 
@@ -924,9 +915,19 @@
 %. オプション処理
 %.. フォント関連
 \newdimen\jlreq@fontsize
-\jlreq@tempdima=0.25mm
-\expandafter\jlreq@replace\expandafter{\jlreq@option@fontsize}{Q}{\jlreq@tempdima}{\@tempa}
-\setlength{\jlreq@fontsize}{\dimexpr\@tempa\relax}
+\ifx l\jlreq@engine
+  \jlreq@tempdima=0.25mm
+  \setlength{\jlreq@fontsize}{%
+    \dimexpr\directlua{
+      local act = string.char(92)
+      local s = [[\jlreq@option@fontsize]]
+      s = s:gsub("Q",act .. "jlreq@tempdima")
+      tex.print(s)
+    }\relax
+  }%
+\else
+  \setlength{\jlreq@fontsize}{\dimexpr\jlreq@option@fontsize\relax}
+\fi
 
 % JFMに関連する設定
 \ifx l\jlreq@engine
@@ -1072,8 +1073,8 @@
 \ifx\jlreq@option@baselineskip\@empty
   \setlength{\jlreq@baselineskip}{\dimexpr 17\jlreq@fontsize/10\relax}%
 \else
-  \jlreq@tempdima=0.25mm
   \ifx l\jlreq@engine
+    \jlreq@tempdima=0.25mm
     \setlength{\jlreq@baselineskip}{%
       \dimexpr\directlua{
         local act = string.char(92)
@@ -1083,8 +1084,7 @@
       }\relax
     }%
   \else
-    \expandafter\jlreq@replace\expandafter{\jlreq@option@baselineskip}{Q}{\jlreq@tempdima}{\@tempa}
-    \setlength{\jlreq@baselineskip}{\dimexpr\@tempa\relax}
+    \setlength{\jlreq@baselineskip}{\jlreq@option@baselineskip}
   \fi
 \fi
 \ifdim\jlreq@fontsize>\jlreq@baselineskip
@@ -1270,10 +1270,12 @@
   \else
     \setlength{\textheight}{0.75\paperheight}
   \fi
+  \addtolength{\textheight}{-\topskip}
+  \divide\textheight\baselineskip \multiply\textheight\baselineskip
+  \addtolength{\textheight}{\topskip}
 \else
-  \setlength{\textheight}{\jlreq@speciallength{\jlreq@option@number@of@lines\baselineskip}}
+  \setlength{\textheight}{\dimexpr\jlreq@speciallength{\jlreq@option@number@of@lines\baselineskip} - \baselineskip + \topskip\relax}
 \fi
-\divide\textheight\baselineskip \multiply\textheight\baselineskip
 
 \setlength{\topskip}{1\zw} % フォントサイズと一致させる
 \setlength{\headsep}{\jlreq@speciallength{\jlreq@option@headfoot@verticalpos}}
@@ -2622,7 +2624,9 @@
         \equal{\expandafter\@secondoftwo\jlreq@running@head@position}{left}
       \)
     \)}{%
-      \jlreq@warning{柱やノンブルは，左ページでは，基本版面の左端の延長線にノンブル又は柱の先頭をそろえて配置するか，基本版面の左端の延長線から基本版面の文字サイズの全角アキだけ右に寄せた位置に配置する（ページスタイル #1 内，2.6.1.b）}%
+      \if@twoside
+        \jlreq@warning{柱やノンブルは，左ページでは，基本版面の左端の延長線にノンブル又は柱の先頭をそろえて配置するか，基本版面の左端の延長線から基本版面の文字サイズの全角アキだけ右に寄せた位置に配置する（ページスタイル #1 内，2.6.1.b）}%
+      \fi
     }{}%
     \ifthenelse{\lengthtest{\jlreq@gap < 1.49\zw} \OR \( \lengthtest{\jlreq@gap > 1.51\zw} \AND \lengthtest{\jlreq@gap < 1.99\zw} \) \OR \lengthtest{\jlreq@gap > 2.01\zw}}{\jlreq@warning{ノンブルと柱との空き量は文字サイズの2倍又は1.5倍とする（ページスタイル #1 内，2.6.1.c）}}{}%
     % 見出しを出す場合：evenに章などの高いレベルの見出しを出す（2.6.3.a）
@@ -2680,9 +2684,10 @@
     \fi\fi
     % ##1 ##2 ##3と並んだヘッダを作る，戻り値は\jlreq@result
     \def\jlreq@setheadfoot@##1##2##3{%
-      \jlreq@ifempty{##1}{\def\jlreq@left{}}{\edef\jlreq@left{\noexpand\hspace*{\jlreq@expand@speciallength{\jlreq@headfoot@sidemargin}}\unexpanded{##1}}}%
+      % -.5\zwは端にそろえるための補正
+      \jlreq@ifempty{##1}{\def\jlreq@left{}}{\edef\jlreq@left{\noexpand\hspace*{\dimexpr\jlreq@expand@speciallength{\jlreq@headfoot@sidemargin}\if@tate - 0.5\zw\fi\relax}\unexpanded{##1}}}%
       % +\topskip - .5\zwは\jlreq@headfoot@sidemargin = 0ptの時に本文の右に一致させるための補正．
-      \jlreq@ifempty{##3}{\def\jlreq@right{}}{\edef\jlreq@right{\unexpanded{##3}\noexpand\hspace*{\dimexpr\jlreq@expand@speciallength{\jlreq@headfoot@sidemargin} + \topskip - .5\zw\relax}}}%
+      \jlreq@ifempty{##3}{\def\jlreq@right{}}{\edef\jlreq@right{\unexpanded{##3}\noexpand\hspace*{\dimexpr\jlreq@expand@speciallength{\jlreq@headfoot@sidemargin}\if@tate + \topskip - .5\zw\fi\relax}}}%
       \jlreq@ifempty{##2}{%
         \edef\jlreq@result{\expandonce{\jlreq@left}\hfil\expandonce{\jlreq@right}}%
         \jlreq@ifempty{##1}{\jlreq@ifempty{##3}{\def\jlreq@result{}}{}}{}%
@@ -3422,12 +3427,14 @@
     \@mainmatterfalse
     \setcounter{chapter}{0}}
 }{}
-\newcommand*\appendix{%
-  \def\@tempa##1{\setcounter{##1}{0}}%
-  \jlreq@heading@execmacro@toallheadings\@tempa
+\newcommand*\appendix{\par
+  \setcounter{section}{0}%
 }
+
 \ifthenelse{\equal{\jlreq@article@type}{article}}{
   \appto\appendix{%
+    \setcounter{subsection}{0}%
+    \gdef\thesection{\@Alph\c@section}%
     \if@tate
       \def\thesection{\rensuji{\Alph{section}}}%
     \else
@@ -3436,6 +3443,7 @@
   }
 }{%book, report
   \appto\appendix{%
+    \setcounter{chapter}{0}%
     \if@tate
       \def\thechapter{\rensuji{\Alph{chapter}}}%
     \else

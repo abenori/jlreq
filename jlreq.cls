@@ -104,32 +104,28 @@
 
 \long\def\jlreq@deleteuntileendmark#1\jlreq@endmark{}
 
-% #1が#2のリスト（{list1}{list2}...{listn}の形）に入っていれば#3を，入っていなければ#4を実行する
-% #2は\edefで展開されてから評価される
-\def\jlreq@ifinlist#1#2#3#4{%
+% #1が#2のトークン内と\ifxで一致すれば#3を，そうでなければ#4を実行する．]
+% #2は\edefで展開する．
+\def\jlreq@ifintokenlist#1#2#3#4{%
   \begingroup
-    \edef\@tempa{#2}%
     \jlreq@tempafalse
-    \expandafter\jlreq@helper@ifinlist@\expandafter{\@tempa}{#1}%
+    \edef\@tempa{#2}%
+    \expandafter\jlreq@helper@ifintokenlist@\expandafter{\@tempa}{#1}%
     \ifjlreq@tempa\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
-      {\def\jlreq@do{#3}}{\def\jlreq@do{#4}}%
+      {\def\jlreq@do{#3\message{YES}}}{\def\jlreq@do{#4\message{NO}}}%
   \expandafter\endgroup
   \jlreq@do
 }
-\def\jlreq@helper@ifinlist@#1#2{%
-  \jlreq@helper@ifinlist@@{#2}#1\jlreq@endmark
+\def\jlreq@helper@ifintokenlist@#1#2{%
+  \jlreq@helper@ifintokenlist@@{#2}#1\jlreq@endmark
 }
-\def\jlreq@helper@ifinlist@@#1#2{%
+\def\jlreq@helper@ifintokenlist@@#1#2{%
   \jlreq@ifendmark{#2}{%
     \def\jlreq@next{}%
   }{%
-    \def\jlreq@helper@ifinlist@tempa{#1}%
-    \def\jlreq@helper@ifinlist@tempb{#2}%
-    \ifx\\jlreq@helper@ifinlist@tempa\jlreq@helper@ifinlist@tempa
-      \jlreq@tempatrue\def\jlreq@next{\jlreq@deleteuntileendmark}%
-    \else
-      \def\jlreq@next{\jlreq@helper@ifinlist@@{#1}}%
-    \fi
+    \ifx#1#2\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+      {\jlreq@tempatrue\def\jlreq@next{\jlreq@deleteuntileendmark}}%
+      {\def\jlreq@next{\jlreq@helper@ifintokenlist@@{#1}}}%
   }%
   \jlreq@next
 }
@@ -938,8 +934,8 @@
 \else
   % 非LuaTeXの場合はJFMの入れ替えと\everyparでの処理で対処．
   \def\jlreq@jfmname@prefix{}
-  \def\jlreq@openbreackets@list{{（} {〔} {［} {｛} {〈} {《} {「} {『} {【}}
-  \ifx u\jlreq@engine\edef\jlreq@openbreackets@list{\jlreq@openbreackets@list {｟} {〘} {〖} {«} {〝}{‘} {“}}\fi
+  \def\jlreq@openbreackets@list{（〔［｛〈《「『【}
+  \ifx u\jlreq@engine\edef\jlreq@openbreackets@list{\jlreq@openbreackets@list {｟〘〖«〝‘“}}\fi
   % \jlreq@jfmnameにJFMの名前を入れる
   \ifjlreq@burasage\edef\jlreq@jfmname@prefix{b\jlreq@jfmname@prefix}\fi
   \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{\edef\jlreq@jfmname@prefix{\jlreq@jfmname@prefix z}}{}
@@ -947,11 +943,11 @@
   \edef\jlreq@jfmname{\jlreq@jfmname@prefix jlreq}
   \edef\jlreq@jfmnameg{\jlreq@jfmname@prefix jlreqg}
   \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkaku_tentsuki}}{
-    \def\jlreq@openbracket@hook{\jlreq@ifinlist{\jlreq@nextchar}{\jlreq@openbreackets@list}{\inhibitglue}{}}
+    \def\jlreq@openbracket@hook{\jlreq@ifintokenlist{\jlreq@nextchar}{\jlreq@openbreackets@list}{\inhibitglue}{}}
     \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
   }{}
   \ifthenelse{\equal{\jlreq@open@bracket@pos}{nibu_tentsuki}}{
-    \def\jlreq@openbracket@hook{\jlreq@ifinlist{\jlreq@nextchar}{\jlreq@openbreackets@list}{\hskip -1\jlreq@mol}{}}
+    \def\jlreq@openbracket@hook{\jlreq@ifintokenlist{\jlreq@nextchar}{\jlreq@openbreackets@list}{\hskip -1\jlreq@mol}{}}
     \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
   }{}
 \fi

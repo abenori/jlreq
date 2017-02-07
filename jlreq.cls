@@ -1650,9 +1650,14 @@
     \fi
     \def\jlreq@addtodo{}%
     \@ifundefined{l@#1}{
-      \edef\jlreq@do{\unexpanded{\setbox\jlreq@tempboxa=\hbox}{\expandonce{\jlreq@label@format}}}%
+      % 長さは適当に計測する
+      \begingroup
+        % ちょっと大きめで計測しておく
+        \csname c@#1\endcsname=9
+        \setbox\jlreq@tempboxa=\hbox{\jlreq@label@format}%
+        \edef\jlreq@do{\noexpand\jlreq@tempdima=\the\dimexpr\wd\jlreq@tempboxa\relax}%
+      \expandafter\endgroup
       \jlreq@do
-      \jlreq@tempdima=\wd\jlreq@tempboxa
       \jlreq@tempdimb=1\jlreq@mol
       \divide\jlreq@tempdima by \jlreq@tempdimb
       \eappto\jlreq@addtodo{%

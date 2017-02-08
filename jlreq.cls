@@ -1,6 +1,11 @@
-% based on JLREQ 20120403 https://www.w3.org/TR/2012/NOTE-jlreq-20120403/ja/
+%% Japanese document class based on requirements for Japanese text layout
+%% 
+%% The package is distributed under the BSD 2-Clause License
+%%
+%%
+% (based on JLREQ 20120403 https://www.w3.org/TR/2012/NOTE-jlreq-20120403/ja/)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{jlreq}[2016/01/01 jlreq]
+\ProvidesClass{jlreq}[2017/02/08 jlreq]
 \RequirePackage{xkeyval,everyhook,filehook,etoolbox,ifthen}
 
 %. helper1

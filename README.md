@@ -17,5 +17,9 @@ Run `make`, then JFM files are created. Move the files as follows:
 See [README-ja.md](README-ja.md) (in Japanese).
 
 ## LICENSE
-This package is distributed under the BSD 2-Clause License.. See [LICENSE](LICENSE).
+This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENSE).
+
+## CHANGELOG
+* 2017-02-08
+    - First release
 

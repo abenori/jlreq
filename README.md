@@ -14,6 +14,8 @@ Run `make`, then JFM files are created. Move the files as follows:
 `make install` will do this where $TEXMF=$TEXMFHOME
 
 ## Usage
-See [README-ja.md](./README-ja.md) (in Japanese).
+See [README-ja.md](README-ja.md) (in Japanese).
 
+## LICENSE
+This package is distributed under the BSD 2-Clause License.. See [LICENSE](LICENSE).
 

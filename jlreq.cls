@@ -1,22 +1,4 @@
-% JLREQ 20120403 https://www.w3.org/TR/2012/NOTE-jlreq-20120403/ja/ に基づく
-
-%#main jlreqtest.tex
-%%#T2D uplatex
-%%#! $(C:TeXToDVI) ; $(C:DVIToPDF)
-%%#! lualatex
-%%#! lualatex -synctex=-1 jlreqtest.tex ; pdftk jlreqtest.pdf multistamp onlya.pdf output out.pdf
-%#! uplatex -synctex=-1 jlreqtest.tex ; dvipdfmx jlreqtest.dvi ; pdftk jlreqtest.pdf multistamp onlya.pdf output out.pdf
-%#PDF out.pdf
-% memo
-% 欧文文字の向きについて (2.3.2.b.1)
-% 割注
-% タブ処理
-% 振分け処理
-% 表
-\showboxdepth=100
-\showboxbreadth=1000
-%\tracingonline=1
-
+% based on JLREQ 20120403 https://www.w3.org/TR/2012/NOTE-jlreq-20120403/ja/
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{jlreq}[2016/01/01 jlreq]
 \RequirePackage{xkeyval,everyhook,filehook,etoolbox,ifthen}

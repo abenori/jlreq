@@ -7,15 +7,20 @@
 クラスファイルjlreq.clsと，横書きLuaTeX-ja用のJFMであるjfm-jlreq.luaが用意されています．また，縦書きのJFMやpLaTeX / upLaTeX 用のJFMを生成するいくつかのスクリプトがあります．
 
 ## インストール
-`make install`で必要なJFMが生成され，`~/texmf`以下に配置されます．jlreq.clsを適当な場所（例えば`~/texmf/tex/latex/jlreq/jlreq.cls`）におきます．
+`make`で必要なJFMを生成してください．その後，
+
+* *.tfm -> $TEXMF/fonts/tfm/public/jlreq
+* *.vf -> $TEXMF/fonts/vf/public/jlreq
+* jfm-jlreq.lua jfm-jlreqv.lua -> $TEXMF/tex/luatex/jlreq
+* jlreq.cls -> $TEXMF/tex/latex/jlreq
+
+と配置します．`make install`とすると，$TEXMF=$TEXMFHOMEとしてこのコピーを行います．
 
 ## 使い方
 通常通り
-
 ````
 \documentclass{jlreq}
 ````
-
 とします．これで横書きのarticle相当の文書クラスとなります．エンジンは自動判定されますが，指定する場合はクラスオプションに`platex/uplatex/lualatex`のいずれかを渡してください．縦書きにするには`tate`オプションを渡します．また，reportやbook相当の文書クラスとするには，それぞれ`report`や`book`オプションを渡します．たとえば，縦書きの本を作成するには
 ````
 \documentclass[tate,book]{jlreq}
@@ -31,11 +36,9 @@
 
 ### `\sidenote`
 傍注（縦組みの場合は脚注）を出力します．デフォルトでは`\footnote`と同様の書式となりますが，クラスオプションに`sidenote_type=mark`が指定されている場合，その書式は`\sidenote{該当項目}{注}`となります．たとえば
-
 ````
 刊行できる\sidenote{該当項目}{原稿とは，印刷などの方法により……}を入手する仕事である．
 ````
-
 とします．後の説明も参照してください．
 
 デフォルトの基本反面では余白が少なく，実用にはならないかと思います．後の基本反面の設定を参考にしてください．

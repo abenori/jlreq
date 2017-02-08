@@ -78,13 +78,26 @@ u%.tfm: u%.pl
 jfm-%v.lua jfm-b%,lua jfm-z%.lua: make_variant_jfm.lua jfm-jlreq.lua
 	texlua make_variant_jfm.lua
 
-doc:
-	pandoc --verbose -f markdown_github -t latex --latex-engine=lualatex --template README-template.tex README.md -o README.pdf
+.SUFFIXES:.md .tex
+.SUFFIXES:.md .pdf
+.SUFFIXES:.md .html
 
-latexdoc:
-	pandoc --verbose -f markdown_github -t latex --latex-engine=lualatex --template README-template.tex README.md -o README.tex
+.md.tex:
+	pandoc --verbose -f markdown_github -t latex --latex-engine=lualatex --template README-template.tex $< -o $@
 
-install: jfm
+.md.pdf:
+	pandoc --verbose -f markdown_github -t latex --latex-engine=lualatex --template README-template.tex $< -o $@
+
+.md.html:
+	pandoc --verbose -f markdown_github -t html -c github.css --self-contained -o $@ $<
+
+latexdoc: README.tex README-ja.tex
+
+doc: README-ja.pdf
+
+htmldoc: README.html README-ja.html
+
+jfm-install: jfm
 	mkdir -p ${TEXMF}/fonts/tfm/public/jlreq
 	cp -f *.tfm ${TEXMF}/fonts/tfm/public/jlreq
 	mkdir -p ${TEXMF}/fonts/vf/public/jlreq
@@ -92,6 +105,23 @@ install: jfm
 	mkdir -p ${TEXMF}/tex/luatex/jlreq
 	cp jfm-jlreq.lua ${TEXMF}/tex/luatex/jlreq
 	cp jfm-jlreqv.lua ${TEXMF}/tex/luatex/jlreq
+
+install: jfm
+	mkdir -p ${TEXMF}/tex/latex/jlreq
+	cp jlreq.cls ${TEXMF}/tex/latex/jlreq
+
+tds: jfm jlreq.cls README.md README-ja.md LICENSE README.html README-ja.html
+	mkdir -p ./tds/fonts/tfm/public/jlreq
+	cp -f *.tfm ./tds/fonts/tfm/public/jlreq
+	mkdir -p ./tds/fonts/vf/public/jlreq
+	cp -f *.vf ./tds/fonts/vf/public/jlreq
+	mkdir -p ./tds/tex/luatex/jlreq
+	cp jfm-jlreq.lua ./tds/tex/luatex/jlreq
+	cp jfm-jlreqv.lua ./tds/tex/luatex/jlreq
+	mkdir -p ./tds/tex/latex/jlreq
+	cp jlreq.cls ./tds/tex/latex/jlreq
+	mkdir -p ./tds/doc/latex/jlreq
+	cp -t ./tds/doc/latex/jlreq README.html README-ja.html README.md README-ja.md LICENSE
 
 uninstall:
 	rm -rf ${TEXMF}/fonts/tfm/public/jlreq
@@ -101,4 +131,5 @@ clean:
 	rm -f *.tfm *.pl *.vf
 	rm -f jfm-jlreqv.lua
 	rm -f jfm-bjlreq.lua jfm-bjlreqv.lua jfm-bzjlreq.lua jfm-bzjlreqv.lua jfm-zjlreq.lua jfm-zjlreqv.lua
+	rm -f README.tex README.pdf README.html README-ja.tex README-ja.pdf README-ja.html
 

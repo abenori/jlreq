@@ -104,15 +104,15 @@
 
 \long\def\jlreq@deleteuntileendmark#1\jlreq@endmark{}
 
-% #1が#2のトークン内と\ifxで一致すれば#3を，そうでなければ#4を実行する．]
+% #1が#2のトークン内と\ifxで一致すれば#3を，そうでなければ#4を実行する．
 % #2は\edefで展開する．
-\def\jlreq@ifintokenlist#1#2#3#4{%
+\def\jlreq@ifintokenlist#1#2{%
   \begingroup
     \jlreq@tempafalse
     \edef\@tempa{#2}%
     \expandafter\jlreq@helper@ifintokenlist@\expandafter{\@tempa}{#1}%
     \ifjlreq@tempa\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
-      {\def\jlreq@do{#3\message{YES}}}{\def\jlreq@do{#4\message{NO}}}%
+      {\def\jlreq@do{\@firstoftwo}}{\def\jlreq@do{\@secondoftwo}}%
   \expandafter\endgroup
   \jlreq@do
 }
@@ -148,8 +148,6 @@
 \newcommand*{\jlreq@getfirstbox}[1]{%
   \loop\ifdim\dimexpr\dp#1+\ht#1=0pt\relax\else\jlreq@getlastbox{#1}\repeat
 }
-
-\newcommand*{\jlreq@debug@output}[1]{\message{\detokenize{#1}}}
 
 % 簡易なkeyvalのパース．
 % \jlreq@parsekeyval*[family=jlreq@key]{ % *ありは\setkeys*を使う
@@ -220,8 +218,6 @@
   \expandafter\endgroup
   \jlreq@do
 }
-
-\def\jlreq@currentline#1{\message{#1: at line \the\inputlineno}}
 
 % \jlreq@switch{str}{
 %   {str}{abcd}
@@ -400,7 +396,7 @@
 \DeclareOptionX{gutter}{\renewcommand*{\jlreq@option@gutter}{#1}}
 
 %.. 柱とノンブル
-\newcommand*{\jlreq@option@headfoot@verticalpos}{1zw}
+\newcommand*{\jlreq@option@headfoot@verticalpos}{}
 \DeclareOptionX{headfoot_verticalposition}{\renewcommand*{\jlreq@option@headfoot@verticalpos}{#1}}
 \newcommand*{\jlreq@headfoot@sidemargin}{0pt}
 \DeclareOptionX{headfoot_sidemargin}{\renewcommand*{\jlreq@headfoot@sidemargin}{#1}}
@@ -1274,6 +1270,10 @@
 \fi
 
 \setlength{\topskip}{1\zw} % フォントサイズと一致させる
+\ifx\jlreq@option@headfoot@verticalpos\@empty
+  \if@tate\def\jlreq@option@headfoot@verticalpos{1zh}
+  \else\def\jlreq@option@headfoot@verticalpos{2zh}\fi
+\fi
 \setlength{\headsep}{\jlreq@speciallength{\jlreq@option@headfoot@verticalpos}}
 \ifdim\headsep<1\zw\jlreq@warning{基本版面との上下方向の最低の空き量を，基本版面の文字サイズの全角アキとする (26.1.a)}\fi
 \setlength{\headheight}{1\zh}
@@ -1912,7 +1912,7 @@
   \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},indent=8,lines=2}
   \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=10,lines=1,before_lines=1}
   \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
-  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
+  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=1}
 \else
   \renewcommand{\thepart}{\Roman{part}}
   \renewcommand{\thesubsection}{\thesection .\arabic{subsection}}

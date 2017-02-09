@@ -106,9 +106,11 @@ jfm-install: jfm
 	cp jfm-jlreq.lua ${TEXMF}/tex/luatex/jlreq
 	cp jfm-jlreqv.lua ${TEXMF}/tex/luatex/jlreq
 
-install: jfm
+cls-install: jfm
 	mkdir -p ${TEXMF}/tex/latex/jlreq
 	cp jlreq.cls ${TEXMF}/tex/latex/jlreq
+
+install: jfm-install cls-install
 
 tds: jfm jlreq.cls README.md README-ja.md LICENSE README.html README-ja.html
 	mkdir -p ./tds/fonts/tfm/public/jlreq

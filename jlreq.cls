@@ -27,13 +27,18 @@
 
 \def\jlreq@uniqtoken{\jlreq@uniqtoken}
 \def\jlreq@endmark{\jlreq@endmark}
+\long\def\jlreq@deleteuntileendmark#1\jlreq@endmark{}
 
+% \jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmarkの形で使う
+% 二回展開すると，#1の先頭を取り出す．
+% ただし空の場合は\jlreq@uniqtoken，先頭が{の場合は\bgroupとなる
+% 空白は無視される……
+\def\jlreq@getfirsttoken#1#{\jlreq@getfirsttoken@#1\bgroup\jlreq@endmark}
+\def\jlreq@getfirsttoken@#1#2\jlreq@endmark#3\jlreq@endmark{#1}
 % 与えられたトークン列が空か（展開はしないでチェック）
-\long\def\jlreq@helper@ifempty@getfirsttoken#1#2\jlreq@uniqtoken{#1}
-\long\def\jlreq@ifempty#1{\expandafter\ifx\jlreq@helper@ifempty@getfirsttoken#1\jlreq@uniqtoken\jlreq@uniqtoken\jlreq@uniqtoken\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+\long\def\jlreq@ifempty#1{\expandafter\ifx\expandafter\relax\detokenize{#1}\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
 % #1が\jlreq@endmarkか
-\long\def\jlreq@helper@ifendmark@getfirsttoken#1#2\jlreq@endmark{#1}
-\long\def\jlreq@ifendmark#1{\expandafter\ifx\jlreq@helper@ifendmark@getfirsttoken#1\jlreq@endmark\jlreq@endmark\@empty\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+\long\def\jlreq@ifendmark#1{\expandafter\expandafter\expandafter\ifx\jlreq@getfirsttoken#1{}\jlreq@uniqtoken\jlreq@endmark\jlreq@endmark\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
 
 % @removeelementの括弧があっても動くかもしれない版
 % 次の変数を使う：\jlreq@tempa：消したいやつ，\jlreq@tempb：今処理している部分．
@@ -88,8 +93,6 @@
   \ifx\jlreq@tempd\@empty\jlreq@tempafalse\else\jlreq@tempatrue\expandafter\def\expandafter\jlreq@tempd\expandafter{\jlreq@helper@removelastcomma#2\jlreq@endmark}\fi
 }
 \def\jlreq@helper@removelastcomma#1,\jlreq@endmark{#1}
-
-\long\def\jlreq@deleteuntileendmark#1\jlreq@endmark{}
 
 % #1が#2のトークン内と\ifxで一致すれば#3を，そうでなければ#4を実行する．
 % #2は\edefで展開する．
@@ -2230,7 +2233,7 @@
   \def\jlreq@sidenotecounter{footnote}% 傍注用のカウンタ名
   \def\sidenote{\@ifnextchar[{\jlreq@sidenote}{\jlreq@sidenote[]}}
   \def\sidenotemark{\@ifnextchar[{\jlreq@sidenotemark}{\jlreq@sidenotemark[]}}
-  \def\sidenotetext{\@ifnextchar[{\jlrqe@sidenotetext}{\jlreq@sidenotetext[]}}
+  \def\sidenotetext{\@ifnextchar[{\jlreq@sidenotetext}{\jlreq@sidenotetext[]}}
   \long\def\jlreq@sidenote[#1]#2{\jlreq@sidenotemark[#1]\@sidenotetext{#2}}
   \def\jlreq@sidenotemark[#1]{%
     \jlreq@ifempty{#1}{%

@@ -1701,7 +1701,11 @@
     \edef\jlreq@do{%
       \noexpand\def\expandonce{\csname #1\endcsname}{%
         \unexpanded{\jlreq@hook@beforeheadings{#1}}%
-        \noexpand\@startsection{\unexpanded{#1}}{\unexpanded{#2}}{\expandonce{\jlreq@indent}\jlreq@mol}{0pt}{-1\jlreq@fontsize}{\expandonce{\jlreq@font}\expandonce{\jlreq@mark}}%
+        \expandafter\jlreq@ifempty\expandafter{\jlreq@mark}{%
+          \noexpand\@startsection{\unexpanded{#1}}{\unexpanded{#2}}{\expandonce{\jlreq@indent}\noexpand\jlreq@mol}{0pt}{-1\jlreq@fontsize}{\expandonce{\jlreq@font}}%
+        }{%
+          \noexpand\@startsection{\unexpanded{#1}}{\unexpanded{#2}}{\expandonce{\jlreq@indent}\noexpand\jlreq@mol}{0pt}{-1\jlreq@fontsize}{\noexpand\kern\expandonce{\jlreq@indent}\noexpand\jlreq@mol\expandonce{\jlreq@mark}\noexpand\kern-\expandonce{\jlreq@indent}\noexpand\jlreq@mol\expandonce{\jlreq@font}}%
+        }%
       }%
     }%
   \expandafter\endgroup

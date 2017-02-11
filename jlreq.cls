@@ -30,11 +30,9 @@
 \long\def\jlreq@deleteuntileendmark#1\jlreq@endmark{}
 
 % \jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmarkの形で使う
-% 二回展開すると，#1の先頭を取り出す．
-% ただし空の場合は\jlreq@uniqtoken，先頭が{の場合は\bgroupとなる
-% 空白は無視される……
-\def\jlreq@getfirsttoken#1#{\jlreq@getfirsttoken@#1\bgroup\jlreq@endmark}
-\def\jlreq@getfirsttoken@#1#2\jlreq@endmark#3\jlreq@endmark{#1}
+% 二回展開すると，#1の先頭を取り出す．ただし空の場合は\jlreq@uniqtoken，先頭が{の場合は\bgroupとなる
+\long\def\jlreq@getfirsttoken#1#{\jlreq@getfirsttoken@#1\bgroup\jlreq@endmark}
+\long\def\jlreq@getfirsttoken@#1#2\jlreq@endmark#3\jlreq@endmark{#1}
 % 与えられたトークン列が空か（展開はしないでチェック）
 \long\def\jlreq@ifempty#1{\expandafter\ifx\expandafter\relax\detokenize{#1}\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
 % #1が\jlreq@endmarkか
@@ -928,14 +926,13 @@
   \ifx u\jlreq@engine\edef\jlreq@jfmname@prefix{u\jlreq@jfmname@prefix}\fi
   \edef\jlreq@jfmname{\jlreq@jfmname@prefix jlreq}
   \edef\jlreq@jfmnameg{\jlreq@jfmname@prefix jlreqg}
-  \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkaku_tentsuki}}{
-    \def\jlreq@openbracket@hook{\jlreq@ifintokenlist{\jlreq@nextchar}{\jlreq@openbreackets@list}{\inhibitglue}{}}
-    \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
-  }{}
+  % JFM glueの伸び縮みで行頭括弧が揃わないのを防ぐために常に\inhibitglueを入れる．
   \ifthenelse{\equal{\jlreq@open@bracket@pos}{nibu_tentsuki}}{
-    \def\jlreq@openbracket@hook{\jlreq@ifintokenlist{\jlreq@nextchar}{\jlreq@openbreackets@list}{\hskip -1\jlreq@mol}{}}
-    \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
-  }{}
+    \def\jlreq@openbracket@hook{\jlreq@ifintokenlist{\jlreq@nextchar}{\jlreq@openbreackets@list}{\hskip -.5\jlreq@mol\inhibitglue}{}}
+  }{% zenkakunibu_nibu,zenkaku_tentsuki
+    \def\jlreq@openbracket@hook{\jlreq@ifintokenlist{\jlreq@nextchar}{\jlreq@openbreackets@list}{\inhibitglue}{}}
+  }
+  \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
 \fi
 % 開き括弧の幅が全角の場合は，ベタ組にするために補正が必要
 \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{

@@ -99,8 +99,11 @@
     \jlreq@tempafalse
     \edef\@tempa{#2}%
     \expandafter\jlreq@helper@ifintokenlist@\expandafter{\@tempa}{#1}%
-    \ifjlreq@tempa\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
-      {\def\jlreq@do{\@firstoftwo}}{\def\jlreq@do{\@secondoftwo}}%
+    \ifjlreq@tempa
+      \def\jlreq@do{\@firstoftwo}%
+    \else
+      \def\jlreq@do{\@secondoftwo}%
+    \fi
   \expandafter\endgroup
   \jlreq@do
 }
@@ -2786,14 +2789,14 @@
 \def\jlreq@heading@execmacro@toallheadings@#1#2{
   \@for\jlreq@tempa:=#2\do{%
     \@ifundefined{\jlreq@tempa}{}{%
-  	   \eappto\jlreq@do{\noexpand#1{\expandonce{\jlreq@tempa}}}%
-  	}%
+      \eappto\jlreq@do{\noexpand#1{\expandonce{\jlreq@tempa}}}%
+    }%
   }%
 }
 \def\jlreq@clearheadingmarks#1{%
-	\@ifundefined{#1mark}{}{%
+  \@ifundefined{#1mark}{}{%
     \expandafter\let\csname#1mark\endcsname=\@gobble
-	}%
+  }%
 }
   
 \newcommand*{\NewPageStyle}[2]{%

@@ -1608,7 +1608,7 @@
       {indent}{\def\jlreq@indent{##1}}
       {format}{\edef\jlreq@format{\unexpanded{##1}}}
       {label_format}{\edef\jlreq@label@format{\unexpanded{##1}}}
-      {subtitle_format}{\def\jlreq@subtitle@format{##1}}
+      {subtitle_format}{\edef\jlreq@subtitle@format{\unexpanded{##1}}}
       *{pagetop_space}{\def\jlreq@pagetop@space{s}}% ページ頭でもスペースを入れる
       {pagebreak}[clearpage,cleardoublepage,clearcolumn,nariyuki]{
         \jlreq@switch{##1}{

@@ -1350,15 +1350,12 @@
     }%
   }{}%
   \begingroup
-    \def\jlreq@contents@format##1{##1}%
     \let\jlreq@contents@label@format=\@undefined
     \let\jlreq@format=\@undefined
     \edef\jlreq@label@format{\expandonce{\csname the#1\endcsname}}%
     \def\jlreq@heading@clearpage{\cleardoublepage}%
     \def\jlreq@pagestyle{empty}%
     \jlreq@parsekeyval[DeclareTobiraHeading]{
-      {contentsline_format}{\def\jlreq@contents@format####1{##1}}
-      {contentsline_label_format}{\def\jlreq@contents@label@format{##1}}
       {label_format}{\def\jlreq@label@format{##1}}
       {format}{\def\jlreq@format####1####2{##1}}
       {pagestyle}{\def\jlreq@pagestyle{##1}}
@@ -1369,9 +1366,6 @@
         }
       }
     }{#3}%
-    \ifx\jlreq@contents@label@format\@undefined
-      \let\jlreq@contents@label@format=\jlreq@label@format
-    \fi
     \ifx\jlreq@format\@undefined
       \def\jlreq@format##1##2{##1##2}%
     \fi

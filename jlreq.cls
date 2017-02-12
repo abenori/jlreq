@@ -478,15 +478,15 @@
   \ifthenelse{\equal{\jlreq@article@type}{book}}{\@twosidetrue}{\@twosidefalse}
 \fi
 
+\def\jlreq@jlreqsetup@keyvallist{}
 \newcommand{\jlreqsetup}[1]{%
-  \jlreq@parsekeyval[jlreqsetup]{
-    {sidenote_mark}{
-      \jlreq@parsekeyval[sidenote_mark]{
-        {mark}{\def\jlreq@sidenote@defaultmark{####1}}
-        {headingfont}{\def\jlreq@sidenote@keywordfont{####1}}
-      }{##1}
-    }
-  }{#1}
+  \begingroup
+    \edef\jlreq@do{\unexpanded{\jlreq@parsekeyval[jlreqsetup]}{\expandonce{\jlreq@jlreqsetup@keyvallist}}}%
+  \expandafter\endgroup
+  \jlreq@do{#1}%
+}
+\newcommand{\jlreq@jlreqsetup@add}[2]{%
+  \eappto\jlreq@jlreqsetup@keyvallist{\unexpanded{{#1}{#2}}}%
 }
 \@onlypreamble\jlreqsetup
 
@@ -1861,14 +1861,14 @@
 \newcommand*\jlreq@HeadingType[1]{%
   \expandafter\ifx\csname jlreq@heading@type@#1\endcsname\relax UndefinedHeading
   \else
-    \jlerq@HeadingType@{#1}{\RenewTobiraHeading}{TobiraHeading}{%
-    \jlerq@HeadingType@{#1}{\RenewBlockHeading}{BlockHeading}{%
-    \jlerq@HeadingType@{#1}{\RenewRuninHeading}{RuninHeading}{%
-    \jlerq@HeadingType@{#1}{\RenewCutinHeading}{CutinHeading}{%
+    \jlreq@HeadingType@{#1}{\RenewTobiraHeading}{TobiraHeading}{%
+    \jlreq@HeadingType@{#1}{\RenewBlockHeading}{BlockHeading}{%
+    \jlreq@HeadingType@{#1}{\RenewRuninHeading}{RuninHeading}{%
+    \jlreq@HeadingType@{#1}{\RenewCutinHeading}{CutinHeading}{%
     UnknownHeading}}}}%
   \fi
 }
-\newcommand*\jlerq@HeadingType@[2]{%
+\newcommand*\jlreq@HeadingType@[2]{%
   \expandafter\expandafter\expandafter\ifx\csname jlreq@heading@type@#1\endcsname#2\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
 }
 
@@ -2205,6 +2205,14 @@
     \global\multiply\marginparwidth\@tempdima
   \fi
   \global\setlength{\marginparpush}{.5\@tempdima} % 同上：g
+}
+
+% sidenote関連の設定
+\jlreq@jlreqsetup@add{sidenote_mark}{
+  \jlreq@parsekeyval[sidenote_mark]{
+    {mark}{\def\jlreq@sidenote@defaultmark{##1}}
+    {headingfont}{\def\jlreq@sidenote@keywordfont{##1}}
+  }{#1}
 }
 
 \def\jlreq@sidenotemarkname{@thefnmark}% 合印用番号を一時的に入れるマクロ名

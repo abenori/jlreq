@@ -2863,17 +2863,21 @@
 % 4.3.1 注4
 \newlength\abovecaptionskip
 \newlength\belowcaptionskip
+\def\jlreq@@makecaption@font{\headfont}
+\def\jlreq@@makecaption@label@font{\headfont}
 \newcommand{\@makecaption}[2]{{%
-  \reset@font\small\headfont
+  \reset@font\small
   \vskip\abovecaptionskip
-  \sbox\@tempboxa{#1\hskip 1\jlreq@mol#2}%
+  \sbox\@tempboxa{{\jlreq@@makecaption@label@font #1}\hskip 1\jlreq@mol{\jlreq@@makecaption@font #2}}%
   \ifdim \wd\@tempboxa >\hsize
-    #1\hskip1\jlreq@mol#2\relax\par
+    {\jlreq@@makecaption@label@font #1}\hskip1\jlreq@mol{\jlreq@@makecaption@font #2}\relax\par
   \else
     \global\@minipagefalse
     \hbox to\hsize{\hfil\box\@tempboxa\hfil}%
   \fi
   \vskip\belowcaptionskip}}
+\jlreq@jlreqsetup@add{caption_font}{\def\jlreq@@makecaption@font{#1}}
+\jlreq@jlreqsetup@add{caption_label_font}{\def\jlreq@@makecaption@label@font{#1}}
 % 特に根拠のない値
 \setlength\abovecaptionskip{.5\jlreq@gol}
 \setlength\belowcaptionskip{0pt}

@@ -3071,26 +3071,33 @@
     }
   \else
     \newenvironment{abstract}{%
+      % とりあえず全部ボックスに入れる．
+      % \maketitleがこれより後にあるときは，\@maketitleの最後に読み込む．
       \global\setbox\jlreq@abstractbox=\vtop\bgroup
       \if@twocolumn
-        \section*{\abstractname}%
-      \else
+        \ifx\maketitle\relax
+          \section*{\abstractname}%
+        \else
+          % 後で\@maketitleとともに呼び出されるときは\twcolumn[***]で呼び出される．
+          \begin{minipage}[b]{\textwidth}
+        \fi
+      \fi
+      \ifnum0\if@twocolumn\else1\fi\ifx\maketitle\relax\else1\fi>0
         \bgroup
         \small
         \begin{center}%
-          {\bfseries\abstractname}%
+        {\bfseries\abstractname}%
         \end{center}%
         \quotation
       \fi
     }{%
-      \if@twocolumn
-        \egroup
-      \else
+      \ifnum0\if@twocolumn\else1\fi\ifx\maketitle\relax\else1\fi>0
         \endquotation
         \egroup
-        \vspace{\baselineskip}%
-        \egroup
+        \if@twocolumn\end{minipage}\fi
       \fi
+      \vspace{\baselineskip}%
+      \egroup
       \ifx\maketitle\relax\box\jlreq@abstractbox\fi
     }
   \fi

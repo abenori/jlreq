@@ -422,7 +422,7 @@
 \DeclareOptionX{endnote_position}{\renewcommand*{\jlreq@endnote@position}{#1}}
 % 傍注のタイプ
 \newcommand*{\jlreq@sidenote@type}{number}
-\define@choicekey{jlreq.cls}{sidenote_type}{number,mark}{\renewcommand*{\jlreq@sidenote@type}{#1}}
+\define@choicekey{jlreq.cls}{sidenote_type}{number,symbol}{\renewcommand*{\jlreq@sidenote@type}{#1}}
 \newcommand*{\jlreq@option@sidenote@width}{}
 \DeclareOptionX{sidenote_width}{\renewcommand*{\jlreq@option@sidenote@width}{#1}}
 
@@ -2213,9 +2213,9 @@
 \def\jlreq@sidenotemarkname{@thefnmark}% 合印用番号を一時的に入れるマクロ名
 
 % (1) \footnoteとかと同じ形式 sidenote_type=number
-% (2) 文中にマークを入れて，傍注には見出しが入る sidenote_type=mark
-% (3) 文中は強調文字列，傍注には見出しが入る sidenote_type=font
-% (4) 文中は何も無し，傍注には見出しが入る sidenote_type=none
+% (2) 文中にマークを入れて，傍注には見出しが入る sidenote_type=symbol
+% (3) 文中は強調文字列，傍注には見出しが入る sidenote_type=symbol
+% (4) 文中は何も無し，傍注には見出しが入る sidenote_type=symbol
 
 % (1) では\sidenote[]{}を定義
 % (2) では\sidenote{見出し}{注中身}を定義
@@ -2264,11 +2264,11 @@
     \def\@makesidetext#1{　\kern-1\zw\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
   \fi
   \def\@makesidemark{\@makefnmark}
-}{
+}{% sidenote_type = symbol
   \jlreq@jlreqsetup@add{sidenote_symbol}{\def\jlreq@sidenote@defaultmark{#1}}
   \jlreq@jlreqsetup@add{sidenote_keyword_font}{\def\jlreq@sidenote@keywordfont{#1}}
   \jlreqsetup{
-    sidenote_symbol=＊,sidenote_keyword_font=\headfont,
+    sidenote_symbol=＊,sidenote_keyword_font={},
   }
   \def\sidenote{\jlreq@sidenote}
   \def\sidenotemark{\jlreq@sidenotemark}
@@ -3484,14 +3484,6 @@
       \number\day~日
     \fi
   }}}
-
-%. ルビ
-\ifx l\jlreq@engine
-  \RequirePackage{luatexja-ruby}
-\else
-  \RequirePackage{pxrubrica}
-  \let\ruby=\jruby
-\fi
 
 %. 定理環境
 \def\jlreq@theorem@abovebelowspace{1\baselineskip}%とりあえず前後に一行分のアキ

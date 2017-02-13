@@ -3066,6 +3066,7 @@
         {\bfseries\gtfamily\abstractname}%
         \@endparpenalty\@M
       \end{center}%
+      \par
     }{%
       \par\vfil\null\endtitlepage
     }
@@ -3080,6 +3081,7 @@
         \else
           % 後で\@maketitleとともに呼び出されるときは\twcolumn[***]で呼び出される．
           \begin{minipage}[b]{\textwidth}
+          \parindent=1\jlreq@mol
         \fi
       \fi
       \ifnum0\if@twocolumn\else1\fi\ifx\maketitle\relax\else1\fi>0

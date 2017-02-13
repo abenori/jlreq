@@ -3013,9 +3013,6 @@
       \fi
       \@thanks
     \endgroup
-    \ifvoid\jlreq@abstractbox\else
-      \centerline{\box\jlreq@abstractbox}
-    \fi
     \jlreq@endofmaketitle
   }
 \fi
@@ -3051,7 +3048,9 @@
   \vskip\baselineskip
   {\jlreq@keepbaselineskip{\large}\@date}%
   \end{center}%
-  \par\vskip\baselineskip}
+  \par\vskip\baselineskip
+  \ifvoid\jlreq@abstractbox\else{\box\jlreq@abstractbox}\fi
+  }
 
 %.. abstract
 \ifthenelse{\equal{jlreq@article@type}{book}}{}{% article,report
@@ -3072,20 +3071,28 @@
     }
   \else
     \newenvironment{abstract}{%
+      \global\setbox\jlreq@abstractbox=\vtop\bgroup
       \if@twocolumn
-        \ifx\maketitle\relax
-          \section*{\abstractname}%
-        \else
-        \fi
+        \section*{\abstractname}%
       \else
-        \global\setbox\jlreq@abstractbox=\vtop\bgroup\bgroup
-          \small
-          \begin{center}%
-            {\bfseries\abstractname}%
-          \end{center}%
-          \quotation
+        \bgroup
+        \small
+        \begin{center}%
+          {\bfseries\abstractname}%
+        \end{center}%
+        \quotation
       \fi
-      }{\if@twocolumn\else\endquotation\egroup\vspace{2\baselineskip}\egroup\fi}
+    }{%
+      \if@twocolumn
+        \egroup
+      \else
+        \endquotation
+        \egroup
+        \vspace{\baselineskip}%
+        \egroup
+      \fi
+      \ifx\maketitle\relax\box\jlreq@abstractbox\fi
+    }
   \fi
 }
 %. 箇条書き．cf. JISX4051 8.4

@@ -2210,14 +2210,6 @@
   \global\setlength{\marginparpush}{.5\@tempdima} % 同上：g
 }
 
-% sidenote関連の設定
-\jlreq@jlreqsetup@add{sidenote_mark}{
-  \jlreq@parsekeyval[sidenote_mark]{
-    {mark}{\def\jlreq@sidenote@defaultmark{##1}}
-    {headingfont}{\def\jlreq@sidenote@keywordfont{##1}}
-  }{#1}
-}
-
 \def\jlreq@sidenotemarkname{@thefnmark}% 合印用番号を一時的に入れるマクロ名
 
 % (1) \footnoteとかと同じ形式 sidenote_type=number
@@ -2273,8 +2265,11 @@
   \fi
   \def\@makesidemark{\@makefnmark}
 }{
-  \def\jlreq@sidenote@keywordfont{\headfont}
-  \def\jlreq@sidenote@defaultmark{＊}
+  \jlreq@jlreqsetup@add{sidenote_symbol}{\def\jlreq@sidenote@defaultmark{#1}}
+  \jlreq@jlreqsetup@add{sidenote_keyword_font}{\def\jlreq@sidenote@keywordfont{#1}}
+  \jlreqsetup{
+    sidenote_symbol=＊,sidenote_keyword_font=\headfont,
+  }
   \def\sidenote{\jlreq@sidenote}
   \def\sidenotemark{\jlreq@sidenotemark}
   \def\sidenotetext{\jlreq@sidenotetext}
@@ -2287,8 +2282,9 @@
     \fi
   }
   \def\@sidenotemark{\@makesidemark}
+  % カスタマイズできるべき？
   \def\jlreq@sidenotetext#1#2{%
-    \expandafter\def\csname\jlreq@sidenotemarkname\endcsname{\jlreq@sidenote@defaultmark\inhibitglue\null{\reset@font\jlreq@sidenote@keywordfont\inhibitglue #1}}%
+    \expandafter\def\csname\jlreq@sidenotemarkname\endcsname{\inhibitglue\null{\reset@font\headfont\inhibitglue #1}}%
     \@sidenotetext{#2}%
   }
   \def\@makesidetext#1{{\headfont\csname\jlreq@sidenotemarkname\endcsname}\hspace*{1\jlreq@mol}#1}
@@ -2434,7 +2430,7 @@
 }
 
 \newcommand*{\jlreq@inlinenote@noauto}[1]{%
-  \setbox\jlreq@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\jlreq@open@bracket@before@space（}%
+  \setbox\jlreq@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\inhibitglue\jlreq@open@bracket@before@space（}%
   \inhibitglue\jlreq@box@putcenter\jlreq@tempboxa
   \jlreq@inlinenote@noauto@#1\\\jlreq@endmark\jlreq@endmark
   \jlreq@inlinenote@endnote
@@ -2863,8 +2859,6 @@
 % 4.3.1 注4
 \newlength\abovecaptionskip
 \newlength\belowcaptionskip
-\def\jlreq@@makecaption@font{\headfont}
-\def\jlreq@@makecaption@label@font{\headfont}
 \newcommand{\@makecaption}[2]{{%
   \reset@font\small
   \vskip\abovecaptionskip
@@ -2878,6 +2872,7 @@
   \vskip\belowcaptionskip}}
 \jlreq@jlreqsetup@add{caption_font}{\def\jlreq@@makecaption@font{#1}}
 \jlreq@jlreqsetup@add{caption_label_font}{\def\jlreq@@makecaption@label@font{#1}}
+\jlreqsetup{caption_font=\headfont,caption_label_font=\headfont}
 % 特に根拠のない値
 \setlength\abovecaptionskip{.5\jlreq@gol}
 \setlength\belowcaptionskip{0pt}

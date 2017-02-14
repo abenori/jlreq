@@ -166,7 +166,7 @@ sidenote_mark={
 
 によりページスタイルを定義することができます．設定は以下の通り．
 
-* `nombre-position`，`running_head_position`: ノンブルと柱の位置を指定します．`top-left`のように指定できます．`center/left/right/top/bottom`が使えます．
+* `nombre_position`，`running_head_position`: ノンブルと柱の位置を指定します．`top-left`のように指定できます．`center/left/right/top/bottom`が使えます．
 * `nombre=<書式>`: 出力するノンブルを指定します．デフォルトは`\thepage`．
 * `odd_running_head=<書式>`，`even_running_head=<書式>`：それぞれ奇数ページ，偶数ページの柱を指定します．`_section`のように`_`から始まる名前を指定すると，対応する見出しを出力します．（`_section`だと現在の`\section`を出力する．）
 

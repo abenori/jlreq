@@ -3531,7 +3531,6 @@
   \twocolumn
   \sloppy
   \flushbottom
-  \if@tate\else\RequirePackage[balance]{nidanfloat}\fi
 \else
   \onecolumn
   \raggedbottom

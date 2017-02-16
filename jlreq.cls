@@ -93,7 +93,7 @@
 \def\jlreq@helper@removelastcomma#1,\jlreq@endmark{#1}
 
 % #1が#2のトークン内と\ifxで一致すれば#3を，そうでなければ#4を実行する．
-% #2は\edefで展開する．
+% #2は\edefで展開する．{}があるとバグるかも．
 \def\jlreq@ifintokenlist#1#2{%
   \begingroup
     \jlreq@tempafalse
@@ -2100,17 +2100,17 @@
   }%
   \@endnotetext{#2}%
 }
-\def\@endnotetext#1{%
+\long\def\@endnotetext#1{%
   \expandafter\let\expandafter\jlreq@tempa\expandafter=\csname\jlreq@endnotemarkname\endcsname
   \expandafter\jlreq@endnote@addtext\expandafter{\jlreq@tempa}{#1}%
 }
-\def\jlreq@theendnotes#1{%
+\long\def\jlreq@theendnotes#1{%
   \jlreq@ifendmark{#1}{}{%
     \jlreq@output@endnotes#1
     \jlreq@theendnotes
   }%
 }
-\def\jlreq@output@endnotes#1#2{%
+\long\def\jlreq@output@endnotes#1#2{%
   \expandafter\def\csname\jlreq@endnotemarkname\endcsname{#1}%
   \item\@makeendtext{#2}%
 }
@@ -2224,7 +2224,7 @@
 
 % (1) では\sidenote[]{}を定義
 % (2) では\sidenote{見出し}{注中身}を定義
-\def\@sidenotetext#1{%
+\long\def\@sidenotetext#1{%
   \marginpar{\reset@font\footnotesize
     \color@begingroup
     \@makesidetext{#1}%
@@ -2263,10 +2263,10 @@
   }
   \def\@sidenotemark{\@makesidemark}
   \ifx l\jlreq@engine
-    \def\@makesidetext#1{\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
+    \long\def\@makesidetext#1{\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
   \else
     % thefootnote = \inhibitglue （...だと\inhibitglueが効かない
-    \def\@makesidetext#1{　\kern-1\zw\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
+    \long\def\@makesidetext#1{　\kern-1\zw\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
   \fi
   \def\@makesidemark{\@makefnmark}
 }{% sidenote_type = symbol
@@ -3109,7 +3109,7 @@
       \ifnum0\if@twocolumn\else1\fi\ifjlreq@preamble1\fi>0
         \endquotation
         \egroup
-        \vskip\baselineskip
+        \vspace{\baselineskip}%
         \if@twocolumn
           \end{minipage}
         \fi

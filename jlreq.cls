@@ -267,6 +267,11 @@
   \jlreq@next
 }
 
+% preambleにいるかのスイッチ
+\newif\ifjlreq@preamble
+\jlreq@preambletrue
+\AtBeginDocument{\jlreq@preamblefalse}
+
 %. オプションの定義
 % オプション処理の際にしか使わない変数（後でそれを元に別の変数を調整する）
 % ものは\jlreq@option@<key>に格納する．
@@ -3048,12 +3053,15 @@
   \vskip\baselineskip
   {\jlreq@keepbaselineskip{\large}\@date}%
   \end{center}%
-  \par\vskip\baselineskip
-  \ifvoid\jlreq@abstractbox\else{\box\jlreq@abstractbox}\fi
-  }
+  \par
+  \vskip\baselineskip
+%  \setbox\jlreq@tempboxa=\vbox{\everypar{}\leavevmode\begin{center}あいうえお\end{center}}%
+%  \unvbox\jlreq@tempboxa
+  \ifvoid\jlreq@abstractbox\else\unvbox\jlreq@abstractbox\fi
+}
 
 %.. abstract
-\ifthenelse{\equal{jlreq@article@type}{book}}{}{% article,report
+\ifthenelse{\equal{\jlreq@article@type}{book}}{}{% article,report
   \newbox\jlreq@abstractbox
   \newcommand*{\abstractname}{概要}
   \if@titlepage
@@ -3072,35 +3080,44 @@
     }
   \else
     \newenvironment{abstract}{%
-      % とりあえず全部ボックスに入れる．
-      % \maketitleがこれより後にあるときは，\@maketitleの最後に読み込む．
-      \global\setbox\jlreq@abstractbox=\vtop\bgroup
-      \if@twocolumn
-        \ifx\maketitle\relax
-          \section*{\abstractname}%
-        \else
-          % 後で\@maketitleとともに呼び出されるときは\twcolumn[***]で呼び出される．
-          \begin{minipage}[b]{\textwidth}
-          \parindent=1\jlreq@mol
+      \ifnum0\if@twocolumn\else1\fi\ifjlreq@preamble1\fi>0
+        % とりあえず全部ボックスに入れる．
+        \global\setbox\jlreq@abstractbox=\vtop\bgroup
+        \ifjlreq@preamble
+          % preamble後っぽく振る舞う
+          \@noskipsecfalse
+          % \@nodocumentが入っているので一時的に無効化
+          \everypar{}
         \fi
-      \fi
-      \ifnum0\if@twocolumn\else1\fi\ifx\maketitle\relax\else1\fi>0
+        \if@twocolumn
+          \parindent=0pt
+          \hsize=\textwidth
+          % 後で\@maketitleとともに呼び出されるときは\twcolumn[***]で呼び出される．
+          \begin{minipage}[b]{\textwidth}%
+        \fi
         \bgroup
         \small
+        \parindent=1\jlreq@mol
         \begin{center}%
-        {\bfseries\abstractname}%
+          {\bfseries\abstractname}%
         \end{center}%
         \quotation
+      \else
+        \section*{\abstractname}%
       \fi
     }{%
-      \ifnum0\if@twocolumn\else1\fi\ifx\maketitle\relax\else1\fi>0
+      \ifnum0\if@twocolumn\else1\fi\ifjlreq@preamble1\fi>0
         \endquotation
         \egroup
-        \if@twocolumn\end{minipage}\fi
+        \vskip\baselineskip
+        \if@twocolumn
+          \end{minipage}
+        \fi
+        \egroup
       \fi
-      \vspace{\baselineskip}%
-      \egroup
-      \ifx\maketitle\relax\box\jlreq@abstractbox\fi
+      \ifjlreq@preamble\else
+        \unvbox\jlreq@abstractbox
+      \fi
     }
   \fi
 }
@@ -3410,7 +3427,7 @@
     \fi
     \@mainmatterfalse
     \let\jlreq@pagestyle@atmain\jlreq@current@pagestyle
-    \ifthenelse{\equal{jlreq@article@type}{article}}{}{%book, report
+    \ifthenelse{\equal{\jlreq@article@type}{article}}{}{%book, report
       \SaveHeading{chapter}{\jlreq@heading@chapter@atmain}%
       \ModifyHeading{chapter}{label_format={}}%
     }%
@@ -3431,7 +3448,7 @@
     \else
       \clearpage
     \fi
-    \ifthenelse{\equal{jlreq@article@type}{article}}{}{%book, report
+    \ifthenelse{\equal{\jlreq@article@type}{article}}{}{%book, report
       \SaveHeading{chapter}{\jlreq@heading@chapter@atmain}%
       \ModifyHeading{chapter}{label_format={}}%
     }%

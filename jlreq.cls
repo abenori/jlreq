@@ -342,28 +342,28 @@
 % 追加
 \jlreq@addpapersize[a0]{}{1189mm}{841mm}
 \jlreq@addpapersize[a1]{}{841mm}{594mm}
-\jlreq@addpapersize[a2]{}{420mm}{594mm}
-\jlreq@addpapersize[a7]{}{74mm}{105mm}
-\jlreq@addpapersize[a8]{}{52mm}{74mm}
-\jlreq@addpapersize[a9]{}{37mm}{52mm}
-\jlreq@addpapersize[a10]{}{26mm}{37mm}
+\jlreq@addpapersize[a2]{}{594mm}{420mm}
+\jlreq@addpapersize[a7]{}{105mm}{74mm}
+\jlreq@addpapersize[a8]{}{74mm}{52mm}
+\jlreq@addpapersize[a9]{}{52mm}{37mm}
+\jlreq@addpapersize[a10]{}{37mm}{26mm}
 
-\jlreq@addpapersize[b0]{}{1030mm}{1456mm}
-\jlreq@addpapersize[b1]{}{728mm}{1030mm}
-\jlreq@addpapersize[b2]{}{515mm}{728mm}
-\jlreq@addpapersize[b3]{}{364mm}{515mm}
-\jlreq@addpapersize[b7]{}{91mm}{128mm}
-\jlreq@addpapersize[b8]{}{64mm}{91mm}
-\jlreq@addpapersize[b9]{}{45mm}{64mm}
-\jlreq@addpapersize[b10]{}{32mm}{45mm}
+\jlreq@addpapersize[b0]{}{1456mm}{1030mm}
+\jlreq@addpapersize[b1]{}{1030mm}{728mm}
+\jlreq@addpapersize[b2]{}{728mm}{515mm}
+\jlreq@addpapersize[b3]{}{515mm}{364mm}
+\jlreq@addpapersize[b7]{}{128mm}{91mm}
+\jlreq@addpapersize[b8]{}{91mm}{64mm}
+\jlreq@addpapersize[b9]{}{64mm}{45mm}
+\jlreq@addpapersize[b10]{}{45mm}{32mm}
 
-\jlreq@addpapersize[c2]{}{458mm}{648mm}
-\jlreq@addpapersize[c3]{}{324mm}{458mm}
-\jlreq@addpapersize[c4]{}{229mm}{354mm}
-\jlreq@addpapersize[c5]{}{162mm}{229mm}
-\jlreq@addpapersize[c6]{}{114mm}{162mm}
-\jlreq@addpapersize[c7]{}{81mm}{114mm}
-\jlreq@addpapersize[c8]{}{57mm}{81mm}
+\jlreq@addpapersize[c2]{}{648mm}{458mm}
+\jlreq@addpapersize[c3]{}{458mm}{324mm}
+\jlreq@addpapersize[c4]{}{354mm}{229mm}
+\jlreq@addpapersize[c5]{}{229mm}{162mm}
+\jlreq@addpapersize[c6]{}{162mm}{114mm}
+\jlreq@addpapersize[c7]{}{114mm}{81mm}
+\jlreq@addpapersize[c8]{}{81mm}{57mm}
 
 %.. フォントサイズ，行長，1ページあたりの行数で基本版面のサイズを決める（2.4.1.a）
 \newcommand*{\jlreq@option@fontsize}{}

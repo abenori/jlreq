@@ -21,5 +21,9 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
 
 ## CHANGELOG
 * 2017-02-08
-    - First release
-
+    - First release.
+* 2017-02-17
+    - Fix bugs.
+    - Implement `abstract` environment.
+    - Change/Add some keys to class option/`\jlreqsetup`
+    - Stop to load `pxrubirica`, `luatexja-ruby` and `nidanfloat`.

@@ -467,7 +467,7 @@
 \newcommand*{\jlreq@warning}[1]{}
 \jlreq@DeclareOption{jlreq_warnings}{\renewcommand*{\jlreq@warning}[1]{\ClassWarningNoLine{jlreq}{(JLREQ warning) ##1}}}
 
-\ExecuteOptionsX{article_type=article,paper=a4,fontsize=10pt,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=_headings,onecolumn,final}
+\ExecuteOptionsX{article_type=article,paper=a4,fontsize=10pt,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=headings,onecolumn,final}
 % \@removeelementを一旦置き換えてから\ProcessOptionsXを実行する
 \let\jlreq@original@@removeelement=\@removeelement
 \let\@removeelement=\jlreq@helper@removeelement
@@ -2070,7 +2070,7 @@
 \newdimen\jlreq@endnote@indent
 % 現在の後注一覧を，\jlreq@endnote@textsに{{合印1}{後注1}}{{合印2}{後注2}}...の形で保持する
 \def\jlreq@endnote@texts{}
-\def\jlreq@endnote@addtext#1#2{%
+\long\def\jlreq@endnote@addtext#1#2{%
   \expandafter\gdef\expandafter\jlreq@endnote@texts\expandafter{\jlreq@endnote@texts{{#1}{#2}}}}
 \def\endnote{\@ifnextchar[{\jlreq@endnote}{\jlreq@endnote[]}}
 \def\endnotemark{\@ifnextchar[{\jlreq@endnotemark}{\jlreq@endnotemark[]}}
@@ -2155,8 +2155,8 @@
 \def\jlreq@tempc{}
 \@for\jlreq@tempa:=\jlreq@endnote@position\do{
   \jlreq@switch{\jlreq@tempa}{
-    {_headings}{\jlreq@tempatrue}
-    {_paragraph}{
+    {headings}{\jlreq@tempatrue}
+    {paragraph}{
       \jlreq@tempatrue% _paragraphの時は_headingsも有効にする
       \PushPostHook{par}{%
         \ifx\jlreq@endnote@texts\@empty\else
@@ -2166,7 +2166,17 @@
         \fi
       }
     }
-    {\edef\jlreq@tempc{\jlreq@tempc,\jlreq@tempa}}
+    {
+      \def\@tempa#1#2\jlreq@endmark{#1}
+      \edef\@tempa{\expandafter\@tempa\jlreq@tempa\jlreq@endmark}
+      \expandafter\ifx\@tempa _
+        \def\@tempa#1#2\jlreq@endmark{\def\jlreq@result{#2}}
+        \expandafter\@tempa\jlreq@tempa\jlreq@endmark
+        \edef\jlreq@tempc{\jlreq@tempc,\jlreq@result}
+      \else
+        \ClassError{jlreq}{invalid value \jlreq@tempa\space in endnote_position}{\@ehc}
+      \fi
+    }
   }
 }
 
@@ -2278,7 +2288,7 @@
   \def\sidenote{\jlreq@sidenote}
   \def\sidenotemark{\jlreq@sidenotemark}
   \def\sidenotetext{\jlreq@sidenotetext}
-  \def\jlreq@sidenote#1#2{\jlreq@sidenotemark{#1}\jlreq@sidenotetext{#1}{#2}}
+  \long\def\jlreq@sidenote#1#2{\jlreq@sidenotemark{#1}\jlreq@sidenotetext{#1}{#2}}
   \def\jlreq@sidenotemark#1{%
     {\reset@font\jlreq@sidenote@keywordfont #1}%
     \ifx\jlreq@sidenote@defaultmark\@empty\else
@@ -2288,11 +2298,11 @@
   }
   \def\@sidenotemark{\@makesidemark}
   % カスタマイズできるべき？
-  \def\jlreq@sidenotetext#1#2{%
+  \long\def\jlreq@sidenotetext#1#2{%
     \expandafter\def\csname\jlreq@sidenotemarkname\endcsname{\inhibitglue\null{\reset@font\headfont\inhibitglue #1}}%
     \@sidenotetext{#2}%
   }
-  \def\@makesidetext#1{{\headfont\csname\jlreq@sidenotemarkname\endcsname}\hspace*{1\jlreq@mol}#1}
+  \long\def\@makesidetext#1{{\headfont\csname\jlreq@sidenotemarkname\endcsname}\hspace*{1\jlreq@mol}#1}
   \def\@makesidemark{\@makefnmark}
 }
 

@@ -1413,7 +1413,7 @@
       }%
     }{}%
     \edef\jlreq@do{%
-     \expandonce{\jlreq@addtodo}%
+      \expandonce{\jlreq@addtodo}%
       \noexpand\def\expandonce{\csname jlreq@TobiraHeading@start@#1\endcsname}[####1]####2{%
         \unexpanded{\ifnum#2>\c@secnumdepth\else}%
           \unexpanded{\refstepcounter{#1}}%
@@ -1455,12 +1455,12 @@
 }
 
 %.. 別行見出し
-% \jlreq@startBlockHeading{1 = 命令名}{2 = レベル}{3 = 字下げ}{4 = 前空き}{5 = 後ろ空き}{6 = トータル行数}{7 =  フォーマット関連}*{見出し}[副題]
+% \jlreq@startBlockHeading{1 = 命令名}{2 = レベル}{3 = 字下げ}{4 = 前空き}{5 = 後ろ空き}{6 = トータル行数}{7 = afterindent}{8 =  フォーマット関連}*{見出し}[副題]
 % 字下げはa:**だと追加する値（ページ行頭には入らない），s:**も追加だがページ行頭でも入る，
 % r:**だとその値に強制する．
-\newcommand{\jlreq@startBlockHeading}[7]{%
-  \edef\jlreq@startBlockHeading@format{\unexpanded{#7}}%
-  \jlreq@startBlockHeading@{#1}{#2}{{#3}{#4}{#5}{#6}}%
+\newcommand{\jlreq@startBlockHeading}[8]{%
+  \edef\jlreq@startBlockHeading@format{\unexpanded{#8}}%
+  \jlreq@startBlockHeading@{#1}{#2}{{#3}{#4}{#5}{#6}{#7}}%
 }
 % {1 = 命令}{2 = レベル}{3 = スペース関連}
 \newcommand{\jlreq@startBlockHeading@}[3]{%
@@ -1517,14 +1517,13 @@
   }%
 }
 
-% {1 = 字下げ}{2 = 前空き}{3 = 後ろ空き}{4 = トータル行数}{5 = 出力}
-\long\def\jlreq@startBlockHeading@@@@#1#2#3#4#5{%
+% {1 = 字下げ}{2 = 前空き}{3 = 後ろ空き}{4 = トータル行数}{5 = afterindent}{6 = 出力}
+\long\def\jlreq@startBlockHeading@@@@#1#2#3#4#5#6{%
   \if@noskipsec\leavevmode\fi
   \setbox\jlreq@tempboxa=\vbox{%
     \jlreq@ifempty{#1}{}{\hsize=\dimexpr\hsize - #1\relax}%
-    \noindent #5}%
+    \noindent #6}%
   \par
-  \@afterindenttrue
   % \jlreq@tempskip(a/b)に前/後ろに入れるべき値を入れる
   % #2がa:ならばその値は\jlreq@tempskipaには入れず\jlreq@tempskipcに入れておく
   \jlreq@tempskipc=0pt
@@ -1577,6 +1576,7 @@
     \fi
   \fi
   \ifdim\jlreq@tempskipb=0pt\else\vspace{\jlreq@tempskipb}\fi
+  #5%
   \@afterheading
 }
 
@@ -1622,6 +1622,7 @@
     \let\jlreq@label@format=\@undefined
     \let\jlreq@subtitle@format=\@undefined
     \def\jlreq@pagetop@space{a}%
+    \def\jlreq@afterindent{\@afterindenttrue}
     \jlreq@parsekeyval[BlockHeading]{
       {lines}{\def\jlreq@lines{##1}}
       {before_space}{\def\jlreq@before@space{##1}}
@@ -1635,6 +1636,7 @@
       {label_format}{\edef\jlreq@label@format{\unexpanded{##1}}}
       {subtitle_format}{\edef\jlreq@subtitle@format{\unexpanded{##1}}}
       *{pagetop_space}{\def\jlreq@pagetop@space{s}}% ページ頭でもスペースを入れる
+      {afterindent}[true,false]{\edef\jlreq@afterindent{\expandonce{\csname @afterindent##1\endcsname}}}
       {pagebreak}[clearpage,cleardoublepage,clearcolumn,nariyuki]{
         \jlreq@switch{##1}{
           {clearpage}{\def\jlreq@pagebreak{\clearpage}}
@@ -1683,7 +1685,7 @@
       \noexpand\edef\expandonce{\csname #1\endcsname}{\noexpand\unexpanded{%
         \noexpand\jlreq@hook@beforeheadings{#1}%
         \expandonce{\jlreq@pagebreak}%
-        \unexpanded{\jlreq@startBlockHeading{#1}{#2}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@before@space}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@lines}}{{\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@format}}{\expandonce{\jlreq@subtitle@format}}%
+        \unexpanded{\jlreq@startBlockHeading{#1}{#2}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@before@space}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@lines}}{\expandonce{\jlreq@afterindent}}{{\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@format}}{\expandonce{\jlreq@subtitle@format}}%
       }}}%
     }%
   \expandafter\endgroup
@@ -1815,17 +1817,17 @@
     \def\jlreq@onelinemax{6\jlreq@fontsize}%
     \def\jlreq@twolinemax{20\jlreq@fontsize}%
     \def\jlreq@indent{0}%
-    \def\jlreq@afterindent{1\jlreq@mol}%
+    \def\jlreq@after@space{1\jlreq@mol}%
     \jlreq@parsekeyval[CutinHeading]{
       {font}{\def\jlreq@fontcommand{##1}}
       {onelinemax}{\def\jlreq@onelinemax{##1}}
       {twolinemax}{\def\jlreq@twolinemax{##1}}
       {indent}{\def\jlreq@indent{##1}}
-      {afterindent}{\def\jlreq@afterindent{##1}}
+      {after_space}{\def\jlreq@after@space{##1}}
     }{#3}%
     \edef\jlreq@do{%
       \noexpand\def\expandonce{\csname #1\endcsname}{%
-        \noexpand\jlreq@CutinHeading@start{#1}{\expandonce{\jlreq@fontcommand}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@afterindent}}{\expandonce{\jlreq@onelinemax}}{\expandonce{\jlreq@twolinemax}}%
+        \noexpand\jlreq@CutinHeading@start{#1}{\expandonce{\jlreq@fontcommand}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@onelinemax}}{\expandonce{\jlreq@twolinemax}}%
       }%
     }%
   \expandafter\endgroup

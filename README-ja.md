@@ -35,7 +35,7 @@
 `\section*[running head]{見出し文字列}[副題]`というように，通常の書式に加えて副題を受け付けられるように拡張されています．その他，`\part`（articleのみ），`\chapter`（book/reportのみ），`\subsection`も副題を受け付けます．（`\subsubsection`も受け付けますが，汚い見た目になります．）
 
 ### `\sidenote`
-傍注（縦組みの場合は脚注）を出力します．デフォルトでは`\footnote`と同様の書式となりますが，クラスオプションに`sidenote_type=mark`が指定されている場合，その書式は`\sidenote{該当項目}{注}`となります．たとえば
+傍注（縦組みの場合は脚注）を出力します．デフォルトでは`\footnote`と同様の書式となりますが，クラスオプションに`sidenote_type=symbol`が指定されている場合，その書式は`\sidenote{該当項目}{注}`となります．たとえば
 ````
 刊行できる\sidenote{原稿}{印刷などの方法により……}を入手する仕事である．
 ````
@@ -112,6 +112,12 @@
 * `caption_font=<命令>`: キャプション自身のフォントを指定します．
 * `caption_label_font=<命令>`: キャプションのラベルのフォントを指定します．
 
+### 引用
+`quote / quotation / verse`環境の挙動をクラスオプションで指定できます．
+* `quote_indent=<寸法;zh,zw>`: 字下げを指定します．デフォルトは2zwです．一行の長さが文字サイズの整数倍になるように調整されます．
+* `quote_end_indent=<寸法;zh,zw>`: 字上げを指定します．デフォルトは0zwです．
+* `quote_beforeafter_space=<寸法>`: 前後の空きを指定します．`quote_beforeafter_space=1\baselineskip`とすると一行あきます．
+* `quote_fontsize=[normalsize/small/footnotesize/scriptsize/tiny]`: フォントサイズを指定します．
 
 ## 見出し
 見出しの設定は，`\Declare***Heading`という命令で行います（***には見出しの種類に応じた文字列が入る）．書式はすべて

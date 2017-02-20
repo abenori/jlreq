@@ -431,6 +431,18 @@
 \newcommand*{\jlreq@option@sidenote@width}{}
 \DeclareOptionX{sidenote_width}{\renewcommand*{\jlreq@option@sidenote@width}{#1}}
 
+%.. 引用
+\def\jlreq@quote@indent{2zw}
+\DeclareOptionX{quote_indent}{\def\jlreq@quote@indent{#1}}
+\def\jlreq@quote@end@indent{0zw}
+\DeclareOptionX{quote_end_indent}{\def\jlreq@quote@end@indent{#1}}
+\def\jlreq@quote@fontsize{normalsize}
+\define@choicekey{jlreq.cls}{quote_fontsize}{normalsize,small,footnotesize,scriptsize,tiny}{\def\jlreq@quote@fontsize{#1}}
+\def\jlreq@quote@beforeafter@space{0pt}
+\DeclareOptionX{quote_beforeafter_space}{\def\jlreq@quote@beforeafter@space{#1}}
+
+
+%.. もろもろ
 \newif\if@restonecol \@restonecolfalse
 \newif\if@titlepage \@titlepagefalse
 \newif\ifjlreq@option@titlepage \jlreq@option@titlepagefalse % titlepageかnotitlepageかが指定された
@@ -3111,13 +3123,29 @@
         \begin{center}%
           {\bfseries\abstractname}%
         \end{center}%
-        \quotation
+        \list{}{%
+          \listparindent\parindent
+          \itemindent\listparindent
+          \labelwidth\z@
+          \labelsep\z@
+          \leftmargin=2\jlreq@mol
+          \rightmargin\leftmargin
+          \@tempdima=1\zw
+          \@tempdimb=\dimexpr\linewidth - \@totalleftmargin - \leftmargin - \rightmargin\relax
+          \@tempdimc=\@tempdimb
+          \divide\@tempdimb by \@tempdima\multiply\@tempdimb by \@tempdima
+          \ifdim\@tempdimb=\@tempdimc\else\@tempdimb=\dimexpr\@tempdimb - 1\jlreq@mol\relax\fi
+          \leftmargin=\dimexpr\leftmargin + (\@tempdimc - \@tempdimb)/2\relax
+          \rightmargin=\dimexpr\rightmargin + (\@tempdimc - \@tempdimb)/2\relax
+          \parsep\z@ \@plus.1\jlreq@gol
+        }%
+        \item\relax
       \else
         \section*{\abstractname}%
       \fi
     }{%
       \ifnum0\if@twocolumn\else1\fi\ifjlreq@preamble1\fi>0
-        \endquotation
+        \endlist
         \egroup
         \vspace{\baselineskip}%
         \if@twocolumn
@@ -3199,7 +3227,7 @@
   \renewcommand{\theenumi}{\Kanji{enumi}}
   \renewcommand{\theenumii}{\rensuji{\@arabic\c@enumii}}
   \renewcommand{\theenumiii}{\rensuji{\@arabic\c@enumiii}}
-  \renewcommand{\theenumiv}{\rensuji{\@arabc\c@enumiv}}
+  \renewcommand{\theenumiv}{\rensuji{\@arabic\c@enumiv}}
 \fi
 \newcommand{\labelenumi}{\theenumi}
 \newcommand{\labelenumii}{\theenumii}
@@ -3227,23 +3255,47 @@
     \listparindent\itemindent
     \labelwidth\z@
     \labelsep\z@
-    \leftmargin=2\jlreq@mol
-    \rightmargin\leftmargin \advance\leftmargin 2\jlreq@mol}%
+    \leftmargin=\jlreq@speciallength{\jlreq@quote@indent}%
+    \addtolength{\leftmargin}{2\jlreq@mol}%
+    \rightmargin=\jlreq@speciallength{\jlreq@quote@end@indent}%
+    \csname\jlreq@quote@fontsize\endcsname
+    \@tempdima=1\zw
+    \@tempdimb=\dimexpr\linewidth - \@totalleftmargin - \leftmargin - \rightmargin\relax
+    \@tempdimc=\@tempdimb
+    \divide\@tempdimb by \@tempdima\multiply\@tempdimb by \@tempdima
+    \topsep=\jlreq@speciallength{\jlreq@quote@beforeafter@space}%
+    \leftmargin=\dimexpr\leftmargin + \@tempdimc - \@tempdimb\relax}%
     \item\relax}{\endlist}
 \newenvironment{quotation}
-  {\list{}{\listparindent\parindent
+  {\list{}{%
+    \leftmargin=\jlreq@speciallength{\jlreq@quote@indent}%
+    \rightmargin=\jlreq@speciallength{\jlreq@quote@end@indent}%
+    \csname\jlreq@quote@fontsize\endcsname
+    \@tempdima=1\zw
+    \@tempdimb=\dimexpr\linewidth - \@totalleftmargin - \leftmargin - \rightmargin\relax
+    \@tempdimc=\@tempdimb
+    \divide\@tempdimb by \@tempdima\multiply\@tempdimb by \@tempdima
+    \leftmargin=\dimexpr\leftmargin + \@tempdimc - \@tempdimb\relax
+    \listparindent\parindent
     \itemindent\listparindent
     \labelwidth\z@
     \labelsep\z@
-    \leftmargin=2\jlreq@mol
-    \rightmargin\leftmargin
+    \topsep=\jlreq@speciallength{\jlreq@quote@beforeafter@space}%
     \parsep\z@ \@plus.1\jlreq@gol}%
     \item\relax}{\endlist}
 \newenvironment{quote}
   {\list{}{%
-    \rightmargin\leftmargin
+    \leftmargin=\jlreq@speciallength{\jlreq@quote@indent}%
+    \rightmargin=\jlreq@speciallength{\jlreq@quote@end@indent}%
+    \csname\jlreq@quote@fontsize\endcsname
+    \@tempdima=1\zw
+    \@tempdimb=\dimexpr\linewidth - \@totalleftmargin - \leftmargin - \rightmargin\relax
+    \@tempdimc=\@tempdimb
+    \divide\@tempdimb by \@tempdima\multiply\@tempdimb by \@tempdima
+    \leftmargin=\dimexpr\leftmargin + \@tempdimc - \@tempdimb\relax
     \labelwidth\z@
-    \leftmargin=2\jlreq@mol
+    \itemindent\z@
+    \topsep=\jlreq@speciallength{\jlreq@quote@beforeafter@space}%
     \listparindent\z@}%
     \item\relax}{\endlist}
 
@@ -3530,9 +3582,11 @@
 
 %. 定理環境
 \def\jlreq@theorem@abovebelowspace{1\baselineskip}%とりあえず前後に一行分のアキ
+\let\jlreq@original@@begintheorem=\@begintheorem
 \def\@begintheorem#1#2{\topsep=\jlreq@theorem@abovebelowspace
   \trivlist\labelsep=1\jlreq@mol
    \item[\hskip \labelsep{\headfont #1\ #2}]}
+\let\jlreq@original@@opargbegintheorem=\@opargbegintheorem
 \def\@opargbegintheorem#1#2#3{\topsep=\jlreq@theorem@abovebelowspace
   \trivlist\labelsep=1\jlreq@mol
   \item[\hskip \labelsep{\headfont #1\ #2（#3）}]}

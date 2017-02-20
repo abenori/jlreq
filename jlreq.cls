@@ -1052,6 +1052,17 @@
 \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{bx}{it}{<->ssub*gt/m/n}{}
 \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
 
+% 和文ファミリと欧文ファミリの連動
+\DeclareRobustCommand\rmfamily{%
+  \not@math@alphabet\rmfamily\mathrm
+  \romanfamily\rmdefault\kanjifamily\mcdefault\selectfont}
+\DeclareRobustCommand\sffamily{%
+  \not@math@alphabet\sffamily\mathsf
+  \romanfamily\sfdefault\kanjifamily\gtdefault\selectfont}
+\DeclareRobustCommand\ttfamily{%
+  \not@math@alphabet\ttfamily\mathtt
+  \romanfamily\ttdefault\kanjifamily\gtdefault\selectfont}
+
 % 数式フォント設定
 \ifx l\jlreq@engine\else
   \DeclareSymbolFont{mincho}{\jlreq@yokokanjiencoding}{mc}{m}{n}
@@ -1875,7 +1886,7 @@
 \newcounter{paragraph}[subsubsection]
 \newcounter{subparagraph}[paragraph]
 \renewcommand*{\@seccntformat}[1]{\csname the#1\endcsname\hspace{1\jlreq@mol}}
-\newcommand*{\headfont}{\gtfamily\sffamily}
+\newcommand*{\headfont}{\sffamily\bfseries}
 
 
 \newcommand*\jlreq@HeadingType[1]{%
@@ -3093,7 +3104,7 @@
       \null\vfil
       \@beginparpenalty\@lowpenalty
       \begin{center}%
-        {\bfseries\gtfamily\abstractname}%
+        {\sffamily\bfseries\abstractname}%
         \@endparpenalty\@M
       \end{center}%
       \par
@@ -3121,7 +3132,7 @@
         \small
         \parindent=1\jlreq@mol
         \begin{center}%
-          {\bfseries\abstractname}%
+          {\sffamily\bfseries\abstractname}%
         \end{center}%
         \list{}{%
           \listparindent\parindent

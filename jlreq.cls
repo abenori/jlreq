@@ -272,6 +272,17 @@
 \jlreq@preambletrue
 \AtBeginDocument{\jlreq@preamblefalse}
 
+\RequirePackage[savepos]{zref}
+% 現在のページを得る
+\newcount\jlreq@zref@reference@count
+\jlreq@zref@reference@count=0
+\newcount\jlreq@currentpage
+\newcommand*{\jlreq@setcurrentpage}{%
+  \global\advance\jlreq@zref@reference@count by 1
+  \zref@labelbyprops{jlreq@rest@width.page.\the\jlreq@zref@reference@count}{page}%
+  \jlreq@currentpage=\zref@extractdefault{jlreq@rest@width.page.\the\jlreq@zref@reference@count}{page}{\c@page}%
+}
+
 %. オプションの定義
 % オプション処理の際にしか使わない変数（後でそれを元に別の変数を調整する）
 % ものは\jlreq@option@<key>に格納する．
@@ -572,15 +583,11 @@
 \fi
 
 % 現在行の残りを得る．
-\RequirePackage[savepos]{zref}
-\newcount\jlreq@rest@linewidth@count
-\jlreq@rest@linewidth@count=0
-
 \ifx l\jlreq@engine
   % 以下のコードはおかしい．
   \newcommand*{\jlreq@calc@current@linewidth}{%
-    \dimexpr\zposx{jlreq@rest@width.pos.\the\jlreq@rest@linewidth@count} sp - \@totalleftmargin -
-    \ifodd\zref@extractdefault{jlreq@rest@width.page.\the\jlreq@rest@linewidth@count}{page}{\c@page}%
+    \dimexpr\zposx{jlreq@rest@width.pos.\the\jlreq@zref@reference@count} sp - \@totalleftmargin -
+    \ifodd\jlreq@currentpage
       \oddsidemargin
     \else
       \evensidemargin
@@ -591,8 +598,8 @@
   \newcommand*{\jlreq@calc@current@linewidth}{%
     \dimexpr
       \jlreq@ifydir{%
-        \zposx{jlreq@rest@width.pos.\the\jlreq@rest@linewidth@count} sp - \hoffset
-        \ifodd\zref@extractdefault{jlreq@rest@width.page.\the\jlreq@rest@linewidth@count}{page}{\c@page}%
+        \zposx{jlreq@rest@width.pos.\the\jlreq@zref@reference@count} sp - \hoffset
+        \ifodd\jlreq@currentpage
           - \oddsidemargin
         \else
           - \evensidemargin
@@ -604,7 +611,7 @@
           \pdfpageheight
         \fi
         - \topmargin - \headheight - \headsep - \voffset
-        - \zposy{jlreq@rest@width.pos.\the\jlreq@rest@linewidth@count} sp
+        - \zposy{jlreq@rest@width.pos.\the\jlreq@zref@reference@count} sp
       }%
       - \@totalleftmargin - 1in
     \relax
@@ -616,13 +623,13 @@
 % この命令以降，次にこの命令を実行する前まで\jlreq@rest@linewidth/\jlreq@rest@linewidthで
 % この場所における残り長さが取得できる．
 \newcommand*{\jlreq@savepos@for@rest@linewidth}{%
-  \global\advance\jlreq@rest@linewidth@count by 1\relax
-  \zsavepos{jlreq@rest@width.pos.\the\jlreq@rest@linewidth@count}%
-  \zref@labelbyprops{jlreq@rest@width.page.\the\jlreq@rest@linewidth@count}{page}%
+  \jlreq@setcurrentpage
+  \global\advance\jlreq@zref@reference@count by 1\relax
+  \zsavepos{jlreq@rest@width.pos.\the\jlreq@zref@reference@count}%
   \jlreq@current@linewidth=\jlreq@calc@current@linewidth
   \jlreq@rest@linewidth=\dimexpr\linewidth - \jlreq@current@linewidth\relax
+  \edef\jlreq@savepos@iflabelundefined{\noexpand\@ifundefined{\ZREF@RefPrefix @jlreq@rest@width.pos.\the\jlreq@zref@reference@count}}%
 }
-\def\jlreq@savepos@iflabelundefined{\@ifundefined{\ZREF@RefPrefix @jlreq@rest@width.pos.\the\jlreq@rest@linewidth@count}}
 
 %. 基本設定
 % 和文文字，欧文文字の設定（とりあえずLuaTeX-jaのデフォルトのまま）
@@ -1455,12 +1462,12 @@
 }
 
 %.. 別行見出し
-% \jlreq@startBlockHeading{1 = 命令名}{2 = レベル}{3 = 字下げ}{4 = 前空き}{5 = 後ろ空き}{6 = トータル行数}{7 = afterindent}{8 =  フォーマット関連}*{見出し}[副題]
+% \jlreq@startBlockHeading{1 = 命令名}{2 = レベル}{3 = スペース関連}{4 =  フォーマット関連}*{見出し}[副題]
 % 字下げはa:**だと追加する値（ページ行頭には入らない），s:**も追加だがページ行頭でも入る，
 % r:**だとその値に強制する．
 \newcommand{\jlreq@startBlockHeading}[8]{%
-  \edef\jlreq@startBlockHeading@format{\unexpanded{#8}}%
-  \jlreq@startBlockHeading@{#1}{#2}{{#3}{#4}{#5}{#6}{#7}}%
+  \edef\jlreq@startBlockHeading@format{\unexpanded{#4}}%
+  \jlreq@startBlockHeading@{#1}{#2}{#3}%
 }
 % {1 = 命令}{2 = レベル}{3 = スペース関連}
 \newcommand{\jlreq@startBlockHeading@}[3]{%
@@ -1517,12 +1524,13 @@
   }%
 }
 
-% {1 = 字下げ}{2 = 前空き}{3 = 後ろ空き}{4 = トータル行数}{5 = afterindent}{6 = 出力}
-\long\def\jlreq@startBlockHeading@@@@#1#2#3#4#5#6{%
+% {1 = 字下げ}{2 = 前空き}{3 = 後ろ空き}{4 = トータル行数}{5 = afterindent}{7 = 偶数ページ改ページ}{6 = 出力}
+\long\def\jlreq@startBlockHeading@@@@#1#2#3#4#5#6#7{%
   \if@noskipsec\leavevmode\fi
+  \jlreq@ifempty{#7}{}{\jlreq@setcurrentpage}%
   \setbox\jlreq@tempboxa=\vbox{%
     \jlreq@ifempty{#1}{}{\hsize=\dimexpr\hsize - #1\relax}%
-    \noindent #6}%
+    \noindent #7}%
   \par
   % \jlreq@tempskip(a/b)に前/後ろに入れるべき値を入れる
   % #2がa:ならばその値は\jlreq@tempskipaには入れず\jlreq@tempskipcに入れておく
@@ -1564,7 +1572,10 @@
   \dp\jlreq@tempboxa=\dimexpr\dp\jlreq@tempboxa + \ht\jlreq@tempboxa\relax
   \ht\jlreq@tempboxa=0pt
   \box\jlreq@tempboxa
-  \par\nobreak
+  \par
+  \jlreq@ifempty{#7}{\nobreak}{%
+    \ifodd\jlreq@currentpage\nobreak\fi
+  }%
   \prevdepth=0pt
   \jlreq@startBlockHeading@analyzespace#3:\jlreq@endmark
   \jlreq@tempskipb=\glueexpr\jlreq@tempskipb + \ht\jlreq@tempboxb - \baselineskip\relax
@@ -1622,7 +1633,8 @@
     \let\jlreq@label@format=\@undefined
     \let\jlreq@subtitle@format=\@undefined
     \def\jlreq@pagetop@space{a}%
-    \def\jlreq@afterindent{\@afterindenttrue}
+    \def\jlreq@afterindent{\@afterindenttrue}%
+    \def\jlreq@nobreak@evenpage{*}% 偶数ページでも改ページを抑制するならば*，そうでないと空
     \jlreq@parsekeyval[BlockHeading]{
       {lines}{\def\jlreq@lines{##1}}
       {before_space}{\def\jlreq@before@space{##1}}
@@ -1637,6 +1649,12 @@
       {subtitle_format}{\edef\jlreq@subtitle@format{\unexpanded{##1}}}
       *{pagetop_space}{\def\jlreq@pagetop@space{s}}% ページ頭でもスペースを入れる
       {afterindent}[true,false]{\edef\jlreq@afterindent{\expandonce{\csname @afterindent##1\endcsname}}}
+      {nobreak_evenpage}[true,false]{%
+        \jlreq@switch{##1}{
+          {true}{\def\jlreq@nobreak@evenpage{*}}
+          {false}{\def\jlreq@nobreak@evenpage{}}
+        }%
+      }%
       {pagebreak}[clearpage,cleardoublepage,clearcolumn,nariyuki]{
         \jlreq@switch{##1}{
           {clearpage}{\def\jlreq@pagebreak{\clearpage}}
@@ -1685,8 +1703,10 @@
       \noexpand\edef\expandonce{\csname #1\endcsname}{\noexpand\unexpanded{%
         \noexpand\jlreq@hook@beforeheadings{#1}%
         \expandonce{\jlreq@pagebreak}%
-        \unexpanded{\jlreq@startBlockHeading{#1}{#2}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@before@space}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@lines}}{\expandonce{\jlreq@afterindent}}{{\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@format}}{\expandonce{\jlreq@subtitle@format}}%
-      }}}%
+        \unexpanded{\jlreq@startBlockHeading{#1}{#2}}%
+        {{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@before@space}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@lines}}{\expandonce{\jlreq@afterindent}}{\expandonce{\jlreq@nobreak@evenpage}}}%
+        {{\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@format}}{\expandonce{\jlreq@subtitle@format}}}%
+      }}%
     }%
   \expandafter\endgroup
   \jlreq@do
@@ -1920,15 +1940,20 @@
 
   \ifthenelse{\equal{\jlreq@article@type}{article}}{
     \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},indent=4,lines=4}
+    \if@twoside\ModifyHeading{part}{nobreak_evenpage=false}\fi
   }
   {% book, report
     \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\jlreq@mol}},format={\null\vfill {\Huge\headfont \hspace*{2\jlreq@mol}#1#2}\vspace*{2\jlreq@gol}}}
     \NewBlockHeading{chapter}{0}{indent=2,lines=6,label_format={第\thechapter 章\hspace*{1\jlreq@gol}},font={\huge\headfont}}
+    \if@twoside\ModifyHeading{chapter}{nobreak_evenpage=false}\fi
     \renewcommand{\thechapter}{\Kanji{chapter}}
   }
   \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},indent=6,lines=3}
+  \if@twoside\ModifyHeading{section}{nobreak_evenpage=false}\fi
   \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},indent=8,lines=2}
+  \if@twoside\ModifyHeading{subsection}{nobreak_evenpage=false}\fi
   \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=10,lines=1,before_lines=1}
+  \if@twoside\ModifyHeading{subsubsection}{nobreak_evenpage=false}\fi
   \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
   \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=1}
 \else

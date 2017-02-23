@@ -1647,26 +1647,31 @@
       {format}{\edef\jlreq@format{\unexpanded{##1}}}
       {label_format}{\edef\jlreq@label@format{\unexpanded{##1}}}
       {subtitle_format}{\edef\jlreq@subtitle@format{\unexpanded{##1}}}
-      *{pagetop_space}{\def\jlreq@pagetop@space{s}}% ページ頭でもスペースを入れる
+      {pagetop_space}[true,false]{% ページ頭でもスペースを入れる
+        \jlreq@switch{##1}{
+          {true}{\def\jlreq@pagetop@space{s}}
+          {false}{\def\jlreq@pagetop@space{a}}
+        }%
+      }
       {afterindent}[true,false]{\edef\jlreq@afterindent{\expandonce{\csname @afterindent##1\endcsname}}}
       {nobreak_evenpage}[true,false]{%
         \jlreq@switch{##1}{
           {true}{\def\jlreq@nobreak@evenpage{*}}
           {false}{\def\jlreq@nobreak@evenpage{}}
         }%
-      }%
-      {pagebreak}[clearpage,cleardoublepage,clearcolumn,nariyuki]{
+      }
+      {pagebreak}[clearpage,cleardoublepage,clearcolumn,nariyuki]{%
         \jlreq@switch{##1}{
           {clearpage}{\def\jlreq@pagebreak{\clearpage}}
           {cleardoublepage}{\def\jlreq@pagebreak{\cleardoublepage}}
           {clearcolumn}{\if@twocolumn\def\jlreq@pagebreak{\newpage}\else\def\jlreq@pagebreak{}\fi}
           {nariyuki}{\def\jlreq@pagebreak{}}
-        }
+        }%
       }
     }{#3}%
     \ifx\jlreq@format\@undefined
       \edef\jlreq@format{%
-        \expandonce{\jlreq@font}\unexpanded{##1}\unexpanded{##2}%
+        \expandonce{\jlreq@font}\@hangfrom{\unexpanded{##1}}\unexpanded{##2}%
         \unexpanded{##3}%
       }%
     \fi
@@ -1674,7 +1679,7 @@
       \def\jlreq@label@format{\@seccntformat{#1}}%
     \fi
     \ifx\jlreq@subtitle@format\@undefined
-      \edef\jlreq@subtitle@format{{\unexpanded{\nobreak\par\hspace*{4\jlreq@mol}}\expandonce{\jlreq@subtitle@font}---\unexpanded{##1}---}}%
+      \edef\jlreq@subtitle@format{{\unexpanded{\nobreak{\par}\hspace*{4\jlreq@mol}}\expandonce{\jlreq@subtitle@font}---\unexpanded{##1}---}}%
     \fi
     \def\jlreq@addtodo{}%
     \@ifundefined{l@#1}{
@@ -2256,22 +2261,35 @@
 \setlength{\marginparsep}{2\jlreq@mol} % フォントサイズ×2（4.2.7：特に問題に～e）
 {%
   \footnotesize
-  \setlength{\jlreq@tempdima}{\dimexpr \paperwidth - \textwidth - 1in - \oddsidemargin - \marginparsep\relax}
+  % \jlreq@tempdimaにマージン最小値を入れる
+  \if@tate
+    \setlength{\jlreq@tempdima}{\dimexpr\paperheight - \topmargin - \headheight - \headsep - \voffset - 1in - \textwidth\relax}
+    \if@twocolumn
+      \ifdim\jlreq@tempdima>\dimexpr\paperheight - \jlreq@tempdima - \textwidth\relax
+        \setlength{\jlreq@tempdima}{\dimexpr\paperheight - \jlreq@tempdima - \textwidth\relax}
+      \fi
+    \fi
+  \else
+    \setlength{\jlreq@tempdima}{\dimexpr \paperwidth - \textwidth - 1in - \oddsidemargin - \marginparsep\relax}
+    \ifdim\jlreq@tempdima>\dimexpr\oddsidemargin + 1in\relax
+      \setlength{\jlreq@tempdima}{\dimexpr\oddsidemargin + 1in\relax}
+    \fi
+  \fi
   \ifx\jlreq@option@sidenote@width\@empty
-    \setlength{\marginparwidth}{\dimexpr\jlreq@tempdima-2\jlreq@fontsize\relax}
+    \setlength{\marginparwidth}{\dimexpr\jlreq@tempdima-2\jlreq@fontsize - \marginparsep\relax}
+    % 4.7.2.b: 並列中の行長は15文から20字程度
+    \ifdim\marginparwidth>20\jlreq@mol
+      \global\marginparwidth=20\jlreq@mol
+    \fi
   \else
     \setlength{\marginparwidth}{\jlreq@speciallength{\jlreq@option@sidenote@width}}
     \ifnum\marginparwidth>\jlreq@tempdima
       \ClassWarningNoLine{jlreq}{sidenote_width is greater than the width of the margin}
     \fi
   \fi
-  \ifdim\marginparwidth>18\jlreq@mol
-    \global\marginparwidth=18\jlreq@mol
-  \else
-    \@tempdima=1\zw% 1\jlreq@mol
-    \global\divide\marginparwidth\@tempdima
-    \global\multiply\marginparwidth\@tempdima
-  \fi
+  \@tempdima=1\zw% 1\jlreq@mol
+  \global\divide\marginparwidth\@tempdima
+  \global\multiply\marginparwidth\@tempdima
   \global\setlength{\marginparpush}{.5\@tempdima} % 同上：g
 }
 
@@ -2670,7 +2688,7 @@
       {mark_format}{\edef\jlreq@mark@format{\unexpanded{##1}}}
       {command}{\edef\jlreq@command{\unexpanded{##1}}}
       {gap}{\def\jlreq@gap{##1}}
-      *{no_clear_mark}{\jlreq@clearmarkfalse}
+      {clear_mark}[true,false]{\csname jlreq@clearmark##1\endcsname}
     }{#2}%
     \ifthenelse{\(
       \boolean{@tate} \AND \(
@@ -2895,8 +2913,8 @@
   \ModifyPageStyle{headings}{mark_format={_chapter={第\thechapter 章\quad #1}}}
 }
 \if@tate
-  \RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},no_clear_mark}
-  \NewPageStyle{myheadings}{nombre=\thepage,odd_running_head=\rightmark,even_running_head=\leftmark,no_clear_mark}
+  \RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},clear_mark=false}
+  \NewPageStyle{myheadings}{nombre=\thepage,odd_running_head=\rightmark,even_running_head=\leftmark,clear_mark=false}
   \if@twoside
     \ModifyPageStyle{plain}{nombre_position={top-left}}
     \ModifyPageStyle{headings}{nombre=\thepage,nombre_position=bottom-left,running_head_position=top-left}
@@ -2907,9 +2925,9 @@
     \ModifyPageStyle{myheadings}{nombre_position=bottom-center,running_head_position=top-center}
   \fi
 \else% yoko
-  \RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},nombre_position={bottom-center},no_clear_mark}
+  \RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},nombre_position={bottom-center},clear_mark=false}
   \ModifyPageStyle{headings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center}
-  \NewPageStyle{myheadings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center,odd_running_head=\rightmark,even_running_head=\leftmark,no_clear_mark}
+  \NewPageStyle{myheadings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center,odd_running_head=\rightmark,even_running_head=\leftmark,clear_mark=false}
 \fi
 
 %. フロート関連

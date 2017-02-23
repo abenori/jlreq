@@ -433,8 +433,8 @@
 % 脚注の字下げ，一行目を下げるならばone，二行目以降ならばtwo．ちょっと酷いので後で考える．
 \newcommand*{\jlreq@footnotetext@indent}{one}
 \define@choicekey{jlreq.cls}{footnotetext_indent}{one,two}{\renewcommand*{\jlreq@footnotetext@indent}{#1}}
-% 後注をどこに配置するか．_headings（全ての見出し）,_paragraph（段落後）,_で始まらないやつ（その名前の見出し）．カンマ区切り
-\newcommand*{\jlreq@endnote@position}{_headings}
+% 後注をどこに配置するか．headings（全ての見出し）,paragraph（段落後）,_で始まるやつ（その名前の見出し）．カンマ区切り
+\newcommand*{\jlreq@endnote@position}{headings}
 \DeclareOptionX{endnote_position}{\renewcommand*{\jlreq@endnote@position}{#1}}
 % 傍注のタイプ
 \newcommand*{\jlreq@sidenote@type}{number}
@@ -1465,7 +1465,7 @@
 % \jlreq@startBlockHeading{1 = 命令名}{2 = レベル}{3 = スペース関連}{4 =  フォーマット関連}*{見出し}[副題]
 % 字下げはa:**だと追加する値（ページ行頭には入らない），s:**も追加だがページ行頭でも入る，
 % r:**だとその値に強制する．
-\newcommand{\jlreq@startBlockHeading}[8]{%
+\newcommand{\jlreq@startBlockHeading}[4]{%
   \edef\jlreq@startBlockHeading@format{\unexpanded{#4}}%
   \jlreq@startBlockHeading@{#1}{#2}{#3}%
 }
@@ -1524,7 +1524,7 @@
   }%
 }
 
-% {1 = 字下げ}{2 = 前空き}{3 = 後ろ空き}{4 = トータル行数}{5 = afterindent}{7 = 偶数ページ改ページ}{6 = 出力}
+% {1 = 字下げ}{2 = 前空き}{3 = 後ろ空き}{4 = トータル行数}{5 = afterindent}{6 = 偶数ページ改ページ}{7 = 出力}
 \long\def\jlreq@startBlockHeading@@@@#1#2#3#4#5#6#7{%
   \if@noskipsec\leavevmode\fi
   \jlreq@ifempty{#7}{}{\jlreq@setcurrentpage}%
@@ -1533,7 +1533,7 @@
     \noindent #7}%
   \par
   % \jlreq@tempskip(a/b)に前/後ろに入れるべき値を入れる
-  % #2がa:ならばその値は\jlreq@tempskipaには入れず\jlreq@tempskipcに入れておく
+  % #2がa:ならばその値は\jlreq@tempskipaには足さず\jlreq@tempskipcに入れておく
   \jlreq@tempskipc=0pt
   \jlreq@startBlockHeading@analyzespace#2:\jlreq@endmark
   \setbox\jlreq@tempboxb=\vbox{　}%
@@ -2224,7 +2224,7 @@
         \expandafter\@tempa\jlreq@tempa\jlreq@endmark
         \edef\jlreq@tempc{\jlreq@tempc,\jlreq@result}
       \else
-        \ClassError{jlreq}{invalid value \jlreq@tempa\space in endnote_position}{\@ehc}
+        \ClassError{jlreq}{Invalid value \jlreq@tempa\space in endnote_position}{\@ehc}
       \fi
     }
   }

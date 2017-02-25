@@ -923,12 +923,11 @@
 %.. フォント関連
 \newdimen\jlreq@fontsize
 \ifx l\jlreq@engine
-  \jlreq@tempdima=0.25mm
   \setlength{\jlreq@fontsize}{%
     \dimexpr\directlua{
       local act = string.char(92)
       local s = [[\jlreq@option@fontsize]]
-      s = s:gsub("Q",act .. "jlreq@tempdima")
+      s = s:gsub("Q",act .. "dimexpr 0.25mm" .. act .. "relax")
       tex.print(s)
     }\relax
   }%
@@ -1091,12 +1090,11 @@
   \setlength{\jlreq@baselineskip}{\dimexpr 17\jlreq@fontsize/10\relax}%
 \else
   \ifx l\jlreq@engine
-    \jlreq@tempdima=0.25mm
     \setlength{\jlreq@baselineskip}{%
       \dimexpr\directlua{
         local act = string.char(92)
         local s = [[\jlreq@option@baselineskip]]
-        s = s:gsub("Q",act .. "jlreq@tempdima"):gsub("zh",act .. "zh"):gsub("zw",act .. "zw")
+        s = s:gsub("Q",act .. "dimexpr 0.25mm" .. act .. "relax"):gsub("zh",act .. "zh"):gsub("zw",act .. "zw")
         tex.print(s)
       }\relax
     }%
@@ -1573,9 +1571,9 @@
   \ht\jlreq@tempboxa=0pt
   \box\jlreq@tempboxa
   \par
-  \jlreq@ifempty{#7}{\nobreak}{%
+  \jlreq@ifempty{#7}{%
     \ifodd\jlreq@currentpage\nobreak\fi
-  }%
+  }{\nobreak}%
   \prevdepth=0pt
   \jlreq@startBlockHeading@analyzespace#3:\jlreq@endmark
   \jlreq@tempskipb=\glueexpr\jlreq@tempskipb + \ht\jlreq@tempboxb - \baselineskip\relax
@@ -1627,7 +1625,7 @@
     \def\jlreq@after@lines{}%
     \def\jlreq@font{\normalsize}%
     \def\jlreq@subtitle@font{\normalsize}%
-    \def\jlreq@indent{0}%
+    \def\jlreq@indent{0\jlreq@mol}%
     \let\jlreq@format=\@undefined
     \def\jlreq@pagebreak{}%
     \let\jlreq@label@format=\@undefined
@@ -1702,7 +1700,6 @@
     \ifx\jlreq@before@lines\@empty\else\edef\jlreq@before@space{\expandonce{\jlreq@pagetop@space}:\expandonce{\jlreq@before@lines}\baselineskip}\fi
     \ifx\jlreq@after@space\@empty\else\edef\jlreq@after@space{r:\expandonce{\jlreq@after@space}}\fi
     \ifx\jlreq@after@lines\@empty\else\edef\jlreq@after@space{a:\expandonce{\jlreq@after@lines}\baselineskip}\fi
-    \ifx\jlreq@indent\@empty\else\edef\jlreq@indent{\expandonce{\jlreq@indent}\jlreq@mol}\fi
     \edef\jlreq@do{%
       \expandonce{\jlreq@addtodo}%
       \noexpand\edef\expandonce{\csname #1\endcsname}{\noexpand\unexpanded{%
@@ -1739,7 +1736,7 @@
   \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\@dottedtocline{#2}{0\jlreq@mol}{2\jlreq@gol}}}{}%
   \begingroup
     \def\jlreq@font{\normalfont\normalsize}%
-    \def\jlreq@indent{0}%
+    \def\jlreq@indent{0\jlreq@mol}%
     \def\jlreq@mark{}%
     \jlreq@parsekeyval[RuninHeading]{%
       {font}{\def\jlreq@font{##1}}
@@ -1751,9 +1748,9 @@
       \noexpand\def\expandonce{\csname #1\endcsname}{%
         \unexpanded{\jlreq@hook@beforeheadings{#1}}%
         \expandafter\jlreq@ifempty\expandafter{\jlreq@mark}{%
-          \noexpand\@startsection{\unexpanded{#1}}{\unexpanded{#2}}{\expandonce{\jlreq@indent}\noexpand\jlreq@mol}{0pt}{-1\jlreq@fontsize}{\expandonce{\jlreq@font}}%
+          \noexpand\@startsection{\unexpanded{#1}}{\unexpanded{#2}}{\expandonce{\jlreq@indent}}{0pt}{-1\jlreq@fontsize}{\expandonce{\jlreq@font}}%
         }{%
-          \noexpand\@startsection{\unexpanded{#1}}{\unexpanded{#2}}{\expandonce{\jlreq@indent}\noexpand\jlreq@mol}{0pt}{-1\jlreq@fontsize}{\noexpand\kern\expandonce{\jlreq@indent}\noexpand\jlreq@mol\expandonce{\jlreq@mark}\noexpand\kern-\expandonce{\jlreq@indent}\noexpand\jlreq@mol\expandonce{\jlreq@font}}%
+          \noexpand\@startsection{\unexpanded{#1}}{\unexpanded{#2}}{\expandonce{\jlreq@indent}}{0pt}{-1\jlreq@fontsize}{\noexpand\kern\expandonce{\jlreq@indent}\expandonce{\jlreq@mark}\noexpand\kern-\expandonce{\jlreq@indent}\expandonce{\jlreq@font}}%
         }%
       }%
     }%
@@ -1807,9 +1804,9 @@
   \dp\@tempboxa=\dp\jlreq@tempboxa
   \@tempdima=\wd\@tempboxa
   % \hang****を設定
-  \hangindent=\dimexpr#2\jlreq@mol + \@tempdima + #3\relax\hangafter=-\jlreq@CutinHeading@linecount
+  \hangindent=\dimexpr#2 + \@tempdima + #3\relax\hangafter=-\jlreq@CutinHeading@linecount
   \jlreq@hangindent=\hangindent\jlreq@wraplinecount=\hangafter
-  \hspace*{#2\jlreq@mol}%
+  \hspace*{#2}%
   \kern-\dimexpr\@tempdima + #3 + \parindent\relax
   \box\@tempboxa
   \hspace*{#3}%
@@ -1841,7 +1838,7 @@
     \def\jlreq@fontcommand{\headfont}%
     \def\jlreq@onelinemax{6\jlreq@fontsize}%
     \def\jlreq@twolinemax{20\jlreq@fontsize}%
-    \def\jlreq@indent{0}%
+    \def\jlreq@indent{0\jlreq@mol}%
     \def\jlreq@after@space{1\jlreq@mol}%
     \jlreq@parsekeyval[CutinHeading]{
       {font}{\def\jlreq@fontcommand{##1}}
@@ -1930,6 +1927,33 @@
   \expandafter\expandafter\expandafter\ifx\csname jlreq@heading@type@#1\endcsname#2\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
 }
 
+% 全ての見出しにマクロ#1を適用する．
+\def\jlreq@heading@execmacro@toallheadings#1{%
+  \begingroup
+    \def\jlreq@do{}%
+    \ifx\jlreq@heading@allheadings\@undefined
+      \jlreq@heading@execmacro@toallheadings@{#1}{chapter,part,section,subsection,subsubsection,paragraph,subparagraph}%
+    \else
+      \def\@tempa{\jlreq@heading@execmacro@toallheadings@{#1}}%
+      \expandafter\@tempa\expandafter{\jlreq@heading@allheadings}%
+    \fi
+  \expandafter\endgroup
+  \jlreq@do
+}
+
+\def\jlreq@heading@execmacro@toallheadings@#1#2{
+  \@for\jlreq@tempa:=#2\do{%
+    \@ifundefined{\jlreq@tempa}{}{%
+      \eappto\jlreq@do{\noexpand#1{\expandonce{\jlreq@tempa}}}%
+    }%
+  }%
+}
+\def\jlreq@clearheadingmarks#1{%
+  \@ifundefined{#1mark}{}{%
+    \expandafter\let\csname#1mark\endcsname=\@gobble
+  }%
+}
+
 %.. 各種定義
 \if@tate
   \renewcommand{\thepart}{\Kanji{part}}
@@ -1944,23 +1968,23 @@
     (\rensuji{\@arabic\c@subparagraph})}
 
   \ifthenelse{\equal{\jlreq@article@type}{article}}{
-    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},indent=4,lines=4}
+    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},indent=4\zh,lines=4}
     \if@twoside\ModifyHeading{part}{nobreak_evenpage=false}\fi
   }
   {% book, report
     \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\jlreq@mol}},format={\null\vfill {\Huge\headfont \hspace*{2\jlreq@mol}#1#2}\vspace*{2\jlreq@gol}}}
-    \NewBlockHeading{chapter}{0}{indent=2,lines=6,label_format={第\thechapter 章\hspace*{1\jlreq@gol}},font={\huge\headfont}}
+    \NewBlockHeading{chapter}{0}{indent=2\zh,lines=6,label_format={第\thechapter 章\hspace*{1\jlreq@gol}},font={\huge\headfont}}
     \if@twoside\ModifyHeading{chapter}{nobreak_evenpage=false}\fi
     \renewcommand{\thechapter}{\Kanji{chapter}}
   }
-  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},indent=6,lines=3}
+  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},indent=6\zh,lines=3}
   \if@twoside\ModifyHeading{section}{nobreak_evenpage=false}\fi
-  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},indent=8,lines=2}
+  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},indent=8\zh,lines=2}
   \if@twoside\ModifyHeading{subsection}{nobreak_evenpage=false}\fi
-  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=10,lines=1,before_lines=1}
+  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=10\zh,lines=1,before_lines=1}
   \if@twoside\ModifyHeading{subsubsection}{nobreak_evenpage=false}\fi
   \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
-  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=1}
+  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=1\zh}
 \else
   \renewcommand{\thepart}{\Roman{part}}
   \renewcommand{\thesubsection}{\thesection .\arabic{subsection}}
@@ -1988,8 +2012,8 @@
   \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},lines=3}
   \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},lines=2}
   \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},lines=1,before_lines=1}
-  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=1}
-  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=2}
+  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=1\zw}
+  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=2\zw}
 \fi
 
 \ifthenelse{\equal{\jlreq@article@type}{article}}{}{% book, report
@@ -2851,33 +2875,6 @@
   \jlreq@do
 }
 
-% 全ての見出しにマクロ#1を適用する．
-\def\jlreq@heading@execmacro@toallheadings#1{%
-  \begingroup
-    \def\jlreq@do{}%
-    \ifx\jlreq@heading@allheadings\@undefined
-      \jlreq@heading@execmacro@toallheadings@{#1}{chapter,part,section,subsection,subsubsection,paragraph,subparagraph}%
-    \else
-      \def\@tempa{\jlreq@heading@execmacro@toallheadings@{#1}}%
-      \expandafter\@tempa\expandafter{\jlreq@heading@allheadings}%
-    \fi
-  \expandafter\endgroup
-  \jlreq@do
-}
-
-\def\jlreq@heading@execmacro@toallheadings@#1#2{
-  \@for\jlreq@tempa:=#2\do{%
-    \@ifundefined{\jlreq@tempa}{}{%
-      \eappto\jlreq@do{\noexpand#1{\expandonce{\jlreq@tempa}}}%
-    }%
-  }%
-}
-\def\jlreq@clearheadingmarks#1{%
-  \@ifundefined{#1mark}{}{%
-    \expandafter\let\csname#1mark\endcsname=\@gobble
-  }%
-}
-  
 \newcommand*{\NewPageStyle}[2]{%
   \expandafter\@ifdefinable\csname ps@#1\endcsname{\DeclarePageStyle{#1}{#2}}%
 }

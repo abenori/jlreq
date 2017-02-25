@@ -273,14 +273,16 @@
 \AtBeginDocument{\jlreq@preamblefalse}
 
 \RequirePackage[savepos]{zref}
+\zref@newprop*{jlreq@page}[0]{\number\c@page}
+\zref@addprop{main}{jlreq@page}
 % 現在のページを得る
 \newcount\jlreq@zref@reference@count
 \jlreq@zref@reference@count=0
 \newcount\jlreq@currentpage
 \newcommand*{\jlreq@setcurrentpage}{%
   \global\advance\jlreq@zref@reference@count by 1
-  \zref@labelbyprops{jlreq@rest@width.page.\the\jlreq@zref@reference@count}{page}%
-  \jlreq@currentpage=\zref@extractdefault{jlreq@rest@width.page.\the\jlreq@zref@reference@count}{page}{\c@page}%
+  \zref@labelbyprops{jlreq@rest@width.page.\the\jlreq@zref@reference@count}{jlreq@page}%
+  \global\jlreq@currentpage=\zref@extractdefault{jlreq@rest@width.page.\the\jlreq@zref@reference@count}{jlreq@page}{\c@page}%
 }
 
 %. オプションの定義
@@ -626,9 +628,9 @@
   \jlreq@setcurrentpage
   \global\advance\jlreq@zref@reference@count by 1\relax
   \zsavepos{jlreq@rest@width.pos.\the\jlreq@zref@reference@count}%
-  \jlreq@current@linewidth=\jlreq@calc@current@linewidth
-  \jlreq@rest@linewidth=\dimexpr\linewidth - \jlreq@current@linewidth\relax
-  \edef\jlreq@savepos@iflabelundefined{\noexpand\@ifundefined{\ZREF@RefPrefix @jlreq@rest@width.pos.\the\jlreq@zref@reference@count}}%
+  \global\jlreq@current@linewidth=\jlreq@calc@current@linewidth
+  \global\jlreq@rest@linewidth=\dimexpr\linewidth - \jlreq@current@linewidth\relax
+  \edef\jlreq@savepos@iflabelundefined{\noexpand\zref@ifrefundefined{jlreq@rest@width.pos.\the\jlreq@zref@reference@count}}%
 }
 
 %. 基本設定
@@ -1677,10 +1679,10 @@
       \def\jlreq@label@format{\@seccntformat{#1}}%
     \fi
     \ifx\jlreq@subtitle@format\@undefined
-      \edef\jlreq@subtitle@format{{\unexpanded{\nobreak{\par}\hspace*{4\jlreq@mol}}\expandonce{\jlreq@subtitle@font}---\unexpanded{##1}---}}%
+      \edef\jlreq@subtitle@format{{\unexpanded{\nobreak{\par}\hspace*{4\jlreq@mol}}\expandonce{\jlreq@subtitle@font}--- \unexpanded{##1} ---}}%
     \fi
     \def\jlreq@addtodo{}%
-    \@ifundefined{l@#1}{
+    \@ifundefined{l@#1}{%
       % 長さは適当に計測する
       \begingroup
         % ちょっと大きめで計測しておく
@@ -1738,6 +1740,7 @@
     \def\jlreq@font{\normalfont\normalsize}%
     \def\jlreq@indent{0\jlreq@mol}%
     \def\jlreq@mark{}%
+    \def\jlreq@label@font{}%
     \jlreq@parsekeyval[RuninHeading]{%
       {font}{\def\jlreq@font{##1}}
       {indent}{\def\jlreq@indent{##1}}
@@ -2303,7 +2306,7 @@
     \fi
   \fi
   \ifx\jlreq@option@sidenote@width\@empty
-    \setlength{\marginparwidth}{\dimexpr\jlreq@tempdima-2\jlreq@fontsize - \marginparsep\relax}
+    \setlength{\marginparwidth}{\dimexpr\jlreq@tempdima - 2\jlreq@fontsize - \marginparsep\relax}
     % 4.7.2.b: 並列中の行長は15文から20字程度
     \ifdim\marginparwidth>20\jlreq@mol
       \global\marginparwidth=20\jlreq@mol

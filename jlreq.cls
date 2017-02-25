@@ -3,7 +3,7 @@
 %% The package is distributed under the BSD 2-Clause License
 %%
 %%
-% (based on JLREQ 20120403 https://www.w3.org/TR/2012/NOTE-jlreq-20120403/ja/)
+% (based on JLReq 20120403 https://www.w3.org/TR/2012/NOTE-jlreq-20120403/ja/)
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{jlreq}[2017/02/17 jlreq]
 \RequirePackage{xkeyval,everyhook,filehook,etoolbox,ifthen}
@@ -488,7 +488,7 @@
 \jlreq@DeclareOption{fleqn}{\input{fleqn.clo}}
 
 \newcommand*{\jlreq@warning}[1]{}
-\jlreq@DeclareOption{jlreq_warnings}{\renewcommand*{\jlreq@warning}[1]{\ClassWarningNoLine{jlreq}{(JLREQ warning) ##1}}}
+\jlreq@DeclareOption{jlreq_warnings}{\renewcommand*{\jlreq@warning}[1]{\ClassWarningNoLine{jlreq}{(JLReq warning) ##1}}}
 
 \ExecuteOptionsX{article_type=article,paper=a4,fontsize=10pt,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=headings,onecolumn,final}
 % \@removeelementを一旦置き換えてから\ProcessOptionsXを実行する
@@ -1807,7 +1807,7 @@
   \hangindent=\dimexpr#2 + \@tempdima + #3\relax\hangafter=-\jlreq@CutinHeading@linecount
   \jlreq@hangindent=\hangindent\jlreq@wraplinecount=\hangafter
   \hspace*{#2}%
-  \kern-\dimexpr\@tempdima + #3 + \parindent\relax
+  \kern-\dimexpr\hangindent + \parindent\relax
   \box\@tempboxa
   \hspace*{#3}%
   % 改段落が起こっても\hang****をキープするように\parを書き換えておく（終わったら元に戻す）．
@@ -1847,6 +1847,9 @@
       {indent}{\def\jlreq@indent{##1}}
       {after_space}{\def\jlreq@after@space{##1}}
     }{#3}%
+    \ifthenelse{\lengthtest{\jlreq@after@space < 0.99\jlreq@mol} \OR \lengthtest{\jlreq@after@space > 2.01\jlreq@mol}}{%
+      \jlreq@warning{窓見出しと本文との空き量は，基本版面の文字サイズの全角以上，2倍未満とする（4.1.10.c）}%&
+    }{}%
     \edef\jlreq@do{%
       \noexpand\def\expandonce{\csname #1\endcsname}{%
         \noexpand\jlreq@CutinHeading@start{#1}{\expandonce{\jlreq@fontcommand}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@onelinemax}}{\expandonce{\jlreq@twolinemax}}%

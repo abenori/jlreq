@@ -186,15 +186,15 @@
   \@tempa
 }
 \long\def\jlreq@helper@parsekeyval@@@choicekey#1#2[#3]#4{%
-  \define@choicekey{#1}{#2}{#3}{\appto\jlreq@do{#4}}%
+  \define@choicekey{#1}{#2}{#3}{\eappto\jlreq@do{\unexpanded{#4}}}%
   \jlreq@helper@parsekeyval@@@{#1}%
 }
 \long\def\jlreq@helper@parsekeyval@@@definekeywithdefault#1#2#3{%
-  \define@key{#1}{#2}[]{\appto\jlreq@do{#3}}%
+  \define@key{#1}{#2}[]{\eappto\jlreq@do{\unexpanded{#3}}}%
   \jlreq@helper@parsekeyval@@@{#1}%
 }
 \long\def\jlreq@helper@parsekeyval@@@definekey#1#2#3{%
-  \define@key{#1}{#2}{\appto\jlreq@do{#3}}%
+  \define@key{#1}{#2}{\eappto\jlreq@do{\unexpanded{#3}}}%
   \jlreq@helper@parsekeyval@@@{#1}%
 }
 
@@ -1524,26 +1524,27 @@
   }%
 }
 
-% {1 = 字下げ}{2 = 前空き}{3 = 後ろ空き}{4 = トータル行数}{5 = afterindent}{6 = 偶数ページ改ページ}{7 = 出力}
-\long\def\jlreq@startBlockHeading@@@@#1#2#3#4#5#6#7{%
+% {1 = 字下げ}{2 = 字上げ}{3 = 前空き}{4 = 後ろ空き}{5 = トータル行数}{6 = afterindent}{7 = 偶数ページ改ページ}{8 = 出力}
+\long\def\jlreq@startBlockHeading@@@@#1#2#3#4#5#6#7#8{%
   \if@noskipsec\leavevmode\fi
   \jlreq@ifempty{#7}{}{\jlreq@setcurrentpage}%
   \setbox\jlreq@tempboxa=\vbox{%
     \jlreq@ifempty{#1}{}{\hsize=\dimexpr\hsize - #1\relax}%
-    \noindent #7}%
+    \jlreq@ifempty{#2}{}{\hsize=\dimexpr\hsize - #2\relax}%
+    \noindent #8}%
   \par
   % \jlreq@tempskip(a/b)に前/後ろに入れるべき値を入れる
-  % #2がa:ならばその値は\jlreq@tempskipaには足さず\jlreq@tempskipcに入れておく
+  % #3がa:ならばその値は\jlreq@tempskipaには足さず\jlreq@tempskipcに入れておく
   \jlreq@tempskipc=0pt
-  \jlreq@startBlockHeading@analyzespace#2:\jlreq@endmark
+  \jlreq@startBlockHeading@analyzespace#3:\jlreq@endmark
   \setbox\jlreq@tempboxb=\vbox{　}%
-  \jlreq@ifempty{#4}{%
+  \jlreq@ifempty{#5}{%
     \ifx\jlreq@startBlockHeading@space\@empty\else
       \jlreq@tempskipa=\glueexpr\jlreq@startBlockHeading@space\relax
     \fi
     \jlreq@tempskipb=0pt\relax
   }{%
-    \jlreq@tempskipb=\glueexpr(\baselineskip*(#4 + 1) - \ht\jlreq@tempboxb - \dp\jlreq@tempboxb - \ht\jlreq@tempboxa - \dp\jlreq@tempboxa)/2\relax
+    \jlreq@tempskipb=\glueexpr(\baselineskip*(#5 + 1) - \ht\jlreq@tempboxb - \dp\jlreq@tempboxb - \ht\jlreq@tempboxa - \dp\jlreq@tempboxa)/2\relax
     \ifx\jlreq@startBlockHeading@space\@empty
       \jlreq@tempskipa=\jlreq@tempskipb
     \else
@@ -1556,7 +1557,7 @@
       \fi
       \ifx r\jlreq@startBlockHeading@spacetype
         \jlreq@tempskipa=\glueexpr\jlreq@startBlockHeading@space\relax%
-        \jlreq@tempskipb=\glueexpr(\baselineskip*(#4 + 1) - \ht\jlreq@tempboxb - \dp\jlreq@tempboxb - \ht\jlreq@tempboxa - \dp\jlreq@tempboxa) - \jlreq@startBlockHeading@space\relax
+        \jlreq@tempskipb=\glueexpr(\baselineskip*(#5 + 1) - \ht\jlreq@tempboxb - \dp\jlreq@tempboxb - \ht\jlreq@tempboxa - \dp\jlreq@tempboxa) - \jlreq@startBlockHeading@space\relax
       \fi
     \fi
   }%
@@ -1577,7 +1578,7 @@
     \ifodd\jlreq@currentpage\nobreak\fi
   }{\nobreak}%
   \prevdepth=0pt
-  \jlreq@startBlockHeading@analyzespace#3:\jlreq@endmark
+  \jlreq@startBlockHeading@analyzespace#4:\jlreq@endmark
   \jlreq@tempskipb=\glueexpr\jlreq@tempskipb + \ht\jlreq@tempboxb - \baselineskip\relax
   \ifx\jlreq@startBlockHeading@space\@empty\else
     \ifx a\jlreq@startBlockHeading@spacetype
@@ -1587,7 +1588,7 @@
     \fi
   \fi
   \ifdim\jlreq@tempskipb=0pt\else\vspace{\jlreq@tempskipb}\fi
-  #5%
+  #6%
   \@afterheading
 }
 
@@ -1625,9 +1626,10 @@
     \def\jlreq@after@space{}%
     \def\jlreq@before@lines{}%
     \def\jlreq@after@lines{}%
-    \def\jlreq@font{\normalsize}%
+    \def\jlreq@font{}%
     \def\jlreq@subtitle@font{\normalsize}%
     \def\jlreq@indent{0\jlreq@mol}%
+    \def\jlreq@end@indent{0\jlreq@mol}%
     \let\jlreq@format=\@undefined
     \def\jlreq@pagebreak{}%
     \let\jlreq@label@format=\@undefined
@@ -1639,20 +1641,24 @@
       {lines}{\def\jlreq@lines{##1}}
       {before_space}{\def\jlreq@before@space{##1}}
       {after_space}{\def\jlreq@after@space{##1}}
-      {before_lines}{\def\jlreq@before@lines{##1}}
+      {before_lines}{%
+        \def\@tempa####1####2\jlreq@endmark{%
+          \jlreq@ifendmark{####1}{\def\jlreq@before@lines{}}{%
+            \ifx*####1\def\jlreq@before@lines{s:####2}%
+            \else\def\jlreq@before@lines{a:####1####2}%
+            \fi
+          }%
+        }%
+        \@tempa##1\jlreq@endmark
+      }
       {after_lines}{\def\jlreq@after@lines{##1}}
       {font}{\def\jlreq@font{##1}}
       {subtitle_font}{\def\jlreq@subtitle@font{##1}}
       {indent}{\def\jlreq@indent{##1}}
+      {end_indent}{\def\jlreq@end@indent{##1}}
       {format}{\edef\jlreq@format{\unexpanded{##1}}}
       {label_format}{\edef\jlreq@label@format{\unexpanded{##1}}}
       {subtitle_format}{\edef\jlreq@subtitle@format{\unexpanded{##1}}}
-      {pagetop_space}[true,false]{% ページ頭でもスペースを入れる
-        \jlreq@switch{##1}{
-          {true}{\def\jlreq@pagetop@space{s}}
-          {false}{\def\jlreq@pagetop@space{a}}
-        }%
-      }
       {afterindent}[true,false]{\edef\jlreq@afterindent{\expandonce{\csname @afterindent##1\endcsname}}}
       {nobreak_evenpage}[true,false]{%
         \jlreq@switch{##1}{
@@ -1671,15 +1677,21 @@
     }{#3}%
     \ifx\jlreq@format\@undefined
       \edef\jlreq@format{%
-        \expandonce{\jlreq@font}\@hangfrom{\unexpanded{##1}}\unexpanded{##2}%
+        \unexpanded{##1}\unexpanded{##2}%
         \unexpanded{##3}%
       }%
+    \fi
+    \ifx\jlreq@font\@empty\else
+      \edef\jlreq@format{\expandonce{\jlreq@font}\expandonce{\jlreq@format}}%
     \fi
     \ifx\jlreq@label@format\@undefined
       \def\jlreq@label@format{\@seccntformat{#1}}%
     \fi
     \ifx\jlreq@subtitle@format\@undefined
-      \edef\jlreq@subtitle@format{{\unexpanded{\nobreak{\par}\hspace*{4\jlreq@mol}}\expandonce{\jlreq@subtitle@font}--- \unexpanded{##1} ---}}%
+      \edef\jlreq@subtitle@format{\unexpanded{{\par}\global\advance\hangindent by 4\jlreq@mol\noindent\hspace*{\hangindent}}--- \unexpanded{##1} ---}%
+    \fi
+    \ifx\jlreq@subtitle@font\@empty\else
+      \edef\jlreq@subtitle@format{{\expandonce{\jlreq@subtitle@font}\expandonce{\jlreq@subtitle@format}}}%
     \fi
     \def\jlreq@addtodo{}%
     \@ifundefined{l@#1}{%
@@ -1699,7 +1711,7 @@
     }{}%
     % before/after_lines優先
     \ifx\jlreq@before@space\@empty\else\edef\jlreq@before@space{r:\expandonce{\jlreq@before@space}}\fi
-    \ifx\jlreq@before@lines\@empty\else\edef\jlreq@before@space{\expandonce{\jlreq@pagetop@space}:\expandonce{\jlreq@before@lines}\baselineskip}\fi
+    \ifx\jlreq@before@lines\@empty\else\edef\jlreq@before@space{\expandonce{\jlreq@before@lines}\baselineskip}\fi
     \ifx\jlreq@after@space\@empty\else\edef\jlreq@after@space{r:\expandonce{\jlreq@after@space}}\fi
     \ifx\jlreq@after@lines\@empty\else\edef\jlreq@after@space{a:\expandonce{\jlreq@after@lines}\baselineskip}\fi
     \edef\jlreq@do{%
@@ -1708,7 +1720,7 @@
         \noexpand\jlreq@hook@beforeheadings{#1}%
         \expandonce{\jlreq@pagebreak}%
         \unexpanded{\jlreq@startBlockHeading{#1}{#2}}%
-        {{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@before@space}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@lines}}{\expandonce{\jlreq@afterindent}}{\expandonce{\jlreq@nobreak@evenpage}}}%
+        {{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@end@indent}}{\expandonce{\jlreq@before@space}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@lines}}{\expandonce{\jlreq@afterindent}}{\expandonce{\jlreq@nobreak@evenpage}}}%
         {{\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@format}}{\expandonce{\jlreq@subtitle@format}}}%
       }}%
     }%

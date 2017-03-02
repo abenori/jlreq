@@ -470,9 +470,8 @@
   \tombowtrue \tombowdatefalse
   \setlength{\@tombowwidth}{\z@}%
   \maketombowbox}
-\jlreq@DeclareOption{tate}{\@tatetrue
-  \AtBeginDocument{\tate\message{\jlreq@tategumi@message}\adjustbaseline}%
-}
+\jlreq@DeclareOption{tate}{\@tatetrue}
+
 \newif\ifjlreq@option@twoside\jlreq@option@twosidefalse % onesideかtwosideが指定された
 \jlreq@DeclareOption{oneside}{\@twosidefalse\@mparswitchfalse\jlreq@option@twosidetrue}
 \jlreq@DeclareOption{twoside}{\@twosidetrue\@mparswitchtrue\jlreq@option@twosidetrue}
@@ -549,7 +548,9 @@
   % http://oku.edu.mie-u.ac.jp/tex/mod/forum/discuss.php?d=1508&parent=8435
   \if@tate\AtEndPreamble{\par}\fi
 \fi
-\def\jlreq@tategumi@message{《縦組モード》}
+\if@tate
+  \AtBeginDocument{\tate\message{《縦組モード》}\adjustbaseline}
+\fi
 
 % \jlreq@gol(Gyo Okuri Length), \jlreq@mol (Moji Okuri Length)を定義
 \if@tate
@@ -1528,10 +1529,16 @@
 \long\def\jlreq@startBlockHeading@@@@#1#2#3#4#5#6#7#8{%
   \if@noskipsec\leavevmode\fi
   \jlreq@ifempty{#7}{}{\jlreq@setcurrentpage}%
-  \setbox\jlreq@tempboxa=\vbox{%
-    \jlreq@ifempty{#1}{}{\hsize=\dimexpr\hsize - #1\relax}%
-    \jlreq@ifempty{#2}{}{\hsize=\dimexpr\hsize - #2\relax}%
-    \noindent #8}%
+  \setbox\jlreq@tempboxa=\vbox{\noindent
+    \jlreq@tempafalse % 中央寄せするか
+    \ifthenelse{\equal{#1}{center}}{\jlreq@tempatrue}{%
+      \jlreq@ifempty{#1}{}{\hsize=\dimexpr\hsize - #1\relax}%
+    }%
+    \ifthenelse{\equal{#2}{center}}{\jlreq@tempatrue}{%
+      \jlreq@ifempty{#2}{}{\hsize=\dimexpr\hsize - #2\relax}%
+    }%
+    \ifjlreq@tempa\hfil\fi
+    #8}%
   \par
   % \jlreq@tempskip(a/b)に前/後ろに入れるべき値を入れる
   % #3がa:ならばその値は\jlreq@tempskipaには足さず\jlreq@tempskipcに入れておく
@@ -1568,10 +1575,11 @@
   \setbox\jlreq@tempboxa=\vbox{%
     \ifdim\jlreq@tempskipa=0pt\else\vskip\jlreq@tempskipa\fi
     \noindent
-    \jlreq@ifempty{#1}{}{\hskip #1}%
-    \box\jlreq@tempboxa\nopagebreak}%
+    \ifthenelse{\equal{#1}{center}}{}{\jlreq@ifempty{#1}{}{\hskip #1}}%
+    \box\jlreq@tempboxa}%
   \dp\jlreq@tempboxa=\dimexpr\dp\jlreq@tempboxa + \ht\jlreq@tempboxa\relax
   \ht\jlreq@tempboxa=0pt
+%  \showbox\jlreq@tempboxa
   \box\jlreq@tempboxa
   \par
   \jlreq@ifempty{#7}{%
@@ -1602,7 +1610,7 @@
 % indent=<全体のインデント>
 % pagebreak=clearpage/cleardoublepage/newcolumn/nariyuki
 % なお，これ以外に見出しの前後に記号を付ける，あるいは罫線を見出しの前後に配置する，罫線で見出しを囲むなどといったことも行われている．
-% 縦組の偶数ページの場合は，ページ末に見出しを配置する．
+% フォーマットあたりは要整理
 \newcommand{\DeclareBlockHeading}[3]{%
   \appto{\jlreq@heading@allheadings}{,#1}%
   \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}%
@@ -1630,26 +1638,32 @@
     \def\jlreq@subtitle@font{\normalsize}%
     \def\jlreq@indent{0\jlreq@mol}%
     \def\jlreq@end@indent{0\jlreq@mol}%
-    \let\jlreq@format=\@undefined
+    \edef\jlreq@format{\unexpanded{##1##2##3}}%
     \def\jlreq@pagebreak{}%
-    \let\jlreq@label@format=\@undefined
-    \let\jlreq@subtitle@format=\@undefined
+%    \def\jlreq@label@format{\@hangfrom{\@seccntformat{#1}}\hspace*{1\jlreq@mol}}%
+    \def\jlreq@label@format{\@hangfrom{\@seccntformat{#1}}}%
+    \edef\jlreq@subtitle@format{\unexpanded{---##1---}}%
+    \def\jlreq@subtitle@indent{1\jlreq@mol}%
     \def\jlreq@pagetop@space{a}%
     \def\jlreq@afterindent{\@afterindenttrue}%
     \def\jlreq@nobreak@evenpage{*}% 偶数ページでも改ページを抑制するならば*，そうでないと空
+    \newif\ifjlreq@subtitle@break\jlreq@subtitle@breaktrue
+    \def\jlreq@subtitle@indent{1\jlreq@mol}%
     \jlreq@parsekeyval[BlockHeading]{
       {lines}{\def\jlreq@lines{##1}}
       {before_space}{\def\jlreq@before@space{##1}}
       {after_space}{\def\jlreq@after@space{##1}}
       {before_lines}{%
         \def\@tempa####1####2\jlreq@endmark{%
-          \jlreq@ifendmark{####1}{\def\jlreq@before@lines{}}{%
+          \jlreq@ifendmark{####1}{\def\jlreq@before@lines{}\def\@tempa{}}{%
             \ifx*####1\def\jlreq@before@lines{s:####2}%
             \else\def\jlreq@before@lines{a:####1####2}%
             \fi
+            \def\@tempa{\@gobble}%
           }%
+          \@tempa
         }%
-        \@tempa##1\jlreq@endmark
+        \@tempa##1\jlreq@endmark\jlreq@endmark
       }
       {after_lines}{\def\jlreq@after@lines{##1}}
       {font}{\def\jlreq@font{##1}}
@@ -1659,6 +1673,8 @@
       {format}{\edef\jlreq@format{\unexpanded{##1}}}
       {label_format}{\edef\jlreq@label@format{\unexpanded{##1}}}
       {subtitle_format}{\edef\jlreq@subtitle@format{\unexpanded{##1}}}
+      {subtitle_indent}{\def\jlreq@subtitle@indent{##1}}
+      {subtitle_break}[true,false]{\csname jlreq@subtitle@break##1\endcsname}
       {afterindent}[true,false]{\edef\jlreq@afterindent{\expandonce{\csname @afterindent##1\endcsname}}}
       {nobreak_evenpage}[true,false]{%
         \jlreq@switch{##1}{
@@ -1675,21 +1691,17 @@
         }%
       }
     }{#3}%
-    \ifx\jlreq@format\@undefined
-      \edef\jlreq@format{%
-        \unexpanded{##1}\unexpanded{##2}%
-        \unexpanded{##3}%
-      }%
-    \fi
     \ifx\jlreq@font\@empty\else
       \edef\jlreq@format{\expandonce{\jlreq@font}\expandonce{\jlreq@format}}%
     \fi
-    \ifx\jlreq@label@format\@undefined
-      \def\jlreq@label@format{\@seccntformat{#1}}%
-    \fi
-    \ifx\jlreq@subtitle@format\@undefined
-      \edef\jlreq@subtitle@format{\unexpanded{{\par}\global\advance\hangindent by 4\jlreq@mol\noindent\hspace*{\hangindent}}--- \unexpanded{##1} ---}%
-    \fi
+    \edef\jlreq@subtitle@format{%
+      \ifjlreq@subtitle@break\unexpanded{{\par}\nobreak\global\hangafter=0}\fi
+      \ifdim\jlreq@subtitle@indent=0pt\else
+        {\unexpanded{\normalsize\global\advance\hangindent by }\expandonce{\jlreq@subtitle@indent}}%
+        \ifjlreq@subtitle@break\else\unexpanded{\hspace*}{\expandonce{\jlreq@subtitle@indent}}\fi
+      \fi
+      \noexpand\noindent\expandonce{\jlreq@subtitle@format}%
+    }%
     \ifx\jlreq@subtitle@font\@empty\else
       \edef\jlreq@subtitle@format{{\expandonce{\jlreq@subtitle@font}\expandonce{\jlreq@subtitle@format}}}%
     \fi

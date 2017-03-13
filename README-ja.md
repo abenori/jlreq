@@ -32,7 +32,7 @@
 標準的な文書クラスと同じように中身を書くことができますが，次のような命令が追加 / 拡張されています．
 
 ### `\section`
-`\section*[running head]{見出し文字列}[副題]`というように，通常の書式に加えて副題を受け付けられるように拡張されています．その他，`\part`（articleのみ），`\chapter`（book/reportのみ），`\subsection`も副題を受け付けます．（`\subsubsection`も受け付けますが，汚い見た目になります．）
+`\section*[running head]{見出し文字列}[副題]`というように，通常の書式に加えて副題を受け付けられるように拡張されています．その他，`\part`（articleのみ），`\chapter`（book/reportのみ），`\subsection`，`\subsubsection`も副題を受け付けます．
 
 ### `abstract`環境
 プリアンブルにもかけるようになっています．プリアンブルに書かれた場合は，`\maketitle`とともに出力されます．二段組の場合は，段組にならず概要を出力することができます．
@@ -141,28 +141,34 @@
 ### 別行見出し
 `\DeclareBlockHeading`で作成します．`\<命令名>*[running head]{見出し文字列}[副題]`という書式の命令を作成します．設定は以下の通り．
 
+#### 書式関連
 * `font=<命令>`: 見出しのフォントを指定します．
+* `subtitle_font=<命令>`: 副題のフォントを指定します．
+* `label_format=<命令>`: ラベルのフォーマットを指定します．`label_format={第\thechapter 章}`などのようにします．
+* `subtitle_format=<命令>`: 副題のフォーマットを指定します．`subtitle_format={「#1」}`のようにします．`#1`が副題自身になります．
+
+#### インデント関連
 * `indent=<寸法/center>` 見出し全体の字下げ量を指定します．`indent=center`とすると見出しを中央寄せします．
 * `end_indent=<寸法/center>`: 見出し全体の字上げ量を指定します．`end_indent=center`とすると見出しを中央寄せします．
+* `after_label_space=<寸法>`: ラベル後，見出し文字列までの空きを指定します．
+* `second_heading_text_indent=<寸法/{寸法,寸法}>`: 見出し文字列の二行目以降のインデントを指定します．一行目の頭を起点として指定しますが，`second_heading_text_indent=*1\zw`のように先頭に`*`をつけるとラベルの頭を起点としての指定になります．（ラベルがない時は一行目の頭が起点．）また，`second_heading_text_indent={<ラベルがある時>,<ラベルがない時>}`という指定をすると，ラベルの有無に応じて値を変更することができます．`<ラベルがある時>`の指定ではやはり`*`を使うことができます．
+* `subtitle_indent=<寸法>`: 副題のインデント量を指定します．見出し文字列の一行目を起点として指定します．
+
+#### その他
+* `subtitle_break=<true/false>`: 見出し文字列と副題の間を改行するか指定します．
+* `allowbreak_if_evenpage=[true/false]`: 見出しが偶数ページにあった場合，その直後の改ページを許可します．
 * `pagebreak=[clearpage/cleardoublepage/clearcolumn/nariyuki]`: 見出し直前の改ページを指定します．それぞれ，改ページ，改丁，改段，なりゆきです．
 * `afterindent=[true/false]`: 見出し直後の段落の字下げを行うかを指定します．
-* `label_format=<命令>`: ラベルのフォーマットを指定します．`label_format={第\thechapter 章\hspace*{1zw}}`などのようにします．
-* `subtitle_font=<命令>`: 副題のフォントを指定します．
-* `subtitle_format=<命令>`: 副題のフォーマットを指定します．`#1`が副題自身になります．
-* `subtitle_indent=<寸法>`: 副題の，見出し文字列からのインデント量を指定します．
-* `subtitle_break=<true/false>`: 見出し文字列と副題の間を改行するか指定します．
-<!-- もう少し悩む
-* `format=<命令>`: 見出し全体のフォーマットを指定します．`#1`がラベル，`#2`が見出し文字列，`#3`が副題になります．ラベルや副題はない場合は空になります．
--->
 
-また，行取りの指定を行うことができます．次のいずれかの方法で行います．
+#### 行取り
+行取りの指定は以下のいずれかの方法で行うことができます．
 
 * 行数を指定し，その中央に配置する．`lines=<整数値>`により行数を指定します．`before_lines=<整数値>`や`after_lines=<整数値>`により，さらに前後に追加する行数を指定します．たとえば`lines=3,after_lines=1`とすれば，四行の中に配置され，前の空きよりも後ろの空きの方が一行分大きくなります．`before_lines`により指定された空きは，ページ頭には入りませんが，`before_lines=*1`というように`*`を先頭につけると常に入るようになります．
-* 行数と，前後いずれかの空きを指定します．`lines=<整数値>`により行数を，`before_space=<寸法>`または`after_space=<寸法>`のいずれかの指定によりそれぞれ前またら後ろの空きを指定します．
+* 行数と，前後いずれかの空きを指定します．`lines=<整数値>`により行数を，`before_space=<寸法>`または`after_space=<寸法>`のいずれかの指定によりそれぞれ前または後ろの空きを指定します．
 * 前後の空きを指定します．`before_space=<寸法>`および`after_space=<寸法>`を指定します．
 
 ### 同行見出し
-`\DeclareRuninHeading`で作成します．`\section`と同様の書式の命令が作成されます．設定は以下の通り．
+`\DeclareRuninHeading`で作成します．通常の文書クラスにおける`\section`と同様の，`\<命令名>*[running head]{見出し文字列}`という書式の命令が作成されます．設定は以下の通り．
 
 * `font=<命令>`: 見出しのフォントを指定します．
 * `indent=<寸法>` 見出し文字列全体の字下げ量を指定します．
@@ -181,6 +187,16 @@
 \ModifyHeading{section}{lines=10}
 ````
 とすると，`\section`のフォントなどの設定はそのままに，行取りのみが10行に変更されます．見出しの種類を変更することはできません．
+
+### `\SaveHeading`
+見出し命令の定義を待避します．
+````
+\SaveHeading{section}{\restoresection} % \sectionの中身を\restoresectionに待避．
+\RenewBlockHeading{section}{1}{font=……} % \sectionを新しく定義する．
+……
+\restoresection % \sectionの中身を元に戻す．
+````
+のように使います．
 
 ## ページスタイル
 ````

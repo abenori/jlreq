@@ -80,7 +80,6 @@ jfm-%v.lua jfm-b%,lua jfm-z%.lua: make_variant_jfm.lua jfm-jlreq.lua
 
 .SUFFIXES:.md .tex
 .SUFFIXES:.md .pdf
-.SUFFIXES:.md .html
 
 .md.tex:
 	pandoc --verbose -f markdown_github -t latex --latex-engine=lualatex --template README-template.tex $< -o $@
@@ -88,12 +87,15 @@ jfm-%v.lua jfm-b%,lua jfm-z%.lua: make_variant_jfm.lua jfm-jlreq.lua
 .md.pdf:
 	pandoc --verbose -f markdown_github -t latex --latex-engine=lualatex --template README-template.tex $< -o $@
 
-.md.html:
-	pandoc --verbose -f markdown_github -t html -c github.css --self-contained -o $@ $<
-
 latexdoc: README.tex README-ja.tex
 
 doc: README-ja.pdf
+
+README-ja.html: README-ja.md
+	pandoc --verbose -f markdown_github -t html5 -V lang=ja --template README-template.html -o README-ja.html README-ja.md
+
+README.html: README.md
+	pandoc --verbose -f markdown_github -t html5 --template README-template.html -o README.html README.md
 
 htmldoc: README.html README-ja.html
 

@@ -943,38 +943,6 @@
   \setlength{\jlreq@fontsize}{\dimexpr\jlreq@option@fontsize\relax}
 \fi
 
-% JFMに関連する設定
-\ifx l\jlreq@engine
-  % この値は後でjfm-jlreq内で読む
-  \directlua{jlreq.open_bracket_pos = [[\jlreq@open@bracket@pos]]}
-  \ifjlreq@burasage\directlua{jlreq.burasage = true}
-  \else\directlua{jlreq.burasage = false}\fi
-\else
-  % 非LuaTeXの場合はJFMの入れ替えと\everyparでの処理で対処．
-  \def\jlreq@jfmname@prefix{}
-  \def\jlreq@openbreackets@list{（〔［｛〈《「『【}
-  \ifx u\jlreq@engine\edef\jlreq@openbreackets@list{\jlreq@openbreackets@list {｟〘〖«〝‘“}}\fi
-  % \jlreq@jfmnameにJFMの名前を入れる
-  \ifjlreq@burasage\edef\jlreq@jfmname@prefix{b\jlreq@jfmname@prefix}\fi
-  \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{\edef\jlreq@jfmname@prefix{\jlreq@jfmname@prefix z}}{}
-  \ifx u\jlreq@engine\edef\jlreq@jfmname@prefix{u\jlreq@jfmname@prefix}\fi
-  \edef\jlreq@jfmname{\jlreq@jfmname@prefix jlreq}
-  \edef\jlreq@jfmnameg{\jlreq@jfmname@prefix jlreqg}
-  % JFM glueの伸び縮みで行頭括弧が揃わないのを防ぐために常に\inhibitglueを入れる．
-  \ifthenelse{\equal{\jlreq@open@bracket@pos}{nibu_tentsuki}}{
-    \def\jlreq@openbracket@hook{\jlreq@ifintokenlist{\jlreq@nextchar}{\jlreq@openbreackets@list}{\hskip -.5\jlreq@mol\inhibitglue}{}}
-  }{% zenkakunibu_nibu,zenkaku_tentsuki
-    \def\jlreq@openbracket@hook{\jlreq@ifintokenlist{\jlreq@nextchar}{\jlreq@openbreackets@list}{\inhibitglue}{}}
-  }
-  \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
-\fi
-% 開き括弧の幅が全角の場合は，ベタ組にするために補正が必要
-\ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{
-  \def\jlreq@open@bracket@before@space{\hskip -.5\jlreq@mol}
-}{
-  \def\jlreq@open@bracket@before@space{}
-}
-
 %. フォント
 \RequirePackage{lmodern}
 
@@ -1015,6 +983,38 @@
 \DeclareRobustCommand*{\mit}{\@fontswitch\relax\mathnormal}
 
 %.. 和文
+% JFMに関連する設定
+\ifx l\jlreq@engine
+  % この値は後でjfm-jlreq内で読む
+  \directlua{jlreq.open_bracket_pos = [[\jlreq@open@bracket@pos]]}
+  \ifjlreq@burasage\directlua{jlreq.burasage = true}
+  \else\directlua{jlreq.burasage = false}\fi
+\else
+  % 非LuaTeXの場合はJFMの入れ替えと\everyparでの処理で対処．
+  \def\jlreq@jfmname@prefix{}
+  \def\jlreq@openbreackets@list{（〔［｛〈《「『【}
+  \ifx u\jlreq@engine\edef\jlreq@openbreackets@list{\jlreq@openbreackets@list {｟〘〖«〝‘“}}\fi
+  % \jlreq@jfmnameにJFMの名前を入れる
+  \ifjlreq@burasage\edef\jlreq@jfmname@prefix{b\jlreq@jfmname@prefix}\fi
+  \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{\edef\jlreq@jfmname@prefix{\jlreq@jfmname@prefix z}}{}
+  \ifx u\jlreq@engine\edef\jlreq@jfmname@prefix{u\jlreq@jfmname@prefix}\fi
+  \edef\jlreq@jfmname{\jlreq@jfmname@prefix jlreq}
+  \edef\jlreq@jfmnameg{\jlreq@jfmname@prefix jlreqg}
+  % JFM glueの伸び縮みで行頭括弧が揃わないのを防ぐために常に\inhibitglueを入れる．
+  \ifthenelse{\equal{\jlreq@open@bracket@pos}{nibu_tentsuki}}{
+    \def\jlreq@openbracket@hook{\jlreq@ifintokenlist{\jlreq@nextchar}{\jlreq@openbreackets@list}{\hskip -.5\jlreq@mol\inhibitglue}{}}
+  }{% zenkakunibu_nibu,zenkaku_tentsuki
+    \def\jlreq@openbracket@hook{\jlreq@ifintokenlist{\jlreq@nextchar}{\jlreq@openbreackets@list}{\inhibitglue}{}}
+  }
+  \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
+\fi
+% 開き括弧の幅が全角の場合は，ベタ組にするために補正が必要
+\ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{
+  \def\jlreq@open@bracket@before@space{\hskip -.5\jlreq@mol}
+}{
+  \def\jlreq@open@bracket@before@space{}
+}
+
 \ifx l\jlreq@engine
   \RequirePackage{luatexja-adjust}
   \ltjenableadjust[lineend=extended,priority=true]
@@ -1403,11 +1403,11 @@
       {label_format}{\def\jlreq@label@format{##1}}
       {format}{\def\jlreq@format####1####2{##1}}
       {pagestyle}{\def\jlreq@pagestyle{##1}}
-      {type}[han,naka]{
+      {type}[han,naka]{%
         \jlreq@switch{##1}{
           {han}{\def\jlreq@heading@clearpage{\clearpage}}
           {naka}{\def\jlreq@heading@clearpage{\cleardoublepage}}
-        }
+        }%
       }
     }{#3}%
     \ifx\jlreq@format\@undefined
@@ -1609,16 +1609,6 @@
 }
 
 % \DeclareBlockHeading{命令名}{レベル}{設定}
-% 行取り（4.1.6）
-% a: lines=<何行取りか>
-% b,d: before_lines, after_lines
-% c: before_space, after_space
-% f: beforeやafterを省略する
-% font=<見出しフォント>, labelfont=<ラベルフォント>, subtitle_font=<副題フォント>
-% indent=<全体のインデント>
-% pagebreak=clearpage/cleardoublepage/newcolumn/nariyuki
-% なお，これ以外に見出しの前後に記号を付ける，あるいは罫線を見出しの前後に配置する，罫線で見出しを囲むなどといったことも行われている．
-% フォーマットあたりは要整理
 \newcommand{\DeclareBlockHeading}[3]{%
   \appto{\jlreq@heading@allheadings}{,#1}%
   \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}%
@@ -1776,7 +1766,7 @@
         \fi
         {\ifx\jlreq@subtitle@font@empty\else\expandonce{\jlreq@subtitle@font}\fi\expandonce{\jlreq@subtitle@format}}%
       }%
-    }
+    }%
     \jlreq@make@subtitle@format\jlreq@subtitle@format@wlabel{%
       - (\expandonce{\jlreq@second@heading@text@indent@wlabel})%
       \ifjlreq@hang\else + (\noexpand\jlreq@startBlockHeading@labellength)\fi
@@ -2955,7 +2945,7 @@
         {left}{\def\jlreq@tempe{right}}
       }%
       \edef##1{{\expandafter\@firstoftwo##1}{\jlreq@tempe}}%
-    }
+    }%
     \getoppositeposition\jlreq@nombre@position
     \getoppositeposition\jlreq@running@head@position
     % 上と同じことをする

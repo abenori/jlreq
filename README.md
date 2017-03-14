@@ -27,3 +27,8 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Implement `abstract` environment.
     - Change/Add some keys to class option/`\jlreqsetup`
     - Stop to load `pxrubirica`, `luatexja-ruby` and `nidanfloat`.
+* 2017-03-14
+    - Fix bugs.
+    - `\sffamily` etc. also change the Japanese font family.
+    - Add many options to `\DeclareBlockHeading`.
+    - Some options related to `quote` environment etc.

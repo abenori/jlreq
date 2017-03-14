@@ -5,7 +5,7 @@
 %%
 % (based on JLReq 20120403 https://www.w3.org/TR/2012/NOTE-jlreq-20120403/ja/)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{jlreq}[2017/02/17 jlreq]
+\ProvidesClass{jlreq}[2017/03/14 jlreq]
 \RequirePackage{xkeyval,everyhook,filehook,etoolbox,ifthen}
 
 %. helper1
@@ -1633,7 +1633,7 @@
     \def\jlreq@before@lines{}%
     \def\jlreq@after@lines{}%
     \def\jlreq@font{}%
-    \def\jlreq@subtitle@font{\normalsize}%
+    \def\jlreq@subtitle@font{}%
     \def\jlreq@indent{0\jlreq@mol}%
     \def\jlreq@end@indent{0\jlreq@mol}%
     \edef\jlreq@format{\unexpanded{##1##2##3}}%
@@ -1764,7 +1764,7 @@
         \ifdim\jlreq@subtitle@indent=0pt\else
           \ifjlreq@subtitle@break\else\unexpanded{\hspace*}{\expandonce{\jlreq@subtitle@indent}}\fi
         \fi
-        {\ifx\jlreq@subtitle@font@empty\else\expandonce{\jlreq@subtitle@font}\fi\expandonce{\jlreq@subtitle@format}}%
+        {\ifx\jlreq@subtitle@font\@empty\else\expandonce{\jlreq@subtitle@font}\fi\expandonce{\jlreq@subtitle@format}}%
       }%
     }%
     \jlreq@make@subtitle@format\jlreq@subtitle@format@wlabel{%
@@ -2074,20 +2074,20 @@
     (\rensuji{\@arabic\c@subparagraph})}
 
   \ifthenelse{\equal{\jlreq@article@type}{article}}{
-    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},indent=4\zh,lines=4,after_label_space=1\zh,second_heading_text_indent={-1\zh,1\zh}}
+    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},indent=4\zh,lines=4,after_label_space=1\zh,second_heading_text_indent={-1\zh,1\zh},subtitle_font={\jlreq@keepbaselineskip{\large}}}
     \if@twoside\ModifyHeading{part}{allowbreak_if_evenpage=true}\fi
   }
   {% book, report
     \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\jlreq@mol}},format={\null\vfill {\Huge\headfont \hspace*{2\jlreq@mol}#1#2}\vspace*{2\jlreq@gol}}}
-    \NewBlockHeading{chapter}{0}{indent=2\zh,lines=6,label_format={第\thechapter 章},font={\huge\headfont},after_label_space=1\zh,second_heading_text_indent={-1\zh,1\zh}}
+    \NewBlockHeading{chapter}{0}{indent=2\zh,lines=6,label_format={第\thechapter 章},font={\huge\headfont},after_label_space=1\zh,second_heading_text_indent={-1\zh,1\zh},subtitle_font={\jlreq@keepbaselineskip{\Large}}}
     \if@twoside\ModifyHeading{chapter}{allowbreak_if_evenpage=true}\fi
     \renewcommand{\thechapter}{\Kanji{chapter}}
   }
-  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},indent=6\zh,lines=3,after_label_space=1\zh,second_heading_text_indent={-1\zh,1\zh}}
+  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},indent=6\zh,lines=3,after_label_space=1\zh,second_heading_text_indent={-1\zh,1\zh},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
   \if@twoside\ModifyHeading{section}{allowbreak_if_evenpage=true}\fi
-  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},indent=8\zh,lines=2,after_label_space=1\zh,second_heading_text_indent={-1\zh,1\zh}}
+  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},indent=8\zh,lines=2,after_label_space=1\zh,second_heading_text_indent={-1\zh,1\zh},subtitle_font={\jlreq@keepbaselineskip{\small}}}
   \if@twoside\ModifyHeading{subsection}{allowbreak_if_evenpage=true}\fi
-  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=10\zh,lines=1,before_lines=1,subtitle_break=false,after_label_space=1\zh,second_heading_text_indent={-1\zh,1\zh}}
+  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=10\zh,lines=1,before_lines=1,subtitle_break=false,after_label_space=1\zh,second_heading_text_indent={-1\zh,1\zh},,subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
   \if@twoside\ModifyHeading{subsubsection}{allowbreak_if_evenpage=true}\fi
   \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
   \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=1\zh}
@@ -2098,7 +2098,7 @@
   \renewcommand{\theparagraph}{\thesubsubsection .\arabic{paragraph}}
   \renewcommand{\thesubparagraph}{\theparagraph .\arabic{subparagraph}}
   \ifthenelse{\equal{\jlreq@article@type}{article}}{
-    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},label_format={第\thepart 部},lines=4,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw}}
+    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},label_format={第\thepart 部},lines=4,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\large}}}
     \renewcommand{\thesection}{\arabic{section}}
   }
   {% book, report
@@ -2106,7 +2106,8 @@
     \NewBlockHeading{chapter}{0}{%
       format={{\jlreq@keepbaselineskip{\huge\headfont} #1#2}#3},
       label_format={第\thechapter 章\quad},
-      lines=5,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw}}
+      lines=5,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},
+      subtitle_font={\jlreq@keepbaselineskip{\Large}}}
     \renewcommand{\thechapter}{\arabic{chapter}}
     \renewcommand{\thesection}{\thechapter.\arabic{section}}
     \ifthenelse{\equal{\jlreq@article@type}{book}}{
@@ -2115,9 +2116,9 @@
       \ModifyHeading{chapter}{pagebreak=clearpage}
     }
   }
-  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},lines=3,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw}}
-  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},lines=2,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw}}
-  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},lines=1,before_lines=1,subtitle_break=false,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw}}
+  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},lines=3,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
+  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},lines=2,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\small}}}
+  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},lines=1,before_lines=1,subtitle_break=false,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
   \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=1\zw}
   \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=2\zw}
 \fi

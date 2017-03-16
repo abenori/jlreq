@@ -301,6 +301,22 @@
   \expandafter\expandafter\expandafter\let\expandafter\expandafter\csname jlreq@original@#1\endcsname\csname #1\endcsname
 }
 
+% #1の先頭が文字か
+\def\jlreq@isletter#1{%
+  \expandafter\expandafter\expandafter\jlreq@helper@isletter\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark
+}
+\def\jlreq@helper@isletter#1{%
+  \ifnum
+    0\ifcat 阿\noexpand #11\fi
+    \ifcat あ\noexpand #11\fi
+    \ifcat （\noexpand #11\fi
+    \ifcat A\noexpand #11\fi
+    \ifcat 1\noexpand #11\fi
+  >0
+    \expandafter\@firstoftwo\else\expandafter\@secondoftwo
+  \fi
+}
+
 %. オプションの定義
 % オプション処理の際にしか使わない変数（後でそれを元に別の変数を調整する）
 % ものは\jlreq@option@<key>に格納する．
@@ -643,18 +659,7 @@
 }
 
 \ifx\jlreq@engine l
-  % https://ja.osdn.net/projects/eptex/wiki/lastnodechar
-  \def\lastnodechar{%
-    \directlua{%
-      local act = string.char(92)
-      local n = tex.nest[tex.nest.ptr].tail
-      if n and n.id==node.id('glyph') then
-        tex.print(act .. "numexpr " .. tostring(n.char) .. act .. "relax")
-      else
-        tex.print(act .. 'numexpr -1' .. act .. "relax")
-      end
-    }%
-  }
+  \def\lastnodechar{\directlua{luatexja.pltx_composite_last_node_char()}}
 \fi
 % #1と#2の間に入るjmglueを\jlreq@resultskip（(x)kanjiskipも）に入れる
 \newcommand*{\jlreq@calc@jfmglue}[2]{%
@@ -669,8 +674,12 @@
 \def\jlreq@fixjfm{%
   \ifnum\jlreq@lastnodechar>-1
     \def\jlreq@do{%
-      \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{\jlreq@nextchar}%
-      \hskip\jlreq@resultskip
+      \jlreq@isletter{\jlreq@nextchar}{%
+        \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{\jlreq@nextchar}%
+        \message{fixjfm Insert: \the\jlreq@resultskip}%
+        \hskip\jlreq@resultskip
+        \inhibitglue
+      }{}%
     }%
     \def\@tempa{%
       \futurelet\jlreq@nextchar\jlreq@do
@@ -2213,6 +2222,39 @@
 %. 注
 % 合印：4.2.3
 % 文字サイズは6ポイントくらい（4.2.3.a）とりあえす\scriptsize
+
+% \footnoteとか\footnotemarkの前に#2後に#3を入れる
+\newcommand*{\jlreq@modify@noteandmark}[4]{%
+  \edef\@tempa{\expandafter\@gobble\string#1}%
+  \jlreq@saveoriginalcs{\@tempa}%
+  \edef#1{%
+    \unexpanded{#3}%
+    \noexpand\@ifnextchar[{\expandonce{\csname jlreq@fixjfm@\@tempa @\endcsname}}{\expandonce{\csname jlreq@fixjfm@\@tempa @@\endcsname}}%
+  }
+  \long\expandafter\edef\csname jlreq@fixjfm@\@tempa @\endcsname[##1]##2{%
+    \expandonce{\csname jlreq@original@\@tempa\endcsname}[##1]{##2}%
+    \unexpanded{#4}%
+  }
+  \long\expandafter\edef\csname jlreq@fixjfm@\@tempa @@\endcsname##1{%
+    \expandonce{\csname jlreq@original@\@tempa\endcsname}{##1}%
+    \unexpanded{#4}%
+  }
+  \edef\@tempa{\expandafter\@gobble\string#2}%
+  \jlreq@saveoriginalcs{\@tempa}%
+  \edef#2{%
+    \unexpanded{#3}%
+    \noexpand\@ifnextchar[{\expandonce{\csname jlreq@fixjfm@\@tempa @\endcsname}}{\expandonce{\csname jlreq@fixjfm@\@tempa @@\endcsname}}%
+  }
+  \expandafter\edef\csname jlreq@fixjfm@\@tempa @\endcsname[##1]{%
+    \expandonce{\csname jlreq@original@\@tempa\endcsname}[##1]%
+    \unexpanded{#4}%
+  }
+  \expandafter\edef\csname jlreq@fixjfm@\@tempa @@\endcsname{%
+    \expandonce{\csname jlreq@original@\@tempa\endcsname}%
+    \unexpanded{#4}%
+  }
+}
+
 \newcommand*\jlreq@referencemark@format[1]{#1}
 \ifthenelse{\equal{\jlreq@referencemark}{inline}}{
   \newcommand*{\jlreq@notemark}[1]{%
@@ -2223,8 +2265,9 @@
       \raise\dimexpr.5\jlreq@gol - (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa
     }%
   }
-  \newcommand*{\jlreq@modify@fixjfm@note}[1]{}
-  \newcommand*{\jlreq@modify@fixjfm@mark}[1]{}
+  \newcommand*{\jlreq@modify@noteandmark@fixjfm}[2]{%
+    \jlreq@modify@noteandmark{#1}{#2}{\inhibitglue}{\inhibitglue}
+  }
 }{
   \newcommand*{\jlreq@notemark}[1]{{%
     \setbox\@tempboxa=\hbox{\scriptsize\jlreq@referencemark@format{#1}}%
@@ -2237,43 +2280,25 @@
     \fi
     \setbox\jlreq@tempboxa=\hbox to\z@{\hskip-\@tempdima\raise\dimexpr.5\zw + (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa\hss}%
     \dp\jlreq@tempboxa=0pt\ht\jlreq@tempboxa=0pt\box\jlreq@tempboxa}}%
-  % 命令の前に\lastnodecharをとっておいて，後ろを\futureletでとって，
-  % JFM glueなどを入れる処理
-  \newcommand*{\jlreq@modify@fixjfm@note}[1]{%
-    \edef\@tempa{\expandafter\@gobble\string#1}%
-    \jlreq@saveoriginalcs{\@tempa}%
-    \edef#1{%
-      \unexpanded{\jlreq@lastnodechar=\lastnodechar}%
-      \noexpand\@ifnextchar[{\expandonce{\csname jlreq@fixjfm@\@tempa @\endcsname}}{\expandonce{\csname jlreq@fixjfm@\@tempa @@\endcsname}}%
+  \ifx\jlreq@engine l
+    % luatexの時は\inhibitglueすると\lastnodechar=-1になる
+    \newcommand*{\jlreq@modify@noteandmark@fixjfm}[2]{%
+      \jlreq@modify@noteandmark{#1}{#2}{%
+        \jlreq@lastnodechar=\lastnodechar
+        \ifnum\lastnodechar>-1\inhibitglue\fi
+      }{\jlreq@fixjfm}
     }
-    \expandafter\edef\csname jlreq@fixjfm@\@tempa @\endcsname[##1]##2{%
-      \expandonce{\csname jlreq@original@\@tempa\endcsname}[##1]{##2}%
-      \noexpand\jlreq@fixjfm
+  \else
+    % (u)platexの時は代入すると\inhibitglueが効かなくなる
+    \newcommand*{\jlreq@modify@noteandmark@fixjfm}[2]{%
+      \jlreq@modify@noteandmark{#1}{#2}{%
+        \ifnum\lastnodechar>-1\inhibitglue\fi
+        \jlreq@lastnodechar=\lastnodechar
+      }{\jlreq@fixjfm}
     }
-    \expandafter\edef\csname jlreq@fixjfm@\@tempa @@\endcsname##1{%
-      \expandonce{\csname jlreq@original@\@tempa\endcsname}{##1}%
-      \noexpand\jlreq@fixjfm
-    }
-  }
-  \newcommand*{\jlreq@modify@fixjfm@mark}[1]{%
-    \edef\@tempa{\expandafter\@gobble\string#1}%
-    \jlreq@saveoriginalcs{\@tempa}%
-    \edef#1{%
-      \unexpanded{\jlreq@lastnodechar=\lastnodechar}%
-      \noexpand\@ifnextchar[{\expandonce{\csname jlreq@fixjfm@\@tempa @\endcsname}}{\expandonce{\csname jlreq@fixjfm@\@tempa @@\endcsname}}%
-    }
-    \expandafter\edef\csname jlreq@fixjfm@\@tempa @\endcsname[##1]{%
-      \expandonce{\csname jlreq@original@\@tempa\endcsname}[##1]%
-      \noexpand\jlreq@fixjfm
-    }
-    \expandafter\edef\csname jlreq@fixjfm@\@tempa @@\endcsname{%
-      \expandonce{\csname jlreq@original@\@tempa\endcsname}%
-      \noexpand\jlreq@fixjfm
-    }
-  }
+  \fi
 }
-\jlreq@modify@fixjfm@note\footnote
-\jlreq@modify@fixjfm@mark\footnotemark
+\jlreq@modify@noteandmark@fixjfm{\footnote}{\footnotemark}
 % \@footnotemarkをシンプルなものにする
 \def\jlreq@setdefaultnotemark#1#2{%
   \def#1{%
@@ -2416,9 +2441,7 @@
     \par
   \fi
 }
-\jlreq@modify@fixjfm@note\endnote
-\jlreq@modify@fixjfm@mark\endnotemark
-
+\jlreq@modify@noteandmark@fixjfm{\endnote}{\endnotemark}
 \jlreq@endnote@indent=2\jlreq@mol
 % 二行目以降を全角分下げる
 \newcommand{\@makeendtext}[1]{\parindent 1\jlreq@mol
@@ -2545,7 +2568,7 @@
       \begingroup
         \csname c@\jlreq@sidenotecounter\endcsname #1\relax
         \expandafter\unrestored@protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
-     \endgroup
+      \endgroup
     }%
     \@sidenotemark
   }
@@ -2568,8 +2591,7 @@
     \long\def\@makesidetext#1{　\kern-1\jlreq@mol\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
   \fi
   \def\@makesidemark{\@makefnmark}
-  \jlreq@modify@fixjfm@note\sidenote
-  \jlreq@modify@fixjfm@mark\sidenotemark
+  \jlreq@modify@noteandmark@fixjfm{\sidenote}{\sidenotemark}
 }{% sidenote_type = symbol
   \jlreq@jlreqsetup@add{sidenote_symbol}{\def\jlreq@sidenote@defaultmark{#1}}
   \jlreq@jlreqsetup@add{sidenote_keyword_font}{\def\jlreq@sidenote@keywordfont{#1}}
@@ -2580,13 +2602,30 @@
   \def\sidenotemark{\jlreq@sidenotemark}
   \def\sidenotetext{\jlreq@sidenotetext}
   \long\def\jlreq@sidenote#1#2{\jlreq@sidenotemark{#1}\jlreq@sidenotetext{#1}{#2}}
-  \def\jlreq@sidenotemark#1{%
-    {\reset@font\jlreq@sidenote@keywordfont #1}%
-    \jlreq@lastnodechar=\lastnodechar % reference_mark=inlineの時は不要だけど害があるわけでもないので……
-    \ifx\jlreq@sidenote@defaultmark\@empty\else
-      \expandafter\edef\csname\jlreq@sidenotemarkname\endcsname{\jlreq@sidenote@defaultmark}%
-      \@sidenotemark
+  \ifthenelse{\equal{\jlreq@referencemark}{inline}}{%
+    \def\@tempa{\inhibitglue}
+  }{
+    \ifx\jlreq@engine l
+      \def\@tempa{%
+        \jlreq@lastnodechar=\lastnodechar
+        \ifnum\lastnodechar>-1\inhibitglue\fi
+      }
+    \else
+      \def\@tempa{%
+        \ifnum\lastnodechar>-1\inhibitglue\fi
+        \jlreq@lastnodechar=\lastnodechar
+      }
     \fi
+  }
+  \edef\jlreq@sidenotemark#1{%
+    {\noexpand\reset@font\jlreq@sidenote@keywordfont #1}%
+    \expandonce{\@tempa}%
+    \unexpanded{%
+      \ifx\jlreq@sidenote@defaultmark\@empty\else
+        \expandafter\edef\csname\jlreq@sidenotemarkname\endcsname{\jlreq@sidenote@defaultmark}%
+        \@sidenotemark
+      \fi
+    }%
   }
   \def\@sidenotemark{\@makesidemark}
   % カスタマイズできるべき？
@@ -2596,20 +2635,19 @@
   }
   \long\def\@makesidetext#1{{\headfont\csname\jlreq@sidenotemarkname\endcsname}\hspace*{1\jlreq@mol}#1}
   \def\@makesidemark{\@makefnmark}
-  \ifthenelse{\equal{\jlreq@referencemark}{interlinear}}{%
-    \edef\jlreq@do{
-      % \jlreq@lastnodecharの仕込みはすんでいる
-      \unexpanded{\def\sidenote#1#2}{%
-        \expandonce{\sidenote{#1}{#2}}%
-        \noexpand\jlreq@fixjfm
-      }
-      \unexpanded{\def\sidenotemark#1}{%
-        \expandonce{\sidenotemark{#1}}%
-        \noexpand\jlreq@fixjfm
-      }
+  \ifthenelse{\equal{\jlreq@referencemark}{interlinear}}{\def\@tempa{\jlreq@fixjfm}}{\def\@tempa{\inhibitglue}}
+  \edef\jlreq@do{
+    % \jlreq@lastnodecharの仕込みはすんでいる
+    \unexpanded{\long\def\sidenote#1#2}{%
+      \expandonce{\sidenote{#1}{#2}}%
+      \expandonce{\@tempa}%
     }
-    \jlreq@do
+    \unexpanded{\long\def\sidenotemark#1}{%
+      \expandonce{\sidenotemark{#1}}%
+      \expandonce{\@tempa}%
+    }
   }
+  \jlreq@do
 }
 
 %.. 割注（3.4）

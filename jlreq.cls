@@ -558,18 +558,10 @@
 \fi
 
 % \jlreq@gol(Gyo Okuri Length), \jlreq@mol (Moji Okuri Length)を定義
-\if@tate
-  \ifx l\jlreq@engine
-    \def\jlreq@gol{\zw}\def\jlreq@mol{\zh}
-  \else
-    \def\jlreq@gol{zw}\def\jlreq@mol{zh}  
-  \fi
+\ifx l\jlreq@engine
+  \def\jlreq@gol{\zh}\def\jlreq@mol{\zw}
 \else
-  \ifx l\jlreq@engine
-    \def\jlreq@gol{\zh}\def\jlreq@mol{\zw}
-  \else
-    \def\jlreq@gol{zh}\def\jlreq@mol{zw}
-  \fi
+  \def\jlreq@gol{zh}\def\jlreq@mol{zw}
 \fi
 
 %. helper2（エンジン依存系）
@@ -641,14 +633,16 @@
 
 %. 基本設定
 % 和文文字，欧文文字の設定（とりあえずLuaTeX-jaのデフォルトのまま）
+\def\jlreq@kanjiskip{0pt plus 0.25zw minus 0pt}
+\def\jlreq@xkanjiskip{0.25zw plus 0.25zw minus 0.125zw}
 \ifx l\jlreq@engine
   \ltjsetparameter{jacharrange={-1, +2, +3, -4, -5, +6, +7, -8}}
   % kanjiskip, xkanjiskipはjfmのものを使う
   \ltjsetparameter{kanjiskip=\maxdimen}
   \ltjsetparameter{xkanjiskip=\maxdimen}
 \else
-  \kanjiskip=0pt plus 0.25zw minus 0pt
-  \xkanjiskip=0.25zw plus 0.25zw minus 0.125zw
+  \kanjiskip=\jlreq@kanjiskip
+  \xkanjiskip=\jlreq@xkanjiskip
 \fi
 
 % 禁則処理，表1,2に従う
@@ -1147,6 +1141,14 @@
 }
 \def\jlreq@setfontsizehook{}
 \appto\jlreq@setfontsizehook{\ifdim\parindent>0pt\setlength{\parindent}{1\jlreq@mol}\fi}
+\ifx\jlreq@engine l\else
+  \appto\jlreq@setfontsizehook{%
+    \kanjiskip=\jlreq@kanjiskip
+    \ifdim\xkanjiskip>0pt
+      \xkanjiskip=\jlreq@xkanjiskip
+    \fi
+  }
+\fi
 
 % 2.5.2 \baselineskipは一定の方がよい？
 \newcommand{\footnotesize}{%
@@ -1185,7 +1187,7 @@
     \RequirePackage{plext}
   \fi
   \renewcommand*{\@Kanji}[1]{\expandafter\kansuji\number #1\relax} % \relax追加
-  \rensujiskip=0\zh plus 0.25\zh minus 0\zh
+  \rensujiskip=0\jlreq@mol plus 0.25\jlreq@mol minus 0\jlreq@mol
 \fi
 
 % このあたりはtarticleと同じ
@@ -1302,12 +1304,12 @@
 
 \setlength{\topskip}{1\zw} % フォントサイズと一致させる
 \ifx\jlreq@option@headfoot@verticalpos\@empty
-  \if@tate\def\jlreq@option@headfoot@verticalpos{1zh}
+  \if@tate\def\jlreq@option@headfoot@verticalpos{1zw}
   \else\def\jlreq@option@headfoot@verticalpos{2zh}\fi
 \fi
 \setlength{\headsep}{\jlreq@speciallength{\jlreq@option@headfoot@verticalpos}}
 \ifdim\headsep<1\zw\jlreq@warning{基本版面との上下方向の最低の空き量を，基本版面の文字サイズの全角アキとする (26.1.a)}\fi
-\setlength{\headheight}{1\zh}
+\setlength{\headheight}{1\zw}
 %.. 横
 \ifx\jlreq@option@gutter\@empty
   % 中央配置
@@ -1366,7 +1368,7 @@
 \addtolength{\topmargin}{-1in}
 %.. 下
 % 本文から一文字分離すつもり
-\setlength{\footskip}{2\zh}
+\setlength{\footskip}{2\zw}
 % \maxdepth + \topskip = フォントサイズ×1.5
 \setlength{\maxdepth}{1.5\jlreq@fontsize}
 \addtolength{\maxdepth}{-\topskip}
@@ -2074,23 +2076,23 @@
     (\rensuji{\@arabic\c@subparagraph})}
 
   \ifthenelse{\equal{\jlreq@article@type}{article}}{
-    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},indent=4\zh,lines=4,after_label_space=1\zh,second_heading_text_indent={-1\zh,1\zh},subtitle_font={\jlreq@keepbaselineskip{\large}}}
+    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},indent=4\jlreq@mol,lines=4,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\large}}}
     \if@twoside\ModifyHeading{part}{allowbreak_if_evenpage=true}\fi
   }
   {% book, report
     \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\jlreq@mol}},format={\null\vfill {\Huge\headfont \hspace*{2\jlreq@mol}#1#2}\vspace*{2\jlreq@gol}}}
-    \NewBlockHeading{chapter}{0}{indent=2\zh,lines=6,label_format={第\thechapter 章},font={\huge\headfont},after_label_space=1\zh,second_heading_text_indent={-1\zh,1\zh},subtitle_font={\jlreq@keepbaselineskip{\Large}}}
+    \NewBlockHeading{chapter}{0}{indent=2\jlreq@mol,lines=6,label_format={第\thechapter 章},font={\huge\headfont},after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\Large}}}
     \if@twoside\ModifyHeading{chapter}{allowbreak_if_evenpage=true}\fi
     \renewcommand{\thechapter}{\Kanji{chapter}}
   }
-  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},indent=6\zh,lines=3,after_label_space=1\zh,second_heading_text_indent={-1\zh,1\zh},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
+  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},indent=6\jlreq@mol,lines=3,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
   \if@twoside\ModifyHeading{section}{allowbreak_if_evenpage=true}\fi
-  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},indent=8\zh,lines=2,after_label_space=1\zh,second_heading_text_indent={-1\zh,1\zh},subtitle_font={\jlreq@keepbaselineskip{\small}}}
+  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},indent=8\jlreq@mol,lines=2,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\small}}}
   \if@twoside\ModifyHeading{subsection}{allowbreak_if_evenpage=true}\fi
-  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=10\zh,lines=1,before_lines=1,subtitle_break=false,after_label_space=1\zh,second_heading_text_indent={-1\zh,1\zh},,subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
+  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=10\jlreq@mol,lines=1,before_lines=1,subtitle_break=false,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},,subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
   \if@twoside\ModifyHeading{subsubsection}{allowbreak_if_evenpage=true}\fi
   \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
-  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=1\zh}
+  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=1\jlreq@mol}
 \else
   \renewcommand{\thepart}{\Roman{part}}
   \renewcommand{\thesubsection}{\thesection .\arabic{subsection}}
@@ -2098,7 +2100,7 @@
   \renewcommand{\theparagraph}{\thesubsubsection .\arabic{paragraph}}
   \renewcommand{\thesubparagraph}{\theparagraph .\arabic{subparagraph}}
   \ifthenelse{\equal{\jlreq@article@type}{article}}{
-    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},label_format={第\thepart 部},lines=4,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\large}}}
+    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},label_format={第\thepart 部},lines=4,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\large}}}
     \renewcommand{\thesection}{\arabic{section}}
   }
   {% book, report
@@ -2106,7 +2108,7 @@
     \NewBlockHeading{chapter}{0}{%
       format={{\jlreq@keepbaselineskip{\huge\headfont} #1#2}#3},
       label_format={第\thechapter 章\quad},
-      lines=5,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},
+      lines=5,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},
       subtitle_font={\jlreq@keepbaselineskip{\Large}}}
     \renewcommand{\thechapter}{\arabic{chapter}}
     \renewcommand{\thesection}{\thechapter.\arabic{section}}
@@ -2116,11 +2118,11 @@
       \ModifyHeading{chapter}{pagebreak=clearpage}
     }
   }
-  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},lines=3,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
-  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},lines=2,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\small}}}
-  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},lines=1,before_lines=1,subtitle_break=false,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
-  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=1\zw}
-  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=2\zw}
+  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},lines=3,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
+  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},lines=2,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\small}}}
+  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},lines=1,before_lines=1,subtitle_break=false,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
+  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=1\jlreq@mol}
+  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=2\jlreq@mol}
 \fi
 
 \ifthenelse{\equal{\jlreq@article@type}{article}}{}{% book, report
@@ -2221,7 +2223,7 @@
   \footnotesize
   \jlreq@footnoteindent=1\jlreq@mol
   \@tempdima=\dimexpr\textwidth - \jlreq@footnoteindent\relax
-  \@tempdimb=1\zw
+  \@tempdimb=1\jlreq@mol
   \divide\@tempdima\@tempdimb \multiply\@tempdima\@tempdimb
   \global\jlreq@footnoteindent=\dimexpr\textwidth - \@tempdima\relax
 }
@@ -2418,7 +2420,7 @@
       \ClassWarningNoLine{jlreq}{sidenote_width is greater than the width of the margin}
     \fi
   \fi
-  \@tempdima=1\zw% 1\jlreq@mol
+  \@tempdima=1\jlreq@mol
   \global\divide\marginparwidth\@tempdima
   \global\multiply\marginparwidth\@tempdima
   \global\setlength{\marginparpush}{.5\@tempdima} % 同上：g
@@ -2475,7 +2477,7 @@
     \long\def\@makesidetext#1{\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
   \else
     % thefootnote = \inhibitglue （...だと\inhibitglueが効かない
-    \long\def\@makesidetext#1{　\kern-1\zw\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
+    \long\def\@makesidetext#1{　\kern-1\jlreq@mol\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
   \fi
   \def\@makesidemark{\@makefnmark}
 }{% sidenote_type = symbol
@@ -3408,7 +3410,7 @@
 \fi
 \newcommand{\labelitemiv}{\hbox to 1\jlreq@mol{\hss ・\hss}}
 
-% 引用系．1.5em→1\zh，字下げを二文字にした．3.5.2の例．
+% 引用系．1.5em→1\zw，字下げを二文字にした．3.5.2の例．
 \newenvironment{verse}
   {\let\\\@centercr
   \list{}{\itemsep\z@ \itemindent -2\jlreq@mol%

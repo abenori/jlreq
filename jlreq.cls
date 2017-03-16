@@ -9,6 +9,9 @@
 \RequirePackage{xkeyval,everyhook,filehook,etoolbox,ifthen}
 
 %. helper1
+\newcount\jlreq@tempcnta
+\newcount\jlreq@tempcntb
+\newcount\jlreq@tempcntc
 \newdimen\jlreq@tempdima
 \newdimen\jlreq@tempdimb
 \newdimen\jlreq@tempdimc
@@ -23,6 +26,7 @@
 \newbox\jlreq@tempboxc
 % 計算結果を返すための変数
 \newdimen\jlreq@resultdimen
+\newskip\jlreq@resultskip
 \newbox\jlreq@resultbox
 \newif\ifjlreq@result
 
@@ -288,6 +292,13 @@
   \global\advance\jlreq@zref@reference@count by 1
   \zref@labelbyprops{jlreq@rest@width.page.\the\jlreq@zref@reference@count}{jlreq@page}%
   \global\jlreq@currentpage=\zref@extractdefault{jlreq@rest@width.page.\the\jlreq@zref@reference@count}{jlreq@page}{\c@page}%
+}
+
+\def\jlreq@saveoriginalcs#1{
+  \@ifundefined{jlreq@original@#1}{}{%
+    \ClassError{jlreq}{Trying to save \string\ #1 twice, maybe a bug}{\@ehc}%
+  }
+  \expandafter\expandafter\expandafter\let\expandafter\expandafter\csname jlreq@original@#1\endcsname\csname #1\endcsname
 }
 
 %. オプションの定義
@@ -629,6 +640,43 @@
   \global\jlreq@current@linewidth=\jlreq@calc@current@linewidth
   \global\jlreq@rest@linewidth=\dimexpr\linewidth - \jlreq@current@linewidth\relax
   \edef\jlreq@savepos@iflabelundefined{\noexpand\zref@ifrefundefined{jlreq@rest@width.pos.\the\jlreq@zref@reference@count}}%
+}
+
+\ifx\jlreq@engine l
+  % https://ja.osdn.net/projects/eptex/wiki/lastnodechar
+  \def\lastnodechar{%
+    \directlua{%
+      local act = string.char(92)
+      local n = tex.nest[tex.nest.ptr].tail
+      if n and n.id==node.id('glyph') then
+        tex.print(act .. "numexpr " .. tostring(n.char) .. act .. "relax")
+      else
+        tex.print(act .. 'numexpr -1' .. act .. "relax")
+      end
+    }%
+  }
+\fi
+% #1と#2の間に入るjmglueを\jlreq@resultskip（(x)kanjiskipも）に入れる
+\newcommand*{\jlreq@calc@jfmglue}[2]{%
+  \begingroup
+    \setbox\jlreq@tempboxa=\hbox{\inhibitglue #1\inhibitglue\hbox{}\inhibitglue#2\inhibitglue}%
+    \setbox\jlreq@tempboxb=\hbox{\inhibitglue #1#2\inhibitglue}%
+    \edef\jlreq@do{\noexpand\jlreq@resultskip=\the\dimexpr\wd\jlreq@tempboxb - \wd\jlreq@tempboxa\relax\noexpand\relax}%
+  \expandafter\endgroup
+  \jlreq@do
+}
+\newcount\jlreq@lastnodechar
+\def\jlreq@fixjfm{%
+  \ifnum\jlreq@lastnodechar>-1
+    \def\jlreq@do{%
+      \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{\jlreq@nextchar}%
+      \hskip\jlreq@resultskip
+    }%
+    \def\@tempa{%
+      \futurelet\jlreq@nextchar\jlreq@do
+    }%
+  \else\def\@tempa{}\fi
+  \@tempa
 }
 
 %. 基本設定
@@ -1134,7 +1182,7 @@
 % 文字サイズを基準としているような寸法に対しては，
 % \@setfontsizeが実行されるたびに追随して値を変える
 % その処理は\jlreq@setfontsizehookに入れる
-\let\jlreq@original@@setfontsize=\@setfontsize
+\jlreq@saveoriginalcs{@setfontsize}
 \renewcommand*{\@setfontsize}[3]{%
   \jlreq@original@@setfontsize{#1}{#2}{#3}%
   \jlreq@setfontsizehook
@@ -2175,6 +2223,8 @@
       \raise\dimexpr.5\jlreq@gol - (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa
     }%
   }
+  \newcommand*{\jlreq@modify@fixjfm@note}[1]{}
+  \newcommand*{\jlreq@modify@fixjfm@mark}[1]{}
 }{
   \newcommand*{\jlreq@notemark}[1]{{%
     \setbox\@tempboxa=\hbox{\scriptsize\jlreq@referencemark@format{#1}}%
@@ -2187,7 +2237,43 @@
     \fi
     \setbox\jlreq@tempboxa=\hbox to\z@{\hskip-\@tempdima\raise\dimexpr.5\zw + (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa\hss}%
     \dp\jlreq@tempboxa=0pt\ht\jlreq@tempboxa=0pt\box\jlreq@tempboxa}}%
+  % 命令の前に\lastnodecharをとっておいて，後ろを\futureletでとって，
+  % JFM glueなどを入れる処理
+  \newcommand*{\jlreq@modify@fixjfm@note}[1]{%
+    \edef\@tempa{\expandafter\@gobble\string#1}%
+    \jlreq@saveoriginalcs{\@tempa}%
+    \edef#1{%
+      \unexpanded{\jlreq@lastnodechar=\lastnodechar}%
+      \noexpand\@ifnextchar[{\expandonce{\csname jlreq@fixjfm@\@tempa @\endcsname}}{\expandonce{\csname jlreq@fixjfm@\@tempa @@\endcsname}}%
+    }
+    \expandafter\edef\csname jlreq@fixjfm@\@tempa @\endcsname[##1]##2{%
+      \expandonce{\csname jlreq@original@\@tempa\endcsname}[##1]{##2}%
+      \noexpand\jlreq@fixjfm
+    }
+    \expandafter\edef\csname jlreq@fixjfm@\@tempa @@\endcsname##1{%
+      \expandonce{\csname jlreq@original@\@tempa\endcsname}{##1}%
+      \noexpand\jlreq@fixjfm
+    }
+  }
+  \newcommand*{\jlreq@modify@fixjfm@mark}[1]{%
+    \edef\@tempa{\expandafter\@gobble\string#1}%
+    \jlreq@saveoriginalcs{\@tempa}%
+    \edef#1{%
+      \unexpanded{\jlreq@lastnodechar=\lastnodechar}%
+      \noexpand\@ifnextchar[{\expandonce{\csname jlreq@fixjfm@\@tempa @\endcsname}}{\expandonce{\csname jlreq@fixjfm@\@tempa @@\endcsname}}%
+    }
+    \expandafter\edef\csname jlreq@fixjfm@\@tempa @\endcsname[##1]{%
+      \expandonce{\csname jlreq@original@\@tempa\endcsname}[##1]%
+      \noexpand\jlreq@fixjfm
+    }
+    \expandafter\edef\csname jlreq@fixjfm@\@tempa @@\endcsname{%
+      \expandonce{\csname jlreq@original@\@tempa\endcsname}%
+      \noexpand\jlreq@fixjfm
+    }
+  }
 }
+\jlreq@modify@fixjfm@note\footnote
+\jlreq@modify@fixjfm@mark\footnotemark
 % \@footnotemarkをシンプルなものにする
 \def\jlreq@setdefaultnotemark#1#2{%
   \def#1{%
@@ -2197,7 +2283,7 @@
     \ifhmode\spacefactor\@x@sf\fi
     \relax}
 }
-\let\jlreq@original@@footnotemark=\@footnotemark
+\def\@tempa{@footnotemark}
 \jlreq@setdefaultnotemark\@footnotemark\@makefnmark
 %.. 脚注  （縦書きの時は傍注，4.2.5）
 {%
@@ -2260,7 +2346,7 @@
 \def\jlreq@endnote@texts{}
 \long\def\jlreq@endnote@addtext#1#2{%
   \expandafter\gdef\expandafter\jlreq@endnote@texts\expandafter{\jlreq@endnote@texts{{#1}{#2}}}}
-\def\endnote{\@ifnextchar[{\jlreq@endnote}{\jlreq@endnote[]}}
+\def\endnote{\@ifnextchar[{\jlreq@endnote}{\jlreq@endnote[]}}  
 \def\endnotemark{\@ifnextchar[{\jlreq@endnotemark}{\jlreq@endnotemark[]}}
 \def\endnotetext{\@ifnextchar[{\jlreq@endnotetext}{\jlreq@endnotetext[]}}
 \long\def\jlreq@endnote[#1]#2{\jlreq@endnotemark[#1]\@endnotetext{#2}}
@@ -2330,6 +2416,8 @@
     \par
   \fi
 }
+\jlreq@modify@fixjfm@note\endnote
+\jlreq@modify@fixjfm@mark\endnotemark
 
 \jlreq@endnote@indent=2\jlreq@mol
 % 二行目以降を全角分下げる
@@ -2480,6 +2568,8 @@
     \long\def\@makesidetext#1{　\kern-1\jlreq@mol\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
   \fi
   \def\@makesidemark{\@makefnmark}
+  \jlreq@modify@fixjfm@note\sidenote
+  \jlreq@modify@fixjfm@mark\sidenotemark
 }{% sidenote_type = symbol
   \jlreq@jlreqsetup@add{sidenote_symbol}{\def\jlreq@sidenote@defaultmark{#1}}
   \jlreq@jlreqsetup@add{sidenote_keyword_font}{\def\jlreq@sidenote@keywordfont{#1}}
@@ -2492,6 +2582,7 @@
   \long\def\jlreq@sidenote#1#2{\jlreq@sidenotemark{#1}\jlreq@sidenotetext{#1}{#2}}
   \def\jlreq@sidenotemark#1{%
     {\reset@font\jlreq@sidenote@keywordfont #1}%
+    \jlreq@lastnodechar=\lastnodechar % reference_mark=inlineの時は不要だけど害があるわけでもないので……
     \ifx\jlreq@sidenote@defaultmark\@empty\else
       \expandafter\edef\csname\jlreq@sidenotemarkname\endcsname{\jlreq@sidenote@defaultmark}%
       \@sidenotemark
@@ -2505,6 +2596,20 @@
   }
   \long\def\@makesidetext#1{{\headfont\csname\jlreq@sidenotemarkname\endcsname}\hspace*{1\jlreq@mol}#1}
   \def\@makesidemark{\@makefnmark}
+  \ifthenelse{\equal{\jlreq@referencemark}{interlinear}}{%
+    \edef\jlreq@do{
+      % \jlreq@lastnodecharの仕込みはすんでいる
+      \unexpanded{\def\sidenote#1#2}{%
+        \expandonce{\sidenote{#1}{#2}}%
+        \noexpand\jlreq@fixjfm
+      }
+      \unexpanded{\def\sidenotemark#1}{%
+        \expandonce{\sidenotemark{#1}}%
+        \noexpand\jlreq@fixjfm
+      }
+    }
+    \jlreq@do
+  }
 }
 
 %.. 割注（3.4）
@@ -3070,9 +3175,6 @@
 % \begin{figure}***\caption{???}\end{figure}を
 % \begin{figure}\layoutfloat{***}\pcaption{???}\end{figure}にする．
 % 
-%\def\jlreq@saveoriginalcs#1{
-%  \expandafter\expandafter\expandafter\let\expandafter\expandafter\csname jlreq@original@#1\endcsname\csname #1\endcsname
-%}
 %\long\def\jlreq@replace@layoutfloat#1\caption{\layoutfloat{#1}\jlreq@caption}
 %\long\def\jlreq@caption#1{\ifx#1\jlreq@endmark\else\pcaption{#1}\expandafter\jlreq@replace@layoutfloat\fi}
 %\def\jlreq@modify@float#1{%
@@ -3463,8 +3565,8 @@
 
 %. 表関係 4.4
 % 表内の行間を0にする（4.4.3.f）
-\let\jlreq@original@tabular=\tabular
-\let\jlreq@original@endtabular=\endtabular
+\jlreq@saveoriginalcs{tabular}
+\jlreq@saveoriginalcs{endtabular}
 \preto\tabular{\begingroup\appto\@arrayparboxrestore{\baselineskip=0pt\lineskip=0pt}}
 \appto\endtabular{\endgroup}
 % 4.4.3.e
@@ -3742,11 +3844,11 @@
 
 %. 定理環境
 \def\jlreq@theorem@abovebelowspace{1\baselineskip}%とりあえず前後に一行分のアキ
-\let\jlreq@original@@begintheorem=\@begintheorem
+\jlreq@saveoriginalcs{@begintheorem}
 \def\@begintheorem#1#2{\topsep=\jlreq@theorem@abovebelowspace
   \trivlist\labelsep=1\jlreq@mol
    \item[\hskip \labelsep{\headfont #1\ #2}]}
-\let\jlreq@original@@opargbegintheorem=\@opargbegintheorem
+\jlreq@saveoriginalcs{@opargbegintheorem}
 \def\@opargbegintheorem#1#2#3{\topsep=\jlreq@theorem@abovebelowspace
   \trivlist\labelsep=1\jlreq@mol
   \item[\hskip \labelsep{\headfont #1\ #2（#3）}]}
@@ -3754,8 +3856,8 @@
 \AtEndOfPackageFile*{amsthm}{
   \newtheoremstyle{jlreq}{\jlreq@theorem@abovebelowspace}{\jlreq@theorem@abovebelowspace}{\normalfont}{}{\headfont}{}{1\jlreq@mol}{\thmname{#1}\thmnumber{\ #2}\thmnote{ (#3)}}
   \theoremstyle{jlreq}
-  \let\jlreq@original@proof=\proof
-  \let\jlreq@original@endproof=\endproof
+  \jlreq@saveoriginalcs{proof}
+  \jlreq@saveoriginalcs{endproof}
   \def\proof{\@ifnextchar[{\jlreq@proof}{\jlreq@proof[\proofname]}}
   \def\jlreq@proof[#1]{\labelsep=1\jlreq@mol\jlreq@original@proof[{\normalfont\headfont #1\inhibitglue}\nopunct]}
   \renewcommand{\proofname}{証明}

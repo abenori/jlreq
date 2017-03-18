@@ -1314,7 +1314,8 @@
 \setlength{\columnseprule}{0pt}
 
 % デフォルト値は縦横ともにが0.5倍．
-%.. \textwidth：縦書きは縦，横書きは横
+%.. \textwidth：文字送り方向の行長
+% 二段の場合は最初の段の頭から次の段の後まで
 % 一度\textwidthに一行の長さの文字数を入れる（段組の場合でも）
 \@tempdima=1\jlreq@fontsize
 \ifx\jlreq@option@line@length\@empty
@@ -1345,7 +1346,11 @@
   \setlength{\textwidth}{\dimexpr2\textwidth + \columnsep\relax}
 \fi
 
-%.. \textheight：縦書きは横，横書きは縦
+\setlength{\topskip}{1\zw} % フォントサイズと一致させる
+
+%.. \textheight：行送り方向の長さ
+% 一番上（直後に\topskip由来が入る）から最終行のベースラインまでの長さ．
+% \topskipが十分ある時は先頭行のベースラインから最終行のベースライン＋\topskip
 \ifx\jlreq@option@number@of@lines\@empty
   \if@tate
     \setlength{\textheight}{0.75\paperwidth}
@@ -1359,7 +1364,6 @@
   \setlength{\textheight}{\dimexpr\jlreq@speciallength{\jlreq@option@number@of@lines\baselineskip} - \baselineskip + \topskip\relax}
 \fi
 
-\setlength{\topskip}{1\zw} % フォントサイズと一致させる
 \ifx\jlreq@option@headfoot@verticalpos\@empty
   \if@tate\def\jlreq@option@headfoot@verticalpos{1zw}
   \else\def\jlreq@option@headfoot@verticalpos{2zh}\fi
@@ -1370,22 +1374,22 @@
 %.. 横
 \ifx\jlreq@option@gutter\@empty
   % 中央配置
-  \setlength{\oddsidemargin}{\paperwidth}
   \if@tate
-    \addtolength{\oddsidemargin}{-\textheight}
+    \setlength{\oddsidemargin}{\dimexpr\paperwidth - \textheight + \topskip\relax}
   \else
-    \addtolength{\oddsidemargin}{-\textwidth}
+    \setlength{\oddsidemargin}{\dimexpr\paperwidth - \textwidth\relax}
   \fi
   \setlength{\oddsidemargin}{.5\oddsidemargin}
   \addtolength{\oddsidemargin}{-1in}
   \setlength{\evensidemargin}{\oddsidemargin}
 \else
-  \setlength{\oddsidemargin}{\jlreq@speciallength{\jlreq@option@gutter}}
-  \setlength{\evensidemargin}{\dimexpr\paperwidth - \textheight - \oddsidemargin\relax}
   \if@tate
-    \setlength{\jlreq@tempdima}{\oddsidemargin}
-    \setlength{\oddsidemargin}{\evensidemargin}
-    \setlength{\evensidemargin}{\jlreq@tempdima}
+    \setlength{\evensidemargin}{\jlreq@speciallength{\jlreq@option@gutter}}
+    \setlength{\oddsidemargin}{\dimexpr\paperwidth - \textheight - \evensidemargin + \topskip - \Cht\relax}
+    \addtolength{\evensidemargin}{\Cdp}
+  \else
+    \setlength{\oddsidemargin}{\jlreq@speciallength{\jlreq@option@gutter}}
+    \setlength{\evensidemargin}{\dimexpr\paperwidth - \textwidth - \oddsidemargin\relax}
   \fi
   \addtolength{\oddsidemargin}{-1in}
   \addtolength{\evensidemargin}{-1in}
@@ -2515,8 +2519,10 @@
     \fi
   \else
     \setlength{\jlreq@tempdima}{\dimexpr \paperwidth - \textwidth - 1in - \oddsidemargin - \marginparsep\relax}
-    \ifdim\jlreq@tempdima>\dimexpr\oddsidemargin + 1in\relax
-      \setlength{\jlreq@tempdima}{\dimexpr\oddsidemargin + 1in\relax}
+    \if@twocolumn
+      \ifdim\jlreq@tempdima>\dimexpr\oddsidemargin + 1in - \marginparsep\relax
+        \setlength{\jlreq@tempdima}{\dimexpr\oddsidemargin + 1in - \marginparsep\relax}
+      \fi
     \fi
   \fi
   \ifx\jlreq@option@sidenote@width\@empty

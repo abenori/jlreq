@@ -3704,7 +3704,7 @@
 % 第三引数は，上からの幅に加え更にトップの見出しからの差による補正（プラス）が入る．
 % 補正には\jlreq@top@contentsを使う．
 % 「トップ」というか，一番最初に現れた見出しを入れる．
-% リーダーは.から・に変更しました．更に直後から出るように．
+% リーダーは.から・に変更しました．
 \def\@dottedtocline#1#2#3#4#5{%
   \jlreq@set@top@contents{#1}%
   \ifnum #1>\c@tocdepth \else
@@ -3721,7 +3721,7 @@
     \advance\leftskip \@lnumwidth \hbox{}\hskip -\leftskip
       \advance\leftskip\@tempdima
     {#4}\nobreak
-    \leaders\hbox{$\hbox{・}\mkern \@dotsep mu \m@th \mkern \@dotsep mu$}%
+    \leaders\hbox{$\m@th\mkern \@dotsep mu$\null\inhibitglue ・\inhibitglue\null$\m@th\mkern \@dotsep mu$}%
     \hfill\nobreak
     \hb@xt@\@pnumwidth{\hss\normalfont\normalcolor #5}%
     \par}%

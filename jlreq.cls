@@ -594,20 +594,17 @@
 %. helper2（エンジン依存系）
 % 組方向を判定
 % \jlreq@if(y|t)(dir|box)を定義する．
-\def\jlreq@do{%
-  \def\jlreq@ifydir{\ifydir\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-  \def\jlreq@iftdir{\iftdir\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-  \def\jlreq@ifybox##1{\ifybox##1\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-  \def\jlreq@iftbox##1{\iftbox##1\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-}
-\ifx l\jlreq@engine
+\ifx l\jlreq@engine\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{
   \def\jlreq@ifydir{\ifnum\ltjgetparameter{direction}=4\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
   \def\jlreq@iftdir{\ifnum\numexpr\ltjgetparameter{direction}-(\ltjgetparameter{direction}/8)*8=3\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
   \def\jlreq@ifybox#1{\ifnum\ltjgetparameter{boxdir}{#1}=4\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
   \def\jlreq@iftbox#1{\ifnum\numexpr\ltjgetparameter{boxdir}{#1}-(\ltjgetparameter{boxdir}{#1}/8)*8=3\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-\else
-  \jlreq@do
-\fi
+}{
+  \def\jlreq@ifydir{\ifydir\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+  \def\jlreq@iftdir{\iftdir\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+  \def\jlreq@ifybox#1{\ifybox#1\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+  \def\jlreq@iftbox#1{\iftbox#1\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+}
 
 % 現在行の残りを得る．
 \ifx l\jlreq@engine
@@ -661,6 +658,7 @@
 \ifx\jlreq@engine l
   \def\lastnodechar{\directlua{luatexja.pltx_composite_last_node_char()}}
 \fi
+
 % #1と#2の間に入るjmglueを\jlreq@resultskip（(x)kanjiskipも）に入れる
 \newcommand*{\jlreq@calc@jfmglue}[2]{%
   \begingroup
@@ -671,12 +669,13 @@
   \jlreq@do
 }
 \newcount\jlreq@lastnodechar
+% jlreq@lastnodecharに入っている値と次のトークン（\futureletで得る）の間に入るJFMグルー等を挿入する
 \def\jlreq@fixjfm{%
   \ifnum\jlreq@lastnodechar>-1
     \def\jlreq@do{%
       \jlreq@isletter{\jlreq@nextchar}{%
         \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{\jlreq@nextchar}%
-        \message{fixjfm Insert: \the\jlreq@resultskip}%
+%        \message{fixjfm Insert: \the\jlreq@resultskip}%
         \hskip\jlreq@resultskip
         \inhibitglue
       }{}%
@@ -1168,26 +1167,8 @@
   \jlreq@warning{行間は二分以上全角以下が望ましい (2.4.2.d 注3)}
 }{}
 
-\emergencystretch 3\jlreq@mol
+\emergencystretch 3\jlreq@gol
 
-\renewcommand{\normalsize}{%
-  \@setfontsize\normalsize{\jlreq@fontsize}{\jlreq@baselineskip}%
-  \abovedisplayskip 1.1\jlreq@fontsize \@plus .3\jlreq@fontsize \@minus .4\jlreq@fontsize
-  \abovedisplayshortskip \z@ \@plus .3\jlreq@fontsize
-  \belowdisplayskip .9\jlreq@fontsize \@plus.3\jlreq@fontsize \@minus.4\jlreq@fontsize
-  \belowdisplayshortskip \belowdisplayskip
-  \let\@listi\@listI}
-
-\if@tate\tate\fi % ここで発行しておく
-\mcfamily\selectfont\normalsize
-\setbox0\hbox{　} % 全角スペース
-\setlength\Cht{\ht0}
-\setlength\Cdp{\dp0}
-\setlength\Cwd{\wd0}
-\setlength\Cvs{\baselineskip}
-\setlength\Chs{\wd0}
-
-% 4.1.3.a
 % 文字サイズを基準としているような寸法に対しては，
 % \@setfontsizeが実行されるたびに追随して値を変える
 % その処理は\jlreq@setfontsizehookに入れる
@@ -1207,6 +1188,24 @@
   }
 \fi
 
+\renewcommand{\normalsize}{%
+  \@setfontsize\normalsize{\jlreq@fontsize}{\jlreq@baselineskip}%
+  \abovedisplayskip 1.1\jlreq@fontsize \@plus .3\jlreq@fontsize \@minus .4\jlreq@fontsize
+  \abovedisplayshortskip \z@ \@plus .3\jlreq@fontsize
+  \belowdisplayskip .9\jlreq@fontsize \@plus.3\jlreq@fontsize \@minus.4\jlreq@fontsize
+  \belowdisplayshortskip \belowdisplayskip
+  \let\@listi\@listI}
+
+\if@tate\tate\fi % ここで発行しておく
+\mcfamily\selectfont\normalsize
+\setbox0\hbox{阿}
+\setlength\Cht{\ht0}
+\setlength\Cdp{\dp0}
+\setlength\Cwd{\wd0}
+\setlength\Cvs{\baselineskip}
+\setlength\Chs{\wd0}
+
+% 4.1.3.a
 % 2.5.2 \baselineskipは一定の方がよい？
 \newcommand{\footnotesize}{%
   \@setfontsize\footnotesize{.8\jlreq@fontsize}{\dimexpr 115\jlreq@baselineskip/170\relax}% 脚注文字サイズの二分より少し小さい値を行間に: 4.2.5.e
@@ -1313,7 +1312,7 @@
 \setlength{\columnsep}{\jlreq@speciallength{\jlreq@option@column@gap}}
 \setlength{\columnseprule}{0pt}
 
-% デフォルト値は縦横ともにが0.5倍．
+% \textwidthと\textheightのデフォルト値は縦横ともに0.75倍（調整が入る）．
 %.. \textwidth：文字送り方向の行長
 % 二段の場合は最初の段の頭から次の段の後まで
 % 一度\textwidthに一行の長さの文字数を入れる（段組の場合でも）
@@ -1361,7 +1360,7 @@
   \divide\textheight\baselineskip \multiply\textheight\baselineskip
   \addtolength{\textheight}{\topskip}
 \else
-  \setlength{\textheight}{\dimexpr\jlreq@speciallength{\jlreq@option@number@of@lines\baselineskip} - \baselineskip + \topskip\relax}
+  \setlength{\textheight}{\dimexpr\jlreq@option@number@of@lines\baselineskip - \baselineskip + \topskip\relax}
 \fi
 
 \ifx\jlreq@option@headfoot@verticalpos\@empty
@@ -1394,45 +1393,54 @@
   \addtolength{\oddsidemargin}{-1in}
   \addtolength{\evensidemargin}{-1in}
 \fi
+
 %.. 縦
-\ifx\jlreq@option@head@space\@empty
-  \setlength{\topmargin}{\paperheight}
+% \topmarginに全体の頭からテキストの頭までの長さを入れる
+% 天の値からtopmarginを設定する
+\def\jlreq@settopmarginbyhead#1{
   \if@tate
-    \addtolength{\topmargin}{-\textwidth}
+    \setlength{\topmargin}{\dimexpr #1 - \headsep - \headheight - 1in\relax}
   \else
-    \addtolength{\topmargin}{-\textheight}
+    \setlength{\topmargin}{\dimexpr #1 - \headsep - \headheight - 1in - \topskip + \Cht\relax}
   \fi
-  \ifx\jlreq@option@foot@space\@empty
-    % 中央配置
-    \setlength{\topmargin}{0.5\topmargin}
+}
+% 地の値から
+\def\jlreq@settopmarginbyfoot#1{
+  \if@tate
+    \setlength{\topmargin}{\dimexpr\paperheight - \textwidth - \headsep - \headheight - 1in\relax}
   \else
-    \addtolength{\topmargin}{-\jlreq@speciallength{\jlreq@option@foot@space}}
+    \setlength{\topmargin}{\dimexpr\paperheight - \textheight + \topskip - 1\zh - \headsep - \headheight - 1in - #1\relax}
+  \fi
+} 
+\ifx\jlreq@option@head@space\@empty
+  \ifx\jlreq@option@foot@space\@empty
+    \if@tate
+      \jlreq@settopmarginbyhead{\dimexpr(\paperheight - \textwidth)/2\relax}
+    \else
+      \jlreq@settopmarginbyhead{\dimexpr(\paperheight - (\textheight - \topskip + 1\zh))/2\relax}
+    \fi
+  \else
+    \jlreq@settopmarginbyfoot{\jlreq@speciallength{\jlreq@option@foot@space}}
   \fi
 \else
   \ifx\jlreq@option@foot@space\@empty
-    \setlength{\topmargin}{\jlreq@speciallength{\jlreq@option@head@space}}
+    \jlreq@settopmarginbyhead{\jlreq@speciallength{\jlreq@option@head@space}}
   \else
     % 両方指定されていたら，縦書きは地を，横書きは天を使う
     \if@tate
-      \setlength{\topmargin}{\paperheight}
-      \addtolength{\topmargin}{-\textwidth}
-      \addtolength{\topmargin}{-\jlreq@speciallength{\jlreq@option@foot@space}}
+      \jlreq@settopmarginbyfoot{\jlreq@speciallength{\jlreq@option@foot@space}}
     \else
-      \setlength{\topmargin}{\jlreq@speciallength{\jlreq@option@head@space}}
+      \jlreq@settopmarginbyhead{\jlreq@speciallength{\jlreq@option@head@space}}
     \fi
   \fi
 \fi
+\let\jlreq@settopmarginbyhead=\@undefined
+\let\jlreq@settopmarginbyfoot=\@undefined
 
-
-\addtolength{\topmargin}{-\headsep}
-\addtolength{\topmargin}{-\headheight}
-\addtolength{\topmargin}{-1in}
 %.. 下
-% 本文から一文字分離すつもり
-\setlength{\footskip}{2\zw}
-% \maxdepth + \topskip = フォントサイズ×1.5
-\setlength{\maxdepth}{1.5\jlreq@fontsize}
-\addtolength{\maxdepth}{-\topskip}
+\setlength{\footskip}{\dimexpr\headsep + 1\zw\relax}
+% \maxdepth + \topskip = フォントサイズ×1.5（だってさ）
+\setlength{\maxdepth}{\dimexpr1.5\jlreq@fontsize - \topskip\relax}
 
 %. 見出し関係 (4.1)
 % 見出しの直前に実行される

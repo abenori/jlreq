@@ -296,7 +296,7 @@
 
 \def\jlreq@saveoriginalcs#1{
   \@ifundefined{jlreq@original@#1}{}{%
-    \ClassError{jlreq}{Trying to save \string\ #1 twice, maybe a bug}{\@ehc}%
+    \ClassError{jlreq}{Trying to save \expandafter\string\csname #1\endcsname\space twice, maybe a bug}{\@ehc}%
   }
   \expandafter\expandafter\expandafter\let\expandafter\expandafter\csname jlreq@original@#1\endcsname\csname #1\endcsname
 }
@@ -1400,6 +1400,7 @@
 \def\jlreq@settopmarginbyhead#1{
   \if@tate
     \setlength{\topmargin}{\dimexpr #1 - \headsep - \headheight - 1in\relax}
+    \jlreq@warning{縦組の場合は地の空き量を指定する (2.4.1.b)}
   \else
     \setlength{\topmargin}{\dimexpr #1 - \headsep - \headheight - 1in - \topskip + \Cht\relax}
   \fi
@@ -1407,15 +1408,16 @@
 % 地の値から
 \def\jlreq@settopmarginbyfoot#1{
   \if@tate
-    \setlength{\topmargin}{\dimexpr\paperheight - \textwidth - \headsep - \headheight - 1in\relax}
+    \setlength{\topmargin}{\dimexpr\paperheight - \textwidth - \headsep - \headheight - 1in - #1\relax}
   \else
+    \jlreq@warning{横組の場合は天の空き量を指定する (2.4.1.b)}
     \setlength{\topmargin}{\dimexpr\paperheight - \textheight + \topskip - 1\zh - \headsep - \headheight - 1in - #1\relax}
   \fi
 } 
 \ifx\jlreq@option@head@space\@empty
   \ifx\jlreq@option@foot@space\@empty
     \if@tate
-      \jlreq@settopmarginbyhead{\dimexpr(\paperheight - \textwidth)/2\relax}
+      \jlreq@settopmarginbyfoot{\dimexpr(\paperheight - \textwidth)/2\relax}
     \else
       \jlreq@settopmarginbyhead{\dimexpr(\paperheight - (\textheight - \topskip + 1\zh))/2\relax}
     \fi
@@ -1429,8 +1431,10 @@
     % 両方指定されていたら，縦書きは地を，横書きは天を使う
     \if@tate
       \jlreq@settopmarginbyfoot{\jlreq@speciallength{\jlreq@option@foot@space}}
+      \ClassWarningNoLine{jlreq}{head_space is ignored}
     \else
       \jlreq@settopmarginbyhead{\jlreq@speciallength{\jlreq@option@head@space}}
+      \ClassWarningNoLine{jlreq}{foot_space is ignored}
     \fi
   \fi
 \fi
@@ -2023,7 +2027,7 @@
       {after_space}{\def\jlreq@after@space{##1}}
     }{#3}%
     \ifthenelse{\lengthtest{\jlreq@after@space < 0.99\jlreq@mol} \OR \lengthtest{\jlreq@after@space > 2.01\jlreq@mol}}{%
-      \jlreq@warning{窓見出しと本文との空き量は，基本版面の文字サイズの全角以上，2倍未満とする（4.1.10.c）}%&
+      \jlreq@warning{窓見出しと本文との空き量は，基本版面の文字サイズの全角以上，2倍未満とする (4.1.10.c)}%&
     }{}%
     \edef\jlreq@do{%
       \noexpand\def\expandonce{\csname #1\endcsname}{%
@@ -2071,8 +2075,7 @@
 
 \newcommand*{\jlreq@keepbaselineskip}[1]{%
   \begingroup
-    \jlreq@tempdima=\baselineskip
-    \edef\jlreq@do{\unexpanded{#1}\noexpand\baselineskip=\the\jlreq@tempdima}%
+    \edef\jlreq@do{\unexpanded{#1}\noexpand\baselineskip=\the\baselineskip}%
   \expandafter\endgroup
   \jlreq@do
 }
@@ -2162,7 +2165,7 @@
   \if@twoside\ModifyHeading{subsubsection}{allowbreak_if_evenpage=true}\fi
   \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
   \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=1\jlreq@mol}
-\else
+\else% yoko
   \renewcommand{\thepart}{\Roman{part}}
   \renewcommand{\thesubsection}{\thesection .\arabic{subsection}}
   \renewcommand{\thesubsubsection}{\thesubsection .\arabic{subsubsection}}
@@ -2175,8 +2178,8 @@
   {% book, report
     \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\jlreq@gol}},format={\null\vfil {\Huge\headfont #1#2}\vfil}}
     \NewBlockHeading{chapter}{0}{%
-      format={{\jlreq@keepbaselineskip{\huge\headfont} #1#2}#3},
-      label_format={第\thechapter 章\quad},
+      font={\jlreq@keepbaselineskip{\huge\headfont}},
+      label_format={第\thechapter 章},
       lines=5,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},
       subtitle_font={\jlreq@keepbaselineskip{\Large}}}
     \renewcommand{\thechapter}{\arabic{chapter}}
@@ -2991,10 +2994,10 @@
       \)
     \)}{%
       \if@twoside
-        \jlreq@warning{柱やノンブルは，左ページでは，基本版面の左端の延長線にノンブル又は柱の先頭をそろえて配置するか，基本版面の左端の延長線から基本版面の文字サイズの全角アキだけ右に寄せた位置に配置する（ページスタイル #1 内，2.6.1.b）}%
+        \jlreq@warning{柱やノンブルは，左ページでは，基本版面の左端の延長線にノンブル又は柱の先頭をそろえて配置するか，基本版面の左端の延長線から基本版面の文字サイズの全角アキだけ右に寄せた位置に配置する (ページスタイル #1 内，2.6.1.b)}%
       \fi
     }{}%
-    \ifthenelse{\lengthtest{\jlreq@gap < 1.49\zw} \OR \( \lengthtest{\jlreq@gap > 1.51\zw} \AND \lengthtest{\jlreq@gap < 1.99\zw} \) \OR \lengthtest{\jlreq@gap > 2.01\zw}}{\jlreq@warning{ノンブルと柱との空き量は文字サイズの2倍又は1.5倍とする（ページスタイル #1 内，2.6.1.c）}}{}%
+    \ifthenelse{\lengthtest{\jlreq@gap < 1.49\zw} \OR \( \lengthtest{\jlreq@gap > 1.51\zw} \AND \lengthtest{\jlreq@gap < 1.99\zw} \) \OR \lengthtest{\jlreq@gap > 2.01\zw}}{\jlreq@warning{ノンブルと柱との空き量は文字サイズの2倍又は1.5倍とする (ページスタイル #1 内，2.6.1.c)}}{}%
     % 見出しを出す場合：evenに章などの高いレベルの見出しを出す（2.6.3.a）
     \def\jlreq@markdefinition{}%
     \def\jlreq@even@running@head@level{}%
@@ -3045,7 +3048,7 @@
     \expandafter\@tempb\jlreq@odd@running@head\jlreq@endmark\jlreq@endmark
     \ifx\jlreq@odd@running@head@level\@empty\else\ifx\jlreq@even@running@head@level\@empty\else
       \ifnum\jlreq@odd@running@head@level<\jlreq@even@running@head@level
-        \jlreq@warning{偶数ページには奇数ページよりアウトラインレベルの高い見出しを入れる（ページスタイル #1内，2.6.3.a）}%
+        \jlreq@warning{偶数ページには奇数ページよりアウトラインレベルの高い見出しを入れる (ページスタイル #1内，2.6.3.a)}%
       \fi
     \fi\fi
     % ##1 ##2 ##3と並んだヘッダを作る，戻り値は\jlreq@result

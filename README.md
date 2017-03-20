@@ -33,5 +33,5 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Add many options to `\DeclareBlockHeading`.
     - Some options related to `quote` environment etc.
 * 2017-03-20
-    - Fux bugs.
+    - Fix bugs.
     - Insert some spaces around `\footnote / \sidenote / \endnote`.

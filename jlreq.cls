@@ -297,7 +297,7 @@
 \def\jlreq@saveoriginalcs#1{
   \@ifundefined{jlreq@original@#1}{}{%
     \ClassError{jlreq}{Trying to save \expandafter\string\csname #1\endcsname\space twice, maybe a bug}{\@ehc}%
-  }
+  }%
   \expandafter\expandafter\expandafter\let\expandafter\expandafter\csname jlreq@original@#1\endcsname\csname #1\endcsname
 }
 
@@ -409,6 +409,8 @@
 \jlreq@addpapersize[c6]{}{162mm}{114mm}
 \jlreq@addpapersize[c7]{}{114mm}{81mm}
 \jlreq@addpapersize[c8]{}{81mm}{57mm}
+
+\let\jlreq@addpapersize=\@undefined
 
 %.. フォントサイズ，行長，1ページあたりの行数で基本版面のサイズを決める（2.4.1.a）
 \newcommand*{\jlreq@option@fontsize}{}
@@ -522,6 +524,8 @@
 
 \newcommand*{\jlreq@warning}[1]{}
 \jlreq@DeclareOption{jlreq_warnings}{\renewcommand*{\jlreq@warning}[1]{\ClassWarningNoLine{jlreq}{(JLReq warning) ##1}}}
+
+\let\jlreq@DeclareOption=\@undefined
 
 \ExecuteOptionsX{article_type=article,paper=a4,fontsize=10pt,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=headings,onecolumn,final}
 % \@removeelementを一旦置き換えてから\ProcessOptionsXを実行する
@@ -3511,7 +3515,7 @@
   \setlength{\parsep}{0pt}%
   \setlength{\listparindent}{\parindent}%
 % itemizeは直後ベタ，enumerateは直後全角空き．
-  \ifthenelse{\equal{\@currenvir}{itemize}}{
+  \ifthenelse{\equal{\@currenvir}{itemize}}{%
     \setlength{\labelsep}{0\jlreq@mol}%
   }{%
     \setlength{\labelsep}{1\jlreq@mol}%
@@ -3567,7 +3571,7 @@
 \fi
 \newcommand{\labelitemiv}{\hbox to 1\jlreq@mol{\hss ・\hss}}
 
-% 引用系．1.5em→1\zw，字下げを二文字にした．3.5.2の例．
+% 引用系．3.5.2の例．
 \newenvironment{verse}
   {\let\\\@centercr
   \list{}{\itemsep\z@ \itemindent -2\jlreq@mol%

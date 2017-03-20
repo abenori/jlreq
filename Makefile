@@ -105,8 +105,8 @@ jfm-install: jfm
 	mkdir -p ${TEXMF}/fonts/vf/public/jlreq
 	cp -f *.vf ${TEXMF}/fonts/vf/public/jlreq
 	mkdir -p ${TEXMF}/tex/luatex/jlreq
-	cp jfm-jlreq.lua ${TEXMF}/tex/luatex/jlreq
-	cp jfm-jlreqv.lua ${TEXMF}/tex/luatex/jlreq
+	cp -f jfm-jlreq.lua ${TEXMF}/tex/luatex/jlreq
+	cp -f jfm-jlreqv.lua ${TEXMF}/tex/luatex/jlreq
 
 cls-install: jfm
 	mkdir -p ${TEXMF}/tex/latex/jlreq
@@ -125,7 +125,11 @@ tds: jfm jlreq.cls README.md README-ja.md LICENSE README.html README-ja.html
 	mkdir -p ./tds/tex/latex/jlreq
 	cp jlreq.cls ./tds/tex/latex/jlreq
 	mkdir -p ./tds/doc/latex/jlreq
-	cp -t ./tds/doc/latex/jlreq README.md README-ja.md LICENSE README.html README-ja.html
+	cp README.md ./tds/doc/latex/jlreq
+	cp README-ja.md ./tds/doc/latex/jlreq
+	cp LICENSE ./tds/doc/latex/jlreq
+	cp README.html ./tds/doc/latex/jlreq
+	cp README-ja.html ./tds/doc/latex/jlreq
 
 uninstall:
 	rm -rf ${TEXMF}/fonts/tfm/public/jlreq

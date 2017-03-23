@@ -541,7 +541,12 @@
   \ifthenelse{\equal{\jlreq@article@type}{book}}{\@openrighttrue}{\@openrightfalse}
 \fi
 % articleではopenrightは効かない．
-\ifthenelse{\equal{\jlreq@article@type}{article}}{\@openrightfalse}{}
+\ifthenelse{\equal{\jlreq@article@type}{article}}{%
+  \if@openright
+    \ClassWarningNoLine{jlreq}{The option `openright' is ignored in article}
+    \@openrightfalse
+  \fi
+}{}
 \ifjlreq@option@twoside\else
   \ifthenelse{\equal{\jlreq@article@type}{book}}{\@twosidetrue}{\@twosidefalse}
 \fi
@@ -599,10 +604,10 @@
 % 組方向を判定
 % \jlreq@if(y|t)(dir|box)を定義する．
 \ifx l\jlreq@engine\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{
-  \def\jlreq@ifydir{\ifnum\ltjgetparameter{direction}=4\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-  \def\jlreq@iftdir{\ifnum\numexpr\ltjgetparameter{direction}-(\ltjgetparameter{direction}/8)*8=3\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-  \def\jlreq@ifybox#1{\ifnum\ltjgetparameter{boxdir}{#1}=4\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-  \def\jlreq@iftbox#1{\ifnum\numexpr\ltjgetparameter{boxdir}{#1}-(\ltjgetparameter{boxdir}{#1}/8)*8=3\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+  \def\jlreq@ifydir{\ifnum\ltjgetparameter{direction}=4 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+  \def\jlreq@iftdir{\ifnum\numexpr\ltjgetparameter{direction}-(\ltjgetparameter{direction}/8)*8\relax=3 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+  \def\jlreq@ifybox#1{\ifnum\ltjgetparameter{boxdir}{#1}=4 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+  \def\jlreq@iftbox#1{\ifnum\numexpr\ltjgetparameter{boxdir}{#1}-(\ltjgetparameter{boxdir}{#1}/8)*8\relax=3 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
 }{
   \def\jlreq@ifydir{\ifydir\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
   \def\jlreq@iftdir{\iftdir\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
@@ -660,7 +665,7 @@
 }
 
 \ifx\jlreq@engine l
-  \def\lastnodechar{\directlua{luatexja.pltx_composite_last_node_char()}}
+  \newcommand*{\lastnodechar}{\directlua{luatexja.pltx_composite_last_node_char()}}
 \fi
 
 % #1と#2の間に入るjmglueを\jlreq@resultskip（(x)kanjiskipも）に入れる
@@ -2851,8 +2856,6 @@
 \newcommand{\jlreq@inlinenote@endnote}{%
   \jlreq@in@inlinenotefalse
   {%
-%    \jlreq@inlinenote@kakkofontsize
-%    \hbox{）}\inhibitglue
     \setbox\jlreq@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize）}%
     \jlreq@box@putcenter\jlreq@tempboxa
     \inhibitglue

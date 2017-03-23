@@ -294,7 +294,7 @@
   \global\jlreq@currentpage=\zref@extractdefault{jlreq@rest@width.page.\the\jlreq@zref@reference@count}{jlreq@page}{\c@page}%
 }
 
-\def\jlreq@saveoriginalcs#1{
+\def\jlreq@saveoriginalcs#1{%
   \@ifundefined{jlreq@original@#1}{}{%
     \ClassError{jlreq}{Trying to save \expandafter\string\csname #1\endcsname\space twice, maybe a bug}{\@ehc}%
   }%
@@ -2218,8 +2218,8 @@
 \jlreq@switch{\jlreq@article@type}{
   {book}{%
     \renewcommand{\jlreq@heading@maketoc@chapter}[3]{%
-      \chaptermark{#3}%
       \jlreq@ifempty{#1}{%
+        \chaptermark{#3}%
         \ifnum0\if@mainmatter\else1\fi\ifnum\jlreq@heading@level@chapter>\c@secnumdepth 1\fi>0
           \addcontentsline{toc}{chapter}{#3}%
         \else
@@ -2230,8 +2230,8 @@
   }
   {report}{
     \renewcommand{\jlreq@heading@maketoc@chapter}[3]{%
-      \chaptermark{#3}%
       \jlreq@ifempty{#1}{%
+        \chaptermark{#3}%
         \ifnum0\ifnum\jlreq@heading@level@chapter>\c@secnumdepth 1\fi>0
           \addcontentsline{toc}{chapter}{#3}%
         \else

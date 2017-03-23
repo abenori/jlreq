@@ -1527,7 +1527,7 @@
       }%
       \noexpand\def\expandonce{\csname jlreq@TobiraHeading@start@s@#1\endcsname}####1{%
         \expandonce{\jlreq@format{}{##1}}%
-        \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{}{\expandonce{\jlreq@label@format}}{####1}%
+        \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{*}{\expandonce{\jlreq@label@format}}{####1}%
         \noexpand\@afterheading
         \expandonce{\jlreq@heading@clearpage}%
         \unexpanded{\if@restonecol\twocolumn\fi}%

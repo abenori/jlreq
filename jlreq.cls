@@ -2942,7 +2942,15 @@
 \newcommand*\jlreq@pagestyle@parse@position@@[1]{%
   \ifthenelse{\equal{#1}{top} \OR \equal{#1}{bottom}}{\def\jlreq@tempc{#1}}{%
     \ifthenelse{\equal{#1}{left} \OR \equal{#1}{right} \OR \equal{#1}{center}}{\def\jlreq@tempd{#1}}{%
-      \ClassError{jlreq}{Invalid position: #1}{\@ehc}%
+      \ifthenelse{\equal{#1}{gutter}}{%
+        \if@tate\def\jlreq@tempd{right}\else\def\jlreq@tempd{left}\fi
+      }{%
+        \ifthenelse{\equal{#1}{fore_edge}}{%
+          \if@tate\def\jlreq@tempd{left}\else\def\jlreq@tempd{right}\fi
+        }{%
+          \ClassError{jlreq}{Invalid position: #1}{\@ehc}%
+        }%
+      }%
     }%
   }%
 }
@@ -2997,9 +3005,12 @@
     % 見出しを出す場合：evenに章などの高いレベルの見出しを出す（2.6.3.a）
     \def\jlreq@markdefinition{}%
     \def\jlreq@even@running@head@level{}%
-    % **markを作る
-    % \jlreq@makemark{odd/even}running_headの中身\jlreq@endmark
     \def\jlreq@markdefinition{}%
+    % _***な指定な時に，
+    % * \jlreq@[even/odd]@running@headを\leftmarkや\rightmarkに書き換える
+    % * \jlreq@markdefinitionに\***markを定義するマクロを入れる．
+    % また\jlreq@[even/odd]@running@head@levelに見出しのレベルを入れる．
+    % \jlreq@makemark{odd/even}running_headの中身\jlreq@endmark
     \def\jlreq@makemark##1##2##3\jlreq@endmark{%
       \ifx_##2%
         \ifthenelse{\equal{##1}{even}}{%
@@ -3010,9 +3021,10 @@
         \@ifundefined{jlreq@heading@setting@##3}{}{%
           \expandafter\edef\csname jlreq@##1@running@head@level\endcsname{\csname jlreq@heading@level@##3\endcsname}%
         }%
+        % mark_formatを調べる
         \def\jlreq@tempa####1{%
           \jlreq@tempafalse
-         \let\jlreq@result=\@undefined
+          \let\jlreq@result=\@undefined
           \jlreq@parsekeyval*{
             {##1}{\edef\jlreq@result{\unexpanded{########1}}\jlreq@tempatrue}
             {##2##3}{\ifjlreq@tempa\else\edef\jlreq@result{\unexpanded{########1}}\fi}
@@ -3022,7 +3034,8 @@
         \ifx\jlreq@result\@undefined
           \edef\jlreq@result{\expandonce{\csname the##3\endcsname}\noexpand\quad\unexpanded{####1}}%
         \fi
-        \ifthenelse{\equal{##1}{even}}{%
+        % どっちを\markbothにしてどっちを\markrightにするかは縦組か横組かに依る
+        \ifthenelse{\equal{##1}{\if@tate odd\else even\fi}}{%
           \def\jlreq@markcommand{\markboth}%
           \def\jlreq@markcommandafter{{}}%
         }{%
@@ -3047,6 +3060,7 @@
         \jlreq@warning{偶数ページには奇数ページよりアウトラインレベルの高い見出しを入れる (ページスタイル #1内，2.6.3.a)}%
       \fi
     \fi\fi
+    % \jlreq@[even/odd][head/foot]に入れていく．tateか否かで場合分け．
     \ifjlreq@tate\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
       \ifx\jlreq@nombre@position\@empty\def\jlreq@nombre@position{0pt}\fi
       \ifx\jlreq@running@head@position\@empty\def\jlreq@running@head@position{0pt}\fi
@@ -3058,7 +3072,7 @@
         \edef\jlreq@result{%
           \unexpanded{\setbox\jlreq@tempboxa=\hbox to }%
           \unexpanded{\dimexpr\headsep + \headheight + \textheight}\if@tate\else\unexpanded{ - \topskip + 1\zh}\fi\noexpand\relax
-          {\noexpand\tate\adjustbaseline
+          {\unexpanded{\tate\adjustbaseline}%
             \ifx##1\@empty\else
               \noexpand\hspace{\unexpanded{\dimexpr\headsep + \headheight + }%
               \if@tate\else\unexpanded{\topskip - \Cht + }\fi
@@ -3073,6 +3087,7 @@
               \fi
             \fi
           }%
+          % Overfull防止
           \ifx l\jlreq@engine
             \unexpanded{\wd\jlreq@tempboxa=\headheight}%
           \else
@@ -3221,6 +3236,7 @@
         \unexpanded{\def\@evenhead}{\expandonce{\jlreq@evenhead}}%
         \unexpanded{\def\@evenfoot}{\expandonce{\jlreq@evenfoot}}%
       }%
+      % \jlreq@markdefinition/\jlreq@commandは引数トークンを持つ可能性がある
       \noexpand\edef\expandonce{\csname ps@#1\endcsname}{%
         \noexpand\expandonce{\expandonce{\csname ps@#1\endcsname}}%
         \noexpand\unexpanded{\expandonce{\jlreq@markdefinition}}%

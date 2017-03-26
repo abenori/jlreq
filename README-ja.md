@@ -206,8 +206,8 @@
 
 * `yoko`: 横書きで上下に出力します．デフォルト．
 * `tate`: 縦書きで小口側に出力します．
-* `running_head_position`, `nombre_position`: 柱と柱の位置を指定します．`yoko`か`tate`のどちらが指定されているかで挙動が変わります．
-    - `yoko`指定時：`top-left`のように指定できます．`center/left/right/top/bottom`が使えます．
+* `running_head_position`, `nombre_position`: 柱とノンブルの位置を指定します．`yoko`か`tate`のどちらが指定されているかで挙動が変わります．
+    - `yoko`指定時：`top-left`のように指定できます．`center/left/right/top/bottom/gutter/fore_edge`が使えます．`gutter`はのど，`fore_edge`は小口です．`left`，`right`の指定は奇数ページに対するものです．`twoside`が指定されている場合，偶数ページはその逆になります．
     - `tate`指定時：`<寸法>`が指定できます．`running_head_position`は柱の天からの下げ量を，`nombre_position`はノンブルの地からの上げ量を指定します．
 * `nombre=<書式>`: 出力するノンブルを指定します．デフォルトは`\thepage`．
 * `odd_running_head=<書式>`，`even_running_head=<書式>`：それぞれ奇数ページ，偶数ページの柱を指定します．`_section`のように`_`から始まる名前を指定すると，対応する見出しを出力します．（`_section`だと現在の`\section`を出力する．）

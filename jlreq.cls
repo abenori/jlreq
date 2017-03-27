@@ -241,7 +241,8 @@
 \long\def\jlreq@switch#1#2{%
   \begingroup
     \let\jlreq@do\@undefined
-    \jlreq@helper@switch@{#1}#2\jlreq@endmark
+    \edef\jlreq@tempa{#1}%
+    \expandafter\jlreq@helper@switch@\expandafter{\jlreq@tempa}#2\jlreq@endmark
     \ifx\jlreq@do\@undefined
       \def\jlreq@do{\@ifnextchar[{\jlreq@helper@switch@executeoption{#1}}{}}%
     \else
@@ -263,7 +264,7 @@
     \edef\jlreq@do{\unexpanded{#2}}%
     \def\jlreq@next{}%
   }{%
-    \edef\jlreq@tempa{#1}%
+    \def\jlreq@tempa{#1}% 最初に\edefで展開済み
     \edef\jlreq@tempb{#2}%
     \ifx\jlreq@tempa\jlreq@tempb\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
     {%
@@ -2929,7 +2930,21 @@
 }
 
 % bottom-leftみたいなのを解釈する．入力の順番はどっちでも良いが，出力は<top/bottom><left/right>の順番
-% #1にセットする．
+% #1 = bottom-leftみたいなのを{bottom}{left}に変換し，#2に代入，#3はデフォルト値，出力形式で入れる
+\newcommand*{\jlreq@pagestyle@parse@position}[3]{%
+  \begingroup
+    \jlreq@pagestyle@parse@position@#1-\jlreq@endmark
+    % \jlreq@tempcに縦方向を，\jlreq@tempdに横方向を入れる
+    \def\jlreq@tempc{}\def\jlreq@tempd{}%
+    \jlreq@pagestyle@parse@position@@{\jlreq@tempa}%
+    \jlreq@pagestyle@parse@position@@{\jlreq@tempb}%
+    \ifx\jlreq@tempc\@empty\edef\jlreq@tempc{\expandafter\@firstoftwo#3}\fi
+    \ifx\jlreq@tempd\@empty\edef\jlreq@tempd{\expandafter\@secondoftwo#3}\fi
+    \edef\jlreq@do{\unexpanded{\def#2}{{\jlreq@tempc}{\jlreq@tempd}}}%
+  \expandafter\endgroup
+  \jlreq@do
+}
+
 \def\jlreq@pagestyle@parse@position@#1-#2\jlreq@endmark{%
   \def\jlreq@tempa{#1}\def\jlreq@tempb{#2}%
   \jlreq@ifempty{#2}{%
@@ -2939,35 +2954,20 @@
     \@tempa#2\relax
   }%
 }
+
 \newcommand*\jlreq@pagestyle@parse@position@@[1]{%
-  \ifthenelse{\equal{#1}{top} \OR \equal{#1}{bottom}}{\def\jlreq@tempc{#1}}{%
-    \ifthenelse{\equal{#1}{left} \OR \equal{#1}{right} \OR \equal{#1}{center}}{\def\jlreq@tempd{#1}}{%
-      \ifthenelse{\equal{#1}{gutter}}{%
-        \if@tate\def\jlreq@tempd{right}\else\def\jlreq@tempd{left}\fi
-      }{%
-        \ifthenelse{\equal{#1}{fore_edge}}{%
-          \if@tate\def\jlreq@tempd{left}\else\def\jlreq@tempd{right}\fi
-        }{%
-          \ClassError{jlreq}{Invalid position: #1}{\@ehc}%
-        }%
-      }%
-    }%
+  \jlreq@switch{#1}{
+    {top}{\def\jlreq@tempc{#1}}
+    {bottom}{\def\jlreq@tempc{#1}}
+    {left}{\def\jlreq@tempd{#1}}
+    {right}{\def\jlreq@tempd{#1}}
+    {center}{\def\jlreq@tempd{#1}}
+    {gutter}{\if@tate\def\jlreq@tempd{right}\else\def\jlreq@tempd{left}\fi}
+    {fore_edge}{\if@tate\def\jlreq@tempd{left}\else\def\jlreq@tempd{right}\fi}
+    {\ClassError{jlreq}{Invalid position: #1}{\@ehc}}
   }%
 }
-% #1 = bottom-leftみたいなのを{bottom}{left}に変換し，#2に代入，#3はデフォルト値，出力形式で入れる
-\newcommand*{\jlreq@pagestyle@parse@position}[3]{%
-  \begingroup
-    \jlreq@pagestyle@parse@position@#1-\jlreq@endmark
-    % \jlreq@tempcに縦方向を，\jlreq@tempdに横方向を入れる
-    \def\jlreq@tempc{}\def\jlreq@tempd{}%
-    \expandafter\jlreq@pagestyle@parse@position@@\expandafter{\jlreq@tempa}%
-    \expandafter\jlreq@pagestyle@parse@position@@\expandafter{\jlreq@tempb}%
-    \ifx\jlreq@tempc\@empty\edef\jlreq@tempc{\expandafter\@firstoftwo#3}\fi
-    \ifx\jlreq@tempd\@empty\edef\jlreq@tempd{\expandafter\@secondoftwo#3}\fi
-    \edef\jlreq@do{\unexpanded{\def#2}{{\jlreq@tempc}{\jlreq@tempd}}}%
-  \expandafter\endgroup
-  \jlreq@do
-}
+
 
 % odd_running_head=_sectionのように下線から始まる場合，その値の見出し命令を柱に出すようにする．
 % 要するに\ps@***に\sectionmarkを定義するように仕込む．
@@ -3154,10 +3154,10 @@
       \ifthenelse{\lengthtest{\jlreq@gap < 1.49\zw} \OR \( \lengthtest{\jlreq@gap > 1.51\zw} \AND \lengthtest{\jlreq@gap < 1.99\zw} \) \OR \lengthtest{\jlreq@gap > 2.01\zw}}{\jlreq@warning{ノンブルと柱との空き量は文字サイズの2倍又は1.5倍とする (ページスタイル #1 内，2.6.1.c)}}{}%
       % ##1 ##2 ##3と並んだヘッダを作る，戻り値は\jlreq@result
       \def\jlreq@setheadfoot@##1##2##3{%
-        % -.5\zwは端にそろえるための補正
-        \jlreq@ifempty{##1}{\def\jlreq@left{}}{\edef\jlreq@left{\noexpand\hspace{\dimexpr\jlreq@expand@speciallength{\jlreq@headfoot@sidemargin}\if@tate - 0.5\zw\fi\relax}\unexpanded{##1}}}%
-        % +\topskip - .5\zwは\jlreq@headfoot@sidemargin = 0ptの時に本文の右に一致させるための補正．
-        \jlreq@ifempty{##3}{\def\jlreq@right{}}{\edef\jlreq@right{\unexpanded{##3}\noexpand\hspace{\dimexpr\jlreq@expand@speciallength{\jlreq@headfoot@sidemargin}\if@tate + \topskip - .5\zw\fi\relax}}}%
+        % - \Cdpは端にそろえるための補正
+        \jlreq@ifempty{##1}{\def\jlreq@left{}}{\edef\jlreq@left{\noexpand\hspace{\dimexpr\jlreq@expand@speciallength{\jlreq@headfoot@sidemargin}\if@tate - \Cdp\fi\relax}\unexpanded{##1}}}%
+        % +\topskip - \Chtは\jlreq@headfoot@sidemargin = 0ptの時に本文の右に一致させるための補正．
+        \jlreq@ifempty{##3}{\def\jlreq@right{}}{\edef\jlreq@right{\unexpanded{##3}\noexpand\hspace{\dimexpr\jlreq@expand@speciallength{\jlreq@headfoot@sidemargin}\if@tate + \topskip - \Cht\fi\relax}}}%
         \jlreq@ifempty{##2}{%
           \edef\jlreq@result{\expandonce{\jlreq@left}\hfil\expandonce{\jlreq@right}}%
           \jlreq@ifempty{##1}{\jlreq@ifempty{##3}{\def\jlreq@result{}}{}}{}%

@@ -30,6 +30,33 @@
 \newbox\jlreq@resultbox
 \newif\ifjlreq@result
 
+\newcommand*{\jlreq@undefcs}[1]{%
+  \expandafter\ifx\csname\expandafter\@gobble\string #1\endcsname\relax\expandafter\@firstofone\else\expandafter\@gobble\fi
+    {\ClassError{jlreq}{Trying to delete \string#1\space even though it is not defined, maybe a bug}{\@ehc}}%
+  \let#1=\@undefined
+}
+
+% クラスファイル内でしか使わないマクロをクラスファイル終了時に未定義にする
+\newcommand*{\jlreq@aftercls@addtodeletecs}[1]{%
+  \appto\jlreq@aftercls@deletecslist{\jlreq@undefcs{#1}}%
+}
+\jlreq@aftercls@addtodeletecs{\jlreq@aftercls@addtodeletecs}
+\newcommand*{\jlreq@aftercls@addtodeleteif}[1]{%
+  \edef\@tempa{\expandafter\@gobble\string#1}%
+  \edef\@tempa{\expandafter\@gobbletwo\@tempa}%
+  \eappto\jlreq@aftercls@deletecslist{%
+    \unexpanded{\jlreq@undefcs{#1}}%
+    \noexpand\jlreq@undefcs{\expandonce{\csname\@tempa true\endcsname}}%
+    \noexpand\jlreq@undefcs{\expandonce{\csname\@tempa false\endcsname}}%
+  }%
+}
+\jlreq@aftercls@addtodeletecs{\jlreq@aftercls@addtodeleteif}
+\AtEndOfClass{%
+  \jlreq@aftercls@deletecslist
+  \jlreq@undefcs{\jlreq@aftercls@deletecslist}%
+  \let\jlreq@undefcs=\@undefined
+}
+
 \def\jlreq@uniqtoken{\jlreq@uniqtoken}
 \def\jlreq@endmark{\jlreq@endmark}
 \long\def\jlreq@deleteuntileendmark#1\jlreq@endmark{}
@@ -322,13 +349,14 @@
 % オプション処理の際にしか使わない変数（後でそれを元に別の変数を調整する）
 % ものは\jlreq@option@<key>に格納する．
 % _とかは@に変換する．
-\newcommand*{\jlreq@checkempty}[2]{
-  \jlreq@ifempty{#2}{}{\ClassError{jlreq}{The option #1 should have no value}{\@ehc}}%
-}
 % 引数無しの\DeclareOptionX
 \newcommand*{\jlreq@DeclareOption}[2]{%
-  \DeclareOptionX{#1}{\jlreq@checkempty{#1}{##1}#2}
+  \DeclareOptionX{#1}{%
+    \jlreq@ifempty{##1}{}{\ClassError{jlreq}{The option #1 should have no value}{\@ehc}}%
+    #2%
+  }
 }
+\jlreq@aftercls@addtodeletecs{\jlreq@DeclareOption}
 % エンジン類
 \jlreq@DeclareOption{uplatex}{\let\jlreq@engine=u}
 \jlreq@DeclareOption{platex}{\let\jlreq@engine=p}
@@ -343,6 +371,7 @@
 
 %.. 基本版面．まずは紙サイズ．
 \def\jlreq@switchpapersize{}
+\jlreq@aftercls@addtodeletecs{\jlreq@switchpapersize}
 \newcommand*\jlreq@addpapersize[4][]{%
   \jlreq@ifempty{#2}{}{
     \jlreq@DeclareOption{#2}{\setlength\paperheight{#3}\setlength\paperwidth{#4}}
@@ -352,6 +381,7 @@
     \appto\jlreq@switchpapersize{{#1}{\setlength\paperheight{#3}\setlength\paperwidth{#4}}}
   }
 }
+\jlreq@aftercls@addtodeletecs{\jlreq@addpapersize}
 \DeclareOptionX{paper}{
   \edef\jlreq@do{%
     \unexpanded{\jlreq@switch{#1}}{\expandonce{\jlreq@switchpapersize}}%
@@ -411,10 +441,10 @@
 \jlreq@addpapersize[c7]{}{114mm}{81mm}
 \jlreq@addpapersize[c8]{}{81mm}{57mm}
 
-\let\jlreq@addpapersize=\@undefined
 
 %.. フォントサイズ，行長，1ページあたりの行数で基本版面のサイズを決める（2.4.1.a）
 \newcommand*{\jlreq@option@fontsize}{}
+\jlreq@aftercls@addtodeletecs{\jlreq@option@fontsize}
 \DeclareOptionX{fontsize}{\renewcommand*{\jlreq@option@fontsize}{#1}}
 \jlreq@DeclareOption{10pt}{\renewcommand*{\jlreq@option@fontsize}{10pt}}
 \jlreq@DeclareOption{11pt}{\renewcommand*{\jlreq@option@fontsize}{11pt}}
@@ -422,35 +452,43 @@
 
 %.. 行の長さ
 \newcommand*{\jlreq@option@line@length}{}
+\jlreq@aftercls@addtodeletecs{\jlreq@option@line@length}
 \DeclareOptionX{line_length}{\renewcommand*{\jlreq@option@line@length}{#1}}
 %.. 1ページあたりの行数
 \newcommand*{\jlreq@option@number@of@lines}{}
+\jlreq@aftercls@addtodeletecs{\jlreq@option@number@of@lines}
 \DeclareOptionX{number_of_lines}{\renewcommand*{\jlreq@option@number@of@lines}{#1}}
 
 % 地の空き量，のどの空き量で配置位置を決める（2.4.1.b）省略されたら中央配置．
 %.. 天
 \newcommand*{\jlreq@option@head@space}{}
+\jlreq@aftercls@addtodeletecs{\jlreq@option@head@space}
 \DeclareOptionX{head_space}{\renewcommand*{\jlreq@option@head@space}{#1}}
 
 %.. 地
 \newcommand*{\jlreq@option@foot@space}{}
+\jlreq@aftercls@addtodeletecs{\jlreq@option@foot@space}
 \DeclareOptionX{foot_space}{\renewcommand*{\jlreq@option@foot@space}{#1}}
 %.. のど
 \newcommand*{\jlreq@option@gutter}{}
+\jlreq@aftercls@addtodeletecs{\jlreq@option@gutter}
 \DeclareOptionX{gutter}{\renewcommand*{\jlreq@option@gutter}{#1}}
 
 %.. 柱とノンブル
 \newcommand*{\jlreq@option@headfoot@verticalpos}{}
+\jlreq@aftercls@addtodeletecs{\jlreq@option@headfoot@verticalpos}
 \DeclareOptionX{headfoot_verticalposition}{\renewcommand*{\jlreq@option@headfoot@verticalpos}{#1}}
 \newcommand*{\jlreq@headfoot@sidemargin}{0pt}
 \DeclareOptionX{headfoot_sidemargin}{\renewcommand*{\jlreq@headfoot@sidemargin}{#1}}
 
 %.. 段間
 \newcommand*{\jlreq@option@column@gap}{2zw}
+\jlreq@aftercls@addtodeletecs{\jlreq@option@column@gap}
 \DeclareOptionX{column_gap}{\renewcommand*{\jlreq@option@column@gap{#1}}}
 
 %.. 行送り，指定無しの場合は文字サイズの1.7倍とする．（1.5から2倍が好ましい：2.4.2.d 注3）
 \newcommand*{\jlreq@option@baselineskip}{}
+\jlreq@aftercls@addtodeletecs{\jlreq@option@baselineskip}
 \DeclareOptionX{baselineskip}{\def\jlreq@option@baselineskip{#1}}
 \DeclareOptionX{linegap}{\def\jlreq@option@baselineskip{1zw + #1}}
 
@@ -477,6 +515,7 @@
 \newcommand*{\jlreq@sidenote@type}{number}
 \define@choicekey{jlreq.cls}{sidenote_type}{number,symbol}{\renewcommand*{\jlreq@sidenote@type}{#1}}
 \newcommand*{\jlreq@option@sidenote@width}{}
+\jlreq@aftercls@addtodeletecs{\jlreq@option@sidenote@width}
 \DeclareOptionX{sidenote_width}{\renewcommand*{\jlreq@option@sidenote@width}{#1}}
 
 %.. 引用
@@ -508,6 +547,7 @@
 \jlreq@DeclareOption{tate}{\@tatetrue}
 
 \newif\ifjlreq@option@twoside\jlreq@option@twosidefalse % onesideかtwosideが指定された
+\jlreq@aftercls@addtodeleteif{\ifjlreq@option@twoside}
 \jlreq@DeclareOption{oneside}{\@twosidefalse\@mparswitchfalse\jlreq@option@twosidetrue}
 \jlreq@DeclareOption{twoside}{\@twosidetrue\@mparswitchtrue\jlreq@option@twosidetrue}
 \jlreq@DeclareOption{onecolumn}{\@twocolumnfalse}
@@ -518,6 +558,7 @@
 \jlreq@DeclareOption{final}{\setlength\overfullrule{0pt}}
 \newif\if@openright
 \newif\ifjlreq@option@open \jlreq@option@openfalse % openrightかopenanyが指定された
+\jlreq@aftercls@addtodeleteif{\ifjlreq@option@open}
 \jlreq@DeclareOption{openright}{\@openrighttrue\jlreq@option@opentrue}
 \jlreq@DeclareOption{openany}{\@openrightfalse\jlreq@option@opentrue}
 \jlreq@DeclareOption{leqno}{\input{leqno.clo}}
@@ -526,13 +567,11 @@
 \newcommand*{\jlreq@warning}[1]{}
 \jlreq@DeclareOption{jlreq_warnings}{\renewcommand*{\jlreq@warning}[1]{\ClassWarningNoLine{jlreq}{(JLReq warning) ##1}}}
 
-\let\jlreq@DeclareOption=\@undefined
-
 \ExecuteOptionsX{article_type=article,paper=a4,fontsize=10pt,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=headings,onecolumn,final}
 % \@removeelementを一旦置き換えてから\ProcessOptionsXを実行する
 \let\jlreq@original@@removeelement=\@removeelement
 \let\@removeelement=\jlreq@helper@removeelement
-\ProcessOptionsX*\relax
+\ProcessOptionsX\relax
 \let\@removeelement=\jlreq@original@@removeelement
 
 \ifjlreq@option@titlepage\else
@@ -562,6 +601,7 @@
 \newcommand{\jlreq@jlreqsetup@add}[2]{%
   \eappto\jlreq@jlreqsetup@keyvallist{\unexpanded{{#1}{#2}}}%
 }
+\jlreq@aftercls@addtodeletecs{\jlreq@jlreqsetup@add}
 \@onlypreamble\jlreqsetup
 
 % エンジンの設定
@@ -669,7 +709,7 @@
   \newcommand*{\lastnodechar}{\directlua{luatexja.pltx_composite_last_node_char()}}
 \fi
 
-% #1と#2の間に入るjmglueを\jlreq@resultskip（(x)kanjiskipも）に入れる
+% #1と#2の間に入るjmglue（(x)kanjiskipも）を\jlreq@resultskipに入れる
 \newcommand*{\jlreq@calc@jfmglue}[2]{%
   \begingroup
     \setbox\jlreq@tempboxa=\hbox{\inhibitglue #1\inhibitglue\hbox{}\inhibitglue#2\inhibitglue}%
@@ -698,10 +738,10 @@
 }
 
 %. 基本設定
-% 和文文字，欧文文字の設定（とりあえずLuaTeX-jaのデフォルトのまま）
 \def\jlreq@kanjiskip{0pt plus 0.25zw minus 0pt}
 \def\jlreq@xkanjiskip{0.25zw plus 0.25zw minus 0.125zw}
 \ifx l\jlreq@engine
+  % 和文文字，欧文文字の設定（とりあえずLuaTeX-jaのデフォルトのまま）
   \ltjsetparameter{jacharrange={-1, +2, +3, -4, -5, +6, +7, -8}}
   % kanjiskip, xkanjiskipはjfmのものを使う
   \ltjsetparameter{kanjiskip=\maxdimen}
@@ -731,6 +771,9 @@
     }
   }
 \fi
+\jlreq@aftercls@addtodeletecs{\jlreq@setpostbreakpenalty}
+\jlreq@aftercls@addtodeletecs{\jlreq@setprebreakpenalty}
+\jlreq@aftercls@addtodeletecs{\jlreq@setjaxspmode}
 
 \jlreq@setpostbreakpenalty{（}{10000}
 \jlreq@setpostbreakpenalty{〔}{10000}
@@ -985,7 +1028,6 @@
 \jlreq@setprebreakpenalty{…}{10000}
 \jlreq@setprebreakpenalty{‥}{10000}
 % ￥100とか70％とか……
-
 
 %. オプション処理
 %.. フォント関連
@@ -1317,6 +1359,8 @@
   \def\jlreq@expand@speciallength#1{#1}
 \fi
 \def\jlreq@speciallength#1{\dimexpr\jlreq@expand@speciallength{#1}\relax}
+\jlreq@aftercls@addtodeletecs{\jlreq@expand@speciallength}
+\jlreq@aftercls@addtodeletecs{\jlreq@speciallength}
 
 % 二段組み用パラメータ
 \setlength{\columnsep}{\jlreq@speciallength{\jlreq@option@column@gap}}
@@ -1415,6 +1459,7 @@
     \setlength{\topmargin}{\dimexpr #1 - \headsep - \headheight - 1in - \topskip + \Cht\relax}
   \fi
 }
+\jlreq@aftercls@addtodeletecs{\jlreq@settopmarginbyhead}
 % 地の値から
 \def\jlreq@settopmarginbyfoot#1{
   \if@tate
@@ -1423,7 +1468,8 @@
     \jlreq@warning{横組の場合は天の空き量を指定する (2.4.1.b)}
     \setlength{\topmargin}{\dimexpr\paperheight - \textheight + \topskip - 1\zh - \headsep - \headheight - 1in - #1\relax}
   \fi
-} 
+}
+\jlreq@aftercls@addtodeletecs{\jlreq@settopmarginbyfoot}
 \ifx\jlreq@option@head@space\@empty
   \ifx\jlreq@option@foot@space\@empty
     \if@tate
@@ -1448,8 +1494,6 @@
     \fi
   \fi
 \fi
-\let\jlreq@settopmarginbyhead=\@undefined
-\let\jlreq@settopmarginbyfoot=\@undefined
 
 %.. 下
 \setlength{\footskip}{\dimexpr\headsep + 1\zw\relax}
@@ -2279,6 +2323,7 @@
     \unexpanded{#4}%
   }
 }
+\jlreq@aftercls@addtodeletecs{\jlreq@referencemark@format}
 
 \newcommand*\jlreq@referencemark@format[1]{#1}
 \ifthenelse{\equal{\jlreq@referencemark}{inline}}{
@@ -2323,6 +2368,7 @@
     }
   \fi
 }
+\jlreq@aftercls@addtodeletecs{\jlreq@modify@noteandmark@fixjfm}
 \jlreq@modify@noteandmark@fixjfm{\footnote}{\footnotemark}
 % \@footnotemarkをシンプルなものにする
 \def\jlreq@setdefaultnotemark#1#2{%
@@ -3334,23 +3380,22 @@
 % \begin{figure}\layoutfloat{***}\pcaption{???}\end{figure}にする．
 % 
 %\long\def\jlreq@replace@layoutfloat#1\caption{\layoutfloat{#1}\jlreq@caption}
-%\long\def\jlreq@caption#1{\ifx#1\jlreq@endmark\else\pcaption{#1}\expandafter\jlreq@replace@layoutfloat\fi}
+%\long\def\jlreq@caption#1{\jlreq@ifendmark{#1}{}{\pcaption{#1}\csname\jlreq@replace@layoutfloat@#1\endcsname}}
 %\def\jlreq@modify@float#1{%
-%  \def\lgdef{\long\gdef}
 %  \jlreq@saveoriginalcs{#1}
 %  \@namedef{#1}{\@ifnextchar[{\@nameuse{jlreq@float@#1}}{\@nameuse{jlreq@float@@#1}}}
-%  \expandafter\lgdef\csname jlreq@float@#1\endcsname[##1]{%
-%    \expandafter\csname jlreq@original@#1\endcsname[##1]
-%    \csname jlreq@process@insertlayoutfloat@#1\endcsname{}
+%  \expandafter\long\expandafter\gdef\csname jlreq@float@#1\endcsname[##1]{%
+%    \csname jlreq@original@#1\endcsname[##1]%
+%    \csname jlreq@process@insertlayoutfloat@#1\endcsname{}%
 %  }
-%  \expandafter\lgdef\csname jlreq@float@@#1\endcsname{%
-%    \expandafter\csname jlreq@original@#1\endcsname
-%    \csname \jlreq@process@insertlayoutfloat@#1\endcsname{}
+%  \expandafter\long\expandafter\gdef\csname jlreq@float@@#1\endcsname{%
+%    \csname jlreq@original@#1\endcsname
+%    \csname jlreq@process@insertlayoutfloat@#1\endcsname{}%
 %  }
-%  \expandafter\lgdef\csname jlreq@process@insertlayoutfloat@#1\endcsname ##1##2\end{%
+%  \expandafter\long\expandafter\gdef\csname jlreq@process@insertlayoutfloat@#1\endcsname ##1##2\end{%
 %    \csname jlreq@checkenvname@#1\endcsname{##1##2}\end
 %  }
-%  \expandafter\lgdef\csname jlreq@checkenvname@#1\endcsname ##1\end##2{%
+%  \expandafter\long\expandafter\gdef\csname jlreq@checkenvname@#1\endcsname ##1\end##2{%
 %    \def\@tempa{##2}%
 %    \def\@tempb{#1}%
 %    \ifx\@tempa\@tempb
@@ -3361,6 +3406,7 @@
 %    \jlreq@next
 %  }
 %}
+%\jlreq@aftercls@addtodeletecs{\jlreq@modify@float}
 
 %.. figure環境
 \newcounter{figure}

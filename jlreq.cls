@@ -1029,8 +1029,6 @@
 \jlreq@setprebreakpenalty{‥}{10000}
 % ￥100とか70％とか……
 
-%. オプション処理
-%.. フォント関連
 \newdimen\jlreq@fontsize
 \ifx l\jlreq@engine
   \setlength{\jlreq@fontsize}{%
@@ -1048,7 +1046,7 @@
 %. フォント
 \RequirePackage{lmodern}
 
-% 古いフォントコマンド
+%.. 古いフォントコマンド
 \DeclareOldFontCommand{\jlreq@oldfontcommand@mc}{\normalfont\mcfamily}{\mathmc}
 \DeclareOldFontCommand{\jlreq@oldfontcommand@gt}{\normalfont\gtfamily}{\mathgt}
 \DeclareOldFontCommand{\jlreq@oldfontcommand@rm}{\normalfont\rmfamily}{\mathrm}
@@ -1221,6 +1219,7 @@
 
 \emergencystretch 3\jlreq@gol
 
+%.. 文字サイズ変更
 % 文字サイズを基準としているような寸法に対しては，
 % \@setfontsizeが実行されるたびに追随して値を変える
 % その処理は\jlreq@setfontsizehookに入れる
@@ -1359,8 +1358,6 @@
   \def\jlreq@expand@speciallength#1{#1}
 \fi
 \def\jlreq@speciallength#1{\dimexpr\jlreq@expand@speciallength{#1}\relax}
-\jlreq@aftercls@addtodeletecs{\jlreq@expand@speciallength}
-\jlreq@aftercls@addtodeletecs{\jlreq@speciallength}
 
 % 二段組み用パラメータ
 \setlength{\columnsep}{\jlreq@speciallength{\jlreq@option@column@gap}}
@@ -3031,6 +3028,7 @@
     \def\jlreq@even@running@head{}%
     \def\jlreq@command{}%
     \def\jlreq@mark@format{}%
+    \def\jlreq@font{}%
     % 柱とノンブルの間
     \def\jlreq@gap{1.5\zw}%
     \newif\ifjlreq@clearmark\jlreq@clearmarktrue
@@ -3043,6 +3041,7 @@
       {nombre}{\def\jlreq@nombre{##1}}
       {odd_running_head}{\def\jlreq@odd@running@head{##1}}
       {even_running_head}{\def\jlreq@even@running@head{##1}}
+      {font}{\def\jlreq@font{##1}}
       {mark_format}{\edef\jlreq@mark@format{\unexpanded{##1}}}
       {command}{\edef\jlreq@command{\unexpanded{##1}}}
       {gap}{\def\jlreq@gap{##1}}
@@ -3198,6 +3197,36 @@
         \fi
       }{}%
       \ifthenelse{\lengthtest{\jlreq@gap < 1.49\zw} \OR \( \lengthtest{\jlreq@gap > 1.51\zw} \AND \lengthtest{\jlreq@gap < 1.99\zw} \) \OR \lengthtest{\jlreq@gap > 2.01\zw}}{\jlreq@warning{ノンブルと柱との空き量は文字サイズの2倍又は1.5倍とする (ページスタイル #1 内，2.6.1.c)}}{}%
+      % ##2を##1 = left/center/rightの場所，##4を##3の場所に置く．被った場合は##2を外側にする．
+      % 戻り値は\jlreq@result
+      \def\jlreq@setheadfoot##1##2##3##4{%
+        % 左，真ん中，右に置くもの（対応するものがなければ空）をそれぞれ格納する．
+        \def\jlreq@left{}\def\jlreq@center{}\def\jlreq@right{}%
+        % \ifjlreq@tempa = if(##1 == ##3 && ##2 != "" && ##4 != "")
+        \jlreq@tempatrue
+        \jlreq@ifempty{##2}{\jlreq@tempafalse}{}%
+        \jlreq@ifempty{##4}{\jlreq@tempafalse}{}%
+        \ifthenelse{\equal{##1}{##3}}{}{\jlreq@tempafalse}%
+        \ifjlreq@tempa
+          \ifthenelse{\equal{##1}{right}}{%
+            \edef\jlreq@right{\unexpanded{##4}\noexpand\hspace{\expandonce{\jlreq@gap}}\unexpanded{##2}}%
+          }{%
+            \expandafter\edef\csname jlreq@##1\endcsname{\unexpanded{##2}\noexpand\hspace{\expandonce{\jlreq@gap}}\unexpanded{##4}}%
+          }%
+        \else
+          \jlreq@ifempty{##2}{}{\expandafter\def\csname jlreq@##1\endcsname{##2}}%
+          \jlreq@ifempty{##4}{}{\expandafter\def\csname jlreq@##3\endcsname{##4}}%
+        \fi
+        % フォント命令を挿入
+        \ifx\jlreq@font\@empty\else
+          \ifx\jlreq@left\@empty\else\edef\jlreq@left{{\expandonce{\jlreq@font}\expandonce{\jlreq@left}}}\fi
+          \ifx\jlreq@center\@empty\else\edef\jlreq@center{{\expandonce{\jlreq@font}\expandonce{\jlreq@center}}}\fi
+          \ifx\jlreq@right\@empty\else\edef\jlreq@right{{\expandonce{\jlreq@font}\expandonce{\jlreq@right}}}\fi
+        \fi
+        % \jlreq@setheadfoot@に回して処理
+        \edef\jlreq@do{\noexpand\jlreq@setheadfoot@{\expandonce{\jlreq@left}}{\expandonce{\jlreq@center}}{\expandonce{\jlreq@right}}}%
+        \jlreq@do
+      }%
       % ##1 ##2 ##3と並んだヘッダを作る，戻り値は\jlreq@result
       \def\jlreq@setheadfoot@##1##2##3{%
         % - \Cdpは端にそろえるための補正
@@ -3212,28 +3241,6 @@
           \ifx\jlreq@right\@empty\else\edef\jlreq@right{\noexpand\hbox to 0pt{\hss\expandonce{\jlreq@right}}}\fi
           \edef\jlreq@result{\expandonce{\jlreq@left}\hfil\unexpanded{##2}\hfil\expandonce{\jlreq@right}}%
         }%
-      }%
-      % ##2を##1 = left/center/rightの場所，##4を##3の場所に置く．被った場合は##2を外側にする．
-      % 戻り値は\jlreq@result
-      \def\jlreq@setheadfoot##1##2##3##4{%
-        \def\jlreq@left{}\def\jlreq@center{}\def\jlreq@right{}%
-        % \ifjlreq@tempa = if(##1 == ##3 && ##2 != "" && ##4 != "")
-        \jlreq@tempatrue
-        \jlreq@ifempty{##2}{\jlreq@tempafalse}{}%
-        \jlreq@ifempty{##4}{\jlreq@tempafalse}{}%
-        \ifthenelse{\equal{##1}{##3}}{}{\jlreq@tempafalse}%
-        \ifjlreq@tempa
-          \ifthenelse{\equal{##1}{right}}{%
-            \edef\jlreq@right{\unexpanded{##4}\noexpand\hspace{\gap}\unexpanded{##2}}%
-          }{%
-            \expandafter\edef\csname jlreq@##1\endcsname{\unexpanded{##2}\noexpand\hspace{\gap}\unexpanded{##4}}%
-          }%
-        \else
-          \jlreq@ifempty{##2}{}{\expandafter\def\csname jlreq@##1\endcsname{##2}}%
-          \jlreq@ifempty{##4}{}{\expandafter\def\csname jlreq@##3\endcsname{##4}}%
-        \fi
-        \edef\jlreq@do{\noexpand\jlreq@setheadfoot@{\expandonce{\jlreq@left}}{\expandonce{\jlreq@center}}{\expandonce{\jlreq@right}}}%
-        \jlreq@do
       }%
       % \nombre@<top/bottom>を定義
       \def\jlreq@nombre@top{}\def\jlreq@nombre@bottom{}%
@@ -3344,6 +3351,9 @@
   \ModifyPageStyle{headings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center}
   \NewPageStyle{myheadings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center,odd_running_head=\rightmark,even_running_head=\leftmark,clear_mark=false}
 \fi
+\ModifyPageStyle{plain}{font=\small}
+\ModifyPageStyle{headings}{font=\small}
+\ModifyPageStyle{myheadings}{font=\small}
 
 %. フロート関連
 % 4.3.3.dの例，縦組みの時だけど横にも適用……

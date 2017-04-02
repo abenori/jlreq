@@ -1,12 +1,10 @@
 TEXMF=$(shell kpsewhich -var-value=TEXMFHOME)
 
 
-
-
 all: jfm
 
 jfm: \
-	jfm-jlreqv.lua jfm-bjlreq.lua jfm-bjlreqv.lua jfm-bzjlreq.lua jfm-bzjlreqv.lua \
+	jfm-jlreqv.lua \
 	jlreq.tfm bjlreq.tfm zjlreq.tfm bzjlreq.tfm \
 	jlreq.vf bjlreq.vf zjlreq.vf bzjlreq.vf \
 	ujlreq.tfm ubjlreq.tfm uzjlreq.tfm ubzjlreq.tfm \
@@ -62,42 +60,40 @@ u%.vf: u%.tfm
 %.vf: %.tfm
 	makejvf -i $< rml.tfm
 
-u%.tfm: u%.pl
-	uppltotf -kanji=uptex $< $@
-
-%.tfm: %.pl
-	ppltotf -kanji=utf8 $< $@
-
 %g-v.tfm: %-v.tfm
 	cp $< $@
 
 %g.tfm: %.tfm
 	cp $< $@
 
+u%.tfm: u%.pl
+	uppltotf -kanji=uptex $< $@
 
-jfm-%v.lua jfm-b%,lua jfm-z%.lua: make_variant_jfm.lua jfm-jlreq.lua
+%.tfm: %.pl
+	ppltotf -kanji=utf8 $< $@
+
+jfm-%v.lua jfm-b%.lua jfm-z%.lua: make_variant_jfm.lua jfm-jlreq.lua
 	texlua make_variant_jfm.lua
 
-.SUFFIXES:.md .tex
-.SUFFIXES:.md .pdf
+doc: pdfdoc htmldoc
 
-.md.tex:
+latexdoc: jlreq.tex jlreq-ja.tex
+
+jlreq%tex: README%md README-template.tex
 	pandoc --verbose -f markdown_github -t latex --latex-engine=lualatex --template README-template.tex $< -o $@
 
-.md.pdf:
+pdfdoc: jlreq.pdf jlreq-ja.pdf
+
+jlreq%pdf: README%md README-template.tex
 	pandoc --verbose -f markdown_github -t latex --latex-engine=lualatex --template README-template.tex $< -o $@
 
-latexdoc: README.tex README-ja.tex
+htmldoc: jlreq.html jlreq-ja.html
 
-doc: README-ja.pdf
+jlreq-ja.html: README-ja.md README-template.html
+	pandoc --verbose -f markdown_github -t html5 -V lang=ja --template README-template.html -o jlreq-ja.html README-ja.md
 
-README-ja.html: README-ja.md
-	pandoc --verbose -f markdown_github -t html5 -V lang=ja --template README-template.html -o README-ja.html README-ja.md
-
-README.html: README.md
-	pandoc --verbose -f markdown_github -t html5 --template README-template.html -o README.html README.md
-
-htmldoc: README.html README-ja.html
+jlreq.html: README.md README-template.html
+	pandoc --verbose -f markdown_github -t html5 --template README-template.html -o jlreq.html README.md
 
 jfm-install: jfm
 	mkdir -p ${TEXMF}/fonts/tfm/public/jlreq
@@ -114,7 +110,7 @@ cls-install: jfm
 
 install: jfm-install cls-install
 
-tds: jfm jlreq.cls README.md README-ja.md LICENSE README.html README-ja.html
+tds: jfm jlreq.cls README.md README-ja.md LICENSE jlreq.html jlreq-ja.html
 	mkdir -p ./tds/fonts/tfm/public/jlreq
 	cp -f *.tfm ./tds/fonts/tfm/public/jlreq
 	mkdir -p ./tds/fonts/vf/public/jlreq
@@ -128,8 +124,8 @@ tds: jfm jlreq.cls README.md README-ja.md LICENSE README.html README-ja.html
 	cp README.md ./tds/doc/latex/jlreq
 	cp README-ja.md ./tds/doc/latex/jlreq
 	cp LICENSE ./tds/doc/latex/jlreq
-	cp README.html ./tds/doc/latex/jlreq
-	cp README-ja.html ./tds/doc/latex/jlreq
+	cp jlreq.html ./tds/doc/latex/jlreq
+	cp jlreq-ja.html ./tds/doc/latex/jlreq
 
 uninstall:
 	rm -rf ${TEXMF}/fonts/tfm/public/jlreq
@@ -139,5 +135,5 @@ clean:
 	rm -f *.tfm *.pl *.vf
 	rm -f jfm-jlreqv.lua
 	rm -f jfm-bjlreq.lua jfm-bjlreqv.lua jfm-bzjlreq.lua jfm-bzjlreqv.lua jfm-zjlreq.lua jfm-zjlreqv.lua
-	rm -f README.tex README.pdf README.html README-ja.tex README-ja.pdf README-ja.html
+	rm -f README.tex jlreq.pdf jlreq.html README-ja.tex jlreq-ja.pdf jlreq-ja.html
 

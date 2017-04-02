@@ -35,3 +35,7 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
 * 2017-03-20
     - Fix bugs.
     - Insert some spaces around `\footnote / \sidenote / \endnote`.
+
+--------------
+Noriyuki Abe
+https://github.com/abenori/jlreq

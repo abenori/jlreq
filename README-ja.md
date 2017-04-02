@@ -18,13 +18,13 @@
 
 ## 使い方
 通常通り
-````
+```latex
 \documentclass{jlreq}
-````
+```
 とします．これで横書きのarticle相当の文書クラスとなります．エンジンは自動判定されますが，指定する場合はクラスオプションに`platex/uplatex/lualatex`のいずれかを渡してください．縦書きにするには`tate`オプションを渡します．また，reportやbook相当の文書クラスとするには，それぞれ`report`や`book`オプションを渡します．たとえば，縦書きの本を作成するには
-````
+```latex
 \documentclass[tate,book]{jlreq}
-````
+```
 とします．
 
 その他，`oneside / twoside / onecolumn / twocolumn / titlepage / notitlepage / draft / final / openright / openany / leqno / fleqn`というよくあるオプションを受け付けます．
@@ -39,9 +39,9 @@
 
 ### `\sidenote`
 傍注（縦組みの場合は脚注）を出力します．デフォルトでは`\footnote`と同様の書式となりますが，クラスオプションに`sidenote_type=symbol`が指定されている場合，その書式は`\sidenote{該当項目}{注}`となります．たとえば
-````
+```latex
 刊行できる\sidenote{原稿}{印刷などの方法により……}を入手する仕事である．
-````
+```
 とします．後の説明も参照してください．
 
 デフォルトの基本版面では余白が少なく，実用にはならないかと思います．後の基本版面の設定を参考にしてください．
@@ -51,20 +51,20 @@
 
 ### `\warichu`
 割注を出力します．行分割位置などは自動で計算されます．（複数回のコンパイルが必要．）`\warichu*`ではこれらの位置を手動で指定できます．書式は
-````
+```
 \warichu*{(一行目前) & (一行目後)\\ (二行目前) & (二行目後)...}
-````
+```
 です．`&`が省略されている場合は自動で調整されます．
 
 ### `\jlreqsetup`
 設定用命令です．プリアンブルでしか使えません．文書に対する殆どの設定はクラスオプションにより行いますが，一部の設定はこの命令を通じて行います．
 
 ### その他
-* ルビは提供されません．[PXrubrica](https://github.com/zr-tex8r/PXrubrica)またはluatexja-ruby（LuaTeX利用時のみ，LuaTeX-jaパッケージに付属）を使うと良いかと思います．
+* ルビは提供されません．[PXrubrica](https://github.com/zr-tex8r/PXrubrica)（pLaTeX / upLaTeX）またはluatexja-ruby（LuaLaTeX，LuaTeX-jaパッケージに付属）を使うと良いかと思います．
 * 日本語組版処理の要件2.3.2.dによれば，二段組の最後のページの各段の行数は揃えることが望ましいとされていますが，この処理は行われません．`nidanfloat`パッケージを使い，
-````
+```latex
 \usepackage[balance]{nidanfloat}
-````
+```
 とするとこの処理が行われます．ただし，最終ページでの`\newpage`や`\clearpage`が正しく動作しません．詳しくは`nidanfloat`パッケージのマニュアルをご覧ください．
 
 ## 各種設計
@@ -82,7 +82,7 @@
 * `paper=[<紙サイズ名>/{<寸法>,<寸法>}]`：紙サイズです．紙サイズ名はa0からa10，b0からb10，c2からc8を指定できます．B列はJIS B列です．また，`{<縦>,<横>}`と直接寸法を指定することもできます．
 * `fontsize=<寸法;Q>` : フォントサイズ．デフォルトは10pt．
 * `line_length=<寸法;zw,zh>` : 一行の長さ．デフォルトは紙の縦幅の0.75倍．実際の値は一文字の長さの整数倍になるように補正されます．
-* `number_of_lines=<整数値>` : 一ページの行数．デフォルトは紙の横幅の0.75倍になるような値．
+* `number_of_lines=<自然数値>` : 一ページの行数．デフォルトは紙の横幅の0.75倍になるような値．
 * `gutter=<寸法;zw,zh>` : のどの余白の大きさ．
     - `tate`無指定時は奇数ページ左，偶数ページ右の余白
     - `tate`指定時は奇数ページ右，偶数ページ左の余白
@@ -103,8 +103,8 @@
 * `reference_mark=[inline/interlinear]`: 合印の配置方法を指定します．`inline`にすると該当項目の後ろの行中に配置します．`interlinear`を指定すると該当項目の上（横組）または右（縦組）に配置します．クラスオプションです．
 * `sidenote_type=[number/symbol]`: クラスオプションです．傍注と本文との対応の方法を指定します．`number`が規定で，注の位置に通し番号が入り，それにより対応が示されます．`symbol`とすると，注の位置に特定の記号が入り，また注がついている単語が強調されます．ここに入る記号と単語の強調は`\jlreqsetup`に次を渡すことで指定します．
 
-    - `sidenote_symbol`: 注の位置に入る記号．デフォルト＊
-    - `sidenote_keyword_font`: 注のついている単語のフォント命令．デフォルトは無し（強調しない）
+    - `sidenote_symbol=<記号>`: 注の位置に入る記号．デフォルト＊
+    - `sidenote_keyword_font=<命令>`: 注のついている単語のフォント指定．デフォルトは無し（強調しない）
 
 * `sidenote_width=<寸法;zw,zh>`: 傍注の幅を指定します．基本版面の設定に合わせて設定してください．クラスオプションです．
 * `endnote_position=[headings/paragraph/{_<見出し名1>,_<見出し名2>,...}]`：後注の出力場所を指定します．`headings`は各見出しの直前（デフォルト），`paragraph`は改段落の際に出力します．また，`endnote_position={_chapter,_section}`とすると，`\chapter`と`\section`の直前に出力します．クラスオプションです．
@@ -125,7 +125,7 @@
 見出しの設定は，`\Declare***Heading`という命令で行います（***には見出しの種類に応じた文字列が入る）．書式はすべて
 
 ```
-\Declare****Heading{<命令名>}{<レベル>}{<設定>}
+\Declare***Heading{<命令名>}{<レベル>}{<設定>}
 ```
 
 となっています．また，`\New***Heading`，`\Renew***Heading`，`\Provide***Heading`も同時に用意されます．それぞれ`\newcommand`，`\renewcommand`，`\providecommand`に対応した動きをします．
@@ -163,8 +163,8 @@
 #### 行取り
 行取りの指定は以下のいずれかの方法で行うことができます．
 
-* 行数を指定し，その中央に配置する．`lines=<整数値>`により行数を指定します．`before_lines=<整数値>`や`after_lines=<整数値>`により，さらに前後に追加する行数を指定します．たとえば`lines=3,after_lines=1`とすれば，四行の中に配置され，前の空きよりも後ろの空きの方が一行分大きくなります．`before_lines`により指定された空きは，ページ頭には入りませんが，`before_lines=*1`というように`*`を先頭につけると常に入るようになります．
-* 行数と，前後いずれかの空きを指定します．`lines=<整数値>`により行数を，`before_space=<寸法>`または`after_space=<寸法>`のいずれかの指定によりそれぞれ前または後ろの空きを指定します．
+* 行数を指定し，その中央に配置する．`lines=<自然数値>`により行数を指定します．`before_lines=<自然数値>`や`after_lines=<自然数値>`により，さらに前後に追加する行数を指定します．たとえば`lines=3,after_lines=1`とすれば，四行の中に配置され，前の空きよりも後ろの空きの方が一行分大きくなります．`before_lines`により指定された空きは，ページ頭には入りませんが，`before_lines=*1`というように`*`を先頭につけると常に入るようになります．
+* 行数と，前後いずれかの空きを指定します．`lines=<自然数値>`により行数を，`before_space=<寸法>`または`after_space=<寸法>`のいずれかの指定によりそれぞれ前または後ろの空きを指定します．
 * 前後の空きを指定します．`before_space=<寸法>`および`after_space=<寸法>`を指定します．
 
 ### 同行見出し
@@ -183,29 +183,30 @@
 
 ### `\ModifyHeading`
 既に（上のどれかを使い）定義された見出し命令の設定を変更します．たとえば
-```
+```latex
 \ModifyHeading{section}{lines=10}
-````
+```
 とすると，`\section`のフォントなどの設定はそのままに，行取りのみが10行に変更されます．見出しの種類を変更することはできません．
 
 ### `\SaveHeading`
 見出し命令の定義を待避します．
-````
+```latex
 \SaveHeading{section}{\restoresection} % \sectionの中身を\restoresectionに待避．
 \RenewBlockHeading{section}{1}{font=……} % \sectionを新しく定義する．
 ……
 \restoresection % \sectionの中身を元に戻す．
-````
+```
 のように使います．
 
 ## ページスタイル
-````
+```
 \DeclarePageStyle{<ページスタイル名>}{<設定>}
-````
+```
 によりページスタイルを定義することができます．柱やノンブルを出力します．設定は以下の通り．
 
 * `yoko`: 横書きで上下に出力します．デフォルト．
 * `tate`: 縦書きで小口側に出力します．
+* `font=<命令>`: 柱とノンブルのフォントを指定します．
 * `running_head_position`, `nombre_position`: 柱とノンブルの位置を指定します．`yoko`か`tate`のどちらが指定されているかで挙動が変わります．
     - `yoko`指定時：`top-left`のように指定できます．`top/bottom/center/left/right/gutter/fore_edge`が使えます．`gutter`はのど，`fore_edge`は小口です．`left`，`right`の指定は奇数ページに対するものです．`twoside`が指定されている場合，偶数ページはその逆になります．
     - `tate`指定時：`<寸法>`が指定できます．`running_head_position`は柱の天からの下げ量を，`nombre_position`はノンブルの地からの上げ量を指定します．
@@ -237,3 +238,6 @@
     - バグ修正．
     - `\footnote / \sidenote / \endnote`の周りに必要ならば空白を挿入するようにした．
 
+--------------
+Noriyuki Abe
+https://github.com/abenori/jlreq

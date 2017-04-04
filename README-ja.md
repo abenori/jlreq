@@ -237,6 +237,10 @@
 * 2017-03-20
     - バグ修正．
     - `\footnote / \sidenote / \endnote`の周りに必要ならば空白を挿入するようにした．
+* 2017-04-04
+    - バグ修正．
+    - `\DeclarePageStyle`に`tate`と`font`オプションを追加．
+
 
 --------------
 Noriyuki Abe

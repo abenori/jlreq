@@ -35,6 +35,10 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
 * 2017-03-20
     - Fix bugs.
     - Insert some spaces around `\footnote / \sidenote / \endnote`.
+* 2017-04-04
+    - Fix a bug.
+    - Add options `tate` and `font` to `\DeclarePageStyle`.
+
 
 --------------
 Noriyuki Abe

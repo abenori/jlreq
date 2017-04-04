@@ -345,6 +345,19 @@
   \fi
 }
 
+% #1が[0-9\.]*に当てはまるか．
+\def\jlreq@iffloat#1{\jlreq@helper@iffloat#1\jlreq@endmark}
+\def\jlreq@helper@chknumlist#1{\ifx#101\fi\ifx#111\fi\ifx#121\fi\ifx#131\fi\ifx#141\fi\ifx#151\fi\ifx#161\fi\ifx#171\fi\ifx#181\fi\ifx#191\fi}
+\def\jlreq@helper@chkfloatlist#1{\jlreq@helper@chknumlist{#1}\ifx#1.1\fi}
+\def\jlreq@helper@iffloat#1{%
+  \jlreq@ifendmark{#1}{\@firstoftwo}%
+  {%
+    \ifnum0\jlreq@helper@chkfloatlist{#1}>0 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+      {\jlreq@helper@iffloat}%
+      {\expandafter\@secondoftwo\jlreq@deleteuntileendmark}%
+  }%
+}
+
 %. オプションの定義
 % オプション処理の際にしか使わない変数（後でそれを元に別の変数を調整する）
 % ものは\jlreq@option@<key>に格納する．
@@ -2065,7 +2078,7 @@
   \expandafter\def\csname jlreq@heading@setting@#1\endcsname{#3}%
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewCutinHeading}%
   \begingroup
-    \def\jlreq@fontcommand{\headfont}%
+    \def\jlreq@fontcommand{\sffamily\bfseries}%
     \def\jlreq@onelinemax{6\jlreq@fontsize}%
     \def\jlreq@twolinemax{20\jlreq@fontsize}%
     \def\jlreq@indent{0\jlreq@mol}%
@@ -2184,38 +2197,34 @@
 \newcounter{paragraph}[subsubsection]
 \newcounter{subparagraph}[paragraph]
 \renewcommand*{\@seccntformat}[1]{\csname the#1\endcsname}
-\newcommand*{\headfont}{\sffamily\bfseries}
 
 \if@tate
   \renewcommand{\thepart}{\Kanji{part}}
   \ifthenelse{\equal{\jlreq@article@type}{article}}{}{\renewcommand{\thechapter}{\Kanji{chapter}}}
   \renewcommand{\thesection}{\rensuji{\@arabic\c@section}}
   \renewcommand{\thesubsection}{\rensuji{\@alph\c@subsection}}
-  \renewcommand{\thesubsubsection}{%
-    \rensuji{\@arabic\c@subsubsection}}
-  \renewcommand{\theparagraph}{%
-    (\rensuji{\@arabic\c@paragraph})}
-  \renewcommand{\thesubparagraph}{%
-    (\rensuji{\@arabic\c@subparagraph})}
+  \renewcommand{\thesubsubsection}{\rensuji{\@arabic\c@subsubsection}}
+  \renewcommand{\theparagraph}{(\rensuji{\@arabic\c@paragraph})}
+  \renewcommand{\thesubparagraph}{(\rensuji{\@arabic\c@subparagraph})}
 
   \ifthenelse{\equal{\jlreq@article@type}{article}}{
-    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},indent=4\jlreq@mol,lines=4,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\large}}}
+    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE}},indent=4\jlreq@mol,lines=4,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\large}}}
     \if@twoside\ModifyHeading{part}{allowbreak_if_evenpage=true}\fi
   }
   {% book, report
-    \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\jlreq@mol}},format={\null\vfill {\Huge\headfont \hspace*{2\jlreq@mol}#1#2}\vspace*{2\jlreq@gol}}}
-    \NewBlockHeading{chapter}{0}{indent=2\jlreq@mol,lines=6,label_format={第\thechapter 章},font={\huge\headfont},after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\Large}}}
+    \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\jlreq@mol}},format={\null\vfill {\Huge\hspace*{2\jlreq@mol}#1#2}\vspace*{2\jlreq@gol}}}
+    \NewBlockHeading{chapter}{0}{indent=2\jlreq@mol,lines=6,label_format={第\thechapter 章},font={\huge},after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\Large}}}
     \if@twoside\ModifyHeading{chapter}{allowbreak_if_evenpage=true}\fi
     \renewcommand{\thechapter}{\Kanji{chapter}}
   }
-  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},indent=6\jlreq@mol,lines=3,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
+  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large}},indent=6\jlreq@mol,lines=3,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
   \if@twoside\ModifyHeading{section}{allowbreak_if_evenpage=true}\fi
-  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},indent=8\jlreq@mol,lines=2,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\small}}}
+  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large}},indent=8\jlreq@mol,lines=2,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\small}}}
   \if@twoside\ModifyHeading{subsection}{allowbreak_if_evenpage=true}\fi
-  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=10\jlreq@mol,lines=1,before_lines=1,subtitle_break=false,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},,subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
+  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize}},indent=10\jlreq@mol,lines=1,before_lines=1,subtitle_break=false,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},,subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
   \if@twoside\ModifyHeading{subsubsection}{allowbreak_if_evenpage=true}\fi
-  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}}}
-  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=1\jlreq@mol}
+  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize}}}
+  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize}},indent=1\jlreq@mol}
 \else% yoko
   \renewcommand{\thepart}{\Roman{part}}
   \renewcommand{\thesubsection}{\thesection .\arabic{subsection}}
@@ -2223,13 +2232,13 @@
   \renewcommand{\theparagraph}{\thesubsubsection .\arabic{paragraph}}
   \renewcommand{\thesubparagraph}{\theparagraph .\arabic{subparagraph}}
   \ifthenelse{\equal{\jlreq@article@type}{article}}{
-    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\headfont}},label_format={第\thepart 部},lines=4,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\large}}}
+    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\sffamily\bfseries}},label_format={第\thepart 部},lines=4,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\large}}}
     \renewcommand{\thesection}{\arabic{section}}
   }
   {% book, report
-    \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\jlreq@gol}},format={\null\vfil {\Huge\headfont #1#2}\vfil}}
+    \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\jlreq@gol}},format={\null\vfil {\Huge\sffamily\bfseries #1#2}\vfil}}
     \NewBlockHeading{chapter}{0}{%
-      font={\jlreq@keepbaselineskip{\huge\headfont}},
+      font={\jlreq@keepbaselineskip{\huge\sffamily\bfseries}},
       label_format={第\thechapter 章},
       lines=5,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},
       subtitle_font={\jlreq@keepbaselineskip{\Large}}}
@@ -2241,11 +2250,11 @@
       \ModifyHeading{chapter}{pagebreak=clearpage}
     }
   }
-  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\headfont}},lines=3,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
-  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\headfont}},lines=2,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\small}}}
-  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},lines=1,before_lines=1,subtitle_break=false,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
-  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=1\jlreq@mol}
-  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\headfont}},indent=2\jlreq@mol}
+  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\sffamily\bfseries}},lines=3,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
+  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\sffamily\bfseries}},lines=2,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\small}}}
+  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\bfseries}},lines=1,before_lines=1,subtitle_break=false,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
+  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\bfseries}},indent=1\jlreq@mol}
+  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\bfseries}},indent=2\jlreq@mol}
 \fi
 
 \ifthenelse{\equal{\jlreq@article@type}{article}}{}{% book, report
@@ -2320,7 +2329,6 @@
     \unexpanded{#4}%
   }
 }
-\jlreq@aftercls@addtodeletecs{\jlreq@referencemark@format}
 
 \newcommand*\jlreq@referencemark@format[1]{#1}
 \ifthenelse{\equal{\jlreq@referencemark}{inline}}{
@@ -2700,10 +2708,10 @@
   \def\@sidenotemark{\@makesidemark}
   % カスタマイズできるべき？
   \long\def\jlreq@sidenotetext#1#2{%
-    \expandafter\def\csname\jlreq@sidenotemarkname\endcsname{\inhibitglue\null{\reset@font\headfont\inhibitglue #1}}%
+    \expandafter\def\csname\jlreq@sidenotemarkname\endcsname{\inhibitglue\null{\reset@font\sffamily\bfseries\inhibitglue #1}}%
     \@sidenotetext{#2}%
   }
-  \long\def\@makesidetext#1{{\headfont\csname\jlreq@sidenotemarkname\endcsname}\hspace*{1\jlreq@mol}#1}
+  \long\def\@makesidetext#1{{\sffamily\bfseries\csname\jlreq@sidenotemarkname\endcsname}\hspace*{1\jlreq@mol}#1}
   \def\@makesidemark{\@makefnmark}
   \ifthenelse{\equal{\jlreq@referencemark}{interlinear}}{\def\@tempa{\jlreq@fixjfm}}{\def\@tempa{\inhibitglue}}
   \edef\jlreq@do{
@@ -3196,7 +3204,9 @@
           \jlreq@warning{柱やノンブルは，左ページでは，基本版面の左端の延長線にノンブル又は柱の先頭をそろえて配置するか，基本版面の左端の延長線から基本版面の文字サイズの全角アキだけ右に寄せた位置に配置する (ページスタイル #1 内，2.6.1.b)}%
         \fi
       }{}%
-      \ifthenelse{\lengthtest{\jlreq@gap < 1.49\zw} \OR \( \lengthtest{\jlreq@gap > 1.51\zw} \AND \lengthtest{\jlreq@gap < 1.99\zw} \) \OR \lengthtest{\jlreq@gap > 2.01\zw}}{\jlreq@warning{ノンブルと柱との空き量は文字サイズの2倍又は1.5倍とする (ページスタイル #1 内，2.6.1.c)}}{}%
+      {\jlreq@font
+        \ifthenelse{\lengthtest{\jlreq@gap < 1.49\zw} \OR \( \lengthtest{\jlreq@gap > 1.51\zw} \AND \lengthtest{\jlreq@gap < 1.99\zw} \) \OR \lengthtest{\jlreq@gap > 2.01\zw}}{\jlreq@warning{ノンブルと柱との空き量は文字サイズの2倍又は1.5倍とする (ページスタイル #1 内，2.6.1.c)}}{}%
+      }%
       % ##2を##1 = left/center/rightの場所，##4を##3の場所に置く．被った場合は##2を外側にする．
       % 戻り値は\jlreq@result
       \def\jlreq@setheadfoot##1##2##3##4{%
@@ -3380,7 +3390,7 @@
   \vskip\belowcaptionskip}}
 \jlreq@jlreqsetup@add{caption_font}{\def\jlreq@@makecaption@font{#1}}
 \jlreq@jlreqsetup@add{caption_label_font}{\def\jlreq@@makecaption@label@font{#1}}
-\jlreqsetup{caption_font=\headfont,caption_label_font=\headfont}
+\jlreqsetup{caption_font={\sffamily\bfseries},caption_label_font={\sffamily\bfseries}}
 % 特に根拠のない値
 \setlength\abovecaptionskip{.5\jlreq@gol}
 \setlength\belowcaptionskip{0pt}
@@ -3647,7 +3657,7 @@
 %  \let\jlreq@original@@item=\@item
 %  \def\@item[##1]{\jlreq@original@@item[##1]\mbox{}\par
   }}{\endlist}
-\newcommand{\descriptionlabel}[1]{\normalfont\headfont #1}
+\newcommand{\descriptionlabel}[1]{\normalfont\sffamily\bfseries #1}
 
 % enumerateとitemize
 % 見出しが一つ上のレベルからどのくらいずれているかを入れる．
@@ -4059,19 +4069,19 @@
 \jlreq@saveoriginalcs{@begintheorem}
 \def\@begintheorem#1#2{\topsep=\jlreq@theorem@abovebelowspace
   \trivlist\labelsep=1\jlreq@mol
-   \item[\hskip \labelsep{\headfont #1\ #2}]}
+   \item[\hskip \labelsep{\sffamily\bfseries #1\ #2}]}
 \jlreq@saveoriginalcs{@opargbegintheorem}
 \def\@opargbegintheorem#1#2#3{\topsep=\jlreq@theorem@abovebelowspace
   \trivlist\labelsep=1\jlreq@mol
-  \item[\hskip \labelsep{\headfont #1\ #2（#3）}]}
+  \item[\hskip \labelsep{\sffamily\bfseries #1\ #2（#3）}]}
 
 \AtEndOfPackageFile*{amsthm}{
-  \newtheoremstyle{jlreq}{\jlreq@theorem@abovebelowspace}{\jlreq@theorem@abovebelowspace}{\normalfont}{}{\headfont}{}{1\jlreq@mol}{\thmname{#1}\thmnumber{\ #2}\thmnote{ (#3)}}
+  \newtheoremstyle{jlreq}{\jlreq@theorem@abovebelowspace}{\jlreq@theorem@abovebelowspace}{\normalfont}{}{\sffamily\bfseries}{}{1\jlreq@mol}{\thmname{#1}\thmnumber{\ #2}\thmnote{ (#3)}}
   \theoremstyle{jlreq}
   \jlreq@saveoriginalcs{proof}
   \jlreq@saveoriginalcs{endproof}
   \def\proof{\@ifnextchar[{\jlreq@proof}{\jlreq@proof[\proofname]}}
-  \def\jlreq@proof[#1]{\labelsep=1\jlreq@mol\jlreq@original@proof[{\normalfont\headfont #1\inhibitglue}\nopunct]}
+  \def\jlreq@proof[#1]{\labelsep=1\jlreq@mol\jlreq@original@proof[{\normalfont\sffamily\bfseries #1\inhibitglue}\nopunct]}
   \renewcommand{\proofname}{証明}
 }
 

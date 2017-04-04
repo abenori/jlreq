@@ -135,5 +135,5 @@ clean:
 	rm -f *.tfm *.pl *.vf
 	rm -f jfm-jlreqv.lua
 	rm -f jfm-bjlreq.lua jfm-bjlreqv.lua jfm-bzjlreq.lua jfm-bzjlreqv.lua jfm-zjlreq.lua jfm-zjlreqv.lua
-	rm -f README.tex jlreq.pdf jlreq.html README-ja.tex jlreq-ja.pdf jlreq-ja.html
+	rm -f jlreq.tex jlreq.pdf jlreq.html jlreq-ja.tex jlreq-ja.pdf jlreq-ja.html
 

@@ -462,7 +462,12 @@
 \jlreq@DeclareOption{10pt}{\renewcommand*{\jlreq@option@fontsize}{10pt}}
 \jlreq@DeclareOption{11pt}{\renewcommand*{\jlreq@option@fontsize}{11pt}}
 \jlreq@DeclareOption{12pt}{\renewcommand*{\jlreq@option@fontsize}{12pt}}
-
+\newcommand*{\jlreq@option@jafontsize}{}
+\jlreq@aftercls@addtodeletecs{\jlreq@option@jafontsize}
+\DeclareOptionX{jafontsize}{\renewcommand*{\jlreq@option@jafontsize}{#1}}
+\newcommand*{\jlreq@option@jafontscale}{1}
+\DeclareOptionX{jafontscale}{\renewcommand*{\jlreq@option@jafontscale}{#1}}
+\jlreq@aftercls@addtodeletecs{\jlreq@option@jafontscale}
 %.. 行の長さ
 \newcommand*{\jlreq@option@line@length}{}
 \jlreq@aftercls@addtodeletecs{\jlreq@option@line@length}
@@ -580,7 +585,7 @@
 \newcommand*{\jlreq@warning}[1]{}
 \jlreq@DeclareOption{jlreq_warnings}{\renewcommand*{\jlreq@warning}[1]{\ClassWarningNoLine{jlreq}{(JLReq warning) ##1}}}
 
-\ExecuteOptionsX{article_type=article,paper=a4,fontsize=10pt,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=headings,onecolumn,final}
+\ExecuteOptionsX{article_type=article,paper=a4,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=headings,onecolumn,final}
 % \@removeelementを一旦置き換えてから\ProcessOptionsXを実行する
 \let\jlreq@original@@removeelement=\@removeelement
 \let\@removeelement=\jlreq@helper@removeelement
@@ -749,6 +754,47 @@
   \else\def\@tempa{}\fi
   \@tempa
 }
+
+% #1÷#2を#3に入れる．（#1,#2は寸法を与え，#3もdimenレジスタ）
+\ifx l\jlreq@engine
+  \def\jlreq@divide#1#2#3{%
+    \begingroup
+      \jlreq@tempdima=#1
+      \jlreq@tempdimb=#2
+      \edef\jlreq@do{\noexpand#3=\directlua{tex.print(tostring(\strip@pt\jlreq@tempdima/\strip@pt\jlreq@tempdimb) .. "pt")}}%
+    \expandafter\endgroup
+    \jlreq@do
+  }
+\else
+  \def\jlreq@divide#1#2#3{%
+    \begingroup
+      \@tempdima=#1\relax\@tempdimb=#2\relax
+      % 分母を正にする
+      \ifdim\@tempdimb<0pt \@tempdima=-\@tempdima\@tempdimb=-\@tempdimb\fi
+      % \jlreq@tempdima*\@tempdimb <= \@tempdima < (\jlreq@tempdima + 1)*\@tempdimb
+      % となる整数\jlreq@tempdimaを捜し，\jlreq@tempdimb=\jlreq@tempdima + 1とする
+      \jlreq@tempdima=0pt
+      \ifdim\@tempdimb<0pt
+        \loop\ifdim\strip@pt\jlreq@tempdima\@tempdimb>\@tempdima\advance\jlreq@tempcnta by -1pt\repeat
+      \else
+        \loop\ifdim\strip@pt\jlreq@tempdima\@tempdimb<\@tempdima\advance\jlreq@tempdima by 1pt\repeat
+        \ifdim\strip@pt\jlreq@tempdima\@tempdimb=\@tempdima\else\advance\jlreq@tempdima by -1pt\fi
+      \fi
+      \jlreq@tempdimb=\dimexpr\jlreq@tempdima + 1pt\relax
+      % 二分法
+      \jlreq@tempcnta=0 % 無限ループを避けるためのカウンタ
+      \loop\ifnum\numexpr\ifdim\dimexpr\jlreq@tempdimb - \jlreq@tempdima\relax>1sp 1\else0\fi*\ifnum\jlreq@tempcnta<100 1\else 0\fi\relax=1
+        \jlreq@tempdimc=\dimexpr(\jlreq@tempdima+\jlreq@tempdimb)/2\relax
+        \ifdim\strip@pt\jlreq@tempdimc\@tempdimb>\@tempdima \jlreq@tempdimb=\jlreq@tempdimc
+        \else\jlreq@tempdima=\jlreq@tempdimc\fi
+        \advance\jlreq@tempcnta by 1
+      \repeat
+      \message{count = \the\jlreq@tempcnta}%
+      \edef\jlreq@do{\noexpand#3=\the\jlreq@tempdima}%
+    \expandafter\endgroup
+    \jlreq@do
+  }
+\fi
 
 %. 基本設定
 \def\jlreq@kanjiskip{0pt plus 0.25zw minus 0pt}
@@ -1042,20 +1088,38 @@
 \jlreq@setprebreakpenalty{‥}{10000}
 % ￥100とか70％とか……
 
+% フォントサイズを設定
 \newdimen\jlreq@fontsize
+\newdimen\jlreq@jafontsize
 \ifx l\jlreq@engine
-  \setlength{\jlreq@fontsize}{%
+  \def\jlreq@expand@optionfontsize#1{
     \dimexpr\directlua{
       local act = string.char(92)
-      local s = [[\jlreq@option@fontsize]]
+      local s = [[#1]]
       s = s:gsub("Q",act .. "dimexpr 0.25mm" .. act .. "relax")
       tex.print(s)
     }\relax
   }%
 \else
-  \setlength{\jlreq@fontsize}{\dimexpr\jlreq@option@fontsize\relax}
+  \def\jlreq@expand@optionfontsize#1{\dimexpr#1\relax}
 \fi
-
+\jlreq@aftercls@addtodeletecs{\jlreq@expand@optionfontsize}
+\ifx\jlreq@option@fontsize\@empty
+  \ifx\jlreq@option@jafontsize\@empty
+    \jlreq@fontsize=10pt
+    \jlreq@jafontsize=\jlreq@option@jafontscale\jlreq@fontsize
+  \else
+    \setlength{\jlreq@jafontsize}{\jlreq@expand@optionfontsize{\jlreq@option@jafontsize}}
+    \jlreq@divide{\jlreq@jafontsize}{\jlreq@option@jafontscale pt}{\jlreq@fontsize}
+  \fi
+\else
+  \setlength{\jlreq@fontsize}{\jlreq@expand@optionfontsize{\jlreq@option@fontsize}}
+  \ifx\jlreq@option@jafontsize\@empty
+    \jlreq@jafontsize=\jlreq@option@jafontscale\jlreq@fontsize
+  \else
+    \setlength{\jlreq@jafontsize}{\jlreq@expand@optionfontsize{\jlreq@option@jafontsize}}
+  \fi
+\fi
 %. フォント
 \RequirePackage{lmodern}
 
@@ -1143,22 +1207,25 @@
   \def\jlreq@yokokanjiencoding{JY2}
   \def\jlreq@tatekanjiencoding{JT2}
 \fi
+\jlreq@divide{\jlreq@jafontsize}{\jlreq@fontsize}{\jlreq@tempdima}
+\edef\jlreq@jafontscale{\strip@pt\jlreq@tempdima}
+\jlreq@aftercls@addtodeletecs{\jlreq@jafontscale}
 \ifx l\jlreq@engine
   \def\jlreq@yokokanjiencoding{JY3}
   \def\jlreq@tatekanjiencoding{JT3}
   \expandafter\let\csname JY3/mc/m/n/10\endcsname\relax
   \expandafter\let\csname JT3/mc/m/n/10\endcsname\relax
-  \DeclareFontShape{JY3}{mc}{m}{n}{<->\ltj@stdmcfont:jfm=jlreq;script=latn;-kern}{}
-  \DeclareFontShape{JY3}{gt}{m}{n}{<->\ltj@stdgtfont:jfm=jlreq;script=latn;-kern}{}
-  \DeclareFontShape{JT3}{mc}{m}{n}{<->\ltj@stdmcfont:jfm=jlreqv;script=latn;-kern}{}
-  \DeclareFontShape{JT3}{gt}{m}{n}{<->\ltj@stdgtfont:jfm=jlreqv;script=latn;-kern}{}
+  \DeclareFontShape{JY3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont:jfm=jlreq;script=latn;-kern}{}
+  \DeclareFontShape{JY3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont:jfm=jlreq;script=latn;-kern}{}
+  \DeclareFontShape{JT3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont:jfm=jlreqv;script=latn;-kern}{}
+  \DeclareFontShape{JT3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont:jfm=jlreqv;script=latn;-kern}{}
 \else
   \expandafter\let\csname \jlreq@yokokanjiencoding/mc/m/n/10\endcsname\relax
   \expandafter\let\csname \jlreq@tatekanjiencoding/mc/m/n/10\endcsname\relax
-  \DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{m}{n}{<-> \jlreq@jfmname}{}
-  \DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{m}{n}{<-> \jlreq@jfmnameg}{}
-  \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{n}{<-> \jlreq@jfmname-v}{}
-  \DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{n}{<-> \jlreq@jfmnameg-v}{}
+  \DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmname}{}
+  \DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmnameg}{}
+  \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmname-v}{}
+  \DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmnameg-v}{}
 \fi
 \DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{bx}{n}{<->ssub*gt/m/n}{}
 \DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{bx}{n}{<->ssub*gt/m/n}{}
@@ -1251,6 +1318,17 @@
     \fi
   }
 \fi
+\jlreq@divide{\jlreq@fontsize}{\jlreq@jafontsize}{\jlreq@tempdima}
+\edef\jlreq@jafontinvscale{\strip@pt\jlreq@tempdima}
+\newcommand*{\jafontsize}[2]{%
+  \jlreq@iffloat{#1}{\fontsize{#1\jlreq@jafontsize}{#2}}{%
+    \begingroup
+      \jlreq@tempdima=\jlreq@jafontinvscale\dimexpr#1\relax
+      \edef\jlreq@do{\noexpand\fontsize{\expandonce{\the\jlreq@tempdima}}{\unexpanded{#2}}}%
+    \expandafter\endgroup
+    \jlreq@do
+  }%
+}
 
 \renewcommand{\normalsize}{%
   \@setfontsize\normalsize{\jlreq@fontsize}{\jlreq@baselineskip}%

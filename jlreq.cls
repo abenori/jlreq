@@ -387,11 +387,11 @@
 \jlreq@aftercls@addtodeletecs{\jlreq@switchpapersize}
 \newcommand*\jlreq@addpapersize[4][]{%
   \jlreq@ifempty{#2}{}{
-    \jlreq@DeclareOption{#2}{\setlength\paperheight{#3}\setlength\paperwidth{#4}}
-    \appto\jlreq@switchpapersize{{#2}{\setlength\paperheight{#3}\setlength\paperwidth{#4}}}
+    \jlreq@DeclareOption{#2}{\setlength\paperwidth{#3}\setlength\paperheight{#4}}
+    \appto\jlreq@switchpapersize{{#2}{\setlength\paperwidth{#3}\setlength\paperheight{#4}}}
   }
   \jlreq@ifempty{#1}{}{
-    \appto\jlreq@switchpapersize{{#1}{\setlength\paperheight{#3}\setlength\paperwidth{#4}}}
+    \appto\jlreq@switchpapersize{{#1}{\setlength\paperwidth{#3}\setlength\paperheight{#4}}}
   }
 }
 \jlreq@aftercls@addtodeletecs{\jlreq@addpapersize}
@@ -401,8 +401,8 @@
     [\unexpanded{%
       \jlreq@helper@dividebycomma{#1}%
       \ifjlreq@tempa
-        \setlength{\paperheight}{\dimexpr\jlreq@tempc\relax}%
-        \setlength{\paperwidth}{\dimexpr\jlreq@tempd\relax}%
+        \setlength{\paperwidth}{\dimexpr\jlreq@tempc\relax}%
+        \setlength{\paperheight}{\dimexpr\jlreq@tempd\relax}%
       \else
         \ClassError{jlreq}{The paper #1 is unknown}{\@ehc}%
       \fi
@@ -412,47 +412,47 @@
 }
 % 紙サイズ一覧．b*はJIS B．
 % [paper=で指定できるようにするもの]{オプション名}{縦}{横}
-\jlreq@addpapersize[a3]{a3paper}{420mm}{297mm}
-\jlreq@addpapersize[a4]{a4paper}{297mm}{210mm}
-\jlreq@addpapersize[a5]{a5paper}{210mm}{148mm}
-\jlreq@addpapersize[a6]{a6paper}{148mm}{105mm}
-\jlreq@addpapersize[b4]{b4paper}{364mm}{257mm}
-\jlreq@addpapersize[b5]{b5paper}{257mm}{182mm}
-\jlreq@addpapersize[b6]{b6paper}{182mm}{128mm}
-\jlreq@addpapersize{a4j}{297mm}{210mm}
-\jlreq@addpapersize{a5j}{210mm}{148mm}
-\jlreq@addpapersize{b4j}{364mm}{257mm}
-\jlreq@addpapersize{b5j}{257mm}{182mm}
-\jlreq@addpapersize{a4var}{283mm}{210mm}
-\jlreq@addpapersize{b5var}{230mm}{182mm}
-\jlreq@addpapersize[letter]{letterpaper}{11in}{8.5in}
-\jlreq@addpapersize[legal]{legalpaper}{14in}{8.5in}
-\jlreq@addpapersize[executive]{executivepaper}{10.5in}{7.25in}
+\jlreq@addpapersize[a3]{a3paper}{297mm}{420mm}
+\jlreq@addpapersize[a4]{a4paper}{210mm}{297mm}
+\jlreq@addpapersize[a5]{a5paper}{148mm}{210mm}
+\jlreq@addpapersize[a6]{a6paper}{105mm}{148mm}
+\jlreq@addpapersize[b4]{b4paper}{257mm}{364mm}
+\jlreq@addpapersize[b5]{b5paper}{182mm}{257mm}
+\jlreq@addpapersize[b6]{b6paper}{128mm}{182mm}
+\jlreq@addpapersize{a4j}{210mm}{297mm}
+\jlreq@addpapersize{a5j}{148mm}{210mm}
+\jlreq@addpapersize{b4j}{257mm}{364mm}
+\jlreq@addpapersize{b5j}{182mm}{257mm}
+\jlreq@addpapersize{a4var}{210mm}{283mm}
+\jlreq@addpapersize{b5var}{182mm}{230mm}
+\jlreq@addpapersize[letter]{letterpaper}{8.5in}{11in}
+\jlreq@addpapersize[legal]{legalpaper}{8.5in}{14in}
+\jlreq@addpapersize[executive]{executivepaper}{7.25in}{10.5in}
 % 追加
-\jlreq@addpapersize[a0]{}{1189mm}{841mm}
-\jlreq@addpapersize[a1]{}{841mm}{594mm}
-\jlreq@addpapersize[a2]{}{594mm}{420mm}
-\jlreq@addpapersize[a7]{}{105mm}{74mm}
-\jlreq@addpapersize[a8]{}{74mm}{52mm}
-\jlreq@addpapersize[a9]{}{52mm}{37mm}
-\jlreq@addpapersize[a10]{}{37mm}{26mm}
+\jlreq@addpapersize[a0]{}{841mm}{1189mm}
+\jlreq@addpapersize[a1]{}{594mm}{841mm}
+\jlreq@addpapersize[a2]{}{420mm}{594mm}
+\jlreq@addpapersize[a7]{}{74mm}{105mm}
+\jlreq@addpapersize[a8]{}{52mm}{74mm}
+\jlreq@addpapersize[a9]{}{37mm}{52mm}
+\jlreq@addpapersize[a10]{}{26mm}{37mm}
 
-\jlreq@addpapersize[b0]{}{1456mm}{1030mm}
-\jlreq@addpapersize[b1]{}{1030mm}{728mm}
-\jlreq@addpapersize[b2]{}{728mm}{515mm}
-\jlreq@addpapersize[b3]{}{515mm}{364mm}
-\jlreq@addpapersize[b7]{}{128mm}{91mm}
-\jlreq@addpapersize[b8]{}{91mm}{64mm}
-\jlreq@addpapersize[b9]{}{64mm}{45mm}
-\jlreq@addpapersize[b10]{}{45mm}{32mm}
+\jlreq@addpapersize[b0]{}{1030mm}{1456mm}
+\jlreq@addpapersize[b1]{}{728mm}{1030mm}
+\jlreq@addpapersize[b2]{}{515mm}{728mm}
+\jlreq@addpapersize[b3]{}{364mm}{515mm}
+\jlreq@addpapersize[b7]{}{91mm}{128mm}
+\jlreq@addpapersize[b8]{}{64mm}{91mm}
+\jlreq@addpapersize[b9]{}{45mm}{64mm}
+\jlreq@addpapersize[b10]{}{32mm}{45mm}
 
-\jlreq@addpapersize[c2]{}{648mm}{458mm}
-\jlreq@addpapersize[c3]{}{458mm}{324mm}
-\jlreq@addpapersize[c4]{}{354mm}{229mm}
-\jlreq@addpapersize[c5]{}{229mm}{162mm}
-\jlreq@addpapersize[c6]{}{162mm}{114mm}
-\jlreq@addpapersize[c7]{}{114mm}{81mm}
-\jlreq@addpapersize[c8]{}{81mm}{57mm}
+\jlreq@addpapersize[c2]{}{458mm}{648mm}
+\jlreq@addpapersize[c3]{}{324mm}{458mm}
+\jlreq@addpapersize[c4]{}{229mm}{354mm}
+\jlreq@addpapersize[c5]{}{162mm}{229mm}
+\jlreq@addpapersize[c6]{}{114mm}{162mm}
+\jlreq@addpapersize[c7]{}{81mm}{114mm}
+\jlreq@addpapersize[c8]{}{57mm}{81mm}
 
 
 %.. フォントサイズ，行長，1ページあたりの行数で基本版面のサイズを決める（2.4.1.a）

@@ -738,7 +738,7 @@
 }
 \newcount\jlreq@lastnodechar
 % jlreq@lastnodecharに入っている値と次のトークン（\futureletで得る）の間に入るJFMグルー等を挿入する
-\def\jlreq@fixjfm{%
+\newcommand*{\jlreq@fixjfm}{%
   \ifnum\jlreq@lastnodechar>-1
     \def\jlreq@do{%
       \jlreq@isletter{\jlreq@nextchar}{%
@@ -757,16 +757,16 @@
 
 % #1÷#2を#3に入れる．（#1,#2は寸法を与え，#3もdimenレジスタ）
 \ifx l\jlreq@engine
-  \def\jlreq@divide#1#2#3{%
+  \newcommand*{\jlreq@divide}[3]{%
     \begingroup
-      \jlreq@tempdima=#1
-      \jlreq@tempdimb=#2
+      \jlreq@tempdima=#1\relax
+      \jlreq@tempdimb=#2\relax
       \edef\jlreq@do{\noexpand#3=\directlua{tex.print(tostring(\strip@pt\jlreq@tempdima/\strip@pt\jlreq@tempdimb) .. "pt")}}%
     \expandafter\endgroup
     \jlreq@do
   }
 \else
-  \def\jlreq@divide#1#2#3{%
+  \newcommand*{\jlreq@divide}[3]{%
     \begingroup
       \@tempdima=#1\relax\@tempdimb=#2\relax
       % 分母を正にする
@@ -774,22 +774,21 @@
       % \jlreq@tempdima*\@tempdimb <= \@tempdima < (\jlreq@tempdima + 1)*\@tempdimb
       % となる整数\jlreq@tempdimaを捜し，\jlreq@tempdimb=\jlreq@tempdima + 1とする
       \jlreq@tempdima=0pt
-      \ifdim\@tempdimb<0pt
-        \loop\ifdim\strip@pt\jlreq@tempdima\@tempdimb>\@tempdima\advance\jlreq@tempcnta by -1pt\repeat
+      \ifdim\@tempdima<0pt
+        \loop\ifdim\strip@pt\jlreq@tempdima\@tempdimb>\@tempdima\advance\jlreq@tempdima by -1pt\repeat
       \else
         \loop\ifdim\strip@pt\jlreq@tempdima\@tempdimb<\@tempdima\advance\jlreq@tempdima by 1pt\repeat
         \ifdim\strip@pt\jlreq@tempdima\@tempdimb=\@tempdima\else\advance\jlreq@tempdima by -1pt\fi
       \fi
       \jlreq@tempdimb=\dimexpr\jlreq@tempdima + 1pt\relax
-      % 二分法
+      % \jlreq@tempdimaと\jlreq@tempdimbで挟んでいく二分法
       \jlreq@tempcnta=0 % 無限ループを避けるためのカウンタ
       \loop\ifnum\numexpr\ifdim\dimexpr\jlreq@tempdimb - \jlreq@tempdima\relax>1sp 1\else0\fi*\ifnum\jlreq@tempcnta<100 1\else 0\fi\relax=1
         \jlreq@tempdimc=\dimexpr(\jlreq@tempdima+\jlreq@tempdimb)/2\relax
-        \ifdim\strip@pt\jlreq@tempdimc\@tempdimb>\@tempdima \jlreq@tempdimb=\jlreq@tempdimc
+        \ifdim\strip@pt\jlreq@tempdimc\@tempdimb>\@tempdima\jlreq@tempdimb=\jlreq@tempdimc
         \else\jlreq@tempdima=\jlreq@tempdimc\fi
         \advance\jlreq@tempcnta by 1
       \repeat
-      \message{count = \the\jlreq@tempcnta}%
       \edef\jlreq@do{\noexpand#3=\the\jlreq@tempdima}%
     \expandafter\endgroup
     \jlreq@do
@@ -1301,11 +1300,11 @@
 
 %.. 文字サイズ変更
 % 文字サイズを基準としているような寸法に対しては，
-% \@setfontsizeが実行されるたびに追随して値を変える
+% \set@fontsizeが実行されるたびに追随して値を変える
 % その処理は\jlreq@setfontsizehookに入れる
-\jlreq@saveoriginalcs{@setfontsize}
-\renewcommand*{\@setfontsize}[3]{%
-  \jlreq@original@@setfontsize{#1}{#2}{#3}%
+\jlreq@saveoriginalcs{set@fontsize}
+\renewcommand*{\set@fontsize}[3]{%
+  \jlreq@original@set@fontsize{#1}{#2}{#3}%
   \jlreq@setfontsizehook
 }
 \def\jlreq@setfontsizehook{}
@@ -1321,13 +1320,16 @@
 \jlreq@divide{\jlreq@fontsize}{\jlreq@jafontsize}{\jlreq@tempdima}
 \edef\jlreq@jafontinvscale{\strip@pt\jlreq@tempdima}
 \newcommand*{\jafontsize}[2]{%
-  \jlreq@iffloat{#1}{\fontsize{#1\jlreq@jafontsize}{#2}}{%
-    \begingroup
+  \begingroup
+    \jlreq@iffloat{#1}{%
+      \jlreq@tempdima=\jlreq@jafontinvscale\dimexpr #1pt\relax
+      \edef\jlreq@do{\noexpand\fontsize{\strip@pt\jlreq@tempdima}{\unexpanded{#2}}}%
+    }{%
       \jlreq@tempdima=\jlreq@jafontinvscale\dimexpr#1\relax
       \edef\jlreq@do{\noexpand\fontsize{\expandonce{\the\jlreq@tempdima}}{\unexpanded{#2}}}%
-    \expandafter\endgroup
-    \jlreq@do
-  }%
+    }%
+  \expandafter\endgroup
+  \jlreq@do
 }
 
 \renewcommand{\normalsize}{%

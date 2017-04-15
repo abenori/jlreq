@@ -128,31 +128,6 @@
 }
 \def\jlreq@helper@removelastcomma#1,\jlreq@endmark{#1}
 
-% #1が#2内のあるトークンと\ifxで一致すれば#3を，そうでなければ#4を実行する．
-% #2内に{}があったら中身は消える．空白も無視．
-\newcommand{\jlreq@ifintokenlist}[2]{%
-  % まずは{}を消していく
-  \jlreq@helper@ifintokenlist{#1}{}#2{\jlreq@endmark}%
-}
-\long\def\jlreq@helper@ifintokenlist#1#2#3#{\jlreq@helper@ifintokenlist@{#1}{#2#3}}
-\long\def\jlreq@helper@ifintokenlist@#1#2#3{%
-  \jlreq@ifendmark{#3}{%
-    \jlreq@helper@ifintokenlist@@{#1}#2\jlreq@endmark
-  }{%
-    \jlreq@helper@ifintokenlist{#1}{#2}%
-  }%
-}
-% #1を探すループ
-\long\def\jlreq@helper@ifintokenlist@@#1#2{%
-  \jlreq@ifendmark{#2}{%
-    \@secondoftwo
-  }{%
-    \ifx#1#2\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
-      {\expandafter\@firstoftwo\jlreq@deleteuntileendmark}%
-      {\jlreq@helper@ifintokenlist@@{#1}}%
-  }%
-}
-
 % vbox #1の最後を\jlreq@resultboxに入れる
 % #1の最後の行は消える
 \newcommand*{\jlreq@getlastbox}[1]{%
@@ -1083,7 +1058,7 @@
 \newdimen\jlreq@fontsize
 \newdimen\jlreq@jafontsize
 \ifx l\jlreq@engine
-  \def\jlreq@expand@optionfontsize#1{
+  \def\jlreq@expand@optionfontsize#1{%
     \dimexpr\directlua{
       local act = string.char(92)
       local s = [[#1]]
@@ -1159,20 +1134,26 @@
   \else\directlua{jlreq.burasage = false}\fi
 \else
   % 非LuaTeXの場合はJFMの入れ替えと\everyparでの処理で対処．
-  \def\jlreq@jfmname@prefix{}
   \def\jlreq@openbreackets@list{（〔［｛〈《「『【}
   \ifx u\jlreq@engine\edef\jlreq@openbreackets@list{\jlreq@openbreackets@list ｟〘〖«〝‘“}\fi
+  \jlreq@aftercls@addtodeletecs{\jlreq@openbreackets@list}
   % \jlreq@jfmnameにJFMの名前を入れる
+  \def\jlreq@jfmname@prefix{}
+  \jlreq@aftercls@addtodeletecs{\jlreq@jfmname@prefix}
   \ifjlreq@burasage\edef\jlreq@jfmname@prefix{b\jlreq@jfmname@prefix}\fi
   \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{\edef\jlreq@jfmname@prefix{\jlreq@jfmname@prefix z}}{}
   \ifx u\jlreq@engine\edef\jlreq@jfmname@prefix{u\jlreq@jfmname@prefix}\fi
   \edef\jlreq@jfmname{\jlreq@jfmname@prefix jlreq}
   \edef\jlreq@jfmnameg{\jlreq@jfmname@prefix jlreqg}
+  % \jlreq@openbreackets@listの各括弧に対して，\ifx\jlreq@nextchar 「1\fiみたいなのが並んだのを作る
+  \def\jlreq@tempa{}
+  \def\jlreq@do#1{\jlreq@ifendmark{#1}{}{\appto\jlreq@tempa{\ifx\jlreq@nextchar#11\fi}\jlreq@do}}
+  \expandafter\jlreq@do\jlreq@openbreackets@list\jlreq@endmark
   % JFM glueの伸び縮みで行頭括弧が揃わないのを防ぐために常に\inhibitglueを入れる．
   \ifthenelse{\equal{\jlreq@open@bracket@pos}{nibu_tentsuki}}{
-    \edef\jlreq@openbracket@hook{\noexpand\jlreq@ifintokenlist{\noexpand\jlreq@nextchar}{\expandonce{\jlreq@openbreackets@list}}{\unexpanded{\hskip -.5\jlreq@mol\inhibitglue}}{}}
+    \edef\jlreq@openbracket@hook{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\hskip -.5\jlreq@mol\inhibitglue}\noexpand\fi}
   }{% zenkakunibu_nibu,zenkaku_tentsuki
-    \edef\jlreq@openbracket@hook{\noexpand\jlreq@ifintokenlist{\noexpand\jlreq@nextchar}{\expandonce{\jlreq@openbreackets@list}}{\noexpand\inhibitglue}{}}
+    \edef\jlreq@openbracket@hook{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\inhibitglue}\noexpand\fi}
   }
   \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
 \fi
@@ -1341,23 +1322,23 @@
 % 2.5.2 \baselineskipは一定の方がよい？
 \newcommand{\footnotesize}{%
   \@setfontsize\footnotesize{.8\jlreq@fontsize}{\dimexpr 115\jlreq@baselineskip/170\relax}% 脚注文字サイズの二分より少し小さい値を行間に: 4.2.5.e
-  \abovedisplayskip .6\jlreq@gol \@plus.2\jlreq@gol \@minus.4\jlreq@gol
-  \abovedisplayshortskip \z@ \@plus.1\jlreq@gol
-  \belowdisplayshortskip .3\jlreq@gol \@plus.1\jlreq@gol \@minus.2\jlreq@gol
+  \abovedisplayskip .6\jlreq@fontsize \@plus.2\jlreq@fontsize \@minus.4\jlreq@fontsize
+  \abovedisplayshortskip \z@ \@plus.1\jlreq@fontsize
+  \belowdisplayshortskip .3\jlreq@fontsize \@plus.1\jlreq@fontsize \@minus.2\jlreq@fontsize
   \def\@listi{\leftmargin\leftmargini
-    \topsep .3\jlreq@gol \@plus.1\jlreq@gol \@minus.1\jlreq@gol
-    \parsep .2\jlreq@gol \@plus.1\jlreq@gol \@minus.1\jlreq@gol
+    \topsep .3\jlreq@fontsize \@plus.1\jlreq@fontsize \@minus.1\jlreq@fontsize
+    \parsep .2\jlreq@fontsize \@plus.1\jlreq@fontsize \@minus.1\jlreq@fontsize
     \itemsep \parsep}%
   \belowdisplayskip \abovedisplayskip}
 % tsize10.cloの引数を，そのまま\jlreq@fontsize/\jlreq@baselineskipでスケーリングしているだけ．
 \newcommand{\small}{%
   \@setfontsize\small{.9\jlreq@fontsize}{\dimexpr 11\jlreq@baselineskip/17\relax}%
-  \abovedisplayskip .85\jlreq@gol \@plus.3\jlreq@gol \@minus.4\jlreq@gol
-  \abovedisplayshortskip \z@ \@plus.2\jlreq@gol
-  \belowdisplayshortskip .4\jlreq@gol \@plus.2\jlreq@gol \@minus.2\jlreq@gol
+  \abovedisplayskip .85\jlreq@fontsize \@plus.3\jlreq@fontsize \@minus.4\jlreq@fontsize
+  \abovedisplayshortskip \z@ \@plus.2\jlreq@fontsize
+  \belowdisplayshortskip .4\jlreq@fontsize \@plus.2\jlreq@fontsize \@minus.2\jlreq@fontsize
   \def\@listi{\leftmargin\leftmargini
-    \topsep .4\jlreq@gol \@plus.2\jlreq@gol \@minus.2\jlreq@gol
-    \parsep .2\jlreq@gol \@plus.1\jlreq@gol \@minus.1\jlreq@gol
+    \topsep .4\jlreq@fontsize \@plus.2\jlreq@fontsize \@minus.2\jlreq@fontsize
+    \parsep .2\jlreq@fontsize \@plus.1\jlreq@fontsize \@minus.1\jlreq@fontsize
     \itemsep \parsep}%
   \belowdisplayskip \abovedisplayskip}
 \newcommand{\scriptsize}{\@setfontsize\scriptsize{\dimexpr 7\jlreq@fontsize/10\relax}{\dimexpr 8\jlreq@baselineskip/17\relax}}
@@ -2452,7 +2433,6 @@
     \ifhmode\spacefactor\@x@sf\fi
     \relax}
 }
-\def\@tempa{@footnotemark}
 \jlreq@setdefaultnotemark\@footnotemark\@makefnmark
 %.. 脚注  （縦書きの時は傍注，4.2.5）
 {%
@@ -3579,6 +3559,7 @@
         \jlreq@iftdir{\yoko}{}%
         \rlap{\@textsuperscript{\normalfont\@thefnmark}}%
       }}%
+      \renewcommand{\jlreq@referencemark@format}[1]{\@makefnmark}% うーん
       \if@twocolumn
         \ifnum\col@number=\@ne
           \@maketitle

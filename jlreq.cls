@@ -644,7 +644,7 @@
 % 現在行の残りを得る．
 \ifx l\jlreq@engine
   % 以下のコードはおかしい．
-  \newcommand*{\jlreq@calc@current@linewidth}{%
+  \newcommand*{\jlreq@calc@current@linewidth@onecolumn}{%
     \dimexpr\zposx{jlreq@rest@width.pos.\the\jlreq@zref@reference@count} sp - \@totalleftmargin -
     \ifodd\jlreq@currentpage
       \oddsidemargin
@@ -654,7 +654,7 @@
     - 1in - \hoffset\relax
   }
 \else
-  \newcommand*{\jlreq@calc@current@linewidth}{%
+  \newcommand*{\jlreq@calc@current@linewidth@onecolumn}{%
     \dimexpr
       \jlreq@ifydir{%
         \zposx{jlreq@rest@width.pos.\the\jlreq@zref@reference@count} sp - \hoffset
@@ -676,10 +676,17 @@
     \relax
   }
 \fi
+\newcommand*{\jlreq@calc@current@linewidth}{%
+  \dimexpr\jlreq@calc@current@linewidth@onecolumn
+    \ifdim\jlreq@calc@current@linewidth@onecolumn<\dimexpr\linewidth+\columnsep\relax\else
+      - \linewidth - \columnsep
+   \fi
+ \relax
+}
 
 \newdimen\jlreq@current@linewidth
 \newdimen\jlreq@rest@linewidth
-% この命令以降，次にこの命令を実行する前まで\jlreq@rest@linewidth/\jlreq@rest@linewidthで
+% この命令以降，次にこの命令を実行する前まで\jlreq@current@linewidth/\jlreq@rest@linewidthで
 % この場所における残り長さが取得できる．
 \newcommand*{\jlreq@savepos@for@rest@linewidth}{%
   \jlreq@setcurrentpage
@@ -2709,7 +2716,6 @@
     }%
     \@sidenotetext{#2}%
   }
-  \def\@sidenotemark{\@makesidemark}
   \ifx l\jlreq@engine
     \long\def\@makesidetext#1{\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
   \else
@@ -2753,7 +2759,6 @@
       \fi
     }%
   }
-  \def\@sidenotemark{\@makesidemark}
   % カスタマイズできるべき？
   \long\def\jlreq@sidenotetext#1#2{%
     \expandafter\def\csname\jlreq@sidenotemarkname\endcsname{\inhibitglue\null{\reset@font\sffamily\bfseries\inhibitglue #1}}%
@@ -2862,7 +2867,7 @@
     \edef\jlreq@parshapearg{\jlreq@parshapearg 0pt \the\jlreq@tempdimb 0pt \the\jlreq@tempdimb}%
   }%
   \ifvoid\jlreq@resultbox
-    \ClassWarning{jlreq}{\string\inlinenote\space failed, maybe a bug}%
+    \ClassWarning{jlreq}{\string\warichu\space failed, maybe a bug}%
   \else
     \@tempcnta=0
     \splittopskip=0pt\relax
@@ -2879,6 +2884,7 @@
         \ifnum\@tempcnta=0\jlreq@tempdima=\jlreq@tempdimb
         \else\jlreq@tempdima=\linewidth\fi
       \else
+        % 最終行は自然長に任せる
         \jlreq@tempdima=-1pt\relax
       \fi
       {%
@@ -2886,25 +2892,18 @@
         \vbadness=10000
         \setbox\jlreq@tempboxa=\vsplit\@tempboxa to \dimexpr\jlreq@inlinenote@baselineskip*2\relax
         \vbadness=\@tempa\relax
-        % \jlreq@inlinenote@autolinebreak=\\の場合には，割注の長さを計測した物に長さに強制する
         \jlreq@getlastbox{\jlreq@tempboxa}%
         \setbox\jlreq@tempboxb=\box\jlreq@resultbox
         \jlreq@getlastbox{\jlreq@tempboxa}%
         \setbox\jlreq@tempboxa=\box\jlreq@resultbox
-        \ifx\jlreq@inlinenote@autolinebreak\\\relax
-          \ifdim\jlreq@tempdima>0pt\relax
-            \setbox\jlreq@tempboxa=\vbox{\jlreq@inlinenote@fontsize%
-              \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxa}%
-              \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxb}}%
-          \else
-            \setbox\jlreq@tempboxa=\vbox{\jlreq@inlinenote@fontsize%
-              \hbox{\unhbox\jlreq@tempboxa}%
-              \hbox{\unhbox\jlreq@tempboxb}}%
-          \fi
-        \else
-          \setbox\jlreq@tempboxa=\vbox{\jlreq@inlinenote@fontsize%
+        \ifdim\jlreq@tempdima>0pt\relax
+          \setbox\jlreq@tempboxa=\vbox{\jlreq@inlinenote@fontsize
             \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxa}%
             \hbox to \jlreq@tempdima{\unhbox\jlreq@tempboxb}}%
+        \else
+          \setbox\jlreq@tempboxa=\vbox{\jlreq@inlinenote@fontsize
+            \hbox{\unhbox\jlreq@tempboxa}%
+            \hbox{\unhbox\jlreq@tempboxb}}%
         \fi
         \jlreq@box@putcenter\jlreq@tempboxa
       }%
@@ -2962,19 +2961,25 @@
   }%
 }
 
-% \jlreq@inlinenote@determinelength{テキスト(1)}{書式指定(2)}{\parshape指定(3)}{調整に使う行数(4)}{成功行数(5)}{最小長さ(6)}{最大長さ(7)}
-% \jlreq@resultboxに整形結果を返す．見つからなかったらvoid
+% \jlreq@inlinenote@determinelength{テキスト(1)}{フォントとか指定(2)}{\parshape指定(3)}{調整に使う行数(4)}{成功行数(5)}{最小長さ(6)}{最大長さ(7)}
+% 次を満たす長さXの最小値を求める（ただし#6 <= X <= #7）
+% #1を
+% * #5 - #4行目までは#3の指定に従う
+% * それ以降はX
+% として整形した際に，#5行以内に収まる．
+% \jlreq@resultboxに整形結果を返す（垂直ボックス）．見つからなかったらvoid
 \newcommand{\jlreq@inlinenote@determinelength}[7]{%
-%  \message{#1 の試行開始，行数 = #5, \the#6 から \the#7まで}%
+%  \message{#1 の試行開始，行数 = #5, \the\dimexpr#6\relax から \the\dimexpr#7\relaxまで}%
   \@tempcnta=1\relax
   \def\@tempa{}%
+  % 調整に使う行の\parshape指定を\@tempaに入れる．長さは\jlreq@tempdima．
   \@whilenum\@tempcnta<#4\do{%
     \expandafter\def\expandafter\@tempa\expandafter{\@tempa 0pt \the\jlreq@tempdima}%
     \advance\@tempcnta by 1\relax
   }%
   \@tempcnta=0
   \jlreq@tempdima=#6\relax
-  % 最後の行を少しずつ伸ばしていく
+  % \jlreq@tempdimaを少しずつ伸ばしていく
   \@whilenum\@tempcnta<1000\do{%
     \ifnum\@tempcnta>999\relax% ループが長すぎる
       \global\setbox\jlreq@resultbox=\voidb@x%
@@ -2991,6 +2996,7 @@
     \setbox\jlreq@tempboxa=\box\jlreq@resultbox
     \ifnum\@tempcntb<#5\relax% 行数が達していないならOK
 %      \message{行数 = \the\@tempcntb により確定}
+      % #5行になるまで空の水平ボックスを加えていく．
       \global\setbox\jlreq@resultbox=\vbox{#2%
         \unvbox\@tempboxa\hbox{\unhbox\jlreq@tempboxa\unskip\unskip\unpenalty}%
         \@whilenum\@tempcntb<#5\do{\hbox{}\advance\@tempcntb by 1}}%
@@ -3001,7 +3007,7 @@
       \setbox\jlreq@tempboxb=\box\jlreq@resultbox
 %      \message{最終行の長さ \the\wd\jlreq@tempboxa, その前の長さ \the\wd\jlreq@tempboxb}%
       \ifdim\wd\jlreq@tempboxa>\wd\jlreq@tempboxb
-        \advance\jlreq@tempdima by 0.3pt\relax
+        \advance\jlreq@tempdima by 0.3pt\relax% 0.3ptに意味はない
       \else
         % 後ろが短いのでOK
         \global\setbox\jlreq@resultbox=\vbox{#2\unvbox\@tempboxa\box\jlreq@tempboxb\box\jlreq@tempboxa}%

@@ -641,6 +641,12 @@
   \def\jlreq@iftbox#1{\iftbox#1\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
 }
 
+\ifx l\jlreq@engine
+  \newcommand*{\jlreq@getpostbreakpenalty}[1]{\ltjgetparameter{postbreakpenalty}{#1}}
+\else
+  \newcommand*{\jlreq@getpostbreakpenalty}[1]{\postbreakpenalty#1}
+\fi
+
 % 現在行の残りを得る．
 \ifx l\jlreq@engine
   % 以下のコードはおかしい．
@@ -678,8 +684,10 @@
 \fi
 \newcommand*{\jlreq@calc@current@linewidth}{%
   \dimexpr\jlreq@calc@current@linewidth@onecolumn
-    \ifdim\jlreq@calc@current@linewidth@onecolumn<\dimexpr\linewidth+\columnsep\relax\else
-      - \linewidth - \columnsep
+    \if@twocolumn
+      \ifdim\jlreq@calc@current@linewidth@onecolumn<\dimexpr\linewidth+\columnsep\relax\else
+        - \linewidth - \columnsep
+      \fi
    \fi
  \relax
 }
@@ -715,6 +723,7 @@
 \newcommand*{\jlreq@fixjfm}{%
   \ifnum\jlreq@lastnodechar>-1
     \def\jlreq@do{%
+      \ifnum\jlreq@getpostbreakpenalty{\jlreq@lastnodechar}=0\else\penalty\jlreq@getpostbreakpenalty{\jlreq@lastnodechar}\fi
       \jlreq@isletter{\jlreq@nextchar}{%
         \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{\jlreq@nextchar}%
 %        \message{fixjfm Insert: \the\jlreq@resultskip}%
@@ -2410,14 +2419,15 @@
       \@tempdima=\wd\@tempboxa
     \fi
     \setbox\jlreq@tempboxa=\hbox to\z@{\hskip-\@tempdima\raise\dimexpr.5\zw + (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa\hss}%
-    \dp\jlreq@tempboxa=0pt\ht\jlreq@tempboxa=0pt\box\jlreq@tempboxa}}%
+    \dp\jlreq@tempboxa=0pt\ht\jlreq@tempboxa=0pt\box\jlreq@tempboxa}%
+  }%
   \ifx l\jlreq@engine
     % luatexの時は\inhibitglueすると\lastnodechar=-1になる
     \newcommand*{\jlreq@modify@noteandmark@fixjfm}[2]{%
       \jlreq@modify@noteandmark{#1}{#2}{%
         \jlreq@lastnodechar=\lastnodechar
         \ifnum\lastnodechar>-1\inhibitglue\fi
-      }{\jlreq@fixjfm}
+      }{\jlreq@fixjfm}%
     }
   \else
     % (u)platexの時は代入すると\inhibitglueが効かなくなる
@@ -2425,7 +2435,7 @@
       \jlreq@modify@noteandmark{#1}{#2}{%
         \ifnum\lastnodechar>-1\inhibitglue\fi
         \jlreq@lastnodechar=\lastnodechar
-      }{\jlreq@fixjfm}
+      }{\jlreq@fixjfm}%
     }
   \fi
 }

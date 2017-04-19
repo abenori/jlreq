@@ -1603,7 +1603,7 @@
     \edef\jlreq@label@format{\expandonce{\csname the#1\endcsname}}%
     \def\jlreq@heading@clearpage{\cleardoublepage}%
     \def\jlreq@pagestyle{empty}%
-    \jlreq@parsekeyval[DeclareTobiraHeading]{
+    \jlreq@parsekeyval[DeclareTobiraHeading:#1]{
       {label_format}{\def\jlreq@label@format{##1}}
       {format}{\def\jlreq@format####1####2{##1}}
       {pagestyle}{\def\jlreq@pagestyle{##1}}
@@ -1880,7 +1880,7 @@
       \@tempa##1,\jlreq@endmark
       \jlreq@do
     }%
-    \jlreq@parsekeyval[BlockHeading]{
+    \jlreq@parsekeyval[BlockHeading:#1]{
       {lines}{\def\jlreq@lines{##1}}
       {before_space}{\def\jlreq@before@space{##1}}
       {after_space}{\def\jlreq@after@space{##1}}
@@ -2042,7 +2042,7 @@
     \def\jlreq@mark{}%
     \def\jlreq@label@font{}%
     \def\jlreq@after@space{1\jlreq@mol}%
-    \jlreq@parsekeyval[RuninHeading]{%
+    \jlreq@parsekeyval[RuninHeading:#1]{%
       {font}{\def\jlreq@font{##1}}
       {indent}{\def\jlreq@indent{##1}}
       {mark}{\def\jlreq@mark{##1}}
@@ -2148,7 +2148,7 @@
     \def\jlreq@twolinemax{20\zw}%
     \def\jlreq@indent{0\jlreq@mol}%
     \def\jlreq@after@space{1\jlreq@mol}%
-    \jlreq@parsekeyval[CutinHeading]{
+    \jlreq@parsekeyval[CutinHeading:#1]{
       {font}{\def\jlreq@fontcommand{##1}}
       {onelinemax}{\def\jlreq@onelinemax{##1}}
       {twolinemax}{\def\jlreq@twolinemax{##1}}
@@ -2402,11 +2402,11 @@
       \hbox{}\hbox{\@textsuperscript{\normalfont\jlreq@referencemark@format{#1}}}\hbox{}%
     }{%
       \setbox\@tempboxa=\hbox{\scriptsize\jlreq@referencemark@format{#1}}%
-      \raise\dimexpr.5\jlreq@gol - (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa
+      \raise\dimexpr.5\jlreq@gol - \ht\@tempboxa\relax\box\@tempboxa
     }%
   }
   \newcommand*{\jlreq@modify@noteandmark@fixjfm}[2]{%
-    \jlreq@modify@noteandmark{#1}{#2}{\inhibitglue}{\inhibitglue}
+    \jlreq@modify@noteandmark{#1}{#2}{\inhibitglue}{\inhibitglue}%
   }
 }{
   \newcommand*{\jlreq@notemark}[1]{{%
@@ -3105,7 +3105,7 @@
     \def\jlreq@gap{1.5\zw}%
     \newif\ifjlreq@clearmark\jlreq@clearmarktrue
     \newif\ifjlreq@tate\jlreq@tatefalse
-    \jlreq@parsekeyval[PageStyle]{
+    \jlreq@parsekeyval[PageStyle:#1]{
       *{tate}{\jlreq@tatetrue}
       *{yoko}{\jlreq@tatefalse}
       {nombre_position}{\def\jlreq@nombre@position{##1}}
@@ -4099,6 +4099,27 @@
   }
 }
 
+%. その他諸々
+%.. 縦中横
+\DeclareRobustCommand*{\tatechuyoko}[1]{%
+  \jlreq@ifydir{\ClassError{jlreq}{\string\tatechuyoko\space is used in yoko mode}{\@ehc}}{}%
+  \jlreq@lastnodechar=\lastnodechar
+  \ifvmode\leavevmode\fi
+  \ifnum\jlreq@lastnodechar=-1\else
+    \inhibitglue
+    \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{阿}%
+    \ifdim\jlreq@resultskip=0pt\else\hskip\dimexpr\jlreq@resultskip\fi
+  \fi
+  \hbox{\yoko \vrule width 0pt height 0.88\zw depth 0.12\zw #1}%
+  \def\jlreq@do{%
+    \jlreq@isletter{\jlreq@nextchar}{%
+      \jlreq@calc@jfmglue{\jlreq@nextchar}{阿}%
+      \ifdim\jlreq@resultskip=0pt\else\hskip\dimexpr\jlreq@resultskip\fi
+      \inhibitglue
+    }{}%
+  }%
+  \futurelet\jlreq@nextchar\jlreq@do
+}
 
 % 日にち
 \newif\if西暦 \西暦true
@@ -4129,7 +4150,7 @@
     \fi
   }}}
 
-%. 定理環境
+%.. 定理環境
 \def\jlreq@theorem@abovebelowspace{1\baselineskip}%とりあえず前後に一行分のアキ
 \jlreq@saveoriginalcs{@begintheorem}
 \def\@begintheorem#1#2{\topsep=\jlreq@theorem@abovebelowspace

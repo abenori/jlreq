@@ -382,37 +382,37 @@
   \jlreq@do
 }
 % 紙サイズ一覧．b*はJIS B．
-\jlreq@addpapersize{a0}{}{841mm}{1189mm}
-\jlreq@addpapersize{a1}{}{594mm}{841mm}
-\jlreq@addpapersize{a2}{}{420mm}{594mm}
-\jlreq@addpapersize{a3}{a3paper}{297mm}{420mm}
-\jlreq@addpapersize{a4}{a4paper}{210mm}{297mm}
-\jlreq@addpapersize{a5}{a5paper}{148mm}{210mm}
-\jlreq@addpapersize{a6}{a6paper}{105mm}{148mm}
-\jlreq@addpapersize{a7}{}{74mm}{105mm}
-\jlreq@addpapersize{a8}{}{52mm}{74mm}
-\jlreq@addpapersize{a9}{}{37mm}{52mm}
-\jlreq@addpapersize{a10}{}{26mm}{37mm}
+\jlreq@addpapersize{a0,A0}{}{841mm}{1189mm}
+\jlreq@addpapersize{a1,A1}{}{594mm}{841mm}
+\jlreq@addpapersize{a2,A2}{}{420mm}{594mm}
+\jlreq@addpapersize{a3,A3}{a3paper}{297mm}{420mm}
+\jlreq@addpapersize{a4,A4}{a4paper}{210mm}{297mm}
+\jlreq@addpapersize{a5,A5}{a5paper}{148mm}{210mm}
+\jlreq@addpapersize{a6,A6}{a6paper}{105mm}{148mm}
+\jlreq@addpapersize{a7,A7}{}{74mm}{105mm}
+\jlreq@addpapersize{a8,A8}{}{52mm}{74mm}
+\jlreq@addpapersize{a9,A9}{}{37mm}{52mm}
+\jlreq@addpapersize{a10,A10}{}{26mm}{37mm}
 
-\jlreq@addpapersize{b0}{}{1030mm}{1456mm}
-\jlreq@addpapersize{b1}{}{728mm}{1030mm}
-\jlreq@addpapersize{b2}{}{515mm}{728mm}
-\jlreq@addpapersize{b3}{}{364mm}{515mm}
-\jlreq@addpapersize{b4}{b4paper}{257mm}{364mm}
-\jlreq@addpapersize{b5}{b5paper}{182mm}{257mm}
-\jlreq@addpapersize{b6}{b6paper}{128mm}{182mm}
-\jlreq@addpapersize{b7}{}{91mm}{128mm}
-\jlreq@addpapersize{b8}{}{64mm}{91mm}
-\jlreq@addpapersize{b9}{}{45mm}{64mm}
-\jlreq@addpapersize{b10}{}{32mm}{45mm}
+\jlreq@addpapersize{b0,B0}{}{1030mm}{1456mm}
+\jlreq@addpapersize{b1,B1}{}{728mm}{1030mm}
+\jlreq@addpapersize{b2,B2}{}{515mm}{728mm}
+\jlreq@addpapersize{b3,B3}{}{364mm}{515mm}
+\jlreq@addpapersize{b4,B4}{b4paper}{257mm}{364mm}
+\jlreq@addpapersize{b5,B5}{b5paper}{182mm}{257mm}
+\jlreq@addpapersize{b6,B6}{b6paper}{128mm}{182mm}
+\jlreq@addpapersize{b7,B7}{}{91mm}{128mm}
+\jlreq@addpapersize{b8,B8}{}{64mm}{91mm}
+\jlreq@addpapersize{b9,B9}{}{45mm}{64mm}
+\jlreq@addpapersize{b10,B10}{}{32mm}{45mm}
 
-\jlreq@addpapersize{c2}{}{458mm}{648mm}
-\jlreq@addpapersize{c3}{}{324mm}{458mm}
-\jlreq@addpapersize{c4}{}{229mm}{354mm}
-\jlreq@addpapersize{c5}{}{162mm}{229mm}
-\jlreq@addpapersize{c6}{}{114mm}{162mm}
-\jlreq@addpapersize{c7}{}{81mm}{114mm}
-\jlreq@addpapersize{c8}{}{57mm}{81mm}
+\jlreq@addpapersize{c2,C2}{}{458mm}{648mm}
+\jlreq@addpapersize{c3,C3}{}{324mm}{458mm}
+\jlreq@addpapersize{c4C,C4}{}{229mm}{354mm}
+\jlreq@addpapersize{c5,C5}{}{162mm}{229mm}
+\jlreq@addpapersize{c6,C6}{}{114mm}{162mm}
+\jlreq@addpapersize{c7,C7}{}{81mm}{114mm}
+\jlreq@addpapersize{c8,C8}{}{57mm}{81mm}
 
 \jlreq@addpapersize{a4var}{}{210mm}{283mm}
 \jlreq@addpapersize{b5var}{}{182mm}{230mm}
@@ -538,8 +538,8 @@
 \jlreq@DeclareOption{leqno}{\input{leqno.clo}}
 \jlreq@DeclareOption{fleqn}{\input{fleqn.clo}}
 
-\newcommand*{\jlreq@notes}[1]{}
-\jlreq@DeclareOption{jlreq_notes}{\renewcommand*{\jlreq@notes}[1]{\message{^^JJLReq note: ##1^^J}}}
+\newcommand*{\jlreq@note}[1]{}
+\jlreq@DeclareOption{jlreq_notes}{\renewcommand*{\jlreq@note}[1]{\message{^^JJLReq note: ##1^^J}}}
 
 \ExecuteOptionsX{article_type=article,paper=a4,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=headings,onecolumn,final}
 % \@removeelementを一旦置き換えてから\ProcessOptionsXを実行する
@@ -1272,7 +1272,7 @@
   \ClassError{jlreq}{The baselineskip is less than fontsize}{\@ehc}%
 \fi
 \ifthenelse{\lengthtest{\jlreq@baselineskip<1.5\zw} \OR \lengthtest{\jlreq@baselineskip>2\zw}}{
-  \jlreq@notes{行間は二分以上全角以下が望ましい (2.4.2.d 注3)}
+  \jlreq@note{行間は二分以上全角以下が望ましい (2.4.2.d 注3)．}
 }{}
 
 \emergencystretch 3\jlreq@gol
@@ -1448,11 +1448,11 @@
   \divide\textwidth\@tempdima
   \if@tate
     \ifnum\number\textwidth>52
-      \jlreq@notes{一行の長さは52文字以下が望ましい (2.4.2.c 注2)}
+      \jlreq@note{一行の長さは52文字以下が望ましい (2.4.2.c 注2)．}
     \fi
   \else
     \ifnum\number\textwidth>40
-      \jlreq@notes{一行の長さは40文字以下が望ましい (2.4.2.c 注2)}
+      \jlreq@note{一行の長さは40文字以下が望ましい (2.4.2.c 注2)．}
     \fi
   \fi
 \fi
@@ -1484,7 +1484,7 @@
   \else\def\jlreq@option@headfoot@verticalpos{2zh}\fi
 \fi
 \setlength{\headsep}{\jlreq@speciallength{\jlreq@option@headfoot@verticalpos}}
-\ifdim\headsep<1\zw\jlreq@notes{基本版面との上下方向の最低の空き量を，基本版面の文字サイズの全角アキとする (26.1.a)}\fi
+\ifdim\headsep<1\zw\relax\jlreq@note{基本版面との上下方向の最低の空き量を，基本版面の文字サイズの全角アキとする (26.1.a)．}\fi
 \setlength{\headheight}{1\zw}
 %.. 横
 \ifx\jlreq@option@gutter\@empty
@@ -1516,7 +1516,7 @@
 \def\jlreq@settopmarginbyhead#1{
   \if@tate
     \setlength{\topmargin}{\dimexpr #1 - \headsep - \headheight - 1in\relax}
-    \jlreq@notes{縦組の場合は地の空き量を指定する (2.4.1.b)}
+    \jlreq@note{縦組の場合は地の空き量を指定する (2.4.1.b)．}
   \else
     \setlength{\topmargin}{\dimexpr #1 - \headsep - \headheight - 1in - \topskip + \Cht\relax}
   \fi
@@ -1527,7 +1527,7 @@
   \if@tate
     \setlength{\topmargin}{\dimexpr\paperheight - \textwidth - \headsep - \headheight - 1in - #1\relax}
   \else
-    \jlreq@notes{横組の場合は天の空き量を指定する (2.4.1.b)}
+    \jlreq@note{横組の場合は天の空き量を指定する (2.4.1.b)．}
     \setlength{\topmargin}{\dimexpr\paperheight - \textheight + \topskip - 1\zh - \headsep - \headheight - 1in - #1\relax}
   \fi
 }
@@ -2143,7 +2143,7 @@
       {after_space}{\def\jlreq@after@space{##1}}
     }{#3}%
     \ifthenelse{\lengthtest{\jlreq@after@space < 0.99\jlreq@mol} \OR \lengthtest{\jlreq@after@space > 2.01\jlreq@mol}}{%
-      \jlreq@notes{窓見出しと本文との空き量は，基本版面の文字サイズの全角以上，2倍未満とする (4.1.10.c)}%&
+      \jlreq@note{窓見出しと本文との空き量は，基本版面の文字サイズの全角以上，2倍未満とする (4.1.10.c)．}%&
     }{}%
     \edef\jlreq@do{%
       \noexpand\def\expandonce{\csname #1\endcsname}{%
@@ -2396,14 +2396,17 @@
     \jlreq@modify@noteandmark{#1}{#2}{\inhibitglue}{\inhibitglue}%
   }
 }{
+  \newif\ifjlreqadjustreferencemark
+  \jlreqadjustreferencemarktrue
   \newcommand*{\jlreq@notemark}[1]{{%
     \setbox\@tempboxa=\hbox{\scriptsize\jlreq@referencemark@format{#1}}%
+    \@tempdima=\wd\@tempboxa
     % 行頭に来たときに頭を天にそろえる処理．
-    \jlreq@savepos@for@rest@linewidth
-    \ifdim\jlreq@current@linewidth<\wd\@tempboxa
-      \@tempdima=\jlreq@current@linewidth
-    \else
-      \@tempdima=\wd\@tempboxa
+    \ifjlreqadjustreferencemark
+      \jlreq@savepos@for@rest@linewidth
+      \ifdim\jlreq@current@linewidth<\wd\@tempboxa
+        \@tempdima=\jlreq@current@linewidth
+      \fi
     \fi
     \setbox\jlreq@tempboxa=\hbox to\z@{\hskip-\@tempdima\raise\dimexpr.5\zw + (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa\hss}%
     \dp\jlreq@tempboxa=0pt\ht\jlreq@tempboxa=0pt\box\jlreq@tempboxa}%
@@ -2667,6 +2670,10 @@
   \global\setlength{\marginparpush}{.5\@tempdima} % 同上：g
 }
 
+\ifdim\marginparwidth>25\zw\relax
+  \jlreq@note{並列注の字詰め方向の長さ（行長）は，15字から20字くらいである．ケースによっては25字程度にする場合もある (4.2.7)．}
+\fi
+
 \def\jlreq@sidenotemarkname{@thefnmark}% 合印用番号を一時的に入れるマクロ名
 
 % (1) \footnoteとかと同じ形式 sidenote_type=number
@@ -2713,20 +2720,19 @@
     }%
     \@sidenotetext{#2}%
   }
+  % \hspace{0.5\jlreq@mol}の部分は二分空きにする例もある（4.2.7.g）
   \ifx l\jlreq@engine
     \long\def\@makesidetext#1{\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
   \else
-    % thefootnote = \inhibitglue （...だと\inhibitglueが効かない
-    \long\def\@makesidetext#1{　\kern-1\jlreq@mol\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
+    % thefootnote = \inhibitglue （...だと\inhibitglueが効かないので空白を挟む
+    \long\def\@makesidetext#1{　\kern-1\zw\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
   \fi
   \def\@makesidemark{\@makefnmark}
   \jlreq@modify@noteandmark@fixjfm{\sidenote}{\sidenotemark}
 }{% sidenote_type = symbol
   \jlreq@jlreqsetup@add{sidenote_symbol}{\def\jlreq@sidenote@defaultmark{#1}}
   \jlreq@jlreqsetup@add{sidenote_keyword_font}{\def\jlreq@sidenote@keywordfont{#1}}
-  \jlreqsetup{
-    sidenote_symbol=＊,sidenote_keyword_font={},
-  }
+  \jlreqsetup{sidenote_symbol=＊,sidenote_keyword_font={}}
   \def\sidenote{\jlreq@sidenote}
   \def\sidenotemark{\jlreq@sidenotemark}
   \def\sidenotetext{\jlreq@sidenotetext}
@@ -2747,7 +2753,7 @@
     \fi
   }
   \edef\jlreq@sidenotemark#1{%
-    {\noexpand\reset@font\jlreq@sidenote@keywordfont #1}%
+    {\unexpanded{\reset@font\jlreq@sidenote@keywordfont}#1}%
     \expandonce{\@tempa}%
     \unexpanded{%
       \ifx\jlreq@sidenote@defaultmark\@empty\else
@@ -3028,7 +3034,7 @@
 % 柱：両柱と片柱（2.6.3）
 \@tempdima=\jlreq@speciallength{\jlreq@headfoot@sidemargin}
 \ifthenelse{\lengthtest{\@tempdima=0pt} \OR \(\lengthtest{0.99\zw < \@tempdima} \AND \lengthtest{\@tempdima < 1.01\zw}\)}{}{
-  \jlreq@notes{ノンブルまたは柱は，基本版面の左右にそろえるか，全角アキだけ寄せた位置に配置する (2.6.1.b)}
+  \jlreq@note{ノンブルまたは柱は，基本版面の左右にそろえるか，全角アキだけ寄せた位置に配置する (2.6.1.b)．}
 }
 
 % bottom-leftみたいなのを解釈する．入力の順番はどっちでも良いが，出力は<top/bottom><left/right>の順番
@@ -3161,7 +3167,7 @@
     \expandafter\@tempb\jlreq@odd@running@head\jlreq@endmark\jlreq@endmark
     \ifx\jlreq@odd@running@head@level\@empty\else\ifx\jlreq@even@running@head@level\@empty\else
       \ifnum\jlreq@odd@running@head@level<\jlreq@even@running@head@level
-        \jlreq@notes{偶数ページには奇数ページよりアウトラインレベルの高い見出しを入れる (ページスタイル #1内，2.6.3.a)}%
+        \jlreq@note{偶数ページには奇数ページよりアウトラインレベルの高い見出しを入れる (ページスタイル #1内，2.6.3.a)．}%
       \fi
     \fi\fi
     % \jlreq@[even/odd][head/foot]に入れていく．tateか否かで場合分け．
@@ -3169,7 +3175,7 @@
       \ifx\jlreq@nombre@position\@empty\def\jlreq@nombre@position{0pt}\fi
       \ifx\jlreq@running@head@position\@empty\def\jlreq@running@head@position{0pt}\fi
       \if@tate\else
-        \jlreq@notes{ノンブルおよび柱を縦組にして配置するのは縦組の場合のみである (ページスタイル #1 内，2.6.1)}%
+        \jlreq@note{ノンブルおよび柱を縦組にして配置するのは縦組の場合のみである (ページスタイル #1 内，2.6.1)．}%
       \fi
       % 柱とノンブルを入れる箱を作る（\jlreq@resultを展開すると\setboxするマクロがでる）
       \def\jlreq@make@tatebox##1{%
@@ -3252,11 +3258,11 @@
         \)
       \)}{%
         \if@twoside
-          \jlreq@notes{柱やノンブルは，左ページでは，基本版面の左端の延長線にノンブル又は柱の先頭をそろえて配置するか，基本版面の左端の延長線から基本版面の文字サイズの全角アキだけ右に寄せた位置に配置する (ページスタイル #1 内，2.6.1.b)}%
+          \jlreq@note{柱やノンブルは，左ページでは，基本版面の左端の延長線にノンブル又は柱の先頭をそろえて配置するか，基本版面の左端の延長線から基本版面の文字サイズの全角アキだけ右に寄せた位置に配置する (ページスタイル #1 内，2.6.1.b)．}%
         \fi
       }{}%
       {\jlreq@font
-        \ifthenelse{\lengthtest{\jlreq@gap < 1.49\zw} \OR \( \lengthtest{\jlreq@gap > 1.51\zw} \AND \lengthtest{\jlreq@gap < 1.99\zw} \) \OR \lengthtest{\jlreq@gap > 2.01\zw}}{\jlreq@notes{ノンブルと柱との空き量は文字サイズの2倍又は1.5倍とする (ページスタイル #1 内，2.6.1.c)}}{}%
+        \ifthenelse{\lengthtest{\jlreq@gap < 1.49\zw} \OR \( \lengthtest{\jlreq@gap > 1.51\zw} \AND \lengthtest{\jlreq@gap < 1.99\zw} \) \OR \lengthtest{\jlreq@gap > 2.01\zw}}{\jlreq@note{ノンブルと柱との空き量は文字サイズの2倍又は1.5倍とする (ページスタイル #1 内，2.6.1.c)．}}{}%
       }%
       % ##2を##1 = left/center/rightの場所，##4を##3の場所に置く．被った場合は##2を外側にする．
       % 戻り値は\jlreq@result
@@ -3641,6 +3647,7 @@
   \else
     \newenvironment{abstract}{%
       \ifnum0\if@twocolumn\else1\fi\ifjlreq@preamble1\fi>0
+        \ifjlreq@preamble\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}\fi
         % とりあえず全部ボックスに入れる．
         \global\setbox\jlreq@abstractbox=\vtop\bgroup
         \ifjlreq@preamble
@@ -3691,7 +3698,9 @@
         \fi
         \egroup
       \fi
-      \ifjlreq@preamble\else
+      \ifjlreq@preamble
+        \PopPostHook{par}%
+      \else
         \unvbox\jlreq@abstractbox
       \fi
     }
@@ -3811,13 +3820,13 @@
     \@tempdimb=\dimexpr\linewidth - \@totalleftmargin - \leftmargin - \rightmargin\relax
     \@tempdimc=\@tempdimb
     \divide\@tempdimb by \@tempdima\multiply\@tempdimb by \@tempdima
-    \topsep=\jlreq@speciallength{\jlreq@quote@beforeafter@space}%
+    \topsep=\dimexpr\jlreq@quote@beforeafter@space\relax
     \leftmargin=\dimexpr\leftmargin + \@tempdimc - \@tempdimb\relax}%
     \item\relax}{\endlist}
 \newenvironment{quotation}
   {\list{}{%
-    \leftmargin=\jlreq@speciallength{\jlreq@quote@indent}%
-    \rightmargin=\jlreq@speciallength{\jlreq@quote@end@indent}%
+    \leftmargin=\dimexpr\jlreq@quote@indent\relax
+    \rightmargin=\dimexpr\jlreq@quote@end@indent\relax
     \jlreq@quote@fontsize
     \@tempdima=1\zw
     \@tempdimb=\dimexpr\linewidth - \@totalleftmargin - \leftmargin - \rightmargin\relax
@@ -3828,13 +3837,13 @@
     \itemindent\listparindent
     \labelwidth\z@
     \labelsep\z@
-    \topsep=\jlreq@speciallength{\jlreq@quote@beforeafter@space}%
+    \topsep=\dimexpr\jlreq@quote@beforeafter@space\relax
     \parsep\z@ \@plus.1\jlreq@gol}%
     \item\relax}{\endlist}
 \newenvironment{quote}
   {\list{}{%
-    \leftmargin=\jlreq@speciallength{\jlreq@quote@indent}%
-    \rightmargin=\jlreq@speciallength{\jlreq@quote@end@indent}%
+    \leftmargin=\dimexpr\jlreq@quote@indent\relax
+    \rightmargin=\dimexpr\jlreq@quote@end@indent\relax
     \jlreq@quote@fontsize
     \@tempdima=1\zw
     \@tempdimb=\dimexpr\linewidth - \@totalleftmargin - \leftmargin - \rightmargin\relax

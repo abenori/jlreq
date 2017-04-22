@@ -541,7 +541,6 @@
 \newcommand*{\jlreq@notes}[1]{}
 \jlreq@DeclareOption{jlreq_notes}{\renewcommand*{\jlreq@notes}[1]{\message{^^JJLReq note: ##1^^J}}}
 
-
 \ExecuteOptionsX{article_type=article,paper=a4,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=headings,onecolumn,final}
 % \@removeelementを一旦置き換えてから\ProcessOptionsXを実行する
 \let\jlreq@original@@removeelement=\@removeelement
@@ -1331,15 +1330,12 @@
 
 % 4.1.3.a
 % 2.5.2 \baselineskipは一定の方がよい？
+% \@listiは再定義しないようにした．（\normalsizeと共用でJLReq通りだと思う．）
 \newcommand{\footnotesize}{%
   \@setfontsize\footnotesize{.8\jlreq@fontsize}{\dimexpr 115\jlreq@baselineskip/170\relax}% 脚注文字サイズの二分より少し小さい値を行間に: 4.2.5.e
   \abovedisplayskip .6\jlreq@fontsize \@plus.2\jlreq@fontsize \@minus.4\jlreq@fontsize
   \abovedisplayshortskip \z@ \@plus.1\jlreq@fontsize
   \belowdisplayshortskip .3\jlreq@fontsize \@plus.1\jlreq@fontsize \@minus.2\jlreq@fontsize
-  \def\@listi{\leftmargin\leftmargini
-    \topsep .3\jlreq@fontsize \@plus.1\jlreq@fontsize \@minus.1\jlreq@fontsize
-    \parsep .2\jlreq@fontsize \@plus.1\jlreq@fontsize \@minus.1\jlreq@fontsize
-    \itemsep \parsep}%
   \belowdisplayskip \abovedisplayskip}
 % tsize10.cloの引数を，そのまま\jlreq@fontsize/\jlreq@baselineskipでスケーリングしているだけ．
 \newcommand{\small}{%
@@ -1347,10 +1343,6 @@
   \abovedisplayskip .85\jlreq@fontsize \@plus.3\jlreq@fontsize \@minus.4\jlreq@fontsize
   \abovedisplayshortskip \z@ \@plus.2\jlreq@fontsize
   \belowdisplayshortskip .4\jlreq@fontsize \@plus.2\jlreq@fontsize \@minus.2\jlreq@fontsize
-  \def\@listi{\leftmargin\leftmargini
-    \topsep .4\jlreq@fontsize \@plus.2\jlreq@fontsize \@minus.2\jlreq@fontsize
-    \parsep .2\jlreq@fontsize \@plus.1\jlreq@fontsize \@minus.1\jlreq@fontsize
-    \itemsep \parsep}%
   \belowdisplayskip \abovedisplayskip}
 \newcommand{\scriptsize}{\@setfontsize\scriptsize{\dimexpr 7\jlreq@fontsize/10\relax}{\dimexpr 8\jlreq@baselineskip/17\relax}}
 \newcommand{\tiny}{\@setfontsize\tiny{\dimexpr 5\jlreq@fontsize/10\relax}{\dimexpr 6\jlreq@baselineskip/17\relax}}
@@ -4156,25 +4148,37 @@
   }}}
 
 %.. 定理環境
-\def\jlreq@theorem@abovebelowspace{1\baselineskip}%とりあえず前後に一行分のアキ
 \jlreq@saveoriginalcs{@begintheorem}
-\def\@begintheorem#1#2{\topsep=\jlreq@theorem@abovebelowspace
-  \trivlist\labelsep=1\jlreq@mol
-   \item[\hskip \labelsep{\sffamily\bfseries #1\ #2}]}
 \jlreq@saveoriginalcs{@opargbegintheorem}
-\def\@opargbegintheorem#1#2#3{\topsep=\jlreq@theorem@abovebelowspace
+\def\@begintheorem#1#2{\topsep=\dimexpr\jlreq@theorem@beforeafter@space\relax
   \trivlist\labelsep=1\jlreq@mol
+  \itemindent=\dimexpr\jlreq@theorem@indent\relax
+   \item[\hskip \labelsep{\sffamily\bfseries #1\ #2}]}
+\def\@opargbegintheorem#1#2#3{\topsep=\dimexpr\jlreq@theorem@beforeafter@space\relax
+  \trivlist\labelsep=1\jlreq@mol
+  \itemindent=\dimexpr\jlreq@theorem@indent\relax
   \item[\hskip \labelsep{\sffamily\bfseries #1\ #2（#3）}]}
-
-\AtEndOfPackageFile*{amsthm}{
-  \newtheoremstyle{jlreq}{\jlreq@theorem@abovebelowspace}{\jlreq@theorem@abovebelowspace}{\normalfont}{}{\sffamily\bfseries}{}{1\jlreq@mol}{\thmname{#1}\thmnumber{\ #2}\thmnote{ (#3)}}
-  \theoremstyle{jlreq}
-  \jlreq@saveoriginalcs{proof}
-  \jlreq@saveoriginalcs{endproof}
+\AtEndOfPackageFile*{amsthm}{%
+  \jlreq@saveoriginalcs{proof}%
+  \jlreq@saveoriginalcs{endproof}%
   \def\proof{\@ifnextchar[{\jlreq@proof}{\jlreq@proof[\proofname]}}
   \def\jlreq@proof[#1]{\labelsep=1\jlreq@mol\jlreq@original@proof[{\normalfont\sffamily\bfseries #1\inhibitglue}\nopunct]}
   \renewcommand{\proofname}{証明}
+  \jlreq@setupamsthm
+  \theoremstyle{jlreq}
 }
+\def\jlreq@setupamsthm{
+  \newtheoremstyle{jlreq}{\dimexpr\jlreq@theorem@beforeafter@space\relax}{\dimexpr\jlreq@theorem@beforeafter@space\relax}{\normalfont}{\dimexpr\jlreq@theorem@indent\relax}{\sffamily\bfseries}{}{1\jlreq@mol}{\thmname{##1}\thmnumber{\ ##2}\thmnote{ (##3)}}
+}
+\jlreq@jlreqsetup@add{theorem_beforeafter_space}{
+  \def\jlreq@theorem@beforeafter@space{#1}
+  \@ifpackageloaded{amsthm}{\jlreq@setupamsthm}{}
+}
+\jlreq@jlreqsetup@add{theorem_indent}{
+  \def\jlreq@theorem@indent{#1}
+  \@ifpackageloaded{amsthm}{\jlreq@setupamsthm}{}
+}
+\jlreqsetup{theorem_beforeafter_space=1\baselineskip,theorem_indent=0pt}
 
 
 % デフォルト設定

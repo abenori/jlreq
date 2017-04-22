@@ -538,8 +538,9 @@
 \jlreq@DeclareOption{leqno}{\input{leqno.clo}}
 \jlreq@DeclareOption{fleqn}{\input{fleqn.clo}}
 
-\newcommand*{\jlreq@warning}[1]{}
-\jlreq@DeclareOption{jlreq_warnings}{\renewcommand*{\jlreq@warning}[1]{\ClassWarningNoLine{jlreq}{(JLReq warning) ##1}}}
+\newcommand*{\jlreq@notes}[1]{}
+\jlreq@DeclareOption{jlreq_notes}{\renewcommand*{\jlreq@notes}[1]{\message{^^JJLReq note: ##1^^J}}}
+
 
 \ExecuteOptionsX{article_type=article,paper=a4,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=headings,onecolumn,final}
 % \@removeelementを一旦置き換えてから\ProcessOptionsXを実行する
@@ -1272,7 +1273,7 @@
   \ClassError{jlreq}{The baselineskip is less than fontsize}{\@ehc}%
 \fi
 \ifthenelse{\lengthtest{\jlreq@baselineskip<1.5\zw} \OR \lengthtest{\jlreq@baselineskip>2\zw}}{
-  \jlreq@warning{行間は二分以上全角以下が望ましい (2.4.2.d 注3)}
+  \jlreq@notes{行間は二分以上全角以下が望ましい (2.4.2.d 注3)}
 }{}
 
 \emergencystretch 3\jlreq@gol
@@ -1455,11 +1456,11 @@
   \divide\textwidth\@tempdima
   \if@tate
     \ifnum\number\textwidth>52
-      \jlreq@warning{一行の長さは52文字以下が望ましい (2.4.2.c 注2)}
+      \jlreq@notes{一行の長さは52文字以下が望ましい (2.4.2.c 注2)}
     \fi
   \else
     \ifnum\number\textwidth>40
-      \jlreq@warning{一行の長さは40文字以下が望ましい (2.4.2.c 注2)}
+      \jlreq@notes{一行の長さは40文字以下が望ましい (2.4.2.c 注2)}
     \fi
   \fi
 \fi
@@ -1491,7 +1492,7 @@
   \else\def\jlreq@option@headfoot@verticalpos{2zh}\fi
 \fi
 \setlength{\headsep}{\jlreq@speciallength{\jlreq@option@headfoot@verticalpos}}
-\ifdim\headsep<1\zw\jlreq@warning{基本版面との上下方向の最低の空き量を，基本版面の文字サイズの全角アキとする (26.1.a)}\fi
+\ifdim\headsep<1\zw\jlreq@notes{基本版面との上下方向の最低の空き量を，基本版面の文字サイズの全角アキとする (26.1.a)}\fi
 \setlength{\headheight}{1\zw}
 %.. 横
 \ifx\jlreq@option@gutter\@empty
@@ -1523,7 +1524,7 @@
 \def\jlreq@settopmarginbyhead#1{
   \if@tate
     \setlength{\topmargin}{\dimexpr #1 - \headsep - \headheight - 1in\relax}
-    \jlreq@warning{縦組の場合は地の空き量を指定する (2.4.1.b)}
+    \jlreq@notes{縦組の場合は地の空き量を指定する (2.4.1.b)}
   \else
     \setlength{\topmargin}{\dimexpr #1 - \headsep - \headheight - 1in - \topskip + \Cht\relax}
   \fi
@@ -1534,7 +1535,7 @@
   \if@tate
     \setlength{\topmargin}{\dimexpr\paperheight - \textwidth - \headsep - \headheight - 1in - #1\relax}
   \else
-    \jlreq@warning{横組の場合は天の空き量を指定する (2.4.1.b)}
+    \jlreq@notes{横組の場合は天の空き量を指定する (2.4.1.b)}
     \setlength{\topmargin}{\dimexpr\paperheight - \textheight + \topskip - 1\zh - \headsep - \headheight - 1in - #1\relax}
   \fi
 }
@@ -2150,7 +2151,7 @@
       {after_space}{\def\jlreq@after@space{##1}}
     }{#3}%
     \ifthenelse{\lengthtest{\jlreq@after@space < 0.99\jlreq@mol} \OR \lengthtest{\jlreq@after@space > 2.01\jlreq@mol}}{%
-      \jlreq@warning{窓見出しと本文との空き量は，基本版面の文字サイズの全角以上，2倍未満とする (4.1.10.c)}%&
+      \jlreq@notes{窓見出しと本文との空き量は，基本版面の文字サイズの全角以上，2倍未満とする (4.1.10.c)}%&
     }{}%
     \edef\jlreq@do{%
       \noexpand\def\expandonce{\csname #1\endcsname}{%
@@ -3035,7 +3036,7 @@
 % 柱：両柱と片柱（2.6.3）
 \@tempdima=\jlreq@speciallength{\jlreq@headfoot@sidemargin}
 \ifthenelse{\lengthtest{\@tempdima=0pt} \OR \(\lengthtest{0.99\zw < \@tempdima} \AND \lengthtest{\@tempdima < 1.01\zw}\)}{}{
-  \jlreq@warning{ノンブルまたは柱は，基本版面の左右にそろえるか，全角アキだけ寄せた位置に配置する (2.6.1.b)}
+  \jlreq@notes{ノンブルまたは柱は，基本版面の左右にそろえるか，全角アキだけ寄せた位置に配置する (2.6.1.b)}
 }
 
 % bottom-leftみたいなのを解釈する．入力の順番はどっちでも良いが，出力は<top/bottom><left/right>の順番
@@ -3168,7 +3169,7 @@
     \expandafter\@tempb\jlreq@odd@running@head\jlreq@endmark\jlreq@endmark
     \ifx\jlreq@odd@running@head@level\@empty\else\ifx\jlreq@even@running@head@level\@empty\else
       \ifnum\jlreq@odd@running@head@level<\jlreq@even@running@head@level
-        \jlreq@warning{偶数ページには奇数ページよりアウトラインレベルの高い見出しを入れる (ページスタイル #1内，2.6.3.a)}%
+        \jlreq@notes{偶数ページには奇数ページよりアウトラインレベルの高い見出しを入れる (ページスタイル #1内，2.6.3.a)}%
       \fi
     \fi\fi
     % \jlreq@[even/odd][head/foot]に入れていく．tateか否かで場合分け．
@@ -3176,7 +3177,7 @@
       \ifx\jlreq@nombre@position\@empty\def\jlreq@nombre@position{0pt}\fi
       \ifx\jlreq@running@head@position\@empty\def\jlreq@running@head@position{0pt}\fi
       \if@tate\else
-        \jlreq@warning{ノンブルおよび柱を縦組にして配置するのは縦組の場合のみである (ページスタイル #1 内，2.6.1)}%
+        \jlreq@notes{ノンブルおよび柱を縦組にして配置するのは縦組の場合のみである (ページスタイル #1 内，2.6.1)}%
       \fi
       % 柱とノンブルを入れる箱を作る（\jlreq@resultを展開すると\setboxするマクロがでる）
       \def\jlreq@make@tatebox##1{%
@@ -3259,11 +3260,11 @@
         \)
       \)}{%
         \if@twoside
-          \jlreq@warning{柱やノンブルは，左ページでは，基本版面の左端の延長線にノンブル又は柱の先頭をそろえて配置するか，基本版面の左端の延長線から基本版面の文字サイズの全角アキだけ右に寄せた位置に配置する (ページスタイル #1 内，2.6.1.b)}%
+          \jlreq@notes{柱やノンブルは，左ページでは，基本版面の左端の延長線にノンブル又は柱の先頭をそろえて配置するか，基本版面の左端の延長線から基本版面の文字サイズの全角アキだけ右に寄せた位置に配置する (ページスタイル #1 内，2.6.1.b)}%
         \fi
       }{}%
       {\jlreq@font
-        \ifthenelse{\lengthtest{\jlreq@gap < 1.49\zw} \OR \( \lengthtest{\jlreq@gap > 1.51\zw} \AND \lengthtest{\jlreq@gap < 1.99\zw} \) \OR \lengthtest{\jlreq@gap > 2.01\zw}}{\jlreq@warning{ノンブルと柱との空き量は文字サイズの2倍又は1.5倍とする (ページスタイル #1 内，2.6.1.c)}}{}%
+        \ifthenelse{\lengthtest{\jlreq@gap < 1.49\zw} \OR \( \lengthtest{\jlreq@gap > 1.51\zw} \AND \lengthtest{\jlreq@gap < 1.99\zw} \) \OR \lengthtest{\jlreq@gap > 2.01\zw}}{\jlreq@notes{ノンブルと柱との空き量は文字サイズの2倍又は1.5倍とする (ページスタイル #1 内，2.6.1.c)}}{}%
       }%
       % ##2を##1 = left/center/rightの場所，##4を##3の場所に置く．被った場合は##2を外側にする．
       % 戻り値は\jlreq@result

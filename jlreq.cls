@@ -503,17 +503,6 @@
 \jlreq@aftercls@addtodeletecs{\jlreq@option@sidenote@width}
 \DeclareOptionX{sidenote_width}{\renewcommand*{\jlreq@option@sidenote@width}{#1}}
 
-%.. 引用
-\def\jlreq@quote@indent{2zw}
-\DeclareOptionX{quote_indent}{\def\jlreq@quote@indent{#1}}
-\def\jlreq@quote@end@indent{0zw}
-\DeclareOptionX{quote_end_indent}{\def\jlreq@quote@end@indent{#1}}
-\def\jlreq@quote@fontsize{normalsize}
-\define@choicekey{jlreq.cls}{quote_fontsize}{normalsize,small,footnotesize,scriptsize,tiny}{\def\jlreq@quote@fontsize{#1}}
-\def\jlreq@quote@beforeafter@space{0pt}
-\DeclareOptionX{quote_beforeafter_space}{\def\jlreq@quote@beforeafter@space{#1}}
-
-
 %.. もろもろ
 \newif\if@restonecol \@restonecolfalse
 \newif\if@titlepage \@titlepagefalse
@@ -583,10 +572,18 @@
   \expandafter\endgroup
   \jlreq@do{#1}%
 }
-\newcommand{\jlreq@jlreqsetup@add}[2]{%
+\newcommand{\jlreq@jlreqsetup@add}[1]{%
+  \@ifnextchar[{\jlreq@jlreqsetup@add@{#1}}{\jlreq@jlreqsetup@add@@{#1}}%
+}
+\long\def\jlreq@jlreqsetup@add@#1[#2]#3{%
+  \eappto\jlreq@jlreqsetup@keyvallist{\unexpanded{{#1}[#2]{#3}}}%
+}
+\long\def\jlreq@jlreqsetup@add@@#1#2{%
   \eappto\jlreq@jlreqsetup@keyvallist{\unexpanded{{#1}{#2}}}%
 }
 \jlreq@aftercls@addtodeletecs{\jlreq@jlreqsetup@add}
+\jlreq@aftercls@addtodeletecs{\jlreq@jlreqsetup@add@}
+\jlreq@aftercls@addtodeletecs{\jlreq@jlreqsetup@add@@}
 \@onlypreamble\jlreqsetup
 
 % エンジンの設定
@@ -718,6 +715,7 @@
   \expandafter\endgroup
   \jlreq@do
 }
+
 \newcount\jlreq@lastnodechar
 % jlreq@lastnodecharに入っている値と次のトークン（\futureletで得る）の間に入るJFMグルー等を挿入する
 \newcommand*{\jlreq@fixjfm}{%
@@ -738,18 +736,13 @@
   \@tempa
 }
 
-% #1÷#2を#3に入れる．（#1,#2は寸法を与え，#3もdimenレジスタ）
+% #1÷#2を\jlreq@resultdimenに入れる．（#1,#2は寸法を与える．）
 \ifx l\jlreq@engine
-  \newcommand*{\jlreq@divide}[3]{%
-    \begingroup
-      \jlreq@tempdima=#1\relax
-      \jlreq@tempdimb=#2\relax
-      \edef\jlreq@do{\noexpand#3=\directlua{tex.print(tostring(\strip@pt\jlreq@tempdima/\strip@pt\jlreq@tempdimb) .. "pt")}}%
-    \expandafter\endgroup
-    \jlreq@do
+  \newcommand*{\jlreq@divide}[2]{%
+    \jlreq@resultdimen=\directlua{tex.print(tostring(\strip@pt\dimexpr #1\relax/\strip@pt\dimexpr #2\relax) .. "pt")}%
   }
 \else
-  \newcommand*{\jlreq@divide}[3]{%
+  \newcommand*{\jlreq@divide}[2]{%
     \begingroup
       \@tempdima=#1\relax\@tempdimb=#2\relax
       % 分母を正にする
@@ -772,7 +765,7 @@
         \else\jlreq@tempdima=\jlreq@tempdimc\fi
         \advance\jlreq@tempcnta by 1
       \repeat
-      \edef\jlreq@do{\noexpand#3=\the\jlreq@tempdima}%
+      \edef\jlreq@do{\noexpand\jlreq@resultdimen=\the\jlreq@tempdima}%
     \expandafter\endgroup
     \jlreq@do
   }
@@ -1092,7 +1085,8 @@
     \jlreq@jafontsize=\jlreq@option@jafontscale\jlreq@fontsize
   \else
     \setlength{\jlreq@jafontsize}{\jlreq@expand@optionfontsize{\jlreq@option@jafontsize}}
-    \jlreq@divide{\jlreq@jafontsize}{\jlreq@option@jafontscale pt}{\jlreq@fontsize}
+    \jlreq@divide{\jlreq@jafontsize}{\jlreq@option@jafontscale pt}
+    \jlreq@fontsize=\jlreq@resultdimen
   \fi
 \else
   \setlength{\jlreq@fontsize}{\jlreq@expand@optionfontsize{\jlreq@option@fontsize}}
@@ -1195,8 +1189,8 @@
   \def\jlreq@yokokanjiencoding{JY2}
   \def\jlreq@tatekanjiencoding{JT2}
 \fi
-\jlreq@divide{\jlreq@jafontsize}{\jlreq@fontsize}{\jlreq@tempdima}
-\edef\jlreq@jafontscale{\strip@pt\jlreq@tempdima}
+\jlreq@divide{\jlreq@jafontsize}{\jlreq@fontsize}
+\edef\jlreq@jafontscale{\strip@pt\jlreq@resultdimen}
 \jlreq@aftercls@addtodeletecs{\jlreq@jafontscale}
 \ifx l\jlreq@engine
   \def\jlreq@yokokanjiencoding{JY3}
@@ -1302,8 +1296,8 @@
     \fi
   }
 \fi
-\jlreq@divide{\jlreq@fontsize}{\jlreq@jafontsize}{\jlreq@tempdima}
-\edef\jlreq@jafontinvscale{\strip@pt\jlreq@tempdima}
+\jlreq@divide{\jlreq@fontsize}{\jlreq@jafontsize}
+\edef\jlreq@jafontinvscale{\strip@pt\jlreq@resultdimen}
 \newcommand*{\jafontsize}[2]{%
   \begingroup
     \jlreq@iffloat{#1}{%
@@ -3734,12 +3728,16 @@
 \setlength\leftmarginv{1\jlreq@mol}
 \setlength\leftmarginvi{1\jlreq@mol}
 
+%.. 箇条書き
+\jlreq@jlreqsetup@add{itemization_beforeafter_space}{\def\jlreq@itemization@beforeafter@space{#1}}
+\jlreq@jlreqsetup@add{itemization_itemsep}{\def\jlreq@itemization@itemsep{#1}}
+\jlreqsetup{itemization_beforeafter_space=0pt,itemization_itemsep=0pt}
 % enumerate, itemize用初期化
 \def\jlreq@init@list{%
   \setlength{\labelwidth}{2\jlreq@mol}%
-  \setlength{\topsep}{0pt}%
+  \setlength{\topsep}{\dimexpr\jlreq@itemization@beforeafter@space\relax}%
   \setlength{\partopsep}{0pt}%
-  \setlength{\itemsep}{0pt}%
+  \setlength{\itemsep}{\dimexpr\jlreq@itemization@itemsep\relax}%
   \setlength{\parsep}{0pt}%
   \setlength{\listparindent}{\parindent}%
 % itemizeは直後ベタ，enumerateは直後全角空き．
@@ -3800,16 +3798,22 @@
 \newcommand{\labelitemiv}{\hbox to 1\jlreq@mol{\hss ・\hss}}
 
 % 引用系．3.5.2の例．
+\jlreq@jlreqsetup@add{quote_indent}{\def\jlreq@quote@indent{#1}}
+\jlreq@jlreqsetup@add{quote_end_indent}{\def\jlreq@quote@end@indent{#1}}
+\jlreq@jlreqsetup@add{quote_fontsize}[normalsize,small,footnotesize,scriptsize,tiny,]{\jlreq@ifempty{#1}{\def\jlreq@quote@fontsize{}}{\edef\jlreq@quote@fontsize{\expandonce{\csname #1\endcsname}}}}
+\jlreq@jlreqsetup@add{quote_beforeafter_space}{\def\jlreq@quote@beforeafter@space{#1}}
+\jlreqsetup{quote_indent=2\zw,quote_end_indent=0pt,quote_fontsize=,quote_beforeafter_space=0pt}
+
 \newenvironment{verse}
   {\let\\\@centercr
-  \list{}{\itemsep\z@ \itemindent -2\jlreq@mol%
+  \list{}{\itemsep\z@ \itemindent -2\jlreq@mol
     \listparindent\itemindent
     \labelwidth\z@
     \labelsep\z@
-    \leftmargin=\jlreq@speciallength{\jlreq@quote@indent}%
+    \leftmargin=\dimexpr\jlreq@quote@indent\relax
     \addtolength{\leftmargin}{2\jlreq@mol}%
-    \rightmargin=\jlreq@speciallength{\jlreq@quote@end@indent}%
-    \csname\jlreq@quote@fontsize\endcsname
+    \rightmargin=\dimexpr\jlreq@quote@end@indent\relax
+    \jlreq@quote@fontsize
     \@tempdima=1\zw
     \@tempdimb=\dimexpr\linewidth - \@totalleftmargin - \leftmargin - \rightmargin\relax
     \@tempdimc=\@tempdimb
@@ -3821,7 +3825,7 @@
   {\list{}{%
     \leftmargin=\jlreq@speciallength{\jlreq@quote@indent}%
     \rightmargin=\jlreq@speciallength{\jlreq@quote@end@indent}%
-    \csname\jlreq@quote@fontsize\endcsname
+    \jlreq@quote@fontsize
     \@tempdima=1\zw
     \@tempdimb=\dimexpr\linewidth - \@totalleftmargin - \leftmargin - \rightmargin\relax
     \@tempdimc=\@tempdimb
@@ -3838,7 +3842,7 @@
   {\list{}{%
     \leftmargin=\jlreq@speciallength{\jlreq@quote@indent}%
     \rightmargin=\jlreq@speciallength{\jlreq@quote@end@indent}%
-    \csname\jlreq@quote@fontsize\endcsname
+    \jlreq@quote@fontsize
     \@tempdima=1\zw
     \@tempdimb=\dimexpr\linewidth - \@totalleftmargin - \leftmargin - \rightmargin\relax
     \@tempdimc=\@tempdimb
@@ -4102,19 +4106,19 @@
 %. その他諸々
 %.. 縦中横
 \DeclareRobustCommand*{\tatechuyoko}[1]{%
-  \jlreq@ifydir{\ClassError{jlreq}{\string\tatechuyoko\space is used in yoko mode}{\@ehc}}{}%
+  \jlreq@ifydir{\ClassError{jlreq}{\string\tatechuyoko\space is not allowed in yoko mode}{\@ehc}}{}%
   \jlreq@lastnodechar=\lastnodechar
   \ifvmode\leavevmode\fi
   \ifnum\jlreq@lastnodechar=-1\else
     \inhibitglue
     \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{阿}%
-    \ifdim\jlreq@resultskip=0pt\else\hskip\dimexpr\jlreq@resultskip\fi
+    \ifdim\jlreq@resultskip=0pt\else\hskip\jlreq@resultskip\fi
   \fi
   \hbox{\yoko \vrule width 0pt height 0.88\zw depth 0.12\zw #1}%
   \def\jlreq@do{%
     \jlreq@isletter{\jlreq@nextchar}{%
       \jlreq@calc@jfmglue{\jlreq@nextchar}{阿}%
-      \ifdim\jlreq@resultskip=0pt\else\hskip\dimexpr\jlreq@resultskip\fi
+      \ifdim\jlreq@resultskip=0pt\else\hskip\jlreq@resultskip\fi
       \inhibitglue
     }{}%
   }%

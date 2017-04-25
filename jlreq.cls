@@ -487,18 +487,7 @@
 \jlreq@DeclareOption{hanging_punctuation}{\jlreq@burasagetrue}
 
 %.. 注
-% 合印の場所（4.2.3）行間に入れるか否か
-\newcommand*{\jlreq@referencemark}{inline}
-\define@choicekey{jlreq.cls}{reference_mark}{inline,interlinear}{\renewcommand*{\jlreq@referencemark}{#1}}
-% 脚注の字下げ，一行目を下げるならばone，二行目以降ならばtwo．ちょっと酷いので後で考える．
-\newcommand*{\jlreq@footnotetext@indent}{one}
-\define@choicekey{jlreq.cls}{footnotetext_indent}{one,two}{\renewcommand*{\jlreq@footnotetext@indent}{#1}}
-% 後注をどこに配置するか．headings（全ての見出し）,paragraph（段落後）,_で始まるやつ（その名前の見出し）．カンマ区切り
-\newcommand*{\jlreq@endnote@position}{headings}
-\DeclareOptionX{endnote_position}{\renewcommand*{\jlreq@endnote@position}{#1}}
 % 傍注のタイプ
-\newcommand*{\jlreq@sidenote@type}{number}
-\define@choicekey{jlreq.cls}{sidenote_type}{number,symbol}{\renewcommand*{\jlreq@sidenote@type}{#1}}
 \newcommand*{\jlreq@option@sidenote@width}{}
 \jlreq@aftercls@addtodeletecs{\jlreq@option@sidenote@width}
 \DeclareOptionX{sidenote_width}{\renewcommand*{\jlreq@option@sidenote@width}{#1}}
@@ -541,7 +530,7 @@
 \newcommand*{\jlreq@note}[1]{}
 \jlreq@DeclareOption{jlreq_notes}{\renewcommand*{\jlreq@note}[1]{\message{^^JJLReq note: ##1^^J}}}
 
-\ExecuteOptionsX{article_type=article,paper=a4,open_bracket_pos=zenkaku_tentsuki,reference_mark=inline,footnotetext_indent=one,endnote_position=headings,onecolumn,final}
+\ExecuteOptionsX{article_type=article,paper=a4,open_bracket_pos=zenkaku_tentsuki,onecolumn,final}
 % \@removeelementを一旦置き換えてから\ProcessOptionsXを実行する
 \let\jlreq@original@@removeelement=\@removeelement
 \let\@removeelement=\jlreq@helper@removeelement
@@ -566,11 +555,13 @@
 \fi
 
 \def\jlreq@jlreqsetup@keyvallist{}
+\def\jlreq@jlreqsetup@finally{}
 \newcommand{\jlreqsetup}[1]{%
   \begingroup
     \edef\jlreq@do{\unexpanded{\jlreq@parsekeyval[jlreqsetup]}{\expandonce{\jlreq@jlreqsetup@keyvallist}}}%
   \expandafter\endgroup
   \jlreq@do{#1}%
+  \jlreq@jlreqsetup@finally
 }
 \newcommand{\jlreq@jlreqsetup@add}[1]{%
   \@ifnextchar[{\jlreq@jlreqsetup@add@{#1}}{\jlreq@jlreqsetup@add@@{#1}}%
@@ -581,6 +572,7 @@
 \long\def\jlreq@jlreqsetup@add@@#1#2{%
   \eappto\jlreq@jlreqsetup@keyvallist{\unexpanded{{#1}{#2}}}%
 }
+\newcommand\jlreq@jlreqsetup@addtofinally[1]{\eappto\jlreq@jlreqsetup@finally{\unexpanded{#1}}}
 \jlreq@aftercls@addtodeletecs{\jlreq@jlreqsetup@add}
 \jlreq@aftercls@addtodeletecs{\jlreq@jlreqsetup@add@}
 \jlreq@aftercls@addtodeletecs{\jlreq@jlreqsetup@add@@}
@@ -739,7 +731,7 @@
 % #1÷#2を\jlreq@resultdimenに入れる．（#1,#2は寸法を与える．）
 \ifx l\jlreq@engine
   \newcommand*{\jlreq@divide}[2]{%
-    \jlreq@resultdimen=\directlua{tex.print(tostring(\strip@pt\dimexpr #1\relax/\strip@pt\dimexpr #2\relax) .. "pt")}%
+    \jlreq@resultdimen=\directlua{tex.print(tostring(\strip@pt\dimexpr #1\relax/\strip@pt\dimexpr #2\relax) .. "pt ")}%
   }
 \else
   \newcommand*{\jlreq@divide}[2]{%
@@ -765,7 +757,7 @@
         \else\jlreq@tempdima=\jlreq@tempdimc\fi
         \advance\jlreq@tempcnta by 1
       \repeat
-      \edef\jlreq@do{\noexpand\jlreq@resultdimen=\the\jlreq@tempdima}%
+      \edef\jlreq@do{\noexpand\jlreq@resultdimen=\the\jlreq@tempdima\noexpand\relax}%
     \expandafter\endgroup
     \jlreq@do
   }
@@ -2350,87 +2342,85 @@
 % 合印：4.2.3
 % 文字サイズは6ポイントくらい（4.2.3.a）とりあえす\scriptsize
 
-% \footnoteとか\footnotemarkの前に#2後に#3を入れる
-\newcommand*{\jlreq@modify@noteandmark}[4]{%
+% \footnoteとか\footnotemarkの前に\jlreq@hook@@prenote/\jlreq@hook@postnoteを入れる
+\newcommand*{\jlreq@modify@noteandmark}[2]{%
   \edef\@tempa{\expandafter\@gobble\string#1}%
   \jlreq@saveoriginalcs{\@tempa}%
   \edef#1{%
-    \unexpanded{#3}%
+    \noexpand\jlreq@hook@prenote
     \noexpand\@ifnextchar[{\expandonce{\csname jlreq@fixjfm@\@tempa @\endcsname}}{\expandonce{\csname jlreq@fixjfm@\@tempa @@\endcsname}}%
   }
   \long\expandafter\edef\csname jlreq@fixjfm@\@tempa @\endcsname[##1]##2{%
     \expandonce{\csname jlreq@original@\@tempa\endcsname}[##1]{##2}%
-    \unexpanded{#4}%
+    \noexpand\jlreq@hook@postnote
   }
   \long\expandafter\edef\csname jlreq@fixjfm@\@tempa @@\endcsname##1{%
     \expandonce{\csname jlreq@original@\@tempa\endcsname}{##1}%
-    \unexpanded{#4}%
+    \noexpand\jlreq@hook@postnote
   }
   \edef\@tempa{\expandafter\@gobble\string#2}%
   \jlreq@saveoriginalcs{\@tempa}%
   \edef#2{%
-    \unexpanded{#3}%
+    \noexpand\jlreq@hook@prenote
     \noexpand\@ifnextchar[{\expandonce{\csname jlreq@fixjfm@\@tempa @\endcsname}}{\expandonce{\csname jlreq@fixjfm@\@tempa @@\endcsname}}%
   }
   \expandafter\edef\csname jlreq@fixjfm@\@tempa @\endcsname[##1]{%
     \expandonce{\csname jlreq@original@\@tempa\endcsname}[##1]%
-    \unexpanded{#4}%
+    \noexpand\jlreq@hook@postnote
   }
   \expandafter\edef\csname jlreq@fixjfm@\@tempa @@\endcsname{%
     \expandonce{\csname jlreq@original@\@tempa\endcsname}%
-    \unexpanded{#4}%
+    \noexpand\jlreq@hook@postnote
   }
 }
 
 \newcommand*\jlreq@referencemark@format[1]{#1}
-\ifthenelse{\equal{\jlreq@referencemark}{inline}}{
-  \newcommand*{\jlreq@notemark}[1]{%
-    \jlreq@ifydir{%
-      \hbox{}\hbox{\@textsuperscript{\normalfont\jlreq@referencemark@format{#1}}}\hbox{}%
-    }{%
-      \setbox\@tempboxa=\hbox{\scriptsize\jlreq@referencemark@format{#1}}%
-      \raise\dimexpr.5\jlreq@gol - \ht\@tempboxa\relax\box\@tempboxa
-    }%
-  }
-  \newcommand*{\jlreq@modify@noteandmark@fixjfm}[2]{%
-    \jlreq@modify@noteandmark{#1}{#2}{\inhibitglue}{\inhibitglue}%
-  }
-}{
-  \newif\ifjlreqadjustreferencemark
-  \jlreqadjustreferencemarktrue
-  \newcommand*{\jlreq@notemark}[1]{{%
-    \setbox\@tempboxa=\hbox{\scriptsize\jlreq@referencemark@format{#1}}%
-    \@tempdima=\wd\@tempboxa
-    % 行頭に来たときに頭を天にそろえる処理．
-    \ifjlreqadjustreferencemark
-      \jlreq@savepos@for@rest@linewidth
-      \ifdim\jlreq@current@linewidth<\wd\@tempboxa
-        \@tempdima=\jlreq@current@linewidth
+\newif\ifjlreqadjustreferencemark
+\jlreqadjustreferencemarktrue
+\jlreq@jlreqsetup@add{reference_mark}[inline,interlinear]{
+  \def\jlreq@referencemark{#1}
+  \ifthenelse{\equal{\jlreq@referencemark}{inline}}{
+    \def\jlreq@notemark##1{%
+      \jlreq@ifydir{%
+        \hbox{}\hbox{\@textsuperscript{\normalfont\jlreq@referencemark@format{##1}}}\hbox{}%
+      }{%
+        \setbox\@tempboxa=\hbox{\scriptsize\jlreq@referencemark@format{##1}}%
+        \raise\dimexpr.5\jlreq@gol - \ht\@tempboxa\relax\box\@tempboxa
+      }%
+    }
+    \def\jlreq@hook@prenote{\inhibitglue}
+    \def\jlreq@hook@postnote{\inhibitglue}
+  }{
+    \def\jlreq@notemark##1{{%
+      \setbox\@tempboxa=\hbox{\scriptsize\jlreq@referencemark@format{##1}}%
+      \@tempdima=\wd\@tempboxa
+      % 行頭に来たときに頭を天にそろえる処理．
+      \ifjlreqadjustreferencemark
+        \jlreq@savepos@for@rest@linewidth
+        \ifdim\jlreq@current@linewidth<\wd\@tempboxa
+          \@tempdima=\jlreq@current@linewidth
+        \fi
       \fi
+      \setbox\jlreq@tempboxa=\hbox to\z@{\hskip-\@tempdima\raise\dimexpr.5\zw + (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa\hss}%
+      \dp\jlreq@tempboxa=0pt\ht\jlreq@tempboxa=0pt\box\jlreq@tempboxa}%
+    }%
+    \ifx l\jlreq@engine
+      \def\jlreq@hook@prenote{%
+        \jlreq@lastnodechar=\lastnodechar
+        \ifnum\lastnodechar>-1\inhibitglue\fi
+      }
+    \else
+      % (u)platexの時は代入すると\inhibitglueが効かなくなる
+      \def\jlreq@hook@prenote{%
+        \ifnum\lastnodechar>-1\inhibitglue\fi
+        \jlreq@lastnodechar=\lastnodechar
+      }
     \fi
-    \setbox\jlreq@tempboxa=\hbox to\z@{\hskip-\@tempdima\raise\dimexpr.5\zw + (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa\hss}%
-    \dp\jlreq@tempboxa=0pt\ht\jlreq@tempboxa=0pt\box\jlreq@tempboxa}%
-  }%
-  \ifx l\jlreq@engine
-    % luatexの時は\inhibitglueすると\lastnodechar=-1になる
-    \newcommand*{\jlreq@modify@noteandmark@fixjfm}[2]{%
-      \jlreq@modify@noteandmark{#1}{#2}{%
-        \jlreq@lastnodechar=\lastnodechar
-        \ifnum\lastnodechar>-1\inhibitglue\fi
-      }{\jlreq@fixjfm}%
-    }
-  \else
-    % (u)platexの時は代入すると\inhibitglueが効かなくなる
-    \newcommand*{\jlreq@modify@noteandmark@fixjfm}[2]{%
-      \jlreq@modify@noteandmark{#1}{#2}{%
-        \ifnum\lastnodechar>-1\inhibitglue\fi
-        \jlreq@lastnodechar=\lastnodechar
-      }{\jlreq@fixjfm}%
-    }
-  \fi
+    \def\jlreq@hook@postnote{\jlreq@fixjfm}
+  }
 }
-\jlreq@aftercls@addtodeletecs{\jlreq@modify@noteandmark@fixjfm}
-\jlreq@modify@noteandmark@fixjfm{\footnote}{\footnotemark}
+\jlreqsetup{reference_mark=inline}
+\jlreq@modify@noteandmark{\footnote}{\footnotemark}
 % \@footnotemarkをシンプルなものにする
 \def\jlreq@setdefaultnotemark#1#2{%
   \def#1{%
@@ -2470,15 +2460,19 @@
   \global\jlreq@footnoteindent=\dimexpr\textwidth - \@tempdima\relax
 }
 % 4.2.5.d
-\ifthenelse{\equal{\jlreq@footnotetext@indent}{one}}{
-  \newcommand\@makefntext[1]{\parindent 1\jlreq@mol
-    \addtolength{\leftskip}{\dimexpr\jlreq@footnoteindent + 1\jlreq@mol\relax}% 全体をインデント+1文字分下げる
-    \noindent\hskip -1\jlreq@mol\jlreq@referencemark@format{\@thefnmark}\hskip 1\jlreq@mol#1}% 見出し出力と一文字分の空き
-}{
-  \newcommand\@makefntext[1]{\parindent 1\jlreq@mol
-    \addtolength{\leftskip}{\jlreq@footnoteindent}% 全体をインデント
-    \noindent\hskip 1\jlreq@mol\jlreq@referencemark@format{\@thefnmark}\hskip 1\jlreq@mol#1}% 見出し出力と一文字分の空き
+\newcommand{\@makefntext}[1]{\jlreq@makefntext{#1}}
+\jlreq@jlreqsetup@add{footnotetext_indent}{
+  \ifthenelse{\equal{#1}{one}}{
+    \long\def\jlreq@makefntext##1{\parindent 1\jlreq@mol
+      \addtolength{\leftskip}{\dimexpr\jlreq@footnoteindent + 1\jlreq@mol\relax}% 全体をインデント+1文字分下げる
+      \noindent\hskip -1\jlreq@mol\jlreq@referencemark@format{\@thefnmark}\hskip 1\jlreq@mol##1}% 見出し出力と一文字分の空き
+  }{
+    \long\def\jlreq@makefntext##1{\parindent 1\jlreq@mol
+      \addtolength{\leftskip}{\jlreq@footnoteindent}% 全体をインデント
+      \noindent\hskip 1\jlreq@mol\jlreq@referencemark@format{\@thefnmark}\hskip 1\jlreq@mol##1}% 見出し出力と一文字分の空き
+  }
 }
+\jlreqsetup{footnotetext_indent=one}
 % 合印
 \renewcommand*{\@makefnmark}{%
   \jlreq@ifydir{\jlreq@notemark{\@thefnmark}}{\hbox{\jlreq@notemark{\@thefnmark}}}%
@@ -2487,7 +2481,7 @@
 \if@tate
   \renewcommand*{\thefootnote}{\jlreq@open@bracket@before@space\inhibitglue（\rensuji{\@arabic\c@footnote}）\inhibitglue}
 \else
-  \renewcommand*{\thefootnote}{\arabic{footnote}）\inhibitglue}
+  \renewcommand*{\thefootnote}{\arabic{footnote}\hbox{}）\inhibitglue}
 \fi
 
 %.. 後注（4.2.4）
@@ -2572,7 +2566,7 @@
     \par
   \fi
 }
-\jlreq@modify@noteandmark@fixjfm{\endnote}{\endnotemark}
+\jlreq@modify@noteandmark{\endnote}{\endnotemark}
 \jlreq@endnote@indent=2\jlreq@mol
 % 二行目以降を全角分下げる
 \newcommand{\@makeendtext}[1]{\parindent 1\jlreq@mol
@@ -2580,56 +2574,62 @@
 \def\@makeendmark{\@makefnmark}
 
 % \theendnoteの出力を仕込む
-\jlreq@tempafalse
-% \jlreq@tempcにセクション名たちを入れていく
-\def\jlreq@tempc{}
-\@for\jlreq@tempa:=\jlreq@endnote@position\do{
-  \jlreq@switch{\jlreq@tempa}{
-    {headings}{\jlreq@tempatrue}
-    {paragraph}{
-      \jlreq@tempatrue% _paragraphの時は_headingsも有効にする
-      \PushPostHook{par}{%
-        \ifx\jlreq@endnote@texts\@empty\else
-          \vskip\dimexpr-\baselineskip\relax
-          \vskip\dimexpr0pt\relax
-          \theendnotes
+\PushPostHook{par}{\jlreq@endnote@parhook}
+
+\jlreq@jlreqsetup@add{endnote_position}{
+  \jlreq@tempafalse % headingsが指定された
+  % \jlreq@tempcにセクション名たちを入れていく
+  \def\jlreq@tempc{}
+  \def\jlreq@endnote@parhook{}
+  \@for\jlreq@tempa:=#1\do{
+    \jlreq@switch{\jlreq@tempa}{
+      {headings}{\jlreq@tempatrue}
+      {paragraph}{
+        \jlreq@tempatrue% _paragraphの時は_headingsも有効にする
+        \def\jlreq@endnote@parhook{%
+          \ifx\jlreq@endnote@texts\@empty\else
+            \vskip\dimexpr-\baselineskip\relax
+            \vskip\dimexpr0pt\relax
+            \theendnotes
+          \fi
+        }
+      }
+      {
+        \def\@tempa##1##2\jlreq@endmark{##1}
+        \edef\@tempa{\expandafter\@tempa\jlreq@tempa\jlreq@endmark}
+        \expandafter\ifx\@tempa _
+          \def\@tempa##1##2\jlreq@endmark{\def\jlreq@result{##2}}
+          \expandafter\@tempa\jlreq@tempa\jlreq@endmark
+          \edef\jlreq@tempc{\jlreq@tempc,\jlreq@result}
+        \else
+          \ClassError{jlreq}{Invalid value \jlreq@tempa\space in endnote_position}{\@ehc}
         \fi
       }
     }
-    {
-      \def\@tempa#1#2\jlreq@endmark{#1}
-      \edef\@tempa{\expandafter\@tempa\jlreq@tempa\jlreq@endmark}
-      \expandafter\ifx\@tempa _
-        \def\@tempa#1#2\jlreq@endmark{\def\jlreq@result{#2}}
-        \expandafter\@tempa\jlreq@tempa\jlreq@endmark
-        \edef\jlreq@tempc{\jlreq@tempc,\jlreq@result}
-      \else
-        \ClassError{jlreq}{Invalid value \jlreq@tempa\space in endnote_position}{\@ehc}
+  }
+
+  \ifjlreq@tempa
+    \edef\jlreq@do{%
+      \unexpanded{\def\jlreq@hook@beforeheadings##1}{\expandonce{\jlreq@hook@beforeheadings{##1}}%
+        \noexpand\theendnotes
+      }
+    }
+    \jlreq@do
+  \else
+    \@for\@tempa:=\jlreq@tempc\do{
+      \ifx\@tempa\@empty\else
+        \edef\jlreq@do{%
+          \unexpanded{\def\jlreq@hook@beforeheadings##1}{\expandonce{\jlreq@hook@beforeheadings{##1}}%
+            \unexpanded{\def\@tempa}{\@tempa}\unexpanded{\def\@tempb{##1}}%
+            \unexpanded{\ifx\@tempa\@tempb\theendnotes\fi}%
+          }
+        }
+        \jlreq@do
       \fi
     }
-  }
+  \fi
 }
-
-\ifjlreq@tempa
-  \edef\jlreq@do{%
-    \unexpanded{\def\jlreq@hook@beforeheadings#1}{\expandonce{\jlreq@hook@beforeheadings{#1}}%
-      \noexpand\theendnotes
-    }
-  }
-  \jlreq@do
-\else
-  \@for\@tempa:=\jlreq@tempc\do{
-    \ifx\@tempa\@empty\else
-      \edef\jlreq@do{%
-        \unexpanded{\def\jlreq@hook@beforeheadings#1}{\expandonce{\jlreq@hook@beforeheadings{#1}}%
-          \unexpanded{\def\@tempa}{\@tempa}\unexpanded{\def\@tempb{#1}}%
-          \unexpanded{\ifx\@tempa\@tempb\theendnotes\fi}%
-        }
-      }
-      \jlreq@do
-    \fi
-  }
-\fi
+\jlreqsetup{endnote_position=headings}
 \AtEndDocument{\theendnotes}
 
 %.. 傍注（4.2.7）
@@ -2691,98 +2691,85 @@
   }%
 }
 \jlreq@setdefaultnotemark\@sidenotemark\@makesidemark
-\ifthenelse{\equal{\jlreq@sidenote@type}{number}}{
-  \def\jlreq@sidenotecounter{footnote}% 傍注用のカウンタ名
-  \def\sidenote{\@ifnextchar[{\jlreq@sidenote}{\jlreq@sidenote[]}}
-  \def\sidenotemark{\@ifnextchar[{\jlreq@sidenotemark}{\jlreq@sidenotemark[]}}
-  \def\sidenotetext{\@ifnextchar[{\jlreq@sidenotetext}{\jlreq@sidenotetext[]}}
-  \long\def\jlreq@sidenote[#1]#2{\jlreq@sidenotemark[#1]\@sidenotetext{#2}}
-  \def\jlreq@sidenotemark[#1]{%
-    \jlreq@ifempty{#1}{%
-      \stepcounter{\jlreq@sidenotecounter}%
-      \expandafter\protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
-    }{%
-      \begingroup
-        \csname c@\jlreq@sidenotecounter\endcsname #1\relax
-        \expandafter\unrestored@protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
-      \endgroup
-    }%
-    \@sidenotemark
-  }
-  \long\def\jlreq@sidenotetext[#1]#2{%
-    \jlreq@ifempty{#1}{%
-      \expandafter\protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
-    }{%
-     \begingroup
-       \csname c@\jlreq@sidenotecounter\endcsname#1\relax
-       \expandafter\unrestored@protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
-     \endgroup
-    }%
-    \@sidenotetext{#2}%
-  }
-  % \hspace{0.5\jlreq@mol}の部分は二分空きにする例もある（4.2.7.g）
-  \ifx l\jlreq@engine
-    \long\def\@makesidetext#1{\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
-  \else
-    % thefootnote = \inhibitglue （...だと\inhibitglueが効かないので空白を挟む
-    \long\def\@makesidetext#1{　\kern-1\zw\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
-  \fi
-  \def\@makesidemark{\@makefnmark}
-  \jlreq@modify@noteandmark@fixjfm{\sidenote}{\sidenotemark}
-}{% sidenote_type = symbol
-  \jlreq@jlreqsetup@add{sidenote_symbol}{\def\jlreq@sidenote@defaultmark{#1}}
-  \jlreq@jlreqsetup@add{sidenote_keyword_font}{\def\jlreq@sidenote@keywordfont{#1}}
-  \jlreqsetup{sidenote_symbol=＊,sidenote_keyword_font={}}
-  \def\sidenote{\jlreq@sidenote}
-  \def\sidenotemark{\jlreq@sidenotemark}
-  \def\sidenotetext{\jlreq@sidenotetext}
-  \long\def\jlreq@sidenote#1#2{\jlreq@sidenotemark{#1}\jlreq@sidenotetext{#1}{#2}}
-  \ifthenelse{\equal{\jlreq@referencemark}{inline}}{%
-    \def\@tempa{\inhibitglue}
-  }{
+\def\jlreq@sidenotecounter{footnote}% 傍注用のカウンタ名
+\jlreq@jlreqsetup@add{sidenote_type}[number,symbol]{\def\jlreq@sidenote@type{#1}}
+\jlreqsetup{sidenote_type=number}
+\jlreq@jlreqsetup@addtofinally{
+  \ifthenelse{\equal{\jlreq@sidenote@type}{number}}{
+    \def\sidenote{\jlreq@hook@prenote\@ifnextchar[{\jlreq@sidenote}{\jlreq@sidenote[]}}
+    \def\sidenotemark{\jlreq@hook@prenote\@ifnextchar[{\jlreq@sidenotemark}{\jlreq@sidenotemark[]}}
+    \def\sidenotetext{\@ifnextchar[{\jlreq@sidenotetext}{\jlreq@sidenotetext[]}}
+    \long\def\jlreq@sidenote[#1]#2{\jlreq@sidenotemark[#1]\@sidenotetext{#2}\jlreq@hook@postnote}
+    \def\jlreq@sidenotemark[#1]{%
+      \jlreq@ifempty{#1}{%
+        \stepcounter{\jlreq@sidenotecounter}%
+        \expandafter\protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
+      }{%
+        \begingroup
+          \csname c@\jlreq@sidenotecounter\endcsname #1\relax
+          \expandafter\unrestored@protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
+        \endgroup
+      }%
+      \@sidenotemark
+      \jlreq@hook@postnote
+    }
+    \long\def\jlreq@sidenotetext[#1]#2{%
+      \jlreq@ifempty{#1}{%
+        \expandafter\protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
+      }{%
+       \begingroup
+         \csname c@\jlreq@sidenotecounter\endcsname#1\relax
+         \expandafter\unrestored@protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
+       \endgroup
+      }%
+      \@sidenotetext{#2}%
+    }
+    % \hspace{0.5\jlreq@mol}の部分は二分空きにする例もある（4.2.7.g）
     \ifx l\jlreq@engine
-      \def\@tempa{%
-        \jlreq@lastnodechar=\lastnodechar
-        \ifnum\lastnodechar>-1\inhibitglue\fi
-      }
+      \long\def\@makesidetext#1{\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
     \else
-      \def\@tempa{%
-        \ifnum\lastnodechar>-1\inhibitglue\fi
-        \jlreq@lastnodechar=\lastnodechar
-      }
+      % thefootnote = \inhibitglue （...だと\inhibitglueが効かないので空白を挟む
+      \long\def\@makesidetext#1{　\kern-1\zw\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
     \fi
-  }
-  \edef\jlreq@sidenotemark#1{%
-    {\unexpanded{\reset@font\jlreq@sidenote@keywordfont}#1}%
-    \expandonce{\@tempa}%
-    \unexpanded{%
+    \def\@makesidemark{\@makefnmark}
+  }{% sidenote_type = symbol
+    \def\sidenote{\jlreq@sidenote}
+    \def\sidenotemark{\jlreq@sidenotemark}
+    \def\sidenotetext{\jlreq@sidenotetext}
+    \long\def\jlreq@sidenote#1#2{\jlreq@sidenotemark{#1}\jlreq@sidenotetext{#1}{#2}}
+    \edef\jlreq@sidenotemark#1{%
+      {\unexpanded{\reset@font\jlreq@sidenote@keywordfont}#1}%
+      \noexpand\jlreq@hook@prenote
       \ifx\jlreq@sidenote@defaultmark\@empty\else
-        \expandafter\edef\csname\jlreq@sidenotemarkname\endcsname{\jlreq@sidenote@defaultmark}%
-        \@sidenotemark
+        \expandafter\edef\expandonce{\csname\jlreq@sidenotemarkname\endcsname}{\expandonce{\jlreq@sidenote@defaultmark}}%
+        \noexpand\@sidenotemark
       \fi
-    }%
-  }
-  % カスタマイズできるべき？
-  \long\def\jlreq@sidenotetext#1#2{%
-    \expandafter\def\csname\jlreq@sidenotemarkname\endcsname{\inhibitglue\null{\reset@font\sffamily\bfseries\inhibitglue #1}}%
-    \@sidenotetext{#2}%
-  }
-  \long\def\@makesidetext#1{{\sffamily\bfseries\csname\jlreq@sidenotemarkname\endcsname}\hspace*{1\jlreq@mol}#1}
-  \def\@makesidemark{\@makefnmark}
-  \ifthenelse{\equal{\jlreq@referencemark}{interlinear}}{\def\@tempa{\jlreq@fixjfm}}{\def\@tempa{\inhibitglue}}
-  \edef\jlreq@do{
-    % \jlreq@lastnodecharの仕込みはすんでいる
-    \unexpanded{\long\def\sidenote#1#2}{%
-      \expandonce{\sidenote{#1}{#2}}%
-      \expandonce{\@tempa}%
     }
-    \unexpanded{\long\def\sidenotemark#1}{%
-      \expandonce{\sidenotemark{#1}}%
-      \expandonce{\@tempa}%
+    % カスタマイズできるべき？
+    \long\def\jlreq@sidenotetext#1#2{%
+      \expandafter\def\csname\jlreq@sidenotemarkname\endcsname{\inhibitglue\null{\reset@font\sffamily\bfseries\inhibitglue #1}}%
+      \@sidenotetext{#2}%
     }
+    \long\def\@makesidetext#1{{\sffamily\bfseries\csname\jlreq@sidenotemarkname\endcsname}\hspace*{1\jlreq@mol}#1}
+    \def\@makesidemark{\@makefnmark}
+
+    \edef\jlreq@do{
+      % \jlreq@lastnodecharの仕込みはすんでいる
+      \unexpanded{\long\def\sidenote#1#2}{%
+        \expandonce{\sidenote{#1}{#2}}%
+        \noexpand\jlreq@hook@postnote
+      }
+      \unexpanded{\long\def\sidenotemark#1}{%
+        \expandonce{\sidenotemark{#1}}%
+        \noexpand\jlreq@hook@postnote
+      }
+    }
+    \jlreq@do
   }
-  \jlreq@do
 }
+\jlreq@jlreqsetup@add{sidenote_symbol}{\def\jlreq@sidenote@defaultmark{#1}}
+\jlreq@jlreqsetup@add{sidenote_keyword_font}{\def\jlreq@sidenote@keywordfont{#1}}
+\jlreqsetup{sidenote_symbol=＊,sidenote_keyword_font={}}
 
 %.. 割注（3.4）
 \def\inlinenotesize{.6\jlreq@jafontsize} % 割注の文字サイズ
@@ -3647,14 +3634,20 @@
   \else
     \newenvironment{abstract}{%
       \ifnum0\if@twocolumn\else1\fi\ifjlreq@preamble1\fi>0
-        \ifjlreq@preamble\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}\fi
+        \ifjlreq@preamble
+          \ifx l\jlreq@engine\else
+            \@ifundefined{jlreq@saveposthook@par}{}{\ClassError{jlreq}{\string\jlreq@saveposthook@par\space is not undefined in abstract, maybe a bug}{\@ehc}}%
+            \SavePostHook{par}{\jlreq@saveposthook@par}%
+            \PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}%
+          \fi
+        \fi
         % とりあえず全部ボックスに入れる．
         \global\setbox\jlreq@abstractbox=\vtop\bgroup
         \ifjlreq@preamble
           % preamble後っぽく振る舞う
           \@noskipsecfalse
           % \@nodocumentが入っているので一時的に無効化
-          \everypar{}
+          \everypar{}%
         \fi
         \if@twocolumn
           \parindent=0pt
@@ -3699,7 +3692,10 @@
         \egroup
       \fi
       \ifjlreq@preamble
-        \PopPostHook{par}%
+        \ifx l\jlreq@engine\else
+          \RestorePostHook{par}{\jlreq@saveposthook@par}%
+          \let\jlreq@saveposthook@par=\@undefined
+        \fi
       \else
         \unvbox\jlreq@abstractbox
       \fi

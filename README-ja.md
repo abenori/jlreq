@@ -56,14 +56,17 @@
 ```
 です．`&`が省略されている場合は自動で調整されます．
 
+### `\tatechuyoko`
+縦中横を出力します．`\tatechuyoko{<文字列>}`とします．縦書きでない場所で使うとエラーになります．
+
 ### `\jafontsize`
-和文フォントサイズを指定する`\fontsize`です．クラスオプションで`fontsize=10pt,jafontscale=0.9`とされている場合，`\fontsize{9pt}{9pt}`とすると和文フォントのサイズは`8.1pt`となりますが，`\jafontsize{9pt}{9pt}`とすると`9pt`となります．（欧文フォントサイズは`10pt`となる．）なお，第二引数は`\fontsize`の第二引数と全く同じです．
+和文フォントサイズを指定する`\fontsize`です．クラスオプションで`jafontscale=0.9`とされている場合，`\fontsize{9pt}{15pt}`とすると和文フォントのサイズは`8.1pt`となりますが，`\jafontsize{9pt}{15pt}`とすると`9pt`となります．（欧文フォントサイズは`10pt`となる．）なお，第二引数は`\fontsize`の第二引数と全く同じです．
 
 ### `\jlreqsetup`
-設定用命令です．プリアンブルでしか使えません．文書に対する殆どの設定はクラスオプションにより行いますが，一部の設定はこの命令を通じて行います．
+設定用命令です．プリアンブルでしか使えません．文書に対する設定は，クラスオプションとして行うか`\jlreqsetup`を通じて行うかします．どちらで設定するかは設定項目によります．
 
 ### その他
-* ルビは提供されません．[PXrubrica](https://github.com/zr-tex8r/PXrubrica)（pLaTeX / upLaTeX）またはluatexja-ruby（LuaLaTeX，LuaTeX-jaパッケージに付属）を使うと良いかと思います．
+* ルビは提供されません．[PXrubrica](https://github.com/zr-tex8r/PXrubrica)またはluatexja-ruby（LuaLaTeX，LuaTeX-jaパッケージに付属）を使うと良いかと思います．
 * 日本語組版処理の要件2.3.2.dによれば，二段組の最後のページの各段の行数は揃えることが望ましいとされていますが，この処理は行われません．`nidanfloat`パッケージを使い，
 ```latex
 \usepackage[balance]{nidanfloat}
@@ -74,7 +77,7 @@
 設計はクラスオプションまたは`\jlreqsetup`によりkeyval形式で行います．以下では次の用法を使います．
 
 * `[A/B]`：AまたはBです．`[A/B/C]`等も同様．
-* `<寸法>`：TeXが認識する寸法です．簡単な式（10pt+10ptのような）を使うこともできます．また，クラスオプションでは，場合によっては次のような特殊な値を使うこともできます．（これらはpLaTeX / upLaTeXではもとから利用可能ですが，LuaLaTeXでも利用可能なように処理されています．）`\jlreqsetup`内のような場所では，常に`\zw`や`\zh`により全角幅が記述できます．以下，たとえば`Q`が利用可能な場合は`<寸法;Q>`のように記述します．
+* `<寸法>`：TeXが認識する寸法です．簡単な式（`10pt+10pt`のような）を使うこともできます．また，クラスオプションでは，場合によっては次のような特殊な値を使うこともできます．（これらはpLaTeX / upLaTeXではもとから利用可能ですが，LuaLaTeXでも利用可能なように処理されています．）`\jlreqsetup`内のような場所では，常に`\zw`や`\zh`により全角幅が記述できます．以下，たとえば`Q`が利用可能な場合は`<寸法;Q>`のように記述します．
     - `Q`：0.25mmと解釈されます．
     - `zw`, `zh`：全角幅として解釈されます．
 
@@ -82,10 +85,10 @@
 ### 基本版面
 クラスオプションです．
 
-* `paper=[<紙サイズ名>/{<寸法>,<寸法>}]`：紙サイズです．紙サイズ名はa0からa10，b0からb10，c2からc8を指定できます．B列はJIS B列です．また，`{<縦>,<横>}`と直接寸法を指定することもできます．
+* `paper=[<紙サイズ名>/{<寸法>,<寸法>}]`：紙サイズです．紙サイズ名はa0からa10，b0からb10，c2からc8を指定できます．B列はJIS B列です．また，`{<横>,<縦>}`と直接寸法を指定することもできます．
 * `fontsize=<寸法;Q>`：欧文フォントサイズ．デフォルトは10pt．
 * `jafontsize=<寸法;Q>`：和文フォントサイズ．
-* `jafontscale=<実数値>`：欧文フォントと和文フォントの比（欧文 / 和文）．`fontsize`と`jafontsize`が両方指定されている場合は無視される．デフォルトは1．
+* `jafontscale=<実数値>`：欧文フォントと和文フォントの比（和文 / 欧文）．`fontsize`と`jafontsize`が両方指定されている場合は無視される．デフォルトは1．
 * `line_length=<寸法;zw,zh>`：一行の長さ．デフォルトは紙の縦幅の0.75倍．実際の値は一文字の長さの整数倍になるように補正されます．
 * `number_of_lines=<自然数値>`：一ページの行数．デフォルトは紙の横幅の0.75倍になるような値．
 * `gutter=<寸法;zw,zh>`：のどの余白の大きさ．
@@ -94,10 +97,11 @@
     - `twoside`が指定されていない時は，常に奇数ページ扱いで余白が設定される
 * `head_space=<寸法;zw,zh>`：天の空き量．デフォルトは中央寄せになるような値．
 * `foot_space=<寸法;zw,zh>`：地の空き量．デフォルトは中央寄せになるような値．
-* `baselineskip=<寸法;Q,zw,zh>`：行送り．デフォルトはfontsizeの1.7倍．
+* `baselineskip=<寸法;Q,zw,zh>`：行送り．デフォルトは`jafontsize`の1.7倍．
 * `linegap=<寸法;Q,zw,zh>`：行間．
 * `headfoot_sidemargin=<寸法;zw,zh>`：柱やノンブルの左右の空き．
-* `column_gap=<寸法;zw,zh>`：段間（twocolumn指定時のみ）．
+* `column_gap=<寸法;zw,zh>`：段間（`twocolumn`指定時のみ）．
+* `sidenote_width=<寸法;zw,zh>`：傍注の幅を指定します．
 
 ### 組み方
 クラスオプションです．
@@ -105,14 +109,13 @@
 * `hanging_punctuation`：ぶら下げ組をします．
 
 ### 注関係
-* `reference_mark=[inline/interlinear]`：合印の配置方法を指定します．`inline`にすると該当項目の後ろの行中に配置します．`interlinear`を指定すると該当項目の上（横組）または右（縦組）に配置します．クラスオプションです．
-* `sidenote_type=[number/symbol]`：クラスオプションです．傍注と本文との対応の方法を指定します．`number`が規定で，注の位置に通し番号が入り，それにより対応が示されます．`symbol`とすると，注の位置に特定の記号が入り，また注がついている単語が強調されます．ここに入る記号と単語の強調は`\jlreqsetup`に次を渡すことで指定します．
+`\jlreqsetup`で指定します．
 
-    - `sidenote_symbol=<記号>`：注の位置に入る記号．デフォルト＊
-    - `sidenote_keyword_font=<命令>`：注のついている単語のフォント指定．デフォルトは無し（強調しない）
-
-* `sidenote_width=<寸法;zw,zh>`：傍注の幅を指定します．基本版面の設定に合わせて設定してください．クラスオプションです．
-* `endnote_position=[headings/paragraph/{_<見出し名1>,_<見出し名2>,...}]`：後注の出力場所を指定します．`headings`は各見出しの直前（デフォルト），`paragraph`は改段落の際に出力します．また，`endnote_position={_chapter,_section}`とすると，`\chapter`と`\section`の直前に出力します．クラスオプションです．
+* `reference_mark=[inline/interlinear]`：合印の配置方法を指定します．`inline`にすると該当項目の後ろの行中に配置します．`interlinear`を指定すると該当項目の上（横組）または右（縦組）に配置します．
+* `sidenote_type=[number/symbol]`：傍注と本文との対応の方法を指定します．`number`が規定で，注の位置に通し番号が入り，それにより対応が示されます．`symbol`とすると，注の位置に特定の記号が入り，また注がついている単語が強調されます．
+* `sidenote_symbol=<記号>`：`sidenote_symbol=symbol`の時に，注の位置に入る記号．デフォルト＊
+* `sidenote_keyword_font=<命令>`：`sidenote_symbol=symbol`の時に，注のついている単語のフォント指定．デフォルトは無し（強調しない）
+* `endnote_position=[headings/paragraph/{_<見出し名1>,_<見出し名2>,...}]`：後注の出力場所を指定します．`headings`は各見出しの直前（デフォルト），`paragraph`は改段落の際に出力します．また，`endnote_position={_chapter,_section}`とすると，`\chapter`と`\section`の直前に出力します．
 
 ### キャプション
 図表のキャプションを`\jlreqsetup`で変更できます．
@@ -120,9 +123,9 @@
 * `caption_label_font=<命令>`：キャプションのラベルのフォントを指定します．
 
 ### 引用
-`quote / quotation / verse`環境の挙動をクラスオプションで指定できます．
-* `quote_indent=<寸法;zw,zh>`：字下げを指定します．デフォルトは2zwです．一行の長さが文字サイズの整数倍になるように調整されます．
-* `quote_end_indent=<寸法;zw,zh>`：字上げを指定します．デフォルトは0zwです．
+`quote / quotation / verse`環境の挙動を`\jlreqsetup`で指定できます．
+* `quote_indent=<寸法>`：字下げを指定します．デフォルトは2zwです．一行の長さが文字サイズの整数倍になるように調整されます．
+* `quote_end_indent=<寸法>`：字上げを指定します．デフォルトは0zwです．
 * `quote_beforeafter_space=<寸法>`：前後の空きを指定します．`quote_beforeafter_space=1\baselineskip`とすると一行あきます．
 * `quote_fontsize=[normalsize/small/footnotesize/scriptsize/tiny]`：フォントサイズを指定します．
 
@@ -221,7 +224,7 @@
 `\ModifyPageStyle`により既存のページスタイルを改変することが可能です．
 
 ## その他
-* クラスオプション`jlreq_warnings`を渡されると，日本語組版処理の要件に反する設定が行われた場合に警告がされます．
+* クラスオプション`jlreq_notes`が渡されると，日本語組版処理の記述と矛盾する設定が行われた場合に通知がされます．
 
 ## ライセンス
 このパッケージは二条項BSDライセンスの元で配布されています．詳しくは[LICENSE](LICENSE)をご覧ください．

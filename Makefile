@@ -9,10 +9,14 @@ jfm: \
 	jlreq.vf bjlreq.vf zjlreq.vf bzjlreq.vf \
 	ujlreq.tfm ubjlreq.tfm uzjlreq.tfm ubzjlreq.tfm \
 	ujlreq.vf ubjlreq.vf uzjlreq.vf ubzjlreq.vf \
+	ujlreq-q.tfm ubjlreq-q.tfm uzjlreq-q.tfm ubzjlreq-q.tfm \
+	ujlreq-q.vf ubjlreq-q.vf uzjlreq-q.vf ubzjlreq-q.vf \
 	jlreqg.tfm bjlreqg.tfm zjlreqg.tfm bzjlreqg.tfm \
 	jlreqg.vf bjlreqg.vf zjlreqg.vf bzjlreqg.vf \
 	ujlreqg.tfm ubjlreqg.tfm uzjlreqg.tfm ubzjlreqg.tfm \
 	ujlreqg.vf ubjlreqg.vf uzjlreqg.vf ubzjlreqg.vf \
+	ujlreqg-q.tfm ubjlreqg-q.tfm uzjlreqg-q.tfm ubzjlreqg-q.tfm \
+	ujlreqg-q.vf ubjlreqg-q.vf uzjlreqg-q.vf ubzjlreqg-q.vf \
 	jlreq-v.tfm bjlreq-v.tfm zjlreq-v.tfm bzjlreq-v.tfm \
 	jlreq-v.vf bjlreq-v.vf zjlreq-v.vf bzjlreq-v.vf \
 	ujlreq-v.tfm ubjlreq-v.tfm uzjlreq-v.tfm ubzjlreq-v.tfm \
@@ -24,6 +28,7 @@ jfm: \
 	
 	rm -f ugbmv.tfm ugbm.tfm gbmv.tfm gbm.tfm urmlv.tfm rmlv.tfm urml.tfm rml.tfm
 
+# .pl
 u%-v.pl: jfm-%v.lua luajfm2pl.lua
 	texlua luajfm2pl.lua $*v $@
 
@@ -36,11 +41,18 @@ u%.pl: jfm-%.lua luajfm2pl.lua
 %.pl: jfm-%.lua luajfm2pl.lua
 	texlua luajfm2pl.lua --noutf $* $@
 
+# .vf
+u%-q.vf: u%-q.tfm
+	makejvf -u jisq $< uprml-hq
+
+u%g-q.vf: u%g-q.tfm
+	makejvf -u jisq $< upgbm-hq
+
 u%g-v.vf: u%g-v.tfm
-	makejvf -i -u jis $< ugbmv.tfm
+	makejvf -i -u jis $< upgbm-v.tfm
 
 u%g.vf: u%g.tfm
-	makejvf -i -u jis $< ugbm.tfm
+	makejvf -i -u jis -U u$*g-q $< upgbm-h.tfm
 
 %g-v.vf: %g-v.tfm
 	makejvf -i $< gbmv.tfm
@@ -49,16 +61,23 @@ u%g.vf: u%g.tfm
 	makejvf -i $< gbm.tfm
 
 u%-v.vf: u%-v.tfm
-	makejvf -i -u jis $< urmlv.tfm
+	makejvf -i -u jis $< uprml-v.tfm
 
 %-v.vf: %-v.tfm
 	makejvf -i $< rmlv.tfm
 
-u%.vf: u%.tfm
-	makejvf -i -u jis $< urml.tfm
+u%.vf: u%.tfm u%-q.tfm
+	makejvf -i -u jis -U u$*-q $< uprml-h.tfm
 
 %.vf: %.tfm
 	makejvf -i $< rml.tfm
+
+# .tfm
+u%-q.tfm: u%.pl
+	uppltotf -kanji=uptex $< $@
+
+u%g-q.tfm: u%-q.tfm
+	cp $< $@
 
 %g-v.tfm: %-v.tfm
 	cp $< $@
@@ -104,7 +123,7 @@ jfm-install: jfm
 	cp -f jfm-jlreq.lua ${TEXMF}/tex/luatex/jlreq
 	cp -f jfm-jlreqv.lua ${TEXMF}/tex/luatex/jlreq
 
-cls-install: jfm
+cls-install:
 	mkdir -p ${TEXMF}/tex/latex/jlreq
 	cp jlreq.cls ${TEXMF}/tex/latex/jlreq
 

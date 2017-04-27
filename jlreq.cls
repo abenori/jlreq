@@ -563,6 +563,8 @@
   \jlreq@do{#1}%
   \jlreq@jlreqsetup@finally
 }
+% \jlreqsetupの項目に加えるマクロ．\jlreq@jlreqsetup@add{key}{action}とするとkeyに対して定義できる．
+% action内ではvalが#1として取得できる．（従ってaction内でマクロを定義する際には##1を使う必要がある．）
 \newcommand{\jlreq@jlreqsetup@add}[1]{%
   \@ifnextchar[{\jlreq@jlreqsetup@add@{#1}}{\jlreq@jlreqsetup@add@@{#1}}%
 }
@@ -572,10 +574,12 @@
 \long\def\jlreq@jlreqsetup@add@@#1#2{%
   \eappto\jlreq@jlreqsetup@keyvallist{\unexpanded{{#1}{#2}}}%
 }
+% \jlreqsetupの最後に必ず実行される処理を入れる．
 \newcommand\jlreq@jlreqsetup@addtofinally[1]{\eappto\jlreq@jlreqsetup@finally{\unexpanded{#1}}}
 \jlreq@aftercls@addtodeletecs{\jlreq@jlreqsetup@add}
 \jlreq@aftercls@addtodeletecs{\jlreq@jlreqsetup@add@}
 \jlreq@aftercls@addtodeletecs{\jlreq@jlreqsetup@add@@}
+\jlreq@aftercls@addtodeletecs{\jlreq@jlreqsetup@addtofinally}
 \@onlypreamble\jlreqsetup
 
 % エンジンの設定
@@ -1128,17 +1132,33 @@
 \DeclareRobustCommand*{\mit}{\@fontswitch\relax\mathnormal}
 
 %.. 和文
+% 行頭括弧に対して\inhibitglueを入れたりする命令を作る
+\def\jlreq@openbreackets@list{（〔［｛〈《「『【}
+\ifx p\jlreq@engine\else\edef\jlreq@openbreackets@list{\jlreq@openbreackets@list ｟〘〖«〝‘“}\fi
+\jlreq@aftercls@addtodeletecs{\jlreq@openbreackets@list}
+% \jlreq@openbreackets@listの各括弧に対して，\ifx\jlreq@nextchar 「1\fiみたいなのが並んだのを作る
+\def\jlreq@tempa{}
+\def\jlreq@do#1{\jlreq@ifendmark{#1}{}{\appto\jlreq@tempa{\ifx\jlreq@nextchar#11\fi}\jlreq@do}}
+\expandafter\jlreq@do\jlreq@openbreackets@list\jlreq@endmark
+% JFM glueの伸び縮みで行頭括弧が揃わないのを防ぐために常に\inhibitglueを入れる．
+\ifthenelse{\equal{\jlreq@open@bracket@pos}{nibu_tentsuki}}{
+  \edef\jlreq@openbracket@hook{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\hskip -.5\jlreq@mol\inhibitglue}\noexpand\fi}
+}{% zenkakunibu_nibu,zenkaku_tentsuki
+  \edef\jlreq@openbracket@hook{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\inhibitglue}\noexpand\fi}
+}
 % JFMに関連する設定
 \ifx l\jlreq@engine
   % この値は後でjfm-jlreq内で読む
   \directlua{jlreq.open_bracket_pos = [[\jlreq@open@bracket@pos]]}
   \ifjlreq@burasage\directlua{jlreq.burasage = true}
   \else\directlua{jlreq.burasage = false}\fi
+  % 行頭括弧はJFMで対応できるが，\item後だけはどうしようもない．
+  \jlreq@saveoriginalcs{list}
+  \jlreq@saveoriginalcs{endlist}
+  \def\list{\jlreq@pushhook@postpar{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}\jlreq@original@list}
+  \def\endlist{\jlreq@pophook@postpar\jlreq@original@endlist}
 \else
   % 非LuaTeXの場合はJFMの入れ替えと\everyparでの処理で対処．
-  \def\jlreq@openbreackets@list{（〔［｛〈《「『【}
-  \ifx u\jlreq@engine\edef\jlreq@openbreackets@list{\jlreq@openbreackets@list ｟〘〖«〝‘“}\fi
-  \jlreq@aftercls@addtodeletecs{\jlreq@openbreackets@list}
   % \jlreq@jfmnameにJFMの名前を入れる
   \def\jlreq@jfmname@prefix{}
   \jlreq@aftercls@addtodeletecs{\jlreq@jfmname@prefix}
@@ -1147,18 +1167,22 @@
   \ifx u\jlreq@engine\edef\jlreq@jfmname@prefix{u\jlreq@jfmname@prefix}\fi
   \edef\jlreq@jfmname{\jlreq@jfmname@prefix jlreq}
   \edef\jlreq@jfmnameg{\jlreq@jfmname@prefix jlreqg}
-  % \jlreq@openbreackets@listの各括弧に対して，\ifx\jlreq@nextchar 「1\fiみたいなのが並んだのを作る
-  \def\jlreq@tempa{}
-  \def\jlreq@do#1{\jlreq@ifendmark{#1}{}{\appto\jlreq@tempa{\ifx\jlreq@nextchar#11\fi}\jlreq@do}}
-  \expandafter\jlreq@do\jlreq@openbreackets@list\jlreq@endmark
-  % JFM glueの伸び縮みで行頭括弧が揃わないのを防ぐために常に\inhibitglueを入れる．
-  \ifthenelse{\equal{\jlreq@open@bracket@pos}{nibu_tentsuki}}{
-    \edef\jlreq@openbracket@hook{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\hskip -.5\jlreq@mol\inhibitglue}\noexpand\fi}
-  }{% zenkakunibu_nibu,zenkaku_tentsuki
-    \edef\jlreq@openbracket@hook{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\inhibitglue}\noexpand\fi}
-  }
   \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
 \fi
+\newcount\jlreq@count@listnest
+\jlreq@count@listnest=0
+\def\jlreq@pushhook@postpar#1{%
+  \advance\jlreq@count@listnest by 1
+  \def\@tempa{\SavePostHook{par}}%
+  \expandafter\@tempa\csname jlreq@save@posthook@par \the\jlreq@count@listnest\endcsname
+  \PushPostHook{par}{#1}%
+}
+\def\jlreq@pophook@postpar{%
+  \def\@tempa{\RestorePostHook{par}}%
+  \expandafter\@tempa\csname jlreq@save@posthook@par \the\jlreq@count@listnest\endcsname
+  \advance\jlreq@count@listnest by -1
+}
+
 % 開き括弧の幅が全角の場合は，ベタ組にするために補正が必要
 \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{
   \def\jlreq@open@bracket@before@space{\hskip -.5\jlreq@mol}
@@ -1175,18 +1199,18 @@
 
 \ifx p\jlreq@engine
   \def\jlreq@yokokanjiencoding{JY1}
-  \def\jlreq@tatekanjiencoding{JT1}
+  \def\jlreq@pstatekanjiencoding{JT1}
 \fi
 \ifx u\jlreq@engine
   \def\jlreq@yokokanjiencoding{JY2}
-  \def\jlreq@tatekanjiencoding{JT2}
+  \def\jlreq@pstatekanjiencoding{JT2}
 \fi
 \jlreq@divide{\jlreq@jafontsize}{\jlreq@fontsize}
 \edef\jlreq@jafontscale{\strip@pt\jlreq@resultdimen}
 \jlreq@aftercls@addtodeletecs{\jlreq@jafontscale}
 \ifx l\jlreq@engine
   \def\jlreq@yokokanjiencoding{JY3}
-  \def\jlreq@tatekanjiencoding{JT3}
+  \def\jlreq@pstatekanjiencoding{JT3}
   \expandafter\let\csname JY3/mc/m/n/10\endcsname\relax
   \expandafter\let\csname JT3/mc/m/n/10\endcsname\relax
   \DeclareFontShape{JY3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont:jfm=jlreq;script=latn;-kern}{}
@@ -1195,11 +1219,11 @@
   \DeclareFontShape{JT3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont:jfm=jlreqv;script=latn;-kern}{}
 \else
   \expandafter\let\csname \jlreq@yokokanjiencoding/mc/m/n/10\endcsname\relax
-  \expandafter\let\csname \jlreq@tatekanjiencoding/mc/m/n/10\endcsname\relax
+  \expandafter\let\csname \jlreq@pstatekanjiencoding/mc/m/n/10\endcsname\relax
   \DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmname}{}
   \DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmnameg}{}
-  \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmname-v}{}
-  \DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmnameg-v}{}
+  \DeclareFontShape{\jlreq@pstatekanjiencoding}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmname-v}{}
+  \DeclareFontShape{\jlreq@pstatekanjiencoding}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmnameg-v}{}
 \fi
 \DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{bx}{n}{<->ssub*gt/m/n}{}
 \DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{bx}{n}{<->ssub*gt/m/n}{}
@@ -1210,15 +1234,15 @@
 \DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{m}{sl}{<->ssub*gt/m/n}{}
 \DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{bx}{it}{<->ssub*gt/m/n}{}
 \DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{bx}{n}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{bx}{n}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{it}{<->ssub*mc/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{sl}{<->ssub*mc/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{sc}{<->ssub*mc/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{it}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{sl}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{bx}{it}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
+\DeclareFontShape{\jlreq@pstatekanjiencoding}{mc}{bx}{n}{<->ssub*gt/m/n}{}
+\DeclareFontShape{\jlreq@pstatekanjiencoding}{gt}{bx}{n}{<->ssub*gt/m/n}{}
+\DeclareFontShape{\jlreq@pstatekanjiencoding}{mc}{m}{it}{<->ssub*mc/m/n}{}
+\DeclareFontShape{\jlreq@pstatekanjiencoding}{mc}{m}{sl}{<->ssub*mc/m/n}{}
+\DeclareFontShape{\jlreq@pstatekanjiencoding}{mc}{m}{sc}{<->ssub*mc/m/n}{}
+\DeclareFontShape{\jlreq@pstatekanjiencoding}{gt}{m}{it}{<->ssub*gt/m/n}{}
+\DeclareFontShape{\jlreq@pstatekanjiencoding}{gt}{m}{sl}{<->ssub*gt/m/n}{}
+\DeclareFontShape{\jlreq@pstatekanjiencoding}{mc}{bx}{it}{<->ssub*gt/m/n}{}
+\DeclareFontShape{\jlreq@pstatekanjiencoding}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
 
 % 和文ファミリと欧文ファミリの連動
 \DeclareRobustCommand\rmfamily{%
@@ -2342,36 +2366,32 @@
 % 合印：4.2.3
 % 文字サイズは6ポイントくらい（4.2.3.a）とりあえす\scriptsize
 
-% \footnoteとか\footnotemarkの前に\jlreq@hook@@prenote/\jlreq@hook@postnoteを入れる
-\newcommand*{\jlreq@modify@noteandmark}[2]{%
-  \edef\@tempa{\expandafter\@gobble\string#1}%
-  \jlreq@saveoriginalcs{\@tempa}%
-  \edef#1{%
-    \noexpand\jlreq@hook@prenote
-    \noexpand\@ifnextchar[{\expandonce{\csname jlreq@fixjfm@\@tempa @\endcsname}}{\expandonce{\csname jlreq@fixjfm@\@tempa @@\endcsname}}%
-  }
-  \long\expandafter\edef\csname jlreq@fixjfm@\@tempa @\endcsname[##1]##2{%
-    \expandonce{\csname jlreq@original@\@tempa\endcsname}[##1]{##2}%
-    \noexpand\jlreq@hook@postnote
-  }
-  \long\expandafter\edef\csname jlreq@fixjfm@\@tempa @@\endcsname##1{%
-    \expandonce{\csname jlreq@original@\@tempa\endcsname}{##1}%
-    \noexpand\jlreq@hook@postnote
-  }
-  \edef\@tempa{\expandafter\@gobble\string#2}%
-  \jlreq@saveoriginalcs{\@tempa}%
-  \edef#2{%
-    \noexpand\jlreq@hook@prenote
-    \noexpand\@ifnextchar[{\expandonce{\csname jlreq@fixjfm@\@tempa @\endcsname}}{\expandonce{\csname jlreq@fixjfm@\@tempa @@\endcsname}}%
-  }
-  \expandafter\edef\csname jlreq@fixjfm@\@tempa @\endcsname[##1]{%
-    \expandonce{\csname jlreq@original@\@tempa\endcsname}[##1]%
-    \noexpand\jlreq@hook@postnote
-  }
-  \expandafter\edef\csname jlreq@fixjfm@\@tempa @@\endcsname{%
-    \expandonce{\csname jlreq@original@\@tempa\endcsname}%
-    \noexpand\jlreq@hook@postnote
-  }
+% \footnoteと\footnotemarkの前後に\jlreq@hook@prenote/\jlreq@hook@postnoteを入れる
+\jlreq@saveoriginalcs{footnote}%
+\def\footnote{%
+  \jlreq@hook@prenote
+  \@ifnextchar[{\jlreq@fixjfm@footnote@}{\jlreq@fixjfm@footnote@@}%
+}
+\long\def\jlreq@fixjfm@footnote@[#1]#2{%
+  \jlreq@original@footnote[#1]{#2}%
+  \jlreq@hook@postnote
+}
+\long\def\jlreq@fixjfm@footnote@@#1{%
+  \jlreq@original@footnote{#1}%
+  \jlreq@hook@postnote
+}
+\jlreq@saveoriginalcs{footnotemark}%
+\def\footnotemark{%
+  \jlreq@hook@prenote
+  \@ifnextchar[{\jlreq@fixjfm@footnotemark@}{\jlreq@fixjfm@footnotemark@@}%
+}
+\def\jlreq@fixjfm@footnotemark@[#1]{%
+  \jlreq@original@footnotemark[#1]%
+  \jlreq@hook@postnote
+}
+\def\jlreq@fixjfm@footnotemark@@{%
+  \jlreq@original@footnotemark
+  \jlreq@hook@postnote
 }
 
 \newcommand*\jlreq@referencemark@format[1]{#1}
@@ -2390,7 +2410,7 @@
     }
     \def\jlreq@hook@prenote{\inhibitglue}
     \def\jlreq@hook@postnote{\inhibitglue}
-  }{
+  }{% reference_mark=interlinear
     \def\jlreq@notemark##1{{%
       \setbox\@tempboxa=\hbox{\scriptsize\jlreq@referencemark@format{##1}}%
       \@tempdima=\wd\@tempboxa
@@ -2420,7 +2440,6 @@
   }
 }
 \jlreqsetup{reference_mark=inline}
-\jlreq@modify@noteandmark{\footnote}{\footnotemark}
 % \@footnotemarkをシンプルなものにする
 \def\jlreq@setdefaultnotemark#1#2{%
   \def#1{%
@@ -2496,10 +2515,10 @@
 \def\jlreq@endnote@texts{}
 \long\def\jlreq@endnote@addtext#1#2{%
   \expandafter\gdef\expandafter\jlreq@endnote@texts\expandafter{\jlreq@endnote@texts{{#1}{#2}}}}
-\def\endnote{\@ifnextchar[{\jlreq@endnote}{\jlreq@endnote[]}}  
-\def\endnotemark{\@ifnextchar[{\jlreq@endnotemark}{\jlreq@endnotemark[]}}
+\def\endnote{\jlreq@hook@prenote\@ifnextchar[{\jlreq@endnote}{\jlreq@endnote[]}}  
+\def\endnotemark{\jlreq@hook@prenote\@ifnextchar[{\jlreq@endnotemark}{\jlreq@endnotemark[]}}
 \def\endnotetext{\@ifnextchar[{\jlreq@endnotetext}{\jlreq@endnotetext[]}}
-\long\def\jlreq@endnote[#1]#2{\jlreq@endnotemark[#1]\@endnotetext{#2}}
+\long\def\jlreq@endnote[#1]#2{\jlreq@endnotemark[#1]\@endnotetext{#2}\jlreq@hook@postnote}
 \def\jlreq@endnotemark[#1]{%
   \jlreq@ifempty{#1}{%
     \stepcounter{\jlreq@endnotecounter}%
@@ -2511,6 +2530,7 @@
     \endgroup
   }%
   \@endnotemark
+  \jlreq@hook@postnote
 }
 \jlreq@setdefaultnotemark\@endnotemark\@makeendmark
 \long\def\jlreq@endnotetext[#1]#2{%
@@ -2566,7 +2586,6 @@
     \par
   \fi
 }
-\jlreq@modify@noteandmark{\endnote}{\endnotemark}
 \jlreq@endnote@indent=2\jlreq@mol
 % 二行目以降を全角分下げる
 \newcommand{\@makeendtext}[1]{\parindent 1\jlreq@mol
@@ -2575,12 +2594,17 @@
 
 % \theendnoteの出力を仕込む
 \PushPostHook{par}{\jlreq@endnote@parhook}
+\edef\jlreq@do{
+  \unexpanded{\def\jlreq@hook@beforeheadings#1}{\expandonce{\jlreq@hook@beforeheadings{#1}}\unexpanded{\jlreq@endnote@hook@beforeheadings{#1}}}
+}
+\jlreq@do
 
 \jlreq@jlreqsetup@add{endnote_position}{
+  \def\jlreq@endnote@parhook{}
+  \def\jlreq@endnote@hook@beforeheadings##1{}
   \jlreq@tempafalse % headingsが指定された
   % \jlreq@tempcにセクション名たちを入れていく
   \def\jlreq@tempc{}
-  \def\jlreq@endnote@parhook{}
   \@for\jlreq@tempa:=#1\do{
     \jlreq@switch{\jlreq@tempa}{
       {headings}{\jlreq@tempatrue}
@@ -2610,7 +2634,7 @@
 
   \ifjlreq@tempa
     \edef\jlreq@do{%
-      \unexpanded{\def\jlreq@hook@beforeheadings##1}{\expandonce{\jlreq@hook@beforeheadings{##1}}%
+      \unexpanded{\def\jlreq@endnote@hook@beforeheadings##1}{\expandonce{\jlreq@endnote@hook@beforeheadings{##1}}%
         \noexpand\theendnotes
       }
     }
@@ -2619,7 +2643,7 @@
     \@for\@tempa:=\jlreq@tempc\do{
       \ifx\@tempa\@empty\else
         \edef\jlreq@do{%
-          \unexpanded{\def\jlreq@hook@beforeheadings##1}{\expandonce{\jlreq@hook@beforeheadings{##1}}%
+          \unexpanded{\def\jlreq@endnote@hook@beforeheadings##1}{\expandonce{\jlreq@endnote@hook@beforeheadings{##1}}%
             \unexpanded{\def\@tempa}{\@tempa}\unexpanded{\def\@tempb{##1}}%
             \unexpanded{\ifx\@tempa\@tempb\theendnotes\fi}%
           }
@@ -3084,10 +3108,10 @@
     % 柱とノンブルの間
     \def\jlreq@gap{1.5\zw}%
     \newif\ifjlreq@clearmark\jlreq@clearmarktrue
-    \newif\ifjlreq@tate\jlreq@tatefalse
+    \newif\ifjlreq@pstate\jlreq@pstatefalse
     \jlreq@parsekeyval[PageStyle:#1]{
-      *{tate}{\jlreq@tatetrue}
-      *{yoko}{\jlreq@tatefalse}
+      *{tate}{\jlreq@pstatetrue}
+      *{yoko}{\jlreq@pstatefalse}
       {nombre_position}{\def\jlreq@nombre@position{##1}}
       {running_head_position}{\def\jlreq@running@head@position{##1}}
       {nombre}{\def\jlreq@nombre{##1}}
@@ -3158,7 +3182,7 @@
       \fi
     \fi\fi
     % \jlreq@[even/odd][head/foot]に入れていく．tateか否かで場合分け．
-    \ifjlreq@tate\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
+    \ifjlreq@pstate\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
       \ifx\jlreq@nombre@position\@empty\def\jlreq@nombre@position{0pt}\fi
       \ifx\jlreq@running@head@position\@empty\def\jlreq@running@head@position{0pt}\fi
       \if@tate\else
@@ -3636,9 +3660,7 @@
       \ifnum0\if@twocolumn\else1\fi\ifjlreq@preamble1\fi>0
         \ifjlreq@preamble
           \ifx l\jlreq@engine\else
-            \@ifundefined{jlreq@saveposthook@par}{}{\ClassError{jlreq}{\string\jlreq@saveposthook@par\space is not undefined in abstract, maybe a bug}{\@ehc}}%
-            \SavePostHook{par}{\jlreq@saveposthook@par}%
-            \PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}%
+            \jlreq@pushhook@postpar{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}%
           \fi
         \fi
         % とりあえず全部ボックスに入れる．
@@ -3693,8 +3715,7 @@
       \fi
       \ifjlreq@preamble
         \ifx l\jlreq@engine\else
-          \RestorePostHook{par}{\jlreq@saveposthook@par}%
-          \let\jlreq@saveposthook@par=\@undefined
+          \jlreq@pophook@postpar
         \fi
       \else
         \unvbox\jlreq@abstractbox

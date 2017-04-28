@@ -1133,8 +1133,8 @@
 
 %.. 和文
 % 行頭括弧に対して\inhibitglueを入れたりする命令を作る
-\def\jlreq@openbreackets@list{（〔［｛〈《「『【}
-\ifx p\jlreq@engine\else\edef\jlreq@openbreackets@list{\jlreq@openbreackets@list ｟〘〖«〝‘“}\fi
+\def\jlreq@openbreackets@list{（〔［｛〈《「『【‘“}
+\ifx p\jlreq@engine\else\edef\jlreq@openbreackets@list{\jlreq@openbreackets@list ｟〘〖«〝}\fi
 \jlreq@aftercls@addtodeletecs{\jlreq@openbreackets@list}
 % \jlreq@openbreackets@listの各括弧に対して，\ifx\jlreq@nextchar 「1\fiみたいなのが並んだのを作る
 \def\jlreq@tempa{}
@@ -1150,8 +1150,7 @@
 \ifx l\jlreq@engine
   % この値は後でjfm-jlreq内で読む
   \directlua{jlreq.open_bracket_pos = [[\jlreq@open@bracket@pos]]}
-  \ifjlreq@burasage\directlua{jlreq.burasage = true}
-  \else\directlua{jlreq.burasage = false}\fi
+  \ifjlreq@burasage\directlua{jlreq.burasage = true}\else\directlua{jlreq.burasage = false}\fi
   % 行頭括弧はJFMで対応できるが，\item後だけはどうしようもない．
   \jlreq@saveoriginalcs{list}
   \jlreq@saveoriginalcs{endlist}
@@ -1180,6 +1179,7 @@
 \def\jlreq@pophook@postpar{%
   \def\@tempa{\RestorePostHook{par}}%
   \expandafter\@tempa\csname jlreq@save@posthook@par \the\jlreq@count@listnest\endcsname
+  \expandafter\let\csname jlreq@save@posthook@par \the\jlreq@count@listnest\endcsname=\@undefined
   \advance\jlreq@count@listnest by -1
 }
 
@@ -1199,18 +1199,18 @@
 
 \ifx p\jlreq@engine
   \def\jlreq@yokokanjiencoding{JY1}
-  \def\jlreq@pstatekanjiencoding{JT1}
+  \def\jlreq@tatekanjiencoding{JT1}
 \fi
 \ifx u\jlreq@engine
   \def\jlreq@yokokanjiencoding{JY2}
-  \def\jlreq@pstatekanjiencoding{JT2}
+  \def\jlreq@tatekanjiencoding{JT2}
 \fi
 \jlreq@divide{\jlreq@jafontsize}{\jlreq@fontsize}
 \edef\jlreq@jafontscale{\strip@pt\jlreq@resultdimen}
 \jlreq@aftercls@addtodeletecs{\jlreq@jafontscale}
 \ifx l\jlreq@engine
   \def\jlreq@yokokanjiencoding{JY3}
-  \def\jlreq@pstatekanjiencoding{JT3}
+  \def\jlreq@tatekanjiencoding{JT3}
   \expandafter\let\csname JY3/mc/m/n/10\endcsname\relax
   \expandafter\let\csname JT3/mc/m/n/10\endcsname\relax
   \DeclareFontShape{JY3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont:jfm=jlreq;script=latn;-kern}{}
@@ -1219,11 +1219,11 @@
   \DeclareFontShape{JT3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont:jfm=jlreqv;script=latn;-kern}{}
 \else
   \expandafter\let\csname \jlreq@yokokanjiencoding/mc/m/n/10\endcsname\relax
-  \expandafter\let\csname \jlreq@pstatekanjiencoding/mc/m/n/10\endcsname\relax
+  \expandafter\let\csname \jlreq@tatekanjiencoding/mc/m/n/10\endcsname\relax
   \DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmname}{}
   \DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmnameg}{}
-  \DeclareFontShape{\jlreq@pstatekanjiencoding}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmname-v}{}
-  \DeclareFontShape{\jlreq@pstatekanjiencoding}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmnameg-v}{}
+  \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmname-v}{}
+  \DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmnameg-v}{}
 \fi
 \DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{bx}{n}{<->ssub*gt/m/n}{}
 \DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{bx}{n}{<->ssub*gt/m/n}{}
@@ -1234,15 +1234,15 @@
 \DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{m}{sl}{<->ssub*gt/m/n}{}
 \DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{bx}{it}{<->ssub*gt/m/n}{}
 \DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@pstatekanjiencoding}{mc}{bx}{n}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@pstatekanjiencoding}{gt}{bx}{n}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@pstatekanjiencoding}{mc}{m}{it}{<->ssub*mc/m/n}{}
-\DeclareFontShape{\jlreq@pstatekanjiencoding}{mc}{m}{sl}{<->ssub*mc/m/n}{}
-\DeclareFontShape{\jlreq@pstatekanjiencoding}{mc}{m}{sc}{<->ssub*mc/m/n}{}
-\DeclareFontShape{\jlreq@pstatekanjiencoding}{gt}{m}{it}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@pstatekanjiencoding}{gt}{m}{sl}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@pstatekanjiencoding}{mc}{bx}{it}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@pstatekanjiencoding}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
+\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{bx}{n}{<->ssub*gt/m/n}{}
+\DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{bx}{n}{<->ssub*gt/m/n}{}
+\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{it}{<->ssub*mc/m/n}{}
+\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{sl}{<->ssub*mc/m/n}{}
+\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{sc}{<->ssub*mc/m/n}{}
+\DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{it}{<->ssub*gt/m/n}{}
+\DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{sl}{<->ssub*gt/m/n}{}
+\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{bx}{it}{<->ssub*gt/m/n}{}
+\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
 
 % 和文ファミリと欧文ファミリの連動
 \DeclareRobustCommand\rmfamily{%

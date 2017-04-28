@@ -26,7 +26,7 @@ jfm: \
 	ujlreqg-v.tfm ubjlreqg-v.tfm uzjlreqg-v.tfm ubzjlreqg-v.tfm \
 	ujlreqg-v.vf ubjlreqg-v.vf uzjlreqg-v.vf ubzjlreqg-v.vf \
 	
-	rm -f ugbmv.tfm ugbm.tfm gbmv.tfm gbm.tfm urmlv.tfm rmlv.tfm urml.tfm rml.tfm
+	rm -f rml.tfm rmlv.tfm gbm.tfm gbmv.tfm uprml-h.tfm uprml-hq.tfm upgbm-h.tfm upgbm-hq.tfm uprml-v.tfm uprml-vq.tfm upgbm-v.tfm upgbm-vq.tfm
 
 # .pl
 u%-v.pl: jfm-%v.lua luajfm2pl.lua
@@ -42,11 +42,11 @@ u%.pl: jfm-%.lua luajfm2pl.lua
 	texlua luajfm2pl.lua --noutf $* $@
 
 # .vf
-u%-q.vf: u%-q.tfm
-	makejvf -u jisq $< uprml-hq
-
 u%g-q.vf: u%g-q.tfm
-	makejvf -u jisq $< upgbm-hq
+	makejvf -u jisq $< upgbm-hq.tfm
+
+u%-q.vf: u%-q.tfm
+	makejvf -u jisq $< uprml-hq.tfm
 
 u%g-v.vf: u%g-v.tfm
 	makejvf -i -u jis $< upgbm-v.tfm

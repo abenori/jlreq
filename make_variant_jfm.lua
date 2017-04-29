@@ -86,7 +86,58 @@ dofile(jfmfile)
 make_jfmfile(burasage(jfm),"jfm-b" .. originaljfm .. ".lua")
 make_jfmfile(zenkaku_kakko(jfm),"jfm-z" .. originaljfm .. ".lua")
 make_jfmfile(burasage(zenkaku_kakko(jfm)),"jfm-bz" .. originaljfm .. ".lua")
-make_jfmfile(tate(jfm),"jfm-" .. originaljfm .. "v.lua")
 make_jfmfile(burasage(tate(jfm)),"jfm-b" .. originaljfm .. "v.lua")
 make_jfmfile(zenkaku_kakko(tate(jfm)),"jfm-z" .. originaljfm .. "v.lua")
 make_jfmfile(burasage(zenkaku_kakko(tate(jfm))),"jfm-bz" .. originaljfm .. "v.lua")
+
+local jfm = tate(jfm)
+local file = "jfm-" .. originaljfm .. "v.lua"
+table.tofile(file,jfm,"local jfm")
+local fp = io.open(file,"a")
+fp:write([[
+local function add_space(before,after,glueorkern,space,ratio)
+	if jfm[before][glueorkern] == nil then jfm[before][glueorkern] = {} end
+	if jfm[before][glueorkern][after] == nil then jfm[before][glueorkern][after] = {0} end
+	local origratio = jfm[before][glueorkern][after].ratio
+	if origratio == nil then origratio = 0.5 end
+	jfm[before][glueorkern][after].ratio = (jfm[before][glueorkern][after][1] * origratio + space * ratio) /  (jfm[before][glueorkern][after][1] + ratio)
+	jfm[before][glueorkern][after][1] = jfm[before][glueorkern][after][1] + space
+end
+
+if jlreq ~= nil then
+	if type(jlreq.open_bracket_pos) == "string" then
+		local r = jlreq.open_bracket_pos:find("_")
+		local danraku = jlreq.open_bracket_pos:sub(1,r - 1)
+		local orikaeshi = jlreq.open_bracket_pos:sub(r + 1)
+
+		-- 折り返し行頭の開き括弧を二分下げる……つもり
+		if orikaeshi == "nibu" then
+			-- widthを二分増やし，その代わりJFMグルーを二分減らす
+			jfm[1].width = jfm[1].width + 0.5
+			for k,v in pairs(jfm) do
+				if type(k) == "number" then
+					add_space(k,1,"glue",-0.5,1)
+				end
+			end
+		end
+
+		-- 段落行頭の下げ
+		if danraku == "zenkakunibu" then
+			add_space(90,1,"glue",0.5,1)
+		elseif danraku == "nibu" then
+			add_space(90,1,"glue",-0.5,1)
+		end
+	end
+
+	-- ぶら下げ組を有効にする．
+	if jlreq.burasage == true then
+		for _,class in ipairs({6,7}) do
+			table.insert(jfm[class].end_adjust,-0.5)
+		end
+	end
+end
+luatexja.jfont.define_jfm(jfm)
+]])
+fp:close()
+
+

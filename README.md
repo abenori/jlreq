@@ -38,6 +38,14 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
 * 2017-04-04
     - Fix a bug.
     - Add options `tate` and `font` to `\DeclarePageStyle`.
+* 2017-04-29
+    - Fix bugs.
+    - Add `jafontsize` and `jafontscale` options and `\jafontsize`.
+    - Add `\tatechuyoko`.
+    - `jlreq_warnings` -> `jlreq_notes` (class option).
+    - Move some class options to `\jlreqsetup`.
+    - Add some options to `\jlreqsetup`.
+    - paper={<height>,<width>} -> paper={<width>,<height>}.
 
 
 --------------

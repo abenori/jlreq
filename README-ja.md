@@ -129,6 +129,15 @@
 * `quote_beforeafter_space=<寸法>`：前後の空きを指定します．`quote_beforeafter_space=1\baselineskip`とすると一行あきます．
 * `quote_fontsize=[normalsize/small/footnotesize/scriptsize/tiny]`：フォントサイズを指定します．
 
+### 箇条書き
+`\jlreqsetup`で指定します．
+* `itemization_beforeafter_space=<寸法>`：箇条書きの前後の空きを指定します．
+* `itemization_itemsep=<寸法>`：項目同士の空きを指定します．
+
+### 定理環境
+`\jlreqsetup`で指定します．
+* `theorem_beforeafter_space=<寸法>`：定理環境の前後の空きを指定します．
+
 ## 見出し
 見出しの設定は，`\Declare***Heading`という命令で行います（***には見出しの種類に応じた文字列が入る）．書式はすべて
 
@@ -248,7 +257,14 @@
 * 2017-04-04
     - バグ修正．
     - `\DeclarePageStyle`に`tate`と`font`オプションを追加．
-
+* 2017-04-29
+    - バグ修正
+    - `jafontsize`と`jafontscale`をクラスオプションに，また`\jafontsize`を追加．
+    - `\tatechuyoko`を追加．
+    - クラスオプション`jlreq_warnings`を`jlreq_notes`に変更．
+    - いくつかのクラスオプションを`\jlreqsetup`に移動．
+    - いくつかのオプションを`\jlreqsetup`に追加．
+    - クラスオプションの`paper={<縦>,<横>}`を`paper={<横>,<縦>}`に変更．
 
 --------------
 Noriyuki Abe

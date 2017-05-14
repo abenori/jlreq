@@ -699,19 +699,49 @@
 }
 
 \ifx l\jlreq@engine
-  \newcommand*{\lastnodechar}{\directlua{luatexja.pltx_composite_last_node_char()}}
+  \newcommand*{\lastnodechar}{\directlua{luatexja.pltx_composite_last_node_char()}}% undocumented
 \fi
 
 % #1と#2の間に入るjmglue（(x)kanjiskipも）を\jlreq@resultskipに入れる
-\newcommand*{\jlreq@calc@jfmglue}[2]{%
-  \begingroup
-    \setbox\jlreq@tempboxa=\hbox{\inhibitglue #1\inhibitglue\hbox{}\inhibitglue#2\inhibitglue}%
-    \setbox\jlreq@tempboxb=\hbox{\inhibitglue #1#2\inhibitglue}%
-    \edef\jlreq@do{\noexpand\jlreq@resultskip=\the\dimexpr\wd\jlreq@tempboxb - \wd\jlreq@tempboxa\relax\noexpand\relax}%
-  \expandafter\endgroup
-  \jlreq@do
-}
-
+\ifx l\jlreq@engine
+  \newcommand*{\jlreq@calc@jfmglue}[2]{%
+    \begingroup
+      \setbox\jlreq@tempboxa=\hbox{\inhibitglue #1\inhibitglue\hbox{}\inhibitglue#2\inhibitglue}%
+      \setbox\jlreq@tempboxb=\hbox{\inhibitglue #1#2\inhibitglue}%
+      \edef\jlreq@do{\noexpand\jlreq@resultskip=\the\dimexpr\wd\jlreq@tempboxb - \wd\jlreq@tempboxa\relax\noexpand\relax}%
+      \jlreq@do
+      \directlua{
+        local width = 0
+        local stretch = 0
+        local shrink = 0
+        local n = tex.box["jlreq@tempboxb"].head
+        while n do
+          if n.id == node.id("glue") then
+            width = width + n.width
+            stretch = stretch + n.stretch
+            shrink = shrink + n.shrink
+          end
+          n = n.next
+        end
+        tex.setglue("jlreq@tempskipa",width,stretch,shrink)
+      }%
+      % TeXで計測した物と一致していなければTeXでの方を信じる
+      \ifdim\jlreq@resultskip=\jlreq@tempskipa
+        \edef\jlreq@do{\noexpand\jlreq@resultskip=\the\jlreq@tempskipa\relax}%
+      \fi
+    \expandafter\endgroup
+    \jlreq@do
+  }
+\else
+  \newcommand*{\jlreq@calc@jfmglue}[2]{%
+    \begingroup
+      \setbox\jlreq@tempboxa=\hbox{\inhibitglue #1\inhibitglue\hbox{}\inhibitglue#2\inhibitglue}%
+      \setbox\jlreq@tempboxb=\hbox{\inhibitglue #1#2\inhibitglue}%
+      \edef\jlreq@do{\noexpand\jlreq@resultskip=\the\dimexpr\wd\jlreq@tempboxb - \wd\jlreq@tempboxa\relax\noexpand\relax}%
+    \expandafter\endgroup
+    \jlreq@do
+  }
+\fi
 \newcount\jlreq@lastnodechar
 % jlreq@lastnodecharに入っている値と次のトークン（\futureletで得る）の間に入るJFMグルー等を挿入する
 \newcommand*{\jlreq@fixjfm}{%
@@ -768,14 +798,13 @@
 \fi
 
 %. 基本設定
-\def\jlreq@kanjiskip{0pt plus 0.25zw minus 0pt}
-\def\jlreq@xkanjiskip{0.25zw plus 0.25zw minus 0.125zw}
+\providecommand*{\jlreq@kanjiskip}{0pt plus 0.25\zw minus 0pt}
+\providecommand*{\jlreq@xkanjiskip}{0.25\zw plus 0.25\zw minus 0.125\zw}
 \ifx l\jlreq@engine
   % 和文文字，欧文文字の設定（とりあえずLuaTeX-jaのデフォルトのまま）
   \ltjsetparameter{jacharrange={-1, +2, +3, -4, -5, +6, +7, -8}}
-  % kanjiskip, xkanjiskipはjfmのものを使う
-  \ltjsetparameter{kanjiskip=\maxdimen}
-  \ltjsetparameter{xkanjiskip=\maxdimen}
+  \ltjsetparameter{kanjiskip=\jlreq@kanjiskip}
+  \ltjsetparameter{xkanjiskip=\jlreq@xkanjiskip}
 \else
   \kanjiskip=\jlreq@kanjiskip
   \xkanjiskip=\jlreq@xkanjiskip
@@ -1132,32 +1161,41 @@
 \DeclareRobustCommand*{\mit}{\@fontswitch\relax\mathnormal}
 
 %.. 和文
-% 行頭括弧に対して\inhibitglueを入れたりする命令を作る
-\def\jlreq@openbreackets@list{（〔［｛〈《「『【‘“}
-\ifx p\jlreq@engine\else\edef\jlreq@openbreackets@list{\jlreq@openbreackets@list ｟〘〖«〝}\fi
-\jlreq@aftercls@addtodeletecs{\jlreq@openbreackets@list}
-% \jlreq@openbreackets@listの各括弧に対して，\ifx\jlreq@nextchar 「1\fiみたいなのが並んだのを作る
-\def\jlreq@tempa{}
-\def\jlreq@do#1{\jlreq@ifendmark{#1}{}{\appto\jlreq@tempa{\ifx\jlreq@nextchar#11\fi}\jlreq@do}}
-\expandafter\jlreq@do\jlreq@openbreackets@list\jlreq@endmark
-% JFM glueの伸び縮みで行頭括弧が揃わないのを防ぐために常に\inhibitglueを入れる．
-\ifthenelse{\equal{\jlreq@open@bracket@pos}{nibu_tentsuki}}{
-  \edef\jlreq@openbracket@hook{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\hskip -.5\jlreq@mol\inhibitglue}\noexpand\fi}
-}{% zenkakunibu_nibu,zenkaku_tentsuki
-  \edef\jlreq@openbracket@hook{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\inhibitglue}\noexpand\fi}
-}
 % JFMに関連する設定
 \ifx l\jlreq@engine
   % この値は後でjfm-jlreq内で読む
   \directlua{jlreq.open_bracket_pos = [[\jlreq@open@bracket@pos]]}
   \ifjlreq@burasage\directlua{jlreq.burasage = true}\else\directlua{jlreq.burasage = false}\fi
-  % 行頭括弧はJFMで対応できるが，\item後だけはどうしようもない．
+  % \item後の行頭括弧のために仕込み．
   \jlreq@saveoriginalcs{list}
   \jlreq@saveoriginalcs{endlist}
-  \def\list{\jlreq@pushhook@postpar{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}\jlreq@original@list}
-  \def\endlist{\jlreq@pophook@postpar\jlreq@original@endlist}
+  \edef\jlreq@do{
+    \unexpanded{\def\list#1#2}{%
+      \unexpanded{\jlreq@pushhook@postpar{\directlua{luatexja.jfmglue.create_beginpar_node()}}}%
+      \expandonce{\list{#1}{#2}}%
+    }
+    \unexpanded{\def\endlist}{%
+      \expandonce{\endlist}%
+      \noexpand\jlreq@pophook@postpar
+    }
+  }
+  \jlreq@do
 \else
   % 非LuaTeXの場合はJFMの入れ替えと\everyparでの処理で対処．
+  % 行頭括弧に対して\inhibitglueを入れたりする命令を作る
+  \def\jlreq@openbreackets@list{（〔［｛〈《「『【‘“}
+  \ifx p\jlreq@engine\else\edef\jlreq@openbreackets@list{\jlreq@openbreackets@list ｟〘〖«〝}\fi
+  \jlreq@aftercls@addtodeletecs{\jlreq@openbreackets@list}
+  % \jlreq@openbreackets@listの各括弧に対して，\ifx\jlreq@nextchar 「1\fiみたいなのが並んだのを作る
+  \def\jlreq@tempa{}
+  \def\jlreq@do#1{\jlreq@ifendmark{#1}{}{\appto\jlreq@tempa{\ifx\jlreq@nextchar#11\fi}\jlreq@do}}
+  \expandafter\jlreq@do\jlreq@openbreackets@list\jlreq@endmark
+  % JFM glueの伸び縮みで行頭括弧が揃わないのを防ぐために常に\inhibitglueを入れる．
+  \ifthenelse{\equal{\jlreq@open@bracket@pos}{nibu_tentsuki}}{
+    \edef\jlreq@openbracket@hook{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\hskip -.5\jlreq@mol\inhibitglue}\noexpand\fi}
+  }{% zenkakunibu_nibu,zenkaku_tentsuki
+    \edef\jlreq@openbracket@hook{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\inhibitglue}\noexpand\fi}
+  }
   % \jlreq@jfmnameにJFMの名前を入れる
   \def\jlreq@jfmname@prefix{}
   \jlreq@aftercls@addtodeletecs{\jlreq@jfmname@prefix}
@@ -1298,13 +1336,28 @@
 % \set@fontsizeが実行されるたびに追随して値を変える
 % その処理は\jlreq@setfontsizehookに入れる
 \jlreq@saveoriginalcs{set@fontsize}
-\renewcommand*{\set@fontsize}[3]{%
-  \jlreq@original@set@fontsize{#1}{#2}{#3}%
-  \jlreq@setfontsizehook
+\edef\jlreq@do{
+  \unexpanded{\def\set@fontsize#1#2#3}{%
+    \expandonce{\set@fontsize{#1}{#2}{#3}}%
+    \noexpand\jlreq@setfontsizehook
+  }
 }
+\jlreq@do
 \def\jlreq@setfontsizehook{}
 \appto\jlreq@setfontsizehook{\ifdim\parindent>0pt\setlength{\parindent}{1\jlreq@mol}\fi}
-\ifx l\jlreq@engine\else
+\ifx l\jlreq@engine
+  \@tempskipa=\ltjgetparameter{kanjiskip}
+  \ifdim\@tempskipa=\maxdimen\else
+    \appto\jlreq@setfontsizehook{%
+      \ltj@setpar@global
+      \ltjsetkanjiskip\jlreq@kanjiskip
+      \@tempskipa=\ltjgetparameter{xkanjiskip}
+      \ifdim\@tempskipa>\z@
+        \ltjsetxkanjiskip\jlreq@xkanjiskip
+      \fi
+    }
+  \fi
+\else
   \appto\jlreq@setfontsizehook{%
     \kanjiskip=\jlreq@kanjiskip
     \ifdim\xkanjiskip>0pt
@@ -2368,30 +2421,36 @@
 
 % \footnoteと\footnotemarkの前後に\jlreq@hook@prenote/\jlreq@hook@postnoteを入れる
 \jlreq@saveoriginalcs{footnote}%
+\edef\jlreq@do{
+  \unexpanded{\long\def\jlreq@fixjfm@footnote@[#1]#2}{%
+    \expandonce{\footnote[#1]{#2}}%
+    \noexpand\jlreq@hook@postnote
+  }
+  \unexpanded{\long\def\jlreq@fixjfm@footnote@@#1}{%
+    \expandonce{\footnote{#1}}%
+    \noexpand\jlreq@hook@postnote
+  }
+}
+\jlreq@do
 \def\footnote{%
   \jlreq@hook@prenote
   \@ifnextchar[{\jlreq@fixjfm@footnote@}{\jlreq@fixjfm@footnote@@}%
 }
-\long\def\jlreq@fixjfm@footnote@[#1]#2{%
-  \jlreq@original@footnote[#1]{#2}%
-  \jlreq@hook@postnote
+\edef\jlreq@do{
+  \unexpanded{\def\jlreq@fixjfm@footnotemark@[#1]}{%
+    \expandonce{\footnotemark[#1]}%
+    \noexpand\jlreq@hook@postnote
+  }
+  \unexpanded{\def\jlreq@fixjfm@footnotemark@@}{%
+    \expandonce{\footnotemark}%
+    \noexpand\jlreq@hook@postnote
+  }
 }
-\long\def\jlreq@fixjfm@footnote@@#1{%
-  \jlreq@original@footnote{#1}%
-  \jlreq@hook@postnote
-}
+\jlreq@do
 \jlreq@saveoriginalcs{footnotemark}%
 \def\footnotemark{%
   \jlreq@hook@prenote
   \@ifnextchar[{\jlreq@fixjfm@footnotemark@}{\jlreq@fixjfm@footnotemark@@}%
-}
-\def\jlreq@fixjfm@footnotemark@[#1]{%
-  \jlreq@original@footnotemark[#1]%
-  \jlreq@hook@postnote
-}
-\def\jlreq@fixjfm@footnotemark@@{%
-  \jlreq@original@footnotemark
-  \jlreq@hook@postnote
 }
 
 \newcommand*\jlreq@referencemark@format[1]{#1}
@@ -3726,10 +3785,11 @@
 %. 箇条書き．cf. JISX4051 8.4
 % 用語定義型
 \newenvironment{description}{\list{}{%
-  \setlength{\leftmargin}{0\jlreq@mol}% 下げない
-  \setlength{\labelwidth}{0\jlreq@mol}%
-  \addtolength{\leftmargin}{\leftskip}%
-  \addtolength{\leftmargin}{\labelsep}%
+  \setlength{\leftmargin}{0\zw}% 下げない
+  \setlength{\labelwidth}{0\zw}%
+  \setlength{\labelsep}{1\zw}
+%  \addtolength{\leftmargin}{\leftskip}% たぶんこの二行いらない……
+%  \addtolength{\leftmargin}{\labelsep}%
   \let\makelabel=\descriptionlabel
 % 同行じゃない場合はこんな感じ？
 %  \let\jlreq@original@@item=\@item
@@ -4131,13 +4191,19 @@
   \ifnum\jlreq@lastnodechar=-1\else
     \inhibitglue
     \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{阿}%
-    \ifdim\jlreq@resultskip=0pt\else\hskip\jlreq@resultskip\fi
+    \edef\@tempa{\the\jlreq@resultskip}%
+    \edef\@tempb{\detokenize{0.0pt}}%
+    \ifx\@tempa\@tempb\else\hskip\jlreq@resultskip\fi
   \fi
-  \hbox{\yoko \vrule width 0pt height 0.88\zw depth 0.12\zw #1}%
+  \hbox{\yoko 
+    \setbox\jlreq@tempboxa=\hbox{阿}%
+    \vrule width 0pt height \ht\jlreq@tempboxa depth \dp\jlreq@tempboxa #1}%
   \def\jlreq@do{%
     \jlreq@isletter{\jlreq@nextchar}{%
-      \jlreq@calc@jfmglue{\jlreq@nextchar}{阿}%
-      \ifdim\jlreq@resultskip=0pt\else\hskip\jlreq@resultskip\fi
+      \jlreq@calc@jfmglue{阿}{\jlreq@nextchar}%
+      \edef\@tempa{\the\jlreq@resultskip}%
+      \edef\@tempb{\detokenize{0.0pt}}%
+      \ifx\@tempa\@tempb\else\hskip\jlreq@resultskip\fi
       \inhibitglue
     }{}%
   }%
@@ -4187,8 +4253,14 @@
 \AtEndOfPackageFile*{amsthm}{%
   \jlreq@saveoriginalcs{proof}%
   \jlreq@saveoriginalcs{endproof}%
+  \edef\jlreq@do{
+    \unexpanded{\def\jlreq@proof[#1]}{%
+      \labelsep=1\jlreq@mol
+      \expandonce{\proof[{\normalfont\sffamily\bfseries #1\inhibitglue}\nopunct]}%
+    }
+  }
+  \jlreq@do
   \def\proof{\@ifnextchar[{\jlreq@proof}{\jlreq@proof[\proofname]}}
-  \def\jlreq@proof[#1]{\labelsep=1\jlreq@mol\jlreq@original@proof[{\normalfont\sffamily\bfseries #1\inhibitglue}\nopunct]}
   \renewcommand{\proofname}{証明}
   \jlreq@setupamsthm
   \theoremstyle{jlreq}

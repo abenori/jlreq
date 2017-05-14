@@ -51,7 +51,7 @@ u%-q.vf: u%-q.tfm
 u%g-v.vf: u%g-v.tfm
 	makejvf -i -u jis $< upgbm-v.tfm
 
-u%g.vf: u%g.tfm
+u%g.vf: u%g.tfm u%g-q.tfm
 	makejvf -i -u jis -U u$*g-q $< upgbm-h.tfm
 
 %g-v.vf: %g-v.tfm

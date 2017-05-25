@@ -1344,14 +1344,14 @@
 }
 \jlreq@do
 \def\jlreq@setfontsizehook{}
-\appto\jlreq@setfontsizehook{\ifdim\parindent>0pt\setlength{\parindent}{1\jlreq@mol}\fi}
+\appto\jlreq@setfontsizehook{\ifdim\parindent>0pt\setlength{\parindent}{1\zw}\fi}
 \ifx l\jlreq@engine
   \@tempskipa=\ltjgetparameter{kanjiskip}
   \ifdim\@tempskipa=\maxdimen\else
     \appto\jlreq@setfontsizehook{%
       \ltj@setpar@global
       \ltjsetkanjiskip\jlreq@kanjiskip
-      \@tempskipa=\ltjgetparameter{xkanjiskip}
+      \@tempskipa=\ltjgetparameter{xkanjiskip}%
       \ifdim\@tempskipa>\z@
         \ltjsetxkanjiskip\jlreq@xkanjiskip
       \fi
@@ -1421,15 +1421,19 @@
 \newcommand{\huge}{\@setfontsize\huge{2\jlreq@fontsize}{\dimexpr 28\jlreq@baselineskip/17\relax}}
 \newcommand{\Huge}{\@setfontsize\Huge{\dimexpr 25\jlreq@fontsize/10\relax}{\dimexpr 33\jlreq@baselineskip/17\relax}}
 
-\if@tate
-  \ifx l\jlreq@engine
-    \RequirePackage{lltjext}
-  \else
-    \RequirePackage{plext}
-  \fi
-  \renewcommand*{\@Kanji}[1]{\expandafter\kansuji\number #1\relax} % \relax追加
-  \rensujiskip=0\jlreq@mol plus 0.25\jlreq@mol minus 0\jlreq@mol
-\fi
+%. plextから一部拝借
+% オプションも*もない\rensuji（コピペ）
+\DeclareRobustCommand{\jlreq@rensuji}[1]{%
+  \ifvmode\leavevmode\fi
+  \jlreq@ifydir{\hbox{#1}}{%
+    \hskip 0pt plus 0.25\zw minus 0pt % \rensujiskipは固定値
+    \setbox\jlreq@tempboxa=\hbox{\yoko#1}%
+    \@tempdima\ht\jlreq@tempboxa \advance\@tempdima\dp\jlreq@tempboxa
+    \vrule\@width\z@ \@height.5\@tempdima \@depth.5\@tempdima
+    \hbox to 1\zw{\yoko\hss#1\hss}%
+    \hskip 0pt plus 0.25\zw minus 0pt
+}}
+\def\jlreq@Kanji#1{\expandafter\kansuji\csname c@#1\endcsname}
 
 % このあたりはtarticleと同じ
 \setlength\lineskip{.1\jlreq@gol}
@@ -1821,7 +1825,7 @@
     \fi
     \jlreq@tempskipb=0pt\relax
   }{%
-    \jlreq@tempskipb=\glueexpr(\baselineskip*(#5 + 1) - \ht\jlreq@tempboxb - \dp\jlreq@tempboxb - \ht\jlreq@tempboxa - \dp\jlreq@tempboxa)/2\relax
+    \jlreq@tempskipb=\glueexpr(#5\baselineskip + \baselineskip - \ht\jlreq@tempboxb - \dp\jlreq@tempboxb - \ht\jlreq@tempboxa - \dp\jlreq@tempboxa)/2\relax
     \ifx\jlreq@startBlockHeading@space\@empty
       \jlreq@tempskipa=\jlreq@tempskipb
     \else
@@ -1834,7 +1838,7 @@
       \fi
       \ifx r\jlreq@startBlockHeading@spacetype
         \jlreq@tempskipa=\glueexpr\jlreq@startBlockHeading@space\relax%
-        \jlreq@tempskipb=\glueexpr(\baselineskip*(#5 + 1) - \ht\jlreq@tempboxb - \dp\jlreq@tempboxb - \ht\jlreq@tempboxa - \dp\jlreq@tempboxa) - \jlreq@startBlockHeading@space\relax
+        \jlreq@tempskipb=\glueexpr(#5\baselineskip + \baselineskip - \ht\jlreq@tempboxb - \dp\jlreq@tempboxb - \ht\jlreq@tempboxa - \dp\jlreq@tempboxa) - \jlreq@startBlockHeading@space\relax
       \fi
     \fi
   }%
@@ -2103,7 +2107,7 @@
       {indent}{\def\jlreq@indent{##1}}
       {mark}{\def\jlreq@mark{##1}}
       {after_space}{%
-        \ifdim##1<0pt\ClassWarning{jlreq}{after_space in Runin Heading #1 should be positive}\fi
+        \ifdim\dimexpr##1\relax<0pt\ClassWarning{jlreq}{after_space in Runin Heading #1 should be positive}\fi
         \def\jlreq@after@space{##1}%
       }
     }{#3}%
@@ -2320,13 +2324,13 @@
 \renewcommand*{\@seccntformat}[1]{\csname the#1\endcsname}
 
 \if@tate
-  \renewcommand{\thepart}{\Kanji{part}}
-  \ifthenelse{\equal{\jlreq@article@type}{article}}{}{\renewcommand{\thechapter}{\Kanji{chapter}}}
-  \renewcommand{\thesection}{\rensuji{\@arabic\c@section}}
-  \renewcommand{\thesubsection}{\rensuji{\@alph\c@subsection}}
-  \renewcommand{\thesubsubsection}{\rensuji{\@arabic\c@subsubsection}}
-  \renewcommand{\theparagraph}{(\rensuji{\@arabic\c@paragraph})}
-  \renewcommand{\thesubparagraph}{(\rensuji{\@arabic\c@subparagraph})}
+  \renewcommand{\thepart}{\jlreq@Kanji{part}}
+  \ifthenelse{\equal{\jlreq@article@type}{article}}{}{\renewcommand{\thechapter}{\jlreq@Kanji{chapter}}}
+  \renewcommand{\thesection}{\jlreq@rensuji{\@arabic\c@section}}
+  \renewcommand{\thesubsection}{\jlreq@rensuji{\@alph\c@subsection}}
+  \renewcommand{\thesubsubsection}{\jlreq@rensuji{\@arabic\c@subsubsection}}
+  \renewcommand{\theparagraph}{(\jlreq@rensuji{\@arabic\c@paragraph})}
+  \renewcommand{\thesubparagraph}{(\jlreq@rensuji{\@arabic\c@subparagraph})}
 
   \ifthenelse{\equal{\jlreq@article@type}{article}}{
     \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE}},indent=4\jlreq@mol,lines=4,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\large}}}
@@ -2336,7 +2340,7 @@
     \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\jlreq@mol}},format={\null\vfill {\Huge\hspace*{2\jlreq@mol}#1#2}\vspace*{2\jlreq@gol}}}
     \NewBlockHeading{chapter}{0}{indent=2\jlreq@mol,lines=6,label_format={第\thechapter 章},font={\huge},after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\Large}}}
     \if@twoside\ModifyHeading{chapter}{allowbreak_if_evenpage=true}\fi
-    \renewcommand{\thechapter}{\Kanji{chapter}}
+    \renewcommand{\thechapter}{\jlreq@Kanji{chapter}}
   }
   \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large}},indent=6\jlreq@mol,lines=3,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
   \if@twoside\ModifyHeading{section}{allowbreak_if_evenpage=true}\fi
@@ -2557,7 +2561,7 @@
 }
 % 4.2.2注3
 \if@tate
-  \renewcommand*{\thefootnote}{\jlreq@open@bracket@before@space\inhibitglue（\rensuji{\@arabic\c@footnote}）\inhibitglue}
+  \renewcommand*{\thefootnote}{\jlreq@open@bracket@before@space\inhibitglue（\jlreq@rensuji{\@arabic\c@footnote}）\inhibitglue}
 \else
   \renewcommand*{\thefootnote}{\arabic{footnote}\hbox{}）\inhibitglue}
 \fi
@@ -3522,39 +3526,6 @@
 \setlength\abovecaptionskip{.5\jlreq@gol}
 \setlength\belowcaptionskip{0pt}
 
-
-% \begin{figure}***\caption{???}\end{figure}を
-% \begin{figure}\layoutfloat{***}\pcaption{???}\end{figure}にする．
-% 
-%\long\def\jlreq@replace@layoutfloat#1\caption{\layoutfloat{#1}\jlreq@caption}
-%\long\def\jlreq@caption#1{\jlreq@ifendmark{#1}{}{\pcaption{#1}\csname\jlreq@replace@layoutfloat@#1\endcsname}}
-%\def\jlreq@modify@float#1{%
-%  \jlreq@saveoriginalcs{#1}
-%  \@namedef{#1}{\@ifnextchar[{\@nameuse{jlreq@float@#1}}{\@nameuse{jlreq@float@@#1}}}
-%  \expandafter\long\expandafter\gdef\csname jlreq@float@#1\endcsname[##1]{%
-%    \csname jlreq@original@#1\endcsname[##1]%
-%    \csname jlreq@process@insertlayoutfloat@#1\endcsname{}%
-%  }
-%  \expandafter\long\expandafter\gdef\csname jlreq@float@@#1\endcsname{%
-%    \csname jlreq@original@#1\endcsname
-%    \csname jlreq@process@insertlayoutfloat@#1\endcsname{}%
-%  }
-%  \expandafter\long\expandafter\gdef\csname jlreq@process@insertlayoutfloat@#1\endcsname ##1##2\end{%
-%    \csname jlreq@checkenvname@#1\endcsname{##1##2}\end
-%  }
-%  \expandafter\long\expandafter\gdef\csname jlreq@checkenvname@#1\endcsname ##1\end##2{%
-%    \def\@tempa{##2}%
-%    \def\@tempb{#1}%
-%    \ifx\@tempa\@tempb
-%      \def\jlreq@next{\jlreq@replace@layoutfloat##1\caption{\jlreq@endmark}\end{##2}}%
-%    \else
-%      \def\jlreq@next{\csname jlreq@process@insertlayoutfloat@#1\endcsname{##1\end{##2}}}%
-%    \fi
-%    \jlreq@next
-%  }
-%}
-%\jlreq@aftercls@addtodeletecs{\jlreq@modify@float}
-
 %.. figure環境
 \newcounter{figure}
 \renewcommand*{\thefigure}{\arabic{figure}}
@@ -3566,11 +3537,6 @@
 \newenvironment{figure*}{\@dblfloat{figure}}{\end@dblfloat}
 \newcommand*{\listfigurename}{図目次}
 \newcommand{\figurename}{図}
-\if@tate
-  \DeclareLayoutCaption{figure}<y>(\floatwidth)[cr]
-\fi
-%\jlreq@modify@float{figure}
-%\jlreq@modify@float{figure*}
 
 %.. table環境
 \newcounter{table}
@@ -3583,11 +3549,6 @@
 \newenvironment{table*}{\@dblfloat{table}}{\end@dblfloat}
 \newcommand{\listtablename}{表目次}
 \newcommand{\tablename}{表}
-\if@tate
-  \DeclareLayoutCaption{table}<y>(\floatwidth)[cr]
-\fi
-%\jlreq@modify@float{table}
-%\jlreq@modify@float{table*}
 
 %. タイトル周り
 \newenvironment{titlepage}{%
@@ -3852,10 +3813,10 @@
 }
 
 \if@tate
-  \renewcommand{\theenumi}{\Kanji{enumi}}
-  \renewcommand{\theenumii}{\rensuji{\@arabic\c@enumii}}
-  \renewcommand{\theenumiii}{\rensuji{\@arabic\c@enumiii}}
-  \renewcommand{\theenumiv}{\rensuji{\@arabic\c@enumiv}}
+  \renewcommand{\theenumi}{\jlreq@Kanji{enumi}}
+  \renewcommand{\theenumii}{\jlreq@rensuji{\@arabic\c@enumii}}
+  \renewcommand{\theenumiii}{\jlreq@rensuji{\@arabic\c@enumiii}}
+  \renewcommand{\theenumiv}{\jlreq@rensuji{\@arabic\c@enumiv}}
 \fi
 \newcommand{\labelenumi}{\theenumi}
 \newcommand{\labelenumii}{\theenumii}
@@ -3943,10 +3904,6 @@
 \setlength\tabcolsep{.5\jlreq@gol}
 \setlength\arraycolsep{.5\jlreq@mol}
 % 4.4.3.j
-%\RequirePackage{tabls} % plextと整合的でない
-%\setlength\extrarulesep{.25\jlreq@gol}
-%\setlength\tablinesep{.25\jlreq@gol}
-%\renewcommand{\arraystretch}{0}
 \setlength\arrayrulewidth{\jlreq@omotekeiwidth} % 4.4.3.c
 \setlength\doublerulesep{2pt}
 \setlength\tabbingsep{\labelsep}
@@ -3970,7 +3927,7 @@
   \protected@write\@auxout
     {\let\label\@gobble \let\index\@gobble \let\glossary\@gobble
       \if@tate
-        \@temptokena{\rensuji{\thepage}}%
+        \@temptokena{\jlreq@rensuji{\thepage}}%
       \else
         \@temptokena{\thepage}%
       \fi
@@ -4159,7 +4116,7 @@
     \setcounter{subsection}{0}%
     \gdef\thesection{\@Alph\c@section}%
     \if@tate
-      \def\thesection{\rensuji{\Alph{section}}}%
+      \def\thesection{\jlreq@rensuji{\Alph{section}}}%
     \else
       \def\thesection{\Alph{section}}%
     \fi
@@ -4168,7 +4125,7 @@
   \appto\appendix{%
     \setcounter{chapter}{0}%
     \if@tate
-      \def\thechapter{\rensuji{\Alph{chapter}}}%
+      \def\thechapter{\jlreq@rensuji{\Alph{chapter}}}%
     \else
       \def\thechapter{\Alph{chapter}}%
     \fi

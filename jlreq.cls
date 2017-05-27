@@ -1799,33 +1799,29 @@
   }%
 }
 
-% {1 = 字下げ}{2 = 字上げ}{3 = 前空き}{4 = 後ろ空き}{5 = トータル行数}{6 = afterindent}{7 = 偶数ページ改ページ}{8 = 出力}
-\long\def\jlreq@startBlockHeading@@@@#1#2#3#4#5#6#7#8{%
+% {1 = 配置(clr)}{2 = 字下げ}{3 = 字上げ}{4 = 前空き}{5 = 後ろ空き}{6 = トータル行数}{7 = afterindent}{8 = 偶数ページ改ページ}{9 = 出力}
+\long\def\jlreq@startBlockHeading@@@@#1#2#3#4#5#6#7#8#9{%
   \if@noskipsec\leavevmode\fi
   \par
-  \jlreq@ifempty{#7}{}{\jlreq@setcurrentpage}%
+  \jlreq@ifempty{#8}{}{\jlreq@setcurrentpage}%
   \setbox\jlreq@tempboxa=\vbox{\noindent
-    \jlreq@tempafalse % 中央寄せするか
-    \ifthenelse{\equal{#1}{center}}{\jlreq@tempatrue}{%
-      \jlreq@ifempty{#1}{}{\hsize=\dimexpr\hsize - #1\relax}%
-    }%
-    \ifthenelse{\equal{#2}{center}}{\jlreq@tempatrue}{%
-      \jlreq@ifempty{#2}{}{\hsize=\dimexpr\hsize - #2\relax}%
-    }%
-    \ifjlreq@tempa\hfil\fi
-    #8}%
+    \ifx#1c\centering\fi
+    \ifx#1r\raggedleft\fi
+    \jlreq@ifempty{#2}{}{\hsize=\dimexpr\hsize - #2\relax}%
+    \jlreq@ifempty{#3}{}{\hsize=\dimexpr\hsize - #3\relax}%
+    #9}%
   % \jlreq@tempskip(a/b)に前/後ろに入れるべき値を入れる
   % #3がa:ならばその値は\jlreq@tempskipaには足さず\jlreq@tempskipcに入れておく
   \jlreq@tempskipc=0pt
-  \jlreq@startBlockHeading@analyzespace#3:\jlreq@endmark
+  \jlreq@startBlockHeading@analyzespace#4:\jlreq@endmark
   \setbox\jlreq@tempboxb=\vbox{　}%
-  \jlreq@ifempty{#5}{%
+  \jlreq@ifempty{#6}{%
     \ifx\jlreq@startBlockHeading@space\@empty\else
       \jlreq@tempskipa=\glueexpr\jlreq@startBlockHeading@space\relax
     \fi
     \jlreq@tempskipb=0pt\relax
   }{%
-    \jlreq@tempskipb=\glueexpr(#5\baselineskip + \baselineskip - \ht\jlreq@tempboxb - \dp\jlreq@tempboxb - \ht\jlreq@tempboxa - \dp\jlreq@tempboxa)/2\relax
+    \jlreq@tempskipb=\glueexpr(#6\baselineskip + \baselineskip - \ht\jlreq@tempboxb - \dp\jlreq@tempboxb - \ht\jlreq@tempboxa - \dp\jlreq@tempboxa)/2\relax
     \ifx\jlreq@startBlockHeading@space\@empty
       \jlreq@tempskipa=\jlreq@tempskipb
     \else
@@ -1838,7 +1834,7 @@
       \fi
       \ifx r\jlreq@startBlockHeading@spacetype
         \jlreq@tempskipa=\glueexpr\jlreq@startBlockHeading@space\relax%
-        \jlreq@tempskipb=\glueexpr(#5\baselineskip + \baselineskip - \ht\jlreq@tempboxb - \dp\jlreq@tempboxb - \ht\jlreq@tempboxa - \dp\jlreq@tempboxa) - \jlreq@startBlockHeading@space\relax
+        \jlreq@tempskipb=\glueexpr(#6\baselineskip + \baselineskip - \ht\jlreq@tempboxb - \dp\jlreq@tempboxb - \ht\jlreq@tempboxa - \dp\jlreq@tempboxa) - \jlreq@startBlockHeading@space\relax
       \fi
     \fi
   }%
@@ -1849,16 +1845,16 @@
   \setbox\jlreq@tempboxa=\vbox{%
     \ifdim\jlreq@tempskipa=0pt\else\vskip\jlreq@tempskipa\fi
     \noindent
-    \ifthenelse{\equal{#1}{center}}{}{\jlreq@ifempty{#1}{}{\hskip #1}}%
+    \jlreq@ifempty{#2}{}{\hskip #2}%
     \box\jlreq@tempboxa}%
   \dp\jlreq@tempboxa=\dimexpr\dp\jlreq@tempboxa + \ht\jlreq@tempboxa\relax
   \ht\jlreq@tempboxa=0pt
 %  \showbox\jlreq@tempboxa
   \box\jlreq@tempboxa
   \par
-  \jlreq@ifempty{#7}{\ifodd\jlreq@currentpage\nobreak\fi}{\nobreak}%
+  \jlreq@ifempty{#8}{\ifodd\jlreq@currentpage\nobreak\fi}{\nobreak}%
   \prevdepth=0pt
-  \jlreq@startBlockHeading@analyzespace#4:\jlreq@endmark
+  \jlreq@startBlockHeading@analyzespace#5:\jlreq@endmark
   \jlreq@tempskipb=\glueexpr\jlreq@tempskipb + \ht\jlreq@tempboxb - \baselineskip\relax
   \ifx\jlreq@startBlockHeading@space\@empty\else
     \ifx a\jlreq@startBlockHeading@spacetype
@@ -1868,7 +1864,7 @@
     \fi
   \fi
   \ifdim\jlreq@tempskipb=0pt\else\vspace{\jlreq@tempskipb}\fi
-  #6%
+  #7%
   \@afterheading
 }
 
@@ -1900,6 +1896,7 @@
     \def\jlreq@subtitle@font{}%
     \def\jlreq@indent{0\jlreq@mol}%
     \def\jlreq@end@indent{0\jlreq@mol}%
+    \def\jlreq@align{l}%
     \edef\jlreq@format{\unexpanded{##1##2##3}}%
     \edef\jlreq@heading@text@format{\unexpanded{##1}}%
     \def\jlreq@pagebreak{}%
@@ -1956,6 +1953,14 @@
       {subtitle_font}{\def\jlreq@subtitle@font{##1}}
       {indent}{\def\jlreq@indent{##1}}
       {end_indent}{\def\jlreq@end@indent{##1}}
+      {align}{%
+        \jlreq@switch{##1}{
+          {left}{\def\jlreq@align{l}}
+          {center}{\def\jlreq@align{c}}
+          {right}{\def\jlreq@align{r}}
+          {\ClassError{jlreq}{Unknown position `##1' in block heading #1}{\@ehc}}
+        }%
+      }
       {format}{\edef\jlreq@format{\unexpanded{##1}}}
       {after_label_space}{\def\jlreq@after@label@space{##1}}
       {second_heading_text_indent}{%
@@ -2063,7 +2068,7 @@
         \noexpand\jlreq@hook@beforeheadings{#1}%
         \expandonce{\jlreq@pagebreak}%
         \unexpanded{\jlreq@startBlockHeading{#1}{#2}}%
-        {{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@end@indent}}{\expandonce{\jlreq@before@space}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@lines}}{\expandonce{\jlreq@afterindent}}{\expandonce{\jlreq@allowbreak@evenpage}}}%
+        {{\expandonce{\jlreq@align}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@end@indent}}{\expandonce{\jlreq@before@space}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@lines}}{\expandonce{\jlreq@afterindent}}{\expandonce{\jlreq@allowbreak@evenpage}}}%
         {%
           {\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@label@format@modified}}%
           {\expandonce{\jlreq@heading@text@format@wlabel}}{\expandonce{\jlreq@heading@text@format@wolabel}}%

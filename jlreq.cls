@@ -1108,10 +1108,12 @@
   \jlreq@setkcatcode{D800,DB80,DC00,E0000,F0000,100000}{15}
   % 範囲6
   \jlreq@setkcatcode{3040,30A0,31F0}{17} % Hiragana,Katakana,Katakana Phonetic Extensions
-  \jlreq@setkcatcode{2460,2E80,3000,3190,3200,3300,3400,4E00,F900,FE10,FE30,FE50,20000,E0100}{16}
+  \jlreq@setkcatcode{2460,3000,3200,3300,FE10,FE30,FE50,E0100}{18} % Enclosed Alphanumerics,CJK Symbols and Punctuation,Enclosed CJK Letters and Months,CJK Compatibility,Vertical Forms,CJK Compatibility Forms,Small Form Variants,Variation Selectors Supplement
+  \jlreq@setkcatcode{2E80,3190,3400,4E00,F900,20000}{16}
   % 範囲7
-  \jlreq@setkcatcode{1100,3130,AC00}{19} % Hangul Jamo,Hangul Compatibility Jamo,Hangul Syllables
-  \jlreq@setkcatcode{2F00,2FF0,3100,31A0,31C0,A000,A490,A830,D7B0}{16}
+  \jlreq@setkcatcode{A000,A490}{18} % Yi Syllables,Yi Radicals
+  \jlreq@setkcatcode{1100,3130,AC00,D7B0}{19} % Hangul Jamo,Hangul Compatibility Jamo,Hangul Syllables,Hangul Jamo Extended-B
+  \jlreq@setkcatcode{2F00,2FF0,3100,31A0,31C0,A830}{16}
 \fi
 
 % フォントサイズを設定

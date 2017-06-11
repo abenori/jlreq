@@ -45,7 +45,7 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - `jlreq_warnings` -> `jlreq_notes` (class option).
     - Move some class options to `\jlreqsetup`.
     - Add some options to `\jlreqsetup`.
-    - paper={<height>,<width>} -> paper={<width>,<height>}.
+    - `paper={<height>,<width>}` -> `paper={<width>,<height>}`.
 
 
 --------------

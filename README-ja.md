@@ -31,6 +31,9 @@
 
 標準的な文書クラスと同じように中身を書くことができますが，次のような命令が追加 / 拡張されています．
 
+### `\jlreqsetup`
+設定用命令です．プリアンブルでしか使えません．文書に対する設定は，クラスオプションとして行うか`\jlreqsetup`を通じて行うかします．どちらで設定するかは設定項目によります．
+
 ### `\section`
 `\section*[running head]{見出し文字列}[副題]`というように，通常の書式に加えて副題を受け付けられるように拡張されています．その他，`\part`（articleのみ），`\chapter`（book/reportのみ），`\subsection`，`\subsubsection`も副題を受け付けます．
 
@@ -38,7 +41,7 @@
 プリアンブルにもかけるようになっています．プリアンブルに書かれた場合は，`\maketitle`とともに出力されます．二段組の場合は，段組にならず概要を出力することができます．
 
 ### `\sidenote`
-傍注（縦組みの場合は脚注）を出力します．デフォルトでは`\footnote`と同様の書式となりますが，クラスオプションに`sidenote_type=symbol`が指定されている場合，その書式は`\sidenote{該当項目}{注}`となります．たとえば
+傍注（縦組みの場合は脚注）を出力します．デフォルトでは`\footnote`と同様の書式となりますが，`\jlreqsetup`で`sidenote_type=symbol`が指定されている場合，その書式は`\sidenote{該当項目}{注}`となります．たとえば
 ```latex
 刊行できる\sidenote{原稿}{印刷などの方法により……}を入手する仕事である．
 ```
@@ -62,11 +65,8 @@
 ### `\jafontsize`
 和文フォントサイズを指定する`\fontsize`です．クラスオプションで`jafontscale=0.9`とされている場合，`\fontsize{9pt}{15pt}`とすると和文フォントのサイズは`8.1pt`となりますが，`\jafontsize{9pt}{15pt}`とすると`9pt`となります．（欧文フォントサイズは`10pt`となる．）なお，第二引数は`\fontsize`の第二引数と全く同じです．
 
-### `\jlreqsetup`
-設定用命令です．プリアンブルでしか使えません．文書に対する設定は，クラスオプションとして行うか`\jlreqsetup`を通じて行うかします．どちらで設定するかは設定項目によります．
-
 ### その他
-* ルビは提供されません．[PXrubrica](https://github.com/zr-tex8r/PXrubrica)またはluatexja-ruby（LuaLaTeX，LuaTeX-jaパッケージに付属）を使うと良いかと思います．
+* ルビや圏点は提供されません．[PXrubrica](https://github.com/zr-tex8r/PXrubrica)またはluatexja-ruby（LuaLaTeX，LuaTeX-jaパッケージに付属）を使うと良いかと思います．
 * 日本語組版処理の要件2.3.2.dによれば，二段組の最後のページの各段の行数は揃えることが望ましいとされていますが，この処理は行われません．`nidanfloat`パッケージを使い，
 ```latex
 \usepackage[balance]{nidanfloat}
@@ -165,14 +165,15 @@
 * `subtitle_format=<命令>`：副題のフォーマットを指定します．`subtitle_format={「#1」}`のようにします．`#1`が副題自身になります．
 
 #### インデント関連
-* `indent=<寸法/center>` 見出し全体の字下げ量を指定します．`indent=center`とすると見出しを中央寄せします．
-* `end_indent=<寸法/center>`：見出し全体の字上げ量を指定します．`end_indent=center`とすると見出しを中央寄せします．
+* `align=[left/center/right]`：見出し位置の横方向の配置場所を指定します．
+* `indent=<寸法>`：見出し全体の字下げ量を指定します．
+* `end_indent=<寸法>`：見出し全体の字上げ量を指定します．
 * `after_label_space=<寸法>`：ラベル後，見出し文字列までの空きを指定します．
-* `second_heading_text_indent=<寸法/{寸法,寸法}>`：見出し文字列の二行目以降のインデントを指定します．一行目の頭を起点として指定しますが，`second_heading_text_indent=*1\zw`のように先頭に`*`をつけるとラベルの頭を起点としての指定になります．（ラベルがない時は一行目の頭が起点．）また，`second_heading_text_indent={<ラベルがある時>,<ラベルがない時>}`という指定をすると，ラベルの有無に応じて値を変更することができます．`<ラベルがある時>`の指定ではやはり`*`を使うことができます．
+* `second_heading_text_indent=[<寸法>/{<寸法>,<寸法>}]`：見出し文字列の二行目以降のインデントを指定します．一行目の頭を起点として指定しますが，`second_heading_text_indent=*1\zw`のように先頭に`*`をつけるとラベルの頭を起点としての指定になります．（ラベルがない時は一行目の頭が起点．）また，`second_heading_text_indent={<ラベルがある時>,<ラベルがない時>}`という指定をすると，ラベルの有無に応じて値を変更することができます．`<ラベルがある時>`の指定ではやはり`*`を使うことができます．
 * `subtitle_indent=<寸法>`：副題のインデント量を指定します．見出し文字列の一行目を起点として指定します．
 
 #### その他
-* `subtitle_break=<true/false>`：見出し文字列と副題の間を改行するか指定します．
+* `subtitle_break=[true/false]`：見出し文字列と副題の間を改行するか指定します．
 * `allowbreak_if_evenpage=[true/false]`：見出しが偶数ページにあった場合，その直後の改ページを許可します．
 * `pagebreak=[clearpage/cleardoublepage/clearcolumn/nariyuki]`：見出し直前の改ページを指定します．それぞれ，改ページ，改丁，改段，なりゆきです．
 * `afterindent=[true/false]`：見出し直後の段落の字下げを行うかを指定します．

@@ -46,7 +46,10 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Move some class options to `\jlreqsetup`.
     - Add some options to `\jlreqsetup`.
     - `paper={<height>,<width>}` -> `paper={<width>,<height>}`.
-
+* 2017-06-11
+    - Stop to load `plext` and `lltjext`.
+    - Add `align` to `\DeclareBlockHeading` and delete `indent=center`, `end_indent=center`.
+    - Change `\kcatcode` for some characters (upLaTeX).
 
 --------------
 Noriyuki Abe

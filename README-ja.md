@@ -266,6 +266,10 @@
     - いくつかのクラスオプションを`\jlreqsetup`に移動．
     - いくつかのオプションを`\jlreqsetup`に追加．
     - クラスオプションの`paper={<縦>,<横>}`を`paper={<横>,<縦>}`に変更．
+* 2017-06-11
+    - `plext` / `lltjext`の読み込みを中止．
+    - `\DeclareBlockHeading`に`align`を追加．`indent=center`や`end_indent=center`を廃止．
+    - 一部の`\kcatcode` (upLaTeX時) を変更．
 
 --------------
 Noriyuki Abe

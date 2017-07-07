@@ -2047,7 +2047,7 @@
     }{#3}%
     % 入力チェック
     \ifthenelse{\equal{\jlreq@column@spanning}{true}}{%
-      \ifnum 0\ifx\jlreq@pagebreak\clearpage1\fi\ifx\jlreq@pagebreak\cleardoublepage1\fi>0\else
+      \ifnum 0\expandafter\ifx\jlreq@pagebreak\clearpage1\fi\expandafter\ifx\jlreq@pagebreak\cleardoublepage1\fi>0\else
         \ClassWarningNoLine{jlreq}{column_spanning can be used only with pagebreak=clearpage or pagebreak=cleardoublepage (in BlockHeading #1)}%
         \def\jlreq@column@spanning{false}%
       \fi

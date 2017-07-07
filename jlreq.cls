@@ -316,18 +316,19 @@
   \fi
 }
 
-% #1が[0-9\.]*に当てはまるか．
-\def\jlreq@iffloat#1{\jlreq@helper@iffloat#1\jlreq@endmark}
-\def\jlreq@helper@chknumlist#1{\ifx#101\fi\ifx#111\fi\ifx#121\fi\ifx#131\fi\ifx#141\fi\ifx#151\fi\ifx#161\fi\ifx#171\fi\ifx#181\fi\ifx#191\fi}
-\def\jlreq@helper@chkfloatlist#1{\jlreq@helper@chknumlist{#1}\ifx#1.1\fi}
-\def\jlreq@helper@iffloat#1{%
-  \jlreq@ifendmark{#1}{\@firstoftwo}%
+\def\jlreq@helper@checktokenlist#1#2{%
+  \jlreq@ifendmark{#2}{\@firstoftwo}%
   {%
-    \ifnum0\jlreq@helper@chkfloatlist{#1}>0 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
-      {\jlreq@helper@iffloat}%
+    \ifnum0#1{#2}>0 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+      {\jlreq@helper@checktokenlist{#1}}%
       {\expandafter\@secondoftwo\jlreq@deleteuntileendmark}%
   }%
 }
+\def\jlreq@helper@chknumlist#1{\ifx#101\fi\ifx#111\fi\ifx#121\fi\ifx#131\fi\ifx#141\fi\ifx#151\fi\ifx#161\fi\ifx#171\fi\ifx#181\fi\ifx#191\fi}
+\def\jlreq@helper@chkfloatlist#1{\jlreq@helper@chknumlist{#1}\ifx#1.1\fi}
+% #1が[0-9\.]*に当てはまるか．
+\def\jlreq@iffloat#1{\jlreq@helper@checktokenlist{\jlreq@helper@chkfloatlist}#1\jlreq@endmark}
+\def\jlreq@ifnumber#1{\jlreq@helper@checktokenlist{\jlreq@helper@chknumlist}#1\jlreq@endmark}
 
 %. オプションの定義
 % オプション処理の際にしか使わない変数（後でそれを元に別の変数を調整する）
@@ -536,6 +537,7 @@
 \let\@removeelement=\jlreq@helper@removeelement
 \ProcessOptionsX\relax
 \let\@removeelement=\jlreq@original@@removeelement
+\let\jlreq@original@@removeelement=\@undefined
 
 \ifjlreq@option@titlepage\else
   \ifthenelse{\equal{\jlreq@article@type}{article}}{\@titlepagefalse}{\@titlepagetrue}
@@ -1456,7 +1458,7 @@
   \jlreq@ifydir{\hbox{#1}}{%
     \hskip 0pt plus 0.25\zw minus 0pt % \rensujiskipは固定値
     \setbox\jlreq@tempboxa=\hbox{\yoko#1}%
-    \@tempdima\ht\jlreq@tempboxa \advance\@tempdima\dp\jlreq@tempboxa
+    \@tempdima=\dimexpr\ht\jlreq@tempboxa+\dp\jlreq@tempboxa\relax
     \vrule\@width\z@ \@height.5\@tempdima \@depth.5\@tempdima
     \hbox to 1\zw{\yoko\hss#1\hss}%
     \hskip 0pt plus 0.25\zw minus 0pt
@@ -1760,11 +1762,12 @@
 }
 
 %.. 別行見出し
-% \jlreq@startBlockHeading{1 = 命令名}{2 = レベル}{3 = スペース関連}{4 =  フォーマット関連}*{見出し}[副題]
+% \jlreq@startBlockHeading{1 = 命令名}{2 = レベル}{3 = スペース関連}{4 =  フォーマット関連}{5 = 全体フォーマット}*{見出し}[副題]
 % 字下げはa:**だと追加する値（ページ行頭には入らない），s:**も追加だがページ行頭でも入る，
 % r:**だとその値に強制する．
-\newcommand{\jlreq@startBlockHeading}[4]{%
+\newcommand{\jlreq@startBlockHeading}[5]{%
   \edef\jlreq@startBlockHeading@format{\unexpanded{#4}}%
+  \edef\jlreq@startBlockHeading@totalformat{\unexpanded{#5}}%
   \jlreq@startBlockHeading@{#1}{#2}{#3}%
 }
 % {1 = 命令}{2 = レベル}{3 = スペース関連}
@@ -1812,8 +1815,12 @@
     \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{\unexpanded{#4}}{\expandonce{\jlreq@tempa}}{\unexpanded{#5}}%
   }%
   \expandafter\jlreq@startBlockHeading@setformat\jlreq@tempb{#6}{#7}%
-  \def\jlreq@do{\jlreq@startBlockHeading@@@@#3}%
-  \expandafter\jlreq@do\expandafter{\jlreq@result}%
+  \long\def\jlreq@do##1{%
+    \def\jlreq@tempa####1{##1}%
+    \edef\jlreq@tempb{\unexpanded{\jlreq@startBlockHeading@@@@#3}{\expandonce{\jlreq@result}}}%
+    \expandafter\jlreq@tempa\expandafter{\jlreq@tempb}%
+  }%
+  \expandafter\jlreq@do\expandafter{\jlreq@startBlockHeading@totalformat}%
 }
 \def\jlreq@startBlockHeading@removecolumn#1:{#1}
 
@@ -1827,19 +1834,19 @@
   }%
 }
 
-% {1 = 配置(clr)}{2 = 字下げ}{3 = 字上げ}{4 = 前空き}{5 = 後ろ空き}{6 = トータル行数}{7 = afterindent}{8 = 偶数ページ改ページ}{9 = 出力}
-\long\def\jlreq@startBlockHeading@@@@#1#2#3#4#5#6#7#8#9{%
+% {1 = 配置(clr)}{2 = 字下げ}{3 = 字上げ}{4 = 前空き}{5 = 後ろ空き}{6 = トータル行数}{7 = 偶数ページ改ページ}{8 = 出力}
+\long\def\jlreq@startBlockHeading@@@@#1#2#3#4#5#6#7#8{%
   \if@noskipsec\leavevmode\fi
   \par
-  \jlreq@ifempty{#8}{}{\jlreq@setcurrentpage}%
+  \jlreq@ifempty{#7}{}{\jlreq@setcurrentpage}%
   \setbox\jlreq@tempboxa=\vbox{\noindent
     \ifx#1c\centering\fi
     \ifx#1r\raggedleft\fi
     \jlreq@ifempty{#2}{}{\hsize=\dimexpr\hsize - #2\relax}%
     \jlreq@ifempty{#3}{}{\hsize=\dimexpr\hsize - #3\relax}%
-    #9}%
+    #8}%
   % \jlreq@tempskip(a/b)に前/後ろに入れるべき値を入れる
-  % #3がa:ならばその値は\jlreq@tempskipaには足さず\jlreq@tempskipcに入れておく
+  % #4がa:ならばその値は\jlreq@tempskipaには足さず\jlreq@tempskipcに入れておく
   \jlreq@tempskipc=0pt
   \jlreq@startBlockHeading@analyzespace#4:\jlreq@endmark
   \setbox\jlreq@tempboxb=\vbox{　}%
@@ -1880,7 +1887,7 @@
 %  \showbox\jlreq@tempboxa
   \box\jlreq@tempboxa
   \par
-  \jlreq@ifempty{#8}{\ifodd\jlreq@currentpage\nobreak\fi}{\nobreak}%
+  \jlreq@ifempty{#7}{\ifodd\jlreq@currentpage\nobreak\fi}{\nobreak}%
   \prevdepth=0pt
   \jlreq@startBlockHeading@analyzespace#5:\jlreq@endmark
   \jlreq@tempskipb=\glueexpr\jlreq@tempskipb + \ht\jlreq@tempboxb - \baselineskip\relax
@@ -1892,8 +1899,6 @@
     \fi
   \fi
   \ifdim\jlreq@tempskipb=0pt\else\vspace{\jlreq@tempskipb}\fi
-  #7%
-  \@afterheading
 }
 
 % \DeclareBlockHeading{命令名}{レベル}{設定}
@@ -1938,7 +1943,8 @@
     \def\jlreq@afterindent{\@afterindenttrue}%
     \def\jlreq@allowbreak@evenpage{*}% 偶数ページでも改ページを許可するならば空，そうでないなら*
     \newif\ifjlreq@subtitle@break\jlreq@subtitle@breaktrue
-    \def\jlreq@subtitle@indent{1\jlreq@mol}%
+    \def\jlreq@subtitle@indent{1\zw}%
+    \def\jlreq@column@spanning{false}%
     % 先頭が*なら\jlreq@resultをtrueにする．*を除いた部分を\jlreq@resultに入れる．
     \def\jlreq@ifstar##1{%
       \jlreq@iffirsttoken{##1}{*}{%
@@ -2022,7 +2028,30 @@
           {nariyuki}{\def\jlreq@pagebreak{}}
         }%
       }
+      % 後々数字を受け付けるようになったりするかもしれないので……
+      {column_spanning}{%
+        \jlreq@tempatrue % validな入力に対してfalse
+        \jlreq@ifempty{##1}{}{
+          \jlreq@ifnumber{##1}{% 数字の時はtrueに回す
+            \jlreq@tempafalse
+            \def\jlreq@column@spanning{true}%
+          }{%
+            \jlreq@switch{##1}{%
+              {true}{\jlreq@tempafalse\def\jlreq@column@spanning{true}}
+              {false}{\jlreq@tempafalse\def\jlreq@column@spanning{false}}
+            }%
+          }%
+        }%
+        \ifjlreq@tempa\ClassWarningNoLine{jlreq}{Invalid input `##1' for column_spanning in BlockHeading #1}\fi
+      }
     }{#3}%
+    % 入力チェック
+    \ifthenelse{\equal{\jlreq@column@spanning}{true}}{%
+      \ifnum 0\ifx\jlreq@pagebreak\clearpage1\fi\ifx\jlreq@pagebreak\cleardoublepage1\fi>0\else
+        \ClassWarningNoLine{jlreq}{column_spanning can be used only with pagebreak=clearpage or pagebreak=cleardoublepage (in BlockHeading #1)}%
+        \def\jlreq@column@spanning{false}%
+      \fi
+    }{}%
     \ifx\jlreq@font\@empty\else
       \edef\jlreq@format{%
         \expandonce{\jlreq@font}\expandonce{\jlreq@format}%
@@ -2090,19 +2119,27 @@
     \ifx\jlreq@before@lines\@empty\else\edef\jlreq@before@space{\expandonce{\jlreq@before@lines}\baselineskip}\fi
     \ifx\jlreq@after@space\@empty\else\edef\jlreq@after@space{r:\expandonce{\jlreq@after@space}}\fi
     \ifx\jlreq@after@lines\@empty\else\edef\jlreq@after@space{a:\expandonce{\jlreq@after@lines}\baselineskip}\fi
+    \if@twocolumn
+      \ifthenelse{\equal{\jlreq@column@spanning}{true}}{%
+        \edef\jlreq@totalformat{\unexpanded{\twocolumn[{##1}]}}%
+      }{%
+        \edef\jlreq@totalformat{\unexpanded{##1}\expandonce{\jlreq@afterindent}\noexpand\@afterheading}%
+      }%
+    \fi
     \edef\jlreq@do{%
       \expandonce{\jlreq@addtodo}%
       \noexpand\edef\expandonce{\csname #1\endcsname}{\noexpand\unexpanded{%
         \noexpand\jlreq@hook@beforeheadings{#1}%
         \expandonce{\jlreq@pagebreak}%
         \unexpanded{\jlreq@startBlockHeading{#1}{#2}}%
-        {{\expandonce{\jlreq@align}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@end@indent}}{\expandonce{\jlreq@before@space}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@lines}}{\expandonce{\jlreq@afterindent}}{\expandonce{\jlreq@allowbreak@evenpage}}}%
+        {{\expandonce{\jlreq@align}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@end@indent}}{\expandonce{\jlreq@before@space}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@lines}}{\expandonce{\jlreq@allowbreak@evenpage}}}%
         {%
           {\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@label@format@modified}}%
           {\expandonce{\jlreq@heading@text@format@wlabel}}{\expandonce{\jlreq@heading@text@format@wolabel}}%
           {\expandonce{\jlreq@subtitle@format@wlabel}}{\expandonce{\jlreq@subtitle@format@wolabel}}%
           {\expandonce{\jlreq@format}}%
         }%
+        {\expandonce{\jlreq@totalformat}}%
       }}%
     }%
   \expandafter\endgroup
@@ -2557,13 +2594,10 @@
 \setlength{\skip\footins}{\dimexpr\baselineskip - 1\jlreq@gol \relax plus 1\jlreq@gol}
 %\setlength{\skip\footins}{0pt}
 % 脚注の前の罫線は表罫で，長さは行長の1/3位（4.2.5.f）
-\edef\jlreq@do{
-  \unexpanded{\renewcommand{\footnoterule}}{%
-    \unexpanded{\hrule width .333\textwidth height \jlreq@omotekeiwidth}%
-    \noexpand\kern\the\jlreq@tempdima
-  }
+\edef\footnoterule{%
+  \unexpanded{\hrule width .333\textwidth height \jlreq@omotekeiwidth}%
+  \noexpand\kern\the\jlreq@tempdima
 }
-\jlreq@do
 
 % インデントの計算：脚注の長さが文字の整数倍になるように字下げする（4.2.5.b）
 {
@@ -4233,11 +4267,11 @@
 \jlreq@saveoriginalcs{@begintheorem}
 \jlreq@saveoriginalcs{@opargbegintheorem}
 \def\@begintheorem#1#2{\topsep=\dimexpr\jlreq@theorem@beforeafter@space\relax
-  \trivlist\labelsep=1\jlreq@mol
+  \trivlist\labelsep=1\zw
   \itemindent=\dimexpr\jlreq@theorem@indent\relax
    \item[\hskip \labelsep{\sffamily\bfseries #1\ #2}]}
 \def\@opargbegintheorem#1#2#3{\topsep=\dimexpr\jlreq@theorem@beforeafter@space\relax
-  \trivlist\labelsep=1\jlreq@mol
+  \trivlist\labelsep=1\zw
   \itemindent=\dimexpr\jlreq@theorem@indent\relax
   \item[\hskip \labelsep{\sffamily\bfseries #1\ #2（#3）}]}
 \AtEndOfPackageFile*{amsthm}{%
@@ -4245,7 +4279,7 @@
   \jlreq@saveoriginalcs{endproof}%
   \edef\jlreq@do{
     \unexpanded{\def\jlreq@proof[#1]}{%
-      \labelsep=1\jlreq@mol
+      \labelsep=1\zw
       \expandonce{\proof[{\normalfont\sffamily\bfseries #1\inhibitglue}\nopunct]}%
     }
   }
@@ -4256,7 +4290,7 @@
   \theoremstyle{jlreq}
 }
 \def\jlreq@setupamsthm{
-  \newtheoremstyle{jlreq}{\dimexpr\jlreq@theorem@beforeafter@space\relax}{\dimexpr\jlreq@theorem@beforeafter@space\relax}{\normalfont}{\dimexpr\jlreq@theorem@indent\relax}{\sffamily\bfseries}{}{1\jlreq@mol}{\thmname{##1}\thmnumber{\ ##2}\thmnote{ (##3)}}
+  \newtheoremstyle{jlreq}{\dimexpr\jlreq@theorem@beforeafter@space\relax}{\dimexpr\jlreq@theorem@beforeafter@space\relax}{\normalfont}{\dimexpr\jlreq@theorem@indent\relax}{\sffamily\bfseries}{}{1\zw}{\thmname{##1}\thmnumber{\ ##2}\thmnote{（##3）}}
 }
 \jlreq@jlreqsetup@add{theorem_beforeafter_space}{
   \def\jlreq@theorem@beforeafter@space{#1}

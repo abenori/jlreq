@@ -2119,12 +2119,9 @@
     \ifx\jlreq@before@lines\@empty\else\edef\jlreq@before@space{\expandonce{\jlreq@before@lines}\baselineskip}\fi
     \ifx\jlreq@after@space\@empty\else\edef\jlreq@after@space{r:\expandonce{\jlreq@after@space}}\fi
     \ifx\jlreq@after@lines\@empty\else\edef\jlreq@after@space{a:\expandonce{\jlreq@after@lines}\baselineskip}\fi
+    \edef\jlreq@totalformat{\unexpanded{##1}\expandonce{\jlreq@afterindent}\noexpand\@afterheading}%
     \if@twocolumn
-      \ifthenelse{\equal{\jlreq@column@spanning}{true}}{%
-        \edef\jlreq@totalformat{\unexpanded{\twocolumn[{##1}]}}%
-      }{%
-        \edef\jlreq@totalformat{\unexpanded{##1}\expandonce{\jlreq@afterindent}\noexpand\@afterheading}%
-      }%
+      \ifthenelse{\equal{\jlreq@column@spanning}{true}}{\edef\jlreq@totalformat{\unexpanded{\twocolumn[{##1}]}}}{}%
     \fi
     \edef\jlreq@do{%
       \expandonce{\jlreq@addtodo}%

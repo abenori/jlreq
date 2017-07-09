@@ -489,7 +489,7 @@
 
 %.. 注
 % 傍注のタイプ
-\newcommand*{\jlreq@option@sidenote@width}{}
+\newcommand*{\jlreq@option@sidenote@width}{0pt}
 \jlreq@aftercls@addtodeletecs{\jlreq@option@sidenote@width}
 \DeclareOptionX{sidenote_width}{\renewcommand*{\jlreq@option@sidenote@width}{#1}}
 
@@ -1527,9 +1527,35 @@
 \fi
 \def\jlreq@speciallength#1{\dimexpr\jlreq@expand@speciallength{#1}\relax}
 
-% 二段組み用パラメータ
+%.. 二段組み用パラメータ
 \setlength{\columnsep}{\jlreq@speciallength{\jlreq@option@column@gap}}
 \setlength{\columnseprule}{0pt}
+
+%.. 傍注（4.2.7）
+\begingroup
+  \footnotesize
+  \setlength{\jlreq@tempdima}{\jlreq@speciallength{\jlreq@option@sidenote@width}}
+  \jlreq@tempdimb=1\zw
+  \divide\jlreq@tempdima\jlreq@tempdimb
+  \multiply\jlreq@tempdima\jlreq@tempdimb
+  \edef\jlreq@do{
+    \noexpand\setlength{\noexpand\marginparwidth}{\the\jlreq@tempdima}
+    \noexpand\setlength{\noexpand\marginparpush}{\the\dimexpr 0.5\zw\relax} % 同上：4.2.7.g
+  }
+  \expandafter\endgroup
+\jlreq@do
+\ifdim\marginparwidth>0pt
+  \setlength{\marginparsep}{2\zw} % フォントサイズ×2（4.2.7：特に問題に～e）
+\else
+  \setlength{\marginparsep}{0pt} % フォントサイズ×2（4.2.7：特に問題に～e）
+\fi
+
+\ifdim\marginparwidth>25\zw\relax
+  \jlreq@note{並列注の字詰め方向の長さ（行長）は，15字から20字くらいである．ケースによっては25字程度にする場合もある (4.2.7)．}
+\fi
+% 縦書きの時は脚注に固定
+% (TODO: 頭注）
+\if@tate\@mparswitchfalse\fi
 
 % \textwidthと\textheightのデフォルト値は縦横ともに0.75倍（調整が入る）．
 %.. \textwidth：文字送り方向の行長
@@ -1543,7 +1569,10 @@
     \setlength{\textwidth}{0.75\paperwidth}
   \fi
   \if@twocolumn
+    \addtolength{\textwidth}{\dimexpr-2\marginparwidth - 2\marginparsep\relax}
     \setlength{\textwidth}{\dimexpr(\textwidth - \columnsep)/2\relax}
+  \else
+    \addtolength{\textwidth}{\dimexpr-\marginparwidth - \marginparsep\relax}
   \fi
   \divide\textwidth\@tempdima
 \else
@@ -1595,11 +1624,18 @@
   \if@tate
     \setlength{\oddsidemargin}{\dimexpr\paperwidth - \textheight + \topskip\relax}
   \else
-    \setlength{\oddsidemargin}{\dimexpr\paperwidth - \textwidth\relax}
+    \if@twocolumn
+      \setlength{\oddsidemargin}{\dimexpr\paperwidth - \textwidth\relax}
+    \else
+      \setlength{\oddsidemargin}{\dimexpr\paperwidth - \textwidth - \marginparsep - \marginparwidth\relax}
+    \fi
   \fi
   \setlength{\oddsidemargin}{.5\oddsidemargin}
-  \addtolength{\oddsidemargin}{-1in}
-  \setlength{\evensidemargin}{\oddsidemargin}
+  \if@twocolumn
+    \setlength{\evensidemargin}{\oddsidemargin}
+  \else
+    \setlength{\evensidemargin}{\dimexpr\oddsidemargin + \marginparsep + \marginparwidth\relax}
+  \fi
 \else
   \if@tate
     \setlength{\evensidemargin}{\jlreq@speciallength{\jlreq@option@gutter}}
@@ -1607,11 +1643,14 @@
     \addtolength{\evensidemargin}{\Cdp}
   \else
     \setlength{\oddsidemargin}{\jlreq@speciallength{\jlreq@option@gutter}}
+    \if@twocolumn
+      \addtolength{\oddsidemargin}{\dimexpr\marginparsep + \marginparwidth\relax}
+    \fi
     \setlength{\evensidemargin}{\dimexpr\paperwidth - \textwidth - \oddsidemargin\relax}
   \fi
-  \addtolength{\oddsidemargin}{-1in}
-  \addtolength{\evensidemargin}{-1in}
 \fi
+\addtolength{\oddsidemargin}{-1in}
+\addtolength{\evensidemargin}{-1in}
 
 %.. 縦
 % \topmarginに全体の頭からテキストの頭までの長さを入れる
@@ -1619,6 +1658,9 @@
 \def\jlreq@settopmarginbyhead#1{
   \if@tate
     \setlength{\topmargin}{\dimexpr #1 - \headsep - \headheight - 1in\relax}
+    \if@twocolumn
+      \addtolength{\topmargin}{\dimexpr\marginparwidth + \marginparsep\relax}
+    \fi
     \jlreq@note{縦組の場合は地の空き量を指定する (2.4.1.b)．}
   \else
     \setlength{\topmargin}{\dimexpr #1 - \headsep - \headheight - 1in - \topskip + \Cht\relax}
@@ -1628,7 +1670,7 @@
 % 地の値から
 \def\jlreq@settopmarginbyfoot#1{
   \if@tate
-    \setlength{\topmargin}{\dimexpr\paperheight - \textwidth - \headsep - \headheight - 1in - #1\relax}
+    \setlength{\topmargin}{\dimexpr\paperheight - \textwidth - \headsep - \headheight - 1in - #1 - \marginparsep - \marginparwidth\relax}
   \else
     \jlreq@note{横組の場合は天の空き量を指定する (2.4.1.b)．}
     \setlength{\topmargin}{\dimexpr\paperheight - \textheight + \topskip - 1\zh - \headsep - \headheight - 1in - #1\relax}
@@ -1638,7 +1680,11 @@
 \ifx\jlreq@option@head@space\@empty
   \ifx\jlreq@option@foot@space\@empty
     \if@tate
-      \jlreq@settopmarginbyfoot{\dimexpr(\paperheight - \textwidth)/2\relax}
+      \if@twocolumn
+        \jlreq@settopmarginbyfoot{\dimexpr(\paperheight - \textwidth - 2\marginparwidth - 2\marginparsep)/2\relax}
+      \else
+        \jlreq@settopmarginbyfoot{\dimexpr(\paperheight - \textwidth - \marginparwidth - \marginparsep)/2\relax}
+      \fi
     \else
       \jlreq@settopmarginbyhead{\dimexpr(\paperheight - (\textheight - \topskip + 1\zh))/2\relax}
     \fi
@@ -1816,7 +1862,7 @@
   }%
   \expandafter\jlreq@startBlockHeading@setformat\jlreq@tempb{#6}{#7}%
   \long\def\jlreq@do##1{%
-    \def\jlreq@tempa####1{##1}%
+    \long\def\jlreq@tempa####1{##1}%
     \edef\jlreq@tempb{\unexpanded{\jlreq@startBlockHeading@@@@#3}{\expandonce{\jlreq@result}}}%
     \expandafter\jlreq@tempa\expandafter{\jlreq@tempb}%
   }%
@@ -2783,48 +2829,6 @@
 \jlreqsetup{endnote_position=headings}
 \AtEndDocument{\theendnotes}
 
-%.. 傍注（4.2.7）
-\setlength{\marginparsep}{2\jlreq@mol} % フォントサイズ×2（4.2.7：特に問題に～e）
-{%
-  \footnotesize
-  % \jlreq@tempdimaにマージン最小値を入れる
-  \if@tate
-    \setlength{\jlreq@tempdima}{\dimexpr\paperheight - \topmargin - \headheight - \headsep - \voffset - 1in - \textwidth\relax}
-    \if@twocolumn
-      \ifdim\jlreq@tempdima>\dimexpr\paperheight - \jlreq@tempdima - \textwidth\relax
-        \setlength{\jlreq@tempdima}{\dimexpr\paperheight - \jlreq@tempdima - \textwidth\relax}
-      \fi
-    \fi
-  \else
-    \setlength{\jlreq@tempdima}{\dimexpr \paperwidth - \textwidth - 1in - \oddsidemargin - \marginparsep\relax}
-    \if@twocolumn
-      \ifdim\jlreq@tempdima>\dimexpr\oddsidemargin + 1in - \marginparsep\relax
-        \setlength{\jlreq@tempdima}{\dimexpr\oddsidemargin + 1in - \marginparsep\relax}
-      \fi
-    \fi
-  \fi
-  \ifx\jlreq@option@sidenote@width\@empty
-    \setlength{\marginparwidth}{\dimexpr\jlreq@tempdima - 2\zw - \marginparsep\relax}
-    % 4.7.2.b: 並列中の行長は15文から20字程度
-    \ifdim\marginparwidth>20\jlreq@mol
-      \global\marginparwidth=20\jlreq@mol
-    \fi
-  \else
-    \setlength{\marginparwidth}{\jlreq@speciallength{\jlreq@option@sidenote@width}}
-    \ifnum\marginparwidth>\jlreq@tempdima
-      \ClassWarningNoLine{jlreq}{sidenote_width is greater than the width of the margin}
-    \fi
-  \fi
-  \@tempdima=1\jlreq@mol
-  \global\divide\marginparwidth\@tempdima
-  \global\multiply\marginparwidth\@tempdima
-  \global\setlength{\marginparpush}{.5\@tempdima} % 同上：g
-}
-
-\ifdim\marginparwidth>25\zw\relax
-  \jlreq@note{並列注の字詰め方向の長さ（行長）は，15字から20字くらいである．ケースによっては25字程度にする場合もある (4.2.7)．}
-\fi
-
 \def\jlreq@sidenotemarkname{@thefnmark}% 合印用番号を一時的に入れるマクロ名
 
 % (1) \footnoteとかと同じ形式 sidenote_type=number
@@ -2834,93 +2838,97 @@
 
 % (1) では\sidenote[]{}を定義
 % (2) では\sidenote{見出し}{注中身}を定義
-\long\def\@sidenotetext#1{%
-  \marginpar{\reset@font\footnotesize
-    \color@begingroup
-    \@makesidetext{#1}%
-    \color@endgroup
-  }%
-}
-\jlreq@setdefaultnotemark\@sidenotemark\@makesidemark
-\def\jlreq@sidenotecounter{footnote}% 傍注用のカウンタ名
-\jlreq@jlreqsetup@add{sidenote_type}[number,symbol]{\def\jlreq@sidenote@type{#1}}
-\jlreqsetup{sidenote_type=number}
-\jlreq@jlreqsetup@addtofinally{
-  \ifthenelse{\equal{\jlreq@sidenote@type}{number}}{
-    \def\sidenote{\jlreq@hook@prenote\@ifnextchar[{\jlreq@sidenote}{\jlreq@sidenote[]}}
-    \def\sidenotemark{\jlreq@hook@prenote\@ifnextchar[{\jlreq@sidenotemark}{\jlreq@sidenotemark[]}}
-    \def\sidenotetext{\@ifnextchar[{\jlreq@sidenotetext}{\jlreq@sidenotetext[]}}
-    \long\def\jlreq@sidenote[#1]#2{\jlreq@sidenotemark[#1]\@sidenotetext{#2}\jlreq@hook@postnote}
-    \def\jlreq@sidenotemark[#1]{%
-      \jlreq@ifempty{#1}{%
-        \stepcounter{\jlreq@sidenotecounter}%
-        \expandafter\protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
-      }{%
-        \begingroup
-          \csname c@\jlreq@sidenotecounter\endcsname #1\relax
-          \expandafter\unrestored@protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
-        \endgroup
-      }%
-      \@sidenotemark
-      \jlreq@hook@postnote
-    }
-    \long\def\jlreq@sidenotetext[#1]#2{%
-      \jlreq@ifempty{#1}{%
-        \expandafter\protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
-      }{%
-       \begingroup
-         \csname c@\jlreq@sidenotecounter\endcsname#1\relax
-         \expandafter\unrestored@protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
-       \endgroup
-      }%
-      \@sidenotetext{#2}%
-    }
-    % \hspace{0.5\jlreq@mol}の部分は二分空きにする例もある（4.2.7.g）
-    \ifx l\jlreq@engine
-      \long\def\@makesidetext#1{\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
-    \else
-      % thefootnote = \inhibitglue （...だと\inhibitglueが効かないので空白を挟む
-      \long\def\@makesidetext#1{　\kern-1\zw\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
-    \fi
-    \def\@makesidemark{\@makefnmark}
-  }{% sidenote_type = symbol
-    \def\sidenote{\jlreq@sidenote}
-    \def\sidenotemark{\jlreq@sidenotemark}
-    \def\sidenotetext{\jlreq@sidenotetext}
-    \long\def\jlreq@sidenote#1#2{\jlreq@sidenotemark{#1}\jlreq@sidenotetext{#1}{#2}}
-    \edef\jlreq@sidenotemark#1{%
-      {\unexpanded{\reset@font\jlreq@sidenote@keywordfont}#1}%
-      \noexpand\jlreq@hook@prenote
-      \ifx\jlreq@sidenote@defaultmark\@empty\else
-        \expandafter\edef\expandonce{\csname\jlreq@sidenotemarkname\endcsname}{\expandonce{\jlreq@sidenote@defaultmark}}%
-        \noexpand\@sidenotemark
-      \fi
-    }
-    % カスタマイズできるべき？
-    \long\def\jlreq@sidenotetext#1#2{%
-      \expandafter\def\csname\jlreq@sidenotemarkname\endcsname{\inhibitglue\null{\reset@font\sffamily\bfseries\inhibitglue #1}}%
-      \@sidenotetext{#2}%
-    }
-    \long\def\@makesidetext#1{{\sffamily\bfseries\csname\jlreq@sidenotemarkname\endcsname}\hspace*{1\jlreq@mol}#1}
-    \def\@makesidemark{\@makefnmark}
-
-    \edef\jlreq@do{
-      % \jlreq@lastnodecharの仕込みはすんでいる
-      \unexpanded{\long\def\sidenote#1#2}{%
-        \expandonce{\sidenote{#1}{#2}}%
-        \noexpand\jlreq@hook@postnote
-      }
-      \unexpanded{\long\def\sidenotemark#1}{%
-        \expandonce{\sidenotemark{#1}}%
-        \noexpand\jlreq@hook@postnote
-      }
-    }
-    \jlreq@do
+% \marginparwidth>0ptの時のみ定義する
+\ifdim\marginparwidth>0pt \expandafter\@firstofone\else\expandafter\@gobble\fi
+{
+  \long\def\@sidenotetext#1{%
+    \marginpar{\reset@font\footnotesize
+      \color@begingroup
+      \@makesidetext{#1}%
+      \color@endgroup
+    }%
   }
+  \jlreq@setdefaultnotemark\@sidenotemark\@makesidemark
+  \def\jlreq@sidenotecounter{footnote}% 傍注用のカウンタ名
+  \jlreq@jlreqsetup@add{sidenote_type}[number,symbol]{\def\jlreq@sidenote@type{#1}}
+  \jlreqsetup{sidenote_type=number}
+  \jlreq@jlreqsetup@addtofinally{
+    \ifthenelse{\equal{\jlreq@sidenote@type}{number}}{
+      \def\sidenote{\jlreq@hook@prenote\@ifnextchar[{\jlreq@sidenote}{\jlreq@sidenote[]}}
+      \def\sidenotemark{\jlreq@hook@prenote\@ifnextchar[{\jlreq@sidenotemark}{\jlreq@sidenotemark[]}}
+      \def\sidenotetext{\@ifnextchar[{\jlreq@sidenotetext}{\jlreq@sidenotetext[]}}
+      \long\def\jlreq@sidenote[#1]#2{\jlreq@sidenotemark[#1]\@sidenotetext{#2}\jlreq@hook@postnote}
+      \def\jlreq@sidenotemark[#1]{%
+        \jlreq@ifempty{#1}{%
+          \stepcounter{\jlreq@sidenotecounter}%
+          \expandafter\protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
+        }{%
+          \begingroup
+            \csname c@\jlreq@sidenotecounter\endcsname #1\relax
+            \expandafter\unrestored@protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
+          \endgroup
+        }%
+        \@sidenotemark
+        \jlreq@hook@postnote
+      }
+      \long\def\jlreq@sidenotetext[#1]#2{%
+        \jlreq@ifempty{#1}{%
+          \expandafter\protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
+        }{%
+         \begingroup
+           \csname c@\jlreq@sidenotecounter\endcsname#1\relax
+           \expandafter\unrestored@protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
+         \endgroup
+        }%
+        \@sidenotetext{#2}%
+      }
+      % \hspace{0.5\jlreq@mol}の部分は二分空きにする例もある（4.2.7.g）
+      \ifx l\jlreq@engine
+        \long\def\@makesidetext#1{\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
+      \else
+        % thefootnote = \inhibitglue （...だと\inhibitglueが効かないので空白を挟む
+        \long\def\@makesidetext#1{　\kern-1\zw\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
+      \fi
+      \def\@makesidemark{\@makefnmark}
+    }{% sidenote_type = symbol
+      \def\sidenote{\jlreq@sidenote}
+      \def\sidenotemark{\jlreq@sidenotemark}
+      \def\sidenotetext{\jlreq@sidenotetext}
+      \long\def\jlreq@sidenote#1#2{\jlreq@sidenotemark{#1}\jlreq@sidenotetext{#1}{#2}}
+      \edef\jlreq@sidenotemark#1{%
+        {\unexpanded{\reset@font\jlreq@sidenote@keywordfont}#1}%
+        \noexpand\jlreq@hook@prenote
+        \ifx\jlreq@sidenote@defaultmark\@empty\else
+          \expandafter\edef\expandonce{\csname\jlreq@sidenotemarkname\endcsname}{\expandonce{\jlreq@sidenote@defaultmark}}%
+          \noexpand\@sidenotemark
+        \fi
+      }
+      % カスタマイズできるべき？
+      \long\def\jlreq@sidenotetext#1#2{%
+        \expandafter\def\csname\jlreq@sidenotemarkname\endcsname{\inhibitglue\null{\reset@font\sffamily\bfseries\inhibitglue #1}}%
+        \@sidenotetext{#2}%
+      }
+      \long\def\@makesidetext#1{{\sffamily\bfseries\csname\jlreq@sidenotemarkname\endcsname}\hspace*{1\jlreq@mol}#1}
+      \def\@makesidemark{\@makefnmark}
+
+      \edef\jlreq@do{
+        % \jlreq@lastnodecharの仕込みはすんでいる
+        \unexpanded{\long\def\sidenote#1#2}{%
+          \expandonce{\sidenote{#1}{#2}}%
+          \noexpand\jlreq@hook@postnote
+        }
+        \unexpanded{\long\def\sidenotemark#1}{%
+          \expandonce{\sidenotemark{#1}}%
+          \noexpand\jlreq@hook@postnote
+        }
+      }
+      \jlreq@do
+    }
+  }
+  \jlreq@jlreqsetup@add{sidenote_symbol}{\def\jlreq@sidenote@defaultmark{#1}}
+  \jlreq@jlreqsetup@add{sidenote_keyword_font}{\def\jlreq@sidenote@keywordfont{#1}}
+  \jlreqsetup{sidenote_symbol=＊,sidenote_keyword_font={}}
 }
-\jlreq@jlreqsetup@add{sidenote_symbol}{\def\jlreq@sidenote@defaultmark{#1}}
-\jlreq@jlreqsetup@add{sidenote_keyword_font}{\def\jlreq@sidenote@keywordfont{#1}}
-\jlreqsetup{sidenote_symbol=＊,sidenote_keyword_font={}}
 
 %.. 割注（3.4）
 \def\inlinenotesize{.6\jlreq@jafontsize} % 割注の文字サイズ

@@ -489,9 +489,9 @@
 
 %.. 注
 % 傍注のタイプ
-\newcommand*{\jlreq@option@sidenote@width}{0pt}
-\jlreq@aftercls@addtodeletecs{\jlreq@option@sidenote@width}
-\DeclareOptionX{sidenote_width}{\renewcommand*{\jlreq@option@sidenote@width}{#1}}
+\newcommand*{\jlreq@option@sidenote@length}{0pt}
+\jlreq@aftercls@addtodeletecs{\jlreq@option@sidenote@length}
+\DeclareOptionX{sidenote_length}{\renewcommand*{\jlreq@option@sidenote@length}{#1}}
 
 %.. もろもろ
 \newif\if@restonecol \@restonecolfalse
@@ -1534,7 +1534,7 @@
 %.. 傍注（4.2.7）
 \begingroup
   \footnotesize
-  \setlength{\jlreq@tempdima}{\jlreq@speciallength{\jlreq@option@sidenote@width}}
+  \setlength{\jlreq@tempdima}{\jlreq@speciallength{\jlreq@option@sidenote@length}}
   \jlreq@tempdimb=1\zw
   \divide\jlreq@tempdima\jlreq@tempdimb
   \multiply\jlreq@tempdima\jlreq@tempdimb
@@ -2093,10 +2093,10 @@
     }{#3}%
     % 入力チェック
     \ifthenelse{\equal{\jlreq@column@spanning}{true}}{%
-      \ifnum 0\expandafter\ifx\jlreq@pagebreak\clearpage1\fi\expandafter\ifx\jlreq@pagebreak\cleardoublepage1\fi>0\else
+      \expandafter\ifx\jlreq@pagebreak\clearpage\relax\else\expandafter\ifx\jlreq@pagebreak\cleardoublepage\relax\else
         \ClassWarningNoLine{jlreq}{column_spanning can be used only with pagebreak=clearpage or pagebreak=cleardoublepage (in BlockHeading #1)}%
         \def\jlreq@column@spanning{false}%
-      \fi
+      \fi\fi
     }{}%
     \ifx\jlreq@font\@empty\else
       \edef\jlreq@format{%

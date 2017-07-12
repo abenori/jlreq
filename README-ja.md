@@ -102,7 +102,7 @@
 * `linegap=<寸法;Q,zw,zh>`：行間．
 * `headfoot_sidemargin=<寸法;zw,zh>`：柱やノンブルの左右の空き．
 * `column_gap=<寸法;zw,zh>`：段間（`twocolumn`指定時のみ）．
-* `sidenote_width=<寸法;zw,zh>`：傍注の幅を指定します．
+* `sidenote_length=<寸法;zw,zh>`：傍注の幅を指定します．
 
 ### 組み方
 クラスオプションです．

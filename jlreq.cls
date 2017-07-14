@@ -463,8 +463,10 @@
 %.. 柱とノンブル
 \newcommand*{\jlreq@option@headfoot@verticalpos}{}
 \jlreq@aftercls@addtodeletecs{\jlreq@option@headfoot@verticalpos}
+% 本文とヘッダ/フッタの間の空き
 \DeclareOptionX{headfoot_verticalposition}{\renewcommand*{\jlreq@option@headfoot@verticalpos}{#1}}
 \newcommand*{\jlreq@headfoot@sidemargin}{0pt}
+% 柱やノンブルの左右の空き
 \DeclareOptionX{headfoot_sidemargin}{\renewcommand*{\jlreq@headfoot@sidemargin}{#1}}
 
 %.. 段間
@@ -1631,7 +1633,7 @@
     \fi
   \fi
   \setlength{\oddsidemargin}{.5\oddsidemargin}
-  \if@twocolumn
+  \ifnum0\if@twocolumn1\fi\if@tate1\fi>0
     \setlength{\evensidemargin}{\oddsidemargin}
   \else
     \setlength{\evensidemargin}{\dimexpr\oddsidemargin + \marginparsep + \marginparwidth\relax}
@@ -3174,7 +3176,6 @@
 
 
 %. ページスタイル．
-% とりあえず脇に縦書きで配置するのは無視する．
 % メモ：
 % 2.6.1.cの後半が前半と整合的でないように見える……
 % 柱：両柱と片柱（2.6.3）
@@ -3243,7 +3244,7 @@
     % 柱とノンブルの間
     \def\jlreq@gap{1.5\zw}%
     \newif\ifjlreq@clearmark\jlreq@clearmarktrue
-    \newif\ifjlreq@pstate\jlreq@pstatefalse
+    \newif\ifjlreq@pstate\jlreq@pstatefalse % PageStyleTATE
     \jlreq@parsekeyval[PageStyle:#1]{
       *{tate}{\jlreq@pstatetrue}
       *{yoko}{\jlreq@pstatefalse}
@@ -3266,7 +3267,7 @@
     % * \jlreq@[even/odd]@running@headを\leftmarkや\rightmarkに書き換える
     % * \jlreq@markdefinitionに\***markを定義するマクロを入れる．
     % また\jlreq@[even/odd]@running@head@levelに見出しのレベルを入れる．
-    % \jlreq@makemark{odd/even}running_headの中身\jlreq@endmark
+    % \jlreq@makemark{odd/even}running_headの中身\jlreq@endmark\jlreq@endmark
     \def\jlreq@makemark##1##2##3\jlreq@endmark{%
       \ifx_##2%
         \ifthenelse{\equal{##1}{even}}{%
@@ -3290,8 +3291,7 @@
         \ifx\jlreq@result\@undefined
           \edef\jlreq@result{\expandonce{\csname the##3\endcsname}\noexpand\quad\unexpanded{####1}}%
         \fi
-        % どっちを\markbothにしてどっちを\markrightにするかは縦組か横組かに依る
-        \ifthenelse{\equal{##1}{\if@tate odd\else even\fi}}{%
+        \ifthenelse{\equal{##1}{even}}{%
           \def\jlreq@markcommand{\markboth}%
           \def\jlreq@markcommandafter{{}}%
         }{%
@@ -3388,11 +3388,11 @@
       \let\jlreq@oddfoot=\@empty
       \let\jlreq@evenfoot=\@empty
     }{% yoko
+      % \jlreq@nombre@positoinと\jlreq@running@head@positionの中身を{bottom}{center}みたいに変換する．
       \ifx\jlreq@nombre@position\@empty\def\jlreq@nombre@position{bottom-center}\fi
       \expandafter\jlreq@pagestyle@parse@position\expandafter{\jlreq@nombre@position}{\jlreq@nombre@position}{{bottom}{center}}%
       \ifx\jlreq@running@head@position\@empty\def\jlreq@running@head@position{top-center}\fi
       \expandafter\jlreq@pagestyle@parse@position\expandafter{\jlreq@running@head@position}{\jlreq@running@head@position}{{top}{center}}%
-      \ifx\jlreq@running@head@position\@empty\def\jlreq@running@head@position{{top}{center}}\fi
       \ifthenelse{\(
         \boolean{@tate} \AND \(
           \equal{\expandafter\@secondoftwo\jlreq@nombre@position}{right} \OR
@@ -3462,10 +3462,10 @@
       \def\jlreq@odd@running@head@top{}\def\jlreq@odd@running@head@bottom{}%
       \expandafter\edef\csname jlreq@odd@running@head@\expandafter\@firstoftwo\jlreq@running@head@position\endcsname{\expandonce{\jlreq@odd@running@head}}%
       % \@oddheadを定義
-      \edef\jlreq@do{\unexpanded{\jlreq@setheadfoot{\expandafter\@secondoftwo\jlreq@nombre@position}}{\expandonce{\jlreq@nombre@top}}\unexpanded{{\expandafter\@secondoftwo\jlreq@running@head@position}}{\expandonce{\jlreq@odd@running@head@top}}}%
+      \edef\jlreq@do{\noexpand\jlreq@setheadfoot{\expandafter\@secondoftwo\jlreq@nombre@position}{\expandonce{\jlreq@nombre@top}}{\expandafter\@secondoftwo\jlreq@running@head@position}{\expandonce{\jlreq@odd@running@head@top}}}%
       \jlreq@do\let\jlreq@oddhead=\jlreq@result
       % \@oddfootを定義
-      \edef\jlreq@do{\unexpanded{\jlreq@setheadfoot{\expandafter\@secondoftwo\jlreq@nombre@position}}{\expandonce{\jlreq@nombre@bottom}}\unexpanded{{\expandafter\@secondoftwo\jlreq@running@head@position}}{\expandonce{\jlreq@odd@running@head@bottom}}}%
+      \edef\jlreq@do{\noexpand\jlreq@setheadfoot{\expandafter\@secondoftwo\jlreq@nombre@position}{\expandonce{\jlreq@nombre@bottom}}{\expandafter\@secondoftwo\jlreq@running@head@position}{\expandonce{\jlreq@odd@running@head@bottom}}}%
       \jlreq@do\let\jlreq@oddfoot=\jlreq@result
       % ##1 = {}{}の後ろを逆にする
       \def\getoppositeposition##1{%
@@ -3492,10 +3492,64 @@
       \edef\jlreq@do{\unexpanded{\jlreq@setheadfoot{\expandafter\@secondoftwo\jlreq@nombre@position}}{\expandonce{\jlreq@nombre@bottom}}\unexpanded{{\expandafter\@secondoftwo\jlreq@running@head@position}}{\expandonce{\jlreq@even@running@head@bottom}}}%
       \jlreq@do\let\jlreq@evenfoot=\jlreq@result
     }%
+    % 傍注がある場合はその分を調整
+    % \hbox to ***{+++}というのがあるが，+++は空でなければ\hfillを含むのでUndefullすることはない．
+    \ifdim\marginparwidth>0pt \ifjlreq@pstate\else
+      \if@tate
+        \def\jlreq@do##1{%
+          \ifx##1\@empty\else
+            \edef##1{%
+              \unexpanded{\raise-\dimexpr\marginparwidth+\marginparsep\relax\hbox to \textwidth}{\expandonce{##1}}%
+            }%
+          \fi
+        }%
+        \jlreq@do\jlreq@oddfoot
+        \jlreq@do\jlreq@evenfoot
+      \else
+        \if@twocolumn
+          \def\jlreq@do##1{%
+            \ifx##1\@empty\else
+              \edef##1{%
+                \unexpanded{\hspace*{-\dimexpr\marginparwidth+\marginparsep\relax}}%
+                \noexpand\hbox to \unexpanded{\dimexpr\textwidth + 2\marginparwidth + 2\marginparsep\relax}{\expandonce{##1}}%
+                \unexpanded{\hspace*{-\dimexpr\marginparwidth+\marginparsep\relax}}%
+              }%
+            \fi
+          }%
+          \jlreq@do\jlreq@oddhead
+          \jlreq@do\jlreq@oddfoot
+          \jlreq@do\jlreq@evenhead
+          \jlreq@do\jlreq@evenfoot
+        \else
+          % 奇数ページ
+          \def\jlreq@do##1{%
+            \ifx##1\@empty\else
+              \edef##1{%
+                \noexpand\hbox to \unexpanded{\dimexpr\textwidth + \marginparwidth + \marginparsep\relax}{\expandonce{##1}}%
+                \unexpanded{\hspace*{-\dimexpr\marginparwidth+\marginparsep\relax}}%
+              }%
+            \fi
+          }%
+          \jlreq@do\jlreq@oddhead
+          \jlreq@do\jlreq@oddfoot
+          % 偶数ページ
+          \def\jlreq@do##1{%
+            \ifx##1\@empty\else
+              \edef##1{%
+                \unexpanded{\hspace*{-\dimexpr\marginparwidth+\marginparsep\relax}}%
+                \noexpand\hbox to \unexpanded{\dimexpr\textwidth + \marginparwidth + \marginparsep\relax}{\expandonce{##1}}%
+              }%
+            \fi
+          }%
+          \jlreq@do\jlreq@evenhead
+          \jlreq@do\jlreq@evenfoot
+        \fi
+      \fi
+    \fi\fi
     \edef\jlreq@do{%
       \noexpand\def\expandonce{\csname ps@#1\endcsname}{%
         \unexpanded{\def\jlreq@current@pagestyle{#1}}%
-        \ifjlreq@clearmark\noexpand\jlreq@heading@execmacro@toallheadings\noexpand\jlreq@clearheadingmarks\fi
+        \ifjlreq@clearmark\unexpanded{\jlreq@heading@execmacro@toallheadings\jlreq@clearheadingmarks}\fi
         \unexpanded{\let\@mkboth=\markboth}%
         \unexpanded{\def\@oddhead}{\expandonce{\jlreq@oddhead}}%
         \unexpanded{\def\@oddfoot}{\expandonce{\jlreq@oddfoot}}%

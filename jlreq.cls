@@ -1193,6 +1193,11 @@
 \DeclareRobustCommand*{\mit}{\@fontswitch\relax\mathnormal}
 
 %.. 和文
+% 必要になりそうなリスト
+% 開き括弧（文字クラス1）
+\edef\jlreq@charlist@openingbrackets{（〔［｛〈《「『【‘“\ifx p\jlreq@engine\else ｟〘〖«〝\fi}
+% 区切り約物（文字クラス4）
+\edef\jlreq@charlist@dividingpunctuationmarks{！？\ifx p\jlreq@engine\else ‼⁇⁈⁉\fi}
 % JFMに関連する設定
 \ifx l\jlreq@engine
   % この値は後でjfm-jlreq内で読む
@@ -1215,13 +1220,10 @@
 \else
   % 非LuaTeXの場合はJFMの入れ替えと\everyparでの処理で対処．
   % 行頭括弧に対して\inhibitglueを入れたりする命令を作る
-  \def\jlreq@openbreackets@list{（〔［｛〈《「『【‘“}
-  \ifx p\jlreq@engine\else\edef\jlreq@openbreackets@list{\jlreq@openbreackets@list ｟〘〖«〝}\fi
-  \jlreq@aftercls@addtodeletecs{\jlreq@openbreackets@list}
-  % \jlreq@openbreackets@listの各括弧に対して，\ifx\jlreq@nextchar 「1\fiみたいなのが並んだのを作る
+  % \jlreq@charlist@openingbracketsの各括弧に対して，\ifx\jlreq@nextchar 「1\fiみたいなのが並んだのを作る
   \def\jlreq@tempa{}
   \def\jlreq@do#1{\jlreq@ifendmark{#1}{}{\appto\jlreq@tempa{\ifx\jlreq@nextchar#11\fi}\jlreq@do}}
-  \expandafter\jlreq@do\jlreq@openbreackets@list\jlreq@endmark
+  \expandafter\jlreq@do\jlreq@charlist@openingbrackets\jlreq@endmark
   % JFM glueの伸び縮みで行頭括弧が揃わないのを防ぐために常に\inhibitglueを入れる．
   \ifthenelse{\equal{\jlreq@open@bracket@pos}{nibu_tentsuki}}{
     \edef\jlreq@openbracket@hook{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\hskip -.5\jlreq@mol\inhibitglue}\noexpand\fi}
@@ -1338,6 +1340,24 @@
   \reDeclareMathAlphabet{\mathbf}{\mathbf}{\mathgt}%
 }
 
+% 和文間隔
+\def\jlreq@tempa{}
+\def\jlreq@do#1{\jlreq@ifendmark{#1}{}{\appto\jlreq@tempa{\ifnum\lastnodechar=`#1 1\fi}\jlreq@do}}
+\expandafter\jlreq@do\jlreq@charlist@dividingpunctuationmarks\jlreq@endmark
+\edef\　{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 }
+\expandafter\DeclareRobustCommand\expandafter*\expandafter\　\expandafter{\　%
+    \hskip 1\zw\hbox{}%
+    \jlreq@lastnodechar=`　
+    \expandafter\jlreq@fixjfm
+  \else　\fi
+}
+\ifx l\jlreq@engine
+  {
+    \catcode`　=\active
+    \global\let　=\　
+  }
+  \AtBeginDocument{\catcode`　=\active}
+\fi
 % \baselineskipの計算
 % いったん文字サイズを変更（(u)platexの際にzh/zwをきちんとするため）
 \@setfontsize\normalsize{\jlreq@fontsize}{\jlreq@fontsize}%

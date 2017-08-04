@@ -1091,17 +1091,14 @@
 % ￥100とか70％とか……
 
 %.. 文字範囲
-\ifx l\jlreq@engine
-  % 和文文字，欧文文字の設定（とりあえずLuaTeX-jaのデフォルトのまま）
-  \ltjsetparameter{jacharrange={-1, +2, +3, -4, -5, +6, +7, -8}}
-\fi
 \ifx u\jlreq@engine
   % \kcatcodeの設定
   \def\jlreq@setkcatcode#1#2{\@for\@tempa:=#1\do{\kcatcode"\@tempa=#2\relax}}
   \jlreq@aftercls@addtodeletecs{\jlreq@setkcatcode}
-  % とりあえずLuaTeX-jaのデフォルトのままに近い設定をする
+  % LuaTeX-jaのデフォルトのままに近い設定をする
   % 範囲1＆8
-  \jlreq@setkcatcode{80,100,180,250,2B0,300,1E00}{15}
+  \jlreq@setkcatcode{80}{15} % Latin-1 Supplement，どうしよう……
+  \jlreq@setkcatcode{100,180,250,2B0,300,1E00}{15}
   % 範囲2
   \jlreq@setkcatcode{370,400,1F00}{18}
   % 範囲3
@@ -1196,6 +1193,8 @@
 % 必要になりそうなリスト
 % 開き括弧（文字クラス1）
 \edef\jlreq@charlist@openingbrackets{（〔［｛〈《「『【‘“\ifx p\jlreq@engine\else ｟〘〖«〝\fi}
+% 閉じ括弧（文字クラス2）
+\edef\jlreq@charlist@closingbrackets{）〕］｝〉》」』】’”\ifx p\jlreq@engine\else｠〙〗»〟\fi}
 % 区切り約物（文字クラス4）
 \edef\jlreq@charlist@dividingpunctuationmarks{！？\ifx p\jlreq@engine\else ‼⁇⁈⁉\fi}
 % JFMに関連する設定
@@ -1345,7 +1344,7 @@
 \def\jlreq@do#1{\jlreq@ifendmark{#1}{}{\appto\jlreq@tempa{\ifnum\lastnodechar=`#1 1\fi}\jlreq@do}}
 \expandafter\jlreq@do\jlreq@charlist@dividingpunctuationmarks\jlreq@endmark
 \edef\　{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 }
-\expandafter\DeclareRobustCommand\expandafter*\expandafter\　\expandafter{\　%
+\expandafter\DeclareRobustCommand\expandafter*\expandafter\　\expandafter{\　
     \hskip 1\zw\hbox{}%
     \jlreq@lastnodechar=`　
     \expandafter\jlreq@fixjfm
@@ -1358,6 +1357,30 @@
   }
   \AtBeginDocument{\catcode`　=\active}
 \fi
+
+% 区切り約物
+\def\jlreq@tempa{}
+\def\jlreq@do#1{\jlreq@ifendmark{#1}{}{\appto\jlreq@tempa{\ifx\jlreq@nextchar #11\fi}\jlreq@do}}
+\expandafter\jlreq@do\jlreq@charlist@closingbrackets\jlreq@endmark
+\def\jlreq@do#1{%
+  \jlreq@ifendmark{#1}{}{
+    \edef\jlreq@tempb{\noexpand\DeclareRobustCommand*\expandonce{\csname #1\endcsname}%
+      {%
+        \unexpanded{\@ifstar{\hskip .25\zw #1\hskip .25\zw\ignorespaces}}{%
+          #1%
+          \unexpanded{\def\jlreq@do}{%
+            \noexpand\ifnum 0\expandonce{\jlreq@tempa}>0\unexpanded{\else\　 \fi\ignorespaces}%
+          }%
+          \unexpanded{\futurelet\jlreq@nextchar\jlreq@do}%
+        }%
+      }%
+    }
+    \jlreq@tempb
+    \jlreq@do
+  }
+}
+\expandafter\jlreq@do\jlreq@charlist@dividingpunctuationmarks\jlreq@endmark
+
 % \baselineskipの計算
 % いったん文字サイズを変更（(u)platexの際にzh/zwをきちんとするため）
 \@setfontsize\normalsize{\jlreq@fontsize}{\jlreq@fontsize}%
@@ -3845,7 +3868,7 @@
         \fi
         \bgroup
         \small
-        \parindent=1\jlreq@mol
+        \parindent=1\zw
         \begin{center}%
           {\sffamily\bfseries\abstractname}%
         \end{center}%
@@ -3854,16 +3877,16 @@
           \itemindent\listparindent
           \labelwidth\z@
           \labelsep\z@
-          \leftmargin=2\jlreq@mol
+          \leftmargin=2\zw
           \rightmargin\leftmargin
           \@tempdima=1\zw
           \@tempdimb=\dimexpr\linewidth - \@totalleftmargin - \leftmargin - \rightmargin\relax
           \@tempdimc=\@tempdimb
           \divide\@tempdimb by \@tempdima\multiply\@tempdimb by \@tempdima
-          \ifdim\@tempdimb=\@tempdimc\else\@tempdimb=\dimexpr\@tempdimb - 1\jlreq@mol\relax\fi
+          \ifdim\@tempdimb=\@tempdimc\else\@tempdimb=\dimexpr\@tempdimb - 1\zw\relax\fi
           \leftmargin=\dimexpr\leftmargin + (\@tempdimc - \@tempdimb)/2\relax
           \rightmargin=\dimexpr\rightmargin + (\@tempdimc - \@tempdimb)/2\relax
-          \parsep\z@ \@plus.1\jlreq@gol
+          \parsep\z@ \@plus.1\zh
         }%
         \item\relax
       \else
@@ -3906,13 +3929,13 @@
 
 % enumerateとitemize
 % 見出しが一つ上のレベルからどのくらいずれているかを入れる．
-% （見出しは2\zhの箱に右/下詰めで入る．）
-\setlength\leftmargini{2\jlreq@mol}
-\setlength\leftmarginii{1\jlreq@mol}
-\setlength\leftmarginiii{1\jlreq@mol}
-\setlength\leftmarginiv{1\jlreq@mol}
-\setlength\leftmarginv{1\jlreq@mol}
-\setlength\leftmarginvi{1\jlreq@mol}
+% （見出しは2\zwの箱に右/下詰めで入る．）
+\setlength\leftmargini{2\zw}
+\setlength\leftmarginii{1\zw}
+\setlength\leftmarginiii{1\zw}
+\setlength\leftmarginiv{1\zw}
+\setlength\leftmarginv{1\zw}
+\setlength\leftmarginvi{1\zw}
 
 %.. 箇条書き
 \jlreq@jlreqsetup@add{itemization_beforeafter_space}{\def\jlreq@itemization@beforeafter@space{#1}}

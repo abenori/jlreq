@@ -1,4 +1,5 @@
 kpse.set_program_name("texlua","lualatex")
+require("lualibs")
 
 if arg[1] ~= nil then
 	jfm = arg[1]
@@ -161,10 +162,28 @@ local function class_check(clstable,class,version,position)
 						elseif char_class[vv] ~= nil then
 							print_error("char " .. vv .. " is found in class " .. tostring(char_class[vv]) .. " and " .. tostring(class))
 						end
+						if type(vv) ~= "number" and type(vv) ~= "string" then print_error("the type of each entry of chars should be number or string" .. position_msg(position)) end
+						if type(vv) == "string" then
+							-- 長さ2以下なのは大人の事情
+							if not (
+								unicode.utf8.len(vv) <= 2 or 
+								(unicode.utf8.len(vv) == 1 and vv:sub(-1) == "*") or 
+								vv == "boxbdd" or 
+								vv == "parbdd" or 
+								vv == "jcharbdd" or
+								(version == 3 and (
+									vv == "alchar" or vv == "nox_alchar" or vv == "glue")
+								) or
+								vv:sub(1,4) == "AJ1-"
+							) then
+								print_error("char " .. vv .. " in chars list is not allowd" .. position_msg(position));
+							end
+						end
 						char_class[vv] = class
 					end
 				end
-			elseif k == "width" or k == "height" or k == "depth" or k == "italic" or k == "left" or k == "down" then
+			elseif k == "width" or k == "height" or k == "depth" or k == "italic" then -- do not check
+			elseif k == "left" or k == "down" then
 				type_check(v,"number",k,position)
 			elseif k == "align" then
 				if v ~= "left" and v ~= "right" and v ~= "middle" then
@@ -257,8 +276,8 @@ if loaded_jfm.version ~= nil then
 	if type(loaded_jfm.version) ~= "number" then print_error("version should be a number.")
 	else version = loaded_jfm.version end
 end
-if version ~= 1 and version ~= 2 then
-	print_error("Only version 1 or 2 is supported. (We assume that the version of the JFM is 1.)")
+if version ~= 1 and version ~= 2 and version ~= 3 then
+	print_error("Only version 1, 2 or 3 is supported. (We assume that the version of the JFM is 1.)")
 	version = 1
 end
 print("version " .. tostring(version))

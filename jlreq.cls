@@ -1343,8 +1343,8 @@
 \def\jlreq@tempa{}
 \def\jlreq@do#1{\jlreq@ifendmark{#1}{}{\appto\jlreq@tempa{\ifnum\lastnodechar=`#1 1\fi}\jlreq@do}}
 \expandafter\jlreq@do\jlreq@charlist@dividingpunctuationmarks\jlreq@endmark
-\edef\　{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 }
-\expandafter\DeclareRobustCommand\expandafter*\expandafter\　\expandafter{\　
+\edef\@tempa{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 }
+\expandafter\DeclareRobustCommand\expandafter*\expandafter\　\expandafter{\@tempa
     \hskip 1\zw\hbox{}%
     \jlreq@lastnodechar=`　
     \expandafter\jlreq@fixjfm
@@ -1357,6 +1357,14 @@
   }
   \AtBeginDocument{\catcode`　=\active}
 \fi
+
+\DeclareRobustCommand*{\jaspace}[1]{%
+  \expandafter\ifx\csname jlreq@jaspace@#1\endcsname\relax\ClassError{jlreq}{unknown jaspace: #1}{\@ehc}%
+  \else\csname jlreq@jaspace@#1\endcsname\fi
+}
+\def\jlreq@jaspace@zenkaku{\hskip 1\zw}
+\def\jlreq@jaspace@nibu{\hskip .5\zw}
+\def\jlreq@jaspace@shibu{\hskip .25\zw}
 
 % 区切り約物
 \def\jlreq@tempa{}

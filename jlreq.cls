@@ -692,7 +692,7 @@
 \newdimen\jlreq@current@linewidth
 \newdimen\jlreq@rest@linewidth
 % この命令以降，次にこの命令を実行する前まで\jlreq@current@linewidth/\jlreq@rest@linewidthで
-% この場所における残り長さが取得できる．
+% この行の行頭からの長さ/残りの長さが取得できる
 \newcommand*{\jlreq@savepos@for@rest@linewidth}{%
   \jlreq@setcurrentpage
   \global\advance\jlreq@zref@reference@count by 1\relax
@@ -747,6 +747,7 @@
   }
 \fi
 \newcount\jlreq@lastnodechar
+% \futurelet\jlreq@nextchar\jlreq@fixjfm の形で使う．
 % jlreq@lastnodecharに入っている値と次のトークン（\futureletで得る）の間に入るJFMグルー等を挿入する
 \newcommand*{\jlreq@fixjfm}{%
   \ifnum\jlreq@lastnodechar>-1
@@ -1121,6 +1122,7 @@
 \newdimen\jlreq@fontsize
 \newdimen\jlreq@jafontsize
 \ifx l\jlreq@engine
+  % Q,zw,zhが正しく扱われるようになる．\dimexprつきに展開される．
   \def\jlreq@expand@optionfontsize#1{%
     \dimexpr\directlua{
       local act = string.char(92)
@@ -1241,6 +1243,8 @@
 \fi
 \newcount\jlreq@count@listnest
 \jlreq@count@listnest=0
+% 現在のeveryparへのhookを保存スタックに積んでからPushPostHookする．
+% スタックに積まれたものは\jlreq@pophook@postparで復帰できる
 \def\jlreq@pushhook@postpar#1{%
   \advance\jlreq@count@listnest by 1
   \def\@tempa{\SavePostHook{par}}%
@@ -1254,7 +1258,7 @@
   \advance\jlreq@count@listnest by -1
 }
 
-% 開き括弧の幅が全角の場合は，ベタ組にするために補正が必要
+% 行頭の括弧は \jlreq@open@bracket@before@space \inhibitglue 「みたいにする．
 \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{
   \def\jlreq@open@bracket@before@space{\hskip -.5\jlreq@mol}
 }{
@@ -1366,7 +1370,8 @@
 \def\jlreq@jaspace@nibu{\hskip .5\zw}
 \def\jlreq@jaspace@shibu{\hskip .25\zw}
 
-% 区切り約物
+% 区切り約物．\？ みたいな命令を作る．直後の空きが自動で入る．
+% \？*とすると文中の？として扱われる．
 \def\jlreq@tempa{}
 \def\jlreq@do#1{\jlreq@ifendmark{#1}{}{\appto\jlreq@tempa{\ifx\jlreq@nextchar #11\fi}\jlreq@do}}
 \expandafter\jlreq@do\jlreq@charlist@closingbrackets\jlreq@endmark
@@ -1415,9 +1420,7 @@
 \emergencystretch 3\jlreq@gol
 
 %.. 文字サイズ変更
-% 文字サイズを基準としているような寸法に対しては，
-% \set@fontsizeが実行されるたびに追随して値を変える
-% その処理は\jlreq@setfontsizehookに入れる
+\def\jlreq@setfontsizehook{}% set@fontsizeの最後に実行される．
 \jlreq@saveoriginalcs{set@fontsize}
 \edef\jlreq@do{
   \unexpanded{\def\set@fontsize#1#2#3}{%
@@ -1426,7 +1429,6 @@
   }
 }
 \jlreq@do
-\def\jlreq@setfontsizehook{}
 \appto\jlreq@setfontsizehook{\ifdim\parindent>0pt\setlength{\parindent}{1\zw}\fi}
 \ifx l\jlreq@engine
   \@tempskipa=\ltjgetparameter{kanjiskip}
@@ -1519,11 +1521,11 @@
 \def\jlreq@Kanji#1{\expandafter\kansuji\csname c@#1\endcsname}
 
 % このあたりはtarticleと同じ
-\setlength\lineskip{.1\jlreq@gol}
-\setlength\normallineskip{.1\jlreq@gol}
+\setlength\lineskip{.1\zh}
+\setlength\normallineskip{.1\zh}
 \renewcommand{\baselinestretch}{}
 \setlength\parskip{0\p@ \@plus \p@}
-\setlength\parindent{1\jlreq@mol}
+\setlength\parindent{1\zw}
 \@lowpenalty   51
 \@medpenalty  151
 \@highpenalty 301

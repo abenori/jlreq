@@ -274,6 +274,12 @@
     - `plext` / `lltjext`の読み込みを中止．
     - `\DeclareBlockHeading`に`align`を追加．`indent=center`や`end_indent=center`を廃止．
     - 一部の`\kcatcode` (upLaTeX時) を変更．
+* 2017-08-13
+    - `column_spanning`を`\DeclareBlockHeading`に追加．
+    - ページレイアウトにおける「本文の長さ」に傍注の長さを入れるようにした．
+    - 傍注の長さのデフォルトを0とした．
+    - 傍注の長さが0の時には`\sidenote`を定義しないようにした．
+    - 和文間隔を挿入する命令を追加．
 
 --------------
 Noriyuki Abe

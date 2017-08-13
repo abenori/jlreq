@@ -1,6 +1,5 @@
 TEXMF=$(shell kpsewhich -var-value=TEXMFHOME)
 
-
 all: jfm
 
 jfm: \
@@ -116,16 +115,15 @@ jlreq.html: README.md README-template.html
 
 jfm-install: jfm
 	mkdir -p ${TEXMF}/fonts/tfm/public/jlreq
-	cp -f *.tfm ${TEXMF}/fonts/tfm/public/jlreq
+	install *.tfm ${TEXMF}/fonts/tfm/public/jlreq
 	mkdir -p ${TEXMF}/fonts/vf/public/jlreq
-	cp -f *.vf ${TEXMF}/fonts/vf/public/jlreq
+	install *.vf ${TEXMF}/fonts/vf/public/jlreq
 	mkdir -p ${TEXMF}/tex/luatex/jlreq
-	cp -f jfm-jlreq.lua ${TEXMF}/tex/luatex/jlreq
-	cp -f jfm-jlreqv.lua ${TEXMF}/tex/luatex/jlreq
+	install jfm-jlreqv.lua jfm-jlreq.lua ${TEXMF}/tex/luatex/jlreq
 
 cls-install:
 	mkdir -p ${TEXMF}/tex/latex/jlreq
-	cp jlreq.cls ${TEXMF}/tex/latex/jlreq
+	install jlreq.cls ${TEXMF}/tex/latex/jlreq
 
 install: jfm-install cls-install
 

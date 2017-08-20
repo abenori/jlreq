@@ -1922,6 +1922,7 @@
     \expandafter\jlreq@tempa\expandafter{\jlreq@tempb}%
   }%
   \expandafter\jlreq@do\expandafter{\jlreq@startBlockHeading@totalformat}%
+  \ignorespaces
 }
 \def\jlreq@startBlockHeading@removecolumn#1:{#1}
 
@@ -3759,9 +3760,18 @@
       \vskip\baselineskip%
       {\Large
       \lineskip .75em%
+      % 縦書き時には表組み内でも縦書きにするようにする
+      \if@tate
+        \let\jlreq@temporary@original@@array=\@array
+        \def\@array{\tate\jlreq@temporary@original@@array}
+      \fi
       \begin{tabular}[t]{c}%
         \@author
       \end{tabular}\par}%
+      \if@tate
+        \let\@array=\jlreq@temporary@original@@array
+        \let\jlreq@temporary@original@@array=\@undefined
+      \fi
       \vskip\baselineskip
       {\large\@date\par}%
     \end{center}\par
@@ -3823,9 +3833,18 @@
   \vskip\baselineskip
   {\jlreq@keepbaselineskip{\large}%
     \lineskip .5\jlreq@gol
+    % 縦書き時には表組み内でも縦書きにするようにする
+    \if@tate
+      \let\jlreq@temporary@original@@array=\@array
+      \def\@array{\tate\jlreq@temporary@original@@array}
+    \fi
     \begin{tabular}[t]{c}%
       \@author
     \end{tabular}%
+    \if@tate
+      \let\@array=\jlreq@temporary@original@@array
+      \let\jlreq@temporary@original@@array=\@undefined
+    \fi
     \par
   }%
   \vskip\baselineskip

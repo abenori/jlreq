@@ -1207,17 +1207,8 @@
   % \item後の行頭括弧のために仕込み．
   \jlreq@saveoriginalcs{list}
   \jlreq@saveoriginalcs{endlist}
-  \edef\jlreq@do{
-    \unexpanded{\def\list#1#2}{%
-      \unexpanded{\jlreq@pushhook@postpar{\directlua{luatexja.jfmglue.create_beginpar_node()}}}%
-      \expandonce{\list{#1}{#2}}%
-    }
-    \unexpanded{\def\endlist}{%
-      \expandonce{\endlist}%
-      \noexpand\jlreq@pophook@postpar
-    }
-  }
-  \jlreq@do
+  \pretocmd{\list}{\jlreq@pushhook@postpar{\directlua{luatexja.jfmglue.create_beginpar_node()}}}{}{}%
+  \apptocmd{\endlist}{\jlreq@pophook@postpar}
 \else
   % 非LuaTeXの場合はJFMの入れ替えと\everyparでの処理で対処．
   % 行頭括弧に対して\inhibitglueを入れたりする命令を作る
@@ -1362,6 +1353,7 @@
   \AtBeginDocument{\catcode`　=\active}
 \fi
 
+% \jaspace
 \DeclareRobustCommand*{\jaspace}[1]{%
   \expandafter\ifx\csname jlreq@jaspace@#1\endcsname\relax\ClassError{jlreq}{unknown jaspace: #1}{\@ehc}%
   \else\csname jlreq@jaspace@#1\endcsname\fi
@@ -1422,13 +1414,7 @@
 %.. 文字サイズ変更
 \def\jlreq@setfontsizehook{}% set@fontsizeの最後に実行される．
 \jlreq@saveoriginalcs{set@fontsize}
-\edef\jlreq@do{
-  \unexpanded{\def\set@fontsize#1#2#3}{%
-    \expandonce{\set@fontsize{#1}{#2}{#3}}%
-    \noexpand\jlreq@setfontsizehook
-  }
-}
-\jlreq@do
+\apptocmd{\set@fontsize}{\jlreq@setfontsizehook}{}{}
 \appto\jlreq@setfontsizehook{\ifdim\parindent>0pt\setlength{\parindent}{1\zw}\fi}
 \ifx l\jlreq@engine
   \@tempskipa=\ltjgetparameter{kanjiskip}
@@ -2823,10 +2809,7 @@
 
 % \theendnoteの出力を仕込む
 \PushPostHook{par}{\jlreq@endnote@parhook}
-\edef\jlreq@do{
-  \unexpanded{\def\jlreq@hook@beforeheadings#1}{\expandonce{\jlreq@hook@beforeheadings{#1}}\unexpanded{\jlreq@endnote@hook@beforeheadings{#1}}}
-}
-\jlreq@do
+\apptocmd{\jlreq@hook@beforeheadings}{\jlreq@endnote@hook@beforeheadings{#1}}{}{}
 
 \jlreq@jlreqsetup@add{endnote_position}{
   \def\jlreq@endnote@parhook{}
@@ -2862,12 +2845,7 @@
   }
 
   \ifjlreq@tempa
-    \edef\jlreq@do{%
-      \unexpanded{\def\jlreq@endnote@hook@beforeheadings##1}{\expandonce{\jlreq@endnote@hook@beforeheadings{##1}}%
-        \noexpand\theendnotes
-      }
-    }
-    \jlreq@do
+    \apptocmd{\jlreq@endnote@hook@beforeheadings}{\theendnotes}{}{}
   \else
     \@for\@tempa:=\jlreq@tempc\do{
       \ifx\@tempa\@empty\else
@@ -2947,9 +2925,9 @@
       \fi
       \def\@makesidemark{\@makefnmark}
     }{% sidenote_type = symbol
-      \def\sidenote{\jlreq@sidenote}
-      \def\sidenotemark{\jlreq@sidenotemark}
-      \def\sidenotetext{\jlreq@sidenotetext}
+      \def\sidenote#1#2{\jlreq@sidenote{#1}{#2}}
+      \def\sidenotemark#1{\jlreq@sidenotemark{#1}}
+      \def\sidenotetext#1#2{\jlreq@sidenotetext{#1}{#2}}
       \long\def\jlreq@sidenote#1#2{\jlreq@sidenotemark{#1}\jlreq@sidenotetext{#1}{#2}}
       \edef\jlreq@sidenotemark#1{%
         {\unexpanded{\reset@font\jlreq@sidenote@keywordfont}#1}%
@@ -2967,18 +2945,8 @@
       \long\def\@makesidetext#1{{\sffamily\bfseries\csname\jlreq@sidenotemarkname\endcsname}\hspace*{1\jlreq@mol}#1}
       \def\@makesidemark{\@makefnmark}
 
-      \edef\jlreq@do{
-        % \jlreq@lastnodecharの仕込みはすんでいる
-        \unexpanded{\long\def\sidenote#1#2}{%
-          \expandonce{\sidenote{#1}{#2}}%
-          \noexpand\jlreq@hook@postnote
-        }
-        \unexpanded{\long\def\sidenotemark#1}{%
-          \expandonce{\sidenotemark{#1}}%
-          \noexpand\jlreq@hook@postnote
-        }
-      }
-      \jlreq@do
+      \apptocmd{\sidenote}{\jlreq@hook@postnote}{}{}
+      \apptocmd{\sidenotemark}{\jlreq@hook@postnote}{}{}
     }
   }
   \jlreq@jlreqsetup@add{sidenote_symbol}{\def\jlreq@sidenote@defaultmark{#1}}
@@ -3761,17 +3729,11 @@
       {\Large
       \lineskip .75em%
       % 縦書き時には表組み内でも縦書きにするようにする
-      \if@tate
-        \let\jlreq@temporary@original@@array=\@array
-        \def\@array{\tate\jlreq@temporary@original@@array}
-      \fi
+      % \@mkpreamに特に意味は無く，\@array内で都合のよい場所にあるだけ……
+      \if@tate\pretocmd{\@mkpream}{\tate}{}{}\fi
       \begin{tabular}[t]{c}%
         \@author
       \end{tabular}\par}%
-      \if@tate
-        \let\@array=\jlreq@temporary@original@@array
-        \let\jlreq@temporary@original@@array=\@undefined
-      \fi
       \vskip\baselineskip
       {\large\@date\par}%
     \end{center}\par
@@ -3833,18 +3795,10 @@
   \vskip\baselineskip
   {\jlreq@keepbaselineskip{\large}%
     \lineskip .5\jlreq@gol
-    % 縦書き時には表組み内でも縦書きにするようにする
-    \if@tate
-      \let\jlreq@temporary@original@@array=\@array
-      \def\@array{\tate\jlreq@temporary@original@@array}
-    \fi
+    \if@tate\pretocmd{\@mkpream}{\tate}{}{}\fi
     \begin{tabular}[t]{c}%
       \@author
     \end{tabular}%
-    \if@tate
-      \let\@array=\jlreq@temporary@original@@array
-      \let\jlreq@temporary@original@@array=\@undefined
-    \fi
     \par
   }%
   \vskip\baselineskip

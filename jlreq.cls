@@ -31,9 +31,7 @@
 \newif\ifjlreq@result
 
 \newcommand*{\jlreq@undefcs}[1]{%
-  \expandafter\ifx\csname\expandafter\@gobble\string #1\endcsname\relax\expandafter\@firstofone\else\expandafter\@gobble\fi
-    {\ClassError{jlreq}{Trying to delete \string#1\space even though it is not defined, maybe a bug}{\@ehc}}%
-  \let#1=\@undefined
+  \ifundef{#1}{\ClassError{jlreq}{Trying to delete \string#1\space even though it is not defined, maybe a bug}{\@ehc}}{\undef{#1}}%
 }
 
 % クラスファイル内でしか使わないマクロをクラスファイル終了時に未定義にする
@@ -54,7 +52,7 @@
 \AtEndOfClass{%
   \jlreq@aftercls@deletecslist
   \jlreq@undefcs{\jlreq@aftercls@deletecslist}%
-  \let\jlreq@undefcs=\@undefined
+  \undef{\jlreq@undefcs}%
 }
 
 \def\jlreq@uniqtoken{\jlreq@uniqtoken}
@@ -3729,8 +3727,10 @@
       {\Large
       \lineskip .75em%
       % 縦書き時には表組み内でも縦書きにするようにする
-      % \@mkpreamに特に意味は無く，\@array内で都合のよい場所にあるだけ……
-      \if@tate\pretocmd{\@mkpream}{\tate}{}{}\fi
+      \if@tate
+        \let\jlreq@temporary@original@ialign=\ialign
+        \pretocmd{\ialign}{\unexpanded{\tate\let\ialign=\jlreq@temporary@ialign}}{}{}%
+      \fi
       \begin{tabular}[t]{c}%
         \@author
       \end{tabular}\par}%
@@ -3795,7 +3795,11 @@
   \vskip\baselineskip
   {\jlreq@keepbaselineskip{\large}%
     \lineskip .5\jlreq@gol
-    \if@tate\pretocmd{\@mkpream}{\tate}{}{}\fi
+    % 縦書き時には表組み内でも縦書きにするようにする
+    \if@tate
+      \let\jlreq@temporary@original@ialign=\ialign
+      \pretocmd{\ialign}{\unexpanded{\tate\let\ialign=\jlreq@temporary@ialign}}{}{}%
+    \fi
     \begin{tabular}[t]{c}%
       \@author
     \end{tabular}%

@@ -1477,10 +1477,11 @@
   \belowdisplayskip \abovedisplayskip}
 % tsize10.cloの引数を，そのまま\jlreq@fontsize/\jlreq@baselineskipでスケーリングしているだけ．
 \newcommand{\small}{%
-  \@setfontsize\small{.9\jlreq@fontsize}{\dimexpr 11\jlreq@baselineskip/17\relax}%
-  \abovedisplayskip .85\jlreq@fontsize \@plus.3\jlreq@fontsize \@minus.4\jlreq@fontsize
-  \abovedisplayshortskip \z@ \@plus.2\jlreq@fontsize
-  \belowdisplayshortskip .4\jlreq@fontsize \@plus.2\jlreq@fontsize \@minus.2\jlreq@fontsize
+  % jsarticleのもの
+  \@setfontsize\small{.9\jlreq@fontsize}{\dimexpr 13\jlreq@baselineskip/17\relax}%
+  \abovedisplayskip .9\jlreq@fontsize \@plus.3\jlreq@fontsize \@minus.4\jlreq@fontsize
+  \abovedisplayshortskip \z@ \@plus.3\jlreq@fontsize
+  \belowdisplayshortskip \abovedisplayshortskip
   \belowdisplayskip \abovedisplayskip}
 \newcommand{\scriptsize}{\@setfontsize\scriptsize{\dimexpr 7\jlreq@fontsize/10\relax}{\dimexpr 8\jlreq@baselineskip/17\relax}}
 \newcommand{\tiny}{\@setfontsize\tiny{\dimexpr 5\jlreq@fontsize/10\relax}{\dimexpr 6\jlreq@baselineskip/17\relax}}

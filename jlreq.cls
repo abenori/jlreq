@@ -2923,9 +2923,9 @@
       \fi
       \def\@makesidemark{\@makefnmark}
     }{% sidenote_type = symbol
-      \def\sidenote#1#2{\jlreq@sidenote{#1}{#2}}
+      \long\def\sidenote#1#2{\jlreq@sidenote{#1}{#2}}
       \def\sidenotemark#1{\jlreq@sidenotemark{#1}}
-      \def\sidenotetext#1#2{\jlreq@sidenotetext{#1}{#2}}
+      \long\def\sidenotetext#1#2{\jlreq@sidenotetext{#1}{#2}}
       \long\def\jlreq@sidenote#1#2{\jlreq@sidenotemark{#1}\jlreq@sidenotetext{#1}{#2}}
       \edef\jlreq@sidenotemark#1{%
         {\unexpanded{\reset@font\jlreq@sidenote@keywordfont}#1}%

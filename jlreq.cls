@@ -5,7 +5,7 @@
 %%
 % (based on JLReq 20120403 https://www.w3.org/TR/2012/NOTE-jlreq-20120403/ja/)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{jlreq}[2017/08/13 jlreq]
+\ProvidesClass{jlreq}[2017/08/29 jlreq]
 \RequirePackage{xkeyval,everyhook,filehook,etoolbox,ifthen}
 
 %. helper1
@@ -745,7 +745,7 @@
   }
 \fi
 \newcount\jlreq@lastnodechar
-% \futurelet\jlreq@nextchar\jlreq@fixjfm の形で使う．
+% \jlreq@fixjfm<次の文字>の形で使う．
 % jlreq@lastnodecharに入っている値と次のトークン（\futureletで得る）の間に入るJFMグルー等を挿入する
 \newcommand*{\jlreq@fixjfm}{%
   \ifnum\jlreq@lastnodechar>-1
@@ -3730,7 +3730,7 @@
       % 縦書き時には表組み内でも縦書きにするようにする
       \if@tate
         \let\jlreq@temporary@original@ialign=\ialign
-        \pretocmd{\ialign}{\unexpanded{\tate\let\ialign=\jlreq@temporary@ialign}}{}{}%
+        \pretocmd{\ialign}{\unexpanded{\tate\let\ialign=\jlreq@temporary@original@ialign}}{}{}%
       \fi
       \begin{tabular}[t]{c}%
         \@author
@@ -3799,7 +3799,7 @@
     % 縦書き時には表組み内でも縦書きにするようにする
     \if@tate
       \let\jlreq@temporary@original@ialign=\ialign
-      \pretocmd{\ialign}{\unexpanded{\tate\let\ialign=\jlreq@temporary@ialign}}{}{}%
+      \pretocmd{\ialign}{\unexpanded{\tate\let\ialign=\jlreq@temporary@original@ialign}}{}{}%
     \fi
     \begin{tabular}[t]{c}%
       \@author
@@ -4218,6 +4218,7 @@
 }{%
   \if@restonecol\onecolumn\else\clearpage\fi
   \ifjlreq@resttate\tate\fi
+  \jlreq@oldfontcommand@disable
 }
 \newcommand{\@idxitem}{\par\hangindent 4\jlreq@mol}
 \newcommand{\subitem}{\@idxitem \hspace*{2\jlreq@mol}}

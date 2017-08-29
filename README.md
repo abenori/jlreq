@@ -55,7 +55,9 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Sidenotes are a part of the main text now.
     - Changed the default length of sidenotes to 0.
     - jlreq does not define `\sidenote` if the length for sidenotes is zero.
-    - Added a command for full-width ideographic space.
+    - Added a command for the full-width ideographic space.
+* 2017-08-29
+    - Fixed a bug.
 
 --------------
 Noriyuki Abe

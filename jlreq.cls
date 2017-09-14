@@ -1356,9 +1356,9 @@
   \expandafter\ifx\csname jlreq@jaspace@#1\endcsname\relax\ClassError{jlreq}{unknown jaspace: #1}{\@ehc}%
   \else\csname jlreq@jaspace@#1\endcsname\fi
 }
-\def\jlreq@jaspace@zenkaku{\hskip 1\zw}
-\def\jlreq@jaspace@nibu{\hskip .5\zw}
-\def\jlreq@jaspace@shibu{\hskip .25\zw}
+\def\jlreq@jaspace@zenkaku{\hskip \glueexpr 1\zw\relax}
+\def\jlreq@jaspace@nibu{\hskip \glueexpr .5\zw\relax}
+\def\jlreq@jaspace@shibu{\hskip \glueexpr .25\zw\relax}
 
 % 区切り約物．\？ みたいな命令を作る．直後の空きが自動で入る．
 % \？*とすると文中の？として扱われる．

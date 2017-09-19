@@ -751,7 +751,7 @@
   \ifnum\jlreq@lastnodechar>-1
     \def\jlreq@do{%
       \ifnum\jlreq@getpostbreakpenalty{\jlreq@lastnodechar}=0\else\penalty\jlreq@getpostbreakpenalty{\jlreq@lastnodechar}\fi
-      \jlreq@isletter{\jlreq@nextchar}{%
+      \expandafter\jlreq@isletter\expandafter{\romannumeral-`0\jlreq@nextchar}{%
         \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{\jlreq@nextchar}%
 %        \message{fixjfm Insert: \the\jlreq@resultskip}%
         \hskip\jlreq@resultskip

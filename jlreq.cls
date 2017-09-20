@@ -65,31 +65,38 @@
 \long\def\jlreq@getfirsttoken@#1#2\jlreq@endmark#3\jlreq@endmark{#1}
 % 与えられたトークン列が空か（展開はしないでチェック）
 \long\def\jlreq@ifempty#1{\expandafter\ifx\expandafter\relax\detokenize{#1}\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-% #1の先頭トークンが#2か
+% #1の先頭トークンが#2か（ただし#1の先頭トークンが空白の時は#2=\spaceでTRUE）
 \long\def\jlreq@iffirsttoken#1#2{%
-  \expandafter\expandafter\expandafter\ifx\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark #2\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+  \expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\jlreq@deleteuntileendmark
+  \expandafter\expandafter\expandafter\ifx\expandafter\space\detokenize{#1}\jlreq@uniqtoken\jlreq@endmark\expandafter\@firstoftwo\else\jlreq@endmark\expandafter\@secondoftwo\fi{%
+    \ifx\space #2\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+  }{%
+    \expandafter\expandafter\expandafter\ifx\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark #2\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+  }%
 }
 % #1が\jlreq@endmarkか
 \long\def\jlreq@ifendmark#1{\jlreq@iffirsttoken{#1}{\jlreq@endmark}}
 
 % #1の先頭がマクロか
-\long\def\jlreq@ifmacro#1{\expandafter\expandafter\expandafter\jlreq@ifmacro@\expandafter\expandafter\expandafter{\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark}}
-\long\def\jlreq@ifmacro@#1{\expandafter\jlreq@ifmacro@@\expandafter{\meaning #1}}
+\long\def\jlreq@ismacro#1{%
+  \jlreq@iffirsttoken{#1}{\space}{\@secondoftwo}{%
+    \jlreq@ifempty{#1}{\@secondoftwo}{%
+      \expandafter\expandafter\expandafter\jlreq@ismacro@\expandafter\expandafter\expandafter{\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark}%
+}}}
+\long\def\jlreq@ismacro@#1{\expandafter\jlreq@ismacro@@\expandafter{\meaning #1}}
 \begingroup
-\let\CATCODE=\catcode
-\let\ENDGROUP=\endgroup
-\CATCODE`m=12
-\CATCODE`a=12
-\CATCODE`c=12
-\CATCODE`r=12
-\CATCODE`o=12
-\gdef\JLREQ@TEMPA{macro:}
+  \let\CATCODE=\catcode
+  \let\ENDGROUP=\endgroup
+  \CATCODE`m=12
+  \CATCODE`a=12
+  \CATCODE`c=12
+  \CATCODE`r=12
+  \CATCODE`o=12
+  \gdef\JLREQ@TEMPA{macro:}
 \ENDGROUP
 \edef\jlreq@do{%
-  \unexpanded{\def\jlreq@ifmacro@@}##1{\noexpand\jlreq@ifmacro@@@##1\expandonce{\JLREQ@TEMPA}\noexpand\jlreq@endmark}%
-  \unexpanded{\def\jlreq@ifmacro@@@}##1\expandonce{\JLREQ@TEMPA}##2\noexpand\jlreq@endmark{%
-    \noexpand\jlreq@ifempty{##1}%
-  }
+  \unexpanded{\def\jlreq@ismacro@@}##1{\noexpand\jlreq@ismacro@@@##1\expandonce{\JLREQ@TEMPA}\noexpand\jlreq@endmark}
+  \unexpanded{\def\jlreq@ismacro@@@}##1\expandonce{\JLREQ@TEMPA}##2\noexpand\jlreq@endmark{\noexpand\jlreq@ifempty{##1}}
 }
 \jlreq@do
 
@@ -322,7 +329,9 @@
 
 % #1の先頭が文字か
 \long\def\jlreq@isletter#1{%
-  \expandafter\expandafter\expandafter\jlreq@helper@isletter\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark
+  \jlreq@iffirsttoken{#1}{\space}{\@secondoftwo}{%
+    \expandafter\expandafter\expandafter\jlreq@helper@isletter\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark
+  }%
 }
 \long\def\jlreq@helper@isletter#1{%
   \ifnum
@@ -337,11 +346,15 @@
 }
 % こっちは先頭にあるマクロを展開してチェックする
 \long\def\jlreq@isletter@expandmacros#1{%
-  \expandafter\expandafter\expandafter\jlreq@ifmacro\expandafter\expandafter\expandafter{\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark}{%
-    \expandafter\jlreq@isletter@expandmacros\expandafter{#1}%
-  }{%
-    \jlreq@isletter{#1}%
-  }
+  \jlreq@ifempty{#1}{\@secondoftwo}{%
+    \jlreq@iffirsttoken{#1}{\space}{\@secondoftwo}{%
+      \jlreq@ismacro{#1}{
+        \expandafter\jlreq@isletter@expandmacros\expandafter{#1}%
+      }{%
+        \jlreq@isletter{#1}%
+      }%
+    }%
+  }%
 }
 
 

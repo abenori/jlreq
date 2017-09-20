@@ -72,6 +72,28 @@
 % #1が\jlreq@endmarkか
 \long\def\jlreq@ifendmark#1{\jlreq@iffirsttoken{#1}{\jlreq@endmark}}
 
+% #1の先頭がマクロか
+\long\def\jlreq@ifmacro#1{\expandafter\expandafter\expandafter\jlreq@ifmacro@\expandafter\expandafter\expandafter{\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark}}
+\long\def\jlreq@ifmacro@#1{\expandafter\jlreq@ifmacro@@\expandafter{\meaning #1}}
+\begingroup
+\let\CATCODE=\catcode
+\let\ENDGROUP=\endgroup
+\CATCODE`m=12
+\CATCODE`a=12
+\CATCODE`c=12
+\CATCODE`r=12
+\CATCODE`o=12
+\gdef\JLREQ@TEMPA{macro:}
+\ENDGROUP
+\edef\jlreq@do{%
+  \unexpanded{\def\jlreq@ifmacro@@}##1{\noexpand\jlreq@ifmacro@@@##1\expandonce{\JLREQ@TEMPA}\noexpand\jlreq@endmark}%
+  \unexpanded{\def\jlreq@ifmacro@@@}##1\expandonce{\JLREQ@TEMPA}##2\noexpand\jlreq@endmark{%
+    \noexpand\jlreq@ifempty{##1}%
+  }
+}
+\jlreq@do
+
+
 % @removeelementの括弧があっても動くかもしれない版
 % 次の変数を使う：\jlreq@tempa：消したいやつ，\jlreq@tempb：今処理している部分．
 \def\jlreq@helper@removeelement#1#2#3{%
@@ -299,10 +321,10 @@
 }
 
 % #1の先頭が文字か
-\def\jlreq@isletter#1{%
+\long\def\jlreq@isletter#1{%
   \expandafter\expandafter\expandafter\jlreq@helper@isletter\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark
 }
-\def\jlreq@helper@isletter#1{%
+\long\def\jlreq@helper@isletter#1{%
   \ifnum
     0\ifcat 阿\noexpand #11\fi
     \ifcat あ\noexpand #11\fi
@@ -313,6 +335,15 @@
     \expandafter\@firstoftwo\else\expandafter\@secondoftwo
   \fi
 }
+% こっちは先頭にあるマクロを展開してチェックする
+\long\def\jlreq@isletter@expandmacros#1{%
+  \expandafter\expandafter\expandafter\jlreq@ifmacro\expandafter\expandafter\expandafter{\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark}{%
+    \expandafter\jlreq@isletter@expandmacros\expandafter{#1}%
+  }{%
+    \jlreq@isletter{#1}%
+  }
+}
+
 
 \def\jlreq@helper@checktokenlist#1#2{%
   \jlreq@ifendmark{#2}{\@firstoftwo}%
@@ -751,7 +782,7 @@
   \ifnum\jlreq@lastnodechar>-1
     \def\jlreq@do{%
       \ifnum\jlreq@getpostbreakpenalty{\jlreq@lastnodechar}=0\else\penalty\jlreq@getpostbreakpenalty{\jlreq@lastnodechar}\fi
-      \jlreq@isletter{\jlreq@nextchar}{%
+      \jlreq@isletter@expandmacros{\jlreq@nextchar}{%
         \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{\jlreq@nextchar}%
 %        \message{fixjfm Insert: \the\jlreq@resultskip}%
         \hskip\jlreq@resultskip

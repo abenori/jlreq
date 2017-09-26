@@ -31,7 +31,7 @@
 \newif\ifjlreq@result
 
 \newcommand*{\jlreq@undefcs}[1]{%
-  \ifundef{#1}{\ClassError{jlreq}{Trying to delete \string#1\space even though it is not defined, maybe a bug}{\@ehc}}{\undef{#1}}%
+  \ifundef{#1}{\ClassError{jlreq}{Trying to delete \string#1\space even though it is not defined, may be a bug}{\@ehc}}{\undef{#1}}%
 }
 
 % クラスファイル内でしか使わないマクロをクラスファイル終了時に未定義にする
@@ -60,46 +60,36 @@
 \long\def\jlreq@deleteuntileendmark#1\jlreq@endmark{}
 
 % \jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmarkの形で使う
-% 二回展開すると，#1の先頭を取り出す．ただし空の場合は\jlreq@uniqtoken，先頭が{の場合は\bgroupとなる
+% 二回展開すると，#1の先頭（ただし空白は無視される）を取り出す．#1が空の場合は\jlreq@uniqtoken，先頭が{の場合は\bgroupとなる
 \long\def\jlreq@getfirsttoken#1#{\jlreq@getfirsttoken@#1\bgroup\jlreq@endmark}
 \long\def\jlreq@getfirsttoken@#1#2\jlreq@endmark#3\jlreq@endmark{#1}
 % 与えられたトークン列が空か（展開はしないでチェック）
 \long\def\jlreq@ifempty#1{\expandafter\ifx\expandafter\relax\detokenize{#1}\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-% #1の先頭トークンが#2か（ただし#1の先頭トークンが空白の時は#2=\spaceでTRUE）
-\long\def\jlreq@iffirsttoken#1#2{%
-  \expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\jlreq@deleteuntileendmark
-  \expandafter\expandafter\expandafter\ifx\expandafter\space\detokenize{#1}\jlreq@uniqtoken\jlreq@endmark\expandafter\@firstoftwo\else\jlreq@endmark\expandafter\@secondoftwo\fi{%
-    \ifx\space #2\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+% #1の先頭トークンが#2か（ただし#1が空ならば#2=\jlreq@uniqtoken，#1={ならば#2=\bgroupでTRUEとなる）
+\long\edef\jlreq@iffirsttoken#1#2{%
+  % スペースチェック
+  \unexpanded{\expandafter\expandafter\expandafter\jlreq@deleteuntileendmark\expandafter\ifx\expandafter}\expandonce{\space}\noexpand\detokenize{#1}\unexpanded{\@undefined\jlreq@endmark\expandafter\@firstoftwo\else\jlreq@endmark\expandafter\@secondoftwo\fi}{%
+    \noexpand\ifx\expandonce{\space}#2\unexpanded{\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}%
   }{%
-    \expandafter\expandafter\expandafter\ifx\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark #2\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+    \unexpanded{\expandafter\expandafter\expandafter\ifx\jlreq@getfirsttoken}#1\unexpanded{\jlreq@uniqtoken{}\jlreq@endmark}#2\unexpanded{\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}%
   }%
 }
+
 % #1が\jlreq@endmarkか
 \long\def\jlreq@ifendmark#1{\jlreq@iffirsttoken{#1}{\jlreq@endmark}}
 
 % #1の先頭がマクロか
-\long\def\jlreq@ismacro#1{%
-  \jlreq@iffirsttoken{#1}{\space}{\@secondoftwo}{%
-    \jlreq@ifempty{#1}{\@secondoftwo}{%
-      \expandafter\expandafter\expandafter\jlreq@ismacro@\expandafter\expandafter\expandafter{\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark}%
+\long\def\jlreq@ifmacro#1{%
+  \jlreq@ifempty{#1}{\@secondoftwo}{%
+    \jlreq@iffirsttoken{#1}{ }{\@secondoftwo}{%
+      \expandafter\expandafter\expandafter\jlreq@ifmacro@\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark
 }}}
-\long\def\jlreq@ismacro@#1{\expandafter\jlreq@ismacro@@\expandafter{\meaning #1}}
-\begingroup
-  \let\CATCODE=\catcode
-  \let\ENDGROUP=\endgroup
-  \CATCODE`m=12
-  \CATCODE`a=12
-  \CATCODE`c=12
-  \CATCODE`r=12
-  \CATCODE`o=12
-  \gdef\JLREQ@TEMPA{macro:}
-\ENDGROUP
+\long\def\jlreq@ifmacro@#1{\expandafter\jlreq@ifmacro@@\expandafter{\meaning #1}}
 \edef\jlreq@do{%
-  \unexpanded{\def\jlreq@ismacro@@}##1{\noexpand\jlreq@ismacro@@@##1\expandonce{\JLREQ@TEMPA}\noexpand\jlreq@endmark}
-  \unexpanded{\def\jlreq@ismacro@@@}##1\expandonce{\JLREQ@TEMPA}##2\noexpand\jlreq@endmark{\noexpand\jlreq@ifempty{##1}}
+  \unexpanded{\def\jlreq@ifmacro@@}##1{\noexpand\jlreq@ifmacro@@@##1\expandonce{\detokenize{macro:}}\noexpand\jlreq@endmark}
+  \unexpanded{\def\jlreq@ifmacro@@@}##1\expandonce{\detokenize{macro:}}##2\noexpand\jlreq@endmark{\noexpand\jlreq@ifempty{##1}}
 }
 \jlreq@do
-
 
 % @removeelementの括弧があっても動くかもしれない版
 % 次の変数を使う：\jlreq@tempa：消したいやつ，\jlreq@tempb：今処理している部分．
@@ -322,18 +312,20 @@
 
 \def\jlreq@saveoriginalcs#1{%
   \@ifundefined{jlreq@original@#1}{}{%
-    \ClassError{jlreq}{Trying to save \expandafter\string\csname #1\endcsname\space twice, maybe a bug}{\@ehc}%
+    \ClassError{jlreq}{Trying to save \expandafter\string\csname #1\endcsname\space twice, may be a bug}{\@ehc}%
   }%
   \expandafter\expandafter\expandafter\let\expandafter\expandafter\csname jlreq@original@#1\endcsname\csname #1\endcsname
 }
 
 % #1の先頭が文字か
-\long\def\jlreq@isletter#1{%
-  \jlreq@iffirsttoken{#1}{\space}{\@secondoftwo}{%
-    \expandafter\expandafter\expandafter\jlreq@helper@isletter\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark
-  }%
+\long\def\jlreq@ifletter#1{%
+  \jlreq@ifempty{#1}{\@secondoftwo}{%
+    \jlreq@iffirsttoken{#1}{ }{\@secondoftwo}{%
+      \expandafter\expandafter\expandafter\jlreq@helper@ifletter\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark
+  }}%
 }
-\long\def\jlreq@helper@isletter#1{%
+
+\long\def\jlreq@helper@ifletter#1{%
   \ifnum
     0\ifcat 阿\noexpand #11\fi
     \ifcat あ\noexpand #11\fi
@@ -344,19 +336,11 @@
     \expandafter\@firstoftwo\else\expandafter\@secondoftwo
   \fi
 }
-% こっちは先頭にあるマクロを展開してチェックする
-\long\def\jlreq@isletter@expandmacros#1{%
-  \jlreq@ifempty{#1}{\@secondoftwo}{%
-    \jlreq@iffirsttoken{#1}{\space}{\@secondoftwo}{%
-      \jlreq@ismacro{#1}{
-        \expandafter\jlreq@isletter@expandmacros\expandafter{#1}%
-      }{%
-        \jlreq@isletter{#1}%
-      }%
-    }%
-  }%
-}
 
+% こっちは先頭にあるマクロを展開してチェックする
+\long\def\jlreq@ifletter@expandmacros#1{%
+  \jlreq@ifmacro{#1}{\expandafter\jlreq@ifletter@expandmacros\expandafter{#1}}{\jlreq@ifletter{#1}}%
+}
 
 \def\jlreq@helper@checktokenlist#1#2{%
   \jlreq@ifendmark{#2}{\@firstoftwo}%
@@ -795,7 +779,7 @@
   \ifnum\jlreq@lastnodechar>-1
     \def\jlreq@do{%
       \ifnum\jlreq@getpostbreakpenalty{\jlreq@lastnodechar}=0\else\penalty\jlreq@getpostbreakpenalty{\jlreq@lastnodechar}\fi
-      \jlreq@isletter@expandmacros{\jlreq@nextchar}{%
+      \jlreq@ifletter@expandmacros{\jlreq@nextchar}{%
         \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{\jlreq@nextchar}%
 %        \message{fixjfm Insert: \the\jlreq@resultskip}%
         \hskip\jlreq@resultskip
@@ -1978,14 +1962,15 @@
     #8}%
   % \jlreq@tempskip(a/b)に前/後ろに入れるべき値を入れる
   % #4がa:ならばその値は\jlreq@tempskipaには足さず\jlreq@tempskipcに入れておく
+  \jlreq@tempskipa=0pt
   \jlreq@tempskipc=0pt
   \jlreq@startBlockHeading@analyzespace#4:\jlreq@endmark
-  \setbox\jlreq@tempboxb=\vbox{　}%
+  \setbox\jlreq@tempboxb=\vbox{阿}%
   \jlreq@ifempty{#6}{%
     \ifx\jlreq@startBlockHeading@space\@empty\else
       \jlreq@tempskipa=\glueexpr\jlreq@startBlockHeading@space\relax
     \fi
-    \jlreq@tempskipb=0pt\relax
+    \jlreq@tempskipb=0pt
   }{%
     \jlreq@tempskipb=\glueexpr(#6\baselineskip + \baselineskip - \ht\jlreq@tempboxb - \dp\jlreq@tempboxb - \ht\jlreq@tempboxa - \dp\jlreq@tempboxa)/2\relax
     \ifx\jlreq@startBlockHeading@space\@empty
@@ -3083,7 +3068,7 @@
     \edef\jlreq@parshapearg{\jlreq@parshapearg 0pt \the\jlreq@tempdimb 0pt \the\jlreq@tempdimb}%
   }%
   \ifvoid\jlreq@resultbox
-    \ClassWarning{jlreq}{\string\warichu\space failed, maybe a bug}%
+    \ClassWarning{jlreq}{\string\warichu\space failed, may be a bug}%
   \else
     \@tempcnta=0
     \splittopskip=0pt\relax
@@ -3839,7 +3824,7 @@
   {\jlreq@keepbaselineskip{\LARGE}\@title\par}%
   \vskip\baselineskip
   {\jlreq@keepbaselineskip{\large}%
-    \lineskip .5\jlreq@gol
+    \lineskip .5\zh
     % 縦書き時には表組み内でも縦書きにするようにする
     \if@tate
       \let\jlreq@temporary@original@ialign=\ialign
@@ -4033,10 +4018,10 @@
   \newcommand{\labelitemii}{○}
   \newcommand{\labelitemiii}{＊}
 \else
-  \newcommand{\labelitemii}{\hbox to 1\jlreq@mol{\hss\textendash\hss}}
-  \newcommand{\labelitemiii}{\hbox to 1\jlreq@mol{\hss\textasteriskcentered\hss}}
+  \newcommand{\labelitemii}{\hbox to 1\zw{\hss\textendash\hss}}
+  \newcommand{\labelitemiii}{\hbox to 1\zw{\hss\textasteriskcentered\hss}}
 \fi
-\newcommand{\labelitemiv}{\hbox to 1\jlreq@mol{\hss ・\hss}}
+\newcommand{\labelitemiv}{\hbox to 1\zw{\hss ・\hss}}
 
 % 引用系．3.5.2の例．
 \jlreq@jlreqsetup@add{quote_indent}{\def\jlreq@quote@indent{#1}}
@@ -4102,14 +4087,14 @@
 \preto\tabular{\begingroup\appto\@arrayparboxrestore{\baselineskip=0pt\lineskip=0pt}}
 \appto\endtabular{\endgroup}
 % 4.4.3.e
-\setlength\tabcolsep{.5\jlreq@gol}
-\setlength\arraycolsep{.5\jlreq@mol}
+\setlength\tabcolsep{.5\zh}
+\setlength\arraycolsep{.5\zw}
 % 4.4.3.j
 \setlength\arrayrulewidth{\jlreq@omotekeiwidth} % 4.4.3.c
 \setlength\doublerulesep{2pt}
 \setlength\tabbingsep{\labelsep}
 \skip\@mpfootins=\skip\footins
-\setlength\fboxsep{.3\jlreq@mol}
+\setlength\fboxsep{.3\zw}
 \setlength\fboxrule{\jlreq@omotekeiwidth} % 根拠はない
 % 後で
 \renewcommand{\theequation}{\@arabic\c@equation}
@@ -4358,7 +4343,7 @@
     \setbox\jlreq@tempboxa=\hbox{阿}%
     \vrule width 0pt height \ht\jlreq@tempboxa depth \dp\jlreq@tempboxa #1}%
   \def\jlreq@do{%
-    \jlreq@isletter{\jlreq@nextchar}{%
+    \jlreq@ifletter{\jlreq@nextchar}{%
       \jlreq@calc@jfmglue{阿}{\jlreq@nextchar}%
       \edef\@tempa{\the\jlreq@resultskip}%
       \edef\@tempb{\detokenize{0.0pt}}%

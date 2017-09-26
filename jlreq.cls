@@ -342,6 +342,11 @@
   \jlreq@ifmacro{#1}{\expandafter\jlreq@ifletter@expandmacros\expandafter{#1}}{\jlreq@ifletter{#1}}%
 }
 
+% 先頭にあるマクロを展開しまくった結果を#2に入れる．
+\long\def\jlreq@expandmacros#1#2{%
+  \jlreq@ifmacro{#1}{\expandafter\jlreq@expandmacros\expandafter{#1}{#2}}{\def#2{#1}}%
+}
+
 \def\jlreq@helper@checktokenlist#1#2{%
   \jlreq@ifendmark{#2}{\@firstoftwo}%
   {%
@@ -780,7 +785,10 @@
     \def\jlreq@do{%
       \ifnum\jlreq@getpostbreakpenalty{\jlreq@lastnodechar}=0\else\penalty\jlreq@getpostbreakpenalty{\jlreq@lastnodechar}\fi
       \jlreq@ifletter@expandmacros{\jlreq@nextchar}{%
-        \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{\jlreq@nextchar}%
+        \jlreq@expandmacros{\jlreq@nextchar}{\jlreq@tempa}%
+        \def\jlreq@tempb####1####2\jlreq@endmark{\def\jlreq@tempa{####1}}%
+        \expandafter\jlreq@tempb\jlreq@tempa\jlreq@endmark
+        \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{\jlreq@tempa}%
 %        \message{fixjfm Insert: \the\jlreq@resultskip}%
         \hskip\jlreq@resultskip
         \inhibitglue
@@ -4344,7 +4352,11 @@
     \vrule width 0pt height \ht\jlreq@tempboxa depth \dp\jlreq@tempboxa #1}%
   \def\jlreq@do{%
     \jlreq@ifletter{\jlreq@nextchar}{%
-      \jlreq@calc@jfmglue{阿}{\jlreq@nextchar}%
+      \jlreq@expandmacros{\jlreq@nextchar}{\jlreq@tempa}%
+      \def\jlreq@tempb####1####2\jlreq@endmark{\def\jlreq@tempa{####1}}%
+      \expandafter\jlreq@tempb\jlreq@tempa\jlreq@endmark
+      \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{\jlreq@tempa}%
+      \jlreq@calc@jfmglue{阿}{\jlreq@tempa}%
       \edef\@tempa{\the\jlreq@resultskip}%
       \edef\@tempb{\detokenize{0.0pt}}%
       \ifx\@tempa\@tempb\else\hskip\jlreq@resultskip\fi

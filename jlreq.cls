@@ -71,8 +71,12 @@
   \unexpanded{\expandafter\expandafter\expandafter\jlreq@deleteuntileendmark\expandafter\ifx\expandafter}\expandonce{\space}\noexpand\detokenize{#1}\unexpanded{\@undefined\jlreq@endmark\expandafter\@firstoftwo\else\jlreq@endmark\expandafter\@secondoftwo\fi}{%
     \noexpand\ifx\expandonce{\space}#2\unexpanded{\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}%
   }{%
-    \unexpanded{\expandafter\expandafter\expandafter\ifx\jlreq@getfirsttoken}#1\unexpanded{\jlreq@uniqtoken{}\jlreq@endmark}#2\unexpanded{\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}%
+    \noexpand\jlreq@iffirsttoken@omitspace{#1}{#2}%
   }%
+}
+% こちらは先頭のスペースを読み飛ばす
+\long\def\jlreq@iffirsttoken@omitspace#1#2{%
+  \expandafter\expandafter\expandafter\ifx\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark#2\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
 }
 
 % #1が\jlreq@endmarkか
@@ -92,56 +96,37 @@
 \jlreq@do
 
 % @removeelementの括弧があっても動くかもしれない版
-% 次の変数を使う：\jlreq@tempa：消したいやつ，\jlreq@tempb：今処理している部分．
+% 次の変数を使う：\jlreq@tempa：消したいやつ，\jlreq@tempb：消していない分を放り込んでいく
+% #2から#1を消して#3に入れる
 \def\jlreq@helper@removeelement#1#2#3{%
   \begingroup
     \def\jlreq@tempb{}%
     \def\jlreq@tempa{#1}%
-    \def#3{}%
-    \jlreq@helper@removeelement@#3#2{\jlreq@endmark}%
-    \edef\jlreq@do{\unexpanded{\def#3}{\expandonce{#3}}}%
+    \jlreq@helper@removeelement@{#2}%
+    \edef\jlreq@do{\unexpanded{\def#3}{\expandonce{\jlreq@tempb}}}%
   \expandafter\endgroup
   \jlreq@do
 }
-% 最初のグルーピングの前までを取得し，@@に回す．グルーピング以降は@@@で処理する
-\def\jlreq@helper@removeelement@#1#2#{%
-  \jlreq@helper@removeelement@@{#1}{#2}%
-  \jlreq@helper@removeelement@@@{#1}%
-}
-% #1をカンマで区切り，既に得ていた\jlreq@tempbと併せて一つの部分を作る．
-\def\jlreq@helper@removeelement@@#1#2{%
-  \jlreq@helper@dividebycomma{#2}%
-  \edef\jlreq@tempb{\expandonce{\jlreq@tempb}\expandonce{\jlreq@tempc}}%
-  \ifjlreq@tempa
-    \ifx\jlreq@tempa\jlreq@tempb\else
-      \ifx#1\@empty\edef#1{\expandonce{\jlreq@tempb}}%
-      \else\edef#1{\expandonce{#1},\expandonce{\jlreq@tempb}}\fi
+\def\jlreq@helper@removeelement@#1{%
+  \jlreq@helper@dividebycomma{#1}%
+  \ifx\jlreq@resulta\jlreq@tempa\else
+    \ifx\jlreq@tempb\@empty
+      \edef\jlreq@tempb{\expandonce{\jlreq@resulta}}%
+    \else
+      \eappto\jlreq@tempb{,\expandonce{\jlreq@resulta}}%
     \fi
-    \def\jlreq@tempb{}%
-    \expandafter\jlreq@helper@removeelement@@\expandafter#1\expandafter{\jlreq@tempd}%
   \fi
+  \ifjlreq@result\expandafter\@firstofone\else\expandafter\@gobble\fi
+    {\expandafter\jlreq@helper@removeelement@\expandafter{\jlreq@resultb}}%
 }
-% グルーピング部分を\jlreq@tempbに加え，@に戻る
-\def\jlreq@helper@removeelement@@@#1#2{%
-  \jlreq@ifendmark{#2}{%
-    % 全体の解釈が終わった
-    \ifx\jlreq@tempa\jlreq@tempb\else
-      \ifx#1\@empty\edef#1{\expandonce{\jlreq@tempb}}%
-      \else\edef#1{\expandonce{#1},\expandonce{\jlreq@tempb}}\fi
-    \fi
-  }{%
-    \edef\jlreq@tempb{\expandonce{\jlreq@tempb}{#2}}%
-    \def\jlreq@next{\jlreq@helper@removeelement@{#1}}%
-    \expandafter\jlreq@next
-  }%
-}
-% カンマで区切って，その前と後ろを\jlreq@tempc,\jlreq@tempdに入れる
-% もしカンマがない場合は\ifjlreq@tempaがfalseになる．
+
+% カンマで区切って，その前と後ろを\jlreq@resulta,\jlreq@resultbに入れる
+% もしカンマがない場合は\ifjlreq@resultがfalseになる．
 \def\jlreq@helper@dividebycomma#1{\jlreq@helper@dividebycomma@#1,\jlreq@endmark}
 \def\jlreq@helper@dividebycomma@#1,#2\jlreq@endmark{%
-  \def\jlreq@tempc{#1}%
-  \def\jlreq@tempd{#2}%
-  \ifx\jlreq@tempd\@empty\jlreq@tempafalse\else\jlreq@tempatrue\expandafter\def\expandafter\jlreq@tempd\expandafter{\jlreq@helper@removelastcomma#2\jlreq@endmark}\fi
+  \def\jlreq@resulta{#1}%
+  \def\jlreq@resultb{#2}%
+  \ifx\jlreq@resultb\@empty\jlreq@resultfalse\else\jlreq@resulttrue\expandafter\def\expandafter\jlreq@resultb\expandafter{\jlreq@helper@removelastcomma#2\jlreq@endmark}\fi
 }
 \def\jlreq@helper@removelastcomma#1,\jlreq@endmark{#1}
 
@@ -184,30 +169,17 @@
   \expandafter\endgroup
   \jlreq@do
 }
-\def\jlreq@helper@parsekeyval@@@#1#2#{\jlreq@helper@parsekeyval@@@@{#1}#2\jlreq@endmark}%
-\def\jlreq@helper@parsekeyval@@@@#1#2{%
-  \jlreq@ifendmark{#2}{%
-    \def\@tempa{\jlreq@helper@parsekeyval@@@@@{#1}}%
+\def\jlreq@helper@parsekeyval@@@#1#2#{%
+  \jlreq@iffirsttoken@omitspace{#2}{*}{%
+    \jlreq@helper@parsekeyval@@@definekeywithdefault{#1}%
   }{%
-    \def\@tempa{\expandafter\@tempb\jlreq@deleteuntileendmark}%
-    \ifx *#2%
-      \def\@tempb{\jlreq@helper@parsekeyval@@@definekeywithdefault{#1}}%
-    \else
-      \def\@tempb{\jlreq@helper@parsekeyval@@@@@{#1}}%
-    \fi
+    \jlreq@helper@parsekeyval@@@@{#1}%
   }%
-  \@tempa
 }
-
-\long\def\jlreq@helper@parsekeyval@@@@@#1#2{%
-  \jlreq@ifendmark{#2}{%
-    \def\@tempa{}%
-  }{%
-    \def\@tempa{%
-      \@ifnextchar[{\jlreq@helper@parsekeyval@@@choicekey{#1}{#2}}{\jlreq@helper@parsekeyval@@@definekey{#1}{#2}}%
-    }%
+\long\def\jlreq@helper@parsekeyval@@@@#1#2{%
+  \jlreq@ifendmark{#2}{}{%
+    \@ifnextchar[{\jlreq@helper@parsekeyval@@@choicekey{#1}{#2}}{\jlreq@helper@parsekeyval@@@definekey{#1}{#2}}%
   }%
-  \@tempa
 }
 \long\def\jlreq@helper@parsekeyval@@@choicekey#1#2[#3]#4{%
   \define@choicekey{#1}{#2}{#3}{\eappto\jlreq@do{\unexpanded{#4}}}%
@@ -267,29 +239,23 @@
   \jlreq@do
 }
 \long\def\jlreq@helper@switch@#1#2{%
-  \jlreq@ifendmark{#2}{%
-    \def\jlreq@next{}%
-  }{%
-    \edef\jlreq@next{\unexpanded{\jlreq@helper@switch@@{#1}{#2}}}%
-  }%
-  \jlreq@next
+  \jlreq@ifendmark{#2}{}{\jlreq@helper@switch@@{#1}{#2}}%
 }
+
 \long\def\jlreq@helper@switch@@#1#2#3{%
   \jlreq@ifendmark{#3}{%
     \edef\jlreq@do{\unexpanded{#2}}%
-    \def\jlreq@next{}%
   }{%
     \def\jlreq@tempa{#1}% 最初に\edefで展開済み
     \edef\jlreq@tempb{#2}%
     \ifx\jlreq@tempa\jlreq@tempb\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
     {%
       \edef\jlreq@do{\unexpanded{#3}}%
-      \def\jlreq@next{\jlreq@deleteuntileendmark}%
+      \jlreq@deleteuntileendmark
     }{%
-      \def\jlreq@next{\jlreq@helper@switch@{#1}}%
+      \jlreq@helper@switch@{#1}%
     }%
   }%
-  \jlreq@next
 }
 
 % preambleにいるかのスイッチ
@@ -403,9 +369,9 @@
     \unexpanded{\jlreq@switch{#1}}{\expandonce{\jlreq@switchpapersize}}%
     [\unexpanded{%
       \jlreq@helper@dividebycomma{#1}%
-      \ifjlreq@tempa
-        \setlength{\paperwidth}{\dimexpr\jlreq@tempc\relax}%
-        \setlength{\paperheight}{\dimexpr\jlreq@tempd\relax}%
+      \ifjlreq@result
+        \setlength{\paperwidth}{\dimexpr\jlreq@resulta\relax}%
+        \setlength{\paperheight}{\dimexpr\jlreq@resultb\relax}%
       \else
         \ClassError{jlreq}{The paper #1 is unknown}{\@ehc}%
       \fi
@@ -617,18 +583,26 @@
 \jlreq@aftercls@addtodeletecs{\jlreq@jlreqsetup@addtofinally}
 \@onlypreamble\jlreqsetup
 
+% \jlreq@ifprimitive#1#2#3: #1がprimitiveならば#2を，そうでなければ#3を実行する
+% （\if(pdf)primitiveを避けるようにしている．）
+\def\jlreq@ifprimitive#1{%
+  \edef\@tempa{\string#1}%
+  \edef\@tempb{\meaning#1}%
+  \ifx\@tempa\@tempb\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+}
 % エンジンの設定
 \ifx\jlreq@engine\@undefined
-  \ifx\directlua\@undefined
-    \ifx\ucs\@undefined
-      \let\jlreq@engine=p
-    \else
-      \let\jlreq@engine=u
-    \fi
-  \else
+  \jlreq@ifprimitive\directlua{
     \let\jlreq@engine=l
-  \fi
+  }{
+    \jlreq@ifprimitive\ucs{
+      \let\jlreq@engine=u
+    }{
+      \let\jlreq@engine=p
+    }
+  }
 \fi
+
 
 \ifx l\jlreq@engine
   \RequirePackage{luatexja}
@@ -648,11 +622,8 @@
 \fi
 
 % \jlreq@gol(Gyo Okuri Length), \jlreq@mol (Moji Okuri Length)を定義
-\ifx l\jlreq@engine
-  \def\jlreq@gol{\zh}\def\jlreq@mol{\zw}
-\else
-  \def\jlreq@gol{zh}\def\jlreq@mol{zw}
-\fi
+\let\jlreq@gol=\zh
+\let\jlreq@mol=\zw
 
 %. helper2（エンジン依存系）
 % 組方向を判定
@@ -734,7 +705,7 @@
 }
 
 \ifx l\jlreq@engine
-  \newcommand*{\lastnodechar}{\directlua{luatexja.pltx_composite_last_node_char()}}% undocumented
+  \newcommand*{\lastnodechar}{\directlua{luatexja.pltx_composite_last_node_char()}}% undocumentedな機能を使っている
 \fi
 
 % #1と#2の間に入るjmglue（(x)kanjiskipも）を\jlreq@resultskipに入れる
@@ -751,6 +722,7 @@
         local shrink = 0
         local n = tex.box["jlreq@tempboxb"].head
         while n do
+          % すべてのglueの和を計算する．
           if n.id == node.id("glue") then
             width = width + n.width
             stretch = stretch + n.stretch
@@ -1241,7 +1213,7 @@
   % \item後の行頭括弧のために仕込み．
   \jlreq@saveoriginalcs{list}
   \jlreq@saveoriginalcs{endlist}
-  \pretocmd{\list}{\jlreq@pushhook@postpar{\directlua{luatexja.jfmglue.create_beginpar_node()}}}{}{}%
+  \pretocmd{\list}{\jlreq@pushhook@postpar{\directlua{luatexja.jfmglue.create_beginpar_node()}}}{}{}% ltjsclassesから
   \apptocmd{\endlist}{\jlreq@pophook@postpar}
 \else
   % 非LuaTeXの場合はJFMの入れ替えと\everyparでの処理で対処．
@@ -1252,18 +1224,17 @@
   \expandafter\jlreq@do\jlreq@charlist@openingbrackets\jlreq@endmark
   % JFM glueの伸び縮みで行頭括弧が揃わないのを防ぐために常に\inhibitglueを入れる．
   \ifthenelse{\equal{\jlreq@open@bracket@pos}{nibu_tentsuki}}{
-    \edef\jlreq@openbracket@hook{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\hskip -.5\jlreq@mol\inhibitglue}\noexpand\fi}
+    \edef\jlreq@openbracket@hook{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\hskip -.5\zw\inhibitglue}\noexpand\fi}
   }{% zenkakunibu_nibu,zenkaku_tentsuki
     \edef\jlreq@openbracket@hook{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\inhibitglue}\noexpand\fi}
   }
-  % \jlreq@jfmnameにJFMの名前を入れる
   \def\jlreq@jfmname@prefix{}
   \jlreq@aftercls@addtodeletecs{\jlreq@jfmname@prefix}
   \ifjlreq@burasage\edef\jlreq@jfmname@prefix{b\jlreq@jfmname@prefix}\fi
   \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{\edef\jlreq@jfmname@prefix{\jlreq@jfmname@prefix z}}{}
   \ifx u\jlreq@engine\edef\jlreq@jfmname@prefix{u\jlreq@jfmname@prefix}\fi
-  \edef\jlreq@jfmname{\jlreq@jfmname@prefix jlreq}
-  \edef\jlreq@jfmnameg{\jlreq@jfmname@prefix jlreqg}
+  \edef\jlreq@jfmname{\jlreq@jfmname@prefix jlreq} % JFMの名前
+  \edef\jlreq@jfmnameg{\jlreq@jfmname@prefix jlreqg} % ゴシックなJFMの名前
   \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
 \fi
 \newcount\jlreq@count@listnest
@@ -1285,7 +1256,7 @@
 
 % 行頭の括弧は \jlreq@open@bracket@before@space \inhibitglue 「みたいにする．
 \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{
-  \def\jlreq@open@bracket@before@space{\hskip -.5\jlreq@mol}
+  \def\jlreq@open@bracket@before@space{\hskip -.5\zw}
 }{
   \def\jlreq@open@bracket@before@space{}
 }
@@ -1387,10 +1358,10 @@
   \AtBeginDocument{\catcode`　=\active}
 \fi
 
-% \jaspace
+%/g  \jaspace
 \DeclareRobustCommand*{\jaspace}[1]{%
-  \expandafter\ifx\csname jlreq@jaspace@#1\endcsname\relax\ClassError{jlreq}{unknown jaspace: #1}{\@ehc}%
-  \else\csname jlreq@jaspace@#1\endcsname\fi
+  \ifcsname jlreq@jaspace@#1\endcsname\csname jlreq@jaspace@#1\endcsname
+  \else\ClassError{jlreq}{unknown jaspace: #1}{\@ehc}\fi
 }
 \def\jlreq@jaspace@zenkaku{\hskip \glueexpr 1\zw\relax}
 \def\jlreq@jaspace@nibu{\hskip \glueexpr .5\zw\relax}
@@ -1457,7 +1428,7 @@
       \ltj@setpar@global
       \ltjsetkanjiskip\jlreq@kanjiskip
       \@tempskipa=\ltjgetparameter{xkanjiskip}%
-      \ifdim\@tempskipa>\z@
+      \ifdim\@tempskipa>0pt
         \ltjsetxkanjiskip\jlreq@xkanjiskip
       \fi
     }
@@ -1495,12 +1466,12 @@
 
 \if@tate\tate\fi % ここで発行しておく
 \mcfamily\selectfont\normalsize
-\setbox0\hbox{阿}
-\setlength\Cht{\ht0}
-\setlength\Cdp{\dp0}
-\setlength\Cwd{\wd0}
+\setbox\jlreq@tempboxa\hbox{阿}
+\setlength\Cht{\ht\jlreq@tempboxa}
+\setlength\Cdp{\dp\jlreq@tempboxa}
+\setlength\Cwd{\wd\jlreq@tempboxa}
 \setlength\Cvs{\baselineskip}
-\setlength\Chs{\wd0}
+\setlength\Chs{\wd\jlreq@tempboxa}
 
 % 4.1.3.a
 % 2.5.2 \baselineskipは一定の方がよい？
@@ -1788,12 +1759,21 @@
 \setlength{\maxdepth}{\dimexpr1.5\zw - \topskip\relax}
 
 %. 見出し関係 (4.1)
+% 同行見出し以外では，jlreq@heading@maketoc@<命令名>が\tableofcontents用の出力をするために呼び出される．
+% #1=*または空（見出し命令に*がついていたかで分岐），#2=ラベル，#3=running head
+% デフォルトでは\<命令名>markと\addcontentslineが必要ならば呼ばれる．
+% 同行見出しでは\@startsection任せ
+
 % 見出しの直前に実行される
 \newcommand*{\jlreq@hook@beforeheadings}[1]{}
+% 見出し名一覧を格納する
 \def\jlreq@heading@allheadings{}
+
 %.. 中/半扉見出し
 % addcontentslineに渡すやつ：番号出すのと出さないの
 \newcommand{\DeclareTobiraHeading}[3]{%
+  \def\jlreq@do{\@removeelement{#1}}%
+  \expandafter\jlreq@do\expandafter{\jlreq@heading@allheadings}{\jlreq@heading@allheadings}%
   \appto{\jlreq@heading@allheadings}{,#1}%
   \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}%
   \expandafter\edef\csname jlreq@heading@setting@#1\endcsname{\unexpanded{#3}}%
@@ -1826,23 +1806,23 @@
         }%
       }
     }{#3}%
+    \def\jlreq@do{}%
     \ifx\jlreq@format\@undefined
       \def\jlreq@format##1##2{##1##2}%
     \fi
     \edef\jlreq@formatwlabel{\noexpand\jlreq@format{\expandonce{\jlreq@label@format}}}%
-    \def\jlreq@addtodo{}%
     \@ifundefined{l@#1}{%
       \edef\jlreq@do{\unexpanded{\setbox\jlreq@tempboxa=\hbox}{\expandonce{\jlreq@label@format}}}%
       \jlreq@do
       \jlreq@tempdima=\wd\jlreq@tempboxa
-      \jlreq@tempdimb=1\jlreq@mol
+      \jlreq@tempdimb=1\zw
       \divide\jlreq@tempdima by \jlreq@tempdimb
-      \eappto\jlreq@addtodo{%
-        \noexpand\def\expandonce{\csname l@#1\endcsname}{\unexpanded{\@dottedtocline{#2}{0\jlreq@mol}}{\the\numexpr\jlreq@tempdima + 1\relax\noexpand\jlreq@mol}}%
+      \eappto\jlreq@do{%
+        \noexpand\def\expandonce{\csname l@#1\endcsname}{\unexpanded{\@dottedtocline{#2}{0\zw}}{\the\numexpr\jlreq@tempdima + 1\relax\noexpand\zw}}%
       }%
     }{}%
     \edef\jlreq@do{%
-      \expandonce{\jlreq@addtodo}%
+      \expandonce{\jlreq@do}%
       \noexpand\def\expandonce{\csname jlreq@TobiraHeading@start@#1\endcsname}[####1]####2{%
         \unexpanded{\ifnum#2>\c@secnumdepth\else}%
           \unexpanded{\refstepcounter{#1}}%
@@ -1884,9 +1864,17 @@
 }
 
 %.. 別行見出し
+% \jlreq@startBlockHeading：別行見出しを出力する命令．
 % \jlreq@startBlockHeading{1 = 命令名}{2 = レベル}{3 = スペース関連}{4 =  フォーマット関連}{5 = 全体フォーマット}*{見出し}[副題]
-% 字下げはa:**だと追加する値（ページ行頭には入らない），s:**も追加だがページ行頭でも入る，
-% r:**だとその値に強制する．
+% スペース関連={配置:lcr（左中央右）}{字下げ（寸法）}{字上げ（寸法）}{前空き}{後空き}{行取りの行数}{空か*か，偶数ページでも改ページを許可するならば空}
+% 前/後空きはprefixにa:/s:/r:が入る．r:は空きがその値そのものになる．a:/s:は行取りに加えて入る．a:で指定された空きはページ行頭では入らない
+% 後空きの時はs:は指定できない．
+% フォーマット関連：
+% フォーマット関連={ラベルのみのフォーマット}{ラベルフォーマット}{見出し文字列フォーマット}{見出し文字列フォーマット（ラベル無し）}{副題フォーマット}{副題フォーマット（ラベル無し）}{見出し全体のフォーマット}
+% 見出しそのものは「全体フォーマット」に従い出力される．パラメータトークン#1を含み，#1=見出し本体：スペース関連と上の「見出し全体のフォーマット」に基づいて整形される．
+% 見出し全体のフォーマット内では#1=ラベル，#2=見出し文字列，#3=副題，それぞれ各々のフォーマットに基づき整形される．
+% ラベルフォーマットでは#1=カウンタ名，見出し文字列フォーマットでは#1=見出し文字列，副題フォーマットでは#1=副題
+% ラベルのみのフォーマットは目次に使われる．
 \newcommand{\jlreq@startBlockHeading}[5]{%
   \edef\jlreq@startBlockHeading@format{\unexpanded{#4}}%
   \edef\jlreq@startBlockHeading@totalformat{\unexpanded{#5}}%
@@ -2027,6 +2015,8 @@
 
 % \DeclareBlockHeading{命令名}{レベル}{設定}
 \newcommand{\DeclareBlockHeading}[3]{%
+  \def\jlreq@do{\@removeelement{#1}}%
+  \expandafter\jlreq@do\expandafter{\jlreq@heading@allheadings}{\jlreq@heading@allheadings}%
   \appto{\jlreq@heading@allheadings}{,#1}%
   \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}%
   \expandafter\edef\csname jlreq@heading@setting@#1\endcsname{\unexpanded{#3}}%
@@ -2051,19 +2041,19 @@
     \def\jlreq@after@lines{}%
     \def\jlreq@font{}%
     \def\jlreq@subtitle@font{}%
-    \def\jlreq@indent{0\jlreq@mol}%
-    \def\jlreq@end@indent{0\jlreq@mol}%
+    \def\jlreq@indent{0\zw}%
+    \def\jlreq@end@indent{0\zw}%
     \def\jlreq@align{l}%
     \edef\jlreq@format{\unexpanded{##1##2##3}}%
     \edef\jlreq@heading@text@format{\unexpanded{##1}}%
     \def\jlreq@pagebreak{}%
     \def\jlreq@label@format{\@seccntformat{#1}}%
     \newif\ifjlreq@hang\jlreq@hangtrue
-    \def\jlreq@after@label@space{1\jlreq@mol}%
+    \def\jlreq@after@label@space{1\zw}%
     \def\jlreq@second@heading@text@indent@wlabel{0pt}%
     \def\jlreq@second@heading@text@indent@wolabel{0pt}%
     \edef\jlreq@subtitle@format{\unexpanded{---##1---}}%
-    \def\jlreq@subtitle@indent{1\jlreq@mol}%
+    \def\jlreq@subtitle@indent{1\zw}%
     \def\jlreq@afterindent{\@afterindenttrue}%
     \def\jlreq@allowbreak@evenpage{*}% 偶数ページでも改ページを許可するならば空，そうでないなら*
     \newif\ifjlreq@subtitle@break\jlreq@subtitle@breaktrue
@@ -2169,6 +2159,7 @@
         \ifjlreq@tempa\ClassWarningNoLine{jlreq}{Invalid input `##1' for column_spanning in BlockHeading #1}\fi
       }
     }{#3}%
+    \def\jlreq@do{}% 初期化．これに最終処理を入れていく．
     % 入力チェック
     \ifthenelse{\equal{\jlreq@column@spanning}{true}}{%
       \expandafter\ifx\jlreq@pagebreak\clearpage\relax\else\expandafter\ifx\jlreq@pagebreak\cleardoublepage\relax\else
@@ -2176,11 +2167,7 @@
         \def\jlreq@column@spanning{false}%
       \fi\fi
     }{}%
-    \ifx\jlreq@font\@empty\else
-      \edef\jlreq@format{%
-        \expandonce{\jlreq@font}\expandonce{\jlreq@format}%
-      }%
-    \fi
+    \edef\jlreq@format{\expandonce{\jlreq@font}\expandonce{\jlreq@format}}%
     \edef\jlreq@label@format@modified{%
       \noexpand\noindent
       \unexpanded{\setbox\jlreq@tempboxa=\hbox}{\expandonce{\jlreq@label@format}}%
@@ -2222,7 +2209,6 @@
       \ifjlreq@hang\else + (\noexpand\jlreq@startBlockHeading@labellength)\fi
     }%
     \jlreq@make@subtitle@format\jlreq@subtitle@format@wolabel{- (\expandonce{\jlreq@second@heading@text@indent@wolabel})}%
-    \def\jlreq@addtodo{}%
     \@ifundefined{l@#1}{%
       % 長さは適当に計測する
       \begingroup
@@ -2232,10 +2218,10 @@
         \edef\jlreq@do{\noexpand\jlreq@tempdima=\the\dimexpr\wd\jlreq@tempboxa\relax}%
       \expandafter\endgroup
       \jlreq@do
-      \jlreq@tempdimb=1\jlreq@mol
+      \jlreq@tempdimb=1\zw
       \divide\jlreq@tempdima by \jlreq@tempdimb
-      \eappto\jlreq@addtodo{%
-        \noexpand\def\expandonce{\csname l@#1\endcsname}{\unexpanded{\@dottedtocline{#2}{0\jlreq@mol}}{\the\numexpr\jlreq@tempdima + 1\relax\noexpand\jlreq@mol}}%
+      \eappto\jlreq@do{%
+        \noexpand\def\expandonce{\csname l@#1\endcsname}{\unexpanded{\@dottedtocline{#2}{0\zw}}{\the\numexpr\jlreq@tempdima + 1\relax\noexpand\zw}}%
       }%
     }{}%
     % before/after_lines優先
@@ -2248,7 +2234,7 @@
       \ifthenelse{\equal{\jlreq@column@spanning}{true}}{\edef\jlreq@totalformat{\unexpanded{\twocolumn[{##1}]}}}{}%
     \fi
     \edef\jlreq@do{%
-      \expandonce{\jlreq@addtodo}%
+      \expandonce{\jlreq@do}%
       \noexpand\edef\expandonce{\csname #1\endcsname}{\noexpand\unexpanded{%
         \noexpand\jlreq@hook@beforeheadings{#1}%
         \expandonce{\jlreq@pagebreak}%
@@ -2280,19 +2266,21 @@
 %.. 同行見出し
 % \DeclareRuninHeading{命令名}{レベル}{設定}
 \newcommand*{\DeclareRuninHeading}[3]{%
+  \def\jlreq@do{\@removeelement{#1}}%
+  \expandafter\jlreq@do\expandafter{\jlreq@heading@allheadings}{\jlreq@heading@allheadings}%
   \appto{\jlreq@heading@allheadings}{,#1}%
   \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}%
   \expandafter\edef\csname jlreq@heading@setting@#1\endcsname{\unexpanded{#3}}%
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewRuninHeading}%
   \@ifundefined{c@#1}{\newcounter{#1}}{}%
   \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}%
-  \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\@dottedtocline{#2}{0\jlreq@mol}{2\jlreq@gol}}}{}%
+  \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\@dottedtocline{#2}{0\zw}{2\jlreq@gol}}}{}%
   \begingroup
     \def\jlreq@font{\normalfont\normalsize}%
-    \def\jlreq@indent{0\jlreq@mol}%
+    \def\jlreq@indent{0\zw}%
     \def\jlreq@mark{}%
     \def\jlreq@label@font{}%
-    \def\jlreq@after@space{1\jlreq@mol}%
+    \def\jlreq@after@space{1\zw}%
     \jlreq@parsekeyval[RuninHeading:#1]{%
       {font}{\def\jlreq@font{##1}}
       {indent}{\def\jlreq@indent{##1}}
@@ -2397,8 +2385,8 @@
     \def\jlreq@fontcommand{\sffamily\bfseries}%
     \def\jlreq@onelinemax{6\zw}%
     \def\jlreq@twolinemax{20\zw}%
-    \def\jlreq@indent{0\jlreq@mol}%
-    \def\jlreq@after@space{1\jlreq@mol}%
+    \def\jlreq@indent{0\zw}%
+    \def\jlreq@after@space{1\zw}%
     \jlreq@parsekeyval[CutinHeading:#1]{
       {font}{\def\jlreq@fontcommand{##1}}
       {onelinemax}{\def\jlreq@onelinemax{##1}}
@@ -2406,8 +2394,8 @@
       {indent}{\def\jlreq@indent{##1}}
       {after_space}{\def\jlreq@after@space{##1}}
     }{#3}%
-    \ifthenelse{\lengthtest{\jlreq@after@space < 0.99\jlreq@mol} \OR \lengthtest{\jlreq@after@space > 2.01\jlreq@mol}}{%
-      \jlreq@note{窓見出しと本文との空き量は，基本版面の文字サイズの全角以上，2倍未満とする (4.1.10.c)．}%&
+    \ifthenelse{\lengthtest{\jlreq@after@space < 0.99\zw} \OR \lengthtest{\jlreq@after@space > 2.01\zw}}{%
+      \jlreq@note{窓見出しと本文との空き量は，基本版面の文字サイズの全角以上，2倍未満とする (4.1.10.c)．}%
     }{}%
     \edef\jlreq@do{%
       \noexpand\def\expandonce{\csname #1\endcsname}{%
@@ -2461,13 +2449,14 @@
 }
 
 \newcommand*\jlreq@HeadingType[1]{%
-  \expandafter\ifx\csname jlreq@heading@type@#1\endcsname\relax UndefinedHeading
-  \else
+  \ifcsname jlreq@heading@type@#1\endcsname
     \jlreq@HeadingType@{#1}{\RenewTobiraHeading}{TobiraHeading}{%
     \jlreq@HeadingType@{#1}{\RenewBlockHeading}{BlockHeading}{%
     \jlreq@HeadingType@{#1}{\RenewRuninHeading}{RuninHeading}{%
     \jlreq@HeadingType@{#1}{\RenewCutinHeading}{CutinHeading}{%
     UnknownHeading}}}}%
+  \else
+    UndefinedHeading%
   \fi
 }
 \newcommand*\jlreq@HeadingType@[2]{%
@@ -2524,23 +2513,23 @@
   \renewcommand{\thesubparagraph}{(\jlreq@rensuji{\@arabic\c@subparagraph})}
 
   \ifthenelse{\equal{\jlreq@article@type}{article}}{
-    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE}},indent=4\jlreq@mol,lines=4,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\large}}}
+    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE}},indent=4\zw,lines=4,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\large}}}
     \if@twoside\ModifyHeading{part}{allowbreak_if_evenpage=true}\fi
   }
   {% book, report
-    \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\jlreq@mol}},format={\null\vfill {\Huge\hspace*{2\jlreq@mol}#1#2}\vspace*{2\jlreq@gol}}}
-    \NewBlockHeading{chapter}{0}{indent=2\jlreq@mol,lines=6,label_format={第\thechapter 章},font={\huge},after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\Large}}}
+    \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\zw}},format={\null\vfill {\Huge\hspace*{2\zw}#1#2}\vspace*{2\jlreq@gol}}}
+    \NewBlockHeading{chapter}{0}{indent=2\zw,lines=6,label_format={第\thechapter 章},font={\huge},after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\Large}}}
     \if@twoside\ModifyHeading{chapter}{allowbreak_if_evenpage=true}\fi
     \renewcommand{\thechapter}{\jlreq@Kanji{chapter}}
   }
-  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large}},indent=6\jlreq@mol,lines=3,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
+  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large}},indent=6\zw,lines=3,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
   \if@twoside\ModifyHeading{section}{allowbreak_if_evenpage=true}\fi
-  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large}},indent=8\jlreq@mol,lines=2,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\small}}}
+  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large}},indent=8\zw,lines=2,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\small}}}
   \if@twoside\ModifyHeading{subsection}{allowbreak_if_evenpage=true}\fi
-  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize}},indent=10\jlreq@mol,lines=1,before_lines=1,subtitle_break=false,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},,subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
+  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize}},indent=10\zw,lines=1,before_lines=1,subtitle_break=false,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},,subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
   \if@twoside\ModifyHeading{subsubsection}{allowbreak_if_evenpage=true}\fi
   \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize}}}
-  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize}},indent=1\jlreq@mol}
+  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize}},indent=1\zw}
 \else% yoko
   \renewcommand{\thepart}{\Roman{part}}
   \renewcommand{\thesubsection}{\thesection .\arabic{subsection}}
@@ -2548,7 +2537,7 @@
   \renewcommand{\theparagraph}{\thesubsubsection .\arabic{paragraph}}
   \renewcommand{\thesubparagraph}{\theparagraph .\arabic{subparagraph}}
   \ifthenelse{\equal{\jlreq@article@type}{article}}{
-    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\sffamily\bfseries}},label_format={第\thepart 部},lines=4,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\large}}}
+    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\sffamily\bfseries}},label_format={第\thepart 部},lines=4,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\large}}}
     \renewcommand{\thesection}{\arabic{section}}
   }
   {% book, report
@@ -2556,7 +2545,7 @@
     \NewBlockHeading{chapter}{0}{%
       font={\jlreq@keepbaselineskip{\huge\sffamily\bfseries}},
       label_format={第\thechapter 章},
-      lines=5,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},
+      lines=5,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},
       subtitle_font={\jlreq@keepbaselineskip{\Large}}}
     \renewcommand{\thechapter}{\arabic{chapter}}
     \renewcommand{\thesection}{\thechapter.\arabic{section}}
@@ -2566,11 +2555,11 @@
       \ModifyHeading{chapter}{pagebreak=clearpage}
     }
   }
-  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\sffamily\bfseries}},lines=3,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
-  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\sffamily\bfseries}},lines=2,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\small}}}
-  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\bfseries}},lines=1,before_lines=1,subtitle_break=false,after_label_space=1\jlreq@mol,second_heading_text_indent={-1\jlreq@mol,1\jlreq@mol},subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
-  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\bfseries}},indent=1\jlreq@mol}
-  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\bfseries}},indent=2\jlreq@mol}
+  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\sffamily\bfseries}},lines=3,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
+  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\sffamily\bfseries}},lines=2,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\small}}}
+  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\bfseries}},lines=1,before_lines=1,subtitle_break=false,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
+  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\bfseries}},indent=1\zw}
+  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\bfseries}},indent=2\zw}
 \fi
 
 \ifthenelse{\equal{\jlreq@article@type}{article}}{}{% book, report
@@ -2680,14 +2669,14 @@
     }%
     \ifx l\jlreq@engine
       \def\jlreq@hook@prenote{%
-        \jlreq@lastnodechar=\lastnodechar
+        \jlreq@lastnodechar=\lastnodechar\relax
         \ifnum\lastnodechar>-1\inhibitglue\fi
       }
     \else
       % (u)platexの時は代入すると\inhibitglueが効かなくなる
       \def\jlreq@hook@prenote{%
         \ifnum\lastnodechar>-1\inhibitglue\fi
-        \jlreq@lastnodechar=\lastnodechar
+        \jlreq@lastnodechar=\lastnodechar\relax
       }
     \fi
     \def\jlreq@hook@postnote{\jlreq@fixjfm}
@@ -3695,9 +3684,9 @@
 \newcommand{\@makecaption}[2]{{%
   \reset@font\small
   \vskip\abovecaptionskip
-  \sbox\@tempboxa{{\jlreq@@makecaption@label@font #1}\hskip 1\jlreq@mol{\jlreq@@makecaption@font #2}}%
+  \sbox\@tempboxa{{\jlreq@@makecaption@label@font #1}\hskip 1\zw{\jlreq@@makecaption@font #2}}%
   \ifdim \wd\@tempboxa >\hsize
-    {\jlreq@@makecaption@label@font #1}\hskip1\jlreq@mol{\jlreq@@makecaption@font #2}\relax\par
+    {\jlreq@@makecaption@label@font #1}\hskip1\zw{\jlreq@@makecaption@font #2}\relax\par
   \else
     \global\@minipagefalse
     \hbox to\hsize{\hfil\box\@tempboxa\hfil}%
@@ -4020,7 +4009,7 @@
 \renewcommand{\p@enumiii}{\theenumi(\theenumii)}
 \renewcommand{\p@enumiv}{\p@enumiii\theenumiii}
 
-\newcommand{\labelitemi}{\hbox to 1\jlreq@mol{\hss\textbullet\hss}}
+\newcommand{\labelitemi}{\hbox to 1\zw{\hss\textbullet\hss}}
 %\newcommand{\labelitemi}{•}
 \if@tate
   \newcommand{\labelitemii}{○}
@@ -4232,8 +4221,7 @@
   \widowpenalty4000%
   \sfcode`\.\@m
 }{%
-  \def\@noitemerr
-    {\@latex@warning{Empty `thebibliography' environment}}%
+  \def\@noitemerr{\@latex@warning{Empty `thebibliography' environment}}%
   \endlist
   \jlreq@oldfontcommand@disable
 }
@@ -4340,6 +4328,7 @@
   \jlreq@ifydir{\ClassError{jlreq}{\string\tatechuyoko\space is not allowed in yoko mode}{\@ehc}}{}%
   \jlreq@lastnodechar=\lastnodechar
   \ifvmode\leavevmode\fi
+  % 前のJFM glue
   \ifnum\jlreq@lastnodechar=-1\else
     \inhibitglue
     \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{阿}%
@@ -4351,6 +4340,7 @@
     \setbox\jlreq@tempboxa=\hbox{阿}%
     \vrule width 0pt height \ht\jlreq@tempboxa depth \dp\jlreq@tempboxa #1}%
   \def\jlreq@do{%
+    % 後ろのJFM glue
     \jlreq@ifletter{\jlreq@nextchar}{%
       \jlreq@expandmacros{\jlreq@nextchar}{\jlreq@tempa}%
       \def\jlreq@tempb####1####2\jlreq@endmark{\def\jlreq@tempa{####1}}%
@@ -4367,34 +4357,50 @@
 }
 
 % 日にち
-\newif\if西暦 \西暦true
+\newif\if西暦
 \def\西暦{\西暦true}
 \def\和暦{\西暦false}
-\newcount\heisei \heisei\year \advance\heisei-1988\relax
-
-\def\today{{%
-  \jlreq@iftdir{%
-    \if西暦
-      \kansuji\year 年
-      \kansuji\month 月
-      \kansuji\day 日
-    \else
-      平成\ifnum\heisei=1 元年\else\kansuji\heisei 年\fi
-      \kansuji\month 月
-      \kansuji\day 日
-    \fi
-  }{%
-    \if西暦
-      \number\year~年
-      \number\month~月
-      \number\day~日
-    \else
-      平成\ifnum\heisei=1 元年\else\number\heisei~年\fi
-      \number\month~月
-      \number\day~日
-    \fi
-  }}}
-
+% #1年#2月#3日 #4は\numberとか\kansujiとか
+\def\jlreq@wareki#1#2#3#4{%
+  % 昭和：1989年1月7日まで
+  \ifnum0\ifnum#1<1988 1\fi\ifnum#1=1989 \ifnum#2=1 \ifnum#3<8 1\fi\fi\fi>0
+    昭和\jlreq@warekiyear@{#1}{1926}{#4}%
+  \else
+    平成\jlreq@warekiyear@{#1}{1989}{#4}%
+  \fi
+  #4#2月#4#3日%
+}
+\def\jlreq@warekiyear@#1#2#3{\ifnum#1=#2 元年\else #3\numexpr#1-#2+1\relax 年\fi}
+\def\today{%
+  \if西暦
+    \jlreq@iftdir{%
+      \kansuji\year 年%
+      \kansuji\month 月%
+      \kansuji\day 日%
+    }{%
+      \number\year 年%
+      \number\month 月%
+      \number\day 日%
+    }%
+  \else
+    \jlreq@iftdir{%
+      \jlreq@wareki{\year}{\month}{\day}{\kansuji}%
+    }{%
+      \jlreq@wareki{\year}{\month}{\day}{\number}%
+    }%
+  \fi
+}
+\jlreq@jlreqsetup@add{year_style}[seireki,wareki]{%
+  \jlreq@switch{#1}{%
+    {seireki}{\西暦true}
+    {wareki}{\西暦false}
+  }
+}
+\if@tate
+  \jlreqsetup{year_style=wareki}
+\else
+  \jlreqsetup{year_style=seireki}
+\fi
 %.. 定理環境
 \jlreq@saveoriginalcs{@begintheorem}
 \jlreq@saveoriginalcs{@opargbegintheorem}
@@ -4412,7 +4418,7 @@
   \edef\jlreq@do{
     \unexpanded{\def\jlreq@proof[#1]}{%
       \labelsep=1\zw
-      \expandonce{\proof[{\normalfont\sffamily\bfseries #1\inhibitglue}\nopunct]}%
+      \expandonce{\proof[{\reset@font\sffamily\bfseries #1\inhibitglue}\nopunct]}%
     }
   }
   \jlreq@do

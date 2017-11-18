@@ -290,6 +290,9 @@
 }
 
 \def\jlreq@saveoriginalcs#1{%
+  \@ifundefined{#1}{%
+    \ClassError{jlreq}{Trying to save \expandafter\string\csname #1\endcsname\space but it's not defined, may be a bug}{\@ehc}%
+  }{}%
   \@ifundefined{jlreq@original@#1}{}{%
     \ClassError{jlreq}{Trying to save \expandafter\string\csname #1\endcsname\space twice, may be a bug}{\@ehc}%
   }%
@@ -1434,10 +1437,10 @@
 \emergencystretch 3\jlreq@gol
 
 %.. 文字サイズ変更
-\def\jlreq@setfontsizehook{}% set@fontsizeの最後に実行される．
+\def\jlreq@setfontsizehook{}
 \jlreq@saveoriginalcs{set@fontsize}
-\apptocmd{\set@fontsize}{\jlreq@setfontsizehook}{}{}
-\appto\jlreq@setfontsizehook{\ifdim\parindent>0pt\setlength{\parindent}{1\zw}\fi}
+\apptocmd{\set@fontsize}{\expandafter\def\expandafter\size@update\expandafter{\size@update\jlreq@setfontsizehook}}{}{}
+\appto\jlreq@setfontsizehook{\ifdim\parindent>0pt \setlength{\parindent}{1\zw}\fi}
 \ifx l\jlreq@engine
   \@tempskipa=\ltjgetparameter{kanjiskip}
   \ifdim\@tempskipa=\maxdimen\else

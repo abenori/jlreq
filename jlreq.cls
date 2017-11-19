@@ -59,6 +59,11 @@
 \def\jlreq@endmark{\jlreq@endmark}
 \long\def\jlreq@deleteuntileendmark#1\jlreq@endmark{}
 
+\def\jlreq@expandafter@ii{\expandafter\expandafter\expandafter}
+\edef\jlreq@expandafter@iii{\expandonce{\jlreq@expandafter@ii}\noexpand\expandafter\expandonce{\jlreq@expandafter@ii}}
+\edef\jlreq@expandtwice#1{\expandonce{\jlreq@expandafter@ii}\noexpand\unexpanded\expandonce{\jlreq@expandafter@ii}{#1}}
+\edef\jlreq@expand@three#1{\expandonce{\jlreq@expandafter@iii}\noexpand\unexpanded\expandonce{\jlreq@expandafter@iii}{#1}}
+
 % \jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmarkの形で使う
 % 二回展開すると，#1の先頭（ただし空白は無視される）を取り出す．#1が空の場合は\jlreq@uniqtoken，先頭が{の場合は\bgroupとなる
 \long\def\jlreq@getfirsttoken#1#{\jlreq@getfirsttoken@#1\bgroup\jlreq@endmark}
@@ -1382,7 +1387,7 @@
   \AtBeginDocument{\catcode`　=\active}
 \fi
 
-%/g  \jaspace
+% \jaspace
 \DeclareRobustCommand*{\jaspace}[1]{%
   \ifcsname jlreq@jaspace@#1\endcsname\csname jlreq@jaspace@#1\endcsname
   \else\ClassError{jlreq}{unknown jaspace: #1}{\@ehc}\fi
@@ -1896,7 +1901,9 @@
 % ラベルフォーマットでは#1=カウンタ名，見出し文字列フォーマットでは#1=見出し文字列，副題フォーマットでは#1=副題
 % ラベルのみのフォーマットは目次に使われる．
 \newcommand{\jlreq@startBlockHeading}[5]{%
-  \edef\jlreq@BlockHeading@start@format{\unexpanded{#4}}% この二つは\parを含むかもしれないので引数渡しはしない
+  % 一端フックを無効化
+  \def\jlreq@BlockHeading@spaces@parhook{}%
+  \edef\jlreq@BlockHeading@start@format{\unexpanded{#4}}% この二つは\parを含むかもしれないので引数渡しはしない（後の\@ifstarで詰まる）
   \edef\jlreq@BlockHeading@start@totalformat{\unexpanded{#5}}%
   \jlreq@BlockHeading@start@{#1}{#2}{#3}%
 }
@@ -1912,7 +1919,7 @@
 % {1 = 命令}{2 = レベル}{3 = スペース関連}{4 = *}{5 = running head}{6 = 見出し}[7 = 副題]
 \long\def\jlreq@BlockHeading@start@@@#1#2#3#4#5#6[#7]{%
   \edef\jlreq@do{\unexpanded{\jlreq@BlockHeading@start@@@@{#1}{#2}{#3}}{\expandonce{\jlreq@BlockHeading@start@format}}{\expandonce{\jlreq@BlockHeading@start@totalformat}}}%
-  \jlreq@do{#4}{#5}{#6}{#7}
+  \jlreq@do{#4}{#5}{#6}{#7}%
 }
 
 % {1 = 命令}{2 = レベル}{3 = スペース関連}{4 = フォーマット群}{5 = 全フォーマット}{6 = *}{7 = running head}{8 = 見出し}{9 = 副題}
@@ -1921,13 +1928,36 @@
     \unexpanded{\jlreq@BlockHeading@start@makeoutput{#1}{#2}}{{##1}{##2}{##3}}\unexpanded{{#4}{#6}{#7}{#8}{#9}}%
     \unexpanded{\def\jlreq@tempb}{{##4}{##5}{##6}{##7}}% 縦方向空き
   }%
-  \jlreq@tempa#3
-  \long\def\jlreq@tempa##1{#5}%
-  \edef\jlreq@do{%
-    \noexpand\jlreq@tempa{\noexpand\jlreq@BlockHeading@start@gyodori\expandonce{\jlreq@tempb}{\expandonce{\jlreq@result}}}%
-  }%
-  \if@noskipsec\leavevmode\fi
-  \jlreq@do
+  \jlreq@tempa#3%
+  \advance\jlreq@BlockHeading@spaces@current@count by 1
+  \ifx p\jlreq@BlockHeading@spaces@current@status\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
+    \appto\jlreq@BlockHeading@spaces@current@sequence{_#1}%
+    \expandafter\edef\csname jlreq@BlockHeading@spaces@current@output@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
+      \expandonce{\jlreq@result}%
+    }%
+    \expandafter\edef\csname jlreq@BlockHeading@spaces@current@space@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
+      \expandonce{\jlreq@tempb}%
+    }%
+    \jlreq@BlockHeading@spaces@canfinalize
+    \ifjlreq@result
+      % ここで全部出してしまう
+      \jlreq@BlockHeading@spaces@output
+      \let\jlreq@BlockHeading@spaces@current@status=a% 
+      \def\jlreq@BlockHeading@spaces@parhook{\def\jlreq@BlockHeading@spaces@parhook{}\jlreq@BlockHeading@spaces@clear}%
+    \else
+      \def\jlreq@BlockHeading@spaces@parhook{\def\jlreq@BlockHeading@spaces@parhook{}\jlreq@BlockHeading@spaces@output\jlreq@BlockHeading@spaces@clear}%
+    \fi
+  }{\ifx a\jlreq@BlockHeading@spaces@current@status\expandafter\@firstofone\else\expandafter\@gobble\fi{%
+    % 普通に出力
+    \edef\jlreq@tempb{%
+      \noexpand\expandonce{\noexpand\jlreq@tempa{\noexpand\jlreq@BlockHeading@start@gyodori\expandonce{\jlreq@tempb}{\expandonce{\jlreq@result}}}}%
+    }%
+    \long\def\jlreq@tempa##1{#5}%
+    \edef\jlreq@do{\jlreq@tempb}%
+    \if@noskipsec\leavevmode\fi
+    \jlreq@do
+    \def\jlreq@BlockHeading@spaces@parhook{\def\jlreq@BlockHeading@spaces@parhook{}\jlreq@BlockHeading@spaces@clear}%
+  }}%
   \ignorespaces
 }
 
@@ -1944,7 +1974,7 @@
       \def\jlreq@tempa{##1}% 素のラベルのフォーマットを取り出す
       \edef\jlreq@tempb{\unexpanded{{##2}{##3}{##4}{##5}{##6}{##7}}{\expandonce{\jlreq@tempc}}}% 残り
     }%
-    \jlreq@tempa#4
+    \jlreq@tempa#4%
     \expandafter\jlreq@BlockHeading@start@makeoutput@@\jlreq@tempb{#7}{#8}%
     \edef\jlreq@do{\noexpand\jlreq@BlockHeading@start@makeoutput@\unexpanded{#3}{\expandonce{\jlreq@result}}}%
     \jlreq@do
@@ -2010,10 +2040,10 @@
 }
 
 % 行取り処理
-% {1 = 前空き}{2 = 後ろ空き}{3 = トータル行数}{4 = 偶数ページ改ページ}{5 = 出力}
+% {1 = 前空き}{2 = 後ろ空き}{3 = トータル行数}{4 = 偶数ページ改ページするなら空}{5 = 出力}
 \long\def\jlreq@BlockHeading@start@gyodori#1#2#3#4#5{%
   \par
-  \jlreq@ifempty{#4}{}{\jlreq@setcurrentpage}%
+  \jlreq@ifempty{#4}{\jlreq@setcurrentpage}{}%
   % \jlreq@tempskip(a/b)に前/後ろに入れるべき値を入れる
   % #1がa:ならばその値は\jlreq@tempskipaには足さず\jlreq@tempskipcに入れておく
   \jlreq@tempskipa=0pt
@@ -2060,7 +2090,7 @@
   \jlreq@tempskipb=\glueexpr\jlreq@tempskipb + \ht\jlreq@tempboxb - \baselineskip\relax
   \ifx\jlreq@BlockHeading@start@space\@empty\else
     \ifx a\jlreq@BlockHeading@start@spacetype
-      \jlreq@tempskipb = \glueexpr\jlreq@tempskipb + \jlreq@BlockHeading@start@space\relax
+      \jlreq@tempskipb=\glueexpr\jlreq@tempskipb + \jlreq@BlockHeading@start@space\relax
     \else
       \jlreq@tempskipb=\glueexpr\jlreq@BlockHeading@start@space + \ht\jlreq@tempboxb - \baselineskip\relax
     \fi
@@ -2162,7 +2192,7 @@
           \@tempa####2\jlreq@endmark
         }%
         \edef\@tempa{\unexpanded{\jlreq@tempa{####1}}{\expandonce{\@tempa}}}%
-        \edef\jlreq@do{\expandafter\expandafter\expandafter\unexpanded\expandafter\expandafter\expandafter{\@tempa}}%
+        \edef\jlreq@do{\jlreq@expandtwice{\@tempa}}%
       }%
       \@tempa##1,\jlreq@endmark
       \jlreq@do
@@ -2225,7 +2255,7 @@
       % 後々数字を受け付けるようになったりするかもしれないので……
       {column_spanning}{%
         \jlreq@tempatrue % validな入力に対してfalse
-        \jlreq@ifempty{##1}{}{
+        \jlreq@ifempty{##1}{}{%
           \jlreq@ifnumber{##1}{% 数字の時はtrueに回す
             \jlreq@tempafalse
             \def\jlreq@column@spanning{true}%
@@ -2343,7 +2373,7 @@
 % 別行見出しが連続した場合の処理
 % 設定値保存に次のマクロを使う
 % \jlreq@BlockHeading@spaces@headingslist
-%   : スペースを考慮しないとならない見出しのリスト．_chapter_section_subsectionみたいなのをカンマ区切り
+%   : スペースを考慮しないとならない見出しのリスト．,_chapter_section_subsection,_section_subsection,...みたいな感じ
 % \jlreq@BlockHeading@spaces@setlist@<見出し名リスト>
 %   : 見出し名リストが続いたときの空き関連設定．<見出し名リスト>は_chapter_section_subsectionみたいなやつ．
 %     {***}{***}...というリスト．各々の***は次のどれか．
@@ -2355,22 +2385,30 @@
 % \jlreq@BlockHeading@spaces@current@sequence
 %   : 現在どのような見出しが続いているかリスト．
 % \jlreq@BlockHeading@spaces@current@space@<n>
-%   : 現在処理中のn番目の見出しに対する空き情報．{前空き}{後ろ空き}{トータル行数}．
+%   : 現在処理中のn番目の見出しに対する空き情報．{前空き}{後ろ空き}{トータル行数}{偶数ページbreak情報}．n=1から始まる．
 % \jlreq@BlockHeading@spaces@current@output@<n>
 %   : 現在処理中のn番目の見出しの中身．
 % \jlreq@BlockHeading@spaces@current@status
 %   : 現在の状況．p=処理中，b=連続した見出しの中にいない，a=リストにない見出しの続きと判断された
 % \jlreq@BlockHeading@spaces@current@count
 %   : 現在いくつ目の連続する見出しを処理しているかのカウンター
-\let\jlreq@BlockHeading@spaces@current@status=b
+\let\jlreq@BlockHeading@spaces@current@status=p
 \newcount\jlreq@BlockHeading@spaces@current@count
 \jlreq@BlockHeading@spaces@current@count=0
 
 \def\jlreq@BlockHeading@spaces@parhook{}
+\def\jlreq@BlockHeading@spaces@current@sequence{}%
 \AtBeginDocument{\PushPreHook{par}{\jlreq@BlockHeading@spaces@parhook}}
+\AtEndDocument{\jlreq@BlockHeading@spaces@parhook}
 
+\def\jlreq@BlockHeading@spaces@headingslist{}
 \newcommand{\SetBlockHeadingSpaces}[1]{%
   \begingroup
+    % 現段階の情報をクリアする
+    \expandafter\@for\expandafter\jlreq@tempa\expandafter:\expandafter=\jlreq@BlockHeading@spaces@headingslist\do{%
+      \expandafter\let\csname jlreq@BlockHeading@spaces@setlist@\jlreq@tempa\endcsname=\@undefined
+    }%
+    \def\jlreq@BlockHeading@spaces@headingslist{}%
     \def\jlreq@tempa{}% 見出しリスト
     \def\jlreq@tempb{}% 設定リスト \def\jlreq@BlockHeading@spaces@***{{**}{**}...}ってのを入れる
     \jlreq@SetBlockHeadingSpaces#1\jlreq@endmark
@@ -2400,7 +2438,7 @@
     }%
     \expandafter\jlreq@do\jlreq@totalset
     \jlreq@SetBlockHeadingSpaces@@@{#2}%
-    \ifx\jlreq@tempa\@empty\else\appto\jlreq@tempa{,}\fi\eappto\jlreq@tempa{\expandonce{\jlreq@headings}}% \jlreq@tempaに\jlreq@headingsを追加
+    \eappto\jlreq@tempa{,\expandonce{\jlreq@headings}}% \jlreq@tempaに\jlreq@headingsを追加
     \ifjlreq@tempb
       \ifx\jlreq@lastdimen\@empty\else % 最後が寸法だったので\jlreq@SetBlockHeadingSpaces@totalsetを改変
         \def\jlreq@do##1##2##3{%
@@ -2418,20 +2456,20 @@
   }%
 }
 \def\jlreq@SetBlockHeadingSpaces@@@#1{%
-  \@for\jlreq@tempa:=#1\do{%
-    \expandafter\jlreq@iffirsttoken@ignorespaces\expandafter{\jlreq@tempa}{_}{%
+  \@for\@tempa:=#1\do{%
+    \expandafter\jlreq@iffirsttoken@ignorespaces\expandafter{\@tempa}{_}{%
       \ifx\jlreq@lastdimen\@empty\else\eappto\jlreq@set{{\expandonce{\jlreq@lastdimen}}}\fi%
       \def\jlreq@lastdimen{}%
-      \expandafter\jlreq@SetBlockHeadingSpaces@@@@\jlreq@tempa{\jlreq@endmark}%
+      \expandafter\jlreq@SetBlockHeadingSpaces@@@@\@tempa{\jlreq@endmark}%
     }{%
       \ifjlreq@tempa
         \def\jlreq@do##1##2##3{%
-          \edef\jlreq@totalset{{r:\expandonce{\jlreq@tempa}}{\unexpanded{##2}}{\unexpanded{##3}}}%
+          \edef\jlreq@totalset{{r:\expandonce{\@tempa}}{\unexpanded{##2}}{\unexpanded{##3}}}%
         }%
         \expandafter\jlreq@do\jlreq@totalset
       \else
         \ifx\jlreq@lastdimen\@empty\else\eappto\jlreq@set{{\expandonce{\jlreq@lastdimen}}}\fi
-        \let\jlreq@lastdimen=\jlreq@tempa
+        \let\jlreq@lastdimen=\@tempa
       \fi
     }%
     \jlreq@tempafalse
@@ -2457,19 +2495,17 @@
 
 
 % \jlreq@BlockHeading@spaces@current@sequenceに更に続くものがリスト内にあるかチェックする．
-% 結果は\ifjlreq@resultに入れる．
+% 続くものがない時に\jlreq@resulttrue
 \def\jlreq@BlockHeading@spaces@canfinalize{%
   \begingroup
     \edef\jlreq@do{%
-      \unexpanded{\def\jlreq@tempa}####1\expandonce{\jlreq@BlockHeading@spaces@current@sequence}_####2\noexpand\jlreq@endmark{%
-        \noexpand\jlreq@ifempty{####2}{\noexpand\jlreq@resultfalse}{\noexpand\jlreq@resulttrue}%
+      \unexpanded{\def\jlreq@tempa}####1,\expandonce{\jlreq@BlockHeading@spaces@current@sequence}_####2\noexpand\jlreq@endmark{%
+        \noexpand\jlreq@ifempty{####2}{\noexpand\jlreq@resulttrue}{\noexpand\jlreq@resultfalse}%
       }%
-      \unexpanded{\jlreq@tempa}\expandonce{\jlreq@BlockHeading@spaces@headingslist}\expandonce{\jlreq@BlockHeading@spaces@current@sequence}_\noexpand\jlreq@endmark
+      \unexpanded{\jlreq@tempa}\expandonce{\jlreq@BlockHeading@spaces@headingslist},\expandonce{\jlreq@BlockHeading@spaces@current@sequence}_\noexpand\jlreq@endmark
     }%
     \jlreq@do
-    \edef\jlreq@do{%
-      \ifjlreq@result\noexpand\jlreq@resulttrue\else\noexpand\jlreq@resultfalse\fi
-    }%
+    \edef\jlreq@do{\ifjlreq@result\noexpand\jlreq@resulttrue\else\noexpand\jlreq@resultfalse\fi}%
   \expandafter\endgroup
   \jlreq@do
 }
@@ -2477,17 +2513,12 @@
 % 連続スペース情報とか無視して各々の見出しを出力する
 \def\jlreq@BlockHeading@spaces@outputwospace{%
   \jlreq@tempcnta=0
-  \jlreq@tempcntb=0
-  % _の数を数える
-  \def\jlreq@do##1{%
-    \jlreq@iffirsttoken@ignorespaces{##1}{_}{\advance\jlreq@tempcntb by 1}{}%
-    \jlreq@ifempty{##1}{}{\expandafter\jlreq@do\expandafter{\@gobble ##1}}%
-  }%
-  \expandafter\jlreq@do\expandafter{\jlreq@BlockHeading@spaces@current@sequence}%
-  \@whilenum\jlreq@tempcnta<\jlreq@tempcntb\do{%
+  \@whilenum\jlreq@tempcnta<\jlreq@BlockHeading@spaces@current@count\do{%
     \advance\jlreq@tempcnta by 1
     \edef\jlreq@do{%
-      \noexpand\jlreq@BlockHeading@start@gyodori\expandafter\expandonce\expandafter{\expandonce{\csname\jlreq@BlockHeading@spaces@current@space@\the\jlreq@tempcnta\endcsname}}{\expandafter\expandonce\expandafter{\expandonce{\csname\jlreq@BlockHeading@spaces@current@output@\the\jlreq@tempcnta\endcsname}}}%
+      \noexpand\jlreq@BlockHeading@start@gyodori
+        \csexpandonce{jlreq@BlockHeading@spaces@current@space@\the\jlreq@tempcnta}%
+        {\csexpandonce{jlreq@BlockHeading@spaces@current@output@\the\jlreq@tempcnta}}%
     }%
     \jlreq@do
   }%
@@ -2495,39 +2526,25 @@
 
 % 現在の情報に基づき出力
 \def\jlreq@BlockHeading@spaces@output{%
-  \jlreq@tempcnta=0
   \@ifundefined{jlreq@BlockHeading@spaces@setlist@\jlreq@BlockHeading@spaces@current@sequence}{%
-    % 個々の出力
     \jlreq@BlockHeading@spaces@outputwospace
   }{%
-    \expandafter\expandafter\expandafter\jlreq@BlockHeading@spaces@output@\expandafter\jlreq@BlockHeading@spaces@setlist@\jlreq@BlockHeading@spaces@current@sequence\jlreq@endmark
+    \jlreq@NotImplemented
   }%
 }
-\def\jlreq@BlockHeading@spaces@output@#1#2\jlreq@endmark{%
-  \jlreq@ifempty{#1}{\jlreq@BlockHeading@spaces@output@@#2\jlreq@endmark}{%
-    \jlreq@BlockHeading@start@gyodori#1{\jlreq@BlockHeading@spaces@output@@#2\jlreq@endmark}%
+
+
+% 連続見出しスペース調整用のデータをすべてクリアする
+\def\jlreq@BlockHeading@spaces@clear{%
+  \jlreq@tempcnta=0
+  \@whilenum\jlreq@tempcnta<\jlreq@BlockHeading@spaces@current@count\do{%
+    \expandafter\global\expandafter\let\csname jlreq@BlockHeading@spaces@current@space@\the\jlreq@tempcnta\endcsname=\@undefined
+    \expandafter\global\expandafter\let\csname jlreq@BlockHeading@spaces@current@output@\the\jlreq@tempcnta\endcsname=\@undefined
+    \advance\jlreq@tempcnta by 1
   }%
-}
-\def\jlreq@BlockHeading@spaces@output@@#1{%
-  \jlreq@ifendmark{#1}{}{%
-    \jlreq@iffirsttoken@ignorespaces{#1}{_}{%
-      \advance\jlreq@tempcnta by 1
-      \expandafter\jlreq@BlockHeading@spaces@output@@@\expandafter{\@gobble #1}%
-    }{\vspace{#1}}%
-  }%
-}
-\def\jlreq@BlockHeading@spaces@output@@@#1{%
-  \jlreq@iffirsttoken@ignorespaces{#1}{*}{%
-    \edef\jlreq@do{%
-      \noexpand\jlreq@BlockHeading@start@gyodori\expandafter\expandonce\expandafter{\expandonce{\csname\jlreq@BlockHeading@spaces@current@space@\the\jlreq@tempcnta\endcsname}}{\expandafter\expandonce\expandafter{\expandonce{\csname\jlreq@BlockHeading@spaces@current@output@\the\jlreq@tempcnta\endcsname}}}%
-    }
-    \jlreq@do
-  }{%
-    \edef\jlreq@do{%
-      \noexpand\jlreq@BlockHeading@start@gyodori#1{\expandafter\expandonce\expandafter{\expandonce{\csname\jlreq@BlockHeading@spaces@current@output@\the\jlreq@tempcnta\endcsname}}}%
-    }%
-    \jlreq@do
-  }%
+  \gdef\jlreq@BlockHeading@spaces@current@sequence{}%
+  \global\let\jlreq@BlockHeading@spaces@current@status=p%
+  \global\jlreq@BlockHeading@spaces@current@count=0
 }
 
 %.. 同行見出し
@@ -4099,8 +4116,10 @@
     \end{tabular}%
     \par
   }%
-  \vskip\baselineskip
-  {\jlreq@keepbaselineskip{\large}\@date}%
+  \ifx\@date\@empty\else
+    \vskip\baselineskip
+    {\jlreq@keepbaselineskip{\large}\@date}%
+  \fi
   \end{center}%
   \par
   \vskip\baselineskip
@@ -4374,16 +4393,14 @@
 \newdimen\@lnumwidth
 \def\numberline#1{\hbox to\@lnumwidth{#1\hfil}}
 \def\addcontentsline#1#2#3{%
-  \protected@write\@auxout
-    {\let\label\@gobble \let\index\@gobble \let\glossary\@gobble
-      \if@tate
-        \@temptokena{\jlreq@rensuji{\thepage}}%
-      \else
-        \@temptokena{\thepage}%
-      \fi
-    }%
-    {\string\@writefile{#1}%
-      {\protect\contentsline{#2}{#3}{\the\@temptokena}}}%
+  \protected@write\@auxout{%
+    \let\label\@gobble\let\index\@gobble\let\glossary\@gobble
+    \if@tate
+      \@temptokena{\jlreq@rensuji{\thepage}}%
+    \else
+      \@temptokena{\thepage}%
+    \fi
+  }{\string\@writefile{#1}{\protect\contentsline{#2}{#3}{\the\@temptokena}}}%
 }
 
 \newcount\jlreq@top@contents % トップ見出しを入れる．レベルと同じ値．

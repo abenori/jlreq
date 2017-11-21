@@ -4436,9 +4436,12 @@
 
 
 % デフォルト設定
-\newcommand{\contentsname}{目 次}
+\AtBeginDocument{%
+  \providecommand*{\texorpdfstring}[2]{#1}
+}
+\newcommand{\contentsname}{\texorpdfstring{目 次}{目次}}
 \newcommand{\refname}{参考文献}
-\newcommand{\indexname}{索 引}
+\newcommand{\indexname}{\texorpdfstring{索 引}{索引}}
 \pagestyle{plain}
 \pagenumbering{arabic}
 \if@twocolumn

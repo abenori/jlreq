@@ -4787,9 +4787,9 @@
 
 
 % デフォルト設定
-\newcommand{\contentsname}{目 次}
+\newcommand{\contentsname}{目次}
 \newcommand{\refname}{参考文献}
-\newcommand{\indexname}{索 引}
+\newcommand{\indexname}{索引}
 \pagestyle{plain}
 \pagenumbering{arabic}
 \if@twocolumn

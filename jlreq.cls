@@ -1979,7 +1979,7 @@
   \jlreq@do
 }
 \def\jlreq@BlockHeading@HeadingSpaces@saveafter#1\jlreq@endmark{%
-  \expandafter\xappto\csname jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count\endcsname{\unexpanded{#1}}%
+  \csxappto{jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count}{\unexpanded{#1}}%
 }
 
 % 特別扱いしたいトークンの列を並べる
@@ -2607,7 +2607,7 @@
       \advance\jlreq@tempcnta by 1
       \expandafter\jlreq@BlockHeading@spaces@output@@@\expandafter{\@gobble #1}%
     }{%
-      \appto\jlreq@result{\vspace{#1}}%
+      \appto\jlreq@result{\vskip\glueexpr #1\relax}%
     }%
     \jlreq@BlockHeading@spaces@output@@
   }%
@@ -2812,29 +2812,16 @@
 }
 
 \newcommand{\ModifyHeading}[2]{%
-  \begingroup
-    \@ifundefined{jlreq@heading@setting@#1}{\ClassError{jlreq}{Unknown heading: #1}{\@ehc}}%
-    \expandafter\let\expandafter\level\expandafter=\csname jlreq@heading@level@#1\endcsname
-    \expandafter\let\expandafter\setting\expandafter=\csname jlreq@heading@setting@#1\endcsname
-    \expandafter\let\expandafter\macroname\expandafter=\csname jlreq@heading@type@#1\endcsname
-    \edef\jlreq@do{\expandonce{\macroname}{#1}{\expandonce{\level}}{\expandonce{\setting},\unexpanded{#2}}}%
-  \expandafter\endgroup
+  \@ifundefined{jlreq@heading@setting@#1}{\ClassError{jlreq}{Unknown heading: #1}{\@ehc}}%
+  \edef\jlreq@do{\csexpandonce{jlreq@heading@type@#1}{#1}{\csexpandonce{jlreq@heading@level@#1}}{\csexpandonce{jlreq@heading@setting@#1},\unexpanded{#2}}}%
   \jlreq@do
 }
 % 見出し#1をマクロ#2に保存する
 \newcommand{\SaveHeading}[2]{%
   \@ifundefined{jlreq@heading@setting@#1}{\ClassError{jlreq}{Unknown heading: #1}{\@ehc}}{}%
-  \begingroup
-    \edef\jlreq@do{%
-      \unexpanded{\edef#2}{%
-        \noexpand\expandonce{\expandonce{\csname jlreq@heading@type@#1\endcsname}}%
-        \noexpand\unexpanded{\unexpanded{{#1}}}%
-        {\noexpand\expandonce{\expandonce{\csname jlreq@heading@level@#1\endcsname}}}%
-        {\noexpand\expandonce{\expandonce{\csname jlreq@heading@setting@#1\endcsname}}}%
-      }%
-    }%
-  \expandafter\endgroup
-  \jlreq@do
+  \edef#2{%
+    \csexpandonce{jlreq@heading@type@#1}{\unexpanded{#1}}{\csexpandonce{jlreq@heading@level@#1}}{\csexpandonce{jlreq@heading@setting@#1}}%
+  }%
 }
 
 \newcommand*{\jlreq@keepbaselineskip}[1]{%
@@ -3151,7 +3138,8 @@
 \def\jlreq@endnote@texts{}
 \long\def\jlreq@endnote@addtext#1#2{%
   \expandafter\gdef\expandafter\jlreq@endnote@texts\expandafter{\jlreq@endnote@texts{{#1}{#2}}}}
-\def\endnote{\jlreq@hook@prenote\@ifnextchar[{\jlreq@endnote}{\jlreq@endnote[]}}  
+% \endnote自身は後で定義する
+\def\jlreq@endnote@impl{\jlreq@hook@prenote\@ifnextchar[{\jlreq@endnote}{\jlreq@endnote[]}}  
 \def\endnotemark{\jlreq@hook@prenote\@ifnextchar[{\jlreq@endnotemark}{\jlreq@endnotemark[]}}
 \def\endnotetext{\@ifnextchar[{\jlreq@endnotetext}{\jlreq@endnotetext[]}}
 \long\def\jlreq@endnote[#1]#2{\jlreq@endnotemark[#1]\@endnotetext{#2}\jlreq@hook@postnote}
@@ -3229,13 +3217,12 @@
 \def\@makeendmark{\@makefnmark}
 
 % \theendnoteの出力を仕込む
-\PushPostHook{par}{\jlreq@endnote@parhook}
 \apptocmd{\jlreq@hook@beforeheadings}{\jlreq@endnote@hook@beforeheadings{#1}}{}{}
 
 \jlreq@jlreqsetup@add{endnote_position}{
-  \def\jlreq@endnote@parhook{}
   \def\jlreq@endnote@hook@beforeheadings##1{}
   \jlreq@tempafalse % headingsが指定された
+  \jlreq@tempbfalse % paragraphが指定された
   % \jlreq@tempcにセクション名たちを入れていく
   \def\jlreq@tempc{}
   \@for\jlreq@tempa:=#1\do{
@@ -3243,13 +3230,7 @@
       {headings}{\jlreq@tempatrue}
       {paragraph}{
         \jlreq@tempatrue% _paragraphの時は_headingsも有効にする
-        \def\jlreq@endnote@parhook{%
-          \ifx\jlreq@endnote@texts\@empty\else
-            \vskip\dimexpr-\baselineskip\relax
-            \vskip\dimexpr0pt\relax
-            \theendnotes
-          \fi
-        }
+        \jlreq@tempbtrue
       }
       {
         \expandafter\jlreq@iffirsttoken@ignorespaces\expandafter{\jlreq@tempa}{_}{
@@ -3260,6 +3241,12 @@
       }
     }
   }
+  
+  \ifjlreq@tempb
+    \edef\endnote{\unexpanded{\def\par{\@restorepar\theendnotes\par}}\expandonce{\jlreq@endnote@impl}}
+  \else
+    \let\endnote=\jlreq@endnote@impl
+  \fi
 
   \ifjlreq@tempa
     \apptocmd{\jlreq@endnote@hook@beforeheadings}{\theendnotes}{}{}
@@ -3997,9 +3984,11 @@
       }%
       % \jlreq@markdefinition/\jlreq@commandは引数トークンを持つ可能性がある
       \noexpand\edef\expandonce{\csname ps@#1\endcsname}{%
-        \noexpand\expandonce{\expandonce{\csname ps@#1\endcsname}}%
-        \noexpand\unexpanded{\expandonce{\jlreq@markdefinition}}%
-        \noexpand\unexpanded{\expandonce{\jlreq@command}}%
+        \noexpand\unexpanded{%
+          \csexpandonce{ps@#1}%
+          \expandonce{\jlreq@markdefinition}%
+          \expandonce{\jlreq@command}%
+        }%
       }%
     }%
   \expandafter\endgroup

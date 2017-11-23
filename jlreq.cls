@@ -64,10 +64,11 @@
 \edef\jlreq@expandtwice#1{\expandonce{\jlreq@expandafter@ii}\noexpand\unexpanded\expandonce{\jlreq@expandafter@ii}{#1}}
 \edef\jlreq@expand@three#1{\expandonce{\jlreq@expandafter@iii}\noexpand\unexpanded\expandonce{\jlreq@expandafter@iii}{#1}}
 
-% \jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmarkの形で使う
+% \jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark@の形で使う
 % 二回展開すると，#1の先頭（ただし空白は無視される）を取り出す．#1が空の場合は\jlreq@uniqtoken，先頭が{の場合は\bgroupとなる
-\long\def\jlreq@getfirsttoken#1#{\jlreq@getfirsttoken@#1\bgroup\jlreq@endmark}
-\long\def\jlreq@getfirsttoken@#1#2\jlreq@endmark#3\jlreq@endmark{#1}
+\def\jlreq@endmark@{\jlreq@endmark@} % \jlreq@getfirsttokenだけのためのendmark
+\long\def\jlreq@getfirsttoken#1#{\jlreq@getfirsttoken@#1\bgroup\jlreq@endmark@}
+\long\def\jlreq@getfirsttoken@#1#2\jlreq@endmark@#3\jlreq@endmark@{#1}
 % 与えられたトークン列が空か（展開はしないでチェック）
 \long\def\jlreq@ifempty#1{\expandafter\ifx\expandafter\relax\detokenize{#1}\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
 % #1の先頭トークンが#2か（ただし#1が空ならば#2=\jlreq@uniqtoken，#1={ならば#2=\bgroupでTRUEとなる）
@@ -81,7 +82,7 @@
 }
 % こちらは先頭のスペースを読み飛ばす
 \long\def\jlreq@iffirsttoken@ignorespaces#1#2{%
-  \expandafter\expandafter\expandafter\ifx\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark#2\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+  \expandafter\expandafter\expandafter\ifx\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark@#2\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
 }
 
 % #1が\jlreq@endmarkか
@@ -91,7 +92,7 @@
 \long\def\jlreq@ifmacro#1{%
   \jlreq@ifempty{#1}{\@secondoftwo}{%
     \jlreq@iffirsttoken{#1}{ }{\@secondoftwo}{%
-      \expandafter\expandafter\expandafter\jlreq@ifmacro@\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark
+      \expandafter\expandafter\expandafter\jlreq@ifmacro@\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark@
 }}}
 \long\def\jlreq@ifmacro@#1{\expandafter\jlreq@ifmacro@@\expandafter{\meaning #1}}
 \edef\jlreq@do{%
@@ -315,7 +316,7 @@
 \long\def\jlreq@ifletter#1{%
   \jlreq@ifempty{#1}{\@secondoftwo}{%
     \jlreq@iffirsttoken{#1}{ }{\@secondoftwo}{%
-      \expandafter\expandafter\expandafter\jlreq@helper@ifletter\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark
+      \expandafter\expandafter\expandafter\jlreq@helper@ifletter\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark@
   }}%
 }
 
@@ -1950,18 +1951,17 @@
     \expandonce{\jlreq@resulta}%
   }%
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count\endcsname{}%
-  \futurelet\jlreq@nextchar\jlreq@BlockHeading@start@afterheading
+  \jlreq@BlockHeading@start@afterheading
 }
 
-\edef\jlreq@BlockHeading@start@afterheading{%
-  \noexpand\ifx\expandonce{\space}\unexpanded{\jlreq@nextchar\expandafter\jlreq@BlockHeading@start@afterheading@}%
-  \unexpanded{\else\expandafter\jlreq@BlockHeading@start@afterheading@@\fi}%
+\def\jlreq@BlockHeading@start@afterheading{\futurelet\jlreq@nextchar\jlreq@BlockHeading@start@afterheading@}
+\edef\jlreq@BlockHeading@start@afterheading@{%
+  \noexpand\ifx\expandonce{\space}\unexpanded{\jlreq@nextchar\expandafter\jlreq@BlockHeading@start@afterheading@@}%
+  \unexpanded{\else\expandafter\jlreq@BlockHeading@start@afterheading@@@\fi}%
 }
 % スペースを読み飛ばす
-\expandafter\def\expandafter\jlreq@BlockHeading@start@afterheading@\space{%
-  \futurelet\jlreq@nextchar\jlreq@BlockHeading@start@afterheading
-}
-\def\jlreq@BlockHeading@start@afterheading@@{%
+\expandafter\def\expandafter\jlreq@BlockHeading@start@afterheading@@\space{\jlreq@BlockHeading@start@afterheading}
+\def\jlreq@BlockHeading@start@afterheading@@@{%
   \def\jlreq@do{\jlreq@BlockHeading@spaces@output\jlreq@BlockHeading@spaces@clear}%
   \expandafter\@for\expandafter\@tempa\expandafter:\expandafter=\jlreq@BlockHeading@allheadings\do{%
     \expandafter\ifx\csname\@tempa\endcsname\jlreq@nextchar\def\jlreq@do{}\fi
@@ -1972,12 +1972,13 @@
       \edef\jlreq@do{%
         \unexpanded{\let\jlreq@BlockHeading@start@savecs=}\expandonce{\@tempa}%
         \noexpand\pretocmd\expandonce{\@tempa}{\noexpand\let\expandonce{\@tempa}=\noexpand\jlreq@BlockHeading@start@savecs\noexpand\jlreq@BlockHeading@HeadingSpaces@saveafter}{}{}%
-        \noexpand\apptocmd\expandonce{\@tempa}{\unexpanded{\jlreq@endmark\futurelet\jlreq@nextchar\jlreq@BlockHeading@start@afterheading}}{}{}%
+        \noexpand\apptocmd\expandonce{\@tempa}{\unexpanded{\jlreq@endmark\jlreq@BlockHeading@start@afterheading}}{}{}%
       }%
     \fi
   }%
   \jlreq@do
 }
+
 \def\jlreq@BlockHeading@HeadingSpaces@saveafter#1\jlreq@endmark{%
   \csxappto{jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count}{\unexpanded{#1}}%
 }
@@ -1995,7 +1996,7 @@
       \def\jlreq@tempc{}%
     \fi
     \long\def\jlreq@tempa##1##2##3##4##5##6##7{%
-      \def\jlreq@tempa{##1}% 素のラベルのフォーマットを取り出す
+      \long\def\jlreq@tempa{##1}% 素のラベルのフォーマットを取り出す
       \edef\jlreq@tempb{\unexpanded{{##2}{##3}{##4}{##5}{##6}{##7}}{\expandonce{\jlreq@tempc}}}% 残り
     }%
     \jlreq@tempa#4%
@@ -2037,11 +2038,11 @@
     % \jlreq@tempaに{ラベル}{見出し}{副題}という形のものを入れる
     \jlreq@ifempty{#7}{%
       % ラベルあり
-      \def\jlreq@tempa{#1}%
+      \long\def\jlreq@tempa{#1}%
       \long\def\jlreq@tempb##1{#2}%
       \jlreq@ifempty{#9}{\def\jlreq@tempc##1{}}{\long\def\jlreq@tempc##1{#4}}%
     }{%
-      \def\jlreq@tempa{}%
+      \long\def\jlreq@tempa{}%
       \long\def\jlreq@tempb##1{#3}%
       \jlreq@ifempty{#9}{\def\jlreq@tempc##1{}}{\long\def\jlreq@tempc##1{#5}}%
     }%
@@ -2565,7 +2566,7 @@
   \@whilenum\jlreq@tempcnta<\jlreq@BlockHeading@spaces@current@count\do{%
     \advance\jlreq@tempcnta by 1
     \edef\jlreq@tempa{%
-      \unexpanded{\def\jlreq@tempa##1}{\csexpandonce{jlreq@BlockHeading@spaces@current@format@\the\jlreq@tempcnta}}%
+      \unexpanded{\long\def\jlreq@tempa##1}{\csexpandonce{jlreq@BlockHeading@spaces@current@format@\the\jlreq@tempcnta}}%
     }%
     \jlreq@tempa
     \edef\jlreq@tempb{%
@@ -2624,7 +2625,7 @@
 % #1: デフォルト値を使うならば*，#2#3#4が設定された値，#5#6#7がデフォルト値，#8は偶数ページの，#9が出力
 \def\jlreq@BlockHeading@spaces@output@@@@#1#2#3#4#5#6#7#8#9{%
   \edef\jlreq@tempa{%
-    \unexpanded{\def\jlreq@tempa##1}{\csexpandonce{jlreq@BlockHeading@spaces@current@format@\the\jlreq@tempcnta}}%
+    \unexpanded{\long\def\jlreq@tempa##1}{\csexpandonce{jlreq@BlockHeading@spaces@current@format@\the\jlreq@tempcnta}}%
   }%
   \jlreq@tempa
   \edef\jlreq@tempb{%
@@ -3984,8 +3985,8 @@
       }%
       % \jlreq@markdefinition/\jlreq@commandは引数トークンを持つ可能性がある
       \noexpand\edef\expandonce{\csname ps@#1\endcsname}{%
+        \noexpand\csexpandonce{ps@#1}%
         \noexpand\unexpanded{%
-          \csexpandonce{ps@#1}%
           \expandonce{\jlreq@markdefinition}%
           \expandonce{\jlreq@command}%
         }%

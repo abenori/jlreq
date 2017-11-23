@@ -257,7 +257,7 @@
 * `nombre=<書式>`：出力するノンブルを指定します．デフォルトは`\thepage`．
 * `odd_running_head=<書式>`，`even_running_head=<書式>`：それぞれ奇数ページ，偶数ページの柱を指定します．`_section`のように`_`から始まる名前を指定すると，対応する見出しを出力します．（`_section`だと現在の`\section`を出力する．）
 
-`\NewPageStyle`，`\RenewPageStyle`，\ProvidePageStyle`もあります．`\ModifyPageStyle`により既存のページスタイルを改変することが可能です．
+`\NewPageStyle`，`\RenewPageStyle`，`\ProvidePageStyle`もあります．`\ModifyPageStyle`により既存のページスタイルを改変することが可能です．
 
 ## その他
 * クラスオプション`jlreq_notes`が渡されると，日本語組版処理の記述と矛盾する設定が行われた場合に通知がされます．
@@ -304,6 +304,11 @@
     - 和文間隔を挿入する命令を追加．
 * 2017-08-29
     - 縦書きでも著者名が横書きで出てしまうバグを修正．
+* 2017-11-23
+    - バグ修正
+    - `\SetBlockHeadingSpaces`を追加．
+    - `\contentsname` と `\indexname`に入っていたスペースを削除．
+
 
 --------------
 Noriyuki Abe

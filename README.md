@@ -58,6 +58,12 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Added a command for the full-width ideographic space.
 * 2017-08-29
     - Fixed a bug.
+* 2017-11-23
+    - Fixed bugs.
+    - Added `\SetBlockHeadingSpaces`.
+    - Removed a space from `\contentsname` and `\indexname`.
+
+
 
 --------------
 Noriyuki Abe

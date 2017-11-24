@@ -2321,22 +2321,21 @@
       \fi\fi
     }{}%
     \edef\jlreq@format{\expandonce{\jlreq@font}\expandonce{\jlreq@format}}%
+    % 空き量などの調整を含んだラベル
     \edef\jlreq@label@format@modified{%
       \noexpand\noindent
       \unexpanded{\setbox\jlreq@tempboxa=\hbox}{\expandonce{\jlreq@label@format}}%
-      \unexpanded{\hangindent=}%
+      \unexpanded{\hangindent=}\glueexpr(\expandonce{\jlreq@after@label@space}) + (\expandonce{\jlreq@second@heading@text@indent@wlabel})%
       \ifjlreq@hang
-        \wd\jlreq@tempboxa
+        +\wd\jlreq@tempboxa\relax
       \else
-        0pt
+        \relax
         \unexpanded{\edef\jlreq@BlockHeading@start@labellength{\the\wd\jlreq@tempboxa}}%
       \fi
-      \unexpanded{\hangindent=\dimexpr\hangindent + }(\expandonce{\jlreq@after@label@space}) + (\expandonce{\jlreq@second@heading@text@indent@wlabel})\noexpand\relax
       \box\jlreq@tempboxa
-      \hskip0pt\relax
     }%
     \edef\jlreq@heading@text@format@wlabel{%
-      \ifdim\jlreq@after@label@space=0pt\else
+      \ifdim\dimexpr\jlreq@after@label@space\relax=0pt\else
         \noexpand\hspace*{\noexpand\dimexpr\expandonce{\jlreq@after@label@space}\noexpand\relax}%
       \fi
       \expandonce{\jlreq@heading@text@format}%
@@ -2349,11 +2348,12 @@
     }%
     \def\jlreq@make@subtitle@format##1##2{%
       \edef##1{%
-        \ifjlreq@subtitle@break\unexpanded{{\par}\nobreak\noindent\global\hangafter=0}\fi
-        \unexpanded{\global\hangindent=\dimexpr\hangindent + }(\expandonce{\jlreq@subtitle@indent}) ##2\noexpand\relax
+        \ifjlreq@subtitle@break\unexpanded{{\par}\hangafter=0}\fi
+        \unexpanded{\hangindent=\dimexpr\hangindent + }(\expandonce{\jlreq@subtitle@indent}) ##2\noexpand\relax
         \ifdim\jlreq@subtitle@indent=0pt\else
           \ifjlreq@subtitle@break\else\unexpanded{\hspace*}{\expandonce{\jlreq@subtitle@indent}}\fi
         \fi
+        \nobreak\noindent
         {\ifx\jlreq@subtitle@font\@empty\else\expandonce{\jlreq@subtitle@font}\fi\expandonce{\jlreq@subtitle@format}}%
       }%
     }%
@@ -2552,13 +2552,13 @@
 
 
 % 現在の情報に基づき出力
-\def\jlreq@BlockHeading@spaces@output{{%
+\def\jlreq@BlockHeading@spaces@output{%
   \@ifundefined{jlreq@BlockHeading@spaces@setlist@\jlreq@BlockHeading@spaces@current@sequence}{%
     \jlreq@BlockHeading@spaces@outputwospace
   }{%
     \expandafter\expandafter\expandafter\jlreq@BlockHeading@spaces@output@\csname jlreq@BlockHeading@spaces@setlist@\jlreq@BlockHeading@spaces@current@sequence\endcsname\jlreq@endmark
   }%
-}}
+}
 
 % 連続スペース情報とか無視して各々の見出しを出力する
 \def\jlreq@BlockHeading@spaces@outputwospace{%
@@ -2650,10 +2650,11 @@
 \def\jlreq@BlockHeading@spaces@clear{%
   \jlreq@tempcnta=0
   \@whilenum\jlreq@tempcnta<\jlreq@BlockHeading@spaces@current@count\do{%
+    \advance\jlreq@tempcnta by 1
     \expandafter\global\expandafter\let\csname jlreq@BlockHeading@spaces@current@space@\the\jlreq@tempcnta\endcsname=\@undefined
     \expandafter\global\expandafter\let\csname jlreq@BlockHeading@spaces@current@output@\the\jlreq@tempcnta\endcsname=\@undefined
-    \expandafter\global\expandafter\let\csname jlreq@BlockHeading@spaces@current@between@\the\jlreq@tempcnta\endcsname=\@undefined
-    \advance\jlreq@tempcnta by 1
+    \expandafter\global\expandafter\let\csname jlreq@BlockHeading@spaces@current@before@\the\jlreq@tempcnta\endcsname=\@undefined
+    \expandafter\global\expandafter\let\csname jlreq@BlockHeading@spaces@current@after@\the\jlreq@tempcnta\endcsname=\@undefined
   }%
   \gdef\jlreq@BlockHeading@spaces@current@sequence{}%
   \global\jlreq@BlockHeading@spaces@current@count=0

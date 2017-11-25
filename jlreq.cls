@@ -2712,10 +2712,8 @@
 }
 
 %.. 窓見出し
-\newcount\jlreq@wraplinecount
-\newdimen\jlreq@hangindent
 \def\jlreq@CutinHeading@start#1#2#3#4#5#6#7{%
-  \ifnum0\ifnum\jlreq@wraplinecount<-1 1\fi\ifnum\jlreq@wraplinecount>1 1\fi>0
+  \ifnum0\ifnum\hangindent<-1 1\fi\ifnum\hangindent>1 1\fi>0
     \ClassError{jlreq}{Can not use \expandafter\string\csname#1\endcsname\space here}{\@ehc}%
   \else
     \jlreq@CutinHeading@@start{#2}{#3}{#4}{#5}{#6}{#7}%
@@ -2724,7 +2722,7 @@
 % 1 = 書式指定，2 = インデント, 3 = 見出しと本文の間, 4 = これを越えたら二行以上，5 = これを越えたら三行以上，6 = テキスト
 \def\jlreq@CutinHeading@@start#1#2#3#4#5#6{%
   \par
-  \leavevmode
+  \noindent
   % 一行で処理したときの見出し長さを計測
   \setbox\@tempboxa=\hbox{#1#6}%
   \@tempdima=\wd\@tempboxa
@@ -2743,32 +2741,28 @@
     \def\jlreq@CutinHeading@linecount{3}%
   \fi
   % 普通の一行の高さ/深さに合わせて見出しのボックスを出力
-  \setbox\@tempboxa=\vtop to \dimexpr\numexpr\jlreq@CutinHeading@linecount - 1\relax\baselineskip + 1\jlreq@gol\relax{\vskip 0pt plus 1fill minus 1fill \box\jlreq@resultbox\vskip 0pt plus 1fill minus 1fill}%
-  \setbox\jlreq@tempboxa=\hbox{あ}%
-  \ht\@tempboxa=\ht\jlreq@tempboxa
-  \dp\@tempboxa=\dp\jlreq@tempboxa
-  \@tempdima=\wd\@tempboxa
+  \setbox\@tempboxa=\vtop to \dimexpr\numexpr\jlreq@CutinHeading@linecount - 1\relax\baselineskip + 1\zh\relax{\vskip 0pt plus 1fill minus 1fill \box\jlreq@resultbox\vskip 0pt plus 1fill minus 1fill}%
   % \hang****を設定
-  \hangindent=\dimexpr#2 + \@tempdima + #3\relax\hangafter=-\jlreq@CutinHeading@linecount
-  \jlreq@hangindent=\hangindent\jlreq@wraplinecount=\hangafter
+  \hangindent=\dimexpr#2 + \wd\@tempboxa + #3\relax\hangafter=-\jlreq@CutinHeading@linecount
+  % 高さを通常の一行のそれにする
+  \setbox\jlreq@tempboxa=\hbox{阿}%
+  \dp\@tempboxa=\dimexpr\ht\@tempboxa + \dp\@tempboxa - \ht\jlreq@tempboxa\relax
+  \ht\@tempboxa=\ht\jlreq@tempboxa
   \hspace*{#2}%
-  \kern-\dimexpr\hangindent + \parindent\relax
-  \box\@tempboxa
+  \kern-\hangindent\relax
+  \copy\@tempboxa
+  \vspace{-\dimexpr\ht\@tempboxa + \dp\@tempboxa - \baselineskip + \lineskip\relax}%
   \hspace*{#3}%
   % 改段落が起こっても\hang****をキープするように\parを書き換えておく（終わったら元に戻す）．
-  % \jlreq@hangindent/\jlreq@wraplinecountにそれぞれ\hangindent/\hangafterに対応する値を入れて
-  % \parのたびにそこから代入する．
   \def\par{%
+    \jlreq@tempcnta=\hangafter\relax
+    \jlreq@tempdima=\hangindent\relax
     \@@par
-    \ifnum\jlreq@wraplinecount<-1\relax
-      \ifnum\jlreq@wraplinecount<-\prevgraf
-        \advance\jlreq@wraplinecount by \prevgraf\hangindent=\jlreq@hangindent\hangafter=\jlreq@wraplinecount
-      \else
-        \jlreq@wraplinecount=1\jlreq@hangindent=0pt\relax
-        \@restorepar
-      \fi
+    \ifnum\jlreq@tempcnta<-\prevgraf\relax
+      \advance\jlreq@tempcnta by \prevgraf\relax
+      \hangafter=\jlreq@tempcnta\relax
+      \hangindent=\jlreq@tempdima\relax
     \else
-      \jlreq@wraplinecount=1\jlreq@hangindent=0pt\relax
       \@restorepar
     \fi
   }%

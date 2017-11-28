@@ -220,18 +220,6 @@
   \jlreq@helper@parsekeyval@@@{#1}%
 }
 
-% #1のboxを今の真ん中に配置する．
-\def\jlreq@box@putcenter#1{%
-  \begingroup
-    \jlreq@tempdima=\dimexpr(\ht#1 - \dp#1)/2\relax
-    \setbox\jlreq@tempboxa=\hbox{あ}%
-    \edef\jlreq@do{%
-      \noexpand\lower\the\dimexpr(\jlreq@tempdima - (\ht\jlreq@tempboxa - \dp\jlreq@tempboxa)/2)\relax\unexpanded{\box#1}%
-    }%
-  \expandafter\endgroup
-  \jlreq@do
-}
-
 % \jlreq@switch{str}{
 %   {str}{abcd}
 %   {str1}{xyz}
@@ -310,31 +298,6 @@
     \ClassError{jlreq}{Trying to save \expandafter\string\csname #1\endcsname\space twice, may be a bug}{\@ehc}%
   }%
   \expandafter\expandafter\expandafter\let\expandafter\expandafter\csname jlreq@original@#1\endcsname\csname #1\endcsname
-}
-
-% #1の先頭が文字か
-\long\def\jlreq@ifletter#1{%
-  \jlreq@ifempty{#1}{\@secondoftwo}{%
-    \jlreq@iffirsttoken{#1}{ }{\@secondoftwo}{%
-      \expandafter\expandafter\expandafter\jlreq@helper@ifletter\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark@
-  }}%
-}
-
-\long\def\jlreq@helper@ifletter#1{%
-  \ifnum
-    0\ifcat 阿\noexpand #11\fi
-    \ifcat あ\noexpand #11\fi
-    \ifcat （\noexpand #11\fi
-    \ifcat A\noexpand #11\fi
-    \ifcat 1\noexpand #11\fi
-  >0
-    \expandafter\@firstoftwo\else\expandafter\@secondoftwo
-  \fi
-}
-
-% こっちは先頭にあるマクロを展開してチェックする
-\long\def\jlreq@ifletter@expandmacros#1{%
-  \jlreq@ifmacro{#1}{\expandafter\jlreq@ifletter@expandmacros\expandafter{#1}}{\jlreq@ifletter{#1}}%
 }
 
 % 先頭にあるマクロを展開しまくった結果を#2に入れる．
@@ -655,6 +618,44 @@
 \let\jlreq@mol=\zw
 
 %. helper2（エンジン依存系）
+% #1のboxを今の真ん中に配置する．
+\def\jlreq@box@putcenter#1{%
+  \begingroup
+    \jlreq@tempdima=\dimexpr(\ht#1 - \dp#1)/2\relax
+    \setbox\jlreq@tempboxa=\hbox{あ}%
+    \edef\jlreq@do{%
+      \noexpand\lower\the\dimexpr(\jlreq@tempdima - (\ht\jlreq@tempboxa - \dp\jlreq@tempboxa)/2)\relax\unexpanded{\box#1}%
+    }%
+  \expandafter\endgroup
+  \jlreq@do
+}
+
+% #1の先頭が文字か
+\long\def\jlreq@ifletter#1{%
+  \jlreq@ifempty{#1}{\@secondoftwo}{%
+    \jlreq@iffirsttoken{#1}{ }{\@secondoftwo}{%
+      \expandafter\expandafter\expandafter\jlreq@helper@ifletter\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark@
+  }}%
+}
+
+\long\def\jlreq@helper@ifletter#1{%
+  \ifnum
+    0%
+    \ifcat 阿\noexpand #11\fi
+    \ifcat あ\noexpand #11\fi
+    \ifcat （\noexpand #11\fi
+    \ifcat A\noexpand #11\fi
+    \ifcat 1\noexpand #11\fi
+  >0
+    \expandafter\@firstoftwo\else\expandafter\@secondoftwo
+  \fi
+}
+
+% こっちは先頭にあるマクロを展開してチェックする
+\long\def\jlreq@ifletter@expandmacros#1{%
+  \jlreq@ifmacro{#1}{\expandafter\jlreq@ifletter@expandmacros\expandafter{#1}}{\jlreq@ifletter{#1}}%
+}
+
 % 組方向を判定
 % \jlreq@if(y|t)(dir|box)を定義する．
 \ifx l\jlreq@engine\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{
@@ -2381,7 +2382,21 @@
     \let\jlreq@spaceset=\jlreq@result
     \edef\jlreq@totalformat{\unexpanded{##1}\expandonce{\jlreq@afterindent}\noexpand\@afterheading}%
     \if@twocolumn
-      \ifthenelse{\equal{\jlreq@column@spanning}{true}}{\edef\jlreq@totalformat{\unexpanded{\twocolumn[{##1}]}}}{}%
+      \ifthenelse{\equal{\jlreq@column@spanning}{true}}{%
+        \def\@tempa##1##2##3{%
+          % 前開きが常に入ってしまうので，a:の時は除去する
+          \jlreq@iffirsttoken{##1}{a}{\def\jlreq@spaceset{{}{##2}{##3}}}{}
+          \edef\jlreq@totalformat{%
+            \noexpand\twocolumn[%
+              % 普段自動で入る\topskipと\baselineskipを手動で入れる
+              \jlreq@iffirsttoken{##1}{r}{}{\unexpanded{\vskip\topskip\relax}}%
+              \unexpanded{####1}%
+              \jlreq@iffirsttoken{##2}{r}{}{\unexpanded{\vskip\glueexpr\baselineskip - \topskip\relax}}%
+            ]%
+          }%
+        }%
+        \expandafter\@tempa\jlreq@spaceset
+      }{}%
     \fi
     \edef\jlreq@do{%
       \expandonce{\jlreq@do}%
@@ -2713,16 +2728,15 @@
 
 %.. 窓見出し
 \def\jlreq@CutinHeading@start#1#2#3#4#5#6#7{%
-  \ifnum0\ifnum\hangindent<-1 1\fi\ifnum\hangindent>1 1\fi>0
-    \ClassError{jlreq}{Can not use \expandafter\string\csname#1\endcsname\space here}{\@ehc}%
+  \par
+  \ifnum\hangafter=1
+    \jlreq@CutinHeading@start@{#2}{#3}{#4}{#5}{#6}{#7}%
   \else
-    \jlreq@CutinHeading@@start{#2}{#3}{#4}{#5}{#6}{#7}%
+    \ClassError{jlreq}{Can not use \expandafter\string\csname#1\endcsname\space here}{\@ehc}%
   \fi
 }
 % 1 = 書式指定，2 = インデント, 3 = 見出しと本文の間, 4 = これを越えたら二行以上，5 = これを越えたら三行以上，6 = テキスト
-\def\jlreq@CutinHeading@@start#1#2#3#4#5#6{%
-  \par
-  \noindent
+\def\jlreq@CutinHeading@start@#1#2#3#4#5#6{%
   % 一行で処理したときの見出し長さを計測
   \setbox\@tempboxa=\hbox{#1#6}%
   \@tempdima=\wd\@tempboxa
@@ -2742,15 +2756,18 @@
   \fi
   % 普通の一行の高さ/深さに合わせて見出しのボックスを出力
   \setbox\@tempboxa=\vtop to \dimexpr\numexpr\jlreq@CutinHeading@linecount - 1\relax\baselineskip + 1\zh\relax{\vskip 0pt plus 1fill minus 1fill \box\jlreq@resultbox\vskip 0pt plus 1fill minus 1fill}%
-  % \hang****を設定
-  \hangindent=\dimexpr#2 + \wd\@tempboxa + #3\relax\hangafter=-\jlreq@CutinHeading@linecount
   % 高さを通常の一行のそれにする
   \setbox\jlreq@tempboxa=\hbox{阿}%
   \dp\@tempboxa=\dimexpr\ht\@tempboxa + \dp\@tempboxa - \ht\jlreq@tempboxa\relax
   \ht\@tempboxa=\ht\jlreq@tempboxa
+  % 出力開始
+  \noindent
+  % \hang****を設定
+  \hangindent=\dimexpr#2 + \wd\@tempboxa + #3\relax\hangafter=-\jlreq@CutinHeading@linecount
   \hspace*{#2}%
   \kern-\hangindent\relax
   \copy\@tempboxa
+  % でかい見出しボックスの分をキャンセルする空きを入れる
   \vspace{-\dimexpr\ht\@tempboxa + \dp\@tempboxa - \baselineskip + \lineskip\relax}%
   \hspace*{#3}%
   % 改段落が起こっても\hang****をキープするように\parを書き換えておく（終わったら元に戻す）．
@@ -3495,12 +3512,11 @@
 
 \def\jlreq@inlinenote@noauto@#1\\#2#3\jlreq@endmark{%
   \jlreq@inlinenote@noauto@@#1&\jlreq@endmark\jlreq@endmark
-  \ifx#2\jlreq@endmark\def\jlreq@next{}\else\linebreak\def\jlreq@next{\jlreq@inlinenote@noauto@#2#3\jlreq@endmark}\fi
-  \jlreq@next
+  \jlreq@ifendmark{#2}{}{\linebreak\jlreq@inlinenote@noauto@#2#3\jlreq@endmark}%
 }
 
 \def\jlreq@inlinenote@noauto@@#1&#2#3\jlreq@endmark{%
-  \ifx#2\jlreq@endmark
+  \jlreq@ifendmark{#2}{%
     \setbox\@tempboxa=\hbox{\jlreq@inlinenote@fontsize #1}%
     \jlreq@tempdimc=\wd\@tempboxa
     \divide\jlreq@tempdimc by 2\relax
@@ -3512,17 +3528,15 @@
       }%
     \fi
     \def\jlreq@next{}%
-  \else
+  }{%
     \def\jlreq@next{\jlreq@inlinenote@noauto@@@{#1}#2#3}%
-  \fi
+  }%
   \jlreq@next
 }
 
 \def\jlreq@inlinenote@noauto@@@#1#2&\jlreq@endmark{%
-  {%
-    \setbox\@tempboxa=\hbox{\jlreq@inlinenote@fontsize\vbox{\hbox{#1}\hbox{#2}}}%
-    \jlreq@box@putcenter\@tempboxa
-  }%
+  \setbox\@tempboxa=\hbox{\jlreq@inlinenote@fontsize\vbox{\hbox{#1}\hbox{#2}}}%
+  \jlreq@box@putcenter\@tempboxa
 }
 
 \newcommand{\jlreq@inlinenote@endnote}{%
@@ -3540,7 +3554,7 @@
 % * #5 - #4行目までは#3の指定に従う
 % * それ以降はX
 % として整形した際に，#5行以内に収まる．
-% \jlreq@resultboxに整形結果を返す（垂直ボックス）．見つからなかったらvoid
+% \jlreq@resultboxに整形結果を返す（垂直ボックス）．見つからなかったらvoid．\globalに設定する．
 \newcommand{\jlreq@inlinenote@determinelength}[7]{%
 %  \message{#1 の試行開始，行数 = #5, \the\dimexpr#6\relax から \the\dimexpr#7\relaxまで}%
   \@tempcnta=1\relax

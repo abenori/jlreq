@@ -1370,31 +1370,30 @@
 }
 
 % 和文間隔
-\def\jlreq@zenkakuspace@fixjfm{%
-  \ifnum\jlreq@lastnodechar>-1
-    \def\@tempa{\futurelet\jlreq@nextchar\jlreq@zenkakuspace@fixjfm@}%
-  \else\def\@tempa{\ignorespaces}\fi
-  \@tempa
+\DeclareRobustCommand*\　{\futurelet\jlreq@nextchar\jlreq@zenkakuspace@ignorespaces}
+% 後続の空白を無視する処理
+\edef\jlreq@zenkakuspace@ignorespaces{%
+  \noexpand\ifx\expandonce{\space}\unexpanded{\jlreq@nextchar\expandafter\jlreq@zenkakuspace@ignorespaces@\else\expandafter\jlreq@zenkakuspace@main\fi}%
 }
-\def\jlreq@zenkakuspace@fixjfm@{\jlreq@insertjfm\ignorespaces}
-
+\expandafter\def\expandafter\jlreq@zenkakuspace@ignorespaces@\space{\　}
 \def\jlreq@tempa{}
 \def\jlreq@do#1{\jlreq@ifendmark{#1}{}{\appto\jlreq@tempa{\ifnum\lastnodechar=`#1 1\fi}\jlreq@do}}
 \expandafter\jlreq@do\jlreq@charlist@dividingpunctuationmarks\jlreq@endmark
 \edef\@tempa{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 }
-\expandafter\DeclareRobustCommand\expandafter*\expandafter\　\expandafter{\@tempa
+\expandafter\DeclareRobustCommand\expandafter*\expandafter\jlreq@zenkakuspace@main\expandafter{\@tempa
     \hskip 1\zw\hbox{}%
     \jlreq@lastnodechar=`　
-    \expandafter\jlreq@zenkakuspace@fixjfm
-  \else　\expandafter\ignorespaces\fi
+    \expandafter\jlreq@fixjfm
+  \else\expandafter　\fi
 }
 \ifx l\jlreq@engine
   {
     \catcode`　=\active
-    \global\let　=\　
+    \global\let　=\jlreq@zenkakuspace@main
   }
   \AtBeginDocument{\catcode`　=\active}
 \fi
+
 
 % \jaspace
 \DeclareRobustCommand*{\jaspace}[1]{%
@@ -1411,7 +1410,7 @@
 \def\jlreq@do#1{\jlreq@ifendmark{#1}{}{\appto\jlreq@tempa{\ifx\jlreq@nextchar #11\fi}\jlreq@do}}
 \expandafter\jlreq@do\jlreq@charlist@closingbrackets\jlreq@endmark
 \edef\jlreq@dividingpunctuationmarkscommand{%
-  \noexpand\ifnum 0\expandonce{\jlreq@tempa}>0\unexpanded{\else\　\fi\ignorespaces}%
+  \noexpand\ifnum 0\expandonce{\jlreq@tempa}>0 \unexpanded{\expandafter\ignorespaces\else\expandafter\　\fi}%
 }
 \def\jlreq@do#1{%
   \jlreq@ifendmark{#1}{}{

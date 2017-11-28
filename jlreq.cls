@@ -2754,35 +2754,41 @@
     \jlreq@inlinenote@determinelength{#6}{#1}{}{\jlreq@CutinHeading@linecount}{\jlreq@CutinHeading@linecount}{\@tempdima}{\linewidth}%
     \def\jlreq@CutinHeading@linecount{3}%
   \fi
-  % 普通の一行の高さ/深さに合わせて見出しのボックスを出力
+  % 普通の一行の高さ/深さに合わせて見出しのボックスを作る
   \setbox\@tempboxa=\vtop to \dimexpr\numexpr\jlreq@CutinHeading@linecount - 1\relax\baselineskip + 1\zh\relax{\vskip 0pt plus 1fill minus 1fill \box\jlreq@resultbox\vskip 0pt plus 1fill minus 1fill}%
   % 高さを通常の一行のそれにする
   \setbox\jlreq@tempboxa=\hbox{阿}%
   \dp\@tempboxa=\dimexpr\ht\@tempboxa + \dp\@tempboxa - \ht\jlreq@tempboxa\relax
   \ht\@tempboxa=\ht\jlreq@tempboxa
-  % 出力開始
   \noindent
-  % \hang****を設定
-  \hangindent=\dimexpr#2 + \wd\@tempboxa + #3\relax\hangafter=-\jlreq@CutinHeading@linecount
   \hspace*{#2}%
-  \kern-\hangindent\relax
   \copy\@tempboxa
   % でかい見出しボックスの分をキャンセルする空きを入れる
-  \vspace{-\dimexpr\ht\@tempboxa + \dp\@tempboxa - \baselineskip + \lineskip\relax}%
+  % \baselineskip - \ht\jlreq@tempboxaはTeXが挿入するスキップの分
   \hspace*{#3}%
+  \vspace{-\dimexpr\ht\@tempboxa + \dp\@tempboxa + \baselineskip - \ht\jlreq@tempboxa\relax}%
+  \par
+  \hangindent=\dimexpr#2 + \wd\@tempboxa + #3\relax
+  \hangafter=-\jlreq@CutinHeading@linecount\relax
+  \prevdepth=0pt
   % 改段落が起こっても\hang****をキープするように\parを書き換えておく（終わったら元に戻す）．
   \def\par{%
+    \ifvmode\jlreq@tempatrue\else\jlreq@tempafalse\fi
     \jlreq@tempcnta=\hangafter\relax
     \jlreq@tempdima=\hangindent\relax
     \@@par
     \ifnum\jlreq@tempcnta<-\prevgraf\relax
-      \advance\jlreq@tempcnta by \prevgraf\relax
+      \ifjlreq@tempa\else
+        \advance\jlreq@tempcnta by \prevgraf\relax
+      \fi
       \hangafter=\jlreq@tempcnta\relax
       \hangindent=\jlreq@tempdima\relax
     \else
       \@restorepar
     \fi
   }%
+  \@afterindentfalse
+  \@afterheading
   \ignorespaces
 }
 

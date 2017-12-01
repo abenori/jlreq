@@ -1802,6 +1802,39 @@
 % 見出し名一覧を格納する
 \def\jlreq@heading@allheadings{}
 
+% 目次を出力する命令\l@<命令名>を作る．{1 = 命令名}{2 = レベル}{3 = ラベルのフォーマット}
+\def\jlreq@heading@make@l@#1#2#3{%
+  \@ifundefined{l@#1}{%
+   % 長さは適当に計測する
+    \begingroup
+      % ちょっと大きめで計測しておく
+      \csname c@#1\endcsname=9
+      \setbox\jlreq@tempboxa=\hbox{#3}%
+      \jlreq@tempdima=\wd\jlreq@tempboxa\relax%
+      \jlreq@tempdimb=1\zw
+      \divide\jlreq@tempdima by \jlreq@tempdimb
+      \edef\jlreq@do{%
+        \unexpanded{\def\jlreq@result}{%
+          \noexpand\def\expandonce{\csname l@#1\endcsname}{\unexpanded{\@dottedtocline{#2}{0\zw}}{\the\numexpr\jlreq@tempdima + 1\relax\noexpand\zw}}%
+        }%
+      }%
+    \expandafter\endgroup
+    \jlreq@do
+  }{\def\jlreq@result{}}%
+}
+
+\def\jlreq@heading@make@maketoc#1#2{%
+  % 目次への出力をするマクロ．外部に切り出しておく．
+  \@ifundefined{jlreq@heading@maketoc@#1}{%
+    % {1 = *}{2 = ラベル}{3 = running head}
+    \expandafter\def\csname jlreq@heading@maketoc@#1\endcsname##1##2##3{%
+      \ifnum0\jlreq@ifempty{##1}{}{1}\ifnum #2>\c@secnumdepth 1\fi>0\else
+        \csname #1mark\endcsname{##3}%
+        \addcontentsline{toc}{#1}{\protect\numberline{##2}##3}%
+      \fi
+    }%
+  }{}%
+}
 %.. 中/半扉見出し
 % addcontentslineに渡すやつ：番号出すのと出さないの
 \newcommand{\DeclareTobiraHeading}[3]{%
@@ -1813,15 +1846,7 @@
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewTobiraHeading}%
   \@ifundefined{c@#1}{\newcounter{#1}}{}%
   \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}%
-  \@ifundefined{jlreq@heading@maketoc@#1}{%
-    % {1 = *}{2 = ラベル}{3 = running head}
-    \expandafter\def\csname jlreq@heading@maketoc@#1\endcsname##1##2##3{%
-      \ifnum0\jlreq@ifempty{##1}{}{1}\ifnum #2>\c@secnumdepth 1\fi>0\else
-        \csname #1mark\endcsname{##3}%
-        \addcontentsline{toc}{#1}{\protect\numberline{##2}##3}%
-      \fi
-    }%
-  }{}%
+  \jlreq@heading@make@maketoc{#1}{#2}%
   \begingroup
     \let\jlreq@contents@label@format=\@undefined
     \let\jlreq@format=\@undefined
@@ -1844,16 +1869,8 @@
       \def\jlreq@format##1##2{##1##2}%
     \fi
     \edef\jlreq@formatwlabel{\noexpand\jlreq@format{\expandonce{\jlreq@label@format}}}%
-    \@ifundefined{l@#1}{%
-      \edef\jlreq@do{\unexpanded{\setbox\jlreq@tempboxa=\hbox}{\expandonce{\jlreq@label@format}}}%
-      \jlreq@do
-      \jlreq@tempdima=\wd\jlreq@tempboxa
-      \jlreq@tempdimb=1\zw
-      \divide\jlreq@tempdima by \jlreq@tempdimb
-      \eappto\jlreq@do{%
-        \noexpand\def\expandonce{\csname l@#1\endcsname}{\unexpanded{\@dottedtocline{#2}{0\zw}}{\the\numexpr\jlreq@tempdima + 1\relax\noexpand\zw}}%
-      }%
-    }{}%
+    \jlreq@heading@make@l@{#1}{#2}{\jlreq@label@format}%
+    \eappto\jlreq@do{\expandonce{\jlreq@result}}%
     \edef\jlreq@do{%
       \expandonce{\jlreq@do}%
       \noexpand\def\expandonce{\csname jlreq@TobiraHeading@start@#1\endcsname}[####1]####2{%
@@ -2095,7 +2112,7 @@
       \jlreq@tempskipb=\glueexpr\jlreq@ushiroaki\relax
     \fi
   \else
-    % 行取り時の前後の空きを足した値
+    % 行取り時の前後の空きを足した値を\jlreq@tempdimaに入れる
     \jlreq@tempdima=\glueexpr(#3\baselineskip - \baselineskip - \ht\jlreq@tempboxa - \dp\jlreq@tempboxa)\relax
     \ifx\jlreq@maeakitype\@empty
       \jlreq@tempskipa=\glueexpr(\jlreq@tempdima + \dp\jlreq@tempboxb - \ht\jlreq@tempboxb)/2\relax
@@ -2194,16 +2211,7 @@
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewBlockHeading}%
   \@ifundefined{c@#1}{\newcounter{#1}}{}%
   \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}%
-  % 目次への出力をするマクロ．外部に切り出しておく．
-  \@ifundefined{jlreq@heading@maketoc@#1}{%
-    % {1 = *}{2 = ラベル}{3 = running head}
-    \expandafter\def\csname jlreq@heading@maketoc@#1\endcsname##1##2##3{%
-      \ifnum0\jlreq@ifempty{##1}{}{1}\ifnum #2>\c@secnumdepth 1\fi>0\else
-        \csname #1mark\endcsname{##3}%
-        \addcontentsline{toc}{#1}{\protect\numberline{##2}##3}%
-      \fi
-    }%
-  }{}%
+  \jlreq@heading@make@maketoc{#1}{#2}%
   \begingroup
     \def\jlreq@font{}%
     \def\jlreq@subtitle@font{}%
@@ -2325,7 +2333,7 @@
     \edef\jlreq@label@format@modified{%
       \noexpand\noindent
       \unexpanded{\setbox\jlreq@tempboxa=\hbox}{\expandonce{\jlreq@label@format}}%
-      \unexpanded{\hangindent=}\glueexpr(\expandonce{\jlreq@after@label@space}) + (\expandonce{\jlreq@second@heading@text@indent@wlabel})%
+      \unexpanded{\hangindent=\glueexpr}(\expandonce{\jlreq@after@label@space}) + (\expandonce{\jlreq@second@heading@text@indent@wlabel})%
       \ifjlreq@hang
         +\wd\jlreq@tempboxa\relax
       \else
@@ -2353,7 +2361,7 @@
         \ifdim\jlreq@subtitle@indent=0pt\else
           \ifjlreq@subtitle@break\else\unexpanded{\hspace*}{\expandonce{\jlreq@subtitle@indent}}\fi
         \fi
-        \nobreak\noindent
+        \unexpanded{\nobreak\noindent}%
         {\ifx\jlreq@subtitle@font\@empty\else\expandonce{\jlreq@subtitle@font}\fi\expandonce{\jlreq@subtitle@format}}%
       }%
     }%
@@ -2362,21 +2370,8 @@
       \ifjlreq@hang\else + (\noexpand\jlreq@BlockHeading@start@labellength)\fi
     }%
     \jlreq@make@subtitle@format\jlreq@subtitle@format@wolabel{- (\expandonce{\jlreq@second@heading@text@indent@wolabel})}%
-    \@ifundefined{l@#1}{%
-      % 長さは適当に計測する
-      \begingroup
-        % ちょっと大きめで計測しておく
-        \csname c@#1\endcsname=9
-        \setbox\jlreq@tempboxa=\hbox{\jlreq@label@format}%
-        \edef\jlreq@do{\noexpand\jlreq@tempdima=\the\dimexpr\wd\jlreq@tempboxa\relax}%
-      \expandafter\endgroup
-      \jlreq@do
-      \jlreq@tempdimb=1\zw
-      \divide\jlreq@tempdima by \jlreq@tempdimb
-      \eappto\jlreq@do{%
-        \noexpand\def\expandonce{\csname l@#1\endcsname}{\unexpanded{\@dottedtocline{#2}{0\zw}}{\the\numexpr\jlreq@tempdima + 1\relax\noexpand\zw}}%
-      }%
-    }{}%
+    \jlreq@heading@make@l@{#1}{#2}{\jlreq@label@format}%
+    \eappto\jlreq@do{\expandonce{\jlreq@result}}%
     \jlreq@BlockHeading@gyodori@parsekeyval*[BlockHeading:#1]{#3}{}{}{1}%
     \let\jlreq@spaceset=\jlreq@result
     \edef\jlreq@totalformat{\unexpanded{##1}\expandonce{\jlreq@afterindent}\noexpand\@afterheading}%
@@ -2579,6 +2574,7 @@
   \jlreq@tempcnta=0
   \@whilenum\jlreq@tempcnta<\jlreq@BlockHeading@spaces@current@count\do{%
     \advance\jlreq@tempcnta by 1
+    \csname jlreq@BlockHeading@spaces@current@before@\the\jlreq@tempcnta\endcsname
     \edef\jlreq@tempa{%
       \unexpanded{\long\def\jlreq@tempa##1}{\csexpandonce{jlreq@BlockHeading@spaces@current@format@\the\jlreq@tempcnta}}%
     }%
@@ -2591,7 +2587,6 @@
       }}%
     }%
     \edef\jlreq@do{\jlreq@tempb}%
-    \csname jlreq@BlockHeading@spaces@current@before@\the\jlreq@tempcnta\endcsname
     \jlreq@do
     \csname jlreq@BlockHeading@spaces@current@after@\the\jlreq@tempcnta\endcsname
   }%
@@ -2685,7 +2680,7 @@
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewRuninHeading}%
   \@ifundefined{c@#1}{\newcounter{#1}}{}%
   \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}%
-  \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\@dottedtocline{#2}{0\zw}{2\jlreq@gol}}}{}%
+  \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\@dottedtocline{#2}{0\zw}{2\zw}}}{}%
   \begingroup
     \def\jlreq@font{\normalfont\normalsize}%
     \def\jlreq@indent{0\zw}%
@@ -4516,15 +4511,15 @@
 }
 
 \newcount\jlreq@top@contents % トップ見出しを入れる．レベルと同じ値．
-\jlreq@top@contents=-1
+\jlreq@top@contents=-100
 \newcommand*{\jlreq@set@top@contents}[1]{%
-  \ifnum\jlreq@top@contents=-1
+  \ifnum\jlreq@top@contents=-100
     \jlreq@top@contents=#1\relax
   \fi
 }
 \ifthenelse{\equal{\jlreq@article@type}{article}}{
   \newcommand{\tableofcontents}{%
-    \jlreq@top@contents=-1\relax
+    \jlreq@top@contents=-100\relax
     \if@twocolumn
       \@restonecoltrue\onecolumn
     \else
@@ -4535,9 +4530,9 @@
     \@starttoc{toc}%
     \if@restonecol\twocolumn\fi
   }
-}{% book, article
+}{% book, report
   \newcommand{\tableofcontents}{%
-    \jlreq@top@contents=-1\relax
+    \jlreq@top@contents=-100\relax
     \if@twocolumn
       \@restonecoltrue\onecolumn
     \else
@@ -4660,7 +4655,7 @@
     \@mainmatterfalse
     \let\jlreq@pagestyle@atmain\jlreq@current@pagestyle
     \SaveHeading{chapter}{\jlreq@heading@chapter@atmain}%
-    \ModifyHeading{chapter}{label_format={}}%
+    \ModifyHeading{chapter}{label_format={},after_label_space=0pt}%
     \pagestyle{plain}%
     \pagenumbering{roman}}
   \newcommand*{\mainmatter}{%
@@ -4680,7 +4675,7 @@
     \fi
     \ifthenelse{\equal{\jlreq@article@type}{article}}{}{%book, report
       \SaveHeading{chapter}{\jlreq@heading@chapter@atmain}%
-      \ModifyHeading{chapter}{label_format={}}%
+      \ModifyHeading{chapter}{label_format={},after_label_space=0pt}%
     }%
     \pagestyle{plain}%
     \@mainmatterfalse

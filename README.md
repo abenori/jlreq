@@ -62,6 +62,8 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Fixed bugs.
     - Added `\SetBlockHeadingSpaces`.
     - Removed a space from `\contentsname` and `\indexname`.
+* 2017-12-02
+    - Fixed bugs.
 
 
 

@@ -308,6 +308,9 @@
     - バグ修正
     - `\SetBlockHeadingSpaces`を追加．
     - `\contentsname` と `\indexname`に入っていたスペースを削除．
+* 2017-12-02
+    - バグ修正
+
 
 
 --------------

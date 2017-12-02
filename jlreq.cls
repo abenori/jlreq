@@ -5,7 +5,7 @@
 %%
 % (based on JLReq 20120403 https://www.w3.org/TR/2012/NOTE-jlreq-20120403/ja/)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{jlreq}[2017/11/23 jlreq]
+\ProvidesClass{jlreq}[2017/12/02 jlreq]
 \RequirePackage{xkeyval,everyhook,filehook,etoolbox,ifthen}
 
 %. helper1

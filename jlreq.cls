@@ -1394,7 +1394,6 @@
   \AtBeginDocument{\catcode`　=\active}
 \fi
 
-
 % \jaspace
 \DeclareRobustCommand*{\jaspace}[1]{%
   \ifcsname jlreq@jaspace@#1\endcsname\csname jlreq@jaspace@#1\endcsname
@@ -1474,20 +1473,23 @@
     \fi
   }
 \fi
-\jlreq@divide{\jlreq@fontsize}{\jlreq@jafontsize}
-\edef\jlreq@jafontinvscale{\strip@pt\jlreq@resultdimen}
-\newcommand*{\jafontsize}[2]{%
-  \begingroup
-    \jlreq@iffloat{#1}{%
-      \jlreq@tempdima=\jlreq@jafontinvscale\dimexpr #1pt\relax
-      \edef\jlreq@do{\noexpand\fontsize{\strip@pt\jlreq@tempdima}{\unexpanded{#2}}}%
-    }{%
-      \jlreq@tempdima=\jlreq@jafontinvscale\dimexpr#1\relax
-      \edef\jlreq@do{\noexpand\fontsize{\expandonce{\the\jlreq@tempdima}}{\unexpanded{#2}}}%
-    }%
-  \expandafter\endgroup
-  \jlreq@do
+
+% \jafontsize
+\def\@tempa#1{
+  \newcommand*{\jafontsize}[2]{%
+    \begingroup
+      \jlreq@iffloat{##1}{%
+        \edef\jlreq@do{\noexpand\fontsize{\strip@pt\dimexpr#1\dimexpr##1pt\relax\relax}}%
+      }{%
+        \edef\jlreq@do{\noexpand\fontsize{\the\dimexpr#1\dimexpr##1\relax\relax}}%
+      }%
+    \expandafter\endgroup
+    \jlreq@do{##2}%
+  }
 }
+\jlreq@divide{\jlreq@fontsize}{\jlreq@jafontsize}
+\edef\jlreq@do{\noexpand\@tempa{\strip@pt\jlreq@resultdimen}}
+\jlreq@do
 
 \renewcommand{\normalsize}{%
   \@setfontsize\normalsize{\jlreq@fontsize}{\jlreq@baselineskip}%
@@ -1627,10 +1629,10 @@
 \ifdim\marginparwidth>0pt
   \setlength{\marginparsep}{2\zw} % フォントサイズ×2（4.2.7：特に問題に～e）
 \else
-  \setlength{\marginparsep}{0pt} % フォントサイズ×2（4.2.7：特に問題に～e）
+  \setlength{\marginparsep}{0pt}
 \fi
 
-\ifdim\marginparwidth>25\zw\relax
+\ifnum 0\ifdim\marginparwidth>25\zw 1\fi\ifdim\marginparwidth<15\zw 1\fi>0
   \jlreq@note{並列注の字詰め方向の長さ（行長）は，15字から20字くらいである．ケースによっては25字程度にする場合もある (4.2.7)．}
 \fi
 % 縦書きの時は脚注に固定
@@ -1926,7 +1928,6 @@
 % ラベルフォーマットでは#1=カウンタ名，見出し文字列フォーマットでは#1=見出し文字列，副題フォーマットでは#1=副題
 % ラベルのみのフォーマットは目次に使われる．
 \newcommand{\jlreq@startBlockHeading}[5]{%
-  % 一端フックを無効化
   \edef\jlreq@BlockHeading@start@format{\unexpanded{#4}}% この二つは\parを含むかもしれないので引数渡しはしない（後の\@ifstarで詰まる）
   \edef\jlreq@BlockHeading@start@totalformat{\unexpanded{#5}}%
   \jlreq@BlockHeading@start@{#1}{#2}{#3}%
@@ -2757,11 +2758,11 @@
   \noindent
   \hspace*{#2}%
   \copy\@tempboxa
+  \hspace*{#3}%
+  \par
   % でかい見出しボックスの分をキャンセルする空きを入れる
   % \baselineskip - \ht\jlreq@tempboxaはTeXが挿入するスキップの分
-  \hspace*{#3}%
-  \vspace{-\dimexpr\ht\@tempboxa + \dp\@tempboxa + \baselineskip - \ht\jlreq@tempboxa\relax}%
-  \par
+  \vskip -\dimexpr\ht\@tempboxa + \dp\@tempboxa + \baselineskip - \ht\jlreq@tempboxa\relax
   \hangindent=\dimexpr#2 + \wd\@tempboxa + #3\relax
   \hangafter=-\jlreq@CutinHeading@linecount\relax
   \prevdepth=0pt
@@ -2771,10 +2772,8 @@
     \jlreq@tempcnta=\hangafter\relax
     \jlreq@tempdima=\hangindent\relax
     \@@par
-    \ifnum\jlreq@tempcnta<-\prevgraf\relax
-      \ifjlreq@tempa\else
-        \advance\jlreq@tempcnta by \prevgraf\relax
-      \fi
+    \ifjlreq@tempa\else\advance\jlreq@tempcnta by \prevgraf\relax\fi
+    \ifnum\jlreq@tempcnta<0
       \hangafter=\jlreq@tempcnta\relax
       \hangindent=\jlreq@tempdima\relax
     \else

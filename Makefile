@@ -98,20 +98,20 @@ doc: pdfdoc htmldoc
 latexdoc: jlreq.tex jlreq-ja.tex
 
 jlreq%tex: README%md README-template.tex
-	pandoc --verbose -f markdown_github -t latex --latex-engine=lualatex --template README-template.tex $< -o $@
+	pandoc --verbose -f gfm -t latex --pdf-engine=lualatex --template README-template.tex $< -o $@
 
 pdfdoc: jlreq.pdf jlreq-ja.pdf
 
 jlreq%pdf: README%md README-template.tex
-	pandoc --verbose -f markdown_github -t latex --latex-engine=lualatex --template README-template.tex $< -o $@
+	pandoc --verbose -f gfm -t latex --pdf-engine=lualatex --template README-template.tex $< -o $@
 
 htmldoc: jlreq.html jlreq-ja.html
 
 jlreq-ja.html: README-ja.md README-template.html
-	pandoc --verbose -f markdown_github -t html5 -V lang=ja --template README-template.html -o jlreq-ja.html README-ja.md
+	pandoc --verbose -f gfm -t html5 -V lang=ja -M title=jlreq --template README-template.html -o jlreq-ja.html README-ja.md
 
 jlreq.html: README.md README-template.html
-	pandoc --verbose -f markdown_github -t html5 --template README-template.html -o jlreq.html README.md
+	pandoc --verbose -f gfm -t html5 -V lang=ja -M title=jlreq --template README-template.html -o jlreq.html README.md
 
 jfm-install: jfm
 	mkdir -p ${TEXMF}/fonts/tfm/public/jlreq

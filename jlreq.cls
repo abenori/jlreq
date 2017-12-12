@@ -101,12 +101,51 @@
 }
 \jlreq@do
 
+% #1（skipレジスタ）が0か（展開不可）．
 \def\jlreq@ifgluezero#1{%
   \edef\@tempa{\the#1}%
   \edef\@tempb{\detokenize{0.0pt}}%
   \ifx\@tempa\@tempb\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
 }
 
+% #1が#2で終わるか（展開不可）
+\def\jlreq@ifendswith#1#2{%
+  \jlreq@ifempty{#2}{\@firstoftwo}{%
+    \begingroup
+      \def\jlreq@tempa##1#2\jlreq@uniqtoken##2\jlreq@endmark{%
+        \edef\jlreq@do{\jlreq@ifempty{##2}{\noexpand\@secondoftwo}{\noexpand\@firstoftwo}}%
+      }%
+      \jlreq@tempa#1\jlreq@uniqtoken#2\jlreq@uniqtoken\jlreq@endmark
+    \expandafter\endgroup
+    \jlreq@do
+  }%
+}
+% #1が#2で始まるか（展開不可）
+\def\jlreq@ifstartswith#1#2{%
+  \jlreq@ifempty{#2}{\@firstoftwo}{%
+    \jlreq@ifempty{#1}{\@secondoftwo}{%
+      \begingroup
+        \def\jlreq@tempa##1#2##2\jlreq@endmark{%
+          \edef\jlreq@do{\jlreq@ifempty{##1}{\noexpand\@firstoftwo}{\noexpand\@secondoftwo}}%
+        }%
+        \jlreq@tempa#1#2\jlreq@endmark
+      \expandafter\endgroup
+      \jlreq@do
+    }%
+  }%
+}
+% #1が#2を含むか（展開不可）
+\def\jlreq@ifcontains#1#2{%
+  \jlreq@ifempty{#2}{\@firstoftwo}{%
+    \begingroup
+      \def\jlreq@tempa##1#2##2\jlreq@endmark{%
+        \edef\jlreq@do{\jlreq@ifempty{##2}{\noexpand\@secondoftwo}{\noexpand\@firstoftwo}}%
+      }%
+      \jlreq@tempa#1#2\jlreq@endmark
+    \expandafter\endgroup
+    \jlreq@do
+  }%
+}
 
 % @removeelementの括弧があっても動くかもしれない版
 % 次の変数を使う：\jlreq@tempa：消したいやつ，\jlreq@tempb：消していない分を放り込んでいく
@@ -144,7 +183,7 @@
   \ifx\jlreq@nextchar\reserved@d\let\reserved@b\reserved@a\fi
   \reserved@b
 }
-% \@ifsart
+% 空白を無視しない\@ifsart
 \def\jlreq@ifstar#1#2{\jlreq@ifnextchar *{\edef\reserved@a*{\unexpanded{#1}}\reserved@a}{#2}}
 % カンマで区切って，その前と後ろを\jlreq@resulta,\jlreq@resultbに入れる
 % もしカンマがない場合は\ifjlreq@resultがfalseになる．
@@ -1632,8 +1671,10 @@
   \setlength{\marginparsep}{0pt}
 \fi
 
-\ifnum 0\ifdim\marginparwidth>25\zw 1\fi\ifdim\marginparwidth<15\zw 1\fi>0
-  \jlreq@note{並列注の字詰め方向の長さ（行長）は，15字から20字くらいである．ケースによっては25字程度にする場合もある (4.2.7)．}
+\ifdim\marginparwidth>0pt
+  \ifnum 0\ifdim\marginparwidth>25\zw 1\fi\ifdim\marginparwidth<15\zw 1\fi>0
+    \jlreq@note{並列注の字詰め方向の長さ（行長）は，15字から20字くらいである．ケースによっては25字程度にする場合もある (4.2.7)．}
+  \fi
 \fi
 % 縦書きの時は脚注に固定
 % (TODO: 頭注）
@@ -1987,21 +2028,24 @@
   % \jlreq@BlockHeading@HeadingSpaces@ignoretokens内のものは特別扱いする
   \expandafter\@tfor\expandafter\@tempa\expandafter:\expandafter=\jlreq@BlockHeading@HeadingSpaces@ignoretokens\do{%
     \expandafter\ifx\@tempa\jlreq@nextchar
-      \edef\jlreq@do{%
-        \unexpanded{\let\jlreq@BlockHeading@start@savecs=}\expandonce{\@tempa}%
-        \noexpand\pretocmd\expandonce{\@tempa}{\noexpand\let\expandonce{\@tempa}=\noexpand\jlreq@BlockHeading@start@savecs\noexpand\jlreq@BlockHeading@HeadingSpaces@saveafter}{}{}%
-        \noexpand\apptocmd\expandonce{\@tempa}{\unexpanded{\jlreq@endmark\jlreq@BlockHeading@start@afterheading}}{}{}%
-      }%
+      \expandafter\ifpatchable\expandafter*\@tempa{%
+        \edef\jlreq@do{%
+          \unexpanded{\let\jlreq@BlockHeading@start@savecs=}\expandonce{\@tempa}%
+          \noexpand\pretocmd\expandonce{\@tempa}{\noexpand\let\expandonce{\@tempa}=\noexpand\jlreq@BlockHeading@start@savecs\noexpand\jlreq@BlockHeading@HeadingSpaces@saveafter}{}{}%
+          \noexpand\apptocmd\expandonce{\@tempa}{\unexpanded{\jlreq@BlockHeading@HeadingSpaces@endmark\jlreq@BlockHeading@start@afterheading}}{}{}%
+        }%
+      }{}%
     \fi
   }%
   \jlreq@do
 }
 
-\def\jlreq@BlockHeading@HeadingSpaces@saveafter#1\jlreq@endmark{%
+\def\jlreq@BlockHeading@HeadingSpaces@endmark{\jlreq@BlockHeading@HeadingSpaces@endmark}
+\def\jlreq@BlockHeading@HeadingSpaces@saveafter#1\jlreq@BlockHeading@HeadingSpaces@endmark{%
   \csxappto{jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count}{\unexpanded{#1}}%
 }
 
-% 特別扱いしたいトークンの列を並べる
+% 特別扱いしたいマクロを並べる
 \def\jlreq@BlockHeading@HeadingSpaces@ignoretokens{\label}
 
 % \jlreq@resultaにaux吐き出しとかを入れて，\jlreq@resultbに出力を入れる（縦方向調整なし）
@@ -2037,7 +2081,7 @@
 % {1 = 配置(clr)}{2 = 字下げ}{3 = 字上げ}{4 = 出力}
 \long\def\jlreq@BlockHeading@start@makeoutput@#1#2#3#4{%
   \edef\jlreq@result{%
-    \noindent
+    \noexpand\noindent
     \jlreq@ifempty{#2}{}{\unexpanded{\hskip #2}}%
     \noexpand\vbox{%
       \noexpand\noindent
@@ -2423,7 +2467,7 @@
   \@ifundefined{#1}{\DeclareBlockHeading{#1}{#2}{#3}}{}%
 }
 
-% 別行見出しが連続した場合の処理
+%.. 別行見出しが連続した場合の処理
 % 設定値保存に次のマクロを使う
 % \jlreq@BlockHeading@spaces@headingslist
 %   : スペースを考慮しないとならない見出しのリスト．,_chapter_section_subsection,_section_subsection,...みたいな感じ
@@ -2533,9 +2577,14 @@
   }%
 }
 \def\jlreq@SetBlockHeadingSpaces@@@@#1#{%
-  \expandafter\jlreq@SetBlockHeadingSpaces@ifcontainsunderbar\expandafter{\@gobble #1}{%
+  \expandafter\jlreq@ifcontains\expandafter{\@gobble #1}{_}{%
     \ClassWarning{jlreq}{Unusual heading name `\@gobble #1' is found. You forgot a comma? (in SetBlockHeadingSpaces)}%
   }{}%
+  \jlreq@ifendswith{#1}{*}{{%
+    \def\@tempa_##1*{\def\@tempa{##1}}%
+    \@tempa#1
+    \ClassWarning{jlreq}{The heading name `\@gobble #1' ends with `*'. Do you mean `\@tempa{*}'? (in SetBlockHeadingSpaces)}%
+  }}{}%
   \appto\jlreq@headings{#1}%
   \jlreq@SetBlockHeadingSpaces@@@@@
 }
@@ -2552,14 +2601,6 @@
     \@gobble % \jlreq@endmarkを食う
   }%
 }
-% #1に_が含まれているか
-\def\jlreq@SetBlockHeadingSpaces@ifcontainsunderbar@#1_#2\jlreq@endmark{%
-  \jlreq@ifempty{#2}{\@secondoftwo}{\@firstoftwo}%
-}
-\def\jlreq@SetBlockHeadingSpaces@ifcontainsunderbar#1{%
-  \jlreq@SetBlockHeadingSpaces@ifcontainsunderbar@#1_\jlreq@endmark
-}
-
 
 % 現在の情報に基づき出力
 \def\jlreq@BlockHeading@spaces@output{%

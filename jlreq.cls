@@ -4527,8 +4527,9 @@
 \setlength\fboxsep{.3\zw}
 \setlength\fboxrule{\jlreq@omotekeiwidth} % 根拠はない
 % 後で
-\renewcommand{\theequation}{\@arabic\c@equation}
-\ifthenelse{\equal{\jlreq@article@type}{article}}{}{%
+\ifthenelse{\equal{\jlreq@article@type}{article}}{%
+  \renewcommand{\theequation}{\@arabic\c@equation}
+}{%
   \@addtoreset{equation}{chapter}
   \renewcommand{\theequation}{%
     \ifnum\c@chapter>\z@\thechapter.\fi \@arabic\c@equation}

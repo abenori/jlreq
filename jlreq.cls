@@ -103,9 +103,12 @@
 
 % #1（skipレジスタ）が0か（展開不可）．
 \def\jlreq@ifgluezero#1{%
-  \edef\@tempa{\the#1}%
-  \edef\@tempb{\detokenize{0.0pt}}%
-  \ifx\@tempa\@tempb\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+  \begingroup
+    \edef\@tempa{\the#1}%
+    \edef\@tempb{\detokenize{0.0pt}}%
+    \edef\jlreq@do{\ifx\@tempa\@tempb\noexpand\@firstoftwo\else\noexpand\@secondoftwo\fi}%
+  \expandafter\endgroup
+  \jlreq@do
 }
 
 % #1が#2で終わるか（展開不可）
@@ -134,7 +137,7 @@
     }%
   }%
 }
-% #1が#2を含むか（展開不可）
+% #1が#2を含むか（展開不可）{}内に#2があってもFALSE判定．
 \def\jlreq@ifcontains#1#2{%
   \jlreq@ifempty{#2}{\@firstoftwo}{%
     \begingroup
@@ -2699,16 +2702,18 @@
 
 % 連続見出しスペース調整用のデータをすべてクリアする
 \def\jlreq@BlockHeading@spaces@clear{%
-  \jlreq@tempcnta=0
-  \@whilenum\jlreq@tempcnta<\jlreq@BlockHeading@spaces@current@count\do{%
-    \advance\jlreq@tempcnta by 1
-    \expandafter\global\expandafter\let\csname jlreq@BlockHeading@spaces@current@space@\the\jlreq@tempcnta\endcsname=\@undefined
-    \expandafter\global\expandafter\let\csname jlreq@BlockHeading@spaces@current@output@\the\jlreq@tempcnta\endcsname=\@undefined
-    \expandafter\global\expandafter\let\csname jlreq@BlockHeading@spaces@current@before@\the\jlreq@tempcnta\endcsname=\@undefined
-    \expandafter\global\expandafter\let\csname jlreq@BlockHeading@spaces@current@after@\the\jlreq@tempcnta\endcsname=\@undefined
-  }%
-  \gdef\jlreq@BlockHeading@spaces@current@sequence{}%
-  \global\jlreq@BlockHeading@spaces@current@count=0
+  \begingroup
+    \jlreq@tempcnta=0
+    \@whilenum\jlreq@tempcnta<\jlreq@BlockHeading@spaces@current@count\do{%
+      \advance\jlreq@tempcnta by 1
+      \expandafter\global\expandafter\let\csname jlreq@BlockHeading@spaces@current@space@\the\jlreq@tempcnta\endcsname=\@undefined
+      \expandafter\global\expandafter\let\csname jlreq@BlockHeading@spaces@current@output@\the\jlreq@tempcnta\endcsname=\@undefined
+      \expandafter\global\expandafter\let\csname jlreq@BlockHeading@spaces@current@before@\the\jlreq@tempcnta\endcsname=\@undefined
+      \expandafter\global\expandafter\let\csname jlreq@BlockHeading@spaces@current@after@\the\jlreq@tempcnta\endcsname=\@undefined
+    }%
+    \gdef\jlreq@BlockHeading@spaces@current@sequence{}%
+    \global\jlreq@BlockHeading@spaces@current@count=0
+  \endgroup
 }
 
 %.. 同行見出し
@@ -2774,38 +2779,43 @@
 % 1 = 書式指定，2 = インデント, 3 = 見出しと本文の間, 4 = これを越えたら二行以上，5 = これを越えたら三行以上，6 = テキスト
 \def\jlreq@CutinHeading@start@#1#2#3#4#5#6{%
   % 一行で処理したときの見出し長さを計測
-  \setbox\@tempboxa=\hbox{#1#6}%
-  \@tempdima=\wd\@tempboxa
-  % 何行必要かを\jlreq@CutinHeading@linecountに入れる
-  \ifdim\@tempdima>#5\def\jlreq@CutinHeading@linecount{3}%
-  \else\ifdim\@tempdima>#4\def\jlreq@CutinHeading@linecount{2}%
-  \else\def\jlreq@CutinHeading@linecount{1}\fi\fi
-  % \@tempdimaが実際の一行の長さに近い
-  \divide\@tempdima by \jlreq@CutinHeading@linecount
-  % \jlreq@resultboxに見出し部分を，\jlreq@CutinHeading@linecountに見出し自身に何行使うかを入れる
-  \ifnum\jlreq@CutinHeading@linecount=1\relax
-    \setbox\jlreq@resultbox=\vbox{\parindent=0pt\rightskip=0pt\leftskip=0pt\hbox{#1#6}}%
-    \def\jlreq@CutinHeading@linecount{2}%
-  \else
-    \jlreq@inlinenote@determinelength{#6}{#1}{}{\jlreq@CutinHeading@linecount}{\jlreq@CutinHeading@linecount}{\@tempdima}{\linewidth}%
-    \def\jlreq@CutinHeading@linecount{3}%
-  \fi
-  % 普通の一行の高さ/深さに合わせて見出しのボックスを作る
-  \setbox\@tempboxa=\vtop to \dimexpr\numexpr\jlreq@CutinHeading@linecount - 1\relax\baselineskip + 1\zh\relax{\vskip 0pt plus 1fill minus 1fill \box\jlreq@resultbox\vskip 0pt plus 1fill minus 1fill}%
-  % 高さを通常の一行のそれにする
-  \setbox\jlreq@tempboxa=\hbox{阿}%
-  \dp\@tempboxa=\dimexpr\ht\@tempboxa + \dp\@tempboxa - \ht\jlreq@tempboxa\relax
-  \ht\@tempboxa=\ht\jlreq@tempboxa
-  \noindent
-  \hspace*{#2}%
-  \copy\@tempboxa
-  \hspace*{#3}%
-  \par
-  % でかい見出しボックスの分をキャンセルする空きを入れる
-  % \baselineskip - \ht\jlreq@tempboxaはTeXが挿入するスキップの分
-  \vskip -\dimexpr\ht\@tempboxa + \dp\@tempboxa + \baselineskip - \ht\jlreq@tempboxa\relax
-  \hangindent=\dimexpr#2 + \wd\@tempboxa + #3\relax
-  \hangafter=-\jlreq@CutinHeading@linecount\relax
+  \begingroup
+    \setbox\@tempboxa=\hbox{#1#6}%
+    \@tempdima=\wd\@tempboxa
+    % 何行必要かを\jlreq@CutinHeading@linecountに入れる
+    \ifdim\@tempdima>#5\def\jlreq@CutinHeading@linecount{3}%
+    \else\ifdim\@tempdima>#4\def\jlreq@CutinHeading@linecount{2}%
+    \else\def\jlreq@CutinHeading@linecount{1}\fi\fi
+    % \@tempdimaが実際の一行の長さに近い
+    \divide\@tempdima by \jlreq@CutinHeading@linecount
+    % \jlreq@resultboxに見出し部分を，\jlreq@CutinHeading@linecountに見出し自身に何行使うかを入れる
+    \ifnum\jlreq@CutinHeading@linecount=1\relax
+      \setbox\jlreq@resultbox=\vbox{\parindent=0pt\rightskip=0pt\leftskip=0pt\hbox{#1#6}}%
+      \def\jlreq@CutinHeading@linecount{2}%
+    \else
+      \jlreq@inlinenote@determinelength{#6}{#1}{}{\jlreq@CutinHeading@linecount}{\jlreq@CutinHeading@linecount}{\@tempdima}{\linewidth}%
+      \def\jlreq@CutinHeading@linecount{3}%
+    \fi
+    % 普通の一行の高さ/深さに合わせて見出しのボックスを作る
+    \setbox\@tempboxa=\vtop to \dimexpr\numexpr\jlreq@CutinHeading@linecount - 1\relax\baselineskip + 1\zh\relax{\vskip 0pt plus 1fill minus 1fill \box\jlreq@resultbox\vskip 0pt plus 1fill minus 1fill}%
+    % 高さを通常の一行のそれにする
+    \setbox\jlreq@tempboxa=\hbox{阿}%
+    \dp\@tempboxa=\dimexpr\ht\@tempboxa + \dp\@tempboxa - \ht\jlreq@tempboxa\relax
+    \ht\@tempboxa=\ht\jlreq@tempboxa
+    \noindent
+    \hspace*{#2}%
+    \copy\@tempboxa
+    \hspace*{#3}%
+    \par
+    % でかい見出しボックスの分をキャンセルする空きを入れる
+    % \baselineskip - \ht\jlreq@tempboxaはTeXが挿入するスキップの分
+    \vskip -\dimexpr\ht\@tempboxa + \dp\@tempboxa + \baselineskip - \ht\jlreq@tempboxa\relax\relax
+    \edef\jlreq@do{%
+      \noexpand\hangindent=\the\dimexpr#2 + \wd\@tempboxa + #3\relax\relax
+      \noexpand\hangafter=-\jlreq@CutinHeading@linecount\relax
+    }%
+  \expandafter\endgroup
+  \jlreq@do
   \prevdepth=0pt
   % 改段落が起こっても\hang****をキープするように\parを書き換えておく（終わったら元に戻す）．
   \def\par{%
@@ -3040,7 +3050,7 @@
 % 文字サイズは6ポイントくらい（4.2.3.a）とりあえす\scriptsize
 
 % \footnoteと\footnotemarkの前後に\jlreq@hook@prenote/\jlreq@hook@postnoteを入れる
-\jlreq@saveoriginalcs{footnote}%
+\jlreq@saveoriginalcs{footnote}
 \edef\jlreq@do{
   \unexpanded{\long\def\jlreq@fixjfm@footnote@[#1]#2}{%
     \expandonce{\footnote[#1]{#2}}%
@@ -4768,19 +4778,17 @@
   \hbox{\yoko 
     \setbox\jlreq@tempboxa=\hbox{阿}%
     \vrule width 0pt height \ht\jlreq@tempboxa depth \dp\jlreq@tempboxa #1}%
-  \def\jlreq@do{%
-    % 後ろのJFM glue
-    \jlreq@ifletter{\jlreq@nextchar}{%
-      \jlreq@expandmacros{\jlreq@nextchar}{\jlreq@tempa}%
-      \def\jlreq@tempb####1####2\jlreq@endmark{\def\jlreq@tempa{####1}}%
-      \expandafter\jlreq@tempb\jlreq@tempa\jlreq@endmark
-      \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{\jlreq@tempa}%
-      \jlreq@calc@jfmglue{阿}{\jlreq@tempa}%
-      \jlreq@ifgluezero\jlreq@resultskip{}{\hskip\jlreq@resultskip}%
-      \inhibitglue
-    }{}%
-  }%
-  \futurelet\jlreq@nextchar\jlreq@do
+  \futurelet\jlreq@nextchar\jlreq@tatechuyoko@
+}
+\def\jlreq@tatechuyoko@{%
+  \jlreq@ifletter{\jlreq@nextchar}{%
+    \jlreq@expandmacros{\jlreq@nextchar}{\jlreq@tempa}%
+    \def\jlreq@tempb##1##2\jlreq@endmark{\def\jlreq@tempa{##1}}%
+    \expandafter\jlreq@tempb\jlreq@tempa\jlreq@endmark
+    \jlreq@calc@jfmglue{阿}{\jlreq@tempa}%
+    \jlreq@ifgluezero\jlreq@resultskip{}{\hskip\jlreq@resultskip}%
+    \inhibitglue
+  }{}%
 }
 
 % 日にち
@@ -4789,13 +4797,19 @@
 \def\和暦{\西暦false}
 % #1年#2月#3日 #4は\numberとか\kansujiとか
 \def\jlreq@wareki#1#2#3#4{%
+  \jlreq@warekiyear{#1}{#2}{#3}{#4}%
+  #4#2月#4#3日%
+}
+\def\jlreq@warekiyear#1#2#3#4{%
   % 昭和：1989年1月7日まで
   \ifnum0\ifnum#1<1988 1\fi\ifnum#1=1989 \ifnum#2=1 \ifnum#3<8 1\fi\fi\fi>0
     昭和\jlreq@warekiyear@{#1}{1926}{#4}%
-  \else
+  % 平成：2019年4月末日まで
+  \else%\ifnum0\ifnum#1<2019 1\fi\ifnum#1=1989 \ifnum#2<5 1\fi\fi>0
     平成\jlreq@warekiyear@{#1}{1989}{#4}%
-  \fi
-  #4#2月#4#3日%
+%  \else
+%    新元号\jlreq@warekiyear@{#1}{2019}{#4}%
+  \fi%\fi
 }
 \def\jlreq@warekiyear@#1#2#3{\ifnum#1=#2 元年\else #3\numexpr#1-#2+1\relax 年\fi}
 \def\today{%

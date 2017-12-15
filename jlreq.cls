@@ -4528,6 +4528,11 @@
 \setlength\fboxrule{\jlreq@omotekeiwidth} % 根拠はない
 % 後で
 \renewcommand{\theequation}{\@arabic\c@equation}
+\ifthenelse{\equal{\jlreq@article@type}{article}}{}{%
+  \@addtoreset{equation}{chapter}
+  \renewcommand{\theequation}{%
+    \ifnum\c@chapter>\z@\thechapter.\fi \@arabic\c@equation}
+}
 
 %. 目次
 \setcounter{tocdepth}{3}

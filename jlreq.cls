@@ -891,282 +891,171 @@
   \xkanjiskip=\jlreq@xkanjiskip
 \fi
 
-% 禁則処理，表1,2に従う
-% 行末
-% 初め括弧類
+% 文字クラスのリスト（必要なものだけ）
+% 開き括弧（文字クラス1）
+\edef\jlreq@charlist@openingbrackets{（〔［｛〈《「『【‘“\ifx p\jlreq@engine\else ｟〘〖«〝\fi}
+% 閉じ括弧（文字クラス2）
+\edef\jlreq@charlist@closingbrackets{）〕］｝〉》」』】’”\ifx p\jlreq@engine\else｠〙〗»〟\fi}
+% ハイフン（文字クラス3）
+\edef\jlreq@charlist@hyphens{‐〜\ifx p\jlreq@engine\else ゠–\fi}
+% 区切り約物（文字クラス4）
+\edef\jlreq@charlist@dividingpunctuationmarks{！？\ifx p\jlreq@engine\else ‼⁇⁈⁉\fi}
+% 中点類（文字クラス5）
+\edef\jlreq@charlist@middlenodes{・：；}
+% 句点類（文字クラス6）
+\edef\jlreq@charlist@fullstops{。．}
+% 読点類（文字クラス7）
+\edef\jlreq@charlist@commas{、，}
+% 分離禁止文字（文字クラス8）
+\edef\jlreq@charlist@inseparablecharacters{—…‥\ifx p\jlreq@engine\else 〳〴〵\fi}
+% 繰返し記号（文字クラス9）
+\edef\jlreq@charlist@iterationmarks{ヽヾゝゞ々\ifx p\jlreq@engine\else 〻\fi}
+% 長音記号（文字クラス10）
+\edef\jlreq@charlist@prolongedsoundmark{ー}
+% 小書きの仮名（文字クラス11）
+\edef\jlreq@charlist@smallkana{ぁぃぅぇぉァィゥェォっゃゅょゎッャュョヮヵヶ\ifx p\jlreq@engine\else ゕゖㇰㇱㇲㇳㇴㇵㇶㇷㇸㇹㇺㇻㇼㇽㇾㇿ\fi}%ㇷ゚
+% 前置省略記号（文字クラス12）
+\edef\jlreq@charlist@prefixedabbreviations{￥＄￡＃\ifx p\jlreq@engine\else €№\fi}
+% 平仮名（文字クラス15）
+\edef\jlreq@charlist@hiragana{あいうえおかがきぎくぐけげこごさざしじすずせぜそぞただちぢつづてでとどなにぬねのはばぱひびぴふぶぷへべぺほぼぽまみむめもやゆよらりるれろわゐゑをん\ifx p\jlreq@engine\else ゔ\fi}% か゚き゚く゚け゚こ゚
+% 片仮名（文字クラス16）
+\edef\jlreq@charlist@katakana{アイウエオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモヤユヨラリルレロワヰヱヲンヴ\ifx p\jlreq@engine\else ヷヸヹヺ\fi}% カ゚キ゚ク゚ケ゚コ゚セ゚ツ゚ト゚
+
 \ifx l\jlreq@engine
-  \newcommand*{\jlreq@setpostbreakpenalty}[2]{\ltjsetparameter{postbreakpenalty={`#1,#2}}}
-  \newcommand*{\jlreq@setprebreakpenalty}[2]{\ltjsetparameter{prebreakpenalty={`#1,#2}}}
-  \newcommand*{\jlreq@setjaxspmode}[2]{\ltjsetparameter{jaxspmode={`#1,#2}}}
-\else
-  \newcommand*{\jlreq@setpostbreakpenalty}[2]{\postbreakpenalty`#1=#2}
-  \newcommand*{\jlreq@setprebreakpenalty}[2]{\prebreakpenalty`#1=#2}
-  \newcommand*{\jlreq@setjaxspmode}[2]{%
+  \newcommand*{\jlreq@setpostbreakpenalty@}[2]{\ltjsetparameter{postbreakpenalty={`#1,#2}}}
+  \newcommand*{\jlreq@setprebreakpenalty@}[2]{\ltjsetparameter{prebreakpenalty={`#1,#2}}}
+  \newcommand*{\jlreq@addjaxspmode@}[2]{%
+    \jlreq@tempcnta=\ltjgetparameter{jaxspmode}{`#1}%
     \jlreq@switch{#2}{
-      {inhibit}{\inhibitxspcode`#1=0}
-      {preonly}{\inhibitxspcode`#1=1}
-      {postonly}{\inhibitxspcode`#1=2}
-      {allow}{\inhibitxspcode`#1=3}
-      {\inhibitxspcode`#1=#2}
-    }
+      {pre}{%
+        \ifnum\jlreq@tempcnta=2
+          \ltjsetparameter{jaxspmode={`#1,allow}}%
+        \else\ifnum\jlreq@tempcnta=0
+          \ltjsetparameter{jaxspmode={`#1,preonly}}%
+        \fi\fi
+      }
+      {post}{%
+        \ifnum\jlreq@tempcnta=1
+          \ltjsetparameter{jaxspmode={`#1,allow}}%
+        \else\ifnum\jlreq@tempcnta=0
+          \ltjsetparameter{jaxspmode={`#1,postonly}}%
+        \fi\fi
+      }
+    }%
+  }
+  \newcommand*{\jlreq@deljaxspmode@}[2]{%
+    \jlreq@tempcnta=\ltjgetparameter{jaxspmode}{`#1}%
+    \jlreq@switch{#2}{
+      {pre}{%
+        \ifnum\jlreq@tempcnta=2
+          \ltjsetparameter{jaxspmode={`#1,postonly}}%
+        \else\ifnum\jlreq@tempcnta=1
+          \ltjsetparameter{jaxspmode={`#1,inhibit}}%
+        \fi\fi
+      }
+      {post}{%
+        \ifnum\jlreq@tempcnta=3
+          \ltjsetparameter{jaxspmode={`#1,preonly}}%
+        \else\ifnum\jlreq@tempcnta=2
+          \ltjsetparameter{jaxspmode={`#1,inhibit}}%
+        \fi\fi
+      }
+    }%
+  }
+\else
+  \newcommand*{\jlreq@setpostbreakpenalty@}[2]{\postbreakpenalty`#1=#2}
+  \newcommand*{\jlreq@setprebreakpenalty@}[2]{\prebreakpenalty`#1=#2}
+  \newcommand*{\jlreq@addjaxspmode@}[2]{%
+    \jlreq@tempcnta=\inhibitxspcode`#1
+    \jlreq@switch{#2}{
+      {pre}{%
+        \ifnum\jlreq@tempcnta=1
+          \inhibitxspcode`#1=3
+        \else\ifnum\jlreq@tempcnta=0
+          \inhibitxspcode`#1=2
+        \fi\fi
+      }
+      {post}{%
+        \ifnum\jlreq@tempcnta=2
+          \inhibitxspcode`#1=3
+        \else\ifnum\jlreq@tempcnta=0
+          \inhibitxspcode`#1=1
+        \fi\fi
+      }
+    }%
+  }
+  \newcommand*{\jlreq@deljaxspmode@}[2]{%
+    \jlreq@tempcnta=\inhibitxspcode`#1
+    \jlreq@switch{#2}{
+      {pre}{%
+        \ifnum\jlreq@tempcnta=3
+          \inhibitxspcode`#1=1
+        \else\ifnum\jlreq@tempcnta=2
+          \inhibitxspcode`#1=0
+        \fi\fi
+      }
+      {post}{%
+        \ifnum\jlreq@tempcnta=3
+          \inhibitxspcode`#1=2
+        \else\ifnum\jlreq@tempcnta=1
+          \inhibitxspcode`#1=0
+        \fi\fi
+      }
+    }%
   }
 \fi
-\jlreq@aftercls@addtodeletecs{\jlreq@setpostbreakpenalty}
-\jlreq@aftercls@addtodeletecs{\jlreq@setprebreakpenalty}
-\jlreq@aftercls@addtodeletecs{\jlreq@setjaxspmode}
+% #1{...}{#3}を...が#2のリストに対して適用．
+\newcommand*\jlreq@iterateapply[3]{%
+  \edef\jlreq@tempa{#2}%
+  \expandafter\@tfor\expandafter\@tempa\expandafter:\expandafter=\jlreq@tempa\do{%
+    \expandafter#1\expandafter{\@tempa}{#3}%
+  }%
+}
+\def\jlreq@setpostbreakpenalty{\jlreq@iterateapply{\jlreq@setpostbreakpenalty@}}
+\def\jlreq@setprebreakpenalty{\jlreq@iterateapply{\jlreq@setprebreakpenalty@}}
+\def\jlreq@addjaxspmode{\jlreq@iterateapply{\jlreq@addjaxspmode@}}
+\def\jlreq@deljaxspmode{\jlreq@iterateapply{\jlreq@deljaxspmode@}}
 
-\jlreq@setpostbreakpenalty{（}{10000}
-\jlreq@setpostbreakpenalty{〔}{10000}
-\jlreq@setpostbreakpenalty{［}{10000}
-\jlreq@setpostbreakpenalty{｛}{10000}
-\jlreq@setpostbreakpenalty{〈}{10000}
-\jlreq@setpostbreakpenalty{《}{10000}
-\jlreq@setpostbreakpenalty{「}{10000}
-\jlreq@setpostbreakpenalty{『}{10000}
-\jlreq@setpostbreakpenalty{【}{10000}
-\ifx p\jlreq@engine\else
-\jlreq@setpostbreakpenalty{｟}{10000}
-\jlreq@setpostbreakpenalty{〘}{10000}
-\jlreq@setpostbreakpenalty{〖}{10000}
-\jlreq@setpostbreakpenalty{«}{10000}
-\jlreq@setpostbreakpenalty{〝}{10000}
-\fi
-\jlreq@setpostbreakpenalty{‘}{10000}
-\jlreq@setpostbreakpenalty{“}{10000}
-% 前置省略記号
-\jlreq@setpostbreakpenalty{￥}{10000}
-\jlreq@setpostbreakpenalty{＄}{10000}
-\jlreq@setpostbreakpenalty{￡}{10000}
-\jlreq@setpostbreakpenalty{＃}{10000}
-\ifx p\jlreq@engine\else
-\jlreq@setpostbreakpenalty{€}{10000}
-\jlreq@setpostbreakpenalty{№}{10000}
-\fi
-% 行頭
-% 終わり括弧類
-\jlreq@setprebreakpenalty{）}{10000}
-\jlreq@setprebreakpenalty{〕}{10000}
-\jlreq@setprebreakpenalty{］}{10000}
-\jlreq@setprebreakpenalty{｝}{10000}
-\jlreq@setprebreakpenalty{〉}{10000}
-\jlreq@setprebreakpenalty{》}{10000}
-\jlreq@setprebreakpenalty{」}{10000}
-\jlreq@setprebreakpenalty{』}{10000}
-\jlreq@setprebreakpenalty{】}{10000}
-\ifx p\jlreq@engine\else
-\jlreq@setprebreakpenalty{｠}{10000}
-\jlreq@setprebreakpenalty{〙}{10000}
-\jlreq@setprebreakpenalty{〗}{10000}
-\jlreq@setprebreakpenalty{»}{10000}
-\jlreq@setprebreakpenalty{〟}{10000}
-\fi
-\jlreq@setprebreakpenalty{’}{10000}
-\jlreq@setprebreakpenalty{”}{10000}
-% ハイフン類
-\jlreq@setprebreakpenalty{‐}{10000}
-\ifx p\jlreq@engine\else
-\jlreq@setprebreakpenalty{゠}{10000}
-\jlreq@setprebreakpenalty{–}{10000}
-\jlreq@setprebreakpenalty{〜}{10000}
-\fi
-% 区切り約物
-\jlreq@setprebreakpenalty{！}{10000}
-\jlreq@setprebreakpenalty{？}{10000}
-\ifx p\jlreq@engine\else
-\jlreq@setprebreakpenalty{‼}{10000}
-\jlreq@setprebreakpenalty{⁇}{10000}
-\jlreq@setprebreakpenalty{⁈}{10000}
-\jlreq@setprebreakpenalty{⁉}{10000}
-\fi
-% 中点類
-\jlreq@setprebreakpenalty{・}{10000}
-\jlreq@setprebreakpenalty{：}{10000}
-\jlreq@setprebreakpenalty{；}{10000}
-% 句点類
-\jlreq@setprebreakpenalty{。}{10000}
-\jlreq@setprebreakpenalty{．}{10000}
-% 読点類
-\jlreq@setprebreakpenalty{、}{10000}
-\jlreq@setprebreakpenalty{，}{10000}
-% 繰返し記号
-\jlreq@setprebreakpenalty{ヽ}{10000}
-\jlreq@setprebreakpenalty{ヾ}{10000}
-\jlreq@setprebreakpenalty{ゝ}{10000}
-\jlreq@setprebreakpenalty{ゞ}{10000}
-\jlreq@setprebreakpenalty{々}{10000}
-\ifx p\jlreq@engine\else
-\jlreq@setprebreakpenalty{〻}{10000}
-\fi
-% 長音記号
-\jlreq@setprebreakpenalty{ー}{10000}
-% 小書きの仮名
-\jlreq@setprebreakpenalty{ぁ}{10000}
-\jlreq@setprebreakpenalty{ぃ}{10000}
-\jlreq@setprebreakpenalty{ぅ}{10000}
-\jlreq@setprebreakpenalty{ぇ}{10000}
-\jlreq@setprebreakpenalty{ぉ}{10000}
-\jlreq@setprebreakpenalty{ァ}{10000}
-\jlreq@setprebreakpenalty{ィ}{10000}
-\jlreq@setprebreakpenalty{ゥ}{10000}
-\jlreq@setprebreakpenalty{ェ}{10000}
-\jlreq@setprebreakpenalty{ォ}{10000}
-\jlreq@setprebreakpenalty{っ}{10000}
-\jlreq@setprebreakpenalty{ゃ}{10000}
-\jlreq@setprebreakpenalty{ゅ}{10000}
-\jlreq@setprebreakpenalty{ょ}{10000}
-\jlreq@setprebreakpenalty{ゎ}{10000}
-\ifx p\jlreq@engine\else
-\jlreq@setprebreakpenalty{ゕ}{10000}
-\jlreq@setprebreakpenalty{ゖ}{10000}
-\fi
-\jlreq@setprebreakpenalty{ッ}{10000}
-\jlreq@setprebreakpenalty{ャ}{10000}
-\jlreq@setprebreakpenalty{ュ}{10000}
-\jlreq@setprebreakpenalty{ョ}{10000}
-\jlreq@setprebreakpenalty{ヮ}{10000}
-\jlreq@setprebreakpenalty{ヵ}{10000}
-\jlreq@setprebreakpenalty{ヶ}{10000}
-\ifx p\jlreq@engine\else
-\jlreq@setprebreakpenalty{ㇰ}{10000}
-\jlreq@setprebreakpenalty{ㇱ}{10000}
-\jlreq@setprebreakpenalty{ㇲ}{10000}
-\jlreq@setprebreakpenalty{ㇳ}{10000}
-\jlreq@setprebreakpenalty{ㇴ}{10000}
-\jlreq@setprebreakpenalty{ㇵ}{10000}
-\jlreq@setprebreakpenalty{ㇶ}{10000}
-\jlreq@setprebreakpenalty{ㇷ}{10000}
-\jlreq@setprebreakpenalty{ㇸ}{10000}
-\jlreq@setprebreakpenalty{ㇹ}{10000}
-\jlreq@setprebreakpenalty{ㇺ}{10000}
-\jlreq@setprebreakpenalty{ㇻ}{10000}
-\jlreq@setprebreakpenalty{ㇼ}{10000}
-\jlreq@setprebreakpenalty{ㇽ}{10000}
-\jlreq@setprebreakpenalty{ㇾ}{10000}
-\jlreq@setprebreakpenalty{ㇿ}{10000}
-\fi
+\jlreq@aftercls@addtodeletecs{\jlreq@iterateapply}
+\jlreq@aftercls@addtodeletecs{\jlreq@setpostbreakpenalty}
+\jlreq@aftercls@addtodeletecs{\jlreq@setpostbreakpenalty@}
+\jlreq@aftercls@addtodeletecs{\jlreq@setprebreakpenalty}
+\jlreq@aftercls@addtodeletecs{\jlreq@setprebreakpenalty@}
+\jlreq@aftercls@addtodeletecs{\jlreq@addjaxspmode}
+\jlreq@aftercls@addtodeletecs{\jlreq@addjaxspmode@}
+\jlreq@aftercls@addtodeletecs{\jlreq@deljaxspmode}
+\jlreq@aftercls@addtodeletecs{\jlreq@deljaxspmode@}
+
+% 前禁則
+\jlreq@setpostbreakpenalty{\jlreq@charlist@openingbrackets}{10000}
+\jlreq@setpostbreakpenalty{\jlreq@charlist@prefixedabbreviations}{10000}
+
+% 後ろ禁則
+\jlreq@setprebreakpenalty{\jlreq@charlist@closingbrackets}{10000}
+\jlreq@setprebreakpenalty{\jlreq@charlist@hyphens}{10000}
+\jlreq@setprebreakpenalty{\jlreq@charlist@dividingpunctuationmarks}{10000}
+\jlreq@setprebreakpenalty{\jlreq@charlist@middlenodes}{10000}
+\jlreq@setprebreakpenalty{\jlreq@charlist@fullstops}{10000}
+\jlreq@setprebreakpenalty{\jlreq@charlist@commas}{10000}
+\jlreq@setprebreakpenalty{\jlreq@charlist@iterationmarks}{10000}
+\jlreq@setprebreakpenalty{\jlreq@charlist@prolongedsoundmark}{10000}
+\jlreq@setprebreakpenalty{\jlreq@charlist@smallkana}{10000}
 
 % xkanjiskip
-% 初め括弧類（二分）
-\jlreq@setjaxspmode{（}{preonly}
-\jlreq@setjaxspmode{〔}{preonly}
-\jlreq@setjaxspmode{［}{preonly}
-\jlreq@setjaxspmode{｛}{preonly}
-\jlreq@setjaxspmode{〈}{preonly}
-\jlreq@setjaxspmode{《}{preonly}
-\jlreq@setjaxspmode{「}{preonly}
-\jlreq@setjaxspmode{『}{preonly}
-\jlreq@setjaxspmode{【}{preonly}
-\ifx p\jlreq@engine\else
-\jlreq@setjaxspmode{｟}{preonly}
-\jlreq@setjaxspmode{〘}{preonly}
-\jlreq@setjaxspmode{〖}{preonly}
-\jlreq@setjaxspmode{«}{preonly}
-\jlreq@setjaxspmode{〝}{preonly}
-\fi
-\jlreq@setjaxspmode{‘}{preonly}
-\jlreq@setjaxspmode{“}{preonly}
-% 終わり括弧類（二分）
-\jlreq@setjaxspmode{）}{postonly}
-\jlreq@setjaxspmode{〕}{postonly}
-\jlreq@setjaxspmode{］}{postonly}
-\jlreq@setjaxspmode{｝}{postonly}
-\jlreq@setjaxspmode{〉}{postonly}
-\jlreq@setjaxspmode{》}{postonly}
-\jlreq@setjaxspmode{」}{postonly}
-\jlreq@setjaxspmode{』}{postonly}
-\jlreq@setjaxspmode{】}{postonly}
-\ifx p\jlreq@engine\else
-\jlreq@setjaxspmode{｠}{postonly}
-\jlreq@setjaxspmode{〙}{postonly}
-\jlreq@setjaxspmode{〗}{postonly}
-\jlreq@setjaxspmode{»}{postonly}
-\jlreq@setjaxspmode{〟}{postonly}
-\fi
-\jlreq@setjaxspmode{’}{postonly}
-\jlreq@setjaxspmode{”}{postonly}
-% ハイフン類（二分）
-\jlreq@setjaxspmode{‐}{inhibit}
-\ifx p\jlreq@engine\else
-\jlreq@setjaxspmode{゠}{inhibit}
-\jlreq@setjaxspmode{–}{inhibit}
-\jlreq@setjaxspmode{〜}{inhibit}
-\fi
-% 区切り約物
-\jlreq@setjaxspmode{！}{postonly}
-\jlreq@setjaxspmode{？}{postonly}
-\ifx p\jlreq@engine\else
-\jlreq@setjaxspmode{‼}{postonly}
-\jlreq@setjaxspmode{⁇}{postonly}
-\jlreq@setjaxspmode{⁈}{postonly}
-\jlreq@setjaxspmode{⁉}{postonly}
-\fi
-% 中点類
-\jlreq@setjaxspmode{・}{postonly}
-\jlreq@setjaxspmode{：}{postonly}
-\jlreq@setjaxspmode{；}{postonly}
-% 句点類（二分）
-\jlreq@setjaxspmode{。}{postonly}
-\jlreq@setjaxspmode{．}{postonly}
-% 読点類（二分）
-\jlreq@setjaxspmode{、}{postonly}
-\jlreq@setjaxspmode{，}{postonly}
-% 分離禁止文字
-\jlreq@setjaxspmode{—}{inhibit}
-\jlreq@setjaxspmode{…}{inhibit}
-\jlreq@setjaxspmode{‥}{inhibit}
-\ifx p\jlreq@engine\else
-\jlreq@setjaxspmode{〳}{inhibit}
-\jlreq@setjaxspmode{〴}{inhibit}
-\jlreq@setjaxspmode{〵}{inhibit}
-\fi
-% 前置省略記号
-\jlreq@setjaxspmode{￥}{inhibit}
-\jlreq@setjaxspmode{＄}{inhibit}
-\jlreq@setjaxspmode{￡}{inhibit}
-\jlreq@setjaxspmode{＃}{inhibit}
-\ifx p\jlreq@engine\else
-\jlreq@setjaxspmode{€}{inhibit}
-\jlreq@setjaxspmode{№}{inhibit}
-\fi
-% 後置省略記号
-\jlreq@setjaxspmode{°}{inhibit}
-\jlreq@setjaxspmode{′}{inhibit}
-\jlreq@setjaxspmode{″}{inhibit}
-\jlreq@setjaxspmode{℃}{inhibit}
-\jlreq@setjaxspmode{￠}{inhibit}
-\jlreq@setjaxspmode{％}{inhibit}
-\jlreq@setjaxspmode{‰}{inhibit}
-\ifx p\jlreq@engine\else
-\jlreq@setjaxspmode{㏋}{inhibit}
-\jlreq@setjaxspmode{ℓ}{inhibit}
-\jlreq@setjaxspmode{㌃}{inhibit}
-\jlreq@setjaxspmode{㌍}{inhibit}
-\jlreq@setjaxspmode{㌔}{inhibit}
-\jlreq@setjaxspmode{㌘}{inhibit}
-\jlreq@setjaxspmode{㌢}{inhibit}
-\jlreq@setjaxspmode{㌣}{inhibit}
-\jlreq@setjaxspmode{㌦}{inhibit}
-\jlreq@setjaxspmode{㌧}{inhibit}
-\jlreq@setjaxspmode{㌫}{inhibit}
-\jlreq@setjaxspmode{㌶}{inhibit}
-\jlreq@setjaxspmode{㌻}{inhibit}
-\jlreq@setjaxspmode{㍉}{inhibit}
-\jlreq@setjaxspmode{㍊}{inhibit}
-\jlreq@setjaxspmode{㍍}{inhibit}
-\jlreq@setjaxspmode{㍑}{inhibit}
-\jlreq@setjaxspmode{㍗}{inhibit}
-\jlreq@setjaxspmode{㎎}{inhibit}
-\jlreq@setjaxspmode{㎏}{inhibit}
-\jlreq@setjaxspmode{㎜}{inhibit}
-\jlreq@setjaxspmode{㎝}{inhibit}
-\jlreq@setjaxspmode{㎞}{inhibit}
-\jlreq@setjaxspmode{㎡}{inhibit}
-\jlreq@setjaxspmode{㏄}{inhibit}
-\fi
+\jlreq@addjaxspmode{\jlreq@charlist@iterationmarks}{pre}
+\jlreq@addjaxspmode{\jlreq@charlist@iterationmarks}{post}
+\jlreq@addjaxspmode{\jlreq@charlist@prolongedsoundmark}{pre}
+\jlreq@addjaxspmode{\jlreq@charlist@prolongedsoundmark}{post}
+\jlreq@addjaxspmode{\jlreq@charlist@smallkana}{pre}
+\jlreq@addjaxspmode{\jlreq@charlist@smallkana}{post}
+\jlreq@addjaxspmode{\jlreq@charlist@hiragana}{pre}
+\jlreq@addjaxspmode{\jlreq@charlist@hiragana}{post}
+\jlreq@addjaxspmode{\jlreq@charlist@katakana}{pre}
+\jlreq@addjaxspmode{\jlreq@charlist@katakana}{post}
+\jlreq@addjaxspmode{\jlreq@charlist@dividingpunctuationmarks}{post}
+
 % 分割禁止（分離禁止文字は特定の並びで分割禁止だが，とりあえず一括で禁止しておく．）
-\jlreq@setprebreakpenalty{—}{10000}
-\jlreq@setprebreakpenalty{…}{10000}
-\jlreq@setprebreakpenalty{‥}{10000}
+\jlreq@setprebreakpenalty{\jlreq@charlist@inseparablecharacters}{10000}
 % ￥100とか70％とか……
 
 %.. 文字範囲
@@ -1270,13 +1159,6 @@
 \DeclareRobustCommand*{\mit}{\@fontswitch\relax\mathnormal}
 
 %.. 和文
-% 必要になりそうなリスト
-% 開き括弧（文字クラス1）
-\edef\jlreq@charlist@openingbrackets{（〔［｛〈《「『【‘“\ifx p\jlreq@engine\else ｟〘〖«〝\fi}
-% 閉じ括弧（文字クラス2）
-\edef\jlreq@charlist@closingbrackets{）〕］｝〉》」』】’”\ifx p\jlreq@engine\else｠〙〗»〟\fi}
-% 区切り約物（文字クラス4）
-\edef\jlreq@charlist@dividingpunctuationmarks{！？\ifx p\jlreq@engine\else ‼⁇⁈⁉\fi}
 % JFMに関連する設定
 \ifx l\jlreq@engine
   % この値は後でjfm-jlreq内で読む

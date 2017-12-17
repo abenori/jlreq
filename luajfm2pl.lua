@@ -141,12 +141,18 @@ end
 local no_jis_chars_hash = {}
 for _,c in ipairs(no_jis_chars) do no_jis_chars_hash[c] = true end
 
+alcharclass = nil
+noxalcharclass = nil
+
 for class,val in pairs(jfm) do
 	if type(class) ~= "number" or class == 0 then goto continue end
 	local chars = {}
 	for _,c in ipairs(val.chars) do
 		local ac = nil
-		if unicode.utf8.len(c) == 1 then ac = c
+		-- 'alchar'や'nox_alchar'が入っているクラスを記憶
+		if c == 'alchar' then alcharclass = class
+		elseif c == 'nox_alchar' then noxalcharclass = class
+		elseif unicode.utf8.len(c) == 1 then ac = c
 		elseif unicode.utf8.len(c) == 2 then
 			local cs = {}
 			for _,cc in string.utfcharacters(c) do
@@ -158,12 +164,83 @@ for class,val in pairs(jfm) do
 	end
 	chars = array_uniq(chars)
  	-- charsが空になった場合は消しておく
-	if isempty(chars) == true then
+	if class ~= alcharclass and class ~= noxalcharclass and isempty(chars) == true then
 		io.stderr:write("Class " .. class .. " has no chars, so we omit it\n")
 		jfm[class] = nil
 	else jfm[class].chars = table.concat(chars," ") end
 	::continue::
 end
+
+-- 以下の条件が同時に成立する場合文字クラス0との間のglueを消す．
+-- （\xkanjiskipが）
+-- * 文字クラス0との間のグルーXが定義されていて，Xはxkanjiskipと異なる．
+-- * alcharclassとの間のグルーが定義されていないか，xkanjiskipと同じ値が定義されている．
+if alcharclass ~= nil then
+	for _,gluekern in ipairs({'glue','kern'}) do
+		for class,val in pairs(jfm) do
+			if type(class) ~= "number" then goto continue end
+			if class == 0 or class == alcharclass or class == noxalcharclass then goto continue end
+			if jfm[class][gluekern] ~= nil then
+				if 
+					jfm[class][gluekern][0] ~= nil and 
+					(
+						jfm[class][gluekern][0][1] ~= jfm.xkanjiskip[1] or
+						jfm[class][gluekern][0][2] ~= jfm.xkanjiskip[2] or
+						jfm[class][gluekern][0][3] ~= jfm.xkanjiskip[3]
+					)
+					and
+					(
+						jfm[class][gluekern][alcharclass] == nil or
+						(
+							jfm[class][gluekern][alcharclass][1] == jfm.xkanjiskip[1] and
+							jfm[class][gluekern][alcharclass][2] == jfm.xkanjiskip[2] and
+							jfm[class][gluekern][alcharclass][3] == jfm.xkanjiskip[3]
+						)
+					)
+				then
+					io.stderr:write(gluekern .. " between Class " .. class .. " and 0 is omitted\n")
+					jfm[class][gluekern][0] = nil
+					jfm[class][gluekern][alcharclass] = nil
+				end
+			end
+			if jfm[0][gluekern] ~= nil and jfm[alcharclass][gluekern] ~= nil then
+				if
+					jfm[0][gluekern][class] ~= nil and 
+					(
+						jfm[0][gluekern][class][1] ~= jfm.xkanjiskip[1] or
+						jfm[0][gluekern][class][2] ~= jfm.xkanjiskip[2] or
+						jfm[0][gluekern][class][3] ~= jfm.xkanjiskip[3]
+					)
+					and
+					(
+						jfm[alcharclass][gluekern][class] == nil or
+						(
+							jfm[alcharclass][gluekern][class][1] == jfm.xkanjiskip[1] and
+							jfm[alcharclass][gluekern][class][2] == jfm.xkanjiskip[2] and
+							jfm[alcharclass][gluekern][class][3] == jfm.xkanjiskip[3]
+						)
+					)
+				then
+					io.stderr:write(gluekern .. " between Class 0 and " .. class .. " is omitted\n")
+					jfm[0][gluekern][class] = nil
+					jfm[alcharclass][gluekern][class] = nil
+				end
+			end
+			::continue::
+		end
+	end
+end
+
+if alcharclass == noxalcharclass then noxalcharclass = nil end
+for _,class in ipairs({alcharclass,noxalcharclass}) do
+	if class ~= nil then
+		if jfm[class].chars == "" then
+			io.stderr:write("Class " .. class .. " has only Alchar, so we omit it\n")
+			jfm[class] = nil
+		end
+	end
+end
+
 
 -- 存在しないクラスに対するglue/kernは消す
 for _,gluekern in ipairs({"glue","kern"}) do

@@ -147,6 +147,8 @@ tds: jfm jlreq.cls README.md README-ja.md LICENSE jlreq.html jlreq-ja.html
 uninstall:
 	rm -rf ${TEXMF}/fonts/tfm/public/jlreq
 	rm -rf ${TEXMF}/fonts/vf/public/jlreq
+	rm -rf ${TEXMF}/tex/luatex/jlreq
+	rm -rf ${TEXMF}/tex/latex/jlreq
 
 clean:
 	rm -f *.tfm *.pl *.vf

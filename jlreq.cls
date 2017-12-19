@@ -1026,11 +1026,11 @@
 \jlreq@aftercls@addtodeletecs{\jlreq@deljaxspmode}
 \jlreq@aftercls@addtodeletecs{\jlreq@deljaxspmode@}
 
-% 前禁則
+% 行末禁則
 \jlreq@setpostbreakpenalty{\jlreq@charlist@openingbrackets}{10000}
 \jlreq@setpostbreakpenalty{\jlreq@charlist@prefixedabbreviations}{10000}
 
-% 後ろ禁則
+% 行頭禁則
 \jlreq@setprebreakpenalty{\jlreq@charlist@closingbrackets}{10000}
 \jlreq@setprebreakpenalty{\jlreq@charlist@hyphens}{10000}
 \jlreq@setprebreakpenalty{\jlreq@charlist@dividingpunctuationmarks}{10000}
@@ -1906,7 +1906,7 @@
 % スペースを読み飛ばす
 \expandafter\def\expandafter\jlreq@BlockHeading@start@afterheading@@\space{\jlreq@BlockHeading@start@afterheading}
 \def\jlreq@BlockHeading@start@afterheading@@@{%
-  \def\jlreq@do{\jlreq@BlockHeading@spaces@output\jlreq@BlockHeading@spaces@clear}%
+  \def\jlreq@do{\jlreq@BlockHeading@spaces@output}%
   \expandafter\@for\expandafter\@tempa\expandafter:\expandafter=\jlreq@BlockHeading@allheadings\do{%
     \expandafter\ifx\csname\@tempa\endcsname\jlreq@nextchar\def\jlreq@do{}\fi
   }%
@@ -2498,10 +2498,18 @@
 
 % 連続スペース情報とか無視して各々の見出しを出力する
 \def\jlreq@BlockHeading@spaces@outputwospace{%
-  \jlreq@tempcnta=0
-  \@whilenum\jlreq@tempcnta<\jlreq@BlockHeading@spaces@current@count\do{%
+  \begingroup
+    \jlreq@tempcnta=0
+    \def\jlreq@do{}%
+    \jlreq@BlockHeading@spaces@outputwospace@
+    \jlreq@BlockHeading@spaces@clear
+  \expandafter\endgroup
+  \jlreq@do
+}
+\def\jlreq@BlockHeading@spaces@outputwospace@{%
+  \ifnum\jlreq@tempcnta<\jlreq@BlockHeading@spaces@current@count
     \advance\jlreq@tempcnta by 1
-    \csname jlreq@BlockHeading@spaces@current@before@\the\jlreq@tempcnta\endcsname
+    \eappto\jlreq@do{\csexpandonce{jlreq@BlockHeading@spaces@current@before@\the\jlreq@tempcnta}}%
     \edef\jlreq@tempa{%
       \unexpanded{\long\def\jlreq@tempa##1}{\csexpandonce{jlreq@BlockHeading@spaces@current@format@\the\jlreq@tempcnta}}%
     }%
@@ -2513,10 +2521,9 @@
           {\csexpandonce{jlreq@BlockHeading@spaces@current@output@\the\jlreq@tempcnta}}%
       }}%
     }%
-    \edef\jlreq@do{\jlreq@tempb}%
-    \jlreq@do
-    \csname jlreq@BlockHeading@spaces@current@after@\the\jlreq@tempcnta\endcsname
-  }%
+    \eappto\jlreq@do{\jlreq@tempb\csexpandonce{jlreq@BlockHeading@spaces@current@after@\the\jlreq@tempcnta}}%
+    \expandafter\jlreq@BlockHeading@spaces@outputwospace@
+  \fi
 }
 
 \def\jlreq@BlockHeading@spaces@output@#1#2\jlreq@endmark{%
@@ -2535,6 +2542,7 @@
       \expandonce{\jlreq@result}%
     \fi
   }%
+  \jlreq@BlockHeading@spaces@clear
   \jlreq@do
 }
 % jlreq@resultに出力すべきものを入れていく

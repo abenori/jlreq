@@ -1167,8 +1167,8 @@
   % \item後の行頭括弧のために仕込み．
   \jlreq@saveoriginalcs{list}
   \jlreq@saveoriginalcs{endlist}
-  \pretocmd{\list}{\jlreq@pushhook@postpar{\directlua{luatexja.jfmglue.create_beginpar_node()}}}{}{}% ltjsclassesから
-  \apptocmd{\endlist}{\jlreq@pophook@postpar}
+  \pretocmd{\list}{\jlreq@pushhook@postpar{\ltjfakeparbegin}}{}{}
+  \apptocmd{\endlist}{\jlreq@pophook@postpar}{}{}
 \else
   % 非LuaTeXの場合はJFMの入れ替えと\everyparでの処理で対処．
   % 行頭括弧に対して\inhibitglueを入れたりする命令を作る
@@ -1895,7 +1895,10 @@
     \expandonce{\jlreq@resulta}%
   }%
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count\endcsname{}%
-  \jlreq@BlockHeading@start@afterheading
+  
+  \ifx\jlreq@BlockHeading@spaces@headingslist\@empty\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+    {\jlreq@BlockHeading@spaces@outputwospace\ignorespaces}%
+    {\jlreq@BlockHeading@start@afterheading}%
 }
 
 \def\jlreq@BlockHeading@start@afterheading{\futurelet\jlreq@nextchar\jlreq@BlockHeading@start@afterheading@}
@@ -1913,21 +1916,32 @@
   % \jlreq@BlockHeading@HeadingSpaces@ignoretokens内のものは特別扱いする
   \expandafter\@tfor\expandafter\@tempa\expandafter:\expandafter=\jlreq@BlockHeading@HeadingSpaces@ignoretokens\do{%
     \expandafter\ifx\@tempa\jlreq@nextchar
-      \expandafter\ifpatchable\expandafter*\@tempa{%
-        \edef\jlreq@do{%
-          \unexpanded{\let\jlreq@BlockHeading@start@savecs=}\expandonce{\@tempa}%
-          \noexpand\pretocmd\expandonce{\@tempa}{\noexpand\let\expandonce{\@tempa}=\noexpand\jlreq@BlockHeading@start@savecs\noexpand\jlreq@BlockHeading@HeadingSpaces@saveafter}{}{}%
-          \noexpand\apptocmd\expandonce{\@tempa}{\unexpanded{\jlreq@BlockHeading@HeadingSpaces@endmark\jlreq@BlockHeading@start@afterheading}}{}{}%
-        }%
-      }{}%
+      \def\jlreq@do{\jlreq@BlockHeading@start@afterheading@saveafter@cs}%
     \fi
   }%
   \jlreq@do
 }
 
-\def\jlreq@BlockHeading@HeadingSpaces@endmark{\jlreq@BlockHeading@HeadingSpaces@endmark}
-\def\jlreq@BlockHeading@HeadingSpaces@saveafter#1\jlreq@BlockHeading@HeadingSpaces@endmark{%
-  \csxappto{jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count}{\unexpanded{#1}}%
+% コントロールシークエンスを保存
+\def\jlreq@BlockHeading@start@afterheading@saveafter@cs#1{%
+  \csappto{jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count}{#1}%
+  \jlreq@BlockHeading@start@afterheading@saveafter@option
+}
+% オプションがあれば保存
+\def\jlreq@BlockHeading@start@afterheading@saveafter@option{%
+  \@ifnextchar[{\jlreq@BlockHeading@start@afterheading@saveafter@option@}{\jlreq@BlockHeading@start@afterheading@saveafter@arguments}%
+}
+\def\jlreq@BlockHeading@start@afterheading@saveafter@option@[#1]{%
+  \csxappto{jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count}{\unexpanded{[#1]}}%
+  \jlreq@BlockHeading@start@afterheading@saveafter@arguments
+}
+% 引数を保存し続けるループ
+\def\jlreq@BlockHeading@start@afterheading@saveafter@arguments{%
+  \jlreq@ifnextchar\bgroup{\jlreq@BlockHeading@start@afterheading@saveafter@arguments@}{\jlreq@BlockHeading@start@afterheading}%
+}
+\def\jlreq@BlockHeading@start@afterheading@saveafter@arguments@#1{%
+  \csxappto{jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count}{\unexpanded{{#1}}}%
+  \jlreq@BlockHeading@start@afterheading@saveafter@arguments
 }
 
 % 特別扱いしたいマクロを並べる

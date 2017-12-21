@@ -171,65 +171,6 @@ for class,val in pairs(jfm) do
 	::continue::
 end
 
--- 以下の条件が同時に成立する場合文字クラス0との間のglueを消す．
--- （\xkanjiskipが）
--- * 文字クラス0との間のグルーXが定義されていて，Xはxkanjiskipと異なる．
--- * alcharclassとの間のグルーが定義されていないか，xkanjiskipと同じ値が定義されている．
-if alcharclass ~= nil then
-	for _,gluekern in ipairs({'glue','kern'}) do
-		for class,val in pairs(jfm) do
-			if type(class) ~= "number" then goto continue end
-			if class == 0 or class == alcharclass or class == noxalcharclass then goto continue end
-			if jfm[class][gluekern] ~= nil then
-				if 
-					jfm[class][gluekern][0] ~= nil and 
-					(
-						jfm[class][gluekern][0][1] ~= jfm.xkanjiskip[1] or
-						jfm[class][gluekern][0][2] ~= jfm.xkanjiskip[2] or
-						jfm[class][gluekern][0][3] ~= jfm.xkanjiskip[3]
-					)
-					and
-					(
-						jfm[class][gluekern][alcharclass] == nil or
-						(
-							jfm[class][gluekern][alcharclass][1] == jfm.xkanjiskip[1] and
-							jfm[class][gluekern][alcharclass][2] == jfm.xkanjiskip[2] and
-							jfm[class][gluekern][alcharclass][3] == jfm.xkanjiskip[3]
-						)
-					)
-				then
-					io.stderr:write(gluekern .. " between Class " .. class .. " and 0 is omitted\n")
-					jfm[class][gluekern][0] = nil
-					jfm[class][gluekern][alcharclass] = nil
-				end
-			end
-			if jfm[0][gluekern] ~= nil and jfm[alcharclass][gluekern] ~= nil then
-				if
-					jfm[0][gluekern][class] ~= nil and 
-					(
-						jfm[0][gluekern][class][1] ~= jfm.xkanjiskip[1] or
-						jfm[0][gluekern][class][2] ~= jfm.xkanjiskip[2] or
-						jfm[0][gluekern][class][3] ~= jfm.xkanjiskip[3]
-					)
-					and
-					(
-						jfm[alcharclass][gluekern][class] == nil or
-						(
-							jfm[alcharclass][gluekern][class][1] == jfm.xkanjiskip[1] and
-							jfm[alcharclass][gluekern][class][2] == jfm.xkanjiskip[2] and
-							jfm[alcharclass][gluekern][class][3] == jfm.xkanjiskip[3]
-						)
-					)
-				then
-					io.stderr:write(gluekern .. " between Class 0 and " .. class .. " is omitted\n")
-					jfm[0][gluekern][class] = nil
-					jfm[alcharclass][gluekern][class] = nil
-				end
-			end
-			::continue::
-		end
-	end
-end
 
 if alcharclass == noxalcharclass then noxalcharclass = nil end
 for _,class in ipairs({alcharclass,noxalcharclass}) do

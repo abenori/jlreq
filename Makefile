@@ -28,17 +28,17 @@ jfm: \
 	rm -f rml.tfm rmlv.tfm gbm.tfm gbmv.tfm uprml-h.tfm uprml-hq.tfm upgbm-h.tfm upgbm-hq.tfm uprml-v.tfm uprml-vq.tfm upgbm-v.tfm upgbm-vq.tfm
 
 # .pl
-u%-v.pl: jfm-%v.lua luajfm2pl.lua
-	texlua luajfm2pl.lua $*v $@
+u%-v.pl: jfm-%v-pl.lua luajfm2pl.lua
+	texlua luajfm2pl.lua $*v-pl $@
 
-%-v.pl: jfm-%v.lua luajfm2pl.lua
-	texlua luajfm2pl.lua --noutf $*v $@
+%-v.pl: jfm-%v-pl.lua luajfm2pl.lua
+	texlua luajfm2pl.lua --noutf $*v-pl $@
 
-u%.pl: jfm-%.lua luajfm2pl.lua
-	texlua luajfm2pl.lua $* $@
+u%.pl: jfm-%-pl.lua luajfm2pl.lua
+	texlua luajfm2pl.lua $*-pl $@
 
-%.pl: jfm-%.lua luajfm2pl.lua
-	texlua luajfm2pl.lua --noutf $* $@
+%.pl: jfm-%-pl.lua luajfm2pl.lua
+	texlua luajfm2pl.lua --noutf $*-pl $@
 
 # .vf
 u%g-q.vf: u%g-q.tfm
@@ -90,7 +90,7 @@ u%.tfm: u%.pl
 %.tfm: %.pl
 	ppltotf -kanji=utf8 $< $@
 
-jfm-%v.lua jfm-b%.lua jfm-z%.lua: make_variant_jfm.lua jfm-jlreq.lua
+jfm-jlreqv.lua jfm-jlreq-pl.lua jfm-bjlreq-pl.lua jfm-zjlreq-pl.lua jfm-bzjlreq-pl.lua jfm-jlreqv-pl.lua jfm-bjlreqv-pl.lua jfm-zjlreqv-pl.lua jfm-bzjlreqv-pl.lua : make_variant_jfm.lua jfm-jlreq.lua
 	texlua make_variant_jfm.lua
 
 doc: pdfdoc htmldoc
@@ -153,6 +153,6 @@ uninstall:
 clean:
 	rm -f *.tfm *.pl *.vf
 	rm -f jfm-jlreqv.lua
-	rm -f jfm-bjlreq.lua jfm-bjlreqv.lua jfm-bzjlreq.lua jfm-bzjlreqv.lua jfm-zjlreq.lua jfm-zjlreqv.lua
+	rm -f jfm-jlreq-pl.lua jfm-bjlreq-pl.lua jfm-bjlreqv-pl.lua jfm-bzjlreq-pl.lua jfm-jlreqv-pl.lua jfm-bzjlreqv-pl.lua jfm-zjlreq-pl.lua jfm-zjlreqv-pl.lua
 	rm -f jlreq.tex jlreq.pdf jlreq.html jlreq-ja.tex jlreq-ja.pdf jlreq-ja.html
 

@@ -58,6 +58,23 @@ function tate(t)
 	return t
 end
 
+function to_pl(t)
+	t = table.fastcopy(t)
+	-- 空きの第四段階は消す
+	for cl1,val in pairs(t) do
+		if type(cl1) == "number" then
+			for cl2,glue in pairs(val.glue) do
+				if glue.priority ~= nil and glue.priority[1] < 0 then
+					t[cl1].glue[cl2][2] = 0
+				end
+			end
+		end
+	end
+	-- LuaTeX-jaのJFMではalcharが使えることに由来する補正
+	t[4].glue[0] = nil
+	return t
+end
+
 -- jfmのテーブル，ファイル名
 function make_jfmfile(t,f)
 	table.tofile(f,t,"local jfm")
@@ -83,12 +100,14 @@ end
 
 dofile(jfmfile)
 
-make_jfmfile(burasage(jfm),"jfm-b" .. originaljfm .. ".lua")
-make_jfmfile(zenkaku_kakko(jfm),"jfm-z" .. originaljfm .. ".lua")
-make_jfmfile(burasage(zenkaku_kakko(jfm)),"jfm-bz" .. originaljfm .. ".lua")
-make_jfmfile(burasage(tate(jfm)),"jfm-b" .. originaljfm .. "v.lua")
-make_jfmfile(zenkaku_kakko(tate(jfm)),"jfm-z" .. originaljfm .. "v.lua")
-make_jfmfile(burasage(zenkaku_kakko(tate(jfm))),"jfm-bz" .. originaljfm .. "v.lua")
+make_jfmfile(to_pl(jfm),"jfm-" .. originaljfm .. "-pl.lua")
+make_jfmfile(to_pl(burasage(jfm)),"jfm-b" .. originaljfm .. "-pl.lua")
+make_jfmfile(to_pl(zenkaku_kakko(jfm)),"jfm-z" .. originaljfm .. "-pl.lua")
+make_jfmfile(to_pl(burasage(zenkaku_kakko(jfm))),"jfm-bz" .. originaljfm .. "-pl.lua")
+make_jfmfile(to_pl(tate(jfm)),"jfm-" .. originaljfm .. "v-pl.lua")
+make_jfmfile(to_pl(burasage(tate(jfm))),"jfm-b" .. originaljfm .. "v-pl.lua")
+make_jfmfile(to_pl(zenkaku_kakko(tate(jfm))),"jfm-z" .. originaljfm .. "v-pl.lua")
+make_jfmfile(to_pl(burasage(zenkaku_kakko(tate(jfm)))),"jfm-bz" .. originaljfm .. "v-pl.lua")
 
 local jfm = tate(jfm)
 local file = "jfm-" .. originaljfm .. "v.lua"

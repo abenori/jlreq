@@ -64,6 +64,10 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Removed a space from `\contentsname` and `\indexname`.
 * 2017-12-02
     - Fixed bugs.
+* 2017-12-22
+    - Improved JFM.
+    - Change the way to detect `\label` between block headings.
+    - Added chapter number to `\theequation`，`\thefigure`，`\thetable`.
 
 
 

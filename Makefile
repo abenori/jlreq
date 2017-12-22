@@ -90,7 +90,7 @@ u%.tfm: u%.pl
 %.tfm: %.pl
 	ppltotf -kanji=utf8 $< $@
 
-jfm-jlreqv.lua jfm-jlreq-pl.lua jfm-bjlreq-pl.lua jfm-zjlreq-pl.lua jfm-bzjlreq-pl.lua jfm-jlreqv-pl.lua jfm-bjlreqv-pl.lua jfm-zjlreqv-pl.lua jfm-bzjlreqv-pl.lua : make_variant_jfm.lua jfm-jlreq.lua
+jfm-jlreqv.lua jfm-jlreq-pl.lua jfm-bjlreq-pl.lua jfm-zjlreq-pl.lua jfm-bzjlreq-pl.lua jfm-jlreqv-pl.lua jfm-bjlreqv-pl.lua jfm-zjlreqv-pl.lua jfm-bzjlreqv-pl.lua: make_variant_jfm.lua jfm-jlreq.lua
 	texlua make_variant_jfm.lua
 
 doc: pdfdoc htmldoc

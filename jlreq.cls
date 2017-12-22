@@ -3091,6 +3091,8 @@
 \else
   \renewcommand*{\thefootnote}{\arabic{footnote}\hbox{}）\inhibitglue}
 \fi
+\ifthenelse{\equal{\jlreq@article@type}{article}}{}{\@addtoreset{footnote}{chapter}}
+
 
 %.. 後注（4.2.4）
 \def\jlreq@endnotemarkname{@thefnmark}% 合印用番号を一時的に入れるマクロ名
@@ -4045,7 +4047,12 @@
 
 %.. figure環境
 \newcounter{figure}
-\renewcommand*{\thefigure}{\arabic{figure}}
+\ifthenelse{\equal{\jlreq@article@type}{article}}{%
+  \renewcommand{\thefigure}{\@arabic\c@figure}
+}{%
+  \@addtoreset{figure}{chapter}
+  \renewcommand{\thefigure}{\ifnum\c@chapter>\z@\thechapter.\fi \@arabic\c@figure}
+}
 \newcommand*{\fps@figure}{h}
 \newcommand*{\ftype@figure}{1}
 \newcommand*{\ext@figure}{lof}
@@ -4057,7 +4064,12 @@
 
 %.. table環境
 \newcounter{table}
-\renewcommand*{\thetable}{\arabic{table}}
+\ifthenelse{\equal{\jlreq@article@type}{article}}{%
+  \renewcommand{\thetable}{\@arabic\c@table}
+}{%
+  \@addtoreset{table}{chapter}
+  \renewcommand{\thetable}{\ifnum\c@chapter>\z@\thechapter.\fi \@arabic\c@table}
+}
 \newcommand*{\fps@table}{h}
 \newcommand*{\ftype@table}{2}
 \newcommand*{\ext@table}{lot}
@@ -4444,8 +4456,7 @@
   \renewcommand{\theequation}{\@arabic\c@equation}
 }{%
   \@addtoreset{equation}{chapter}
-  \renewcommand{\theequation}{%
-    \ifnum\c@chapter>\z@\thechapter.\fi \@arabic\c@equation}
+  \renewcommand{\theequation}{\ifnum\c@chapter>\z@\thechapter.\fi \@arabic\c@equation}
 }
 
 %. 目次

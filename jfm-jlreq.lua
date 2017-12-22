@@ -12,6 +12,8 @@ xkanjiskipは{1,-3},kanjiskip={0,0}
 \ltjsetparameter{stretch_priority={kanjiskip=0,xkanjiskip=0}}
 ]]
 
+local stretch_width = 0.25 -- 空き第四段階の空き量
+
 local hyphen_glue = {
 	[1] = {0.5, stretch_width, 0.5, ratio = 1, priority = {-1,-2}},
 	[2] = {0, 0, 0},
@@ -46,8 +48,6 @@ local hyphen_glue = {
 	[30] = {0, 0, 0},
 ]]
 }
-
-local stretch_width = 10 -- 空き第四段階の空き量
 
 local jfm = {
 	dir = 'yoko',

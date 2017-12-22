@@ -1218,8 +1218,8 @@
 \ifx l\jlreq@engine
   \RequirePackage{luatexja-adjust}
   \ltjenableadjust[lineend=extended,priority=true]
-  \ltjsetparameter{stretch_priority={kanjiskip=10,xkanjiskip=-30}}
-  \ltjsetparameter{shrink_priority={kanjiskip=0,xkanjiskip=0}}
+  \ltjsetparameter{stretch_priority={kanjiskip=0,xkanjiskip=10}}
+  \ltjsetparameter{shrink_priority={kanjiskip=0,xkanjiskip=-30}}
 \fi
 
 \ifx p\jlreq@engine
@@ -1891,11 +1891,10 @@
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@format@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
     \unexpanded{#5}%
   }%
-  \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@before@\the\jlreq@BlockHeading@spaces@current@count\endcsname{
+  \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@before@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
     \expandonce{\jlreq@resulta}%
   }%
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count\endcsname{}%
-  
   \ifx\jlreq@BlockHeading@spaces@headingslist\@empty\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
     {\jlreq@BlockHeading@spaces@outputwospace\ignorespaces}%
     {\jlreq@BlockHeading@start@afterheading}%
@@ -1924,7 +1923,7 @@
 
 % コントロールシークエンスを保存
 \def\jlreq@BlockHeading@start@afterheading@saveafter@cs#1{%
-  \csappto{jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count}{#1}%
+  \csgappto{jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count}{#1}%
   \jlreq@BlockHeading@start@afterheading@saveafter@option
 }
 % オプションがあれば保存

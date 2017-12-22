@@ -115,7 +115,7 @@ local function each_glue_check(gluetable,version,position)
 					if v ~= -4 and v ~= -3 and v ~= -2 and v ~= -1 and v ~= 0 and v ~= 1 and v ~= 2 and v ~= 2 then
 						print_error("priority should be in -4,-3,-2,-1,0,1,2,3" .. position_msg(position))
 					end
-				elseif version == 2 and type(v) == "table"then
+				elseif version >= 2 and type(v) == "table"then
 					if array_check(v,k,position,2) == true then
 						for ind in ipairs({1,2}) do
 							if v[ind] ~= -4 and v[ind] ~= -3 and v[ind] ~= -2 and v[ind] ~= -1 and v[ind] ~= 0 and v[ind] ~= 1 and v[ind] ~= 2 and v[ind] ~= 2 then
@@ -124,7 +124,7 @@ local function each_glue_check(gluetable,version,position)
 						end
 					end
 				else
-					print_error("priority should be a number or an array (version 2)" .. position_msg(position))
+					print_error("priority should be a number or an array (only with version >=2)" .. position_msg(position))
 				end
 			elseif k == "ratio" then
 				if type_check(v,"number",k,position) == true then
@@ -171,7 +171,7 @@ local function class_check(clstable,class,version,position)
 								vv == "boxbdd" or 
 								vv == "parbdd" or 
 								vv == "jcharbdd" or
-								(version == 3 and (
+								(version >= 3 and (
 									vv == "alchar" or vv == "nox_alchar" or vv == "glue")
 								) or
 								vv:sub(1,4) == "AJ1-"

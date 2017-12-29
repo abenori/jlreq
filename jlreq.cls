@@ -452,6 +452,7 @@
 \jlreq@addpapersize{letter}{letterpaper}{8.5in}{11in}
 \jlreq@addpapersize{legal}{legalpaper}{8.5in}{14in}
 \jlreq@addpapersize{executive}{executivepaper}{7.25in}{10.5in}
+\jlreq@addpapersize{hagaki}{}{100mm}{148mm}
 
 
 %.. フォントサイズ，行長，1ページあたりの行数で基本版面のサイズを決める（2.4.1.a）
@@ -1895,9 +1896,12 @@
     \expandonce{\jlreq@resulta}%
   }%
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count\endcsname{}%
-  \ifx\jlreq@BlockHeading@spaces@headingslist\@empty\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
-    {\jlreq@BlockHeading@spaces@outputwospace\ignorespaces}%
-    {\jlreq@BlockHeading@start@afterheading}%
+  \ifx\jlreq@BlockHeading@spaces@headingslist\@empty
+    \expandafter\jlreq@BlockHeading@spaces@outputwospace
+    \expandafter\ignorespaces
+  \else
+    \expandafter\jlreq@BlockHeading@start@afterheading
+  \fi
 }
 
 \def\jlreq@BlockHeading@start@afterheading{\futurelet\jlreq@nextchar\jlreq@BlockHeading@start@afterheading@}
@@ -4587,6 +4591,10 @@
   \jlreq@oldfontcommand@disable
 }
 \let\@openbib@code\@empty
+\if@tate
+  \def\@cite#1#2{\jlreq@rensuji{[{#1\if@tempswa , #2\fi}]}}
+  \def\@biblabel#1{\jlreq@rensuji{[#1]}}
+\fi
 
 %. 索引
 \newif\ifjlreq@resttate

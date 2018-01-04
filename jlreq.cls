@@ -88,16 +88,16 @@
 % #1が\jlreq@endmarkか
 \long\def\jlreq@ifendmark#1{\jlreq@iffirsttoken{#1}{\jlreq@endmark}}
 
-% #1の先頭がマクロか
-\long\def\jlreq@ifmacro#1{%
+% #1の先頭が引数なしのマクロか
+\long\def\jlreq@ifmacro@noargument#1{%
   \jlreq@ifempty{#1}{\@secondoftwo}{%
     \jlreq@iffirsttoken{#1}{ }{\@secondoftwo}{%
-      \expandafter\expandafter\expandafter\jlreq@ifmacro@\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark@
+      \expandafter\expandafter\expandafter\jlreq@ifmacro@noargument@\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark@
 }}}
-\long\def\jlreq@ifmacro@#1{\expandafter\jlreq@ifmacro@@\expandafter{\meaning #1}}
+\long\def\jlreq@ifmacro@noargument@#1{\expandafter\jlreq@ifmacro@noargument@@\expandafter{\meaning #1}}
 \edef\jlreq@do{%
-  \unexpanded{\def\jlreq@ifmacro@@}##1{\noexpand\jlreq@ifmacro@@@##1\expandonce{\detokenize{macro:}}\noexpand\jlreq@endmark}
-  \unexpanded{\def\jlreq@ifmacro@@@}##1\expandonce{\detokenize{macro:}}##2\noexpand\jlreq@endmark{\noexpand\jlreq@ifempty{##1}}
+  \unexpanded{\def\jlreq@ifmacro@noargument@@}##1{\noexpand\jlreq@ifmacro@noargument@@@##1\expandonce{\detokenize{macro:->}}\noexpand\jlreq@endmark}
+  \unexpanded{\def\jlreq@ifmacro@noargument@@@}##1\expandonce{\detokenize{macro:->}}##2\noexpand\jlreq@endmark{\noexpand\jlreq@ifempty{##1}}
 }
 \jlreq@do
 
@@ -342,10 +342,19 @@
   \expandafter\expandafter\expandafter\let\expandafter\expandafter\csname jlreq@original@#1\endcsname\csname #1\endcsname
 }
 
-% 先頭にあるマクロを展開しまくった結果を#2に入れる．
-\long\def\jlreq@expandmacros#1#2{%
-  \jlreq@ifmacro{#1}{\expandafter\jlreq@expandmacros\expandafter{#1}{#2}}{\def#2{#1}}%
+% 先頭にあるマクロを展開しまくった結果の先頭を#2に入れる．
+\long\def\jlreq@getfirsttoken@expandmacros#1#2{%
+  \jlreq@iffirsttoken{#1}{ }{\def#2{ }}{%
+    \jlreq@ifempty{#1}{\def#2{}}{%
+      \jlreq@ifmacro@noargument{#1}{%
+        \expandafter\jlreq@getfirsttoken@expandmacros\expandafter{#1}{#2}%
+      }{%
+        \expandafter\expandafter\expandafter\jlreq@getfirsttoken@expandmacros@\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark@{#2}%
+      }%
+    }%
+  }%
 }
+\def\jlreq@getfirsttoken@expandmacros@#1#2{\def#2{#1}}
 
 \def\jlreq@helper@checktokenlist#1#2{%
   \jlreq@ifendmark{#2}{\@firstoftwo}%
@@ -660,12 +669,12 @@
 \let\jlreq@gol=\zh
 \let\jlreq@mol=\zw
 
-%. helper2（エンジン依存系）
+%. helper2（エンジン依存系：和文文字を含むものもこれ以降）
 % #1のboxを今の真ん中に配置する．
 \def\jlreq@box@putcenter#1{%
   \begingroup
     \jlreq@tempdima=\dimexpr(\ht#1 - \dp#1)/2\relax
-    \setbox\jlreq@tempboxa=\hbox{あ}%
+    \setbox\jlreq@tempboxa=\hbox{阿}%
     \edef\jlreq@do{%
       \noexpand\lower\the\dimexpr(\jlreq@tempdima - (\ht\jlreq@tempboxa - \dp\jlreq@tempboxa)/2)\relax\unexpanded{\box#1}%
     }%
@@ -675,10 +684,9 @@
 
 % #1の先頭が文字か
 \long\def\jlreq@ifletter#1{%
-  \jlreq@ifempty{#1}{\@secondoftwo}{%
-    \jlreq@iffirsttoken{#1}{ }{\@secondoftwo}{%
-      \expandafter\expandafter\expandafter\jlreq@helper@ifletter\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark@
-  }}%
+  \jlreq@iffirsttoken{#1}{ }{\@secondoftwo}{%
+    \expandafter\expandafter\expandafter\jlreq@helper@ifletter\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark@
+  }%
 }
 
 \long\def\jlreq@helper@ifletter#1{%
@@ -694,10 +702,6 @@
   \fi
 }
 
-% こっちは先頭にあるマクロを展開してチェックする
-\long\def\jlreq@ifletter@expandmacros#1{%
-  \jlreq@ifmacro{#1}{\expandafter\jlreq@ifletter@expandmacros\expandafter{#1}}{\jlreq@ifletter{#1}}%
-}
 
 % 組方向を判定
 % \jlreq@if(y|t)(dir|box)を定義する．
@@ -835,15 +839,19 @@
 % \jlreq@nextcharと\jlreq@lastnodecharの間のJFMグルーを挿入
 \def\jlreq@insertjfm{%
   \ifnum\jlreq@getpostbreakpenalty{\jlreq@lastnodechar}=0\else\penalty\jlreq@getpostbreakpenalty{\jlreq@lastnodechar}\fi
-  \jlreq@ifletter@expandmacros{\jlreq@nextchar}{%
-    \jlreq@expandmacros{\jlreq@nextchar}{\jlreq@tempa}%
-    \def\jlreq@tempb##1##2\jlreq@endmark{\def\jlreq@tempa{##1}}%
-    \expandafter\jlreq@tempb\jlreq@tempa\jlreq@endmark
-    \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{\jlreq@tempa}%
-%   \message{fixjfm Insert: \the\jlreq@resultskip}%
-    \hskip\jlreq@resultskip
-    \inhibitglue
-  }{}%
+  \begingroup
+    \def\jlreq@do{}%
+    \jlreq@getfirsttoken@expandmacros{\jlreq@nextchar}{\jlreq@tempa}%
+    \expandafter\jlreq@ifletter\expandafter{\jlreq@tempa}{%
+      \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{\jlreq@tempa}%
+%      \message{fixjfm Insert: \the\jlreq@resultskip}%
+      \edef\jlreq@do{%
+        \noexpand\hskip\the\jlreq@resultskip\space
+        \noexpand\inhibitglue
+      }%
+    }{}%
+  \expandafter\endgroup
+  \jlreq@do
 }
 
 % #1÷#2を\jlreq@resultdimenに入れる．（#1,#2は寸法を与える．）
@@ -3017,9 +3025,10 @@
           \@tempdima=\jlreq@current@linewidth
         \fi
       \fi
-      \setbox\jlreq@tempboxa=\hbox to\z@{\hskip-\@tempdima\raise\dimexpr.5\zw + (\ht\@tempboxa + \dp\@tempboxa)/2\relax\box\@tempboxa\hss}%
-      \dp\jlreq@tempboxa=0pt\ht\jlreq@tempboxa=0pt\box\jlreq@tempboxa}%
-    }%
+      \setbox\jlreq@tempboxb=\hbox{阿}%
+      \setbox\jlreq@tempboxa=\hbox to\z@{\hskip-\@tempdima\raise\dimexpr\ht\jlreq@tempboxb + \dp\@tempboxa\relax\box\@tempboxa\hss}%
+      \dp\jlreq@tempboxa=0pt\ht\jlreq@tempboxa=0pt\box\jlreq@tempboxa%
+    }}%
     \ifx l\jlreq@engine
       \def\jlreq@hook@prenote{%
         \jlreq@lastnodechar=\lastnodechar\relax
@@ -3043,45 +3052,59 @@
     \ifhmode\edef\@x@sf{\the\spacefactor}\nobreak\fi
     #2%
     \ifhmode\spacefactor\@x@sf\fi
-    \relax}
+    \relax}%
 }
 \jlreq@setdefaultnotemark\@footnotemark\@makefnmark
 %.. 脚注  （縦書きの時は傍注，4.2.5）
-{%
-  \footnotesize\global\setlength{\footnotesep}{.7\baselineskip} % 何でかわからん……
-  % \jlreq@tempdimaに罫線と脚注との間の長さを入れる
-  % 脚注の行間よりやや広くする（4.2.5.f）
-  \global\jlreq@tempdima=1.5\dimexpr\baselineskip - 1\jlreq@gol\relax
-}
 % 罫線の前は行間分，最大＋文字サイズ分伸びる（4.2.5.g）
 \setlength{\skip\footins}{\dimexpr\baselineskip - 1\jlreq@gol \relax plus 1\jlreq@gol}
-%\setlength{\skip\footins}{0pt}
-% 脚注の前の罫線は表罫で，長さは行長の1/3位（4.2.5.f）
-\edef\footnoterule{%
-  \unexpanded{\hrule width .333\textwidth height \jlreq@omotekeiwidth}%
-  \noexpand\kern\the\jlreq@tempdima
-}
+% 罫線の長さは，基本版面で設定した行長にもよるが，行長の1/3くらいにする．
+\def\jlreq@footnote@rulewidth{.333\textwidth}
+\begingroup
+  \footnotesize
+  \edef\jlreq@do{
+    \unexpanded{\setlength{\footnotesep}}{\the\dimexpr .7\baselineskip\relax}% 何でかわからん……
+    \unexpanded{\def\footnoterule}{%
+      \unexpanded{\hrule width \jlreq@footnote@rulewidth height \jlreq@omotekeiwidth}%
+      % 脚注の行間よりやや広くする（4.2.5.f）
+      \noexpand\kern\the\dimexpr 1.5\dimexpr\baselineskip - 1\zh\relax\relax
+    }
+  }
+\expandafter\endgroup
+\jlreq@do
 
 % インデントの計算：脚注の長さが文字の整数倍になるように字下げする（4.2.5.b）
-{
-  \footnotesize
-  \jlreq@footnoteindent=1\jlreq@mol
-  \@tempdima=\dimexpr\textwidth - \jlreq@footnoteindent\relax
-  \@tempdimb=1\jlreq@mol
-  \divide\@tempdima\@tempdimb \multiply\@tempdima\@tempdimb
-  \global\jlreq@footnoteindent=\dimexpr\textwidth - \@tempdima\relax
+\jlreq@jlreqsetup@add{footnote_indent}{%
+  \if@tate\else
+    \ifdim\dimexpr#1\relax=0pt\else\jlreq@note{脚注は，一般にその前に区切りのための罫線を挿入するので，字下げは行わなくてよい（4.2.5.b）．}\fi
+  \fi
+  \begingroup
+    \footnotesize
+    \jlreq@footnoteindent=\dimexpr#1\relax
+    \@tempdima=\dimexpr\textwidth - \jlreq@footnoteindent\relax
+    \@tempdimb=1\zw
+    \divide\@tempdima\@tempdimb \multiply\@tempdima\@tempdimb
+    \edef\jlreq@do{\noexpand\jlreq@footnoteindent=\the\dimexpr\textwidth - \@tempdima\relax}%
+  \expandafter\endgroup
+  \jlreq@do
 }
+\if@tate
+  \jlreqsetup{footnote_indent=1\zw}% 根拠なし
+\else
+  \jlreqsetup{footnote_indent=0pt}% （4.2.5.b）
+\fi
+
 % 4.2.5.d
 \newcommand{\@makefntext}[1]{\jlreq@makefntext{#1}}
 \jlreq@jlreqsetup@add{footnotetext_indent}{
   \ifthenelse{\equal{#1}{one}}{
-    \long\def\jlreq@makefntext##1{\parindent 1\jlreq@mol
-      \addtolength{\leftskip}{\dimexpr\jlreq@footnoteindent + 1\jlreq@mol\relax}% 全体をインデント+1文字分下げる
-      \noindent\hskip -1\jlreq@mol\jlreq@referencemark@format{\@thefnmark}\hskip 1\jlreq@mol##1}% 見出し出力と一文字分の空き
+    \long\def\jlreq@makefntext##1{\parindent 1\zw
+      \addtolength{\leftskip}{\dimexpr\jlreq@footnoteindent + 1\zw\relax}% 全体をインデント+1文字分下げる
+      \noindent\hskip -1\zw\jlreq@referencemark@format{\@thefnmark}\hskip 1\zw##1}% 見出し出力と一文字分の空き
   }{
-    \long\def\jlreq@makefntext##1{\parindent 1\jlreq@mol
+    \long\def\jlreq@makefntext##1{\parindent 1\zw
       \addtolength{\leftskip}{\jlreq@footnoteindent}% 全体をインデント
-      \noindent\hskip 1\jlreq@mol\jlreq@referencemark@format{\@thefnmark}\hskip 1\jlreq@mol##1}% 見出し出力と一文字分の空き
+      \noindent\hskip 1\zw\jlreq@referencemark@format{\@thefnmark}\hskip 1\zw##1}% 見出し出力と一文字分の空き
   }
 }
 \jlreqsetup{footnotetext_indent=one}
@@ -4709,14 +4732,18 @@
   \futurelet\jlreq@nextchar\jlreq@tatechuyoko@
 }
 \def\jlreq@tatechuyoko@{%
-  \jlreq@ifletter{\jlreq@nextchar}{%
-    \jlreq@expandmacros{\jlreq@nextchar}{\jlreq@tempa}%
-    \def\jlreq@tempb##1##2\jlreq@endmark{\def\jlreq@tempa{##1}}%
-    \expandafter\jlreq@tempb\jlreq@tempa\jlreq@endmark
-    \jlreq@calc@jfmglue{阿}{\jlreq@tempa}%
-    \jlreq@ifgluezero\jlreq@resultskip{}{\hskip\jlreq@resultskip}%
-    \inhibitglue
-  }{}%
+  \begingroup
+    \def\jlreq@do{}%
+    \jlreq@getfirsttoken@expandmacros{\jlreq@nextchar}{\jlreq@tempa}%
+    \expandafter\jlreq@ifletter\expandafter{\jlreq@tempa}{%
+      \jlreq@calc@jfmglue{阿}{\jlreq@tempa}%
+      \edef\jlreq@do{%
+        \noexpand\hskip\the\jlreq@resultskip\space
+        \noexpand\inhibitglue
+      }%
+    }{}%
+  \expandafter\endgroup
+  \jlreq@do
 }
 
 % 日にち

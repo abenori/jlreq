@@ -320,16 +320,27 @@
 \AtBeginDocument{\jlreq@preamblefalse}
 
 \RequirePackage[savepos]{zref}
-\zref@newprop*{jlreq@page}[0]{\number\c@page}
-\zref@addprop{main}{jlreq@page}
-% 現在のページを得る
 \newcount\jlreq@zref@reference@count
 \jlreq@zref@reference@count=0
+% 現在のページを得る
+\zref@newprop*{jlreq@page}[0]{\number\c@page}
+\zref@addprop{main}{jlreq@page}
 \newcount\jlreq@currentpage
+% \jlreq@setcurrentpageをすると，\jlreq@currentpageにこの場所のページ数が入る
 \newcommand*{\jlreq@setcurrentpage}{%
   \global\advance\jlreq@zref@reference@count by 1
-  \zref@labelbyprops{jlreq@rest@width.page.\the\jlreq@zref@reference@count}{jlreq@page}%
-  \global\jlreq@currentpage=\zref@extractdefault{jlreq@rest@width.page.\the\jlreq@zref@reference@count}{jlreq@page}{\c@page}%
+  \zref@labelbyprops{jlreq@currentpage.\the\jlreq@zref@reference@count}{jlreq@page}%
+  \global\jlreq@currentpage=\zref@extractdefault{jlreq@currentpage.\the\jlreq@zref@reference@count}{jlreq@page}{\c@page}
+}
+
+% 現在の段組位置を得る
+\zref@newprop*{jlreq@firstcolumn}[1]{\if@firstcolumn 1\else 0\fi}
+\zref@addprop{main}{jlreq@firstcolumn}
+\newif\ifjlreq@firstcolumn
+\newcommand*{\jlreq@setcurrentcolumn}{%
+  \global\advance\jlreq@zref@reference@count by 1
+  \zref@labelbyprops{jlreq@currentcolumn.\the\jlreq@zref@reference@count}{jlreq@firstcolumn}%
+  \ifnum\zref@extractdefault{jlreq@currentcolumn.\the\jlreq@zref@reference@count}{jlreq@firstcolumn}{1}=1 \global\jlreq@firstcolumntrue\else \global\jlreq@firstcolumnfalse\fi
 }
 
 \def\jlreq@saveoriginalcs#1{%
@@ -340,6 +351,11 @@
     \ClassError{jlreq}{Trying to save \expandafter\string\csname #1\endcsname\space twice, may be a bug}{\@ehc}%
   }%
   \expandafter\expandafter\expandafter\let\expandafter\expandafter\csname jlreq@original@#1\endcsname\csname #1\endcsname
+}
+\def\jlreq@useoriginalcs#1{%
+  \ifcsname jlreq@original@\expandafter\@gobble\string#1\endcsname\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+    {\csname jlreq@original@\expandafter\@gobble\string#1\endcsname}%
+    {#1}%
 }
 
 % 先頭にあるマクロを展開しまくった結果の先頭を#2に入れる．
@@ -648,9 +664,14 @@
 \fi
 
 
+% 必要パッケージのロード
 \ifx l\jlreq@engine
   \RequirePackage{luatexja}
   \directlua{jlreq = {}}
+\fi
+
+\if@tate
+  \RequirePackage{atbegshi}
 \fi
 
 % (u)pLaTeXの場合ここで初めて\epTeXinputencodingが発行されるので，
@@ -664,6 +685,8 @@
 \if@tate
   \AtBeginDocument{\tate\message{《縦組モード》}\adjustbaseline}
 \fi
+
+
 
 % \jlreq@gol(Gyo Okuri Length), \jlreq@mol (Moji Okuri Length)を定義
 \let\jlreq@gol=\zh
@@ -1168,6 +1191,8 @@
 \DeclareRobustCommand*{\mit}{\@fontswitch\relax\mathnormal}
 
 %.. 和文
+% ダミー
+\def\@ptsize{0}
 % JFMに関連する設定
 \ifx l\jlreq@engine
   % この値は後でjfm-jlreq内で読む
@@ -2961,43 +2986,8 @@
 
 
 %. 注
-% 合印：4.2.3
 % 文字サイズは6ポイントくらい（4.2.3.a）とりあえす\scriptsize
-
-% \footnoteと\footnotemarkの前後に\jlreq@hook@prenote/\jlreq@hook@postnoteを入れる
-\jlreq@saveoriginalcs{footnote}
-\edef\jlreq@do{
-  \unexpanded{\long\def\jlreq@fixjfm@footnote@[#1]#2}{%
-    \expandonce{\footnote[#1]{#2}}%
-    \noexpand\jlreq@hook@postnote
-  }
-  \unexpanded{\long\def\jlreq@fixjfm@footnote@@#1}{%
-    \expandonce{\footnote{#1}}%
-    \noexpand\jlreq@hook@postnote
-  }
-}
-\jlreq@do
-\def\footnote{%
-  \jlreq@hook@prenote
-  \@ifnextchar[{\jlreq@fixjfm@footnote@}{\jlreq@fixjfm@footnote@@}%
-}
-\edef\jlreq@do{
-  \unexpanded{\def\jlreq@fixjfm@footnotemark@[#1]}{%
-    \expandonce{\footnotemark[#1]}%
-    \noexpand\jlreq@hook@postnote
-  }
-  \unexpanded{\def\jlreq@fixjfm@footnotemark@@}{%
-    \expandonce{\footnotemark}%
-    \noexpand\jlreq@hook@postnote
-  }
-}
-\jlreq@do
-\jlreq@saveoriginalcs{footnotemark}%
-\def\footnotemark{%
-  \jlreq@hook@prenote
-  \@ifnextchar[{\jlreq@fixjfm@footnotemark@}{\jlreq@fixjfm@footnotemark@@}%
-}
-
+%.. 合印（4.2.3）
 \newcommand*\jlreq@referencemark@format[1]{#1}
 \newif\ifjlreqadjustreferencemark
 \jlreqadjustreferencemarktrue
@@ -3055,7 +3045,9 @@
     \relax}%
 }
 \jlreq@setdefaultnotemark\@footnotemark\@makefnmark
-%.. 脚注  （縦書きの時は傍注，4.2.5）
+
+%.. 脚注（4.2.5）
+% （縦書きの時は傍注，4.2.6）
 % 罫線の前は行間分，最大＋文字サイズ分伸びる（4.2.5.g）
 \setlength{\skip\footins}{\dimexpr\baselineskip - 1\jlreq@gol \relax plus 1\jlreq@gol}
 % 罫線の長さは，基本版面で設定した行長にもよるが，行長の1/3くらいにする．
@@ -3065,6 +3057,7 @@
   \edef\jlreq@do{
     \unexpanded{\setlength{\footnotesep}}{\the\dimexpr .7\baselineskip\relax}% 何でかわからん……
     \unexpanded{\def\footnoterule}{%
+      % この罫線は，表罫（おもてけい）とする．
       \unexpanded{\hrule width \jlreq@footnote@rulewidth height \jlreq@omotekeiwidth}%
       % 脚注の行間よりやや広くする（4.2.5.f）
       \noexpand\kern\the\dimexpr 1.5\dimexpr\baselineskip - 1\zh\relax\relax
@@ -3093,6 +3086,81 @@
 \else
   \jlreqsetup{footnote_indent=0pt}% （4.2.5.b）
 \fi
+
+% \footnoteと\footnotemarkの前後に\jlreq@hook@prenote/\jlreq@hook@postnoteを入れる
+\jlreq@saveoriginalcs{footnote}
+\jlreq@saveoriginalcs{footnotemark}
+\def\footnote{%
+  \jlreq@hook@prenote
+  \@ifnextchar[{\jlreq@footnote@impl@woption}{\jlreq@footnote@impl@wooption}%
+}
+\def\footnotemark{%
+  \jlreq@hook@prenote
+  \@ifnextchar[{\jlreq@footnotemark@impl@woption}{\jlreq@footnotemark@impl@wooption}%
+}
+\if@tate
+  % 縦組の傍注は，その見開き内に付いている合印に対応する注を，奇数ページの左端にそろえて配置する（4.2.6.a）．
+  % TODO: 多段組では最下段の左端にそろえて配置する．
+  \def\jlreq@footnote@delayfootnoteslist{}
+  \preto\@outputpage{%
+    \expandafter\gdef\expandafter\jlreq@footnote@delayfootnoteslist\expandafter{\expandafter}%
+    \jlreq@footnote@delayfootnoteslist
+  }
+  \def\jlreq@footnote@delayfootnote@delay#1#2#3{%
+    \ifnum#1<1
+      \footnotetext[#2]{#3}%
+    \else
+      \xappto\jlreq@footnote@delayfootnoteslist{\noexpand\jlreq@footnote@delayfootnote{\the\numexpr#1 - 1\relax}{\unexpanded{#2}}{\unexpanded{#3}}}%
+    \fi
+  }
+  \def\jlreq@footnote@delayfootnote@immediate#1#2#3{\footnotetext[#2]{#3}}%
+  \let\jlreq@footnote@delayfootnote=\jlreq@footnote@delayfootnote@delay
+  \def\jlreq@footnote@flushdelayfootnoteslist{%
+    \let\jlreq@footnote@delayfootnote=\jlreq@footnote@delayfootnote@immediate
+    \jlreq@footnote@delayfootnoteslist
+    \gdef\jlreq@footnote@delayfootnoteslist{}%
+    \let\jlreq@footnote@delayfootnote=\jlreq@footnote@delayfootnote@delay
+  }
+  \AtEndDocument{\jlreq@footnote@flushdelayfootnoteslist}
+  \preto\newpage{\jlreq@footnote@flushdelayfootnoteslist}
+  \long\def\jlreq@footnote@impl@woption[#1]#2{%
+    \jlreq@setcurrentpage
+    \ifodd\jlreq@currentpage
+      \jlreq@useoriginalcs{\footnote}[#1]{#2}%
+    \else
+      \jlreq@useoriginalcs{\footnotemark}[#1]%
+      \xappto\jlreq@footnote@delayfootnoteslist{\noexpand\jlreq@footnote@delayfootnote{\the\numexpr\jlreq@currentpage - \value{page}\relax}{\unexpanded{#1}}{\unexpanded{#2}}}%
+    \fi
+    \jlreq@hook@postnote
+  }
+  \long\def\jlreq@footnote@impl@wooption#1{%
+    \jlreq@setcurrentpage
+    \ifodd\jlreq@currentpage
+      \jlreq@useoriginalcs{\footnote}{#1}%
+    \else
+      \jlreq@useoriginalcs{\footnotemark}%
+      \xappto\jlreq@footnote@delayfootnoteslist{\noexpand\jlreq@footnote@delayfootnote{\the\numexpr\jlreq@currentpage - \value{page}\relax}{\the\value{footnote}}{\unexpanded{#1}}}%
+    \fi
+    \jlreq@hook@postnote
+  }
+\else
+  \long\def\jlreq@footnote@impl@woption[#1]#2{%
+    \jlreq@useoriginalcs{\footnote}[#1]{#2}%
+    \jlreq@hook@postnote
+  }
+  \long\def\jlreq@footnote@impl@wooption#1{%
+    \jlreq@useoriginalcs{\footnote}{#1}%
+    \jlreq@hook@postnote
+  }
+\fi
+\long\def\jlreq@footnotemark@impl@woption[#1]{%
+  \jlreq@useoriginalcs{\footnotemark}[#1]%
+  \jlreq@hook@postnote
+}
+\long\def\jlreq@footnotemark@impl@wooption{%
+  \jlreq@useoriginalcs{\footnotemark}%
+  \jlreq@hook@postnote
+}
 
 % 4.2.5.d
 \newcommand{\@makefntext}[1]{\jlreq@makefntext{#1}}

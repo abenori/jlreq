@@ -3087,6 +3087,10 @@
   \jlreqsetup{footnote_indent=0pt}% （4.2.5.b）
 \fi
 
+\ifx l\jlreq@engine
+  \fnfixbottomtrue
+\fi
+
 % \footnoteと\footnotemarkの前後に\jlreq@hook@prenote/\jlreq@hook@postnoteを入れる
 \jlreq@saveoriginalcs{footnote}
 \jlreq@saveoriginalcs{footnotemark}

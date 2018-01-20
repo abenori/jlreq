@@ -2657,6 +2657,7 @@
 }
 
 %.. 同行見出し
+% TODO: \@startsectionを使わない実装にする
 % \DeclareRuninHeading{命令名}{レベル}{設定}
 \newcommand*{\DeclareRuninHeading}[3]{%
   \def\jlreq@do{\@removeelement{#1}}%
@@ -2673,13 +2674,15 @@
     \def\jlreq@indent{0\zw}%
     \def\jlreq@mark{}%
     \def\jlreq@label@font{}%
+    \def\jlreq@label@format{}%
     \def\jlreq@after@space{1\zw}%
     \jlreq@parsekeyval[RuninHeading:#1]{%
       {font}{\def\jlreq@font{##1}}
       {indent}{\def\jlreq@indent{##1}}
       {mark}{\def\jlreq@mark{##1}}
+      {label_format}{\def\jlreq@label@format{##1}}
       {after_space}{%
-        \ifdim\dimexpr##1\relax<0pt\ClassWarning{jlreq}{after_space in Runin Heading #1 should be positive}\fi
+        \ifdim\dimexpr##1\relax<0pt \ClassWarning{jlreq}{after_space in Runin Heading #1 should be positive}\fi
         \def\jlreq@after@space{##1}%
       }
     }{#3}%
@@ -4129,17 +4132,60 @@
 \newcommand{\@makecaption}[2]{{%
   \reset@font\small
   \vskip\abovecaptionskip
-  \sbox\@tempboxa{{\jlreq@@makecaption@label@font #1}\hskip 1\zw{\jlreq@@makecaption@font #2}}%
-  \ifdim \wd\@tempboxa >\hsize
-    {\jlreq@@makecaption@label@font #1}\hskip1\zw{\jlreq@@makecaption@font #2}\relax\par
+  \edef\jlreq@do{\unexpanded{\def\jlreq@tempa##1}{\expandonce{\jlreq@makecaption@label@format}}}%
+  \jlreq@do
+  \jlreq@ifempty{#1}{}{%
+    \edef\jlreq@tempa{{\noexpand\jlreq@@makecaption@label@font\expandonce{\jlreq@tempa{#1}}\unexpanded{\hskip \glueexpr\jlreq@makecaption@after@label@space\relax}}}%
+  }%
+  \appto\jlreq@tempa{{\jlreq@@makecaption@font #2}}%
+  \setbox\@tempboxa=\hbox{\jlreq@tempa}%
+  \@ifundefined{jlreq@caption@align@\@captype}%
+    {\let\jlreq@align=\jlreq@caption@align}%
+    {\expandafter\let\expandafter\jlreq@align\csname jlreq@caption@align@\@captype\endcsname}%
+  \ifdim\wd\@tempboxa>\hsize\relax
+    {%
+      \ifx c\jlreq@align\centering\fi
+      \ifx r\jlreq@align\raggedleft\fi
+      \jlreq@tempa\par
+    }%
   \else
     \global\@minipagefalse
-    \hbox to\hsize{\hfil\box\@tempboxa\hfil}%
+    % これではダメ
+    \hbox to\hsize{%
+      \ifnum0\ifx c\jlreq@align 1\fi\ifx r\jlreq@align 1\fi>0 \hfil\fi
+      \unhbox\@tempboxa
+      \ifnum0\ifx c\jlreq@align 1\fi\ifx l\jlreq@align 1\fi>0 \hfil\fi
+    }%
   \fi
   \vskip\belowcaptionskip}}
 \jlreq@jlreqsetup@add{caption_font}{\def\jlreq@@makecaption@font{#1}}
 \jlreq@jlreqsetup@add{caption_label_font}{\def\jlreq@@makecaption@label@font{#1}}
-\jlreqsetup{caption_font={\sffamily\bfseries},caption_label_font={\sffamily\bfseries}}
+\jlreq@jlreqsetup@add{caption_label_format}{\edef\jlreq@makecaption@label@format{\unexpanded{#1}}}
+\jlreq@jlreqsetup@add{caption_after_label_space}{\def\jlreq@makecaption@after@label@space{#1}}
+\let\jlreq@caption@align=c
+\def\jlreq@caption@setalign#1#2{%
+  \jlreq@switch{#2}{
+    {center}{\let#1=c}
+    {left}{\let#1=l}
+    {right}{\let#1=r}
+    {top}{\let#1=l}
+    {bottom}{\let#1=r}
+  }%
+}
+\jlreq@jlreqsetup@add{caption_align}{%
+  \let\jlreq@caption@align@figure=\@undefined
+  \let\jlreq@caption@align@table=\@undefined
+  \jlreq@parsekeyval{
+    *{center}{\let\jlreq@caption@align=c}
+    *{left}{\let\jlreq@caption@align=l}
+    *{right}{\let\jlreq@caption@align=r}
+    *{top}{\let\jlreq@caption@align=l}
+    *{bottom}{\let\jlreq@caption@align=r}
+    {figure}{\jlreq@caption@setalign\jlreq@caption@align@figure{##1}}
+    {table}{\jlreq@caption@setalign\jlreq@caption@align@table{##1}}
+  }{#1}%
+}
+\jlreqsetup{caption_font={\sffamily\bfseries},caption_label_font={\sffamily\bfseries},caption_after_label_space=1\zw,caption_label_format={#1}}
 % 特に根拠のない値
 \setlength\abovecaptionskip{.5\jlreq@gol}
 \setlength\belowcaptionskip{0pt}

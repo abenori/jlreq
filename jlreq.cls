@@ -4162,7 +4162,6 @@
 \jlreq@jlreqsetup@add{caption_label_font}{\def\jlreq@@makecaption@label@font{#1}}
 \jlreq@jlreqsetup@add{caption_label_format}{\edef\jlreq@makecaption@label@format{\unexpanded{#1}}}
 \jlreq@jlreqsetup@add{caption_after_label_space}{\def\jlreq@makecaption@after@label@space{#1}}
-\let\jlreq@caption@align=c
 \def\jlreq@caption@setalign#1#2{%
   \jlreq@switch{#2}{
     {center}{\let#1=c}
@@ -4185,7 +4184,7 @@
     {table}{\jlreq@caption@setalign\jlreq@caption@align@table{##1}}
   }{#1}%
 }
-\jlreqsetup{caption_font={\sffamily\bfseries},caption_label_font={\sffamily\bfseries},caption_after_label_space=1\zw,caption_label_format={#1}}
+\jlreqsetup{caption_font={\sffamily\bfseries},caption_label_font={\sffamily\bfseries},caption_after_label_space=1\zw,caption_label_format={#1},caption_align=center}
 % 特に根拠のない値
 \setlength\abovecaptionskip{.5\jlreq@gol}
 \setlength\belowcaptionskip{0pt}
@@ -4455,13 +4454,38 @@
 \setlength\leftmarginvi{1\zw}
 
 %.. 箇条書き
-\jlreq@jlreqsetup@add{itemization_beforeafter_space}{\def\jlreq@itemization@beforeafter@space{#1}}
+\jlreq@jlreqsetup@add{itemization_beforeafter_space}{
+  \begingroup
+    \def\jlreq@do{}%
+    \def\jlreq@keyvallist{}%
+    \@for\@tempa:=#1\do{%
+      \expandafter\jlreq@ifcontains\expandafter{\@tempa}{=}
+        {\expandafter\appto\expandafter\jlreq@keyvallist\expandafter{\@tempa,}}%
+        {%
+          \@for\@tempb:=i,ii,iii,iv,v,vi\do{%
+            \eappto\jlreq@do{\noexpand\def\expandonce{\csname jlreq@itemization@beforeafter@space@\@tempb\endcsname}{\expandonce{\@tempa}}}%
+          }%
+        }%
+    }%
+    \def\jlreq@tempa{%
+      \jlreq@parsekeyval{%
+        {i}{\appto\jlreq@do{\def\jlreq@itemization@beforeafter@space@i{####1}}}
+        {ii}{\appto\jlreq@do{\def\jlreq@itemization@beforeafter@space@ii{####1}}}
+        {iii}{\appto\jlreq@do{\def\jlreq@itemization@beforeafter@space@iii{####1}}}
+        {iv}{\appto\jlreq@do{\def\jlreq@itemization@beforeafter@space@iv{####1}}}
+        {v}{\appto\jlreq@do{\def\jlreq@itemization@beforeafter@space@v{####1}}}
+        {vi}{\appto\jlreq@do{\def\jlreq@itemization@beforeafter@space@vi{####1}}}
+      }%
+    }%
+    \expandafter\jlreq@tempa\expandafter{\jlreq@keyvallist}%
+  \expandafter\endgroup
+  \jlreq@do
+}
 \jlreq@jlreqsetup@add{itemization_itemsep}{\def\jlreq@itemization@itemsep{#1}}
-\jlreqsetup{itemization_beforeafter_space=0pt,itemization_itemsep=0pt}
+\jlreqsetup{itemization_beforeafter_space={i=.5\baselineskip,0pt},itemization_itemsep=0pt}
 % enumerate, itemize用初期化
 \def\jlreq@init@list{%
   \setlength{\labelwidth}{2\jlreq@mol}%
-  \setlength{\topsep}{\dimexpr\jlreq@itemization@beforeafter@space\relax}%
   \setlength{\partopsep}{0pt}%
   \setlength{\itemsep}{\dimexpr\jlreq@itemization@itemsep\relax}%
   \setlength{\parsep}{0pt}%
@@ -4478,24 +4502,34 @@
 
 \def\@listi{%
   \jlreq@init@list
+  \setlength{\topsep}{\dimexpr\jlreq@itemization@beforeafter@space@i\relax}%
   \setlength{\leftmargin}{\leftmargini}%
 }
 \let\@listI\@listi
 \def\@listii{%
   \jlreq@init@list
+  \setlength{\topsep}{\dimexpr\jlreq@itemization@beforeafter@space@ii\relax}%
   \setlength{\leftmargin}{\leftmarginii}%
 }
 \def\@listiii{%
   \jlreq@init@list
+  \setlength{\topsep}{\dimexpr\jlreq@itemization@beforeafter@space@iii\relax}%
   \setlength{\leftmargin}{\leftmarginiii}%
 }
 \def\@listiv{%
   \jlreq@init@list
+  \setlength{\topsep}{\dimexpr\jlreq@itemization@beforeafter@space@iv\relax}%
   \setlength{\leftmargin}{\leftmarginiv}%
 }
 \def\@listv{%
   \jlreq@init@list
+  \setlength{\topsep}{\dimexpr\jlreq@itemization@beforeafter@space@v\relax}%
   \setlength{\leftmargin}{\leftmarginv}%
+}
+\def\@listvi{%
+  \jlreq@init@list
+  \setlength{\topsep}{\dimexpr\jlreq@itemization@beforeafter@space@vi\relax}%
+  \setlength{\leftmargin}{\leftmarginvi}%
 }
 
 \if@tate

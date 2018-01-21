@@ -3667,7 +3667,6 @@
   }%
 }
 
-
 %. ページスタイル．
 % メモ：
 % 2.6.1.cの後半が前半と整合的でないように見える……
@@ -3716,6 +3715,14 @@
   }%
 }
 
+% レベル#1より低いレベルの見出しの**markを\markboth{}{}にする
+\def\jlreq@pagestyle@setclearmark#1{%
+  \expandafter\@for\expandafter\@tempa\expandafter:\expandafter=\jlreq@heading@allheadings\do{%
+    \@ifundefined{\@tempa}{}{%
+      \ifnum\csname jlreq@heading@level@\@tempa\endcsname<#1 \@namedef{\@tempa mark}{\markboth{}{}}\fi
+    }%
+  }%
+}
 
 % odd_running_head=_sectionのように下線から始まる場合，その値の見出し命令を柱に出すようにする．
 % 要するに\ps@***に\sectionmarkを定義するように仕込む．
@@ -3791,8 +3798,7 @@
           \def\jlreq@markcommand{\markright}%
           \def\jlreq@markcommandafter{}%
         }%
-        \edef\jlreq@markdefinition{%
-          \expandonce{\jlreq@markdefinition}%
+        \eappto\jlreq@markdefinition{%
           \noexpand\def\expandonce{\csname ##3mark\endcsname}\unexpanded{####1}{\expandonce{\jlreq@markcommand}%
             {\expandonce{\jlreq@result}}\expandonce{\jlreq@markcommandafter}}%
         }%
@@ -3809,6 +3815,18 @@
         \jlreq@note{偶数ページには奇数ページよりアウトラインレベルの高い見出しを入れる (ページスタイル #1内，2.6.3.a)．}%
       \fi
     \fi\fi
+    % \jlreq@tempa = min{\jlreq@odd@running@head@level,\jlreq@even@running@head@level}
+    \let\jlreq@tempa=\jlreq@odd@running@head@level
+    \ifx\jlreq@tempa\@empty
+      \let\jlreq@tempa=\jlreq@even@running@head@level
+    \else
+      \ifx\jlreq@even@running@head@level\@empty\else\ifnum\jlreq@tempa>\jlreq@even@running@head@level
+        \let\jlreq@tempa=\jlreq@even@running@head@level
+      \fi\fi
+    \fi
+    \ifx\jlreq@tempa\@empty\else
+      \eappto\jlreq@markdefinition{\noexpand\jlreq@pagestyle@setclearmark{\expandonce{\jlreq@tempa}}}%
+    \fi
     % \jlreq@[even/odd][head/foot]に入れていく．tateか否かで場合分け．
     \ifjlreq@pstate\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
       \ifx\jlreq@nombre@position\@empty\def\jlreq@nombre@position{0pt}\fi

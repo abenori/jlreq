@@ -3742,7 +3742,7 @@
 \def\jlreq@pagestyle@setclearmark#1{%
   \expandafter\@for\expandafter\@tempa\expandafter:\expandafter=\jlreq@heading@allheadings\do{%
     \@ifundefined{\@tempa}{}{%
-      \ifnum\csname jlreq@heading@level@\@tempa\endcsname<#1 \expandafter\def\csname\@tempa mark\endcsname#1{\markboth{}{}}\fi
+      \ifnum\csname jlreq@heading@level@\@tempa\endcsname<#1 \expandafter\def\csname\@tempa mark\endcsname##1{\markboth{}{}}\fi
     }%
   }%
 }
@@ -4217,16 +4217,16 @@
   }%
 }
 \jlreq@jlreqsetup@add{caption_align}{%
-  \let\jlreq@caption@align@figure=\@undefined
-  \let\jlreq@caption@align@table=\@undefined
   \jlreq@parsekeyval@nokey{%
-    \jlreq@switch{#1}{%
-      {center}{\let\jlreq@caption@align=c}
-      {left}{\let\jlreq@caption@align=l}
-      {right}{\let\jlreq@caption@align=r}
-      {top}{\let\jlreq@caption@align=l}
-      {bottom}{\let\jlreq@caption@align=r}
-      {\expandafter\jlreq@caption@setalign\csname jlreq@caption@align@##1\endcsname{##2}}
+    \jlreq@ifempty{#1}{}{%
+      \jlreq@switch{##1}{%
+        {center}{\let\jlreq@caption@align=c}
+        {left}{\let\jlreq@caption@align=l}
+        {right}{\let\jlreq@caption@align=r}
+        {top}{\let\jlreq@caption@align=l}
+        {bottom}{\let\jlreq@caption@align=r}
+        {\expandafter\jlreq@caption@setalign\csname jlreq@caption@align@##1\endcsname{##2}}
+      }%
     }%
   }{#1}%
 }

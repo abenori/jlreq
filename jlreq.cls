@@ -262,6 +262,29 @@
   \jlreq@helper@parsekeyval@@@{#1}%
 }
 
+% キー指定しないkeyval（独自実装）
+% \jlreq@parsekeyval@nokey{<action>}{<parse対象>}
+% action内では#1=key, #2=val
+\long\def\jlreq@parsekeyval@nokey#1#2{%
+  \begingroup
+    \def\jlreq@do{}%
+    \def\jlreq@parsekeyval@nokey@execute##1##2{#1}%
+    \expandafter\jlreq@parsekeyval@nokey@#2,\jlreq@endmark,%
+  \expandafter\endgroup
+  \jlreq@do
+}
+\long\def\jlreq@parsekeyval@nokey@#1,{%
+  \jlreq@ifendmark{#1}{}{\jlreq@parsekeyval@nokey@@#1=\jlreq@endmark}%
+}
+\long\def\jlreq@parsekeyval@nokey@@#1=#2\jlreq@endmark{%
+  \jlreq@ifempty{#2}{\jlreq@parsekeyval@nokey@@@{}{#1}}{\expandafter\jlreq@parsekeyval@nokey@@@\expandafter{\jlreq@parsekeyval@nokey@@@@#2\jlreq@endmark}{#1}}%
+}
+\long\def\jlreq@parsekeyval@nokey@@@#1#2{%
+  \eappto\jlreq@do{\expandonce{\jlreq@parsekeyval@nokey@execute{#2}{#1}}}%
+  \jlreq@parsekeyval@nokey@
+}
+\long\def\jlreq@parsekeyval@nokey@@@@#1=\jlreq@endmark{#1}
+
 % \jlreq@switch{str}{
 %   {str}{abcd}
 %   {str1}{xyz}
@@ -3719,7 +3742,7 @@
 \def\jlreq@pagestyle@setclearmark#1{%
   \expandafter\@for\expandafter\@tempa\expandafter:\expandafter=\jlreq@heading@allheadings\do{%
     \@ifundefined{\@tempa}{}{%
-      \ifnum\csname jlreq@heading@level@\@tempa\endcsname<#1 \@namedef{\@tempa mark}{\markboth{}{}}\fi
+      \ifnum\csname jlreq@heading@level@\@tempa\endcsname<#1 \expandafter\def\csname\@tempa mark\endcsname#1{\markboth{}{}}\fi
     }%
   }%
 }
@@ -3743,7 +3766,7 @@
     \def\jlreq@font{}%
     % 柱とノンブルの間
     \def\jlreq@gap{1.5\zw}%
-    \newif\ifjlreq@clearmark\jlreq@clearmarktrue
+    \newif\ifjlreq@clearmarkcommand\jlreq@clearmarkcommandtrue
     \newif\ifjlreq@pstate\jlreq@pstatefalse % PageStyleTATE
     \jlreq@parsekeyval[PageStyle:#1]{
       *{tate}{\jlreq@pstatetrue}
@@ -3757,7 +3780,7 @@
       {mark_format}{\edef\jlreq@mark@format{\unexpanded{##1}}}
       {command}{\edef\jlreq@command{\unexpanded{##1}}}
       {gap}{\def\jlreq@gap{##1}}
-      {clear_mark}[true,false]{\csname jlreq@clearmark##1\endcsname}
+      {clear_markcommand}[true,false]{\csname jlreq@clearmarkcommand##1\endcsname}
     }{#2}%
     % 見出しを出す場合：evenに章などの高いレベルの見出しを出す（2.6.3.a）
     \def\jlreq@markdefinition{}%
@@ -4060,7 +4083,7 @@
     \edef\jlreq@do{%
       \noexpand\def\expandonce{\csname ps@#1\endcsname}{%
         \unexpanded{\def\jlreq@current@pagestyle{#1}}%
-        \ifjlreq@clearmark\unexpanded{\jlreq@heading@execmacro@toallheadings\jlreq@clearheadingmarks}\fi
+        \ifjlreq@clearmarkcommand\unexpanded{\jlreq@heading@execmacro@toallheadings\jlreq@clearheadingmarks}\fi
         \unexpanded{\let\@mkboth=\markboth}%
         \unexpanded{\def\@oddhead}{\expandonce{\jlreq@oddhead}}%
         \unexpanded{\def\@oddfoot}{\expandonce{\jlreq@oddfoot}}%
@@ -4115,8 +4138,8 @@
   \ModifyPageStyle{headings}{mark_format={_chapter={第\thechapter 章\quad #1}}}
 }
 \if@tate
-  \RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},clear_mark=false}
-  \NewPageStyle{myheadings}{nombre=\thepage,odd_running_head=\rightmark,even_running_head=\leftmark,clear_mark=false}
+  \RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},clear_markcommand=false}
+  \NewPageStyle{myheadings}{nombre=\thepage,odd_running_head=\rightmark,even_running_head=\leftmark,clear_markcommand=false}
   \if@twoside
     \ModifyPageStyle{plain}{nombre_position={top-left}}
     \ModifyPageStyle{headings}{nombre=\thepage,nombre_position=bottom-left,running_head_position=top-left}
@@ -4127,9 +4150,9 @@
     \ModifyPageStyle{myheadings}{nombre_position=bottom-center,running_head_position=top-center}
   \fi
 \else% yoko
-  \RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},nombre_position={bottom-center},clear_mark=false}
+  \RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},nombre_position={bottom-center},clear_markcommand=false}
   \ModifyPageStyle{headings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center}
-  \NewPageStyle{myheadings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center,odd_running_head=\rightmark,even_running_head=\leftmark,clear_mark=false}
+  \NewPageStyle{myheadings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center,odd_running_head=\rightmark,even_running_head=\leftmark,clear_markcommand=false}
 \fi
 \ModifyPageStyle{plain}{font=\small}
 \ModifyPageStyle{headings}{font=\small}
@@ -4157,9 +4180,14 @@
   }%
   \appto\jlreq@tempa{{\jlreq@@makecaption@font #2}}%
   \setbox\@tempboxa=\hbox{\jlreq@tempa}%
-  \@ifundefined{jlreq@caption@align@\@captype}%
+  \@ifundefined{@currenvir}{%
+    \@ifundefined{@captype}%
+      {\def\jlreq@tempb{}}%
+      {\let\jlreq@tempb=\@captype}%
+  }{\let\jlreq@tempb=\@currenvir}%
+  \@ifundefined{jlreq@caption@align@\jlreq@tempb}%
     {\let\jlreq@align=\jlreq@caption@align}%
-    {\expandafter\let\expandafter\jlreq@align\csname jlreq@caption@align@\@captype\endcsname}%
+    {\expandafter\let\expandafter\jlreq@align\csname jlreq@caption@align@\jlreq@tempb\endcsname}%
   \ifdim\wd\@tempboxa>\hsize\relax
     {%
       \ifx c\jlreq@align\centering\fi
@@ -4168,7 +4196,6 @@
     }%
   \else
     \global\@minipagefalse
-    % これではダメ
     \hbox to\hsize{%
       \ifnum0\ifx c\jlreq@align 1\fi\ifx r\jlreq@align 1\fi>0 \hfil\fi
       \unhbox\@tempboxa
@@ -4192,14 +4219,15 @@
 \jlreq@jlreqsetup@add{caption_align}{%
   \let\jlreq@caption@align@figure=\@undefined
   \let\jlreq@caption@align@table=\@undefined
-  \jlreq@parsekeyval{
-    *{center}{\let\jlreq@caption@align=c}
-    *{left}{\let\jlreq@caption@align=l}
-    *{right}{\let\jlreq@caption@align=r}
-    *{top}{\let\jlreq@caption@align=l}
-    *{bottom}{\let\jlreq@caption@align=r}
-    {figure}{\jlreq@caption@setalign\jlreq@caption@align@figure{##1}}
-    {table}{\jlreq@caption@setalign\jlreq@caption@align@table{##1}}
+  \jlreq@parsekeyval@nokey{%
+    \jlreq@switch{#1}{%
+      {center}{\let\jlreq@caption@align=c}
+      {left}{\let\jlreq@caption@align=l}
+      {right}{\let\jlreq@caption@align=r}
+      {top}{\let\jlreq@caption@align=l}
+      {bottom}{\let\jlreq@caption@align=r}
+      {\expandafter\jlreq@caption@setalign\csname jlreq@caption@align@##1\endcsname{##2}}
+    }%
   }{#1}%
 }
 \jlreqsetup{caption_font={\sffamily\bfseries},caption_label_font={\sffamily\bfseries},caption_after_label_space=1\zw,caption_label_format={#1},caption_align=center}

@@ -219,7 +219,7 @@ local function class_check(clstable,class,version,position)
 	if class ~= 0 then table.insert(required_keys,"chars") end
 	for _,v in ipairs(required_keys) do
 		if exist_key[v] ~= true then
-			print_error("Required field " .. v .. " is not found.")
+			print_error("Required field " .. v .. " is not found" .. position_msg(position))
 		end
 	end
 end

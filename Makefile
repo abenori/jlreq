@@ -153,6 +153,6 @@ uninstall:
 clean:
 	rm -f *.tfm *.pl *.vf
 	rm -f jfm-jlreqv.lua
-	rm -f jfm-jlreq-pl.lua jfm-bjlreq-pl.lua jfm-bjlreqv-pl.lua jfm-bzjlreq-pl.lua jfm-jlreqv-pl.lua jfm-bzjlreqv-pl.lua jfm-zjlreq-pl.lua jfm-zjlreqv-pl.lua
+	rm -f jfm-*jlreq*-pl.lua
 	rm -f jlreq.tex jlreq.pdf jlreq.html jlreq-ja.tex jlreq-ja.pdf jlreq-ja.html
 

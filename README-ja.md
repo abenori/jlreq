@@ -214,7 +214,7 @@
 のように使います．この意味は次の通りです．
 
 * `\part`，`\section`，`\subsection`という順番で見出しが掲げられていて，その前後が見出しでない場合は，`\part`は三行取り＋前に一行空き，`\section`と`\subsection`は二行取りとなります．
-* `\section`，`\subsection`という順番で見出しが掲げられていて，その前後が乱し出ない場合は，全体で五行取りとし，`\section`と`\subsection`との間に`23pt`の空き，`\subsection`の後に`16pt`の空きを入れます．
+* `\section`，`\subsection`という順番で見出しが掲げられていて，その前後が見出しでない場合は，全体で五行取りとし，`\section`と`\subsection`との間に`23pt`の空き，`\subsection`の後に`16pt`の空きを入れます．
 
 個々の設定は以下のようになります．
 

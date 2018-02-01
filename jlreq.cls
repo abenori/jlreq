@@ -1899,8 +1899,8 @@
 }
 
 %.. 別行見出し
-% \jlreq@startBlockHeading：別行見出しを出力する命令．
-% \jlreq@startBlockHeading{1 = 命令名}{2 = レベル}{3 = スペース関連}{4 =  フォーマット関連}{5 = 全体フォーマット}*{見出し}[副題]
+% \jlreq@BlockHeading@start：別行見出しを出力する命令．
+% \jlreq@BlockHeading@start{1 = 命令名}{2 = レベル}{3 = スペース関連}{4 =  フォーマット関連}{5 = 全体フォーマット}*{見出し}[副題]
 % スペース関連={配置:lcr（左中央右）}{字下げ（寸法）}{字上げ（寸法）}{前空き}{後空き}{行取りの行数}{空か*か，偶数ページでも改ページを許可するならば空}
 % 前/後空きはprefixにa:/s:/r:が入る．r:は空きがその値そのものになる．a:/s:は行取りに加えて入る．a:で指定された空きはページ行頭では入らない
 % 後空きの時はs:は指定できない．
@@ -1910,7 +1910,7 @@
 % 見出し全体のフォーマット内では#1=ラベル，#2=見出し文字列，#3=副題，それぞれ各々のフォーマットに基づき整形される．
 % ラベルフォーマットでは#1=カウンタ名，見出し文字列フォーマットでは#1=見出し文字列，副題フォーマットでは#1=副題
 % ラベルのみのフォーマットは目次に使われる．
-\newcommand{\jlreq@startBlockHeading}[5]{%
+\newcommand{\jlreq@BlockHeading@start}[5]{%
   \edef\jlreq@BlockHeading@start@format{\unexpanded{#4}}% この二つは\parを含むかもしれないので引数渡しはしない（後の\@ifstarで詰まる）
   \edef\jlreq@BlockHeading@start@totalformat{\unexpanded{#5}}%
   \jlreq@BlockHeading@start@{#1}{#2}{#3}%
@@ -2400,7 +2400,7 @@
       \noexpand\edef\expandonce{\csname #1\endcsname}{\noexpand\unexpanded{%
         \noexpand\jlreq@hook@beforeheadings{#1}%
         \expandonce{\jlreq@pagebreak}%
-        \unexpanded{\jlreq@startBlockHeading{#1}{#2}}%
+        \unexpanded{\jlreq@BlockHeading@start{#1}{#2}}%
         {{\expandonce{\jlreq@align}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@end@indent}}\expandonce{\jlreq@spaceset}{\expandonce{\jlreq@allowbreak@evenpage}}}%
         {%
           {\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@label@format@modified}}%
@@ -2682,19 +2682,19 @@
 %.. 同行見出し
 % {1 = 命令名}{2 = レベル}{3 = ラベルフォーマット}{4 = ラベルありフォーマット}{5 = ラベルなしフォーマット}
 % 4,5は見出し文字列が#1になる．
-\long\def\jlreq@startRuninHeading#1#2#3#4#5{%
-  \edef\jlreq@startRuninHeading@format@label{\unexpanded{#3}}%
-  \edef\jlreq@startRuninHeading@format@wlabel{\unexpanded{#4}}%
-  \edef\jlreq@startRuninHeading@format@wolabel{\unexpanded{#5}}%
-  \@ifstar{\@dblarg{\jlreq@startRuninHeading@{#1}{#2}{*}}}{\@dblarg{\jlreq@startRuninHeading@{#1}{#2}{}}}%
+\long\def\jlreq@RuninHeading@start#1#2#3#4#5{%
+  \edef\jlreq@RuninHeading@start@format@label{\unexpanded{#3}}%
+  \edef\jlreq@RuninHeading@start@format@wlabel{\unexpanded{#4}}%
+  \edef\jlreq@RuninHeading@start@format@wolabel{\unexpanded{#5}}%
+  \@ifstar{\@dblarg{\jlreq@RuninHeading@start@{#1}{#2}{*}}}{\@dblarg{\jlreq@RuninHeading@start@{#1}{#2}{}}}%
 }
 % {1 = 命令名}{2 = レベル}{3 = *}{4 = running head}{5 = 見出し}
-\long\def\jlreq@startRuninHeading@#1#2#3[#4]#5{%
-  \edef\jlreq@do{\noexpand\jlreq@startRuninHeading@@{#1}{#2}{#3}{#4}{#5}{\expandonce{\jlreq@startRuninHeading@format@label}}{\expandonce{\jlreq@startRuninHeading@format@wlabel}}{\expandonce{\jlreq@startRuninHeading@format@wolabel}}}%
+\long\def\jlreq@RuninHeading@start@#1#2#3[#4]#5{%
+  \edef\jlreq@do{\noexpand\jlreq@RuninHeading@start@@{#1}{#2}{#3}{#4}{#5}{\expandonce{\jlreq@RuninHeading@start@format@label}}{\expandonce{\jlreq@RuninHeading@start@format@wlabel}}{\expandonce{\jlreq@RuninHeading@start@format@wolabel}}}%
   \jlreq@do
 }
 % {1 = 命令名}{2 = レベル}{3 = *}{4 = running head}{5 = 見出し}{6 = ラベルフォーマット}{7 = ラベルありフォーマット}{8 = ラベルなしフォーマット}
-\long\def\jlreq@startRuninHeading@@#1#2#3#4#5#6#7#8{%
+\long\def\jlreq@RuninHeading@start@@#1#2#3#4#5#6#7#8{%
   \ifnum0\jlreq@ifempty{#3}{}{1}\ifnum #2>\c@secnumdepth 1\fi>0
     \def\jlreq@tempa##1{#8}%
   \else
@@ -2776,7 +2776,7 @@
       \noexpand\edef\expandonce{\csname #1\endcsname}{%
         \noexpand\unexpanded{%
           \unexpanded{\jlreq@hook@beforeheadings{#1}}%
-          \noexpand\jlreq@startRuninHeading{#1}{#2}{\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@format@wlabel}}{\expandonce{\jlreq@format@wolabel}}%
+          \noexpand\jlreq@RuninHeading@start{#1}{#2}{\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@format@wlabel}}{\expandonce{\jlreq@format@wolabel}}%
         }%
       }%
     }%

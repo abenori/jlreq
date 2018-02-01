@@ -68,6 +68,12 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Improved JFM.
     - Change the way to detect `\label` between block headings.
     - Added chapter number to `\theequation`，`\thefigure`，`\thetable`.
+* 2018-02-01
+    - Sidenotes appears only odd pages in `tate` mode.
+    - Added `\fnixbottomtrue` for LuaLaTeX.
+    - Added some options related to captions.
+    - Extended `itemization_beforeafter_space`.
+    - Fixed bugs.
 
 
 

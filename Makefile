@@ -150,9 +150,13 @@ uninstall:
 	rm -rf ${TEXMF}/tex/luatex/jlreq
 	rm -rf ${TEXMF}/tex/latex/jlreq
 
-clean:
+jfmclean:
 	rm -f *.tfm *.pl *.vf
 	rm -f jfm-jlreqv.lua
 	rm -f jfm-*jlreq*-pl.lua
+
+docclean:
 	rm -f jlreq.tex jlreq.pdf jlreq.html jlreq-ja.tex jlreq-ja.pdf jlreq-ja.html
+clean: jfmclean docclean
+
 

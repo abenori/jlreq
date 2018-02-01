@@ -363,7 +363,12 @@ JFMの名前は次の通りです．`[]`で囲まれている文字は設定に�
     - JFMを改善．
     - 別行見出しの間の`\label`の検出方法を変更．
     - `\theequation`，`\thefigure`，`\thetable`に章番号を追加．
-
+* 2018-02-01
+    - 縦書きの傍注は奇数ページにのみ出るようにした（改善の余地ありかも）．
+    - LuaTeX時に`\fnixbottomtrue`を追加．
+    - キャプション関係のオプションを`\jlreqsetup`に追加．
+    - `itemization_beforeafter_space`を拡張．
+    - バグ修正．
 
 
 --------------

@@ -353,7 +353,7 @@
 \newcommand*{\jlreq@setcurrentpage}{%
   \global\advance\jlreq@zref@reference@count by 1
   \zref@labelbyprops{jlreq@currentpage.\the\jlreq@zref@reference@count}{jlreq@page}%
-  \global\jlreq@currentpage=\zref@extractdefault{jlreq@currentpage.\the\jlreq@zref@reference@count}{jlreq@page}{\c@page}
+  \global\jlreq@currentpage=\zref@extractdefault{jlreq@currentpage.\the\jlreq@zref@reference@count}{jlreq@page}{\c@page}\relax
 }
 
 % 現在の段組位置を得る
@@ -2680,43 +2680,103 @@
 }
 
 %.. 同行見出し
-% TODO: \@startsectionを使わない実装にする
+% {1 = 命令名}{2 = レベル}{3 = ラベルフォーマット}{4 = ラベルありフォーマット}{5 = ラベルなしフォーマット}
+% 4,5は見出し文字列が#1になる．
+\long\def\jlreq@startRuninHeading#1#2#3#4#5{%
+  \edef\jlreq@startRuninHeading@format@label{\unexpanded{#3}}%
+  \edef\jlreq@startRuninHeading@format@wlabel{\unexpanded{#4}}%
+  \edef\jlreq@startRuninHeading@format@wolabel{\unexpanded{#5}}%
+  \@ifstar{\@dblarg{\jlreq@startRuninHeading@{#1}{#2}{*}}}{\@dblarg{\jlreq@startRuninHeading@{#1}{#2}{}}}%
+}
+% {1 = 命令名}{2 = レベル}{3 = *}{4 = running head}{5 = 見出し}
+\long\def\jlreq@startRuninHeading@#1#2#3[#4]#5{%
+  \edef\jlreq@do{\noexpand\jlreq@startRuninHeading@@{#1}{#2}{#3}{#4}{#5}{\expandonce{\jlreq@startRuninHeading@format@label}}{\expandonce{\jlreq@startRuninHeading@format@wlabel}}{\expandonce{\jlreq@startRuninHeading@format@wolabel}}}%
+  \jlreq@do
+}
+% {1 = 命令名}{2 = レベル}{3 = *}{4 = running head}{5 = 見出し}{6 = ラベルフォーマット}{7 = ラベルありフォーマット}{8 = ラベルなしフォーマット}
+\long\def\jlreq@startRuninHeading@@#1#2#3#4#5#6#7#8{%
+  \ifnum0\jlreq@ifempty{#3}{}{1}\ifnum #2>\c@secnumdepth 1\fi>0
+    \def\jlreq@tempa##1{#8}%
+  \else
+    \refstepcounter{#1}%
+    \def\jlreq@tempa##1{#7}%
+  \fi
+  \par
+  \edef\jlreq@do{%
+    \noexpand\everypar{%
+      \unexpanded{\everypar{}}%
+      \unexpanded{{\setbox\jlreq@tempboxa\lastbox}}%
+      \noexpand\begingroup
+        \expandonce{\jlreq@tempa{#5}}%
+        \expandonce{\csname jlreq@heading@maketoc@#1\endcsname{#3}{#6}{#4}}%
+      \noexpand\endgroup
+    }%
+  }%
+  \jlreq@do
+  \ignorespaces
+}
+
 % \DeclareRuninHeading{命令名}{レベル}{設定}
 \newcommand*{\DeclareRuninHeading}[3]{%
   \def\jlreq@do{\@removeelement{#1}}%
   \expandafter\jlreq@do\expandafter{\jlreq@heading@allheadings}{\jlreq@heading@allheadings}%
-  \appto{\jlreq@heading@allheadings}{,#1}%
+  \appto\jlreq@heading@allheadings{,#1}%
   \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}%
   \expandafter\edef\csname jlreq@heading@setting@#1\endcsname{\unexpanded{#3}}%
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewRuninHeading}%
   \@ifundefined{c@#1}{\newcounter{#1}}{}%
   \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}%
   \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\@dottedtocline{#2}{0\zw}{2\zw}}}{}%
+  \jlreq@heading@make@maketoc{#1}{#2}%
   \begingroup
     \def\jlreq@font{\normalfont\normalsize}%
     \def\jlreq@indent{0\zw}%
+    \def\jlreq@after@label@space{1\zw}%
     \def\jlreq@mark{}%
     \def\jlreq@label@font{}%
-    \def\jlreq@label@format{}%
+    \def\jlreq@label@format{\@seccntformat{#1}}%
     \def\jlreq@after@space{1\zw}%
     \jlreq@parsekeyval[RuninHeading:#1]{%
       {font}{\def\jlreq@font{##1}}
       {indent}{\def\jlreq@indent{##1}}
       {mark}{\def\jlreq@mark{##1}}
       {label_format}{\def\jlreq@label@format{##1}}
+      {after_label_space}{
+        \ifdim\dimexpr##1\relax<0pt \ClassWarning{jlreq}{after_label_space in Runin Heading #1 should be not negative}\fi
+        \def\jlreq@after@label@space{##1}
+      }
       {after_space}{%
-        \ifdim\dimexpr##1\relax<0pt \ClassWarning{jlreq}{after_space in Runin Heading #1 should be positive}\fi
+        \ifdim\dimexpr##1\relax<0pt \ClassWarning{jlreq}{after_space in Runin Heading #1 should be not negative}\fi
         \def\jlreq@after@space{##1}%
       }
     }{#3}%
-    % \@startsection{#1}{#2}{indent}{0pt}{-after_space}{font}
+    \newif\ifjlreq@indent@zero
+    \jlreq@ifgluezero{\glueexpr\jlreq@indent\relax}{\jlreq@indent@zerotrue}{\jlreq@indent@zerofalse}%
+    \newif\ifjlreq@after@space@zero
+    \jlreq@ifgluezero{\glueexpr\jlreq@after@space\relax}{\jlreq@after@space@zerotrue}{\jlreq@after@space@zerofalse}%
+    \newif\ifjlreq@after@label@space@zero
+    \jlreq@ifgluezero{\glueexpr\jlreq@after@label@space\relax}{\jlreq@after@label@spacefalse}%
+    \edef\jlreq@format@wlabel{{%
+      \ifjlreq@indent@zero\else\unexpanded{\hskip\glueexpr}\expandonce{\jlreq@indent}\noexpand\relax\fi
+      \expandonce{\jlreq@font}%
+      \expandonce{\jlreq@label@format}%
+      \ifjlreq@after@label@space@zero\else\unexpanded{\hskip\glueexpr}\expandonce{\jlreq@after@label@space}\noexpand\relax\fi
+      ####1%
+      \ifjlreq@after@space@zero\else\unexpanded{\hskip\glueexpr}\expandonce{\jlreq@after@space}\noexpand\relax\fi
+    }}%
+    \edef\jlreq@format@wolabel{{%
+      \ifjlreq@indent@zero\else\unexpanded{\hskip\glueexpr}\expandonce{\jlreq@indent}\noexpand\relax\fi
+      \expandonce{\jlreq@font}%
+      ####1%
+      \ifjlreq@after@space@zero\else\unexpanded{\hskip\glueexpr}\expandonce{\jlreq@after@space}\noexpand\relax\fi
+    }}%
+    \jlreq@heading@make@l@{#1}{#2}{\jlreq@label@format}%
     \edef\jlreq@do{%
-      \noexpand\def\expandonce{\csname #1\endcsname}{%
-        \unexpanded{\jlreq@hook@beforeheadings{#1}}%
-        \expandafter\jlreq@ifempty\expandafter{\jlreq@mark}{%
-          \noexpand\@startsection{\unexpanded{#1}}{\unexpanded{#2}}{\expandonce{\jlreq@indent}}{0pt}{-\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@font}}%
-        }{%
-          \noexpand\@startsection{\unexpanded{#1}}{\unexpanded{#2}}{\expandonce{\jlreq@indent}}{0pt}{-\expandonce{\jlreq@after@space}}{\noexpand\kern\expandonce{\jlreq@indent}\expandonce{\jlreq@mark}\noexpand\kern-\expandonce{\jlreq@indent}\expandonce{\jlreq@font}}%
+      \expandonce{\jlreq@result}%
+      \noexpand\edef\expandonce{\csname #1\endcsname}{%
+        \noexpand\unexpanded{%
+          \unexpanded{\jlreq@hook@beforeheadings{#1}}%
+          \noexpand\jlreq@startRuninHeading{#1}{#2}{\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@format@wlabel}}{\expandonce{\jlreq@format@wolabel}}%
         }%
       }%
     }%
@@ -3229,8 +3289,7 @@
 \newdimen\jlreq@endnote@indent
 % 現在の後注一覧を，\jlreq@endnote@textsに{{合印1}{後注1}}{{合印2}{後注2}}...の形で保持する
 \def\jlreq@endnote@texts{}
-\long\def\jlreq@endnote@addtext#1#2{%
-  \expandafter\gdef\expandafter\jlreq@endnote@texts\expandafter{\jlreq@endnote@texts{{#1}{#2}}}}
+\long\def\jlreq@endnote@addtext#1#2{\xappto\jlreq@endnote@texts{\unexpanded{{{#1}{#2}}}}}
 % \endnote自身は後で定義する
 \def\jlreq@endnote@impl{\jlreq@hook@prenote\@ifnextchar[{\jlreq@endnote}{\jlreq@endnote[]}}  
 \def\endnotemark{\jlreq@hook@prenote\@ifnextchar[{\jlreq@endnotemark}{\jlreq@endnotemark[]}}
@@ -3742,7 +3801,7 @@
 \def\jlreq@pagestyle@setclearmark#1{%
   \expandafter\@for\expandafter\@tempa\expandafter:\expandafter=\jlreq@heading@allheadings\do{%
     \@ifundefined{\@tempa}{}{%
-      \ifnum\csname jlreq@heading@level@\@tempa\endcsname<#1 \expandafter\def\csname\@tempa mark\endcsname##1{\markboth{}{}}\fi
+      \ifnum\csname jlreq@heading@level@\@tempa\endcsname<#1\relax\expandafter\def\csname\@tempa mark\endcsname##1{\markboth{}{}}\fi
     }%
   }%
 }
@@ -4218,7 +4277,7 @@
 }
 \jlreq@jlreqsetup@add{caption_align}{%
   \jlreq@parsekeyval@nokey{%
-    \jlreq@ifempty{#1}{}{%
+    \jlreq@ifempty{##1}{}{%
       \jlreq@switch{##1}{%
         {center}{\let\jlreq@caption@align=c}
         {left}{\let\jlreq@caption@align=l}
@@ -4505,7 +4564,7 @@
     \def\jlreq@do{}%
     \def\jlreq@keyvallist{}%
     \@for\@tempa:=#1\do{%
-      \expandafter\jlreq@ifcontains\expandafter{\@tempa}{=}
+      \expandafter\jlreq@ifcontains\expandafter{\@tempa}{=}%
         {\expandafter\appto\expandafter\jlreq@keyvallist\expandafter{\@tempa,}}%
         {%
           \@for\@tempb:=i,ii,iii,iv,v,vi\do{%
@@ -4528,7 +4587,7 @@
   \jlreq@do
 }
 \jlreq@jlreqsetup@add{itemization_itemsep}{\def\jlreq@itemization@itemsep{#1}}
-\jlreqsetup{itemization_beforeafter_space={i=.5\baselineskip,0pt},itemization_itemsep=0pt}
+\jlreqsetup{itemization_beforeafter_space={0pt,i=.5\baselineskip},itemization_itemsep=0pt}
 % enumerate, itemize用初期化
 \def\jlreq@init@list{%
   \setlength{\labelwidth}{2\jlreq@mol}%

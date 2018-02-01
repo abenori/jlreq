@@ -72,10 +72,12 @@
 ### その他
 * ルビや圏点は提供されません．[PXrubrica](https://github.com/zr-tex8r/PXrubrica)またはluatexja-ruby（LuaLaTeX，LuaTeX-jaパッケージに付属）を使うと良いかと思います．
 * 日本語組版処理の要件2.3.2.dによれば，二段組の最後のページの各段の行数は揃えることが望ましいとされていますが，この処理は行われません．`nidanfloat`パッケージを使い，
-```latex
-\usepackage[balance]{nidanfloat}
-```
-とするとこの処理が行われます．ただし，最終ページでの`\newpage`や`\clearpage`が正しく動作しません．詳しくは`nidanfloat`パッケージのマニュアルをご覧ください．
+
+    ```latex
+    \usepackage[balance]{nidanfloat}
+    ```
+
+    とするとこの処理が行われます．ただし，最終ページでの`\newpage`や`\clearpage`が正しく動作しません．詳しくは`nidanfloat`パッケージのマニュアルをご覧ください．
 
 ## 各種設計
 設計はクラスオプションまたは`\jlreqsetup`によりkeyval形式で行います．以下では次の用法を使います．
@@ -125,6 +127,9 @@
 図表のキャプションを`\jlreqsetup`で変更できます．
 * `caption_font=<命令>`：キャプション自身のフォントを指定します．
 * `caption_label_font=<命令>`：キャプションのラベルのフォントを指定します．
+* `caption_after_label_space=<寸法>`：ラベルとキャプションの間の空きを指定します．
+* `caption_label_format=<書式>`：ラベルの書式を指定します．`caption_label_format={#1：}`のようにします．`#1`が「図1」のような番号に置換されます．
+* `caption_align=[{left/right/center/bottom/top/<環境名1>=<位置指定1>,<環境名2>=<位置指定2>,...}]`：キャプションの場所を指定します．`caption_align=left`のように指定します．`caption_align={center,table=right}`とすると，`table`のみ右，そのほかは中央配置となります．
 
 ### 引用
 `quote / quotation / verse`環境の挙動を`\jlreqsetup`で指定できます．
@@ -135,7 +140,7 @@
 
 ### 箇条書き
 `\jlreqsetup`で指定します．
-* `itemization_beforeafter_space=<寸法>`：箇条書きの前後の空きを指定します．
+* `itemization_beforeafter_space=<寸法>`：箇条書きの前後の空きを指定します．`itemization_beforeafter_space={i=<寸法>}`とするとトップレベルのみに設定を行います．`itemization_beforeafter_space={0pt,i=10pt,ii=5pt}`とすれば，レベル1の箇条書きに10ptを，レベル2のそれに5ptを，それ以外には0ptを設定します．
 * `itemization_itemsep=<寸法>`：項目同士の空きを指定します．
 
 ### 定理環境
@@ -149,7 +154,13 @@
 \Declare***Heading{<命令名>}{<レベル>}{<設定>}
 ```
 
-となっています．また，`\New***Heading`，`\Renew***Heading`，`\Provide***Heading`も同時に用意されます．それぞれ`\newcommand`，`\renewcommand`，`\providecommand`に対応した動きをします．
+となっています．また，`\New***Heading`，`\Renew***Heading`，`\Provide***Heading`も同時に用意されます．それぞれ
+
+* `\New***Heading`：指定した名前の命令が既に定義されている場合はエラー．
+* `\Renew***Heading`：指定した名前の命令が定義されていなければエラー．
+* `\Provide***Heading`：指定した名前の命令が定義されていない場合に限り見出し命令の定義が行われる．
+
+となっています．
 
 ### 扉見出し
 `\DeclareTobiraHeading`で作成します．通常のクラスファイルにおける`\section`等と同じ書式の命令ができます．設定は以下の通り．
@@ -221,6 +232,8 @@
 
 * `font=<命令>`：見出しのフォントを指定します．
 * `indent=<寸法>` 見出し文字列全体の字下げ量を指定します．
+* `after_label_space=<寸法>`：ラベル後，見出し文字列までの空きを指定します．
+* `label_format=<命令>`：ラベルのフォーマットを指定します．`label_format={\theparagraph}`などのようにします．
 
 ### 窓見出し
 `\DeclareCutinHeading`で作成します．`\<命令名>{見出し文字列}`という書式の命令を作成します．設定は以下の通り．
@@ -257,7 +270,7 @@
 * `tate`：縦書きで小口側に出力します．
 * `font=<命令>`：柱とノンブルのフォントを指定します．
 * `running_head_position`, `nombre_position`：柱とノンブルの位置を指定します．`yoko`か`tate`のどちらが指定されているかで挙動が変わります．
-    - `yoko`指定時：`top-left`のように指定できます．`top/bottom/center/left/right/gutter/fore_edge`が使えます．`gutter`はのど，`fore_edge`は小口です．`left`，`right`の指定は奇数ページに対するものです．`twoside`が指定されている場合，偶数ページはその逆になります．
+    - `yoko`指定時：`top-left`のように指定できます．`top / bottom / center / left / right / gutter / fore_edge`が使えます．`gutter`はのど，`fore_edge`は小口です．`left`，`right`の指定は奇数ページに対するものです．`twoside`が指定されている場合，偶数ページはその逆になります．
     - `tate`指定時：`<寸法>`が指定できます．`running_head_position`は柱の天からの下げ量を，`nombre_position`はノンブルの地からの上げ量を指定します．
 * `nombre=<書式>`：出力するノンブルを指定します．デフォルトは`\thepage`．
 * `odd_running_head=<書式>`，`even_running_head=<書式>`：それぞれ奇数ページ，偶数ページの柱を指定します．`_section`のように`_`から始まる名前を指定すると，対応する見出しを出力します．（`_section`だと現在の`\section`を出力する．）
@@ -266,9 +279,11 @@
 
 ## JFM
 以下のような独自のJFMを使います．パッケージによっては，パッケージ独自のJFMや，また標準のJFMを使うように設定がし直される場合があります．例えばLuaTeX-jaに付属するluatexja-presetパッケージは通常LuaTeX-ja標準のJFMを使います．本クラスファイルで使っているJFMを使う場合は，
+
 ```LaTeX
 \usepackage[jfm_yoko=jlreq,jfm_tate=jlreqv,hiragino-pron]{luatexja-preset}
 ```
+
 のようにオプションで指定する必要があります．
 
 ### pLaTeX/upLaTeXの場合

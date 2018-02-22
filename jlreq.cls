@@ -29,6 +29,7 @@
 \newskip\jlreq@resultskip
 \newbox\jlreq@resultbox
 \newif\ifjlreq@result
+\newcount\jlreq@resultcnt
 
 \newcommand*{\jlreq@undefcs}[1]{%
   \ifundef{#1}{\ClassError{jlreq}{Trying to delete \string#1\space even though it is not defined, may be a bug}{\@ehc}}{\undef{#1}}%
@@ -151,28 +152,26 @@
 }
 
 % @removeelementの括弧があっても動くかもしれない版
-% 次の変数を使う：\jlreq@tempa：消したいやつ，\jlreq@tempb：消していない分を放り込んでいく
 % #2から#1を消して#3に入れる
 \def\jlreq@helper@removeelement#1#2#3{%
   \begingroup
-    \def\jlreq@tempb{}%
-    \def\jlreq@tempa{#1}%
-    \jlreq@helper@removeelement@{#2}%
+    \edef\jlreq@tempa{\unexpanded{#1}}% 消したいやつ
+    \def\jlreq@tempb{}% 消していない分を放り込んでいく
+    \jlreq@tempatrue% 最初の\jlreq@tempbへの追加か．
+    \jlreq@helper@removeelement@#2,\jlreq@endmark,%
     \edef\jlreq@do{\unexpanded{\def#3}{\expandonce{\jlreq@tempb}}}%
   \expandafter\endgroup
   \jlreq@do
 }
-\def\jlreq@helper@removeelement@#1{%
-  \jlreq@helper@dividebycomma{#1}%
-  \ifx\jlreq@resulta\jlreq@tempa\else
-    \ifx\jlreq@tempb\@empty
-      \edef\jlreq@tempb{\expandonce{\jlreq@resulta}}%
-    \else
-      \eappto\jlreq@tempb{,\expandonce{\jlreq@resulta}}%
-    \fi
-  \fi
-  \ifjlreq@result\expandafter\@firstofone\else\expandafter\@gobble\fi
-    {\expandafter\jlreq@helper@removeelement@\expandafter{\jlreq@resultb}}%
+\def\jlreq@helper@removeelement@#1,{%
+  \jlreq@ifendmark{#1}{}{%
+    \edef\@tempa{\unexpanded{#1}}%
+    \ifx\jlreq@tempa\@tempa\expandafter\@gobble\else\expandafter\@firstofone\fi{%
+      \eappto\jlreq@tempb{\ifjlreq@tempa\else,\fi\unexpanded{#1}}%
+      \jlreq@tempafalse
+    }%
+    \jlreq@helper@removeelement@
+  }%
 }
 
 % 空白を無視しない\@ifnextchar
@@ -209,12 +208,6 @@
   \else
     \global\setbox\jlreq@resultbox=\copy\voidb@x
   \fi
-}
-
-% vbox #1の最初を\jlreq@resultboxに入れる
-% #1は消える
-\newcommand*{\jlreq@getfirstbox}[1]{%
-  \loop\ifdim\dimexpr\dp#1+\ht#1=0pt\relax\else\jlreq@getlastbox{#1}\repeat
 }
 
 % 簡易なkeyvalのパース．
@@ -297,6 +290,7 @@
 %   {default} % ここは#1を受け付けない（パラメータトークンを受け付けたい場合のため）．
 %} -> abcd
 % 文字列比較→\edefして比較する
+% 第一引数は\jlreq@tempaに入れておく．
 \long\def\jlreq@helper@switch@executeoption#1[#2]{%
   \begingroup
     \def\jlreq@do##1{#2}%
@@ -307,32 +301,30 @@
 \long\def\jlreq@switch#1#2{%
   \begingroup
     \let\jlreq@do\@undefined
-    \edef\jlreq@tempa{#1}%
-    \expandafter\jlreq@helper@switch@\expandafter{\jlreq@tempa}#2\jlreq@endmark
+    \edef\jlreq@tempa{#1}% ループ中ずっと保存する
+    \jlreq@helper@switch@#2\jlreq@endmark
     \ifx\jlreq@do\@undefined
       \def\jlreq@do{\@ifnextchar[{\jlreq@helper@switch@executeoption{#1}}{}}%
     \else
-      \edef\jlreq@do{\expandonce{\jlreq@do}\unexpanded{\@ifnextchar[{\jlreq@helper@removeoption}{}}}%
+      \appto\jlreq@do{\@ifnextchar[{\jlreq@helper@removeoption}{}}%
     \fi
   \expandafter\endgroup
   \jlreq@do
 }
-\long\def\jlreq@helper@switch@#1#2{%
-  \jlreq@ifendmark{#2}{}{\jlreq@helper@switch@@{#1}{#2}}%
+\long\def\jlreq@helper@switch@#1{%
+  \jlreq@ifendmark{#1}{}{\jlreq@helper@switch@@{#1}}%
 }
 
-\long\def\jlreq@helper@switch@@#1#2#3{%
-  \jlreq@ifendmark{#3}{%
-    \edef\jlreq@do{\unexpanded{#2}}%
+\long\def\jlreq@helper@switch@@#1#2{%
+  \jlreq@ifendmark{#2}{%
+    \edef\jlreq@do{\unexpanded{#1}}%
   }{%
-    \def\jlreq@tempa{#1}% 最初に\edefで展開済み
-    \edef\jlreq@tempb{#2}%
-    \ifx\jlreq@tempa\jlreq@tempb\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
-    {%
-      \edef\jlreq@do{\unexpanded{#3}}%
+    \edef\jlreq@tempb{#1}%
+    \ifx\jlreq@tempa\jlreq@tempb\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
+      \edef\jlreq@do{\unexpanded{#2}}%
       \jlreq@deleteuntileendmark
     }{%
-      \jlreq@helper@switch@{#1}%
+      \jlreq@helper@switch@
     }%
   }%
 }
@@ -693,10 +685,6 @@
   \directlua{jlreq = {}}
 \fi
 
-\if@tate
-  \RequirePackage{atbegshi}
-\fi
-
 % (u)pLaTeXの場合ここで初めて\epTeXinputencodingが発行されるので，
 % これ以前には和文は使えない．
 \ifx l\jlreq@engine\else
@@ -708,8 +696,6 @@
 \if@tate
   \AtBeginDocument{\tate\message{《縦組モード》}\adjustbaseline}
 \fi
-
-
 
 % \jlreq@gol(Gyo Okuri Length), \jlreq@mol (Moji Okuri Length)を定義
 \let\jlreq@gol=\zh
@@ -826,6 +812,16 @@
   \global\jlreq@rest@linewidth=\dimexpr\linewidth - \jlreq@current@linewidth\relax
   \edef\jlreq@savepos@iflabelundefined{\noexpand\zref@ifrefundefined{jlreq@rest@width.pos.\the\jlreq@zref@reference@count}}%
 }
+
+\if@twocolumn
+  % \jlreq@setcurrentpageの呼び出しを含む
+  \newcommand*{\jlreq@iffirstcolumn}{%
+    \jlreq@setcurrentpage
+    \global\advance\jlreq@zref@reference@count by 1\relax
+    \zsavepos{jlreq@rest@width.pos.\the\jlreq@zref@reference@count}%
+    \ifdim\jlreq@calc@current@linewidth@onecolumn<\dimexpr\linewidth+\columnsep\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+  }
+\fi
 
 \ifx l\jlreq@engine
   \newcommand*{\lastnodechar}{\directlua{luatexja.pltx_composite_last_node_char()}}% undocumentedな機能を使っている
@@ -1380,9 +1376,9 @@
   \ifcsname jlreq@jaspace@#1\endcsname\csname jlreq@jaspace@#1\endcsname
   \else\ClassError{jlreq}{unknown jaspace: #1}{\@ehc}\fi
 }
-\def\jlreq@jaspace@zenkaku{\hskip \glueexpr 1\zw\relax}
-\def\jlreq@jaspace@nibu{\hskip \glueexpr .5\zw\relax}
-\def\jlreq@jaspace@shibu{\hskip \glueexpr .25\zw\relax}
+\def\jlreq@jaspace@zenkaku{\hskip\glueexpr 1\zw\relax}
+\def\jlreq@jaspace@nibu{\hskip\glueexpr .5\zw\relax}
+\def\jlreq@jaspace@shibu{\hskip\glueexpr .25\zw\relax}
 
 % 区切り約物．\？ みたいな命令を作る．直後の空きが自動で入る．
 % \？*とすると文中の？として扱われる．
@@ -2485,7 +2481,7 @@
   \jlreq@ifendmark{#2}{}{%
     \def\jlreq@headings{}% 見出し名リスト
     \jlreq@BlockHeading@gyodori@parsekeyval[BlockHeadingSpaces]{#1}{}{}{}%
-    \edef\jlreq@totalset{\expandonce{\jlreq@result}}% 上の#1に対応する設定
+    \let\jlreq@totalset=\jlreq@result% 上の#1に対応する設定
     \def\jlreq@set{}% 個々の設定
     \def\jlreq@lastdimen{}% 最後の寸法
     \def\jlreq@do##1##2##3{%
@@ -2522,6 +2518,7 @@
       \expandafter\jlreq@SetBlockHeadingSpaces@@@@\@tempa{\jlreq@endmark}%
     }{%
       \ifjlreq@tempa
+        % 最初が寸法なので，全体の設定（\jlreq@totalset）に組み込む．
         \def\jlreq@do##1##2##3{%
           \edef\jlreq@totalset{{r:\expandonce{\@tempa}}{\unexpanded{##2}}{\unexpanded{##3}}}%
         }%
@@ -2540,7 +2537,7 @@
   }{}%
   \jlreq@ifendswith{#1}{*}{{%
     \def\@tempa_##1*{\def\@tempa{##1}}%
-    \@tempa#1
+    \@tempa#1%
     \ClassWarning{jlreq}{The heading name `\@gobble #1' ends with `*'. Do you mean `\@tempa{*}'? (in SetBlockHeadingSpaces)}%
   }}{}%
   \appto\jlreq@headings{#1}%
@@ -2655,12 +2652,11 @@
       }\unexpanded{{#8}{#9}}%
     }}%
   }%
-  \edef\jlreq@do{\unexpanded{\appto\jlreq@result}{%
+  \eappto\jlreq@result{%
     \csexpandonce{jlreq@BlockHeading@spaces@current@before@\the\jlreq@tempcnta}%
     \jlreq@tempb
     \csexpandonce{jlreq@BlockHeading@spaces@current@after@\the\jlreq@tempcnta}%
-  }}%
-  \jlreq@do
+  }%
 }
 
 % 連続見出しスペース調整用のデータをすべてクリアする
@@ -2695,23 +2691,26 @@
 }
 % {1 = 命令名}{2 = レベル}{3 = *}{4 = running head}{5 = 見出し}{6 = ラベルフォーマット}{7 = ラベルありフォーマット}{8 = ラベルなしフォーマット}
 \long\def\jlreq@RuninHeading@start@@#1#2#3#4#5#6#7#8{%
-  \ifnum0\jlreq@ifempty{#3}{}{1}\ifnum #2>\c@secnumdepth 1\fi>0
-    \def\jlreq@tempa##1{#8}%
-  \else
-    \refstepcounter{#1}%
-    \def\jlreq@tempa##1{#7}%
-  \fi
-  \par
-  \edef\jlreq@do{%
-    \noexpand\everypar{%
-      \unexpanded{\everypar{}}%
-      \unexpanded{{\setbox\jlreq@tempboxa\lastbox}}%
-      \noexpand\begingroup
-        \expandonce{\jlreq@tempa{#5}}%
-        \expandonce{\csname jlreq@heading@maketoc@#1\endcsname{#3}{#6}{#4}}%
-      \noexpand\endgroup
+  \begingroup
+    \def\jlreq@do{}%
+    \ifnum0\jlreq@ifempty{#3}{}{1}\ifnum #2>\c@secnumdepth 1\fi>0
+      \def\jlreq@tempa##1{#8}%
+    \else
+      \appto\jlreq@do{\refstepcounter{#1}}%
+      \def\jlreq@tempa##1{#7}%
+    \fi
+    \par
+    \eappto\jlreq@do{%
+      \noexpand\everypar{%
+        \unexpanded{\everypar{}}%
+        \unexpanded{{\setbox\jlreq@tempboxa\lastbox}}%
+        \noexpand\begingroup
+          \expandonce{\jlreq@tempa{#5}}%
+          \expandonce{\csname jlreq@heading@maketoc@#1\endcsname{#3}{#6}{#4}}%
+        \noexpand\endgroup
+      }%
     }%
-  }%
+  \expandafter\endgroup
   \jlreq@do
   \ignorespaces
 }
@@ -2773,10 +2772,11 @@
     \jlreq@heading@make@l@{#1}{#2}{\jlreq@label@format}%
     \edef\jlreq@do{%
       \expandonce{\jlreq@result}%
+      % パラメータトークンを含むので，\edefして\unexpandedで包む
       \noexpand\edef\expandonce{\csname #1\endcsname}{%
         \noexpand\unexpanded{%
           \unexpanded{\jlreq@hook@beforeheadings{#1}}%
-          \noexpand\jlreq@RuninHeading@start{#1}{#2}{\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@format@wlabel}}{\expandonce{\jlreq@format@wolabel}}%
+          \unexpanded{\jlreq@RuninHeading@start{#1}{#2}}{\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@format@wlabel}}{\expandonce{\jlreq@format@wolabel}}%
         }%
       }%
     }%
@@ -3189,20 +3189,51 @@
   \@ifnextchar[{\jlreq@footnotemark@impl@woption}{\jlreq@footnotemark@impl@wooption}%
 }
 \if@tate
-  % 縦組の傍注は，その見開き内に付いている合印に対応する注を，奇数ページの左端にそろえて配置する（4.2.6.a）．
-  % TODO: 多段組では最下段の左端にそろえて配置する．
+  % 縦組の傍注は，その見開き内に付いている合印に対応する注を，奇数ページの左端にそろえて配置する．多段組では最下段の左端にそろえて配置する．（4.2.6.a）
   \def\jlreq@footnote@delayfootnoteslist{}
-  \preto\@outputpage{%
+  \preto\@opcol{%
     \expandafter\gdef\expandafter\jlreq@footnote@delayfootnoteslist\expandafter{\expandafter}%
     \jlreq@footnote@delayfootnoteslist
   }
-  \def\jlreq@footnote@delayfootnote@delay#1#2#3{%
-    \ifnum#1<1
-      \footnotetext[#2]{#3}%
-    \else
-      \xappto\jlreq@footnote@delayfootnoteslist{\noexpand\jlreq@footnote@delayfootnote{\the\numexpr#1 - 1\relax}{\unexpanded{#2}}{\unexpanded{#3}}}%
-    \fi
-  }
+  % \jlreq@footnote@delayfootnote@countは，どのくらい\footnotetextを遅延するかを計算し，\jlreq@resultcntに結果を入れる．
+  % 今すぐ\footnoteでよい場合は\jlreq@resultcnt=-1
+  \if@twocolumn
+    \def\jlreq@footnote@delayfootnote@count{%
+      \jlreq@iffirstcolumn{%
+        \jlreq@resultcnt=\numexpr\jlreq@currentpage - \value{page} \ifodd\numexpr\jlreq@currentpage\else + 1\fi\relax
+      }{%
+        \ifodd\jlreq@currentpage\jlreq@resultcnt=-1 \else\jlreq@resultcnt=\numexpr\jlreq@currentpage - \value{page} + 1\relax\fi
+      }%
+    }
+    \def\jlreq@footnote@delayfootnote@delay#1#2#3{%
+      \if@firstcolumn
+        \ifnum#1<1
+          \footnotetext[#2]{#3}%
+        \else
+          \xappto\jlreq@footnote@delayfootnoteslist{\unexpanded{\jlreq@footnote@delayfootnote{#1}{#2}{#3}}}%
+        \fi
+      \else
+        % ページ頭でカウントを一つ減らす
+        \xappto\jlreq@footnote@delayfootnoteslist{\noexpand\jlreq@footnote@delayfootnote{\the\numexpr#1 - 1\relax}{\unexpanded{#2}}{\unexpanded{#3}}}%
+      \fi
+    }
+  \else
+    \def\jlreq@footnote@delayfootnote@count{%
+      \jlreq@setcurrentpage
+      \ifodd\jlreq@currentpage
+        \jlreq@resultcnt=-1
+      \else
+        \jlreq@resultcnt=\numexpr\jlreq@currentpage - \value{page}\relax
+      \fi
+    }
+    \def\jlreq@footnote@delayfootnote@delay#1#2#3{%
+      \ifnum#1<1
+        \footnotetext[#2]{#3}%
+      \else
+        \xappto\jlreq@footnote@delayfootnoteslist{\noexpand\jlreq@footnote@delayfootnote{\the\numexpr#1 - 1\relax}{\unexpanded{#2}}{\unexpanded{#3}}}%
+      \fi
+    }
+  \fi % \if@twocolumn
   \def\jlreq@footnote@delayfootnote@immediate#1#2#3{\footnotetext[#2]{#3}}%
   \let\jlreq@footnote@delayfootnote=\jlreq@footnote@delayfootnote@delay
   \def\jlreq@footnote@flushdelayfootnoteslist{%
@@ -3214,22 +3245,22 @@
   \AtEndDocument{\jlreq@footnote@flushdelayfootnoteslist}
   \preto\newpage{\jlreq@footnote@flushdelayfootnoteslist}
   \long\def\jlreq@footnote@impl@woption[#1]#2{%
-    \jlreq@setcurrentpage
-    \ifodd\jlreq@currentpage
+    \jlreq@footnote@delayfootnote@count
+    \ifnum\jlreq@resultcnt=-1
       \jlreq@useoriginalcs{\footnote}[#1]{#2}%
     \else
       \jlreq@useoriginalcs{\footnotemark}[#1]%
-      \xappto\jlreq@footnote@delayfootnoteslist{\noexpand\jlreq@footnote@delayfootnote{\the\numexpr\jlreq@currentpage - \value{page}\relax}{\unexpanded{#1}}{\unexpanded{#2}}}%
+      \xappto\jlreq@footnote@delayfootnoteslist{\noexpand\jlreq@footnote@delayfootnote{\the\jlreq@resultcnt}{\unexpanded{#1}}{\unexpanded{#2}}}%
     \fi
     \jlreq@hook@postnote
   }
   \long\def\jlreq@footnote@impl@wooption#1{%
-    \jlreq@setcurrentpage
-    \ifodd\jlreq@currentpage
+    \jlreq@footnote@delayfootnote@count
+    \ifnum\jlreq@resultcnt=-1
       \jlreq@useoriginalcs{\footnote}{#1}%
     \else
       \jlreq@useoriginalcs{\footnotemark}%
-      \xappto\jlreq@footnote@delayfootnoteslist{\noexpand\jlreq@footnote@delayfootnote{\the\numexpr\jlreq@currentpage - \value{page}\relax}{\the\value{footnote}}{\unexpanded{#1}}}%
+      \xappto\jlreq@footnote@delayfootnoteslist{\noexpand\jlreq@footnote@delayfootnote{\the\jlreq@resultcnt}{\the\value{footnote}}{\unexpanded{#1}}}%
     \fi
     \jlreq@hook@postnote
   }
@@ -3362,10 +3393,11 @@
     \par
   \fi
 }
+% 4.2.4.b
 \jlreq@endnote@indent=2\jlreq@mol
-% 二行目以降を全角分下げる
+% 二行目以降を全角分下げる（4.2.4.d：TODO: 選択できるべき）
 \newcommand{\@makeendtext}[1]{\parindent 1\jlreq@mol
-    \hskip-1\jlreq@mol\csname\jlreq@endnotemarkname\endcsname\hskip 1\jlreq@mol#1}% 見出し出力と一文字分の空き
+    \hskip-1\jlreq@mol\csname\jlreq@endnotemarkname\endcsname\hskip 1\jlreq@mol#1}% 見出し出力と一文字分の空き（4.2.4.c）
 \def\@makeendmark{\@makefnmark}
 
 % \theendnoteの出力を仕込む
@@ -3419,7 +3451,6 @@
 \jlreqsetup{endnote_position=headings}
 \AtEndDocument{\theendnotes}
 
-\def\jlreq@sidenotemarkname{@thefnmark}% 合印用番号を一時的に入れるマクロ名
 
 % (1) \footnoteとかと同じ形式 sidenote_type=number
 % (2) 文中にマークを入れて，傍注には見出しが入る sidenote_type=symbol
@@ -3431,6 +3462,7 @@
 % \marginparwidth>0ptの時のみ定義する
 \ifdim\marginparwidth>0pt \expandafter\@firstofone\else\expandafter\@gobble\fi
 {
+  \def\jlreq@sidenotemarkname{@thefnmark}% 合印用番号を一時的に入れるマクロ名
   \long\def\@sidenotetext#1{%
     \marginpar{\reset@font\footnotesize
       \color@begingroup
@@ -4564,13 +4596,13 @@
     \def\jlreq@do{}%
     \def\jlreq@keyvallist{}%
     \@for\@tempa:=#1\do{%
-      \expandafter\jlreq@ifcontains\expandafter{\@tempa}{=}%
-        {\expandafter\appto\expandafter\jlreq@keyvallist\expandafter{\@tempa,}}%
-        {%
-          \@for\@tempb:=i,ii,iii,iv,v,vi\do{%
-            \eappto\jlreq@do{\noexpand\def\expandonce{\csname jlreq@itemization@beforeafter@space@\@tempb\endcsname}{\expandonce{\@tempa}}}%
-          }%
+      \expandafter\jlreq@ifcontains\expandafter{\@tempa}{=}{%
+        \expandafter\appto\expandafter\jlreq@keyvallist\expandafter{\@tempa,}%
+      }{%
+        \@for\@tempb:=i,ii,iii,iv,v,vi\do{%
+          \eappto\jlreq@do{\noexpand\def\expandonce{\csname jlreq@itemization@beforeafter@space@\@tempb\endcsname}{\expandonce{\@tempa}}}%
         }%
+      }%
     }%
     \def\jlreq@tempa{%
       \jlreq@parsekeyval{%
@@ -4946,7 +4978,6 @@
 \ifthenelse{\equal{\jlreq@article@type}{article}}{
   \appto\appendix{%
     \setcounter{subsection}{0}%
-    \gdef\thesection{\@Alph\c@section}%
     \if@tate
       \def\thesection{\jlreq@rensuji{\Alph{section}}}%
     \else

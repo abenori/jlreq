@@ -3199,13 +3199,12 @@
   % 今すぐ\footnoteでよい場合は\jlreq@resultcnt=-1
   \if@twocolumn
     \def\jlreq@footnote@delayfootnote@count{%
-      \jlreq@iffirstcolumn{%
-        \jlreq@resultcnt=\numexpr\jlreq@currentpage - \value{page} \ifodd\numexpr\jlreq@currentpage\else + 1\fi\relax
-      }{%
-        \ifodd\jlreq@currentpage\jlreq@resultcnt=-1 \else\jlreq@resultcnt=\numexpr\jlreq@currentpage - \value{page} + 1\relax\fi
-      }%
+      \jlreq@setcurrentpage
+      \jlreq@resultcnt=\numexpr\jlreq@currentpage - \value{page} \ifodd\numexpr\jlreq@currentpage\else + 1\fi\relax
+      % このページに表示＆上の段処理済みだと\@opcol内では間に合わない
+      \ifnum\jlreq@resultcnt=0 \if@firstcolumn\else\jlreq@resultcnt=-1 \fi\fi
     }
-    \def\jlreq@footnote@delayfootnote@delay#1#2#3{%
+    \long\def\jlreq@footnote@delayfootnote@delay#1#2#3{%
       \if@firstcolumn
         \ifnum#1<1
           \footnotetext[#2]{#3}%
@@ -3214,10 +3213,10 @@
         \fi
       \else
         % ページ頭でカウントを一つ減らす
-        \xappto\jlreq@footnote@delayfootnoteslist{\noexpand\jlreq@footnote@delayfootnote{\the\numexpr#1 - 1\relax}{\unexpanded{#2}}{\unexpanded{#3}}}%
+        \xappto\jlreq@footnote@delayfootnoteslist{\noexpand\jlreq@footnote@delayfootnote{\the\numexpr#1 - 1\relax}\unexpanded{{#2}{#3}}}
       \fi
     }
-  \else
+  \else % \if@twocolumn
     \def\jlreq@footnote@delayfootnote@count{%
       \jlreq@setcurrentpage
       \ifodd\jlreq@currentpage
@@ -3226,14 +3225,14 @@
         \jlreq@resultcnt=\numexpr\jlreq@currentpage - \value{page}\relax
       \fi
     }
-    \def\jlreq@footnote@delayfootnote@delay#1#2#3{%
+    \long\def\jlreq@footnote@delayfootnote@delay#1#2#3{%
       \ifnum#1<1
         \footnotetext[#2]{#3}%
       \else
         \xappto\jlreq@footnote@delayfootnoteslist{\noexpand\jlreq@footnote@delayfootnote{\the\numexpr#1 - 1\relax}{\unexpanded{#2}}{\unexpanded{#3}}}%
       \fi
     }
-  \fi % \if@twocolumn
+  \fi % \if@twocolumn\else
   \def\jlreq@footnote@delayfootnote@immediate#1#2#3{\footnotetext[#2]{#3}}%
   \let\jlreq@footnote@delayfootnote=\jlreq@footnote@delayfootnote@delay
   \def\jlreq@footnote@flushdelayfootnoteslist{%

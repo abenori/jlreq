@@ -190,9 +190,9 @@
 #### その他
 * `subtitle_break=[true/false]`：見出し文字列と副題の間を改行するか指定します．
 * `allowbreak_if_evenpage=[true/false]`：見出しが偶数ページにあった場合，その直後の改ページを許可します．
-* `pagebreak=[clearpage/cleardoublepage/clearcolumn/nariyuki]`：見出し直前の改ページを指定します．それぞれ，改ページ，改丁，改段，なりゆきです．
+* `pagebreak=[clearpage/cleardoublepage/clearcolumn/nariyuki/begin_with_odd_page/begin_with_even_page]`：見出し直前の改ページを指定します．それぞれ，改ページ，`\cleardoublepage`実行，改段，なりゆき，奇数ページ開始，偶数ページ開始，です．
 * `afterindent=[true/false]`：見出し直後の段落の字下げを行うかを指定します．
-* `column_spanning=[true/false]`： 段抜きの見出しにします．pagebreak=clearpageまたはcleardoublepageの時にしか使えません．
+* `column_spanning=[true/false]`： 段抜きの見出しにします．`pagebreak=nariyuki`または`pagebreak=clearcolumn`の時には無視されます．
 
 #### 行取り
 行取りの指定は以下のいずれかの方法で行うことができます．

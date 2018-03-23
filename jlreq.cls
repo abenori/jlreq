@@ -348,16 +348,6 @@
   \global\jlreq@currentpage=\zref@extractdefault{jlreq@currentpage.\the\jlreq@zref@reference@count}{jlreq@page}{\c@page}\relax
 }
 
-% 現在の段組位置を得る
-\zref@newprop*{jlreq@firstcolumn}[1]{\if@firstcolumn 1\else 0\fi}
-\zref@addprop{main}{jlreq@firstcolumn}
-\newif\ifjlreq@firstcolumn
-\newcommand*{\jlreq@setcurrentcolumn}{%
-  \global\advance\jlreq@zref@reference@count by 1
-  \zref@labelbyprops{jlreq@currentcolumn.\the\jlreq@zref@reference@count}{jlreq@firstcolumn}%
-  \ifnum\zref@extractdefault{jlreq@currentcolumn.\the\jlreq@zref@reference@count}{jlreq@firstcolumn}{1}=1 \global\jlreq@firstcolumntrue\else \global\jlreq@firstcolumnfalse\fi
-}
-
 \def\jlreq@saveoriginalcs#1{%
   \@ifundefined{#1}{%
     \ClassError{jlreq}{Trying to save \expandafter\string\csname #1\endcsname\space but it's not defined, may be a bug}{\@ehc}%
@@ -568,18 +558,18 @@
 \DeclareOptionX{sidenote_length}{\renewcommand*{\jlreq@option@sidenote@length}{#1}}
 
 %.. もろもろ
-\newif\if@restonecol \@restonecolfalse
-\newif\if@titlepage \@titlepagefalse
+\newif\if@restonecol\@restonecolfalse
+\newif\if@titlepage\@titlepagefalse
 \newif\ifjlreq@option@titlepage \jlreq@option@titlepagefalse % titlepageかnotitlepageかが指定された
-\newif\if@landscape \@landscapefalse
+\newif\if@landscape\@landscapefalse
 \newif\if@tate \@tatefalse
 \jlreq@DeclareOption{landscape}{\@landscapetrue}
 \jlreq@DeclareOption{tombo}{%
-  \tombowtrue \tombowdatefalse
+  \tombowtrue\tombowdatefalse
   \setlength{\@tombowwidth}{.1\p@}%
   \maketombowbox}
 \jlreq@DeclareOption{mentuke}{%
-  \tombowtrue \tombowdatefalse
+  \tombowtrue\tombowdatefalse
   \setlength{\@tombowwidth}{\z@}%
   \maketombowbox}
 \jlreq@DeclareOption{tate}{\@tatetrue}
@@ -661,8 +651,10 @@
 % \jlreq@ifprimitive#1#2#3: #1がprimitiveならば#2を，そうでなければ#3を実行する
 % （\if(pdf)primitiveを避けるようにしている．）
 \def\jlreq@ifprimitive#1{%
-  \edef\@tempa{\string#1}%
-  \edef\@tempb{\meaning#1}%
+  \begingroup
+    \edef\@tempa{\string#1}%
+    \edef\@tempb{\meaning#1}%
+  \expandafter\endgroup
   \ifx\@tempa\@tempb\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
 }
 % エンジンの設定
@@ -813,16 +805,6 @@
   \edef\jlreq@savepos@iflabelundefined{\noexpand\zref@ifrefundefined{jlreq@rest@width.pos.\the\jlreq@zref@reference@count}}%
 }
 
-\if@twocolumn
-  % \jlreq@setcurrentpageの呼び出しを含む
-  \newcommand*{\jlreq@iffirstcolumn}{%
-    \jlreq@setcurrentpage
-    \global\advance\jlreq@zref@reference@count by 1\relax
-    \zsavepos{jlreq@rest@width.pos.\the\jlreq@zref@reference@count}%
-    \ifdim\jlreq@calc@current@linewidth@onecolumn<\dimexpr\linewidth+\columnsep\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
-  }
-\fi
-
 \ifx l\jlreq@engine
   \newcommand*{\lastnodechar}{\directlua{luatexja.pltx_composite_last_node_char()}}% undocumentedな機能を使っている
 \fi
@@ -873,10 +855,12 @@
 % \jlreq@fixjfm<次の文字>の形で使う．
 % jlreq@lastnodecharに入っている値と次のトークン（\futureletで得る）の間に入るJFMグルー等を挿入する
 \newcommand*{\jlreq@fixjfm}{%
-  \ifnum\jlreq@lastnodechar>-1
-    \def\@tempa{\futurelet\jlreq@nextchar\jlreq@insertjfm}%
-  \else\def\@tempa{}\fi
-  \@tempa
+  \begingroup
+    \ifnum\jlreq@lastnodechar>-1
+      \def\jlreq@do{\futurelet\jlreq@nextchar\jlreq@insertjfm}%
+    \else\def\jlreq@do{}\fi
+  \expandafter\endgroup
+  \jlreq@do
 }
 % \jlreq@nextcharと\jlreq@lastnodecharの間のJFMグルーを挿入
 \def\jlreq@insertjfm{%
@@ -904,7 +888,7 @@
 \else
   \newcommand*{\jlreq@divide}[2]{%
     \begingroup
-      \@tempdima=#1\relax\@tempdimb=#2\relax
+      \@tempdima=\dimexpr#1\relax\@tempdimb=\dimexpr#2\relax
       % 分母を正にする
       \ifdim\@tempdimb<0pt \@tempdima=-\@tempdima\@tempdimb=-\@tempdimb\fi
       % \jlreq@tempdima*\@tempdimb <= \@tempdima < (\jlreq@tempdima + 1)*\@tempdimb
@@ -1250,14 +1234,18 @@
 % スタックに積まれたものは\jlreq@pophook@postparで復帰できる
 \def\jlreq@pushhook@postpar#1{%
   \advance\jlreq@count@listnest by 1
-  \def\@tempa{\SavePostHook{par}}%
-  \expandafter\@tempa\csname jlreq@save@posthook@par \the\jlreq@count@listnest\endcsname
+  \begingroup
+    \edef\jlreq@do{\unexpanded{\SavePostHook{par}}{\expandonce{\csname jlreq@save@posthook@par@\the\jlreq@count@listnest\endcsname}}}%
+  \expandafter\endgroup
+  \jlreq@do
   \PushPostHook{par}{#1}%
 }
 \def\jlreq@pophook@postpar{%
-  \def\@tempa{\RestorePostHook{par}}%
-  \expandafter\@tempa\csname jlreq@save@posthook@par \the\jlreq@count@listnest\endcsname
-  \expandafter\let\csname jlreq@save@posthook@par \the\jlreq@count@listnest\endcsname=\@undefined
+  \begingroup
+    \edef\jlreq@do{\unexpanded{\RestorePostHook{par}}{\expandonce{\csname jlreq@save@posthook@par@\the\jlreq@count@listnest\endcsname}}}%
+  \expandafter\endgroup
+  \jlreq@do
+  \expandafter\let\csname jlreq@save@posthook@par@\the\jlreq@count@listnest\endcsname=\@undefined
   \advance\jlreq@count@listnest by -1
 }
 
@@ -1452,21 +1440,25 @@
 \fi
 
 % \jafontsize
-\def\@tempa#1{
-  \newcommand*{\jafontsize}[2]{%
-    \begingroup
-      \jlreq@iffloat{##1}{%
-        \edef\jlreq@do{\noexpand\fontsize{\strip@pt\dimexpr#1\dimexpr##1pt\relax\relax}}%
-      }{%
-        \edef\jlreq@do{\noexpand\fontsize{\the\dimexpr#1\dimexpr##1\relax\relax}}%
-      }%
-    \expandafter\endgroup
-    \jlreq@do{##2}%
+\ifdim\jlreq@fontsize=\jlreq@jafontsize
+  \let\jafontsize=\fontsize
+\else
+  \def\@tempa#1{
+    \DeclareRobustCommand*{\jafontsize}[2]{%
+      \begingroup
+        \jlreq@iffloat{##1}{%
+          \edef\jlreq@do{\noexpand\fontsize{\strip@pt\dimexpr#1\dimexpr##1pt\relax\relax}}%
+        }{%
+          \edef\jlreq@do{\noexpand\fontsize{\the\dimexpr#1\dimexpr##1\relax\relax}}%
+        }%
+      \expandafter\endgroup
+      \jlreq@do{##2}%
+    }
   }
-}
-\jlreq@divide{\jlreq@fontsize}{\jlreq@jafontsize}
-\edef\jlreq@do{\noexpand\@tempa{\strip@pt\jlreq@resultdimen}}
-\jlreq@do
+  \jlreq@divide{\jlreq@fontsize}{\jlreq@jafontsize}
+  \edef\jlreq@do{\noexpand\@tempa{\strip@pt\jlreq@resultdimen}}
+  \jlreq@do
+\fi
 
 \renewcommand{\normalsize}{%
   \@setfontsize\normalsize{\jlreq@fontsize}{\jlreq@baselineskip}%
@@ -1669,12 +1661,12 @@
   \divide\textheight\baselineskip \multiply\textheight\baselineskip
   \addtolength{\textheight}{\topskip}
 \else
-  \setlength{\textheight}{\dimexpr\jlreq@option@number@of@lines\baselineskip - \baselineskip + \topskip\relax}
+  \setlength{\textheight}{\dimexpr\numexpr\jlreq@option@number@of@lines\relax\baselineskip - \baselineskip + \topskip\relax}
 \fi
 
 \ifx\jlreq@option@headfoot@verticalpos\@empty
   \if@tate\def\jlreq@option@headfoot@verticalpos{1zw}
-  \else\def\jlreq@option@headfoot@verticalpos{2zh}\fi
+  \else\def\jlreq@option@headfoot@verticalpos{2zw}\fi
 \fi
 \setlength{\headsep}{\jlreq@speciallength{\jlreq@option@headfoot@verticalpos}}
 \ifdim\headsep<1\zw\relax\jlreq@note{基本版面との上下方向の最低の空き量を，基本版面の文字サイズの全角アキとする (26.1.a)．}\fi
@@ -1773,6 +1765,24 @@
 \setlength{\maxdepth}{\dimexpr1.5\zw - \topskip\relax}
 
 %. 見出し関係 (4.1)
+% \clear***page
+\newcommand*{\cleartooddpage}{%
+  \clearpage
+  \ifodd\c@page\else
+    \hbox{}%
+    \newpage
+    \if@twocolumn\hbox{}\newpage\fi
+  \fi
+}
+\newcommand*{\cleartoevenpage}{%
+  \clearpage
+  \ifodd\c@page
+    \hbox{}%
+    \newpage
+    \if@twocolumn\hbox{}\newpage\fi
+  \fi
+}
+
 % 同行見出し以外では，jlreq@heading@maketoc@<命令名>が\tableofcontents用の出力をするために呼び出される．
 % #1=*または空（見出し命令に*がついていたかで分岐），#2=ラベル，#3=running head
 % デフォルトでは\<命令名>markと\addcontentslineが必要ならば呼ばれる．
@@ -1832,7 +1842,7 @@
     \let\jlreq@contents@label@format=\@undefined
     \let\jlreq@format=\@undefined
     \edef\jlreq@label@format{\expandonce{\csname the#1\endcsname}}%
-    \def\jlreq@heading@clearpage{\cleardoublepage}%
+    \def\jlreq@heading@clearpage{\clearpage\hbox{}\clearpage}%
     \def\jlreq@pagestyle{empty}%
     \jlreq@parsekeyval[DeclareTobiraHeading:#1]{
       {label_format}{\def\jlreq@label@format{##1}}
@@ -1841,7 +1851,7 @@
       {type}[han,naka]{%
         \jlreq@switch{##1}{
           {han}{\def\jlreq@heading@clearpage{\clearpage}}
-          {naka}{\def\jlreq@heading@clearpage{\cleardoublepage}}
+          {naka}{\def\jlreq@heading@clearpage{\clearpage\hbox{}\clearpage}}
         }%
       }
     }{#3}%
@@ -1876,7 +1886,8 @@
         \unexpanded{\if@restonecol\twocolumn\fi}%
       }%
       \noexpand\def\expandonce{\csname #1\endcsname}{%
-        \unexpanded{\if@twocolumn\onecolumn\@restonecoltrue\else\@restonecolfalse\fi\cleardoublepage}%
+        % 改丁．これでよいのかな．
+        \unexpanded{\if@twocolumn\onecolumn\@restonecoltrue\else\@restonecolfalse\fi\cleartooddpage}%
         \ifx\jlreq@pagestyle\@empty\else\noexpand\thispagestyle{\expandonce{\jlreq@pagestyle}}\fi
         \noexpand\secdef{\expandonce{\csname jlreq@TobiraHeading@start@#1\endcsname}}{\expandonce{\csname jlreq@TobiraHeading@start@s@#1\endcsname}}}%
     }%
@@ -1965,7 +1976,7 @@
 \expandafter\def\expandafter\jlreq@BlockHeading@start@afterheading@@\space{\jlreq@BlockHeading@start@afterheading}
 \def\jlreq@BlockHeading@start@afterheading@@@{%
   \def\jlreq@do{\jlreq@BlockHeading@spaces@output}%
-  \expandafter\@for\expandafter\@tempa\expandafter:\expandafter=\jlreq@BlockHeading@allheadings\do{%
+  \@for\@tempa:=\jlreq@BlockHeading@allheadings\do{%
     \expandafter\ifx\csname\@tempa\endcsname\jlreq@nextchar\def\jlreq@do{}\fi
   }%
   % \jlreq@BlockHeading@HeadingSpaces@ignoretokens内のものは特別扱いする
@@ -2177,7 +2188,7 @@
       {before_space}{\def\jlreq@before@space{##1}}
       {after_space}{\def\jlreq@after@space{##1}}
       {before_lines}{%
-        \jlreq@iffirsttoken{##1}{*}%
+        \jlreq@iffirsttoken@ignorespaces{##1}{*}%
           {\edef\jlreq@before@lines{s:\expandonce{\@gobble ##1}}}%
           {\def\jlreq@before@lines{a:##1}}%
       }
@@ -2232,6 +2243,7 @@
     \newif\ifjlreq@subtitle@break\jlreq@subtitle@breaktrue
     \def\jlreq@subtitle@indent{1\zw}%
     \def\jlreq@column@spanning{false}%
+    \newif\ifjlreq@column@spanning@possible\jlreq@column@spanning@possiblefalse
     % a,bみたいなのをaとbにわける．カンマがなければbは空．引数を{a}{b}として##2を呼び出す．
     \def\jlreq@parsecomma##1##2{%
       \def\jlreq@tempa####1####2{##2}%
@@ -2294,12 +2306,14 @@
           {false}{\def\jlreq@allowbreak@evenpage{*}}
         }%
       }
-      {pagebreak}[clearpage,cleardoublepage,clearcolumn,nariyuki]{%
+      {pagebreak}[clearpage,cleardoublepage,clearcolumn,nariyuki,begin_with_odd_page,begin_with_even_page]{%
         \jlreq@switch{##1}{
-          {clearpage}{\def\jlreq@pagebreak{\clearpage}}
-          {cleardoublepage}{\def\jlreq@pagebreak{\cleardoublepage}}
-          {clearcolumn}{\if@twocolumn\def\jlreq@pagebreak{\newpage}\else\def\jlreq@pagebreak{}\fi}
-          {nariyuki}{\def\jlreq@pagebreak{}}
+          {clearpage}{\def\jlreq@pagebreak{\clearpage}\jlreq@column@spanning@possibletrue}
+          {cleardoublepage}{\def\jlreq@pagebreak{\cleardoublepage}\jlreq@column@spanning@possibletrue}
+          {clearcolumn}{\if@twocolumn\def\jlreq@pagebreak{\newpage}\else\def\jlreq@pagebreak{}\fi\jlreq@column@spanning@possiblefalse}
+          {begin_with_even_page}{\def\jlreq@pagebreak{\cleartoevenpage}\jlreq@column@spanning@possibletrue}
+          {begin_with_odd_page}{\def\jlreq@pagebreak{\cleartooddpage}\jlreq@column@spanning@possibletrue}
+          {nariyuki}{\def\jlreq@pagebreak{}\jlreq@column@spanning@possiblefalse}
         }%
       }
       % 後々数字を受け付けるようになったりするかもしれないので……
@@ -2322,10 +2336,10 @@
     \def\jlreq@do{}% 初期化．これに最終処理を入れていく．
     % 入力チェック
     \ifthenelse{\equal{\jlreq@column@spanning}{true}}{%
-      \expandafter\ifx\jlreq@pagebreak\clearpage\relax\else\expandafter\ifx\jlreq@pagebreak\cleardoublepage\relax\else
-        \ClassWarningNoLine{jlreq}{column_spanning can be used only with pagebreak=clearpage or pagebreak=cleardoublepage (in BlockHeading #1)}%
+      \ifjlreq@column@spanning@possible\else
+        \ClassWarningNoLine{jlreq}{column_spanning can be used only with `pagebreak=nariyuki' or `pagebreak=clearcolumn' (in BlockHeading #1)}%
         \def\jlreq@column@spanning{false}%
-      \fi\fi
+      \fi
     }{}%
     \edef\jlreq@format{\expandonce{\jlreq@font}\expandonce{\jlreq@format}}%
     % 空き量などの調整を含んだラベル
@@ -2457,7 +2471,7 @@
 \newcommand{\SetBlockHeadingSpaces}[1]{%
   \begingroup
     % 現段階の情報をクリアする
-    \expandafter\@for\expandafter\jlreq@tempa\expandafter:\expandafter=\jlreq@BlockHeading@spaces@headingslist\do{%
+    \@for\jlreq@tempa:=\jlreq@BlockHeading@spaces@headingslist\do{%
       \expandafter\let\csname jlreq@BlockHeading@spaces@setlist@\jlreq@tempa\endcsname=\@undefined
     }%
     \def\jlreq@BlockHeading@spaces@headingslist{}%
@@ -3021,11 +3035,6 @@
       subtitle_font={\jlreq@keepbaselineskip{\Large}}}
     \renewcommand{\thechapter}{\arabic{chapter}}
     \renewcommand{\thesection}{\thechapter.\arabic{section}}
-    \ifthenelse{\equal{\jlreq@article@type}{book}}{
-      \ModifyHeading{chapter}{pagebreak=cleardoublepage}
-    }{
-      \ModifyHeading{chapter}{pagebreak=clearpage}
-    }
   }
   \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\sffamily\bfseries}},lines=3,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
   \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\sffamily\bfseries}},lines=2,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\small}}}
@@ -3037,7 +3046,11 @@
 \ifthenelse{\equal{\jlreq@article@type}{article}}{}{% book, report
   \if@openright
     \ModifyHeading{part}{type=naka}
-    \ModifyHeading{chapter}{pagebreak=cleardoublepage}
+    \if@tate
+      \ModifyHeading{chapter}{pagebreak=begin_with_even_page}
+    \else
+      \ModifyHeading{chapter}{pagebreak=begin_with_odd_page}
+    \fi
   \else
     \ModifyHeading{part}{type=han}
     \ModifyHeading{chapter}{pagebreak=clearpage}
@@ -3200,7 +3213,7 @@
   \if@twocolumn
     \def\jlreq@footnote@delayfootnote@count{%
       \jlreq@setcurrentpage
-      \jlreq@resultcnt=\numexpr\jlreq@currentpage - \value{page} \ifodd\numexpr\jlreq@currentpage\else + 1\fi\relax
+      \jlreq@resultcnt=\numexpr\jlreq@currentpage - \value{page} \ifodd\jlreq@currentpage\else + 1\fi\relax
       % このページに表示＆上の段処理済みだと\@opcol内では間に合わない
       \ifnum\jlreq@resultcnt=0 \if@firstcolumn\else\jlreq@resultcnt=-1 \fi\fi
     }
@@ -3830,7 +3843,7 @@
 
 % レベル#1より低いレベルの見出しの**markを\markboth{}{}にする
 \def\jlreq@pagestyle@setclearmark#1{%
-  \expandafter\@for\expandafter\@tempa\expandafter:\expandafter=\jlreq@heading@allheadings\do{%
+  \@for\@tempa:=\jlreq@heading@allheadings\do{%
     \@ifundefined{\@tempa}{}{%
       \ifnum\csname jlreq@heading@level@\@tempa\endcsname<#1\relax\expandafter\def\csname\@tempa mark\endcsname##1{\markboth{}{}}\fi
     }%
@@ -3874,8 +3887,6 @@
     }{#2}%
     % 見出しを出す場合：evenに章などの高いレベルの見出しを出す（2.6.3.a）
     \def\jlreq@markdefinition{}%
-    \def\jlreq@even@running@head@level{}%
-    \def\jlreq@markdefinition{}%
     % _***な指定な時に，
     % * \jlreq@[even/odd]@running@headを\leftmarkや\rightmarkに書き換える
     % * \jlreq@markdefinitionに\***markを定義するマクロを入れる．
@@ -3918,6 +3929,7 @@
       \fi
       \jlreq@ifendmark{##2}{}{\@gobble}%
     }%
+    \def\jlreq@even@running@head@level{}%
     \def\@tempb{\jlreq@makemark{even}}%
     \expandafter\@tempb\jlreq@even@running@head\jlreq@endmark\jlreq@endmark
     \def\jlreq@odd@running@head@level{}%
@@ -3975,7 +3987,7 @@
           \fi
         }%
       }%
-      % 左に配置するヘッダ．#1は柱の中身．（一回展開で正しくでてくる．）
+      % 左に配置するヘッダ．##1は柱の中身を入れたマクロ．（一回展開で正しくでてくる．）
       \def\jlreq@make@lefthead##1{%
         \jlreq@make@tatebox{##1}%
         \edef\jlreq@lefthead{%
@@ -4621,16 +4633,16 @@
 \jlreqsetup{itemization_beforeafter_space={0pt,i=.5\baselineskip},itemization_itemsep=0pt}
 % enumerate, itemize用初期化
 \def\jlreq@init@list{%
-  \setlength{\labelwidth}{2\jlreq@mol}%
+  \setlength{\labelwidth}{2\zw}%
   \setlength{\partopsep}{0pt}%
   \setlength{\itemsep}{\dimexpr\jlreq@itemization@itemsep\relax}%
   \setlength{\parsep}{0pt}%
   \setlength{\listparindent}{\parindent}%
 % itemizeは直後ベタ，enumerateは直後全角空き．
   \ifthenelse{\equal{\@currenvir}{itemize}}{%
-    \setlength{\labelsep}{0\jlreq@mol}%
+    \setlength{\labelsep}{0\zw}%
   }{%
-    \setlength{\labelsep}{1\jlreq@mol}%
+    \setlength{\labelsep}{1\zw}%
   }%
   % \labelsepだけあけるのは一つ目（ラベルの直後）のみ
   \setlength{\itemindent}{\labelsep}%
@@ -4860,14 +4872,14 @@
 
 % listoffigures
 \newcommand{\listoffigures}{%
-  \jlreq@top@contents=0
+  \jlreq@top@contents=-100
   \section*{\listfigurename}%
   \@mkboth{\listfigurename}{\listfigurename}%
   \@starttoc{lof}%
 }
 \newcommand*{\l@figure}{\@dottedtocline{1}{0\jlreq@gol}{2\jlreq@gol}}
 \newcommand{\listoftables}{%
-  \jlreq@top@contents=0
+  \jlreq@top@contents=-100
   \section*{\listtablename}%
   \@mkboth{\listtablename}{\listtablename}%
   \@starttoc{lot}%
@@ -4936,11 +4948,7 @@
   \newif\if@mainmatter
   \@mainmattertrue
   \newcommand*{\frontmatter}{%
-    \if@openright
-      \cleardoublepage
-    \else
-      \clearpage
-    \fi
+    \cleardoublepage
     \@mainmatterfalse
     \let\jlreq@pagestyle@atmain\jlreq@current@pagestyle
     \SaveHeading{chapter}{\jlreq@heading@chapter@atmain}%

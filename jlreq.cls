@@ -597,11 +597,11 @@
 
 \ExecuteOptionsX{article_type=article,paper=a4,open_bracket_pos=zenkaku_tentsuki,onecolumn,final}
 % \@removeelementを一旦置き換えてから\ProcessOptionsXを実行する
-\let\jlreq@original@@removeelement=\@removeelement
+\let\jlreq@temporary@original@@removeelement=\@removeelement
 \let\@removeelement=\jlreq@helper@removeelement
 \ProcessOptionsX\relax
-\let\@removeelement=\jlreq@original@@removeelement
-\let\jlreq@original@@removeelement=\@undefined
+\let\@removeelement=\jlreq@temporary@original@@removeelement
+\let\jlreq@temporary@original@@removeelement=\@undefined
 
 \ifjlreq@option@titlepage\else
   \ifthenelse{\equal{\jlreq@article@type}{article}}{\@titlepagefalse}{\@titlepagetrue}
@@ -3854,7 +3854,10 @@
 % 要するに\ps@***に\sectionmarkを定義するように仕込む．
 % 常にodd=rightmark，even=leftmarkになる．
 % 場所指定は奇数ページの方．偶数ページは反対になる．
-% mark_format={_chapter={第\thechapter 章\quad #1}}のような形．odd=とかeven=とかも仕込めるようにしたけど
+% mark_format={_chapter={第\thechapter 章\quad #1}}のような形．
+% このとき\ps@***で\def\chaptermark#1{\markboth{第\thechapter 章\quad #1}{}}とか定義される．
+% \markbothか\markrightかはoddかevenかに依存．
+% odd=とかeven=とかも仕込めるようにしたけど
 % あまり意味がない気がしてきた．oddやevenが優先される．
 \newcommand*{\DeclarePageStyle}[2]{%
   \expandafter\edef\csname jlreq@pagestyle@setting@#1\endcsname{\unexpanded{#2}}%
@@ -3883,17 +3886,20 @@
       {mark_format}{\edef\jlreq@mark@format{\unexpanded{##1}}}
       {command}{\edef\jlreq@command{\unexpanded{##1}}}
       {gap}{\def\jlreq@gap{##1}}
+      % trueにすると，\ps@***実行時にまず\***markを全て\@gobbleにする．
       {clear_markcommand}[true,false]{\csname jlreq@clearmarkcommand##1\endcsname}
     }{#2}%
-    % 見出しを出す場合：evenに章などの高いレベルの見出しを出す（2.6.3.a）
     \def\jlreq@markdefinition{}%
-    % _***な指定な時に，
+    % \jlreq@makemark{odd/even}running_headの中身\jlreq@endmark\jlreq@endmark
+    % として使う．running_headの中身が_から始まる時に，次を実行する．
     % * \jlreq@[even/odd]@running@headを\leftmarkや\rightmarkに書き換える
     % * \jlreq@markdefinitionに\***markを定義するマクロを入れる．
-    % また\jlreq@[even/odd]@running@head@levelに見出しのレベルを入れる．
-    % \jlreq@makemark{odd/even}running_headの中身\jlreq@endmark\jlreq@endmark
+    % * \jlreq@[even/odd]@running@head@levelに見出しのレベルを入れる．
     \def\jlreq@makemark##1##2##3\jlreq@endmark{%
       \ifx_##2%
+        \@ifundefined{##2}{%
+          \ClassError{jlreq}{Unknown Heading `##2' (in PageStyle #1)}{\@ehc}%
+        }{}%
         \ifthenelse{\equal{##1}{even}}{%
           \def\jlreq@even@running@head{\leftmark}%
         }{%
@@ -3913,6 +3919,7 @@
         }%
         \expandafter\jlreq@tempa\expandafter{\jlreq@mark@format}%
         \ifx\jlreq@result\@undefined
+          % デフォルトのmark_format
           \edef\jlreq@result{\expandonce{\csname the##3\endcsname}\noexpand\quad\unexpanded{####1}}%
         \fi
         \ifthenelse{\equal{##1}{even}}{%
@@ -3937,6 +3944,7 @@
     \expandafter\@tempb\jlreq@odd@running@head\jlreq@endmark\jlreq@endmark
     \ifx\jlreq@odd@running@head@level\@empty\else\ifx\jlreq@even@running@head@level\@empty\else
       \ifnum\jlreq@odd@running@head@level<\jlreq@even@running@head@level
+        % 見出しを出す場合：evenに章などの高いレベルの見出しを出す（2.6.3.a）
         \jlreq@note{偶数ページには奇数ページよりアウトラインレベルの高い見出しを入れる (ページスタイル #1内，2.6.3.a)．}%
       \fi
     \fi\fi
@@ -4685,11 +4693,20 @@
   \renewcommand{\theenumii}{\jlreq@rensuji{\@arabic\c@enumii}}
   \renewcommand{\theenumiii}{\jlreq@rensuji{\@arabic\c@enumiii}}
   \renewcommand{\theenumiv}{\jlreq@rensuji{\@arabic\c@enumiv}}
+  \newcommand{\labelenumi}{\theenumi}
+  \newcommand{\labelenumii}{\theenumii}
+  \newcommand{\labelenumiii}{\theenumiii}
+  \newcommand{\labelenumiv}{\theenumiv}
+\else
+  \renewcommand{\theenumi}{\@arabic\c@enumi}
+  \renewcommand{\theenumii}{\@alph\c@enumii}
+  \renewcommand{\theenumiii}{\@roman\c@enumiii}
+  \renewcommand{\theenumiv}{\@Alph\c@enumiv}
+  \newcommand{\labelenumi}{\theenumi.}
+  \newcommand{\labelenumii}{(\theenumii)}
+  \newcommand{\labelenumiii}{\theenumiii.}
+  \newcommand{\labelenumiv}{\theenumiv.}
 \fi
-\newcommand{\labelenumi}{\theenumi}
-\newcommand{\labelenumii}{\theenumii}
-\newcommand{\labelenumiii}{\theenumiii}
-\newcommand{\labelenumiv}{\theenumiv}
 \renewcommand{\p@enumii}{\theenumi}
 \renewcommand{\p@enumiii}{\theenumi(\theenumii)}
 \renewcommand{\p@enumiv}{\p@enumiii\theenumiii}

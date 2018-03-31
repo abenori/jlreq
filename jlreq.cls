@@ -3203,7 +3203,7 @@
 }
 \if@tate
   % 縦組の傍注は，その見開き内に付いている合印に対応する注を，奇数ページの左端にそろえて配置する．多段組では最下段の左端にそろえて配置する．（4.2.6.a）
-  % 必要ならば\footnoteを\footnotemarkと\footnotetextにわけ，\footnotetextを\@opcol内まで遅延することで実現する．
+  % 必要ならば\footnoteを\footnotemarkと\footnotetextにわけ，\footnotetextをアウトプット時まで遅延することで実現する．
   \def\jlreq@footnote@delayfootnoteslist{}
   \preto\@opcol{%
     \expandafter\gdef\expandafter\jlreq@footnote@delayfootnoteslist\expandafter{\expandafter}%
@@ -3215,12 +3215,12 @@
     \def\jlreq@footnote@delayfootnote@page{%
       \jlreq@setcurrentpage
       \jlreq@resultcnt=\numexpr\jlreq@currentpage\ifodd\jlreq@currentpage\else + 1\fi\relax
-      % このページに表示＆上の段処理済みだと\@opcol内では間に合わない
-      \ifnum\jlreq@resultcnt=0 \if@firstcolumn\else\jlreq@resultcnt=-1 \fi\fi
+      % このページに表示＆上の段処理済みだと\output内では間に合わない
+      \ifnum\jlreq@resultcnt=\value{page}\if@firstcolumn\else\jlreq@resultcnt=-1 \fi\fi
     }
     \long\def\jlreq@footnote@delayfootnote@delay#1#2#3{%
       % 二段組みの場合は上段を組んだ直後に\footnotetextを挿入（そのページの下段に入る）
-      \ifnum 0\if@firstcolumn\else 1\fi\ifnum\value{page}<#1 1\fi>0
+      \ifnum 0\if@firstcolumn\else 1\fi\ifnum#1>\value{page}1\fi>0
         \xappto\jlreq@footnote@delayfootnoteslist{\unexpanded{\jlreq@footnote@delayfootnote{#1}{#2}{#3}}}%
       \else
         \footnotetext[#2]{#3}%
@@ -3237,7 +3237,7 @@
     }
     \long\def\jlreq@footnote@delayfootnote@delay#1#2#3{%
       % 一段組の場合はその前のページを組んだ直後に\footnotetextを挿入．
-      \ifnum\value{page}<\numexpr#1 - 1\relax
+      \ifnum\numexpr#1 - 1\relax>\value{page}%
         \xappto\jlreq@footnote@delayfootnoteslist{\unexpanded{\jlreq@footnote@delayfootnote{#1}{#2}{#3}}}%
       \else
         \footnotetext[#2]{#3}%

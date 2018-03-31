@@ -3203,61 +3203,68 @@
 }
 \if@tate
   % 縦組の傍注は，その見開き内に付いている合印に対応する注を，奇数ページの左端にそろえて配置する．多段組では最下段の左端にそろえて配置する．（4.2.6.a）
+  % 必要ならば\footnoteを\footnotemarkと\footnotetextにわけ，\footnotetextを\@opcol内まで遅延することで実現する．
   \def\jlreq@footnote@delayfootnoteslist{}
   \preto\@opcol{%
     \expandafter\gdef\expandafter\jlreq@footnote@delayfootnoteslist\expandafter{\expandafter}%
     \jlreq@footnote@delayfootnoteslist
   }
-  % \jlreq@footnote@delayfootnote@countは，どのくらい\footnotetextを遅延するかを計算し，\jlreq@resultcntに結果を入れる．
-  % 今すぐ\footnoteでよい場合は\jlreq@resultcnt=-1
+  % \jlreq@footnote@delayfootnote@delay#1#2#3：#1ページ目に\footnotetext[#2]{#3}を出す
+  % \jlreq@footnote@delayfootnote@page：何ページ目に\footnotetextを入れるかを\jlreq@resultcntに入れる．その場での場合は-1．
   \if@twocolumn
-    \def\jlreq@footnote@delayfootnote@count{%
+    \def\jlreq@footnote@delayfootnote@page{%
       \jlreq@setcurrentpage
-      \jlreq@resultcnt=\numexpr\jlreq@currentpage - \value{page} \ifodd\jlreq@currentpage\else + 1\fi\relax
+      \jlreq@resultcnt=\numexpr\jlreq@currentpage\ifodd\jlreq@currentpage\else + 1\fi\relax
       % このページに表示＆上の段処理済みだと\@opcol内では間に合わない
       \ifnum\jlreq@resultcnt=0 \if@firstcolumn\else\jlreq@resultcnt=-1 \fi\fi
     }
     \long\def\jlreq@footnote@delayfootnote@delay#1#2#3{%
-      \if@firstcolumn
-        \ifnum#1<1
-          \footnotetext[#2]{#3}%
-        \else
-          \xappto\jlreq@footnote@delayfootnoteslist{\unexpanded{\jlreq@footnote@delayfootnote{#1}{#2}{#3}}}%
-        \fi
+      % 二段組みの場合は上段を組んだ直後に\footnotetextを挿入（そのページの下段に入る）
+      \ifnum 0\if@firstcolumn\else 1\fi\ifnum\value{page}<#1 1\fi>0
+        \xappto\jlreq@footnote@delayfootnoteslist{\unexpanded{\jlreq@footnote@delayfootnote{#1}{#2}{#3}}}%
       \else
-        % ページ頭でカウントを一つ減らす
-        \xappto\jlreq@footnote@delayfootnoteslist{\noexpand\jlreq@footnote@delayfootnote{\the\numexpr#1 - 1\relax}\unexpanded{{#2}{#3}}}
+        \footnotetext[#2]{#3}%
       \fi
     }
-  \else % \if@twocolumn
-    \def\jlreq@footnote@delayfootnote@count{%
+  \else
+    \def\jlreq@footnote@delayfootnote@page{%
       \jlreq@setcurrentpage
       \ifodd\jlreq@currentpage
         \jlreq@resultcnt=-1
       \else
-        \jlreq@resultcnt=\numexpr\jlreq@currentpage - \value{page}\relax
+        \jlreq@resultcnt=\numexpr\jlreq@currentpage+1\relax
       \fi
     }
     \long\def\jlreq@footnote@delayfootnote@delay#1#2#3{%
-      \ifnum#1<1
-        \footnotetext[#2]{#3}%
+      % 一段組の場合はその前のページを組んだ直後に\footnotetextを挿入．
+      \ifnum\value{page}<\numexpr#1 - 1\relax
+        \xappto\jlreq@footnote@delayfootnoteslist{\unexpanded{\jlreq@footnote@delayfootnote{#1}{#2}{#3}}}%
       \else
-        \xappto\jlreq@footnote@delayfootnoteslist{\noexpand\jlreq@footnote@delayfootnote{\the\numexpr#1 - 1\relax}{\unexpanded{#2}}{\unexpanded{#3}}}%
+        \footnotetext[#2]{#3}%
       \fi
     }
-  \fi % \if@twocolumn\else
-  \def\jlreq@footnote@delayfootnote@immediate#1#2#3{\footnotetext[#2]{#3}}%
+  \fi
+  \def\jlreq@footnote@delayfootnote@immediate#1#2#3{%
+    \ifnum #1<\jlreq@currentpage
+      \xappto\jlreq@footnote@delayfootnoteslist{\unexpanded{\jlreq@footnote@delayfootnote{#1}{#2}{#3}}}%
+    \else
+      \footnotetext[#2]{#3}%
+    \fi
+  }
   \let\jlreq@footnote@delayfootnote=\jlreq@footnote@delayfootnote@delay
   \def\jlreq@footnote@flushdelayfootnoteslist{%
-    \let\jlreq@footnote@delayfootnote=\jlreq@footnote@delayfootnote@immediate
-    \jlreq@footnote@delayfootnoteslist
-    \gdef\jlreq@footnote@delayfootnoteslist{}%
-    \let\jlreq@footnote@delayfootnote=\jlreq@footnote@delayfootnote@delay
+    \ifx\jlreq@footnote@delayfootnoteslist\@empty\else
+      \let\jlreq@footnote@delayfootnote=\jlreq@footnote@delayfootnote@immediate
+      \jlreq@setcurrentpage
+      \expandafter\gdef\expandafter\jlreq@footnote@delayfootnoteslist\expandafter{\expandafter}%
+      \jlreq@footnote@delayfootnoteslist
+      \let\jlreq@footnote@delayfootnote=\jlreq@footnote@delayfootnote@delay
+    \fi
   }
   \AtEndDocument{\jlreq@footnote@flushdelayfootnoteslist}
   \preto\newpage{\jlreq@footnote@flushdelayfootnoteslist}
   \long\def\jlreq@footnote@impl@woption[#1]#2{%
-    \jlreq@footnote@delayfootnote@count
+    \jlreq@footnote@delayfootnote@page
     \ifnum\jlreq@resultcnt=-1
       \jlreq@useoriginalcs{\footnote}[#1]{#2}%
     \else
@@ -3267,7 +3274,7 @@
     \jlreq@hook@postnote
   }
   \long\def\jlreq@footnote@impl@wooption#1{%
-    \jlreq@footnote@delayfootnote@count
+    \jlreq@footnote@delayfootnote@page
     \ifnum\jlreq@resultcnt=-1
       \jlreq@useoriginalcs{\footnote}{#1}%
     \else

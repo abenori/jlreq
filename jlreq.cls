@@ -32,7 +32,7 @@
 \newcount\jlreq@resultcnt
 
 \newcommand*{\jlreq@undefcs}[1]{%
-  \ifundef{#1}{\ClassError{jlreq}{Trying to delete \string#1\space even though it is not defined, may be a bug}{\@ehc}}{\undef{#1}}%
+  \ifundef{#1}{\ClassError{jlreq}{Trying to delete \string#1 even though it is not defined, may be a bug}{\@ehc}}{\undef{#1}}%
 }
 
 % クラスファイル内でしか使わないマクロをクラスファイル終了時に未定義にする
@@ -349,13 +349,13 @@
 }
 
 \def\jlreq@saveoriginalcs#1{%
-  \@ifundefined{#1}{%
-    \ClassError{jlreq}{Trying to save \expandafter\string\csname #1\endcsname\space but it's not defined, may be a bug}{\@ehc}%
-  }{}%
-  \@ifundefined{jlreq@original@#1}{}{%
-    \ClassError{jlreq}{Trying to save \expandafter\string\csname #1\endcsname\space twice, may be a bug}{\@ehc}%
-  }%
-  \expandafter\expandafter\expandafter\let\expandafter\expandafter\csname jlreq@original@#1\endcsname\csname #1\endcsname
+  \ifx#1\relax
+    \ClassError{jlreq}{Trying to save \string#1 but it's not defined, may be a bug}{\@ehc}%
+  \fi
+  \expandafter\ifx\csname jlreq@original@\expandafter\@gobble\string#1\endcsname\relax\else
+    \ClassError{jlreq}{Trying to save \string#1 twice, may be a bug}{\@ehc}%
+  \fi
+  \expandafter\let\csname jlreq@original@\expandafter\@gobble\string#1\endcsname=#1
 }
 \def\jlreq@useoriginalcs#1{%
   \ifcsname jlreq@original@\expandafter\@gobble\string#1\endcsname\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
@@ -1202,8 +1202,8 @@
   \directlua{jlreq.open_bracket_pos = [[\jlreq@open@bracket@pos]]}
   \ifjlreq@burasage\directlua{jlreq.burasage = true}\else\directlua{jlreq.burasage = false}\fi
   % \item後の行頭括弧のために仕込み．
-  \jlreq@saveoriginalcs{list}
-  \jlreq@saveoriginalcs{endlist}
+  \jlreq@saveoriginalcs{\list}
+  \jlreq@saveoriginalcs{\endlist}
   \pretocmd{\list}{\jlreq@pushhook@postpar{\ltjfakeparbegin}}{}{}
   \apptocmd{\endlist}{\jlreq@pophook@postpar}{}{}
 \else
@@ -1415,7 +1415,7 @@
 
 %.. 文字サイズ変更
 \def\jlreq@setfontsizehook{}
-\jlreq@saveoriginalcs{set@fontsize}
+\jlreq@saveoriginalcs{\set@fontsize}
 \apptocmd{\set@fontsize}{\expandafter\def\expandafter\size@update\expandafter{\size@update\jlreq@setfontsizehook}}{}{}
 \appto\jlreq@setfontsizehook{\ifdim\parindent>0pt \setlength{\parindent}{1\zw}\fi}
 \ifx l\jlreq@engine
@@ -3191,8 +3191,8 @@
 \fi
 
 % \footnoteと\footnotemarkの前後に\jlreq@hook@prenote/\jlreq@hook@postnoteを入れる
-\jlreq@saveoriginalcs{footnote}
-\jlreq@saveoriginalcs{footnotemark}
+\jlreq@saveoriginalcs{\footnote}
+\jlreq@saveoriginalcs{\footnotemark}
 \def\footnote{%
   \jlreq@hook@prenote
   \@ifnextchar[{\jlreq@footnote@impl@woption}{\jlreq@footnote@impl@wooption}%
@@ -3918,17 +3918,13 @@
         % mark_formatを調べる
         \def\jlreq@tempa####1{%
           \jlreq@tempafalse
-          \let\jlreq@result=\@undefined
+          \edef\jlreq@result{\expandonce{\csname the##3\endcsname}\noexpand\quad\unexpanded{########1}}%
           \jlreq@parsekeyval*{
             {##1}{\edef\jlreq@result{\unexpanded{########1}}\jlreq@tempatrue}
             {##2##3}{\ifjlreq@tempa\else\edef\jlreq@result{\unexpanded{########1}}\fi}
           }{####1}%
         }%
         \expandafter\jlreq@tempa\expandafter{\jlreq@mark@format}%
-        \ifx\jlreq@result\@undefined
-          % デフォルトのmark_format
-          \edef\jlreq@result{\expandonce{\csname the##3\endcsname}\noexpand\quad\unexpanded{####1}}%
-        \fi
         \ifthenelse{\equal{##1}{even}}{%
           \def\jlreq@markcommand{\markboth}%
           \def\jlreq@markcommandafter{{}}%
@@ -4788,8 +4784,8 @@
 
 %. 表関係 4.4
 % 表内の行間を0にする（4.4.3.f）
-\jlreq@saveoriginalcs{tabular}
-\jlreq@saveoriginalcs{endtabular}
+\jlreq@saveoriginalcs{\tabular}
+\jlreq@saveoriginalcs{\endtabular}
 \preto\tabular{\begingroup\appto\@arrayparboxrestore{\baselineskip=0pt\lineskip=0pt}}
 \appto\endtabular{\endgroup}
 % 4.4.3.e
@@ -5117,8 +5113,8 @@
   \jlreqsetup{year_style=seireki}
 \fi
 %.. 定理環境
-\jlreq@saveoriginalcs{@begintheorem}
-\jlreq@saveoriginalcs{@opargbegintheorem}
+\jlreq@saveoriginalcs{\@begintheorem}
+\jlreq@saveoriginalcs{\@opargbegintheorem}
 \def\@begintheorem#1#2{\topsep=\dimexpr\jlreq@theorem@beforeafter@space\relax
   \trivlist\labelsep=1\zw
   \itemindent=\dimexpr\jlreq@theorem@indent\relax
@@ -5128,11 +5124,11 @@
   \itemindent=\dimexpr\jlreq@theorem@indent\relax
   \item[\hskip \labelsep{\sffamily\bfseries #1\ #2（#3）}]}
 \AtEndOfPackageFile*{amsthm}{%
-  \jlreq@saveoriginalcs{proof}%
-  \jlreq@saveoriginalcs{endproof}%
+  \jlreq@saveoriginalcs{\proof}%
+  \jlreq@saveoriginalcs{\endproof}%
   \edef\jlreq@do{
     \unexpanded{\def\jlreq@proof[#1]}{%
-      \labelsep=1\zw
+      \unexpanded{\labelsep=1\zw}%
       \expandonce{\proof[{\reset@font\sffamily\bfseries #1\inhibitglue}\nopunct]}%
     }
   }

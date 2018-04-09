@@ -534,7 +534,7 @@
 %.. 段間
 \newcommand*{\jlreq@option@column@gap}{2zw}
 \jlreq@aftercls@addtodeletecs{\jlreq@option@column@gap}
-\DeclareOptionX{column_gap}{\renewcommand*{\jlreq@option@column@gap{#1}}}
+\DeclareOptionX{column_gap}{\renewcommand*{\jlreq@option@column@gap}{#1}}
 
 %.. 行送り，指定無しの場合は文字サイズの1.7倍とする．（1.5から2倍が好ましい：2.4.2.d 注3）
 \newcommand*{\jlreq@option@baselineskip}{17zw/10}

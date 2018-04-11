@@ -74,7 +74,12 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Added some options related to captions.
     - Extended `itemization_beforeafter_space`.
     - Fixed bugs.
-
+* 2018-04-11
+    - Sidenotes (`\footnote`) appears in the second column in `tate` mode.
+    - Added options `begin_widh_(odd|even)_page` to `\DeclareBlockHeading`.
+    - Changed `\labelenumi`  as in `jarticle` etc.
+    - Fix a bug on `column_gap` class option.
+    - Added `mark_format` to `\DeclarePageStyle`.
 
 
 --------------

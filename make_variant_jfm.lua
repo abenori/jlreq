@@ -3,10 +3,11 @@ require('lualibs')
 
 function burasage(t)
 	t = table.fastcopy(t)
-	-- 句読点の幅を0にして，句読点に続くglueを0.5増やす．
+	-- 句読点の幅を0にして，句読点に続くglueを句読点の幅だけ増やす．
 	for _,class in ipairs({6,7}) do
 		local width = t[class].width
 		t[class].width = 0
+		-- 句読点を前とするJFMはすべて定義されていることを仮定．
 		if t[class].glue ~= nil then
 			for key,_ in pairs(t[class].glue) do
 				t[class].glue[key][1] = t[class].glue[key][1] + width

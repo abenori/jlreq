@@ -274,6 +274,8 @@
     - `tate`指定時：`<寸法>`が指定できます．`running_head_position`は柱の天からの下げ量を，`nombre_position`はノンブルの地からの上げ量を指定します．
 * `nombre=<書式>`：出力するノンブルを指定します．デフォルトは`\thepage`．
 * `odd_running_head=<書式>`，`even_running_head=<書式>`：それぞれ奇数ページ，偶数ページの柱を指定します．`_section`のように`_`から始まる名前を指定すると，対応する見出しを出力します．（`_section`だと現在の`\section`を出力する．）
+* `mark_format={[odd=<書式>/even=<書式>/_<見出し命令名>=<書式>],...}`：見出しを柱に出力する際のフォーマットを指定します．`mark_format={_section={節\thesection：#1},_chapter={第\thechapter 章\quad #1}}`のように指定します．見出し命令名の代わりに`odd`や`even`も指定でき，それぞれ奇数ページ/偶数ページの柱の書式になります．`\pagestyle`実行時に`\sectionmark`等を定義することで実現しています．
+
 
 `\NewPageStyle`，`\RenewPageStyle`，`\ProvidePageStyle`もあります．`\ModifyPageStyle`により既存のページスタイルを改変することが可能です．
 
@@ -369,6 +371,12 @@ JFMの名前は次の通りです．`[]`で囲まれている文字は設定に�
     - キャプション関係のオプションを`\jlreqsetup`に追加．
     - `itemization_beforeafter_space`を拡張．
     - バグ修正．
+* 2018-04-11
+    - 縦書き二段組みの傍注を下段に出すようにした．
+    - `begin_widh_(odd|even)_page`を`\DeclareBlockHeading`に追加．
+    - `\labelenumi`らをjarticleなどにあわせた．
+    - `column_gap`クラスオプションを使うとコンパイルできなかったバグ修正．
+    - `mark_format`を`\DeclarePageStyle`に追加．
 
 
 --------------

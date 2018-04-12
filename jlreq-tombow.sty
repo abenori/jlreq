@@ -215,7 +215,7 @@
 
 
 \iftombow
-  \def\maketombowbox{
+  \def\maketombowbox{%
     \setbox\@TL\hbox to\z@{\yoko\hss
         \vrule width\dimexpr 10mm + \jlreq@tombow@bleed\relax height\@tombowwidth depth\z@
         \vrule height10mm width\@tombowwidth depth\z@
@@ -262,8 +262,10 @@
   }
   \def\@outputtombow{%
     \iftombow
+    \@@paperwidth=\dimexpr\@@paperwidth - 6mm + 2\dimexpr\jlreq@tombow@bleed\relax\relax
+    \@@paperheight=\dimexpr\@@paperheight - 6mm + 2\dimexpr\jlreq@tombow@bleed\relax\relax
     \vbox to\z@{\kern-\dimexpr 10mm + \jlreq@tombow@bleed\relax\relax
-      \boxmaxdepth\maxdimen%% Added (Apr 1, 2016)
+      \boxmaxdepth\maxdimen
       \moveleft\jlreq@tombow@bleed\vbox to\@@paperheight{%
         \hbox to\@@paperwidth{\hskip\jlreq@tombow@bleed\relax
            \copy\@TL\hfill\copy\@TC\hfill\copy\@TR\hskip\jlreq@tombow@bleed}%
@@ -299,7 +301,7 @@
     [
       \jlreq@tombow@pttobp{(\jlreq@tombow@paperwidth - \paperwidth)/2 - \jlreq@tombow@bleed}
       \jlreq@tombow@pttobp{(\jlreq@tombow@paperheight - \paperheight)/2 - \jlreq@tombow@bleed}
-      \jlreq@tombow@pttobp{(\jlreq@tombow@paperwidth + \paperwidth)/2 - \jlreq@tombow@bleed}
+      \jlreq@tombow@pttobp{(\jlreq@tombow@paperwidth + \paperwidth)/2 + \jlreq@tombow@bleed}
       \jlreq@tombow@pttobp{(\jlreq@tombow@paperheight + \paperheight)/2 + \jlreq@tombow@bleed}
     ]
   }

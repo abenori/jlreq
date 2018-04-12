@@ -1,0 +1,267 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{jlreq-tombow}[2018/04/12 jlreq-tombow]
+\RequirePackage{xkeyval,ifthen}
+\RequirePackage{jlreq-helpers}
+
+\newcommand*{\jlreq@tombow@DeclareOption}[2]{%
+  \DeclareOptionX{#1}{%
+    \jlreq@ifempty{##1}{}{\PackageError{jlreq-tombow}{The option #1 should have no value}{\@ehc}}%
+    #2%
+  }
+}
+
+\@ifclassloaded{jlreq}{\let\ifjlreq@tombow@jlreqloaded=\@firstoftwo}{\let\ifjlreq@tombow@jlreqloaded=\@secondoftwo}
+
+% \jlreq@tombow@driver：ドライバ
+% dvipdfmx=f，dvips=s，luatex=l
+\jlreq@tombow@DeclareOption{dvipdfmx}{\let\jlreq@tombow@driver=f}
+\jlreq@tombow@DeclareOption{dvips}{\let\jlreq@tombow@driver=s}
+\let\jlreq@tombow@engine=\jlreq@engine
+\jlreq@tombow@DeclareOption{lualatex}{\let\jlreq@tombow@engine=l}
+\jlreq@tombow@DeclareOption{uplatex}{\let\jlreq@tombow@engine=u}
+\jlreq@tombow@DeclareOption{platex}{\let\jlreq@tombow@engine=p}
+
+% 必要サイズ
+% トンボ付きのひとまわり大きな紙面のサイズ=MediaBox/CropBox
+% 仕上がり紙面サイズ=TrimBox/ArtBox
+% 裁ち落とし領域を含んだサイズ=BleedBox
+\def\jlreq@tombow@switchpapersize{}
+\def\jlreq@tombow@addpapersize#1#2{%
+  \@ifnextchar[{\jlreq@tombow@addpapersize@{#1}{#2}}{\jlreq@tombow@addpapersize@@{#1}{#2}}
+}
+\def\jlreq@tombow@addpapersize@#1#2[#3]{%
+  \edef\@tempa{\unexpanded{\jlreq@tombow@addpapersize@@{#1}{#2}}\csexpandonce{jlreq@helper@papersizelist@#3}}%
+  \@tempa
+}
+\newcommand*{\jlreq@tombow@addpapersize@@}[4]{%
+  \@for\@tempa:=#1\do{%
+    \eappto\jlreq@tombow@switchpapersize{{\expandonce{\@tempa}}{\unexpanded{\def\jlreq@tombow@papewidth{#3}\def\jlreq@tombow@paperheight{#4}}}}%
+  }%
+  \@for\@tempa:=#2\do{%
+    \expandafter\jlreq@tombow@DeclareOption\expandafter{\@tempa}{\def\jlreq@tombow@papewidth{#3}\def\jlreq@tombow@paperheight{#4}}%
+  }%
+}
+\jlreq@tombow@addpapersize{a0,A0}{}[a0]
+\jlreq@tombow@addpapersize{a1,A1}{}[a1]
+\jlreq@tombow@addpapersize{a2,A2}{}[a2]
+\jlreq@tombow@addpapersize{a3,A3}{a3paper}[a3]
+\jlreq@tombow@addpapersize{a4,A4}{a4paper}[a4]
+\jlreq@tombow@addpapersize{a5,A5}{a5paper}[a5]
+\jlreq@tombow@addpapersize{a6,A6}{a6paper}[a6]
+\jlreq@tombow@addpapersize{a7,A7}{}[a7]
+\jlreq@tombow@addpapersize{a8,A8}{}[a8]
+\jlreq@tombow@addpapersize{a9,A9}{}[a9]
+\jlreq@tombow@addpapersize{a10,A10}{}[a10]
+
+\jlreq@tombow@addpapersize{b0,B0}{}[b0]
+\jlreq@tombow@addpapersize{b1,B1}{}[b1]
+\jlreq@tombow@addpapersize{b2,B2}{}[b2]
+\jlreq@tombow@addpapersize{b3,B3}{}[b3]
+\jlreq@tombow@addpapersize{b4,B4}{b4paper}[b4]
+\jlreq@tombow@addpapersize{b5,B5}{b5paper}[b5]
+\jlreq@tombow@addpapersize{b6,B6}{b6paper}[b6]
+\jlreq@tombow@addpapersize{b7,B7}{}[b7]
+\jlreq@tombow@addpapersize{b8,B8}{}[b8]
+\jlreq@tombow@addpapersize{b9,B9}{}[b9]
+\jlreq@tombow@addpapersize{b10,B10}{}[b10]
+
+\jlreq@tombow@addpapersize{c2,C2}{}[c2]
+\jlreq@tombow@addpapersize{c3,C3}{}[c3]
+\jlreq@tombow@addpapersize{c4,C4}{}[c4]
+\jlreq@tombow@addpapersize{c5,C5}{}[c5]
+\jlreq@tombow@addpapersize{c6,C6}{}[c6]
+\jlreq@tombow@addpapersize{c7,C7}{}[c7]
+\jlreq@tombow@addpapersize{c8,C8}{}[c8]
+
+\jlreq@tombow@addpapersize{a4var}{}[a4var]
+\jlreq@tombow@addpapersize{b5var}{}[b5var]
+
+\jlreq@tombow@addpapersize{letter}{letterpaper}[letter]
+\jlreq@tombow@addpapersize{legal}{legalpaper}[legal]
+\jlreq@tombow@addpapersize{executive}{executivepaper}[executive]
+\jlreq@tombow@addpapersize{hagaki}{}[hagaki]
+
+
+\DeclareOptionX{tombow_paper}{
+  \edef\jlreq@do{%
+    \unexpanded{\jlreq@switch{#1}}{\expandonce{\jlreq@tombow@switchpapersize}}%
+    [\unexpanded{%
+      \jlreq@helper@dividebycomma{#1}%
+      \ifjlreq@result
+        \edef\jlreq@tombow@paperwidth{\jlreq@resulta}
+        \edef\jlreq@tombow@paperheight{\jlreq@resultb}
+      \else
+        \PackageError{jlreq}{The paper #1 is unknown}{\@ehc}%
+      \fi
+    }]%
+  }%
+  \jlreq@do
+}
+\def\jlreq@tombow@bleed{3mm}
+\DeclareOptionX{bleed_margin}{\def\jlreq@tombow@bleed{#1}}
+
+\newif\ifjlreq@tombow@digital
+\jlreq@tombow@digitaltrue
+\DeclareOptionX{show}{%
+  \tombowfalse\tombowdatefalse\jlreq@tombow@digitalfalse
+  \@for\jlreq@tombow@tempa:=#1\do{%
+    \ifthenelse{\equal{\jlreq@tombow@tempa}{tombow}}{\tombowtrue}{}
+    \ifthenelse{\equal{\jlreq@tombow@tempa}{date}}{\tombowdatetrue}{}
+    \ifthenelse{\equal{\jlreq@tombow@tempa}{digital}}{\jlreq@tombow@digitaltrue}{}
+  }
+}
+\DeclareOptionX{tombow_width}{\setlength{\@tombowwidth}{#1}}
+
+\let\jlreq@temporary@original@@removeelement=\@removeelement
+\let\@removeelement=\jlreq@helper@removeelement
+\ProcessOptionsX\relax
+\let\@removeelement=\jlreq@temporary@original@@removeelement
+\let\jlreq@temporary@original@@removeelement=\@undefined
+
+\iftombowdate
+  \@bannertoken{%
+     \jobname\space(\number\year-\two@digits\month-\two@digits\day
+     \space\two@digits\hour:\two@digits\minute)}%
+\fi
+
+\ifx\jlreq@tombow@engine\@undefined
+  \jlreq@helper@guessengine
+  \let\jlreq@tombow@engine=\jlreq@result
+\fi
+
+\ifx\jlreq@tombow@driver\@undefined
+  \ifx l\jlreq@tombow@engine
+    \let\jlreq@tombow@driver=l
+  \else
+    % platex/uplatexの時はドライバのデフォルトはdvipdfmx
+    \let\jlreq@tombow@driver=f
+  \fi
+\fi
+
+% 紙サイズ
+\ifx\jlreq@tombow@paperwidth\@undefined % 紙サイズが指定されなかった
+  \def\jlreq@tombow@guess@papersize#1#2#3{%
+    \jlreq@tombow@guess@papersize@{#1}{#2}#3\jlreq@endmark
+  }
+  \def\jlreq@tombow@guess@papersize@#1#2#3{%
+    \jlreq@ifendmark{#3}{}{\jlreq@tombow@guess@papersize@@{#1}{#2}{#3}}%
+  }
+  \def\jlreq@tombow@guess@papersize@@#1#2#3#4{%
+    \def\@tempa##1##2{%
+      \ifdim\dimexpr ##1\relax=\dimexpr\expandafter\expandafter\expandafter\@firstoftwo\csname jlreq@helper@papersizelist@#3\endcsname\relax\expandafter\@firstofone\else\expandafter\@gobble\fi
+      {%
+        \ifdim\dimexpr ##2\relax=\dimexpr\expandafter\expandafter\expandafter\@secondoftwo\csname jlreq@helper@papersizelist@#3\endcsname\relax\expandafter\@firstofone\else\expandafter\@gobble\fi
+      }%
+    }%
+    \@tempa{#1}{#2}{%
+      \def\@tempb##1##2{\def\jlreq@tombow@paperwidth{##1}\def\jlreq@tombow@paperheight{##2}}%
+      \edef\jlreq@tombow@do{\noexpand\@tempb\csexpandonce{jlreq@helper@papersizelist@#4}}
+      \jlreq@tombow@do
+    }%
+    % landscape
+    \@tempa{#2}{#1}{
+      \def\@tempb##1##2{\def\jlreq@tombow@paperwidth{##2}\def\jlreq@tombow@paperheight{##1}}%
+      \edef\jlreq@tombow@do{\noexpand\@tempb\csexpandonce{jlreq@helper@papersizelist@#4}}
+      \jlreq@tombow@do
+    }%
+    \ifx\jlreq@tombow@papersize\@undefined\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+      {\jlreq@tombow@guess@papersize@{#1}{#2}}{\jlreq@deleteuntileendmark}%
+  }
+  \edef\jlreq@tombow@do{\noexpand\jlreq@tombow@guess@papersize{\the\paperwidth}{\the\paperheight}}
+  \jlreq@tombow@do{%
+    {a0}{b0}
+    {a1}{b1}
+    {a2}{b2}
+    {a3}{b3}
+    {a4}{b4}
+    {a5}{b5}
+    {a6}{b6}
+    {a7}{b7}
+    {a8}{b8}
+    {a9}{b9}
+    {a10}{b10}
+    {b1}{a0}
+    {b2}{a1}
+    {b3}{a2}
+    {b4}{a3}
+    {b5}{a4}
+    {b6}{a5}
+    {b7}{a6}
+    {b8}{a7}
+    {b9}{a8}
+    {b10}{a9}
+  }
+  \ifx\jlreq@tombow@paperwidth\@undefined\else
+    \edef\jlreq@tombow@paperwidth{\the\dimexpr\paperwidth + 2in\relax}
+    \edef\jlreq@tombow@paperheight{\the\dimexpr\paperheight + 2in\relax}
+  \fi
+\fi
+
+\ifx l\jlreq@engine
+  \setlength{\pagewidth}{\jlreq@tombow@paperwidth}
+  \setlength{\pageheight}{\jlreq@tombow@paperheight}
+\else
+  \setlength{\pdfpagewidth}{\jlreq@tombow@paperwidth}
+  \setlength{\pdfpageheight}{\jlreq@tombow@paperheight}
+\fi
+
+% ずらす……
+\hoffset=\dimexpr(\jlreq@tombow@paperwidth - \paperwidth)/2 - 1in\relax
+\voffset=\dimexpr(\jlreq@tombow@paperheight - \paperheight)/2 - 1in\relax
+
+\ifx l\jlreq@tombow@driver\else
+  \AtBeginDvi{\special{papersize=\jlreq@tombow@paperwidth,\jlreq@tombow@paperheight}}
+\fi
+
+\ifjlreq@tombow@digital
+  \def\jlreq@tombow@pttobp#1{%
+    \strip@pt\dimexpr0.9963\dimexpr#1\relax\relax
+  }
+  \edef\jlreq@tombow@trimboxsize{
+    [
+      \jlreq@tombow@pttobp{(\jlreq@tombow@paperwidth - \paperwidth)/2}
+      \jlreq@tombow@pttobp{(\jlreq@tombow@paperheight - \paperheight)/2}
+      \jlreq@tombow@pttobp{(\jlreq@tombow@paperwidth + \paperwidth)/2}
+      \jlreq@tombow@pttobp{(\jlreq@tombow@paperheight + \paperheight)/2}
+    ]
+  }
+  \edef\jlreq@tombow@bleedboxsize{
+    [
+      \jlreq@tombow@pttobp{(\jlreq@tombow@paperwidth - \paperwidth)/2 - \jlreq@tombow@bleed}
+      \jlreq@tombow@pttobp{(\jlreq@tombow@paperheight - \paperheight)/2 - \jlreq@tombow@bleed}
+      \jlreq@tombow@pttobp{(\jlreq@tombow@paperwidth + \paperwidth)/2 - \jlreq@tombow@bleed}
+      \jlreq@tombow@pttobp{(\jlreq@tombow@paperheight + \paperheight)/2 + \jlreq@tombow@bleed}
+    ]
+  }
+  \edef\jlreq@tombow@cropboxsize{
+    [0 0 \jlreq@tombow@pttobp{\jlreq@tombow@paperwidth} \jlreq@tombow@pttobp{\jlreq@tombow@paperheight}]
+  }
+  \edef\jlreq@tombow@pdfattribute{%
+    /CropBox \jlreq@tombow@cropboxsize
+    /TrimBox \jlreq@tombow@trimboxsize
+    /ArtBox \jlreq@tombow@trimboxsize
+    /BleedBox \jlreq@tombow@bleedboxsize
+  }
+
+  \ifx l\jlreq@tombow@driver
+    \def\@tempa{\pdfvariable pageattr}
+    \expandafter\@tempa\expandafter{\jlreq@tombow@pdfattribute}
+  \fi
+  \ifx f\jlreq@tombow@driver
+    \edef\@tempa{\noexpand\special{pdf: put @thispage <<\jlreq@tombow@pdfattribute>>}}
+    \edef\@outputtombow{\expandonce{\@tempa}\expandonce{\@outputtombow}}
+  \fi
+  \ifx s\jlreq@tombow@driver
+    \edef\@tempa{\noexpand\special{ps:SDict begin 
+      [ /CropBox \jlreq@tombow@cropboxsize\space /PAGE pdfmark
+      [ /TrimBox  \jlreq@tombow@trimboxsize\space /PAGE pdfmark
+      [ /ArtBox   \jlreq@tombow@trimboxsize\space /PAGE pdfmark
+      [ /BleedBox \jlreq@tombow@bleedboxsize\space /PAGE pdfmark
+    end}}%
+    \@tempa
+  \fi
+\fi
+
+\maketombowbox
+
+\endinput

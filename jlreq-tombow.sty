@@ -35,10 +35,10 @@
 }
 \newcommand*{\jlreq@tombow@addpapersize@@}[4]{%
   \@for\@tempa:=#1\do{%
-    \eappto\jlreq@tombow@switchpapersize{{\expandonce{\@tempa}}{\unexpanded{\def\jlreq@tombow@papewidth{#3}\def\jlreq@tombow@paperheight{#4}}}}%
+    \eappto\jlreq@tombow@switchpapersize{{\expandonce{\@tempa}}{\unexpanded{\def\jlreq@tombow@paperwidth{#3}\def\jlreq@tombow@paperheight{#4}}}}%
   }%
   \@for\@tempa:=#2\do{%
-    \expandafter\jlreq@tombow@DeclareOption\expandafter{\@tempa}{\def\jlreq@tombow@papewidth{#3}\def\jlreq@tombow@paperheight{#4}}%
+    \expandafter\jlreq@tombow@DeclareOption\expandafter{\@tempa}{\def\jlreq@tombow@paperwidth{#3}\def\jlreq@tombow@paperheight{#4}}%
   }%
 }
 \jlreq@tombow@addpapersize{a0,A0}{}[a0]
@@ -82,7 +82,7 @@
 \jlreq@tombow@addpapersize{hagaki}{}[hagaki]
 
 
-\DeclareOptionX{tombow_paper}{
+\DeclareOptionX{paper}{
   \edef\jlreq@do{%
     \unexpanded{\jlreq@switch{#1}}{\expandonce{\jlreq@tombow@switchpapersize}}%
     [\unexpanded{%

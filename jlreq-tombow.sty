@@ -140,61 +140,8 @@
 
 % 紙サイズ
 \ifx\jlreq@tombow@paperwidth\@undefined % 紙サイズが指定されなかった
-  \def\jlreq@tombow@guess@papersize#1#2#3{%
-    \jlreq@tombow@guess@papersize@{#1}{#2}#3\jlreq@endmark
-  }
-  \def\jlreq@tombow@guess@papersize@#1#2#3{%
-    \jlreq@ifendmark{#3}{}{\jlreq@tombow@guess@papersize@@{#1}{#2}{#3}}%
-  }
-  \def\jlreq@tombow@guess@papersize@@#1#2#3#4{%
-    \def\@tempa##1##2{%
-      \ifdim\dimexpr ##1\relax=\dimexpr\expandafter\expandafter\expandafter\@firstoftwo\csname jlreq@helper@papersizelist@#3\endcsname\relax\expandafter\@firstofone\else\expandafter\@gobble\fi
-      {%
-        \ifdim\dimexpr ##2\relax=\dimexpr\expandafter\expandafter\expandafter\@secondoftwo\csname jlreq@helper@papersizelist@#3\endcsname\relax\expandafter\@firstofone\else\expandafter\@gobble\fi
-      }%
-    }%
-    \@tempa{#1}{#2}{%
-      \def\@tempb##1##2{\def\jlreq@tombow@paperwidth{##1}\def\jlreq@tombow@paperheight{##2}}%
-      \edef\jlreq@tombow@do{\noexpand\@tempb\csexpandonce{jlreq@helper@papersizelist@#4}}
-      \jlreq@tombow@do
-    }%
-    % landscape
-    \@tempa{#2}{#1}{
-      \def\@tempb##1##2{\def\jlreq@tombow@paperwidth{##2}\def\jlreq@tombow@paperheight{##1}}%
-      \edef\jlreq@tombow@do{\noexpand\@tempb\csexpandonce{jlreq@helper@papersizelist@#4}}
-      \jlreq@tombow@do
-    }%
-    \ifx\jlreq@tombow@papersize\@undefined\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
-      {\jlreq@tombow@guess@papersize@{#1}{#2}}{\jlreq@deleteuntileendmark}%
-  }
-  \edef\jlreq@tombow@do{\noexpand\jlreq@tombow@guess@papersize{\the\paperwidth}{\the\paperheight}}
-  \jlreq@tombow@do{%
-    {a0}{b0}
-    {a1}{b1}
-    {a2}{b2}
-    {a3}{b3}
-    {a4}{b4}
-    {a5}{b5}
-    {a6}{b6}
-    {a7}{b7}
-    {a8}{b8}
-    {a9}{b9}
-    {a10}{b10}
-    {b1}{a0}
-    {b2}{a1}
-    {b3}{a2}
-    {b4}{a3}
-    {b5}{a4}
-    {b6}{a5}
-    {b7}{a6}
-    {b8}{a7}
-    {b9}{a8}
-    {b10}{a9}
-  }
-  \ifx\jlreq@tombow@paperwidth\@undefined\else
-    \edef\jlreq@tombow@paperwidth{\the\dimexpr\paperwidth + 2in\relax}
-    \edef\jlreq@tombow@paperheight{\the\dimexpr\paperheight + 2in\relax}
-  \fi
+  \edef\jlreq@tombow@paperwidth{\the\dimexpr\paperwidth + 2in\relax}
+  \edef\jlreq@tombow@paperheight{\the\dimexpr\paperheight + 2in\relax}
 \fi
 
 \ifx l\jlreq@engine
@@ -286,9 +233,7 @@
 \fi
 
 \ifjlreq@tombow@digital
-  \def\jlreq@tombow@pttobp#1{%
-    \strip@pt\dimexpr0.9963\dimexpr#1\relax\relax
-  }
+  \def\jlreq@tombow@pttobp#1{\strip@pt\dimexpr0.9963\dimexpr#1\relax\relax}
   \edef\jlreq@tombow@trimboxsize{
     [
       \jlreq@tombow@pttobp{(\jlreq@tombow@paperwidth - \paperwidth)/2}
@@ -320,8 +265,7 @@
     \expandafter\@tempa\expandafter{\jlreq@tombow@pdfattribute}
   \fi
   \ifx f\jlreq@tombow@driver
-    \edef\@tempa{\noexpand\special{pdf: put @thispage <<\jlreq@tombow@pdfattribute>>}}
-    \edef\@outputtombow{\expandonce{\@tempa}\expandonce{\@outputtombow}}
+    \edef\@outputtombow{\noexpand\special{pdf: put @thispage <<\jlreq@tombow@pdfattribute>>}\expandonce{\@outputtombow}}
   \fi
   \ifx s\jlreq@tombow@driver
     \edef\@tempa{\noexpand\special{ps:SDict begin 

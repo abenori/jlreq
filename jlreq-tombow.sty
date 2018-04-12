@@ -82,7 +82,7 @@
 \jlreq@tombow@addpapersize{hagaki}{}[hagaki]
 
 
-\DeclareOptionX{paper}{
+\DeclareOptionX{tombow_paper}{
   \edef\jlreq@do{%
     \unexpanded{\jlreq@switch{#1}}{\expandonce{\jlreq@tombow@switchpapersize}}%
     [\unexpanded{%
@@ -211,6 +211,76 @@
 
 \ifx l\jlreq@tombow@driver\else
   \AtBeginDvi{\special{papersize=\jlreq@tombow@paperwidth,\jlreq@tombow@paperheight}}
+\fi
+
+
+\iftombow
+  \def\maketombowbox{
+    \setbox\@TL\hbox to\z@{\yoko\hss
+        \vrule width\dimexpr 10mm + \jlreq@tombow@bleed\relax height\@tombowwidth depth\z@
+        \vrule height10mm width\@tombowwidth depth\z@
+        \iftombowdate
+          \raise4pt\hbox to\z@{\hskip5mm\@bannerfont\the\@bannertoken\hss}%
+        \fi}%
+    \setbox\@Tl\hbox to\z@{\yoko\hss
+        \vrule width10mm height\@tombowwidth depth\z@
+        \vrule height\dimexpr 10mm + \jlreq@tombow@bleed\relax width\@tombowwidth depth\z@}%
+    \setbox\@TC\hbox{\yoko
+        \vrule width10mm height\@tombowwidth depth\z@
+        \vrule height10mm width\@tombowwidth depth\z@
+        \vrule width10mm height\@tombowwidth depth\z@}%
+    \setbox\@TR\hbox to\z@{\yoko
+        \vrule height10mm width\@tombowwidth depth\z@
+        \vrule width\dimexpr 10mm + \jlreq@tombow@bleed\relax height\@tombowwidth depth\z@\hss}%
+    \setbox\@Tr\hbox to\z@{\yoko
+        \vrule height\dimexpr 10mm + \jlreq@tombow@bleed\relax width\@tombowwidth depth\z@
+        \vrule width10mm height\@tombowwidth depth\z@\hss}%
+  %
+    \setbox\@BL\hbox to\z@{\yoko\hss
+        \vrule width\dimexpr 10mm + \jlreq@tombow@bleed\relax depth\@tombowwidth height\z@
+        \vrule depth10mm width\@tombowwidth height\z@}%
+    \setbox\@Bl\hbox to\z@{\yoko\hss
+        \vrule width10mm depth\@tombowwidth height\z@
+        \vrule depth\dimexpr 10mm + \jlreq@tombow@bleed\relax width\@tombowwidth height\z@}%
+    \setbox\@BC\hbox{\yoko
+        \vrule width10mm depth\@tombowwidth height\z@
+        \vrule depth10mm width\@tombowwidth height\z@
+        \vrule width10mm depth\@tombowwidth height\z@}%
+    \setbox\@BR\hbox to\z@{\yoko
+        \vrule depth10mm width\@tombowwidth height\z@
+        \vrule width\dimexpr 10mm + \jlreq@tombow@bleed\relax depth\@tombowwidth height\z@\hss}%
+    \setbox\@Br\hbox to\z@{\yoko
+        \vrule depth\dimexpr 10mm + \jlreq@tombow@bleed\relax width\@tombowwidth height\z@
+        \vrule width10mm depth\@tombowwidth height\z@\hss}%
+  %
+    \setbox\@CL\hbox to\z@{\yoko\hss
+        \vrule width10mm height.5\@tombowwidth depth.5\@tombowwidth
+        \vrule height10mm depth10mm width\@tombowwidth}%
+    \setbox\@CR\hbox to\z@{\yoko
+        \vrule height10mm depth10mm width\@tombowwidth
+        \vrule height.5\@tombowwidth depth.5\@tombowwidth width10mm\hss}%
+  }
+  \def\@outputtombow{%
+    \iftombow
+    \vbox to\z@{\kern-\dimexpr 10mm + \jlreq@tombow@bleed\relax\relax
+      \boxmaxdepth\maxdimen%% Added (Apr 1, 2016)
+      \moveleft\jlreq@tombow@bleed\vbox to\@@paperheight{%
+        \hbox to\@@paperwidth{\hskip\jlreq@tombow@bleed\relax
+           \copy\@TL\hfill\copy\@TC\hfill\copy\@TR\hskip\jlreq@tombow@bleed}%
+        \kern-10mm
+        \hbox to\@@paperwidth{\copy\@Tl\hfill\copy\@Tr}%
+        \vfill
+        \hbox to\@@paperwidth{\copy\@CL\hfill\copy\@CR}%
+        \vfill
+        \hbox to\@@paperwidth{\copy\@Bl\hfill\copy\@Br}%
+        \kern-10mm
+        \hbox to\@@paperwidth{\hskip\jlreq@tombow@bleed\relax
+           \copy\@BL\hfill\copy\@BC\hfill\copy\@BR\hskip\jlreq@tombow@bleed}%
+      }\vss
+    }%
+    \fi
+  }
+
 \fi
 
 \ifjlreq@tombow@digital

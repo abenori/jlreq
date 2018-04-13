@@ -3,12 +3,29 @@
 \RequirePackage{xkeyval,ifthen}
 \RequirePackage{jlreq-helpers}
 
+\newcommand*{\jlreq@undefcs}[1]{%
+  \ifundef{#1}{\PackageError{jlreq-tombow}{Trying to delete \string#1 even though it is not defined, may be a bug}{\@ehc}}{\undef{#1}}%
+}
+
+% クラスファイル内でしか使わないマクロをクラスファイル終了時に未定義にする
+\newcommand*{\jlreq@tombow@afterpkg@addtodeletecs}[1]{%
+  \appto\jlreq@tombow@afterpkg@deletecslist{\jlreq@undefcs{#1}}%
+}
+\jlreq@tombow@afterpkg@addtodeletecs{\jlreq@tombow@afterpkg@addtodeletecs}
+\AtEndOfPackage{%
+  \jlreq@tombow@afterpkg@deletecslist
+  \jlreq@undefcs{\jlreq@tombow@afterpkg@deletecslist}%
+  \undef{\jlreq@undefcs}%
+}
+
+
 \newcommand*{\jlreq@tombow@DeclareOption}[2]{%
   \DeclareOptionX{#1}{%
     \jlreq@ifempty{##1}{}{\PackageError{jlreq-tombow}{The option #1 should have no value}{\@ehc}}%
     #2%
   }
 }
+\jlreq@tombow@afterpkg@addtodeletecs{\jlreq@tombow@DeclareOption}
 
 \@ifclassloaded{jlreq}{\let\ifjlreq@tombow@jlreqloaded=\@firstoftwo}{\let\ifjlreq@tombow@jlreqloaded=\@secondoftwo}
 
@@ -22,9 +39,9 @@
 \jlreq@tombow@DeclareOption{platex}{\let\jlreq@tombow@engine=p}
 
 % 必要サイズ
-% トンボ付きのひとまわり大きな紙面のサイズ=MediaBox/CropBox
-% 仕上がり紙面サイズ=TrimBox/ArtBox
-% 裁ち落とし領域を含んだサイズ=BleedBox
+% (1) トンボ付きのひとまわり大きな紙面のサイズ=MediaBox/CropBox：\paperwidth/\paperheight
+% (2) 仕上がり紙面サイズ=TrimBox/ArtBox：\jlreq@tombow@paperwidth/\jlreq@tombow@paperheight
+% (3) 裁ち落とし領域を含んだサイズ=BleedBox：(2)からの差を\jlreq@tombow@bleemに入れる
 \def\jlreq@tombow@switchpapersize{}
 \def\jlreq@tombow@addpapersize#1#2{%
   \@ifnextchar[{\jlreq@tombow@addpapersize@{#1}{#2}}{\jlreq@tombow@addpapersize@@{#1}{#2}}
@@ -41,6 +58,11 @@
     \expandafter\jlreq@tombow@DeclareOption\expandafter{\@tempa}{\def\jlreq@tombow@paperwidth{#3}\def\jlreq@tombow@paperheight{#4}}%
   }%
 }
+\jlreq@tombow@afterpkg@addtodeletecs{\jlreq@tombow@switchpapersize}
+\jlreq@tombow@afterpkg@addtodeletecs{\jlreq@tombow@addpapersize}
+\jlreq@tombow@afterpkg@addtodeletecs{\jlreq@tombow@addpapersize@}
+\jlreq@tombow@afterpkg@addtodeletecs{\jlreq@tombow@addpapersize@@}
+
 \jlreq@tombow@addpapersize{a0,A0}{}[a0]
 \jlreq@tombow@addpapersize{a1,A1}{}[a1]
 \jlreq@tombow@addpapersize{a2,A2}{}[a2]
@@ -81,7 +103,6 @@
 \jlreq@tombow@addpapersize{executive}{executivepaper}[executive]
 \jlreq@tombow@addpapersize{hagaki}{}[hagaki]
 
-
 \DeclareOptionX{tombow_paper}{
   \edef\jlreq@do{%
     \unexpanded{\jlreq@switch{#1}}{\expandonce{\jlreq@tombow@switchpapersize}}%
@@ -100,12 +121,12 @@
 \def\jlreq@tombow@bleed{3mm}
 \DeclareOptionX{bleed_margin}{\def\jlreq@tombow@bleed{#1}}
 
-\newif\ifjlreq@tombow@digital
-\jlreq@tombow@digitaltrue
+\newif\ifjlreq@tombow@digital \jlreq@tombow@digitaltrue
+\newif\ifjlreq@tombow@show \jlreq@tombow@showtrue
 \DeclareOptionX{show}{%
-  \tombowfalse\tombowdatefalse\jlreq@tombow@digitalfalse
+  \jlreq@tombow@showfalse\tombowdatefalse\jlreq@tombow@digitalfalse
   \@for\jlreq@tombow@tempa:=#1\do{%
-    \ifthenelse{\equal{\jlreq@tombow@tempa}{tombow}}{\tombowtrue}{}
+    \ifthenelse{\equal{\jlreq@tombow@tempa}{tombow}}{\jlreq@tombow@showtrue}{}
     \ifthenelse{\equal{\jlreq@tombow@tempa}{date}}{\tombowdatetrue}{}
     \ifthenelse{\equal{\jlreq@tombow@tempa}{digital}}{\jlreq@tombow@digitaltrue}{}
   }
@@ -114,15 +135,22 @@
 
 \let\jlreq@temporary@original@@removeelement=\@removeelement
 \let\@removeelement=\jlreq@helper@removeelement
-\ProcessOptionsX\relax
+\ProcessOptionsX*\relax
 \let\@removeelement=\jlreq@temporary@original@@removeelement
 \let\jlreq@temporary@original@@removeelement=\@undefined
 
-\iftombowdate
-  \@bannertoken{%
-     \jobname\space(\number\year-\two@digits\month-\two@digits\day
-     \space\two@digits\hour:\two@digits\minute)}%
-\fi
+\newcommand{\jlreqtombowsetup}[1]{%
+  \jlreq@parsekeyval{%
+    {banner}{\@bannertoken{##1}\maketombowbox}
+  }{#1}
+}
+\@onlypreamble\jlreqtombowsetup
+\jlreqtombowsetup{
+  banner={
+    \jobname\space(\number\year-\two@digits\month-\two@digits\day
+    \space\two@digits\hour:\two@digits\minute)%
+  }
+}
 
 \ifx\jlreq@tombow@engine\@undefined
   \jlreq@helper@guessengine
@@ -158,79 +186,77 @@
 
 \ifx l\jlreq@tombow@driver\else
   \AtBeginDvi{\special{papersize=\jlreq@tombow@paperwidth,\jlreq@tombow@paperheight}}
+  \@ifundefined{stockwidth}{\newdimen\stockwidth}{}
+  \@ifundefined{stockheight}{\newdimen\stockheight}{}
+  \setlength{\stockwidth}{\jlreq@tombow@paperwidth}
+  \setlength{\stockheight}{\jlreq@tombow@paperheight}
 \fi
 
-
-\iftombow
-  \def\maketombowbox{%
-    \setbox\@TL\hbox to\z@{\yoko\hss
-        \vrule width\dimexpr 10mm + \jlreq@tombow@bleed\relax height\@tombowwidth depth\z@
-        \vrule height10mm width\@tombowwidth depth\z@
-        \iftombowdate
-          \raise4pt\hbox to\z@{\hskip5mm\@bannerfont\the\@bannertoken\hss}%
-        \fi}%
-    \setbox\@Tl\hbox to\z@{\yoko\hss
-        \vrule width10mm height\@tombowwidth depth\z@
-        \vrule height\dimexpr 10mm + \jlreq@tombow@bleed\relax width\@tombowwidth depth\z@}%
-    \setbox\@TC\hbox{\yoko
-        \vrule width10mm height\@tombowwidth depth\z@
-        \vrule height10mm width\@tombowwidth depth\z@
-        \vrule width10mm height\@tombowwidth depth\z@}%
-    \setbox\@TR\hbox to\z@{\yoko
-        \vrule height10mm width\@tombowwidth depth\z@
-        \vrule width\dimexpr 10mm + \jlreq@tombow@bleed\relax height\@tombowwidth depth\z@\hss}%
-    \setbox\@Tr\hbox to\z@{\yoko
-        \vrule height\dimexpr 10mm + \jlreq@tombow@bleed\relax width\@tombowwidth depth\z@
-        \vrule width10mm height\@tombowwidth depth\z@\hss}%
-  %
-    \setbox\@BL\hbox to\z@{\yoko\hss
-        \vrule width\dimexpr 10mm + \jlreq@tombow@bleed\relax depth\@tombowwidth height\z@
-        \vrule depth10mm width\@tombowwidth height\z@}%
-    \setbox\@Bl\hbox to\z@{\yoko\hss
-        \vrule width10mm depth\@tombowwidth height\z@
-        \vrule depth\dimexpr 10mm + \jlreq@tombow@bleed\relax width\@tombowwidth height\z@}%
-    \setbox\@BC\hbox{\yoko
-        \vrule width10mm depth\@tombowwidth height\z@
-        \vrule depth10mm width\@tombowwidth height\z@
-        \vrule width10mm depth\@tombowwidth height\z@}%
-    \setbox\@BR\hbox to\z@{\yoko
-        \vrule depth10mm width\@tombowwidth height\z@
-        \vrule width\dimexpr 10mm + \jlreq@tombow@bleed\relax depth\@tombowwidth height\z@\hss}%
-    \setbox\@Br\hbox to\z@{\yoko
-        \vrule depth\dimexpr 10mm + \jlreq@tombow@bleed\relax width\@tombowwidth height\z@
-        \vrule width10mm depth\@tombowwidth height\z@\hss}%
-  %
-    \setbox\@CL\hbox to\z@{\yoko\hss
-        \vrule width10mm height.5\@tombowwidth depth.5\@tombowwidth
-        \vrule height10mm depth10mm width\@tombowwidth}%
-    \setbox\@CR\hbox to\z@{\yoko
-        \vrule height10mm depth10mm width\@tombowwidth
-        \vrule height.5\@tombowwidth depth.5\@tombowwidth width10mm\hss}%
-  }
-  \def\@outputtombow{%
-    \iftombow
-    \@@paperwidth=\dimexpr\@@paperwidth - 6mm + 2\dimexpr\jlreq@tombow@bleed\relax\relax
-    \@@paperheight=\dimexpr\@@paperheight - 6mm + 2\dimexpr\jlreq@tombow@bleed\relax\relax
-    \vbox to\z@{\kern-\dimexpr 10mm + \jlreq@tombow@bleed\relax\relax
-      \boxmaxdepth\maxdimen
-      \moveleft\jlreq@tombow@bleed\vbox to\@@paperheight{%
-        \hbox to\@@paperwidth{\hskip\jlreq@tombow@bleed\relax
-           \copy\@TL\hfill\copy\@TC\hfill\copy\@TR\hskip\jlreq@tombow@bleed}%
-        \kern-10mm
-        \hbox to\@@paperwidth{\copy\@Tl\hfill\copy\@Tr}%
-        \vfill
-        \hbox to\@@paperwidth{\copy\@CL\hfill\copy\@CR}%
-        \vfill
-        \hbox to\@@paperwidth{\copy\@Bl\hfill\copy\@Br}%
-        \kern-10mm
-        \hbox to\@@paperwidth{\hskip\jlreq@tombow@bleed\relax
-           \copy\@BL\hfill\copy\@BC\hfill\copy\@BR\hskip\jlreq@tombow@bleed}%
-      }\vss
-    }%
-    \fi
-  }
-
-\fi
+\def\maketombowbox{%
+  \setbox\@TL\hbox to\z@{\yoko\hss
+      \vrule width\dimexpr 10mm + \jlreq@tombow@bleed\relax height\@tombowwidth depth\z@
+      \vrule height10mm width\@tombowwidth depth\z@
+      \iftombowdate
+        \raise4pt\hbox to\z@{\hskip5mm\@bannerfont\the\@bannertoken\hss}%
+      \fi}%
+  \setbox\@Tl\hbox to\z@{\yoko\hss
+      \vrule width10mm height\@tombowwidth depth\z@
+      \vrule height\dimexpr 10mm + \jlreq@tombow@bleed\relax width\@tombowwidth depth\z@}%
+  \setbox\@TC\hbox{\yoko
+      \vrule width10mm height\@tombowwidth depth\z@
+      \vrule height10mm width\@tombowwidth depth\z@
+      \vrule width10mm height\@tombowwidth depth\z@}%
+  \setbox\@TR\hbox to\z@{\yoko
+      \vrule height10mm width\@tombowwidth depth\z@
+      \vrule width\dimexpr 10mm + \jlreq@tombow@bleed\relax height\@tombowwidth depth\z@\hss}%
+  \setbox\@Tr\hbox to\z@{\yoko
+      \vrule height\dimexpr 10mm + \jlreq@tombow@bleed\relax width\@tombowwidth depth\z@
+      \vrule width10mm height\@tombowwidth depth\z@\hss}%
+  \setbox\@BL\hbox to\z@{\yoko\hss
+      \vrule width\dimexpr 10mm + \jlreq@tombow@bleed\relax depth\@tombowwidth height\z@
+      \vrule depth10mm width\@tombowwidth height\z@}%
+  \setbox\@Bl\hbox to\z@{\yoko\hss
+      \vrule width10mm depth\@tombowwidth height\z@
+      \vrule depth\dimexpr 10mm + \jlreq@tombow@bleed\relax width\@tombowwidth height\z@}%
+  \setbox\@BC\hbox{\yoko
+      \vrule width10mm depth\@tombowwidth height\z@
+      \vrule depth10mm width\@tombowwidth height\z@
+      \vrule width10mm depth\@tombowwidth height\z@}%
+  \setbox\@BR\hbox to\z@{\yoko
+      \vrule depth10mm width\@tombowwidth height\z@
+      \vrule width\dimexpr 10mm + \jlreq@tombow@bleed\relax depth\@tombowwidth height\z@\hss}%
+  \setbox\@Br\hbox to\z@{\yoko
+      \vrule depth\dimexpr 10mm + \jlreq@tombow@bleed\relax width\@tombowwidth height\z@
+      \vrule width10mm depth\@tombowwidth height\z@\hss}%
+  \setbox\@CL\hbox to\z@{\yoko\hss
+      \vrule width10mm height.5\@tombowwidth depth.5\@tombowwidth
+      \vrule height10mm depth10mm width\@tombowwidth}%
+  \setbox\@CR\hbox to\z@{\yoko
+      \vrule height10mm depth10mm width\@tombowwidth
+      \vrule height.5\@tombowwidth depth.5\@tombowwidth width10mm\hss}%
+}
+\def\@outputtombow{%
+  \@@paperwidth=\dimexpr\@@paperwidth - 6mm + 2\dimexpr\jlreq@tombow@bleed\relax\relax
+  \@@paperheight=\dimexpr\@@paperheight - 6mm + 2\dimexpr\jlreq@tombow@bleed\relax\relax
+  \ifjlreq@tombow@show
+  \vbox to\z@{\kern-\dimexpr 10mm + \jlreq@tombow@bleed\relax\relax
+    \boxmaxdepth\maxdimen
+    \moveleft\jlreq@tombow@bleed\vbox to\@@paperheight{%
+      \hbox to\@@paperwidth{\hskip\jlreq@tombow@bleed\relax
+         \copy\@TL\hfill\copy\@TC\hfill\copy\@TR\hskip\jlreq@tombow@bleed}%
+      \kern-10mm
+      \hbox to\@@paperwidth{\copy\@Tl\hfill\copy\@Tr}%
+      \vfill
+      \hbox to\@@paperwidth{\copy\@CL\hfill\copy\@CR}%
+      \vfill
+      \hbox to\@@paperwidth{\copy\@Bl\hfill\copy\@Br}%
+      \kern-10mm
+      \hbox to\@@paperwidth{\hskip\jlreq@tombow@bleed\relax
+         \copy\@BL\hfill\copy\@BC\hfill\copy\@BR\hskip\jlreq@tombow@bleed}%
+    }\vss
+  }%
+  \fi
+}
 
 \ifjlreq@tombow@digital
   \def\jlreq@tombow@pttobp#1{\strip@pt\dimexpr0.9963\dimexpr#1\relax\relax}
@@ -259,6 +285,10 @@
     /ArtBox \jlreq@tombow@trimboxsize
     /BleedBox \jlreq@tombow@bleedboxsize
   }
+  \jlreq@tombow@afterpkg@addtodeletecs{\jlreq@tombow@pttobp}
+  \jlreq@tombow@afterpkg@addtodeletecs{\jlreq@tombow@trimboxsize}
+  \jlreq@tombow@afterpkg@addtodeletecs{\jlreq@tombow@cropboxsize}
+  \jlreq@tombow@afterpkg@addtodeletecs{\jlreq@tombow@bleedboxsize}
 
   \ifx l\jlreq@tombow@driver
     \def\@tempa{\pdfvariable pageattr}
@@ -278,6 +308,7 @@
   \fi
 \fi
 
-\maketombowbox
+% トンボ処理自身は常にtrueにする．
+\tombowtrue
 
 \endinput

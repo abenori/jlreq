@@ -3,21 +3,21 @@
 \RequirePackage{xkeyval,ifthen}
 \RequirePackage{jlreq-helpers}
 
-\newcommand*{\jlreq@undefcs}[1]{%
-  \ifundef{#1}{\PackageError{jlreq-tombow}{Trying to delete \string#1 even though it is not defined, may be a bug}{\@ehc}}{\undef{#1}}%
-}
-
+\newcommand*{\jlreq@tombow@undeferr}[1]{\PackageError{jlreq-tombow}{Trying to delete \string#1 even though it is not defined, may be a bug}{\@ehc}}
 % クラスファイル内でしか使わないマクロをクラスファイル終了時に未定義にする
 \newcommand*{\jlreq@tombow@afterpkg@addtodeletecs}[1]{%
-  \appto\jlreq@tombow@afterpkg@deletecslist{\jlreq@undefcs{#1}}%
+  \appto\jlreq@tombow@afterpkg@deletecslist{\jlreq@helper@undefcs{#1}{\jlreq@tombow@undeferr}}%
+}
+\newcommand*{\jlreq@tombow@afterpkg@addtodeleteif}[1]{%
+  \appto\jlreq@tombow@afterpkg@deletecslist{\jlreq@helper@undefif{#1}{\jlreq@tombow@undeferr}}%
 }
 \jlreq@tombow@afterpkg@addtodeletecs{\jlreq@tombow@afterpkg@addtodeletecs}
+\jlreq@tombow@afterpkg@addtodeletecs{\jlreq@tombow@afterpkg@addtodeleteif}
 \AtEndOfPackage{%
   \jlreq@tombow@afterpkg@deletecslist
-  \jlreq@undefcs{\jlreq@tombow@afterpkg@deletecslist}%
-  \undef{\jlreq@undefcs}%
+  \jlreq@helper@undefcs{\jlreq@tombow@afterpkg@deletecslist}{\jlreq@tombow@undeferr}%
+  \undef{\jlreq@tombow@undeferr}%
 }
-
 
 \newcommand*{\jlreq@tombow@DeclareOption}[2]{%
   \DeclareOptionX{#1}{%
@@ -126,12 +126,18 @@
 \DeclareOptionX{show}{%
   \jlreq@tombow@showfalse\tombowdatefalse\jlreq@tombow@digitalfalse
   \@for\jlreq@tombow@tempa:=#1\do{%
-    \ifthenelse{\equal{\jlreq@tombow@tempa}{tombow}}{\jlreq@tombow@showtrue}{}
-    \ifthenelse{\equal{\jlreq@tombow@tempa}{date}}{\tombowdatetrue}{}
-    \ifthenelse{\equal{\jlreq@tombow@tempa}{digital}}{\jlreq@tombow@digitaltrue}{}
+    \jlreq@switch{\jlreq@tombow@tempa}{
+      {tombow}{\jlreq@tombow@showtrue}
+      {date}{\tombowdatetrue}
+      {digital}{\jlreq@tombow@digitaltrue}
+    }[\PackageError{jlreq-tombow}{Unknown value `##1' in the option `show'}{@ehc}]
   }
 }
 \DeclareOptionX{tombow_width}{\setlength{\@tombowwidth}{#1}}
+
+% 色
+\def\jlreq@tombow@color{}
+\DeclareOptionX{tombow_color}{\def\jlreq@tombow@color{#1}}
 
 \let\jlreq@temporary@original@@removeelement=\@removeelement
 \let\@removeelement=\jlreq@helper@removeelement
@@ -166,6 +172,45 @@
   \fi
 \fi
 
+% 色
+\ifx\jlreq@tombow@color\@empty\else
+  \ifx f\jlreq@tombow@driver\PassOptionsToPackage{dvipdfmx}{xcolor}\fi
+  \ifx s\jlreq@tombow@driver\PassOptionsToPackage{dvips}{xcolor}\fi
+  \RequirePackage{xcolor}
+  \def\jlreq@tombow@parsecolor@woption[#1]#2\jlreq@endmark{%
+    \def\jlreq@tombow@color{[#1]{#2}}%
+  }
+  \def\jlreq@tombow@parsecolor@wooption#1\jlreq@endmark{%
+    \def\jlreq@tombow@color{{#1}}%
+  }
+  \jlreq@tombow@afterpkg@addtodeletecs{\jlreq@tombow@parsecolor@woption}
+  \jlreq@tombow@afterpkg@addtodeletecs{\jlreq@tombow@parsecolor@wooption}
+  \jlreq@switch{\jlreq@tombow@color}{
+    {c}{\def\jlreq@tombow@color{\color[cmyk]{1,0,0,0}}}
+    {m}{\def\jlreq@tombow@color{\color[cmyk]{0,1,0,0}}}
+    {y}{\def\jlreq@tombow@color{\color[cmyk]{0,0,1,0}}}
+    {k}{\def\jlreq@tombow@color{\color[cmyk]{0,0,0,1}}}
+    {cm}{\def\jlreq@tombow@color{\color[cmyk]{1,1,0,0}}}
+    {cy}{\def\jlreq@tombow@color{\color[cmyk]{1,0,1,0}}}
+    {ck}{\def\jlreq@tombow@color{\color[cmyk]{1,0,0,1}}}
+    {my}{\def\jlreq@tombow@color{\color[cmyk]{0,1,1,0}}}
+    {mk}{\def\jlreq@tombow@color{\color[cmyk]{0,1,0,1}}}
+    {yk}{\def\jlreq@tombow@color{\color[cmyk]{0,0,1,1}}}
+    {cmy}{\def\jlreq@tombow@color{\color[cmyk]{1,1,1,0}}}
+    {cmk}{\def\jlreq@tombow@color{\color[cmyk]{1,1,0,1}}}
+    {cyk}{\def\jlreq@tombow@color{\color[cmyk]{1,0,1,1}}}
+    {myk}{\def\jlreq@tombow@color{\color[cmyk]{0,1,1,1}}}
+    {cmyk}{\def\jlreq@tombow@color{\color[cmyk]{0,1,1,1}}}
+  }[{
+    \expandafter\jlreq@iffirsttoken\expandafter{\jlreq@tombow@color}{[}{%
+      \expandafter\jlreq@tombow@parsecolor@woption\jlreq@tombow@color\jlreq@endmark
+    }{
+      \expandafter\jlreq@tombow@parsecolor@wooption\jlreq@tombow@color\jlreq@endmark
+    }
+    \edef\jlreq@tombow@color{\noexpand\color\expandonce{\jlreq@tombow@color}}
+  }]
+\fi
+
 % 紙サイズ
 \ifx\jlreq@tombow@paperwidth\@undefined % 紙サイズが指定されなかった
   \edef\jlreq@tombow@paperwidth{\the\dimexpr\paperwidth + 2in\relax}
@@ -186,11 +231,12 @@
 
 \ifx l\jlreq@tombow@driver\else
   \AtBeginDvi{\special{papersize=\jlreq@tombow@paperwidth,\jlreq@tombow@paperheight}}
-  \@ifundefined{stockwidth}{\newdimen\stockwidth}{}
-  \@ifundefined{stockheight}{\newdimen\stockheight}{}
-  \setlength{\stockwidth}{\jlreq@tombow@paperwidth}
-  \setlength{\stockheight}{\jlreq@tombow@paperheight}
 \fi
+% graphicx対策
+\@ifundefined{stockwidth}{\newdimen\stockwidth}{}
+\@ifundefined{stockheight}{\newdimen\stockheight}{}
+\setlength{\stockwidth}{\jlreq@tombow@paperwidth}
+\setlength{\stockheight}{\jlreq@tombow@paperheight}
 
 \def\maketombowbox{%
   \setbox\@TL\hbox to\z@{\yoko\hss
@@ -236,12 +282,14 @@
       \vrule height.5\@tombowwidth depth.5\@tombowwidth width10mm\hss}%
 }
 \def\@outputtombow{%
+  % 6mmはplatex etcのカーネル由来
   \@@paperwidth=\dimexpr\@@paperwidth - 6mm + 2\dimexpr\jlreq@tombow@bleed\relax\relax
   \@@paperheight=\dimexpr\@@paperheight - 6mm + 2\dimexpr\jlreq@tombow@bleed\relax\relax
   \ifjlreq@tombow@show
   \vbox to\z@{\kern-\dimexpr 10mm + \jlreq@tombow@bleed\relax\relax
     \boxmaxdepth\maxdimen
     \moveleft\jlreq@tombow@bleed\vbox to\@@paperheight{%
+      \color@begingroup\jlreq@tombow@color
       \hbox to\@@paperwidth{\hskip\jlreq@tombow@bleed\relax
          \copy\@TL\hfill\copy\@TC\hfill\copy\@TR\hskip\jlreq@tombow@bleed}%
       \kern-10mm
@@ -253,7 +301,7 @@
       \kern-10mm
       \hbox to\@@paperwidth{\hskip\jlreq@tombow@bleed\relax
          \copy\@BL\hfill\copy\@BC\hfill\copy\@BR\hskip\jlreq@tombow@bleed}%
-    }\vss
+    \color@endgroup}\vss
   }%
   \fi
 }
@@ -280,10 +328,10 @@
     [0 0 \jlreq@tombow@pttobp{\jlreq@tombow@paperwidth} \jlreq@tombow@pttobp{\jlreq@tombow@paperheight}]
   }
   \edef\jlreq@tombow@pdfattribute{%
-    /CropBox \jlreq@tombow@cropboxsize
-    /TrimBox \jlreq@tombow@trimboxsize
-    /ArtBox \jlreq@tombow@trimboxsize
-    /BleedBox \jlreq@tombow@bleedboxsize
+    /CropBox \jlreq@tombow@cropboxsize\space
+    /TrimBox \jlreq@tombow@trimboxsize\space
+    /ArtBox \jlreq@tombow@trimboxsize\space
+    /BleedBox \jlreq@tombow@bleedboxsize\space
   }
   \jlreq@tombow@afterpkg@addtodeletecs{\jlreq@tombow@pttobp}
   \jlreq@tombow@afterpkg@addtodeletecs{\jlreq@tombow@trimboxsize}
@@ -291,8 +339,8 @@
   \jlreq@tombow@afterpkg@addtodeletecs{\jlreq@tombow@bleedboxsize}
 
   \ifx l\jlreq@tombow@driver
-    \def\@tempa{\pdfvariable pageattr}
-    \expandafter\@tempa\expandafter{\jlreq@tombow@pdfattribute}
+    \edef\@tempa{\noexpand\pdfvariable pageattr{\jlreq@tombow@pdfattribute}}
+    \@tempa
   \fi
   \ifx f\jlreq@tombow@driver
     \edef\@outputtombow{\noexpand\special{pdf: put @thispage <<\jlreq@tombow@pdfattribute>>}\expandonce{\@outputtombow}}
@@ -310,5 +358,6 @@
 
 % トンボ処理自身は常にtrueにする．
 \tombowtrue
+\maketombowbox
 
 \endinput

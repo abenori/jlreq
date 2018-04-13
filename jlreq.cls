@@ -9,29 +9,20 @@
 \RequirePackage{xkeyval,everyhook,filehook,etoolbox,ifthen}
 \RequirePackage{jlreq-helpers}
 
-\newcommand*{\jlreq@undefcs}[1]{%
-  \ifundef{#1}{\ClassError{jlreq}{Trying to delete \string#1 even though it is not defined, may be a bug}{\@ehc}}{\undef{#1}}%
-}
-
+\newcommand*{\jlreq@undeferr}[1]{\ClassError{jlreq}{Trying to delete \string#1 even though it is not defined, may be a bug}{\@ehc}}
 % クラスファイル内でしか使わないマクロをクラスファイル終了時に未定義にする
 \newcommand*{\jlreq@aftercls@addtodeletecs}[1]{%
-  \appto\jlreq@aftercls@deletecslist{\jlreq@undefcs{#1}}%
+  \appto\jlreq@aftercls@deletecslist{\jlreq@helper@undefcs{#1}{\jlreq@undeferr}}%
+}
+\newcommand*{\jlreq@aftercls@addtodeleteif}[1]{%
+  \appto\jlreq@aftercls@deletecslist{\jlreq@helper@undefif{#1}{\jlreq@undeferr}}%
 }
 \jlreq@aftercls@addtodeletecs{\jlreq@aftercls@addtodeletecs}
-\newcommand*{\jlreq@aftercls@addtodeleteif}[1]{%
-  \edef\@tempa{\expandafter\@gobble\string#1}%
-  \edef\@tempa{\expandafter\@gobbletwo\@tempa}%
-  \eappto\jlreq@aftercls@deletecslist{%
-    \unexpanded{\jlreq@undefcs{#1}}%
-    \noexpand\jlreq@undefcs{\expandonce{\csname\@tempa true\endcsname}}%
-    \noexpand\jlreq@undefcs{\expandonce{\csname\@tempa false\endcsname}}%
-  }%
-}
 \jlreq@aftercls@addtodeletecs{\jlreq@aftercls@addtodeleteif}
 \AtEndOfClass{%
   \jlreq@aftercls@deletecslist
-  \jlreq@undefcs{\jlreq@aftercls@deletecslist}%
-  \undef{\jlreq@undefcs}%
+  \jlreq@helper@undefcs{\jlreq@aftercls@deletecslist}{\jlreq@undeferr}%
+  \undef{\jlreq@undeferr}%
 }
 
 % preambleにいるかのスイッチ

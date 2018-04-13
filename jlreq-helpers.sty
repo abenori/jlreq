@@ -2,7 +2,7 @@
 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{jlreq-helpers}[2018/04/12 jlreq-helpers]
-\RequirePackage{xkeyval}
+\RequirePackage{xkeyval,etoolbox}
 
 %. helper1
 \newcount\jlreq@tempcnta
@@ -363,6 +363,21 @@
       \let\jlreq@result=p%
     }%
   }%
+}
+
+% #1を\@undefinedに，できなければ#2{#1}を呼ぶ
+\newcommand*{\jlreq@helper@undefcs}[2]{%
+  \ifundef{#1}{#2{#1}}{}%
+  \undef{#1}%
+}
+% \if版
+\newcommand*{\jlreq@helper@undefif}[2]{%
+  \ifundef{#1}{#2{#1}}{}%
+  \edef\@tempa{\expandafter\@gobble\string#1}%
+  \edef\@tempa{\expandafter\@gobbletwo\@tempa}%
+  \undef{#1}%
+  \expandafter\undef\expandafter{\csname\@tempa true\endcsname}%
+  \expandafter\undef\expandafter{\csname\@tempa false\endcsname}%
 }
 
 % 紙サイズ一覧

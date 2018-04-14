@@ -174,9 +174,7 @@
 
 % 色
 \ifx\jlreq@tombow@color\@empty\else
-  \ifx f\jlreq@tombow@driver\PassOptionsToPackage{dvipdfmx}{xcolor}\fi
-  \ifx s\jlreq@tombow@driver\PassOptionsToPackage{dvips}{xcolor}\fi
-  \RequirePackage{xcolor}
+  \@ifpackageloaded{xcolor}{}{\PackageError{jlreq-tombow}{The package `xcolor' must be loaded before this package to use `tombow_color' option}{\@ehc}}
   \def\jlreq@tombow@parsecolor@woption[#1]#2\jlreq@endmark{%
     \def\jlreq@tombow@color{[#1]{#2}}%
   }

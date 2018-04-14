@@ -405,6 +405,7 @@
     \else
       \evensidemargin
     \fi
+    \iftombow - 1in\fi
     - 1in - \hoffset\relax
   }
 \else
@@ -426,6 +427,7 @@
         - \topmargin - \headheight - \headsep - \voffset
         - \zposy{jlreq@rest@width.pos.\the\jlreq@zref@reference@count} sp
       }%
+      \iftombow - 1in\fi
       - \@totalleftmargin - 1in
     \relax
   }

@@ -176,10 +176,10 @@
 \ifx\jlreq@tombow@color\@empty\else
   \@ifpackageloaded{xcolor}{}{\PackageError{jlreq-tombow}{The package `xcolor' must be loaded before this package to use `tombow_color' option}{\@ehc}}
   \def\jlreq@tombow@parsecolor@woption[#1]#2\jlreq@endmark{%
-    \def\jlreq@tombow@color{[#1]{#2}}%
+    \def\jlreq@tombow@color{\color[#1]{#2}}%
   }
   \def\jlreq@tombow@parsecolor@wooption#1\jlreq@endmark{%
-    \def\jlreq@tombow@color{{#1}}%
+    \def\jlreq@tombow@color{\color{#1}}%
   }
   \jlreq@tombow@afterpkg@addtodeletecs{\jlreq@tombow@parsecolor@woption}
   \jlreq@tombow@afterpkg@addtodeletecs{\jlreq@tombow@parsecolor@wooption}
@@ -205,7 +205,6 @@
     }{
       \expandafter\jlreq@tombow@parsecolor@wooption\jlreq@tombow@color\jlreq@endmark
     }
-    \edef\jlreq@tombow@color{\noexpand\color\expandonce{\jlreq@tombow@color}}
   }]
 \fi
 
@@ -335,6 +334,7 @@
   \jlreq@tombow@afterpkg@addtodeletecs{\jlreq@tombow@trimboxsize}
   \jlreq@tombow@afterpkg@addtodeletecs{\jlreq@tombow@cropboxsize}
   \jlreq@tombow@afterpkg@addtodeletecs{\jlreq@tombow@bleedboxsize}
+  \jlreq@tombow@afterpkg@addtodeletecs{\jlreq@tombow@pdfattribute}
 
   \ifx l\jlreq@tombow@driver
     \edef\@tempa{\noexpand\pdfvariable pageattr{\jlreq@tombow@pdfattribute}}

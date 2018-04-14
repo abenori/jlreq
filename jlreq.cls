@@ -1610,6 +1610,15 @@
 % (TODO: 頭注）
 \if@tate\@mparswitchfalse\fi
 
+\setlength{\topskip}{1\zw} % フォントサイズと一致させる
+\ifx\jlreq@option@headfoot@verticalpos\@empty
+  \if@tate\def\jlreq@option@headfoot@verticalpos{1zw}
+  \else\def\jlreq@option@headfoot@verticalpos{2zw}\fi
+\fi
+\setlength{\headsep}{\jlreq@speciallength{\jlreq@option@headfoot@verticalpos}}
+\ifdim\headsep<1\zw\relax\jlreq@note{基本版面との上下方向の最低の空き量を，基本版面の文字サイズの全角アキとする (26.1.a)．}\fi
+\setlength{\headheight}{1\zw}
+
 % \textwidthと\textheightのデフォルト値は縦横ともに0.75倍（調整が入る）．
 %.. \textwidth：文字送り方向の行長
 % 二段の場合は最初の段の頭から次の段の後まで
@@ -1617,7 +1626,12 @@
 \@tempdima=1\zw
 \ifx\jlreq@option@line@length\@empty
   \if@tate
-    \setlength{\textwidth}{0.75\paperheight}
+    \ifnum 0\ifx\jlreq@option@head@space\@empty 1\fi\ifx\jlreq@option@foot@space\@empty 1\fi>0
+      \setlength{\textwidth}{0.75\paperheight}
+    \else
+      \jlreq@note{基本版面は，a. サイズの決定 b. 仕上りサイズに対する基本版面の配置位置の決定 という手順で行う（2.4.1）}
+      \setlength{\textwidth}{\dimexpr\paperheight - \jlreq@option@head@space - \jlreq@option@foot@space \relax}
+    \fi
   \else
     \setlength{\textwidth}{0.75\paperwidth}
   \fi
@@ -1646,31 +1660,33 @@
   \setlength{\textwidth}{\dimexpr2\textwidth + \columnsep\relax}
 \fi
 
-\setlength{\topskip}{1\zw} % フォントサイズと一致させる
 
 %.. \textheight：行送り方向の長さ
 % 一番上（直後に\topskip由来が入る）から最終行のベースラインまでの長さ．
 % \topskipが十分ある時は先頭行のベースラインから最終行のベースライン＋\topskip
-\ifx\jlreq@option@number@of@lines\@empty
-  \if@tate
-    \setlength{\textheight}{0.75\paperwidth}
-  \else
-    \setlength{\textheight}{0.75\paperheight}
-  \fi
+\def\jlreq@adjusttextheight{
   \addtolength{\textheight}{-\topskip}
   \divide\textheight\baselineskip \multiply\textheight\baselineskip
   \addtolength{\textheight}{\topskip}
+}
+\jlreq@aftercls@addtodeletecs{\jlreq@adjusttextheight}
+\ifx\jlreq@option@number@of@lines\@empty
+  \if@tate
+    \setlength{\textheight}{0.75\paperwidth}
+    \jlreq@adjusttextheight
+  \else
+    \ifnum 0\ifx\jlreq@option@head@space\@empty 1\fi\ifx\jlreq@option@foot@space\@empty 1\fi>0
+      \setlength{\textheight}{0.75\paperheight}
+      \jlreq@adjusttextheight
+    \else
+      \jlreq@note{基本版面は，a. サイズの決定 b. 仕上りサイズに対する基本版面の配置位置の決定 という手順で行う（2.4.1）}
+      \setlength{\textheight}{\dimexpr\paperheight  + 2\topskip - 1\zh -  \Cht - \jlreq@option@head@space - \jlreq@option@foot@space\relax}
+    \fi
+  \fi
 \else
   \setlength{\textheight}{\dimexpr\numexpr\jlreq@option@number@of@lines\relax\baselineskip - \baselineskip + \topskip\relax}
 \fi
 
-\ifx\jlreq@option@headfoot@verticalpos\@empty
-  \if@tate\def\jlreq@option@headfoot@verticalpos{1zw}
-  \else\def\jlreq@option@headfoot@verticalpos{2zw}\fi
-\fi
-\setlength{\headsep}{\jlreq@speciallength{\jlreq@option@headfoot@verticalpos}}
-\ifdim\headsep<1\zw\relax\jlreq@note{基本版面との上下方向の最低の空き量を，基本版面の文字サイズの全角アキとする (26.1.a)．}\fi
-\setlength{\headheight}{1\zw}
 %.. 横
 \ifx\jlreq@option@gutter\@empty
   % 中央配置
@@ -1751,10 +1767,14 @@
     % 両方指定されていたら，縦書きは地を，横書きは天を使う
     \if@tate
       \jlreq@settopmarginbyfoot{\jlreq@speciallength{\jlreq@option@foot@space}}
-      \ClassWarningNoLine{jlreq}{head_space is ignored}
+      \ifx\jlreq@option@line@length\@empty\else
+        \ClassWarningNoLine{jlreq}{head_space is ignored}
+      \fi
     \else
       \jlreq@settopmarginbyhead{\jlreq@speciallength{\jlreq@option@head@space}}
-      \ClassWarningNoLine{jlreq}{foot_space is ignored}
+      \ifx\jlreq@option@number@of@lines\@empty\else
+        \ClassWarningNoLine{jlreq}{foot_space is ignored}
+      \fi
     \fi
   \fi
 \fi

@@ -521,6 +521,10 @@
 \newcommand*{\jlreq@option@gutter}{}
 \jlreq@aftercls@addtodeletecs{\jlreq@option@gutter}
 \DeclareOptionX{gutter}{\renewcommand*{\jlreq@option@gutter}{#1}}
+%.. 小口
+\newcommand*{\jlreq@option@fore@edge}{}
+\jlreq@aftercls@addtodeletecs{\jlreq@option@fore@edge}
+\DeclareOptionX{fore_edge}{\renewcommand*{\jlreq@option@fore@edge}{#1}}
 
 %.. 柱とノンブル
 \newcommand*{\jlreq@option@headfoot@verticalpos}{}
@@ -1623,17 +1627,34 @@
 %.. \textwidth：文字送り方向の行長
 % 二段の場合は最初の段の頭から次の段の後まで
 % 一度\textwidthに一行の長さの文字数を入れる（段組の場合でも）
+\newif\ifjlreq@determine@kihonhanmen@warning@first
+\jlreq@determine@kihonhanmen@warning@firsttrue
+\def\jlreq@determine@kihonhanmen@warning{
+  \ifjlreq@determine@kihonhanmen@warning@first
+    \jlreq@note{基本版面は，a. サイズの決定 b. 仕上りサイズに対する基本版面の配置位置の決定 という手順で行う (2.4.1)．}
+    \jlreq@determine@kihonhanmen@warning@firstfalse
+  \fi
+}
+\jlreq@aftercls@addtodeletecs{\jlreq@determine@kihonhanmen@warning}
+\jlreq@aftercls@addtodeleteif{\ifjlreq@determine@kihonhanmen@warning@first}
 \@tempdima=1\zw
 \ifx\jlreq@option@line@length\@empty
   \if@tate
     \ifnum 0\ifx\jlreq@option@head@space\@empty 1\fi\ifx\jlreq@option@foot@space\@empty 1\fi>0
       \setlength{\textwidth}{0.75\paperheight}
+      \divide\textwidth\@tempdima\multiply\textwidth\@tempdima
     \else
-      \jlreq@note{基本版面は，a. サイズの決定 b. 仕上りサイズに対する基本版面の配置位置の決定 という手順で行う（2.4.1）}
+      \jlreq@determine@kihonhanmen@warning
       \setlength{\textwidth}{\dimexpr\paperheight - \jlreq@option@head@space - \jlreq@option@foot@space \relax}
     \fi
   \else
-    \setlength{\textwidth}{0.75\paperwidth}
+    \ifnum 0\ifx\jlreq@option@gutter\@empty 1\fi\ifx\jlreq@option@fore@edge\@empty 1\fi>0
+      \setlength{\textwidth}{0.75\paperwidth}
+      \divide\textwidth\@tempdima\multiply\textwidth\@tempdima
+    \else
+      \jlreq@determine@kihonhanmen@warning
+      \setlength{\textwidth}{\dimexpr\paperwidth - \jlreq@option@gutter - \jlreq@option@fore@edge\relax}
+    \fi
   \fi
   \if@twocolumn
     \addtolength{\textwidth}{\dimexpr-2\marginparwidth - 2\marginparsep\relax}
@@ -1641,7 +1662,6 @@
   \else
     \addtolength{\textwidth}{\dimexpr-\marginparwidth - \marginparsep\relax}
   \fi
-  \divide\textwidth\@tempdima
 \else
   \setlength{\textwidth}{\jlreq@speciallength{\jlreq@option@line@length}}
   \divide\textwidth\@tempdima
@@ -1654,8 +1674,8 @@
       \jlreq@note{一行の長さは40文字以下が望ましい (2.4.2.c 注2)．}
     \fi
   \fi
+  \multiply\textwidth\@tempdima
 \fi
-\multiply\textwidth\@tempdima
 \if@twocolumn
   \setlength{\textwidth}{\dimexpr2\textwidth + \columnsep\relax}
 \fi
@@ -1672,14 +1692,19 @@
 \jlreq@aftercls@addtodeletecs{\jlreq@adjusttextheight}
 \ifx\jlreq@option@number@of@lines\@empty
   \if@tate
-    \setlength{\textheight}{0.75\paperwidth}
-    \jlreq@adjusttextheight
+    \ifnum 0\ifx\jlreq@option@gutter\@empty 1\fi\ifx\jlreq@option@fore@edge\@empty 1\fi>0
+      \setlength{\textheight}{0.75\paperwidth}
+      \jlreq@adjusttextheight
+    \else
+      \jlreq@determine@kihonhanmen@warning
+      \setlength{\textheight}{\dimexpr\paperwidth - \jlreq@option@gutter - \jlreq@option@fore@edge + \topskip - 1\zw\relax}
+    \fi
   \else
     \ifnum 0\ifx\jlreq@option@head@space\@empty 1\fi\ifx\jlreq@option@foot@space\@empty 1\fi>0
       \setlength{\textheight}{0.75\paperheight}
       \jlreq@adjusttextheight
     \else
-      \jlreq@note{基本版面は，a. サイズの決定 b. 仕上りサイズに対する基本版面の配置位置の決定 という手順で行う（2.4.1）}
+      \jlreq@determine@kihonhanmen@warning
       \setlength{\textheight}{\dimexpr\paperheight  + 2\topskip - 1\zh -  \Cht - \jlreq@option@head@space - \jlreq@option@foot@space\relax}
     \fi
   \fi
@@ -1688,34 +1713,56 @@
 \fi
 
 %.. 横
-\ifx\jlreq@option@gutter\@empty
-  % 中央配置
+\def\jlreq@setsidemargin@by@gutter#1{
   \if@tate
-    \setlength{\oddsidemargin}{\dimexpr\paperwidth - \textheight + \topskip\relax}
-  \else
-    \if@twocolumn
-      \setlength{\oddsidemargin}{\dimexpr\paperwidth - \textwidth\relax}
-    \else
-      \setlength{\oddsidemargin}{\dimexpr\paperwidth - \textwidth - \marginparsep - \marginparwidth\relax}
-    \fi
-  \fi
-  \setlength{\oddsidemargin}{.5\oddsidemargin}
-  \ifnum0\if@twocolumn1\fi\if@tate1\fi>0
-    \setlength{\evensidemargin}{\oddsidemargin}
-  \else
-    \setlength{\evensidemargin}{\dimexpr\oddsidemargin + \marginparsep + \marginparwidth\relax}
-  \fi
-\else
-  \if@tate
-    \setlength{\evensidemargin}{\jlreq@speciallength{\jlreq@option@gutter}}
+    \setlength{\evensidemargin}{#1}
     \setlength{\oddsidemargin}{\dimexpr\paperwidth - \textheight - \evensidemargin + \topskip - \Cht\relax}
     \addtolength{\evensidemargin}{\Cdp}
   \else
-    \setlength{\oddsidemargin}{\jlreq@speciallength{\jlreq@option@gutter}}
+    \setlength{\oddsidemargin}{#1}
     \if@twocolumn
       \addtolength{\oddsidemargin}{\dimexpr\marginparsep + \marginparwidth\relax}
     \fi
     \setlength{\evensidemargin}{\dimexpr\paperwidth - \textwidth - \oddsidemargin\relax}
+  \fi
+}
+\def\jlreq@setsidemargin@by@fore@edge#1{
+  \jlreq@setsidemargin@by@gutter{#1}
+  \@tempdima=\evensidemargin
+  \evensidemargin=\oddsidemargin
+  \oddsidemargin=\@tempdima
+  \ifjlreq@determine@kihonhanmen@warning@first
+    \jlreq@note{基本版面の配置はのどの空き量を指定する (2.4.1.b)．}
+  \fi
+}
+
+\ifx\jlreq@option@gutter\@empty
+  \ifx\jlreq@option@fore@edge\@empty
+    % 中央配置
+    \if@tate
+      \setlength{\oddsidemargin}{\dimexpr\paperwidth - \textheight + \topskip\relax}
+    \else
+      \if@twocolumn
+        \setlength{\oddsidemargin}{\dimexpr\paperwidth - \textwidth\relax}
+      \else
+        \setlength{\oddsidemargin}{\dimexpr\paperwidth - \textwidth - \marginparsep - \marginparwidth\relax}
+      \fi
+    \fi
+    \setlength{\oddsidemargin}{.5\oddsidemargin}
+    \ifnum0\if@twocolumn1\fi\if@tate1\fi>0
+      \setlength{\evensidemargin}{\oddsidemargin}
+    \else
+      \setlength{\evensidemargin}{\dimexpr\oddsidemargin + \marginparsep + \marginparwidth\relax}
+    \fi
+  \else
+    \jlreq@setsidemargin@by@fore@edge{\jlreq@speciallength{\jlreq@option@fore@edge}}
+  \fi
+\else
+  \jlreq@setsidemargin@by@gutter{\jlreq@speciallength{\jlreq@option@gutter}}
+  \ifx\jlreq@option@fore@edge\@empty\else
+    \ifjlreq@determine@kihonhanmen@warning@first\else
+      \ClassWarningNoLine{jlreq}{fore_edge is ignored}
+    \fi
   \fi
 \fi
 \addtolength{\oddsidemargin}{-1in}
@@ -2537,7 +2584,7 @@
     \fi
     \eappto\jlreq@tempb{%
       \noexpand\@ifundefined{jlreq@BlockHeading@spaces@setlist@\jlreq@headings}{}{%
-        \noexpand\ClassError{jlrqe}{The spaces for \jlreq@headings\space is multiplly defined (in SetBlockHeadingSpaces)}{\noexpand\@ehc}%
+        \noexpand\ClassError{jlrqe}{The spaces for \jlreq@headings\space is defined more than once (in SetBlockHeadingSpaces)}{\noexpand\@ehc}%
       }%
       \noexpand\def\expandonce{\csname jlreq@BlockHeading@spaces@setlist@\jlreq@headings\endcsname}{{\expandonce{\jlreq@totalset}}\expandonce{\jlreq@set}}%
     }%

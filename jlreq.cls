@@ -228,14 +228,14 @@
 \newif\if@landscape\@landscapefalse
 \newif\if@tate \@tatefalse
 \jlreq@DeclareOption{landscape}{\@landscapetrue}
-\jlreq@DeclareOption{tombo}{%
-  \tombowtrue\tombowdatefalse
-  \setlength{\@tombowwidth}{.1\p@}%
-  \maketombowbox}
-\jlreq@DeclareOption{mentuke}{%
-  \tombowtrue\tombowdatefalse
-  \setlength{\@tombowwidth}{\z@}%
-  \maketombowbox}
+%\jlreq@DeclareOption{tombo}{%
+%  \tombowtrue\tombowdatefalse
+%  \setlength{\@tombowwidth}{.1\p@}%
+%  \maketombowbox}
+%\jlreq@DeclareOption{mentuke}{%
+%  \tombowtrue\tombowdatefalse
+%  \setlength{\@tombowwidth}{\z@}%
+%  \maketombowbox}
 \jlreq@DeclareOption{tate}{\@tatetrue}
 
 \newif\ifjlreq@option@twoside\jlreq@option@twosidefalse % onesideかtwosideが指定された
@@ -530,39 +530,12 @@
   \jlreq@do
 }
 
-% #1÷#2を\jlreq@resultdimenに入れる．（#1,#2は寸法を与える．）
 \ifx l\jlreq@engine
   \newcommand*{\jlreq@divide}[2]{%
     \jlreq@resultdimen=\directlua{tex.print(tostring(\strip@pt\dimexpr #1\relax/\strip@pt\dimexpr #2\relax) .. "pt ")}%
   }
 \else
-  \newcommand*{\jlreq@divide}[2]{%
-    \begingroup
-      \@tempdima=\dimexpr#1\relax\@tempdimb=\dimexpr#2\relax
-      % 分母を正にする
-      \ifdim\@tempdimb<0pt \@tempdima=-\@tempdima\@tempdimb=-\@tempdimb\fi
-      % \jlreq@tempdima*\@tempdimb <= \@tempdima < (\jlreq@tempdima + 1)*\@tempdimb
-      % となる整数\jlreq@tempdimaを捜し，\jlreq@tempdimb=\jlreq@tempdima + 1とする
-      \jlreq@tempdima=0pt
-      \ifdim\@tempdima<0pt
-        \loop\ifdim\strip@pt\jlreq@tempdima\@tempdimb>\@tempdima\advance\jlreq@tempdima by -1pt\repeat
-      \else
-        \loop\ifdim\strip@pt\jlreq@tempdima\@tempdimb<\@tempdima\advance\jlreq@tempdima by 1pt\repeat
-        \ifdim\strip@pt\jlreq@tempdima\@tempdimb=\@tempdima\else\advance\jlreq@tempdima by -1pt\fi
-      \fi
-      \jlreq@tempdimb=\dimexpr\jlreq@tempdima + 1pt\relax
-      % \jlreq@tempdimaと\jlreq@tempdimbで挟んでいく二分法
-      \jlreq@tempcnta=0 % 無限ループを避けるためのカウンタ
-      \loop\ifnum\numexpr\ifdim\dimexpr\jlreq@tempdimb - \jlreq@tempdima\relax>1sp 1\else0\fi*\ifnum\jlreq@tempcnta<100 1\else 0\fi\relax=1
-        \jlreq@tempdimc=\dimexpr(\jlreq@tempdima+\jlreq@tempdimb)/2\relax
-        \ifdim\strip@pt\jlreq@tempdimc\@tempdimb>\@tempdima\jlreq@tempdimb=\jlreq@tempdimc
-        \else\jlreq@tempdima=\jlreq@tempdimc\fi
-        \advance\jlreq@tempcnta by 1
-      \repeat
-      \edef\jlreq@do{\noexpand\jlreq@resultdimen=\the\jlreq@tempdima\noexpand\relax}%
-    \expandafter\endgroup
-    \jlreq@do
-  }
+  \let\jlreq@divide=\jlreq@helper@divide
 \fi
 
 %. 基本設定

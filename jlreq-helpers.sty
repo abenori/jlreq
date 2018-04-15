@@ -74,7 +74,7 @@
 \jlreq@do
 
 % #1（skipレジスタ）が0か（展開不可）．
-\def\jlreq@ifgluezero#1{%
+\newcommand*\jlreq@ifgluezero[1]{%
   \begingroup
     \edef\@tempa{\the#1}%
     \edef\@tempb{\detokenize{0.0pt}}%
@@ -84,7 +84,7 @@
 }
 
 % #1が#2で終わるか（展開不可）
-\def\jlreq@ifendswith#1#2{%
+\newcommand*{\jlreq@ifendswith}[2]{%
   \jlreq@ifempty{#2}{\@firstoftwo}{%
     \begingroup
       \def\jlreq@tempa##1#2\jlreq@uniqtoken##2\jlreq@endmark{%
@@ -96,7 +96,7 @@
   }%
 }
 % #1が#2で始まるか（展開不可）
-\def\jlreq@ifstartswith#1#2{%
+\newcommand*{\jlreq@ifstartswith}[2]{%
   \jlreq@ifempty{#2}{\@firstoftwo}{%
     \jlreq@ifempty{#1}{\@secondoftwo}{%
       \begingroup
@@ -110,7 +110,7 @@
   }%
 }
 % #1が#2を含むか（展開不可）{}内に#2があってもFALSE判定．
-\def\jlreq@ifcontains#1#2{%
+\newcommand*{\jlreq@ifcontains}[2]{%
   \jlreq@ifempty{#2}{\@firstoftwo}{%
     \begingroup
       \def\jlreq@tempa##1#2##2\jlreq@endmark{%
@@ -124,7 +124,7 @@
 
 % @removeelementの括弧があっても動くかもしれない版
 % #2から#1を消して#3に入れる
-\def\jlreq@helper@removeelement#1#2#3{%
+\newcommand*{\jlreq@helper@removeelement}[3]{%
   \begingroup
     \edef\jlreq@tempa{\unexpanded{#1}}% 消したいやつ
     \def\jlreq@tempb{}% 消していない分を放り込んでいく
@@ -146,7 +146,7 @@
 }
 
 % 空白を無視しない\@ifnextchar
-\long\def\jlreq@ifnextchar#1#2#3{%
+\newcommand{\jlreq@ifnextchar}[3]{%
   \let\reserved@d=#1%
   \edef\reserved@a{\unexpanded{#2}}%
   \edef\reserved@b{\unexpanded{#3}}%
@@ -157,10 +157,10 @@
   \reserved@b
 }
 % 空白を無視しない\@ifsart
-\def\jlreq@ifstar#1#2{\jlreq@ifnextchar *{\edef\reserved@a*{\unexpanded{#1}}\reserved@a}{#2}}
+\newcommand*{\jlreq@ifstar}[2]{\jlreq@ifnextchar *{\edef\reserved@a*{\unexpanded{#1}}\reserved@a}{#2}}
 % カンマで区切って，その前と後ろを\jlreq@resulta,\jlreq@resultbに入れる
 % もしカンマがない場合は\ifjlreq@resultがfalseになる．
-\def\jlreq@helper@dividebycomma#1{\jlreq@helper@dividebycomma@#1,\jlreq@endmark}
+\newcommand*{\jlreq@helper@dividebycomma}[1]{\jlreq@helper@dividebycomma@#1,\jlreq@endmark}
 \def\jlreq@helper@dividebycomma@#1,#2\jlreq@endmark{%
   \def\jlreq@resulta{#1}%
   \def\jlreq@resultb{#2}%
@@ -187,7 +187,7 @@
 %  *{key}{\def\val{#1}} % デフォルト値を空文字列にする
 %  {key}[choice1,choice2]{\def\valchoice{#1}}
 %}{parse対象}
-\def\jlreq@parsekeyval{%
+\newcommand*{\jlreq@parsekeyval}{%
   \@ifstar{\jlreq@helper@parsekeyval@{*}}{\jlreq@helper@parsekeyval@{}}%
 }
 \def\jlreq@helper@parsekeyval@#1{%
@@ -229,7 +229,7 @@
 % キー指定しないkeyval（独自実装）
 % \jlreq@parsekeyval@nokey{<action>}{<parse対象>}
 % action内では#1=key, #2=val
-\long\def\jlreq@parsekeyval@nokey#1#2{%
+\newcommand{\jlreq@parsekeyval@nokey}[2]{%
   \begingroup
     \def\jlreq@do{}%
     \def\jlreq@parsekeyval@nokey@execute##1##2{#1}%
@@ -269,7 +269,7 @@
   \jlreq@do{#1}%
 }
 \long\def\jlreq@helper@removeoption[#1]{}
-\long\def\jlreq@switch#1#2{%
+\newcommand{\jlreq@switch}[2]{%
   \begingroup
     \let\jlreq@do\@undefined
     \edef\jlreq@tempa{#1}% ループ中ずっと保存する
@@ -316,7 +316,7 @@
 }
 
 % 先頭にあるマクロを展開しまくった結果の先頭を#2に入れる．
-\long\def\jlreq@getfirsttoken@expandmacros#1#2{%
+\newcommand{\jlreq@getfirsttoken@expandmacros}[2]{%
   \jlreq@iffirsttoken{#1}{ }{\def#2{ }}{%
     \jlreq@ifempty{#1}{\def#2{}}{%
       \jlreq@ifmacro@noargument{#1}{%
@@ -340,12 +340,12 @@
 \def\jlreq@helper@chknumlist#1{\ifx#101\fi\ifx#111\fi\ifx#121\fi\ifx#131\fi\ifx#141\fi\ifx#151\fi\ifx#161\fi\ifx#171\fi\ifx#181\fi\ifx#191\fi}
 \def\jlreq@helper@chkfloatlist#1{\jlreq@helper@chknumlist{#1}\ifx#1.1\fi}
 % #1が[0-9\.]*に当てはまるか．
-\def\jlreq@iffloat#1{\jlreq@helper@checktokenlist{\jlreq@helper@chkfloatlist}#1\jlreq@endmark}
-\def\jlreq@ifnumber#1{\jlreq@helper@checktokenlist{\jlreq@helper@chknumlist}#1\jlreq@endmark}
+\newcommand*{\jlreq@iffloat}[1]{\jlreq@helper@checktokenlist{\jlreq@helper@chkfloatlist}#1\jlreq@endmark}
+\newcommand*{\jlreq@ifnumber}[1]{\jlreq@helper@checktokenlist{\jlreq@helper@chknumlist}#1\jlreq@endmark}
 
 % \jlreq@ifprimitive#1#2#3: #1がprimitiveならば#2を，そうでなければ#3を実行する
 % （\if(pdf)primitiveを避けるようにしている．）
-\def\jlreq@ifprimitive#1{%
+\newcommand*{\jlreq@ifprimitive}[1]{%
   \begingroup
     \edef\@tempa{\string#1}%
     \edef\@tempb{\meaning#1}%
@@ -365,19 +365,19 @@
   }%
 }
 
-% #1を\@undefinedに，できなければ#2{#1}を呼ぶ
+% #1を\@undefinedに，既に\@undefinedならば#2{#1}を呼ぶ
 \newcommand*{\jlreq@helper@undefcs}[2]{%
-  \ifundef{#1}{#2{#1}}{}%
-  \undef{#1}%
+  \ifundef{#1}{#2{#1}}{\undef{#1}}%
 }
 % \if版
 \newcommand*{\jlreq@helper@undefif}[2]{%
-  \ifundef{#1}{#2{#1}}{}%
-  \edef\@tempa{\expandafter\@gobble\string#1}%
-  \edef\@tempa{\expandafter\@gobbletwo\@tempa}%
-  \undef{#1}%
-  \expandafter\undef\expandafter{\csname\@tempa true\endcsname}%
-  \expandafter\undef\expandafter{\csname\@tempa false\endcsname}%
+  \ifundef{#1}{#2{#1}}{%
+    \edef\@tempa{\expandafter\@gobble\string#1}%
+    \edef\@tempa{\expandafter\@gobbletwo\@tempa}%
+    \undef{#1}%
+    \expandafter\undef\expandafter{\csname\@tempa true\endcsname}%
+    \expandafter\undef\expandafter{\csname\@tempa false\endcsname}%
+  }%
 }
 
 % 紙サイズ一覧
@@ -421,6 +421,34 @@
 \@namedef{jlreq@helper@papersizelist@executive}{{7.25in}{10.5in}}
 \@namedef{jlreq@helper@papersizelist@hagaki}{{100mm}{148mm}}
 
+% #1÷#2を\jlreq@resultdimenに入れる．（#1,#2は寸法を与える．）
+\newcommand*{\jlreq@helper@divide}[2]{%
+  \begingroup
+    \@tempdima=\dimexpr#1\relax\@tempdimb=\dimexpr#2\relax
+    % 分母を正にする
+    \ifdim\@tempdimb<0pt \@tempdima=-\@tempdima\@tempdimb=-\@tempdimb\fi
+    % \jlreq@tempdima*\@tempdimb <= \@tempdima < (\jlreq@tempdima + 1)*\@tempdimb
+    % となる整数\jlreq@tempdimaを捜し，\jlreq@tempdimb=\jlreq@tempdima + 1とする
+    \jlreq@tempdima=0pt
+    \ifdim\@tempdima<0pt
+      \loop\ifdim\strip@pt\jlreq@tempdima\@tempdimb>\@tempdima\advance\jlreq@tempdima by -1pt\repeat
+    \else
+      \loop\ifdim\strip@pt\jlreq@tempdima\@tempdimb<\@tempdima\advance\jlreq@tempdima by 1pt\repeat
+      \ifdim\strip@pt\jlreq@tempdima\@tempdimb=\@tempdima\else\advance\jlreq@tempdima by -1pt\fi
+    \fi
+    \jlreq@tempdimb=\dimexpr\jlreq@tempdima + 1pt\relax
+    % \jlreq@tempdimaと\jlreq@tempdimbで挟んでいく二分法
+    \jlreq@tempcnta=0 % 無限ループを避けるためのカウンタ
+    \loop\ifnum\numexpr\ifdim\dimexpr\jlreq@tempdimb - \jlreq@tempdima\relax>1sp 1\else0\fi*\ifnum\jlreq@tempcnta<100 1\else 0\fi\relax=1
+      \jlreq@tempdimc=\dimexpr(\jlreq@tempdima+\jlreq@tempdimb)/2\relax
+      \ifdim\strip@pt\jlreq@tempdimc\@tempdimb>\@tempdima\jlreq@tempdimb=\jlreq@tempdimc
+      \else\jlreq@tempdima=\jlreq@tempdimc\fi
+      \advance\jlreq@tempcnta by 1
+    \repeat
+    \edef\jlreq@do{\noexpand\jlreq@resultdimen=\the\jlreq@tempdima\noexpand\relax}%
+  \expandafter\endgroup
+  \jlreq@do
+}
 
 \endinput
 

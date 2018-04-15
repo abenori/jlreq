@@ -1,0 +1,360 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{jlreq-trimmarks}[2018/04/12 jlreq-trimmarks]
+\RequirePackage{xkeyval,ifthen}
+\RequirePackage{jlreq-helpers}
+
+\newcommand*{\jlreq@trimmarks@undeferr}[1]{\PackageError{jlreq-trimmarks}{Trying to delete \string#1 even though it is not defined, may be a bug}{\@ehc}}
+% クラスファイル内でしか使わないマクロをクラスファイル終了時に未定義にする
+\newcommand*{\jlreq@trimmarks@afterpkg@addtodeletecs}[1]{%
+  \appto\jlreq@trimmarks@afterpkg@deletecslist{\jlreq@helper@undefcs{#1}{\jlreq@trimmarks@undeferr}}%
+}
+\newcommand*{\jlreq@trimmarks@afterpkg@addtodeleteif}[1]{%
+  \appto\jlreq@trimmarks@afterpkg@deletecslist{\jlreq@helper@undefif{#1}{\jlreq@trimmarks@undeferr}}%
+}
+\jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@afterpkg@addtodeletecs}
+\jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@afterpkg@addtodeleteif}
+\AtEndOfPackage{%
+  \jlreq@trimmarks@afterpkg@deletecslist
+  \jlreq@helper@undefcs{\jlreq@trimmarks@afterpkg@deletecslist}{\jlreq@trimmarks@undeferr}%
+  \undef{\jlreq@trimmarks@undeferr}%
+}
+
+\newcommand*{\jlreq@trimmarks@DeclareOption}[2]{%
+  \DeclareOptionX{#1}{%
+    \jlreq@ifempty{##1}{}{\PackageError{jlreq-trimmarks}{The option #1 should have no value}{\@ehc}}%
+    #2%
+  }
+}
+\jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@DeclareOption}
+
+\@ifclassloaded{jlreq}{\let\ifjlreq@trimmarks@jlreqloaded=\@firstoftwo}{\let\ifjlreq@trimmarks@jlreqloaded=\@secondoftwo}
+
+% \jlreq@trimmarks@driver：ドライバ
+% dvipdfmx=f，dvips=s，luatex=l
+\jlreq@trimmarks@DeclareOption{dvipdfmx}{\let\jlreq@trimmarks@driver=f}
+\jlreq@trimmarks@DeclareOption{dvips}{\let\jlreq@trimmarks@driver=s}
+\let\jlreq@trimmarks@engine=\jlreq@engine
+\jlreq@trimmarks@DeclareOption{lualatex}{\let\jlreq@trimmarks@engine=l}
+\jlreq@trimmarks@DeclareOption{uplatex}{\let\jlreq@trimmarks@engine=u}
+\jlreq@trimmarks@DeclareOption{platex}{\let\jlreq@trimmarks@engine=p}
+
+% 必要サイズ
+% (1) トンボ付きのひとまわり大きな紙面のサイズ=MediaBox/CropBox：\paperwidth/\paperheight
+% (2) 仕上がり紙面サイズ=TrimBox/ArtBox：\jlreq@trimmarks@paperwidth/\jlreq@trimmarks@paperheight
+% (3) 裁ち落とし領域を含んだサイズ=BleedBox：(2)からの差を\jlreq@trimmarks@bleemに入れる
+\def\jlreq@trimmarks@switchpapersize{}
+\def\jlreq@trimmarks@addpapersize#1{%
+  \@ifnextchar[{\jlreq@trimmarks@addpapersize@{#1}}{\jlreq@trimmarks@addpapersize@@{#1}}
+}
+\def\jlreq@trimmarks@addpapersize@#1[#2]{%
+  \edef\@tempa{\unexpanded{\jlreq@trimmarks@addpapersize@@{#1}}\csexpandonce{jlreq@helper@papersizelist@#2}}%
+  \@tempa
+}
+\newcommand*{\jlreq@trimmarks@addpapersize@@}[3]{%
+  \@for\@tempa:=#1\do{%
+    \eappto\jlreq@trimmarks@switchpapersize{{\expandonce{\@tempa}}{\unexpanded{\def\jlreq@trimmarks@paperwidth{#2}\def\jlreq@trimmarks@paperheight{#3}}}}%
+  }%
+}
+\jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@switchpapersize}
+\jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@addpapersize}
+\jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@addpapersize@}
+\jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@addpapersize@@}
+
+\jlreq@trimmarks@addpapersize{a0,A0}[a0]
+\jlreq@trimmarks@addpapersize{a1,A1}[a1]
+\jlreq@trimmarks@addpapersize{a2,A2}[a2]
+\jlreq@trimmarks@addpapersize{a3,A3}[a3]
+\jlreq@trimmarks@addpapersize{a4,A4}[a4]
+\jlreq@trimmarks@addpapersize{a5,A5}[a5]
+\jlreq@trimmarks@addpapersize{a6,A6}[a6]
+\jlreq@trimmarks@addpapersize{a7,A7}[a7]
+\jlreq@trimmarks@addpapersize{a8,A8}[a8]
+\jlreq@trimmarks@addpapersize{a9,A9}[a9]
+\jlreq@trimmarks@addpapersize{a10,A10}[a10]
+
+\jlreq@trimmarks@addpapersize{b0,B0}[b0]
+\jlreq@trimmarks@addpapersize{b1,B1}[b1]
+\jlreq@trimmarks@addpapersize{b2,B2}[b2]
+\jlreq@trimmarks@addpapersize{b3,B3}[b3]
+\jlreq@trimmarks@addpapersize{b4,B4}[b4]
+\jlreq@trimmarks@addpapersize{b5,B5}[b5]
+\jlreq@trimmarks@addpapersize{b6,B6}[b6]
+\jlreq@trimmarks@addpapersize{b7,B7}[b7]
+\jlreq@trimmarks@addpapersize{b8,B8}[b8]
+\jlreq@trimmarks@addpapersize{b9,B9}[b9]
+\jlreq@trimmarks@addpapersize{b10,B10}[b10]
+
+\jlreq@trimmarks@addpapersize{c2,C2}[c2]
+\jlreq@trimmarks@addpapersize{c3,C3}[c3]
+\jlreq@trimmarks@addpapersize{c4,C4}[c4]
+\jlreq@trimmarks@addpapersize{c5,C5}[c5]
+\jlreq@trimmarks@addpapersize{c6,C6}[c6]
+\jlreq@trimmarks@addpapersize{c7,C7}[c7]
+\jlreq@trimmarks@addpapersize{c8,C8}[c8]
+
+\jlreq@trimmarks@addpapersize{a4var}[a4var]
+\jlreq@trimmarks@addpapersize{b5var}[b5var]
+
+\jlreq@trimmarks@addpapersize{letter}[letter]
+\jlreq@trimmarks@addpapersize{legal}[legal]
+\jlreq@trimmarks@addpapersize{executive}[executive]
+\jlreq@trimmarks@addpapersize{hagaki}[hagaki]
+
+\DeclareOptionX{trimmarks_paper}{
+  \edef\jlreq@do{%
+    \unexpanded{\jlreq@switch{#1}}{\expandonce{\jlreq@trimmarks@switchpapersize}}%
+    [\unexpanded{%
+      \jlreq@helper@dividebycomma{#1}%
+      \ifjlreq@result
+        \edef\jlreq@trimmarks@paperwidth{\jlreq@resulta}
+        \edef\jlreq@trimmarks@paperheight{\jlreq@resultb}
+      \else
+        \PackageError{jlreq}{The paper #1 is unknown}{\@ehc}%
+      \fi
+    }]%
+  }%
+  \jlreq@do
+}
+\def\jlreq@trimmarks@bleed{3mm}
+\DeclareOptionX{bleed_margin}{\def\jlreq@trimmarks@bleed{#1}}
+
+% デフォルトでは全て表示
+\newif\ifjlreq@trimmarks@digital \jlreq@trimmarks@digitaltrue
+\newif\ifjlreq@trimmarks@show \jlreq@trimmarks@showtrue
+\tombowdatetrue
+\DeclareOptionX{show}{%
+  \jlreq@trimmarks@showfalse\tombowdatefalse\jlreq@trimmarks@digitalfalse
+  \@for\jlreq@trimmarks@tempa:=#1\do{%
+    \jlreq@switch{\jlreq@trimmarks@tempa}{
+      {trimmarks}{\jlreq@trimmarks@showtrue}
+      {banner}{\tombowdatetrue}
+      {digital}{\jlreq@trimmarks@digitaltrue}
+    }[\PackageError{jlreq-trimmarks}{Unknown value `##1' in the option `show'}{\@ehc}]
+  }
+}
+\DeclareOptionX{trimmarks_width}{\setlength{\@tombowwidth}{#1}}
+
+% 色
+\def\jlreq@trimmarks@color{}
+\DeclareOptionX{trimmarks_color}{\def\jlreq@trimmarks@color{#1}}
+
+\let\jlreq@temporary@original@@removeelement=\@removeelement
+\let\@removeelement=\jlreq@helper@removeelement
+\ProcessOptionsX*\relax
+\let\@removeelement=\jlreq@temporary@original@@removeelement
+\let\jlreq@temporary@original@@removeelement=\@undefined
+
+\newcommand{\jlreqtrimmarkssetup}[1]{%
+  \jlreq@parsekeyval{%
+    {banner}{\@bannertoken{##1}\maketombowbox}
+  }{#1}
+}
+\@onlypreamble\jlreqtrimmarkssetup
+\jlreqtrimmarkssetup{
+  banner={
+    \jobname\space(\number\year-\two@digits\month-\two@digits\day
+    \space\two@digits\hour:\two@digits\minute)%
+  }
+}
+
+\ifx\jlreq@trimmarks@engine\@undefined
+  \jlreq@helper@guessengine
+  \let\jlreq@trimmarks@engine=\jlreq@result
+\fi
+
+\ifx\jlreq@trimmarks@driver\@undefined
+  \ifx l\jlreq@trimmarks@engine
+    \let\jlreq@trimmarks@driver=l
+  \else
+    % platex/uplatexの時はドライバのデフォルトはdvipdfmx
+    \let\jlreq@trimmarks@driver=f
+  \fi
+\fi
+
+% 色
+\ifx\jlreq@trimmarks@color\@empty\else
+  \@ifpackageloaded{xcolor}{}{\PackageError{jlreq-trimmarks}{The package `xcolor' must be loaded before this package to use `trimmarks_color' option}{\@ehc}}
+  \def\jlreq@trimmarks@parsecolor@woption[#1]#2\jlreq@endmark{%
+    \def\jlreq@trimmarks@color{\color[#1]{#2}}%
+  }
+  \def\jlreq@trimmarks@parsecolor@wooption#1\jlreq@endmark{%
+    \def\jlreq@trimmarks@color{\color{#1}}%
+  }
+  \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@parsecolor@woption}
+  \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@parsecolor@wooption}
+  \jlreq@switch{\jlreq@trimmarks@color}{
+    {c}{\def\jlreq@trimmarks@color{\color[cmyk]{1,0,0,0}}}
+    {m}{\def\jlreq@trimmarks@color{\color[cmyk]{0,1,0,0}}}
+    {y}{\def\jlreq@trimmarks@color{\color[cmyk]{0,0,1,0}}}
+    {k}{\def\jlreq@trimmarks@color{\color[cmyk]{0,0,0,1}}}
+    {cm}{\def\jlreq@trimmarks@color{\color[cmyk]{1,1,0,0}}}
+    {cy}{\def\jlreq@trimmarks@color{\color[cmyk]{1,0,1,0}}}
+    {ck}{\def\jlreq@trimmarks@color{\color[cmyk]{1,0,0,1}}}
+    {my}{\def\jlreq@trimmarks@color{\color[cmyk]{0,1,1,0}}}
+    {mk}{\def\jlreq@trimmarks@color{\color[cmyk]{0,1,0,1}}}
+    {yk}{\def\jlreq@trimmarks@color{\color[cmyk]{0,0,1,1}}}
+    {cmy}{\def\jlreq@trimmarks@color{\color[cmyk]{1,1,1,0}}}
+    {cmk}{\def\jlreq@trimmarks@color{\color[cmyk]{1,1,0,1}}}
+    {cyk}{\def\jlreq@trimmarks@color{\color[cmyk]{1,0,1,1}}}
+    {myk}{\def\jlreq@trimmarks@color{\color[cmyk]{0,1,1,1}}}
+    {cmyk}{\def\jlreq@trimmarks@color{\color[cmyk]{1,1,1,1}}}
+  }[{
+    \expandafter\jlreq@iffirsttoken\expandafter{\jlreq@trimmarks@color}{[}{%
+      \expandafter\jlreq@trimmarks@parsecolor@woption\jlreq@trimmarks@color\jlreq@endmark
+    }{
+      \expandafter\jlreq@trimmarks@parsecolor@wooption\jlreq@trimmarks@color\jlreq@endmark
+    }
+  }]
+\fi
+
+% 紙サイズ
+\ifx\jlreq@trimmarks@paperwidth\@undefined % 紙サイズが指定されなかった
+  \edef\jlreq@trimmarks@paperwidth{\the\dimexpr\paperwidth + 2in\relax}
+  \edef\jlreq@trimmarks@paperheight{\the\dimexpr\paperheight + 2in\relax}
+\fi
+
+\ifx l\jlreq@engine
+  \setlength{\pagewidth}{\jlreq@trimmarks@paperwidth}
+  \setlength{\pageheight}{\jlreq@trimmarks@paperheight}
+\else
+  \setlength{\pdfpagewidth}{\jlreq@trimmarks@paperwidth}
+  \setlength{\pdfpageheight}{\jlreq@trimmarks@paperheight}
+\fi
+
+% ずらす……
+\hoffset=\dimexpr(\jlreq@trimmarks@paperwidth - \paperwidth)/2 - 1in\relax
+\voffset=\dimexpr(\jlreq@trimmarks@paperheight - \paperheight)/2 - 1in\relax
+
+\ifx l\jlreq@trimmarks@driver\else
+  \AtBeginDvi{\special{papersize=\jlreq@trimmarks@paperwidth,\jlreq@trimmarks@paperheight}}
+\fi
+% graphicx対策
+\@ifundefined{stockwidth}{\newdimen\stockwidth}{}
+\@ifundefined{stockheight}{\newdimen\stockheight}{}
+\setlength{\stockwidth}{\jlreq@trimmarks@paperwidth}
+\setlength{\stockheight}{\jlreq@trimmarks@paperheight}
+
+\def\maketombowbox{%
+  \setbox\@TL\hbox to\z@{\yoko\hss
+      \vrule width\dimexpr 10mm + \jlreq@trimmarks@bleed\relax height\@tombowwidth depth\z@
+      \vrule height10mm width\@tombowwidth depth\z@
+      \iftombowdate
+        \raise4pt\hbox to\z@{\hskip5mm\@bannerfont\the\@bannertoken\hss}%
+      \fi}%
+  \setbox\@Tl\hbox to\z@{\yoko\hss
+      \vrule width10mm height\@tombowwidth depth\z@
+      \vrule height\dimexpr 10mm + \jlreq@trimmarks@bleed\relax width\@tombowwidth depth\z@}%
+  \setbox\@TC\hbox{\yoko
+      \vrule width10mm height\@tombowwidth depth\z@
+      \vrule height10mm width\@tombowwidth depth\z@
+      \vrule width10mm height\@tombowwidth depth\z@}%
+  \setbox\@TR\hbox to\z@{\yoko
+      \vrule height10mm width\@tombowwidth depth\z@
+      \vrule width\dimexpr 10mm + \jlreq@trimmarks@bleed\relax height\@tombowwidth depth\z@\hss}%
+  \setbox\@Tr\hbox to\z@{\yoko
+      \vrule height\dimexpr 10mm + \jlreq@trimmarks@bleed\relax width\@tombowwidth depth\z@
+      \vrule width10mm height\@tombowwidth depth\z@\hss}%
+  \setbox\@BL\hbox to\z@{\yoko\hss
+      \vrule width\dimexpr 10mm + \jlreq@trimmarks@bleed\relax depth\@tombowwidth height\z@
+      \vrule depth10mm width\@tombowwidth height\z@}%
+  \setbox\@Bl\hbox to\z@{\yoko\hss
+      \vrule width10mm depth\@tombowwidth height\z@
+      \vrule depth\dimexpr 10mm + \jlreq@trimmarks@bleed\relax width\@tombowwidth height\z@}%
+  \setbox\@BC\hbox{\yoko
+      \vrule width10mm depth\@tombowwidth height\z@
+      \vrule depth10mm width\@tombowwidth height\z@
+      \vrule width10mm depth\@tombowwidth height\z@}%
+  \setbox\@BR\hbox to\z@{\yoko
+      \vrule depth10mm width\@tombowwidth height\z@
+      \vrule width\dimexpr 10mm + \jlreq@trimmarks@bleed\relax depth\@tombowwidth height\z@\hss}%
+  \setbox\@Br\hbox to\z@{\yoko
+      \vrule depth\dimexpr 10mm + \jlreq@trimmarks@bleed\relax width\@tombowwidth height\z@
+      \vrule width10mm depth\@tombowwidth height\z@\hss}%
+  \setbox\@CL\hbox to\z@{\yoko\hss
+      \vrule width10mm height.5\@tombowwidth depth.5\@tombowwidth
+      \vrule height10mm depth10mm width\@tombowwidth}%
+  \setbox\@CR\hbox to\z@{\yoko
+      \vrule height10mm depth10mm width\@tombowwidth
+      \vrule height.5\@tombowwidth depth.5\@tombowwidth width10mm\hss}%
+}
+\def\@outputtombow{%
+  % 6mmはplatex etcのカーネル由来
+  \@@paperwidth=\dimexpr\@@paperwidth - 6mm + 2\dimexpr\jlreq@trimmarks@bleed\relax\relax
+  \@@paperheight=\dimexpr\@@paperheight - 6mm + 2\dimexpr\jlreq@trimmarks@bleed\relax\relax
+  \ifjlreq@trimmarks@show
+  \vbox to\z@{\kern-\dimexpr 10mm + \jlreq@trimmarks@bleed\relax\relax
+    \boxmaxdepth\maxdimen
+    \moveleft\jlreq@trimmarks@bleed\vbox to\@@paperheight{%
+      \color@begingroup\jlreq@trimmarks@color
+      \hbox to\@@paperwidth{\hskip\jlreq@trimmarks@bleed\relax
+         \copy\@TL\hfill\copy\@TC\hfill\copy\@TR\hskip\jlreq@trimmarks@bleed}%
+      \kern-10mm
+      \hbox to\@@paperwidth{\copy\@Tl\hfill\copy\@Tr}%
+      \vfill
+      \hbox to\@@paperwidth{\copy\@CL\hfill\copy\@CR}%
+      \vfill
+      \hbox to\@@paperwidth{\copy\@Bl\hfill\copy\@Br}%
+      \kern-10mm
+      \hbox to\@@paperwidth{\hskip\jlreq@trimmarks@bleed\relax
+         \copy\@BL\hfill\copy\@BC\hfill\copy\@BR\hskip\jlreq@trimmarks@bleed}%
+    \color@endgroup}\vss
+  }%
+  \fi
+}
+
+\ifjlreq@trimmarks@digital
+  \def\jlreq@trimmarks@pttobp#1{\strip@pt\dimexpr0.9963\dimexpr#1\relax\relax}
+  \edef\jlreq@trimmarks@trimboxsize{
+    [
+      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperwidth - \paperwidth)/2}
+      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperheight - \paperheight)/2}
+      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperwidth + \paperwidth)/2}
+      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperheight + \paperheight)/2}
+    ]
+  }
+  \edef\jlreq@trimmarks@bleedboxsize{
+    [
+      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperwidth - \paperwidth)/2 - \jlreq@trimmarks@bleed}
+      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperheight - \paperheight)/2 - \jlreq@trimmarks@bleed}
+      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperwidth + \paperwidth)/2 + \jlreq@trimmarks@bleed}
+      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperheight + \paperheight)/2 + \jlreq@trimmarks@bleed}
+    ]
+  }
+  \edef\jlreq@trimmarks@cropboxsize{
+    [0 0 \jlreq@trimmarks@pttobp{\jlreq@trimmarks@paperwidth} \jlreq@trimmarks@pttobp{\jlreq@trimmarks@paperheight}]
+  }
+  \edef\jlreq@trimmarks@pdfattribute{%
+    /CropBox \jlreq@trimmarks@cropboxsize\space
+    /TrimBox \jlreq@trimmarks@trimboxsize\space
+    /ArtBox \jlreq@trimmarks@trimboxsize\space
+    /BleedBox \jlreq@trimmarks@bleedboxsize\space
+  }
+  \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@pttobp}
+  \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@trimboxsize}
+  \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@cropboxsize}
+  \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@bleedboxsize}
+  \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@pdfattribute}
+
+  \ifx l\jlreq@trimmarks@driver
+    \edef\@tempa{\noexpand\pdfvariable pageattr{\jlreq@trimmarks@pdfattribute}}
+    \@tempa
+  \fi
+  \ifx f\jlreq@trimmarks@driver
+    \edef\@outputtombow{\noexpand\special{pdf: put @thispage <<\jlreq@trimmarks@pdfattribute>>}\expandonce{\@outputtombow}}
+  \fi
+  \ifx s\jlreq@trimmarks@driver
+    \edef\@tempa{\noexpand\special{ps:SDict begin 
+      [ /CropBox \jlreq@trimmarks@cropboxsize\space /PAGE pdfmark
+      [ /TrimBox  \jlreq@trimmarks@trimboxsize\space /PAGE pdfmark
+      [ /ArtBox   \jlreq@trimmarks@trimboxsize\space /PAGE pdfmark
+      [ /BleedBox \jlreq@trimmarks@bleedboxsize\space /PAGE pdfmark
+    end}}%
+    \@tempa
+  \fi
+\fi
+
+% トンボ処理自身は常にtrueにする．
+\tombowtrue
+\maketombowbox
+
+\endinput

@@ -172,7 +172,9 @@
 \fi
 
 % 色
-\ifx\jlreq@trimmarks@color\@empty\else
+\ifx\jlreq@trimmarks@color\@empty
+  \def\jlreq@trimmarks@color{\normalcolor}
+\else
   \@ifpackageloaded{xcolor}{}{\PackageError{jlreq-trimmarks}{The package `xcolor' must be loaded before this package to use `trimmarks_color' option}{\@ehc}}
   \def\jlreq@trimmarks@parsecolor@woption[#1]#2\jlreq@endmark{%
     \def\jlreq@trimmarks@color{\color[#1]{#2}}%

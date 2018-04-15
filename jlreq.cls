@@ -470,7 +470,7 @@
 
 \jlreq@addpapersize{c2,C2}{}{458mm}{648mm}
 \jlreq@addpapersize{c3,C3}{}{324mm}{458mm}
-\jlreq@addpapersize{c4C,C4}{}{229mm}{354mm}
+\jlreq@addpapersize{c4,C4}{}{229mm}{354mm}
 \jlreq@addpapersize{c5,C5}{}{162mm}{229mm}
 \jlreq@addpapersize{c6,C6}{}{114mm}{162mm}
 \jlreq@addpapersize{c7,C7}{}{81mm}{114mm}

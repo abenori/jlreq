@@ -4735,6 +4735,11 @@
 \else
   \jlreqsetup{year_style=seireki}
 \fi
+
+% 時刻
+\hour=\time \divide\hour by 60
+\minute=\numexpr\time - 60*\hour\relax
+
 %.. 定理環境
 \jlreq@saveoriginalcs{\@begintheorem}
 \jlreq@saveoriginalcs{\@opargbegintheorem}

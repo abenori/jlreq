@@ -4,7 +4,6 @@
 \RequirePackage{jlreq-helpers}
 
 \newcommand*{\jlreq@trimmarks@undeferr}[1]{\PackageError{jlreq-trimmarks}{Trying to delete \string#1 even though it is not defined, may be a bug}{\@ehc}}
-% クラスファイル内でしか使わないマクロをクラスファイル終了時に未定義にする
 \newcommand*{\jlreq@trimmarks@afterpkg@addtodeletecs}[1]{%
   \appto\jlreq@trimmarks@afterpkg@deletecslist{\jlreq@helper@undefcs{#1}{\jlreq@trimmarks@undeferr}}%
 }
@@ -29,7 +28,6 @@
 
 \@ifclassloaded{jlreq}{\let\ifjlreq@trimmarks@jlreqloaded=\@firstoftwo}{\let\ifjlreq@trimmarks@jlreqloaded=\@secondoftwo}
 
-% \jlreq@trimmarks@driver：ドライバ
 % dvipdfmx=f，dvips=s，luatex=l
 \jlreq@trimmarks@DeclareOption{dvipdfmx}{\let\jlreq@trimmarks@driver=f}
 \jlreq@trimmarks@DeclareOption{dvips}{\let\jlreq@trimmarks@driver=s}
@@ -38,10 +36,6 @@
 \jlreq@trimmarks@DeclareOption{uplatex}{\let\jlreq@trimmarks@engine=u}
 \jlreq@trimmarks@DeclareOption{platex}{\let\jlreq@trimmarks@engine=p}
 
-% 必要サイズ
-% (1) トンボ付きのひとまわり大きな紙面のサイズ=MediaBox/CropBox：\paperwidth/\paperheight
-% (2) 仕上がり紙面サイズ=TrimBox/ArtBox：\jlreq@trimmarks@paperwidth/\jlreq@trimmarks@paperheight
-% (3) 裁ち落とし領域を含んだサイズ=BleedBox：(2)からの差を\jlreq@trimmarks@bleemに入れる
 \def\jlreq@trimmarks@switchpapersize{}
 \def\jlreq@trimmarks@addpapersize#1{%
   \@ifnextchar[{\jlreq@trimmarks@addpapersize@{#1}}{\jlreq@trimmarks@addpapersize@@{#1}}
@@ -115,10 +109,7 @@
   }%
   \jlreq@do
 }
-\def\jlreq@trimmarks@bleed{3mm}
-\DeclareOptionX{bleed_margin}{\def\jlreq@trimmarks@bleed{#1}}
 
-% デフォルトでは全て表示
 \newif\ifjlreq@trimmarks@digital \jlreq@trimmarks@digitaltrue
 \newif\ifjlreq@trimmarks@show \jlreq@trimmarks@showtrue
 \tombowdatetrue
@@ -132,11 +123,6 @@
     }[\PackageError{jlreq-trimmarks}{Unknown value `##1' in the option `show'}{\@ehc}]
   }
 }
-\DeclareOptionX{trimmarks_width}{\setlength{\@tombowwidth}{#1}}
-
-% 色
-\def\jlreq@trimmarks@color{}
-\DeclareOptionX{trimmarks_color}{\def\jlreq@trimmarks@color{#1}}
 
 \let\jlreq@temporary@original@@removeelement=\@removeelement
 \let\@removeelement=\jlreq@helper@removeelement
@@ -147,6 +133,40 @@
 \newcommand{\jlreqtrimmarkssetup}[1]{%
   \jlreq@parsekeyval{%
     {banner}{\@bannertoken{##1}\maketombowbox}
+    {bleed_margin}{\def\jlreq@trimmarks@bleed{##1}}
+    {trimmarks_width}{\setlength{\@tombowwidth}{##1}}
+    {color}{
+      \jlreq@ifempty{##1}{
+        \def\jlreq@trimmarks@color{\normalcolor}
+      }{
+        \@ifpackageloaded{xcolor}{}{\PackageError{jlreq-trimmarks}{The package `xcolor' must be loaded before this package to use `trimmarks_color'}{\@ehc}}
+        \jlreq@switch{##1}{
+          {c}{\def\jlreq@trimmarks@color{\color[cmyk]{1,0,0,0}}}
+          {m}{\def\jlreq@trimmarks@color{\color[cmyk]{0,1,0,0}}}
+          {y}{\def\jlreq@trimmarks@color{\color[cmyk]{0,0,1,0}}}
+          {k}{\def\jlreq@trimmarks@color{\color[cmyk]{0,0,0,1}}}
+          {cm}{\def\jlreq@trimmarks@color{\color[cmyk]{1,1,0,0}}}
+          {cy}{\def\jlreq@trimmarks@color{\color[cmyk]{1,0,1,0}}}
+          {ck}{\def\jlreq@trimmarks@color{\color[cmyk]{1,0,0,1}}}
+          {my}{\def\jlreq@trimmarks@color{\color[cmyk]{0,1,1,0}}}
+          {mk}{\def\jlreq@trimmarks@color{\color[cmyk]{0,1,0,1}}}
+          {yk}{\def\jlreq@trimmarks@color{\color[cmyk]{0,0,1,1}}}
+          {cmy}{\def\jlreq@trimmarks@color{\color[cmyk]{1,1,1,0}}}
+          {cmk}{\def\jlreq@trimmarks@color{\color[cmyk]{1,1,0,1}}}
+          {cyk}{\def\jlreq@trimmarks@color{\color[cmyk]{1,0,1,1}}}
+          {myk}{\def\jlreq@trimmarks@color{\color[cmyk]{0,1,1,1}}}
+          {cmyk}{\def\jlreq@trimmarks@color{\color[cmyk]{1,1,1,1}}}
+          {
+            \jlreq@iffirsttoken{##1}{[}{%
+              \def\@tempa[####1]####2\jlreq@endmark{\def\jlreq@trimmarks@color{\color[####1]{####2}}}
+            }{
+              \def\@tempa####1\jlreq@endmark{\def\jlreq@trimmarks@color{\color{####1}}}
+            }
+            \@tempa##1\jlreq@endmark
+          }
+        }
+      }
+    }
   }{#1}
 }
 \@onlypreamble\jlreqtrimmarkssetup
@@ -154,7 +174,9 @@
   banner={
     \jobname\space(\number\year-\two@digits\month-\two@digits\day
     \space\two@digits\hour:\two@digits\minute)%
-  }
+  },
+  bleed_margin=3mm,
+  color={}
 }
 
 \ifx\jlreq@trimmarks@engine\@undefined
@@ -166,51 +188,12 @@
   \ifx l\jlreq@trimmarks@engine
     \let\jlreq@trimmarks@driver=l
   \else
-    % platex/uplatexの時はドライバのデフォルトはdvipdfmx
+    % default: dvipdfmx
     \let\jlreq@trimmarks@driver=f
   \fi
 \fi
 
-% 色
-\ifx\jlreq@trimmarks@color\@empty
-  \def\jlreq@trimmarks@color{\normalcolor}
-\else
-  \@ifpackageloaded{xcolor}{}{\PackageError{jlreq-trimmarks}{The package `xcolor' must be loaded before this package to use `trimmarks_color' option}{\@ehc}}
-  \def\jlreq@trimmarks@parsecolor@woption[#1]#2\jlreq@endmark{%
-    \def\jlreq@trimmarks@color{\color[#1]{#2}}%
-  }
-  \def\jlreq@trimmarks@parsecolor@wooption#1\jlreq@endmark{%
-    \def\jlreq@trimmarks@color{\color{#1}}%
-  }
-  \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@parsecolor@woption}
-  \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@parsecolor@wooption}
-  \jlreq@switch{\jlreq@trimmarks@color}{
-    {c}{\def\jlreq@trimmarks@color{\color[cmyk]{1,0,0,0}}}
-    {m}{\def\jlreq@trimmarks@color{\color[cmyk]{0,1,0,0}}}
-    {y}{\def\jlreq@trimmarks@color{\color[cmyk]{0,0,1,0}}}
-    {k}{\def\jlreq@trimmarks@color{\color[cmyk]{0,0,0,1}}}
-    {cm}{\def\jlreq@trimmarks@color{\color[cmyk]{1,1,0,0}}}
-    {cy}{\def\jlreq@trimmarks@color{\color[cmyk]{1,0,1,0}}}
-    {ck}{\def\jlreq@trimmarks@color{\color[cmyk]{1,0,0,1}}}
-    {my}{\def\jlreq@trimmarks@color{\color[cmyk]{0,1,1,0}}}
-    {mk}{\def\jlreq@trimmarks@color{\color[cmyk]{0,1,0,1}}}
-    {yk}{\def\jlreq@trimmarks@color{\color[cmyk]{0,0,1,1}}}
-    {cmy}{\def\jlreq@trimmarks@color{\color[cmyk]{1,1,1,0}}}
-    {cmk}{\def\jlreq@trimmarks@color{\color[cmyk]{1,1,0,1}}}
-    {cyk}{\def\jlreq@trimmarks@color{\color[cmyk]{1,0,1,1}}}
-    {myk}{\def\jlreq@trimmarks@color{\color[cmyk]{0,1,1,1}}}
-    {cmyk}{\def\jlreq@trimmarks@color{\color[cmyk]{1,1,1,1}}}
-  }[{
-    \expandafter\jlreq@iffirsttoken\expandafter{\jlreq@trimmarks@color}{[}{%
-      \expandafter\jlreq@trimmarks@parsecolor@woption\jlreq@trimmarks@color\jlreq@endmark
-    }{
-      \expandafter\jlreq@trimmarks@parsecolor@wooption\jlreq@trimmarks@color\jlreq@endmark
-    }
-  }]
-\fi
-
-% 紙サイズ
-\ifx\jlreq@trimmarks@paperwidth\@undefined % 紙サイズが指定されなかった
+\ifx\jlreq@trimmarks@paperwidth\@undefined
   \edef\jlreq@trimmarks@paperwidth{\the\dimexpr\paperwidth + 2in\relax}
   \edef\jlreq@trimmarks@paperheight{\the\dimexpr\paperheight + 2in\relax}
 \fi
@@ -223,14 +206,12 @@
   \setlength{\pdfpageheight}{\jlreq@trimmarks@paperheight}
 \fi
 
-% ずらす……
 \hoffset=\dimexpr(\jlreq@trimmarks@paperwidth - \paperwidth)/2 - 1in\relax
 \voffset=\dimexpr(\jlreq@trimmarks@paperheight - \paperheight)/2 - 1in\relax
 
 \ifx l\jlreq@trimmarks@driver\else
   \AtBeginDvi{\special{papersize=\jlreq@trimmarks@paperwidth,\jlreq@trimmarks@paperheight}}
 \fi
-% graphicx対策
 \@ifundefined{stockwidth}{\newdimen\stockwidth}{}
 \@ifundefined{stockheight}{\newdimen\stockheight}{}
 \setlength{\stockwidth}{\jlreq@trimmarks@paperwidth}
@@ -280,7 +261,7 @@
       \vrule height.5\@tombowwidth depth.5\@tombowwidth width10mm\hss}%
 }
 \def\@outputtombow{%
-  % 6mmはplatex etcのカーネル由来
+  % 6mm: from plcore
   \@@paperwidth=\dimexpr\@@paperwidth - 6mm + 2\dimexpr\jlreq@trimmarks@bleed\relax\relax
   \@@paperheight=\dimexpr\@@paperheight - 6mm + 2\dimexpr\jlreq@trimmarks@bleed\relax\relax
   \ifjlreq@trimmarks@show
@@ -355,7 +336,7 @@
   \fi
 \fi
 
-% トンボ処理自身は常にtrueにする．
+% always true
 \tombowtrue
 \maketombowbox
 

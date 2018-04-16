@@ -105,13 +105,20 @@ pdfdoc: jlreq.pdf jlreq-ja.pdf
 jlreq%pdf: README%md README-template.tex
 	pandoc --verbose -f gfm -t latex --pdf-engine=lualatex --template README-template.tex $< -o $@
 
-htmldoc: jlreq.html jlreq-ja.html
+htmldoc: jlreq.html jlreq-ja.html jlreq-trimmarks.html jlreq-trimmarks-ja.html
 
 jlreq-ja.html: README-ja.md README-template.html
 	pandoc --verbose -f gfm -t html5 -V lang=ja -M title=jlreq --template README-template.html -o jlreq-ja.html README-ja.md
 
 jlreq.html: README.md README-template.html
-	pandoc --verbose -f gfm -t html5 -V lang=ja -M title=jlreq --template README-template.html -o jlreq.html README.md
+	pandoc --verbose -f gfm -t html5 -V lang=en -M title=jlreq --template README-template.html -o jlreq.html README.md
+
+jlreq-trimmarks-ja.html: jlreq-trimmarks-ja.md README-template.html
+	pandoc --verbose -f gfm -t html5 -V lang=ja -M title=jlreq-trimmarks --template README-template.html -o jlreq-trimmarks-ja.html jlreq-trimmarks-ja.md
+
+jlreq-trimmarks.html: jlreq-trimmarks.md README-template.html
+	pandoc --verbose -f gfm -t html5 -V lang=en -M title=jlreq-trimmarks --template README-template.html -o jlreq-trimmarks.html jlreq-trimmarks.md
+
 
 jfm-install: jfm
 	mkdir -p ${TEXMF}/fonts/tfm/public/jlreq

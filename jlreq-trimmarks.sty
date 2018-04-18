@@ -1,6 +1,6 @@
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{jlreq-trimmarks}[2018/04/12 jlreq-trimmarks]
-\RequirePackage{xkeyval,ifthen}
+\RequirePackage{xkeyval,etoolbox}
 \RequirePackage{jlreq-helpers}
 
 \newcommand*{\jlreq@trimmarks@undeferr}[1]{\PackageError{jlreq-trimmarks}{Trying to delete \string#1 even though it is not defined, may be a bug}{\@ehc}}
@@ -139,7 +139,7 @@
       \jlreq@ifempty{##1}{
         \def\jlreq@trimmarks@color{\normalcolor}
       }{
-        \@ifpackageloaded{xcolor}{}{\PackageError{jlreq-trimmarks}{The package `xcolor' must be loaded before this package to use `trimmarks_color'}{\@ehc}}
+        \@ifpackageloaded{xcolor}{}{\PackageError{jlreq-trimmarks}{The package `xcolor' must be loaded before this package to use `color'}{\@ehc}}
         \jlreq@switch{##1}{
           {c}{\def\jlreq@trimmarks@color{\color[cmyk]{1,0,0,0}}}
           {m}{\def\jlreq@trimmarks@color{\color[cmyk]{0,1,0,0}}}
@@ -157,7 +157,7 @@
           {myk}{\def\jlreq@trimmarks@color{\color[cmyk]{0,1,1,1}}}
           {cmyk}{\def\jlreq@trimmarks@color{\color[cmyk]{1,1,1,1}}}
           {
-            \jlreq@iffirsttoken{##1}{[}{%
+            \jlreq@iffirsttoken{##1}{[}{
               \def\@tempa[####1]####2\jlreq@endmark{\def\jlreq@trimmarks@color{\color[####1]{####2}}}
             }{
               \def\@tempa####1\jlreq@endmark{\def\jlreq@trimmarks@color{\color{####1}}}
@@ -265,7 +265,7 @@
   \@@paperwidth=\dimexpr\@@paperwidth - 6mm + 2\dimexpr\jlreq@trimmarks@bleed\relax\relax
   \@@paperheight=\dimexpr\@@paperheight - 6mm + 2\dimexpr\jlreq@trimmarks@bleed\relax\relax
   \ifjlreq@trimmarks@show
-  \vbox to\z@{\kern-\dimexpr 10mm + \jlreq@trimmarks@bleed\relax\relax
+  \vbox to\z@{\kern-\dimexpr 10mm + \jlreq@trimmarks@bleed\relax
     \boxmaxdepth\maxdimen
     \moveleft\jlreq@trimmarks@bleed\vbox to\@@paperheight{%
       \color@begingroup\jlreq@trimmarks@color
@@ -287,30 +287,30 @@
 
 \ifjlreq@trimmarks@digital
   \def\jlreq@trimmarks@pttobp#1{\strip@pt\dimexpr0.9963\dimexpr#1\relax\relax}
-  \edef\jlreq@trimmarks@trimboxsize{
-    [
+  \edef\jlreq@trimmarks@trimboxsize{%
+    [%
       \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperwidth - \paperwidth)/2}
       \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperheight - \paperheight)/2}
       \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperwidth + \paperwidth)/2}
-      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperheight + \paperheight)/2}
+      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperheight + \paperheight)/2}%
     ]
   }
-  \edef\jlreq@trimmarks@bleedboxsize{
-    [
+  \edef\jlreq@trimmarks@bleedboxsize{%
+    [%
       \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperwidth - \paperwidth)/2 - \jlreq@trimmarks@bleed}
       \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperheight - \paperheight)/2 - \jlreq@trimmarks@bleed}
       \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperwidth + \paperwidth)/2 + \jlreq@trimmarks@bleed}
-      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperheight + \paperheight)/2 + \jlreq@trimmarks@bleed}
+      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperheight + \paperheight)/2 + \jlreq@trimmarks@bleed}%
     ]
   }
-  \edef\jlreq@trimmarks@cropboxsize{
+  \edef\jlreq@trimmarks@cropboxsize{%
     [0 0 \jlreq@trimmarks@pttobp{\jlreq@trimmarks@paperwidth} \jlreq@trimmarks@pttobp{\jlreq@trimmarks@paperheight}]
   }
   \edef\jlreq@trimmarks@pdfattribute{%
-    /CropBox \jlreq@trimmarks@cropboxsize\space
-    /TrimBox \jlreq@trimmarks@trimboxsize\space
-    /ArtBox \jlreq@trimmarks@trimboxsize\space
-    /BleedBox \jlreq@trimmarks@bleedboxsize\space
+    /CropBox \jlreq@trimmarks@cropboxsize
+    /TrimBox \jlreq@trimmarks@trimboxsize
+    /ArtBox \jlreq@trimmarks@trimboxsize
+    /BleedBox \jlreq@trimmarks@bleedboxsize
   }
   \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@pttobp}
   \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@trimboxsize}
@@ -327,10 +327,10 @@
   \fi
   \ifx s\jlreq@trimmarks@driver
     \edef\@tempa{\noexpand\special{ps:SDict begin 
-      [ /CropBox \jlreq@trimmarks@cropboxsize\space /PAGE pdfmark
-      [ /TrimBox  \jlreq@trimmarks@trimboxsize\space /PAGE pdfmark
-      [ /ArtBox   \jlreq@trimmarks@trimboxsize\space /PAGE pdfmark
-      [ /BleedBox \jlreq@trimmarks@bleedboxsize\space /PAGE pdfmark
+      [ /CropBox \jlreq@trimmarks@cropboxsize /PAGE pdfmark
+      [ /TrimBox  \jlreq@trimmarks@trimboxsize /PAGE pdfmark
+      [ /ArtBox   \jlreq@trimmarks@trimboxsize /PAGE pdfmark
+      [ /BleedBox \jlreq@trimmarks@bleedboxsize /PAGE pdfmark
     end}}%
     \@tempa
   \fi

@@ -26,7 +26,7 @@ Set the engine. If it is not specified, then the engine is
 ### `dvipdfmx`, `dvips`
 Set the dvi driver. If it is not specified, then
 
-* output PDF file via LuaLaTeX when the engine is `lualatex`.
+* the package outputs PDF file via LuaLaTeX when the engine is `lualatex`.
 * the driver is `dvipdmx` if the engine is `platex` or `uplatex`
 
 ### `trimmarks_paper`
@@ -55,7 +55,7 @@ Set the bleed margin.
 Set the width of trim marks.
 
 ### ` color`
-Set the color of the trim marks. You have to load `xcolor` package before loading this package to use this function. The color is specified as the following.
+Set the color of the trim marks. You have to load `xcolor` package before loading this package to use this function. Here are some examples of specifying the color.
 
 * `color=c` -> `\color[cmyk]{1,0,0,0}`
 * `color=cyk` -> `\color[cmyk]{1,0,1,1}`

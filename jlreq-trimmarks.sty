@@ -133,8 +133,8 @@
 \newcommand{\jlreqtrimmarkssetup}[1]{%
   \jlreq@parsekeyval{%
     {banner}{\@bannertoken{##1}\maketombowbox}
-    {bleed_margin}{\def\jlreq@trimmarks@bleed{##1}}
-    {trimmarks_width}{\setlength{\@tombowwidth}{##1}}
+    {bleed_margin}{\def\jlreq@trimmarks@bleed{##1}\maketombowbox}
+    {trimmarks_width}{\setlength{\@tombowwidth}{##1}\maketombowbox}
     {color}{
       \jlreq@ifempty{##1}{
         \def\jlreq@trimmarks@color{\normalcolor}
@@ -167,6 +167,7 @@
         }
       }
     }
+    \maketombowbox
   }{#1}
 }
 \@onlypreamble\jlreqtrimmarkssetup
@@ -199,23 +200,24 @@
 \fi
 
 \ifx l\jlreq@engine
-  \setlength{\pagewidth}{\jlreq@trimmarks@paperwidth}
-  \setlength{\pageheight}{\jlreq@trimmarks@paperheight}
+  \setlength{\pagewidth}{\dimexpr\jlreq@trimmarks@paperwidth\relax}
+  \setlength{\pageheight}{\dimexpr\jlreq@trimmarks@paperheight\relax}
 \else
-  \setlength{\pdfpagewidth}{\jlreq@trimmarks@paperwidth}
-  \setlength{\pdfpageheight}{\jlreq@trimmarks@paperheight}
+  \setlength{\pdfpagewidth}{\dimexpr\jlreq@trimmarks@paperwidth\relax}
+  \setlength{\pdfpageheight}{\dimexpr\jlreq@trimmarks@paperheight\relax}
 \fi
 
 \hoffset=\dimexpr(\jlreq@trimmarks@paperwidth - \paperwidth)/2 - 1in\relax
 \voffset=\dimexpr(\jlreq@trimmarks@paperheight - \paperheight)/2 - 1in\relax
 
 \ifx l\jlreq@trimmarks@driver\else
-  \AtBeginDvi{\special{papersize=\jlreq@trimmarks@paperwidth,\jlreq@trimmarks@paperheight}}
+  \edef\@tempa{\noexpand\AtBeginDvi{\noexpand\special{papersize=\the\dimexpr\jlreq@trimmarks@paperwidth\relax,\the\dimexpr\jlreq@trimmarks@paperheight\relax}}}
+  \@tempa
 \fi
 \@ifundefined{stockwidth}{\newdimen\stockwidth}{}
 \@ifundefined{stockheight}{\newdimen\stockheight}{}
-\setlength{\stockwidth}{\jlreq@trimmarks@paperwidth}
-\setlength{\stockheight}{\jlreq@trimmarks@paperheight}
+\setlength{\stockwidth}{\dimexpr\jlreq@trimmarks@paperwidth\relax}
+\setlength{\stockheight}{\dimexpr\jlreq@trimmarks@paperheight\relax}
 
 \def\maketombowbox{%
   \setbox\@TL\hbox to\z@{\yoko\hss
@@ -326,7 +328,7 @@
     \edef\@outputtombow{\noexpand\special{pdf: put @thispage <<\jlreq@trimmarks@pdfattribute>>}\expandonce{\@outputtombow}}
   \fi
   \ifx s\jlreq@trimmarks@driver
-    \edef\@tempa{\noexpand\special{ps:SDict begin 
+    \edef\@tempa{\noexpand\special{ps:SDict begin
       [ /CropBox \jlreq@trimmarks@cropboxsize /PAGE pdfmark
       [ /TrimBox  \jlreq@trimmarks@trimboxsize /PAGE pdfmark
       [ /ArtBox   \jlreq@trimmarks@trimboxsize /PAGE pdfmark

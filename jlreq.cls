@@ -232,14 +232,9 @@
 \newif\if@landscape\@landscapefalse
 \newif\if@tate \@tatefalse
 \jlreq@DeclareOption{landscape}{\@landscapetrue}
-%\jlreq@DeclareOption{tombo}{%
-%  \tombowtrue\tombowdatefalse
-%  \setlength{\@tombowwidth}{.1\p@}%
-%  \maketombowbox}
-%\jlreq@DeclareOption{mentuke}{%
-%  \tombowtrue\tombowdatefalse
-%  \setlength{\@tombowwidth}{\z@}%
-%  \maketombowbox}
+\jlreq@DeclareOption{tombo}{\ClassWarningNoLine{jlreq}{The option `tombo' is not supported by jlreq class. Please use the jlreq-trimmarks package}}
+\jlreq@DeclareOption{tombow}{\ClassWarningNoLine{jlreq}{The option `tombow' is not supported by jlreq class. Please use the jlreq-trimmarks package}}
+\jlreq@DeclareOption{mentuke}{\ClassWarningNoLine{jlreq}{The option `mentuke' is not supported by jlreq class. Please use the jlreq-trimmarks package}}
 \jlreq@DeclareOption{tate}{\@tatetrue}
 
 \newif\ifjlreq@option@twoside\jlreq@option@twosidefalse % onesideかtwosideが指定された
@@ -878,7 +873,7 @@
 
 % 行頭の括弧は \jlreq@open@bracket@before@space \inhibitglue 「みたいにする．
 \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{
-  \def\jlreq@open@bracket@before@space{\hskip -.5\zw}
+  \def\jlreq@open@bracket@before@space{\hskip\glueexpr-.5\zw\relax}
 }{
   \def\jlreq@open@bracket@before@space{}
 }
@@ -2998,11 +2993,11 @@
   \ifthenelse{\equal{#1}{one}}{
     \long\def\jlreq@makefntext##1{\parindent 1\zw
       \addtolength{\leftskip}{\dimexpr\jlreq@footnoteindent + 1\zw\relax}% 全体をインデント+1文字分下げる
-      \noindent\hskip -1\zw\jlreq@referencemark@format{\@thefnmark}\hskip 1\zw##1}% 見出し出力と一文字分の空き
+      \noindent\hskip\glueexpr-1\zw\relax\jlreq@referencemark@format{\@thefnmark}\hskip\glueexpr1\zw\relax##1}% 見出し出力と一文字分の空き
   }{
     \long\def\jlreq@makefntext##1{\parindent 1\zw
       \addtolength{\leftskip}{\jlreq@footnoteindent}% 全体をインデント
-      \noindent\hskip 1\zw\jlreq@referencemark@format{\@thefnmark}\hskip 1\zw##1}% 見出し出力と一文字分の空き
+      \noindent\hskip\glueexpr1\zw\relax\jlreq@referencemark@format{\@thefnmark}\hskip\glueexpr1\zw\relax##1}% 見出し出力と一文字分の空き
   }
 }
 \jlreqsetup{footnotetext_indent=one}
@@ -3106,7 +3101,7 @@
 \jlreq@endnote@indent=2\jlreq@mol
 % 二行目以降を全角分下げる（4.2.4.d：TODO: 選択できるべき）
 \newcommand{\@makeendtext}[1]{\parindent 1\jlreq@mol
-    \hskip-1\jlreq@mol\csname\jlreq@endnotemarkname\endcsname\hskip 1\jlreq@mol#1}% 見出し出力と一文字分の空き（4.2.4.c）
+    \hskip\glueexpr-1\jlreq@mol\relax\csname\jlreq@endnotemarkname\endcsname\hskip\gluexpr1\jlreq@mol\relax#1}% 見出し出力と一文字分の空き（4.2.4.c）
 \def\@makeendmark{\@makefnmark}
 
 % \theendnoteの出力を仕込む

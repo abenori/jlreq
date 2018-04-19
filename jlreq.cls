@@ -7,346 +7,28 @@
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{jlreq}[2018/04/11 jlreq]
 \RequirePackage{xkeyval,everyhook,filehook,etoolbox,ifthen}
+\RequirePackage{jlreq-helpers}
 
-%. helper1
-\newcount\jlreq@tempcnta
-\newcount\jlreq@tempcntb
-\newcount\jlreq@tempcntc
-\newdimen\jlreq@tempdima
-\newdimen\jlreq@tempdimb
-\newdimen\jlreq@tempdimc
-\newskip\jlreq@tempskipa
-\newskip\jlreq@tempskipb
-\newskip\jlreq@tempskipc
-\newif\ifjlreq@tempa
-\newif\ifjlreq@tempb
-\newif\ifjlreq@tempc
-\newbox\jlreq@tempboxa
-\newbox\jlreq@tempboxb
-\newbox\jlreq@tempboxc
-% 計算結果を返すための変数
-\newdimen\jlreq@resultdimen
-\newskip\jlreq@resultskip
-\newbox\jlreq@resultbox
-\newif\ifjlreq@result
-\newcount\jlreq@resultcnt
-
-\newcommand*{\jlreq@undefcs}[1]{%
-  \ifundef{#1}{\ClassError{jlreq}{Trying to delete \string#1 even though it is not defined, may be a bug}{\@ehc}}{\undef{#1}}%
-}
-
+\newcommand*{\jlreq@undeferr}[1]{\ClassError{jlreq}{Trying to delete \string#1 even though it is not defined, may be a bug}{\@ehc}}
 % クラスファイル内でしか使わないマクロをクラスファイル終了時に未定義にする
 \newcommand*{\jlreq@aftercls@addtodeletecs}[1]{%
-  \appto\jlreq@aftercls@deletecslist{\jlreq@undefcs{#1}}%
+  \appto\jlreq@aftercls@deletecslist{\jlreq@helper@undefcs{#1}{\jlreq@undeferr}}%
+}
+\newcommand*{\jlreq@aftercls@addtodeleteif}[1]{%
+  \appto\jlreq@aftercls@deletecslist{\jlreq@helper@undefif{#1}{\jlreq@undeferr}}%
 }
 \jlreq@aftercls@addtodeletecs{\jlreq@aftercls@addtodeletecs}
-\newcommand*{\jlreq@aftercls@addtodeleteif}[1]{%
-  \edef\@tempa{\expandafter\@gobble\string#1}%
-  \edef\@tempa{\expandafter\@gobbletwo\@tempa}%
-  \eappto\jlreq@aftercls@deletecslist{%
-    \unexpanded{\jlreq@undefcs{#1}}%
-    \noexpand\jlreq@undefcs{\expandonce{\csname\@tempa true\endcsname}}%
-    \noexpand\jlreq@undefcs{\expandonce{\csname\@tempa false\endcsname}}%
-  }%
-}
 \jlreq@aftercls@addtodeletecs{\jlreq@aftercls@addtodeleteif}
 \AtEndOfClass{%
   \jlreq@aftercls@deletecslist
-  \jlreq@undefcs{\jlreq@aftercls@deletecslist}%
-  \undef{\jlreq@undefcs}%
-}
-
-\def\jlreq@uniqtoken{\jlreq@uniqtoken}
-\def\jlreq@endmark{\jlreq@endmark}
-\long\def\jlreq@deleteuntileendmark#1\jlreq@endmark{}
-
-\def\jlreq@expandafter@ii{\expandafter\expandafter\expandafter}
-\edef\jlreq@expandafter@iii{\expandonce{\jlreq@expandafter@ii}\noexpand\expandafter\expandonce{\jlreq@expandafter@ii}}
-\edef\jlreq@expandtwice#1{\expandonce{\jlreq@expandafter@ii}\noexpand\unexpanded\expandonce{\jlreq@expandafter@ii}{#1}}
-\edef\jlreq@expand@three#1{\expandonce{\jlreq@expandafter@iii}\noexpand\unexpanded\expandonce{\jlreq@expandafter@iii}{#1}}
-
-% \jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark@の形で使う
-% 二回展開すると，#1の先頭（ただし空白は無視される）を取り出す．#1が空の場合は\jlreq@uniqtoken，先頭が{の場合は\bgroupとなる
-\def\jlreq@endmark@{\jlreq@endmark@} % \jlreq@getfirsttokenだけのためのendmark
-\long\def\jlreq@getfirsttoken#1#{\jlreq@getfirsttoken@#1\bgroup\jlreq@endmark@}
-\long\def\jlreq@getfirsttoken@#1#2\jlreq@endmark@#3\jlreq@endmark@{#1}
-% 与えられたトークン列が空か（展開はしないでチェック）
-\long\def\jlreq@ifempty#1{\expandafter\ifx\expandafter\relax\detokenize{#1}\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-% #1の先頭トークンが#2か（ただし#1が空ならば#2=\jlreq@uniqtoken，#1={ならば#2=\bgroupでTRUEとなる）
-\long\edef\jlreq@iffirsttoken#1#2{%
-  % スペースチェック
-  \unexpanded{\expandafter\expandafter\expandafter\jlreq@deleteuntileendmark\expandafter\ifx\expandafter}\expandonce{\space}\noexpand\detokenize{#1}\unexpanded{\@undefined\jlreq@endmark\expandafter\@firstoftwo\else\jlreq@endmark\expandafter\@secondoftwo\fi}{%
-    \noexpand\ifx\expandonce{\space}#2\unexpanded{\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}%
-  }{%
-    \noexpand\jlreq@iffirsttoken@ignorespaces{#1}{#2}%
-  }%
-}
-% こちらは先頭のスペースを読み飛ばす
-\long\def\jlreq@iffirsttoken@ignorespaces#1#2{%
-  \expandafter\expandafter\expandafter\ifx\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark@#2\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
-}
-
-% #1が\jlreq@endmarkか
-\long\def\jlreq@ifendmark#1{\jlreq@iffirsttoken{#1}{\jlreq@endmark}}
-
-% #1の先頭が引数なしのマクロか
-\long\def\jlreq@ifmacro@noargument#1{%
-  \jlreq@ifempty{#1}{\@secondoftwo}{%
-    \jlreq@iffirsttoken{#1}{ }{\@secondoftwo}{%
-      \expandafter\expandafter\expandafter\jlreq@ifmacro@noargument@\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark@
-}}}
-\long\def\jlreq@ifmacro@noargument@#1{\expandafter\jlreq@ifmacro@noargument@@\expandafter{\meaning #1}}
-\edef\jlreq@do{%
-  \unexpanded{\def\jlreq@ifmacro@noargument@@}##1{\noexpand\jlreq@ifmacro@noargument@@@##1\expandonce{\detokenize{macro:->}}\noexpand\jlreq@endmark}
-  \unexpanded{\def\jlreq@ifmacro@noargument@@@}##1\expandonce{\detokenize{macro:->}}##2\noexpand\jlreq@endmark{\noexpand\jlreq@ifempty{##1}}
-}
-\jlreq@do
-
-% #1（skipレジスタ）が0か（展開不可）．
-\def\jlreq@ifgluezero#1{%
-  \begingroup
-    \edef\@tempa{\the#1}%
-    \edef\@tempb{\detokenize{0.0pt}}%
-    \edef\jlreq@do{\ifx\@tempa\@tempb\noexpand\@firstoftwo\else\noexpand\@secondoftwo\fi}%
-  \expandafter\endgroup
-  \jlreq@do
-}
-
-% #1が#2で終わるか（展開不可）
-\def\jlreq@ifendswith#1#2{%
-  \jlreq@ifempty{#2}{\@firstoftwo}{%
-    \begingroup
-      \def\jlreq@tempa##1#2\jlreq@uniqtoken##2\jlreq@endmark{%
-        \edef\jlreq@do{\jlreq@ifempty{##2}{\noexpand\@secondoftwo}{\noexpand\@firstoftwo}}%
-      }%
-      \jlreq@tempa#1\jlreq@uniqtoken#2\jlreq@uniqtoken\jlreq@endmark
-    \expandafter\endgroup
-    \jlreq@do
-  }%
-}
-% #1が#2で始まるか（展開不可）
-\def\jlreq@ifstartswith#1#2{%
-  \jlreq@ifempty{#2}{\@firstoftwo}{%
-    \jlreq@ifempty{#1}{\@secondoftwo}{%
-      \begingroup
-        \def\jlreq@tempa##1#2##2\jlreq@endmark{%
-          \edef\jlreq@do{\jlreq@ifempty{##1}{\noexpand\@firstoftwo}{\noexpand\@secondoftwo}}%
-        }%
-        \jlreq@tempa#1#2\jlreq@endmark
-      \expandafter\endgroup
-      \jlreq@do
-    }%
-  }%
-}
-% #1が#2を含むか（展開不可）{}内に#2があってもFALSE判定．
-\def\jlreq@ifcontains#1#2{%
-  \jlreq@ifempty{#2}{\@firstoftwo}{%
-    \begingroup
-      \def\jlreq@tempa##1#2##2\jlreq@endmark{%
-        \edef\jlreq@do{\jlreq@ifempty{##2}{\noexpand\@secondoftwo}{\noexpand\@firstoftwo}}%
-      }%
-      \jlreq@tempa#1#2\jlreq@endmark
-    \expandafter\endgroup
-    \jlreq@do
-  }%
-}
-
-% @removeelementの括弧があっても動くかもしれない版
-% #2から#1を消して#3に入れる
-\def\jlreq@helper@removeelement#1#2#3{%
-  \begingroup
-    \edef\jlreq@tempa{\unexpanded{#1}}% 消したいやつ
-    \def\jlreq@tempb{}% 消していない分を放り込んでいく
-    \jlreq@tempatrue% 最初の\jlreq@tempbへの追加か．
-    \jlreq@helper@removeelement@#2,\jlreq@endmark,%
-    \edef\jlreq@do{\unexpanded{\def#3}{\expandonce{\jlreq@tempb}}}%
-  \expandafter\endgroup
-  \jlreq@do
-}
-\def\jlreq@helper@removeelement@#1,{%
-  \jlreq@ifendmark{#1}{}{%
-    \edef\@tempa{\unexpanded{#1}}%
-    \ifx\jlreq@tempa\@tempa\expandafter\@gobble\else\expandafter\@firstofone\fi{%
-      \eappto\jlreq@tempb{\ifjlreq@tempa\else,\fi\unexpanded{#1}}%
-      \jlreq@tempafalse
-    }%
-    \jlreq@helper@removeelement@
-  }%
-}
-
-% 空白を無視しない\@ifnextchar
-\long\def\jlreq@ifnextchar#1#2#3{%
-  \let\reserved@d=#1%
-  \edef\reserved@a{\unexpanded{#2}}%
-  \edef\reserved@b{\unexpanded{#3}}%
-  \futurelet\jlreq@nextchar\jlreq@ifnextchar@
-}
-\def\jlreq@ifnextchar@{%
-  \ifx\jlreq@nextchar\reserved@d\let\reserved@b\reserved@a\fi
-  \reserved@b
-}
-% 空白を無視しない\@ifsart
-\def\jlreq@ifstar#1#2{\jlreq@ifnextchar *{\edef\reserved@a*{\unexpanded{#1}}\reserved@a}{#2}}
-% カンマで区切って，その前と後ろを\jlreq@resulta,\jlreq@resultbに入れる
-% もしカンマがない場合は\ifjlreq@resultがfalseになる．
-\def\jlreq@helper@dividebycomma#1{\jlreq@helper@dividebycomma@#1,\jlreq@endmark}
-\def\jlreq@helper@dividebycomma@#1,#2\jlreq@endmark{%
-  \def\jlreq@resulta{#1}%
-  \def\jlreq@resultb{#2}%
-  \ifx\jlreq@resultb\@empty\jlreq@resultfalse\else\jlreq@resulttrue\expandafter\def\expandafter\jlreq@resultb\expandafter{\jlreq@helper@removelastcomma#2\jlreq@endmark}\fi
-}
-\def\jlreq@helper@removelastcomma#1,\jlreq@endmark{#1}
-
-% vbox #1の最後を\jlreq@resultboxに入れる
-% #1の最後の行は消える
-\newcommand*{\jlreq@getlastbox}[1]{%
-  \setbox#1=\vbox{\unvbox#1\relax
-    \unskip\unskip\unpenalty\global\setbox\jlreq@resultbox=\lastbox}%
-  \ifhbox\jlreq@resultbox
-    \global\setbox\jlreq@resultbox=\hbox{%
-      \unhbox\jlreq@resultbox\unskip\unskip\unpenalty}%
-  \else
-    \global\setbox\jlreq@resultbox=\copy\voidb@x
-  \fi
-}
-
-% 簡易なkeyvalのパース．
-% \jlreq@parsekeyval*[family=jlreq@key]{ % *ありは\setkeys*を使う
-%  {key}{\def\val{#1}}
-%  *{key}{\def\val{#1}} % デフォルト値を空文字列にする
-%  {key}[choice1,choice2]{\def\valchoice{#1}}
-%}{parse対象}
-\def\jlreq@parsekeyval{%
-  \@ifstar{\jlreq@helper@parsekeyval@{*}}{\jlreq@helper@parsekeyval@{}}%
-}
-\def\jlreq@helper@parsekeyval@#1{%
-  \@ifnextchar[{\jlreq@helper@parsekeyval@@{#1}}{\jlreq@helper@parsekeyval@@{#1}[jlreq@key]}%
-}
-\long\def\jlreq@helper@parsekeyval@@#1[#2]#3#4{%
-  \begingroup
-    \def\jlreq@do{}%
-    \jlreq@helper@parsekeyval@@@{#2}#3{\jlreq@endmark}%
-    \setkeys#1{#2}{#4}%
-  \expandafter\endgroup
-  \jlreq@do
-}
-\def\jlreq@helper@parsekeyval@@@#1#2#{%
-  \jlreq@iffirsttoken@ignorespaces{#2}{*}{%
-    \jlreq@helper@parsekeyval@@@definekeywithdefault{#1}%
-  }{%
-    \jlreq@helper@parsekeyval@@@@{#1}%
-  }%
-}
-\long\def\jlreq@helper@parsekeyval@@@@#1#2{%
-  \jlreq@ifendmark{#2}{}{%
-    \@ifnextchar[{\jlreq@helper@parsekeyval@@@choicekey{#1}{#2}}{\jlreq@helper@parsekeyval@@@definekey{#1}{#2}}%
-  }%
-}
-\long\def\jlreq@helper@parsekeyval@@@choicekey#1#2[#3]#4{%
-  \define@choicekey{#1}{#2}{#3}{\eappto\jlreq@do{\unexpanded{#4}}}%
-  \jlreq@helper@parsekeyval@@@{#1}%
-}
-\long\def\jlreq@helper@parsekeyval@@@definekeywithdefault#1#2#3{%
-  \define@key{#1}{#2}[]{\eappto\jlreq@do{\unexpanded{#3}}}%
-  \jlreq@helper@parsekeyval@@@{#1}%
-}
-\long\def\jlreq@helper@parsekeyval@@@definekey#1#2#3{%
-  \define@key{#1}{#2}{\eappto\jlreq@do{\unexpanded{#3}}}%
-  \jlreq@helper@parsekeyval@@@{#1}%
-}
-
-% キー指定しないkeyval（独自実装）
-% \jlreq@parsekeyval@nokey{<action>}{<parse対象>}
-% action内では#1=key, #2=val
-\long\def\jlreq@parsekeyval@nokey#1#2{%
-  \begingroup
-    \def\jlreq@do{}%
-    \def\jlreq@parsekeyval@nokey@execute##1##2{#1}%
-    \expandafter\jlreq@parsekeyval@nokey@#2,\jlreq@endmark,%
-  \expandafter\endgroup
-  \jlreq@do
-}
-\long\def\jlreq@parsekeyval@nokey@#1,{%
-  \jlreq@ifendmark{#1}{}{\jlreq@parsekeyval@nokey@@#1=\jlreq@endmark}%
-}
-\long\def\jlreq@parsekeyval@nokey@@#1=#2\jlreq@endmark{%
-  \jlreq@ifempty{#2}{\jlreq@parsekeyval@nokey@@@{}{#1}}{\expandafter\jlreq@parsekeyval@nokey@@@\expandafter{\jlreq@parsekeyval@nokey@@@@#2\jlreq@endmark}{#1}}%
-}
-\long\def\jlreq@parsekeyval@nokey@@@#1#2{%
-  \eappto\jlreq@do{\expandonce{\jlreq@parsekeyval@nokey@execute{#2}{#1}}}%
-  \jlreq@parsekeyval@nokey@
-}
-\long\def\jlreq@parsekeyval@nokey@@@@#1=\jlreq@endmark{#1}
-
-% \jlreq@switch{str}{
-%   {str}{abcd}
-%   {str1}{xyz}
-%}[default: input = #1] -> abcd
-%または
-%
-% \jlreq@switch{str}{
-%   {str}{abcd}
-%   {str1}{xyz}
-%   {default} % ここは#1を受け付けない（パラメータトークンを受け付けたい場合のため）．
-%} -> abcd
-% 文字列比較→\edefして比較する
-% 第一引数は\jlreq@tempaに入れておく．
-\long\def\jlreq@helper@switch@executeoption#1[#2]{%
-  \begingroup
-    \def\jlreq@do##1{#2}%
-  \expandafter\endgroup
-  \jlreq@do{#1}%
-}
-\long\def\jlreq@helper@removeoption[#1]{}
-\long\def\jlreq@switch#1#2{%
-  \begingroup
-    \let\jlreq@do\@undefined
-    \edef\jlreq@tempa{#1}% ループ中ずっと保存する
-    \jlreq@helper@switch@#2\jlreq@endmark
-    \ifx\jlreq@do\@undefined
-      \def\jlreq@do{\@ifnextchar[{\jlreq@helper@switch@executeoption{#1}}{}}%
-    \else
-      \appto\jlreq@do{\@ifnextchar[{\jlreq@helper@removeoption}{}}%
-    \fi
-  \expandafter\endgroup
-  \jlreq@do
-}
-\long\def\jlreq@helper@switch@#1{%
-  \jlreq@ifendmark{#1}{}{\jlreq@helper@switch@@{#1}}%
-}
-
-\long\def\jlreq@helper@switch@@#1#2{%
-  \jlreq@ifendmark{#2}{%
-    \edef\jlreq@do{\unexpanded{#1}}%
-  }{%
-    \edef\jlreq@tempb{#1}%
-    \ifx\jlreq@tempa\jlreq@tempb\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
-      \edef\jlreq@do{\unexpanded{#2}}%
-      \jlreq@deleteuntileendmark
-    }{%
-      \jlreq@helper@switch@
-    }%
-  }%
+  \jlreq@helper@undefcs{\jlreq@aftercls@deletecslist}{\jlreq@undeferr}%
+  \undef{\jlreq@undeferr}%
 }
 
 % preambleにいるかのスイッチ
 \newif\ifjlreq@preamble
 \jlreq@preambletrue
 \AtBeginDocument{\jlreq@preamblefalse}
-
-\RequirePackage[savepos]{zref}
-\newcount\jlreq@zref@reference@count
-\jlreq@zref@reference@count=0
-% 現在のページを得る
-\zref@newprop*{jlreq@page}[0]{\number\c@page}
-\zref@addprop{main}{jlreq@page}
-\newcount\jlreq@currentpage
-% \jlreq@setcurrentpageをすると，\jlreq@currentpageにこの場所のページ数が入る
-\newcommand*{\jlreq@setcurrentpage}{%
-  \global\advance\jlreq@zref@reference@count by 1
-  \zref@labelbyprops{jlreq@currentpage.\the\jlreq@zref@reference@count}{jlreq@page}%
-  \global\jlreq@currentpage=\zref@extractdefault{jlreq@currentpage.\the\jlreq@zref@reference@count}{jlreq@page}{\c@page}\relax
-}
 
 \def\jlreq@saveoriginalcs#1{%
   \ifx#1\relax
@@ -362,34 +44,6 @@
     {\csname jlreq@original@\expandafter\@gobble\string#1\endcsname}%
     {#1}%
 }
-
-% 先頭にあるマクロを展開しまくった結果の先頭を#2に入れる．
-\long\def\jlreq@getfirsttoken@expandmacros#1#2{%
-  \jlreq@iffirsttoken{#1}{ }{\def#2{ }}{%
-    \jlreq@ifempty{#1}{\def#2{}}{%
-      \jlreq@ifmacro@noargument{#1}{%
-        \expandafter\jlreq@getfirsttoken@expandmacros\expandafter{#1}{#2}%
-      }{%
-        \expandafter\expandafter\expandafter\jlreq@getfirsttoken@expandmacros@\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark@{#2}%
-      }%
-    }%
-  }%
-}
-\def\jlreq@getfirsttoken@expandmacros@#1#2{\def#2{#1}}
-
-\def\jlreq@helper@checktokenlist#1#2{%
-  \jlreq@ifendmark{#2}{\@firstoftwo}%
-  {%
-    \ifnum0#1{#2}>0 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
-      {\jlreq@helper@checktokenlist{#1}}%
-      {\expandafter\@secondoftwo\jlreq@deleteuntileendmark}%
-  }%
-}
-\def\jlreq@helper@chknumlist#1{\ifx#101\fi\ifx#111\fi\ifx#121\fi\ifx#131\fi\ifx#141\fi\ifx#151\fi\ifx#161\fi\ifx#171\fi\ifx#181\fi\ifx#191\fi}
-\def\jlreq@helper@chkfloatlist#1{\jlreq@helper@chknumlist{#1}\ifx#1.1\fi}
-% #1が[0-9\.]*に当てはまるか．
-\def\jlreq@iffloat#1{\jlreq@helper@checktokenlist{\jlreq@helper@chkfloatlist}#1\jlreq@endmark}
-\def\jlreq@ifnumber#1{\jlreq@helper@checktokenlist{\jlreq@helper@chknumlist}#1\jlreq@endmark}
 
 %. オプションの定義
 % オプション処理の際にしか使わない変数（後でそれを元に別の変数を調整する）
@@ -419,7 +73,15 @@
 \def\jlreq@switchpapersize{}
 \jlreq@aftercls@addtodeletecs{\jlreq@switchpapersize}
 % \jlreq@addpapersize{paper=に指定するもの}{単独オプション名}{横}{縦}
-\newcommand*{\jlreq@addpapersize}[4]{%
+
+\def\jlreq@addpapersize#1#2{%
+  \@ifnextchar[{\jlreq@addpapersize@{#1}{#2}}{\jlreq@addpapersize@@{#1}{#2}}
+}
+\def\jlreq@addpapersize@#1#2[#3]{%
+  \edef\@tempa{\unexpanded{\jlreq@addpapersize@@{#1}{#2}}\csexpandonce{jlreq@helper@papersizelist@#3}}%
+  \@tempa
+}
+\newcommand*{\jlreq@addpapersize@@}[4]{%
   \@for\@tempa:=#1\do{%
     \eappto\jlreq@switchpapersize{{\expandonce{\@tempa}}{\unexpanded{\setlength{\paperwidth}{#3}\setlength{\paperheight}{#4}}}}%
   }%
@@ -428,6 +90,8 @@
   }%
 }
 \jlreq@aftercls@addtodeletecs{\jlreq@addpapersize}
+\jlreq@aftercls@addtodeletecs{\jlreq@addpapersize@}
+\jlreq@aftercls@addtodeletecs{\jlreq@addpapersize@@}
 \DeclareOptionX{paper}{
   \edef\jlreq@do{%
     \unexpanded{\jlreq@switch{#1}}{\expandonce{\jlreq@switchpapersize}}%
@@ -444,45 +108,45 @@
   \jlreq@do
 }
 % 紙サイズ一覧．b*はJIS B．
-\jlreq@addpapersize{a0,A0}{}{841mm}{1189mm}
-\jlreq@addpapersize{a1,A1}{}{594mm}{841mm}
-\jlreq@addpapersize{a2,A2}{}{420mm}{594mm}
-\jlreq@addpapersize{a3,A3}{a3paper}{297mm}{420mm}
-\jlreq@addpapersize{a4,A4}{a4paper}{210mm}{297mm}
-\jlreq@addpapersize{a5,A5}{a5paper}{148mm}{210mm}
-\jlreq@addpapersize{a6,A6}{a6paper}{105mm}{148mm}
-\jlreq@addpapersize{a7,A7}{}{74mm}{105mm}
-\jlreq@addpapersize{a8,A8}{}{52mm}{74mm}
-\jlreq@addpapersize{a9,A9}{}{37mm}{52mm}
-\jlreq@addpapersize{a10,A10}{}{26mm}{37mm}
+\jlreq@addpapersize{a0,A0}{}[a0]
+\jlreq@addpapersize{a1,A1}{}[a1]
+\jlreq@addpapersize{a2,A2}{}[a2]
+\jlreq@addpapersize{a3,A3}{a3paper}[a3]
+\jlreq@addpapersize{a4,A4}{a4paper}[a4]
+\jlreq@addpapersize{a5,A5}{a5paper}[a5]
+\jlreq@addpapersize{a6,A6}{a6paper}[a6]
+\jlreq@addpapersize{a7,A7}{}[a7]
+\jlreq@addpapersize{a8,A8}{}[a8]
+\jlreq@addpapersize{a9,A9}{}[a9]
+\jlreq@addpapersize{a10,A10}{}[a10]
 
-\jlreq@addpapersize{b0,B0}{}{1030mm}{1456mm}
-\jlreq@addpapersize{b1,B1}{}{728mm}{1030mm}
-\jlreq@addpapersize{b2,B2}{}{515mm}{728mm}
-\jlreq@addpapersize{b3,B3}{}{364mm}{515mm}
-\jlreq@addpapersize{b4,B4}{b4paper}{257mm}{364mm}
-\jlreq@addpapersize{b5,B5}{b5paper}{182mm}{257mm}
-\jlreq@addpapersize{b6,B6}{b6paper}{128mm}{182mm}
-\jlreq@addpapersize{b7,B7}{}{91mm}{128mm}
-\jlreq@addpapersize{b8,B8}{}{64mm}{91mm}
-\jlreq@addpapersize{b9,B9}{}{45mm}{64mm}
-\jlreq@addpapersize{b10,B10}{}{32mm}{45mm}
+\jlreq@addpapersize{b0,B0}{}[b0]
+\jlreq@addpapersize{b1,B1}{}[b1]
+\jlreq@addpapersize{b2,B2}{}[b2]
+\jlreq@addpapersize{b3,B3}{}[b3]
+\jlreq@addpapersize{b4,B4}{b4paper}[b4]
+\jlreq@addpapersize{b5,B5}{b5paper}[b5]
+\jlreq@addpapersize{b6,B6}{b6paper}[b6]
+\jlreq@addpapersize{b7,B7}{}[b7]
+\jlreq@addpapersize{b8,B8}{}[b8]
+\jlreq@addpapersize{b9,B9}{}[b9]
+\jlreq@addpapersize{b10,B10}{}[b10]
 
-\jlreq@addpapersize{c2,C2}{}{458mm}{648mm}
-\jlreq@addpapersize{c3,C3}{}{324mm}{458mm}
-\jlreq@addpapersize{c4,C4}{}{229mm}{354mm}
-\jlreq@addpapersize{c5,C5}{}{162mm}{229mm}
-\jlreq@addpapersize{c6,C6}{}{114mm}{162mm}
-\jlreq@addpapersize{c7,C7}{}{81mm}{114mm}
-\jlreq@addpapersize{c8,C8}{}{57mm}{81mm}
+\jlreq@addpapersize{c2,C2}{}[c2]
+\jlreq@addpapersize{c3,C3}{}[c3]
+\jlreq@addpapersize{c4,C4}{}[c4]
+\jlreq@addpapersize{c5,C5}{}[c5]
+\jlreq@addpapersize{c6,C6}{}[c6]
+\jlreq@addpapersize{c7,C7}{}[c7]
+\jlreq@addpapersize{c8,C8}{}[c8]
 
-\jlreq@addpapersize{a4var}{}{210mm}{283mm}
-\jlreq@addpapersize{b5var}{}{182mm}{230mm}
+\jlreq@addpapersize{a4var}{}[a4var]
+\jlreq@addpapersize{b5var}{}[b5var]
 
-\jlreq@addpapersize{letter}{letterpaper}{8.5in}{11in}
-\jlreq@addpapersize{legal}{legalpaper}{8.5in}{14in}
-\jlreq@addpapersize{executive}{executivepaper}{7.25in}{10.5in}
-\jlreq@addpapersize{hagaki}{}{100mm}{148mm}
+\jlreq@addpapersize{letter}{letterpaper}[letter]
+\jlreq@addpapersize{legal}{legalpaper}[legal]
+\jlreq@addpapersize{executive}{executivepaper}[executive]
+\jlreq@addpapersize{hagaki}{}[hagaki]
 
 
 %.. フォントサイズ，行長，1ページあたりの行数で基本版面のサイズを決める（2.4.1.a）
@@ -568,14 +232,14 @@
 \newif\if@landscape\@landscapefalse
 \newif\if@tate \@tatefalse
 \jlreq@DeclareOption{landscape}{\@landscapetrue}
-\jlreq@DeclareOption{tombo}{%
-  \tombowtrue\tombowdatefalse
-  \setlength{\@tombowwidth}{.1\p@}%
-  \maketombowbox}
-\jlreq@DeclareOption{mentuke}{%
-  \tombowtrue\tombowdatefalse
-  \setlength{\@tombowwidth}{\z@}%
-  \maketombowbox}
+%\jlreq@DeclareOption{tombo}{%
+%  \tombowtrue\tombowdatefalse
+%  \setlength{\@tombowwidth}{.1\p@}%
+%  \maketombowbox}
+%\jlreq@DeclareOption{mentuke}{%
+%  \tombowtrue\tombowdatefalse
+%  \setlength{\@tombowwidth}{\z@}%
+%  \maketombowbox}
 \jlreq@DeclareOption{tate}{\@tatetrue}
 
 \newif\ifjlreq@option@twoside\jlreq@option@twosidefalse % onesideかtwosideが指定された
@@ -652,26 +316,10 @@
 \jlreq@aftercls@addtodeletecs{\jlreq@jlreqsetup@addtofinally}
 \@onlypreamble\jlreqsetup
 
-% \jlreq@ifprimitive#1#2#3: #1がprimitiveならば#2を，そうでなければ#3を実行する
-% （\if(pdf)primitiveを避けるようにしている．）
-\def\jlreq@ifprimitive#1{%
-  \begingroup
-    \edef\@tempa{\string#1}%
-    \edef\@tempb{\meaning#1}%
-  \expandafter\endgroup
-  \ifx\@tempa\@tempb\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
-}
 % エンジンの設定
 \ifx\jlreq@engine\@undefined
-  \jlreq@ifprimitive\directlua{
-    \let\jlreq@engine=l
-  }{
-    \jlreq@ifprimitive\ucs{
-      \let\jlreq@engine=u
-    }{
-      \let\jlreq@engine=p
-    }
-  }
+  \jlreq@helper@guessengine
+  \let\jlreq@engine=\jlreq@result
 \fi
 
 
@@ -761,6 +409,7 @@
     \else
       \evensidemargin
     \fi
+    \iftombow - 1in\fi
     - 1in - \hoffset\relax
   }
 \else
@@ -782,6 +431,7 @@
         - \topmargin - \headheight - \headsep - \voffset
         - \zposy{jlreq@rest@width.pos.\the\jlreq@zref@reference@count} sp
       }%
+      \iftombow - 1in\fi
       - \@totalleftmargin - 1in
     \relax
   }
@@ -884,39 +534,12 @@
   \jlreq@do
 }
 
-% #1÷#2を\jlreq@resultdimenに入れる．（#1,#2は寸法を与える．）
 \ifx l\jlreq@engine
   \newcommand*{\jlreq@divide}[2]{%
     \jlreq@resultdimen=\directlua{tex.print(tostring(\strip@pt\dimexpr #1\relax/\strip@pt\dimexpr #2\relax) .. "pt ")}%
   }
 \else
-  \newcommand*{\jlreq@divide}[2]{%
-    \begingroup
-      \@tempdima=\dimexpr#1\relax\@tempdimb=\dimexpr#2\relax
-      % 分母を正にする
-      \ifdim\@tempdimb<0pt \@tempdima=-\@tempdima\@tempdimb=-\@tempdimb\fi
-      % \jlreq@tempdima*\@tempdimb <= \@tempdima < (\jlreq@tempdima + 1)*\@tempdimb
-      % となる整数\jlreq@tempdimaを捜し，\jlreq@tempdimb=\jlreq@tempdima + 1とする
-      \jlreq@tempdima=0pt
-      \ifdim\@tempdima<0pt
-        \loop\ifdim\strip@pt\jlreq@tempdima\@tempdimb>\@tempdima\advance\jlreq@tempdima by -1pt\repeat
-      \else
-        \loop\ifdim\strip@pt\jlreq@tempdima\@tempdimb<\@tempdima\advance\jlreq@tempdima by 1pt\repeat
-        \ifdim\strip@pt\jlreq@tempdima\@tempdimb=\@tempdima\else\advance\jlreq@tempdima by -1pt\fi
-      \fi
-      \jlreq@tempdimb=\dimexpr\jlreq@tempdima + 1pt\relax
-      % \jlreq@tempdimaと\jlreq@tempdimbで挟んでいく二分法
-      \jlreq@tempcnta=0 % 無限ループを避けるためのカウンタ
-      \loop\ifnum\numexpr\ifdim\dimexpr\jlreq@tempdimb - \jlreq@tempdima\relax>1sp 1\else0\fi*\ifnum\jlreq@tempcnta<100 1\else 0\fi\relax=1
-        \jlreq@tempdimc=\dimexpr(\jlreq@tempdima+\jlreq@tempdimb)/2\relax
-        \ifdim\strip@pt\jlreq@tempdimc\@tempdimb>\@tempdima\jlreq@tempdimb=\jlreq@tempdimc
-        \else\jlreq@tempdima=\jlreq@tempdimc\fi
-        \advance\jlreq@tempcnta by 1
-      \repeat
-      \edef\jlreq@do{\noexpand\jlreq@resultdimen=\the\jlreq@tempdima\noexpand\relax}%
-    \expandafter\endgroup
-    \jlreq@do
-  }
+  \let\jlreq@divide=\jlreq@helper@divide
 \fi
 
 %. 基本設定
@@ -5179,6 +4802,11 @@
 \else
   \jlreqsetup{year_style=seireki}
 \fi
+
+% 時刻
+\hour=\time \divide\hour by 60
+\minute=\numexpr\time - 60*\hour\relax
+
 %.. 定理環境
 \jlreq@saveoriginalcs{\@begintheorem}
 \jlreq@saveoriginalcs{\@opargbegintheorem}

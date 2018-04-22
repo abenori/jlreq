@@ -4,7 +4,7 @@
 This package outputs trim marks. It works with [LuaTeX-ja](https://osdn.jp/projects/luatex-ja/wiki/FrontPage), pLaTeX or upLaTeX. It provides the following.
 
 * Output trim marks
-* Set CropBox, TrimBox, ArtBox and BleedBox in PDF file.
+* Set CropBox, TrimBox, ArtBox and BleedBox if possible.
 * Set the size of paper..
 
 ## How to use
@@ -23,7 +23,7 @@ Set the engine. If it is not specified, then the engine is
 * the one used in the jlreq class if the jlreq class is loaded.
 * guessed one if the jlreq class is not loaded.
 
-### `dvipdfmx`, `dvips`
+### `dvipdfmx`, `dvips`, `dviout`
 Set the dvi driver. If it is not specified, then
 
 * the package outputs PDF file via LuaLaTeX when the engine is `lualatex`.
@@ -55,7 +55,7 @@ Set the bleed margin.
 Set the width of trim marks.
 
 ### ` color`
-Set the color of the trim marks. You have to load `xcolor` package before loading this package to use this function. Here are some examples of specifying the color.
+Set the color of the trim marks. You have to load a package which defines `\color` (`color' package or its variant) before loading this package to use this function. Here are some examples of specifying the color.
 
 * `color=c` -> `\color[cmyk]{1,0,0,0}`
 * `color=cyk` -> `\color[cmyk]{1,0,1,1}`

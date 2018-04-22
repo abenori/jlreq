@@ -70,14 +70,16 @@
 全角空白（U+3000）一文字からなるマクロです．和文間隔を挿入します．LuaLaTeXでは`　`のみでも和文間隔を入力できます．
 
 ### その他
-* ルビや圏点は提供されません．[PXrubrica](https://github.com/zr-tex8r/PXrubrica)またはluatexja-ruby（LuaLaTeX，LuaTeX-jaパッケージに付属）を使うと良いかと思います．
-* 日本語組版処理の要件2.3.2.dによれば，二段組の最後のページの各段の行数は揃えることが望ましいとされていますが，この処理は行われません．`nidanfloat`パッケージを使い，
+* ルビや圏点は提供されません．[PXrubrica](https://github.com/zr-tex8r/PXrubrica)または`luatexja-ruby`（LuaLaTeX，LuaTeX-jaパッケージに付属）を使うと良いかと思います．
+* 日本語組版処理の要件2.3.2.dによれば，横組みにおける二段組の最後のページの各段の行数は揃えることが望ましいとされていますが，この処理は行われません．`nidanfloat`パッケージを使い，
 
     ```latex
     \usepackage[balance]{nidanfloat}
     ```
 
     とするとこの処理が行われます．ただし，最終ページでの`\newpage`や`\clearpage`が正しく動作しません．詳しくは`nidanfloat`パッケージのマニュアルをご覧ください．
+* フォントを設定する機能は有していません．和文フォントは，LuaLaTeX利用時は`luatexja-fontspec`や`luatexja-preset`（いずれもLuaTeX-jaパッケージに付属）により設定することができます．dvipdfmxを使う場合は，[PXchfon](https://github.com/zr-tex8r/PXchfon)での設定が可能です．
+
 
 ## 各種設計
 設計はクラスオプションまたは`\jlreqsetup`によりkeyval形式で行います．以下では次の用法を使います．

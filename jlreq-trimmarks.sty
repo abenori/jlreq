@@ -28,9 +28,10 @@
 
 \@ifclassloaded{jlreq}{\let\ifjlreq@trimmarks@jlreqloaded=\@firstoftwo}{\let\ifjlreq@trimmarks@jlreqloaded=\@secondoftwo}
 
-% dvipdfmx=f，dvips=s，luatex=l
+% dvipdfmx=f，dvips=s，dviout = o, lualatex = l
 \jlreq@trimmarks@DeclareOption{dvipdfmx}{\let\jlreq@trimmarks@driver=f}
 \jlreq@trimmarks@DeclareOption{dvips}{\let\jlreq@trimmarks@driver=s}
+\jlreq@trimmarks@DeclareOption{dviout}{\let\jlreq@trimmarks@driver=o}
 \let\jlreq@trimmarks@engine=\jlreq@engine
 \jlreq@trimmarks@DeclareOption{lualatex}{\let\jlreq@trimmarks@engine=l}
 \jlreq@trimmarks@DeclareOption{uplatex}{\let\jlreq@trimmarks@engine=u}
@@ -130,6 +131,12 @@
 \let\@removeelement=\jlreq@temporary@original@@removeelement
 \let\jlreq@temporary@original@@removeelement=\@undefined
 
+\ifx o\jlreq@trimmarks@driver
+  \ifjlreq@trimmarks@digital
+    \ClassError{jlreq}{`show=digital' can't be used with the driver `dviout'}{\@ehc}
+  \fi
+\fi
+
 \newcommand{\jlreqtrimmarkssetup}[1]{%
   \jlreq@parsekeyval{%
     {banner}{\@bannertoken{##1}\maketombowbox}
@@ -139,7 +146,9 @@
       \jlreq@ifempty{##1}{
         \def\jlreq@trimmarks@color{\normalcolor}
       }{
-        \@ifpackageloaded{xcolor}{}{\PackageError{jlreq-trimmarks}{The package `xcolor' must be loaded before this package to use `color'}{\@ehc}}
+        \@ifundefined{color}{
+          \PackageError{jlreq-trimmarks}{`\string\color' is not defined, please load the package `color' or its variant before this package}{\@ehc}
+        }
         \jlreq@switch{##1}{
           {c}{\def\jlreq@trimmarks@color{\color[cmyk]{1,0,0,0}}}
           {m}{\def\jlreq@trimmarks@color{\color[cmyk]{0,1,0,0}}}
@@ -166,13 +175,13 @@
           }
         }
       }
-    }
     \maketombowbox
+    }
   }{#1}
 }
 \@onlypreamble\jlreqtrimmarkssetup
 \jlreqtrimmarkssetup{
-  banner={
+  banner={%
     \jobname\space(\number\year-\two@digits\month-\two@digits\day
     \space\two@digits\hour:\two@digits\minute)%
   },

@@ -1,10 +1,10 @@
 # jlreq-trimmarks
 
 ## これは何？
-トンボ（トリムマーク）を出力するためのパッケージです．[LuaTeX-ja](https://osdn.jp/projects/luatex-ja/wiki/FrontPage) / pLaTeX / upLaTeX 上で動きます．以下の機能を提供します．
+トンボ（トリムマーク）を出力するためのパッケージです．[LuaTeX-ja](https://osdn.jp/projects/luatex-ja/wiki/FrontPage) / pLaTeX / upLaTeX + DVIPDFMx / Dvips / dviout上で動きます．以下の機能を提供します．
 
 * トンボの出力
-* PDF出力時には，CropBox / TrimBox / ArtBox / BleedBoxを設定
+* 可能な場合には，CropBox / TrimBox / ArtBox / BleedBoxを設定
 * 紙サイズの設定
 
 ## 使い方
@@ -25,10 +25,10 @@
 
 です．
 
-### `dvipdfmx`，`dvips`
+### `dvipdfmx`，`dvips`，`dviout`
 dviドライバの指定です．省略時は
 
-* `lualatex`利用時は指定されている場合はLuaLaTeXによりPDF出力が行われると見なされる．
+* `lualatex`利用時はLuaLaTeXによりPDF出力が行われると見なされる．
 * `platex`または`uplatex`利用時は`dvipdfmx`．
 
 ### `trimmarks_paper`
@@ -54,9 +54,9 @@ dviドライバの指定です．省略時は
 トンボ自身の太さを指定します．
 
 ### ` color`
-トンボの色．この機能を利用するには，あらかじめ`xcolor`パッケージを読み込んでおく必要があります．色は次のように指定します．
+トンボの色．この機能を利用するには，あらかじめ`\color`を定義するパッケージ（`color`パッケージまたはその派生）を読み込んでおく必要があります．ここでの指定は次のようにして`\color`命令に変換されます．
 
-* `cy`や`myk`のように`cmyk`という文字列の一部の場合は，`cmyk`で指定された色のみの色になります．例えば`color=cy`は`\color[cmyk]{1,0,1,0}`で出力される色になります．
+* `cy`や`myk`のように`cmyk`という文字列の一部の場合は，`cmyk`で指定された色のみの色になります．例えば`color=cy`は`\color[cmyk]{1,0,1,0}`となります．
 * そうでない場合は`\color`の引数に回されます．`[***]`という形が先行する場合は，`\color`のオプションとして扱われます．例えば以下のようになります．
 
     - `black` -> `\color{black}`

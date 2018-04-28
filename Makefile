@@ -132,9 +132,13 @@ cls-install:
 	mkdir -p ${TEXMF}/tex/latex/jlreq
 	install jlreq.cls ${TEXMF}/tex/latex/jlreq
 
-install: jfm-install cls-install
+sty-install:
+	mkdir -p ${TEXMF}/tex/latex/jlreq
+	install jlreq-trimmarks.sty ${TEXMF}/tex/latex/jlreq
 
-tds: jfm jlreq.cls README.md README-ja.md LICENSE jlreq.html jlreq-ja.html
+install: jfm-install cls-install sty-install
+
+tds: jfm jlreq.cls README.md README-ja.md LICENSE jlreq.html jlreq-ja.html jlreq-trimmarks.html jlreq-trimmarks-ja.html
 	mkdir -p ./tds/fonts/tfm/public/jlreq
 	cp -f *.tfm ./tds/fonts/tfm/public/jlreq
 	mkdir -p ./tds/fonts/vf/public/jlreq
@@ -144,12 +148,15 @@ tds: jfm jlreq.cls README.md README-ja.md LICENSE jlreq.html jlreq-ja.html
 	cp jfm-jlreqv.lua ./tds/tex/luatex/jlreq
 	mkdir -p ./tds/tex/latex/jlreq
 	cp jlreq.cls ./tds/tex/latex/jlreq
+	cp jlreq-trimmarks.sty ./tds/tex/latex/jlreq
 	mkdir -p ./tds/doc/latex/jlreq
 	cp README.md ./tds/doc/latex/jlreq
 	cp README-ja.md ./tds/doc/latex/jlreq
 	cp LICENSE ./tds/doc/latex/jlreq
 	cp jlreq.html ./tds/doc/latex/jlreq
 	cp jlreq-ja.html ./tds/doc/latex/jlreq
+	cp jlreq-trimmarks.html ./tds/doc/latex/jlreq
+	cp jlreq-trimmarks-ja.html ./tds/doc/latex/jlreq
 
 uninstall:
 	rm -rf ${TEXMF}/fonts/tfm/public/jlreq
@@ -163,7 +170,8 @@ jfmclean:
 	rm -f jfm-*jlreq*-pl.lua
 
 docclean:
-	rm -f jlreq.tex jlreq.pdf jlreq.html jlreq-ja.tex jlreq-ja.pdf jlreq-ja.html
+	rm -f jlreq.tex jlreq.pdf jlreq.html jlreq-ja.tex jlreq-ja.pdf jlreq-ja.html jlreq-trimmarks.html jlreq-trimmarks-ja.html
+
 clean: jfmclean docclean
 
 

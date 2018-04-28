@@ -130,6 +130,7 @@ jfm-install: jfm
 
 cls-install:
 	mkdir -p ${TEXMF}/tex/latex/jlreq
+	install jlreq-helpers.sty ${TEXMF}/tex/latex/jlreq
 	install jlreq.cls ${TEXMF}/tex/latex/jlreq
 
 sty-install:
@@ -148,6 +149,7 @@ tds: jfm jlreq.cls README.md README-ja.md LICENSE jlreq.html jlreq-ja.html jlreq
 	cp jfm-jlreqv.lua ./tds/tex/luatex/jlreq
 	mkdir -p ./tds/tex/latex/jlreq
 	cp jlreq.cls ./tds/tex/latex/jlreq
+	cp jlreq-helpers.sty ./tds/tex/latex/jlreq
 	cp jlreq-trimmarks.sty ./tds/tex/latex/jlreq
 	mkdir -p ./tds/doc/latex/jlreq
 	cp README.md ./tds/doc/latex/jlreq

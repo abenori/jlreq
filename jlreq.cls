@@ -1468,17 +1468,21 @@
   \fi
 }
 
-% 同行見出し以外では，jlreq@heading@maketoc@<命令名>が\tableofcontents用の出力をするために呼び出される．
+% 扉見出しと別行見出しについては，\<csname> -> \jlreq@headingcs@csname -> 本体と
+% 二段構えで展開されるようにする．一度の展開で\parが出るのを防ぐため．
+% 一度展開を\longなしマクロに渡されると破綻するので．（そういうパッケージが存在する．）
+
+% jlreq@heading@maketoc@<命令名>が\tableofcontents用の出力をするために呼び出される．
 % #1=*または空（見出し命令に*がついていたかで分岐），#2=ラベル，#3=running head
 % デフォルトでは\<命令名>markと\addcontentslineが必要ならば呼ばれる．
-% 同行見出しでは\@startsection任せ
 
 % 見出しの直前に実行される
 \newcommand*{\jlreq@hook@beforeheadings}[1]{}
 % 見出し名一覧を格納する
 \def\jlreq@heading@allheadings{}
 
-% 目次を出力する命令\l@<命令名>を作る．{1 = 命令名}{2 = レベル}{3 = ラベルのフォーマット}
+% 目次を出力する命令\l@<命令名>を作る命令を作る．{1 = 命令名}{2 = レベル}{3 = ラベルのフォーマット}
+% 結果は\jlreq@resultに入る．
 \def\jlreq@heading@make@l@#1#2#3{%
   \@ifundefined{l@#1}{%
    % 長さは適当に計測する
@@ -1486,12 +1490,17 @@
       % ちょっと大きめで計測しておく
       \csname c@#1\endcsname=9
       \setbox\jlreq@tempboxa=\hbox{#3}%
-      \jlreq@tempdima=\wd\jlreq@tempboxa\relax%
-      \jlreq@tempdimb=1\zw
-      \divide\jlreq@tempdima by \jlreq@tempdimb
+      \jlreq@tempdima=\wd\jlreq@tempboxa
+      \csname c@#1\endcsname=26
+      \setbox\jlreq@tempboxa=\hbox{#3}%
+      \ifdim\jlreq@tempdima<\wd\jlreq@tempboxa
+        \jlreq@tempdima=\wd\jlreq@tempboxa
+      \fi
+      % \numexprは四捨五入
+      \jlreq@tempdimb=\dimexpr\the\numexpr\jlreq@tempdima/\dimexpr 1\zw\relax + 2\relax\zw\relax
       \edef\jlreq@do{%
         \unexpanded{\def\jlreq@result}{%
-          \noexpand\def\expandonce{\csname l@#1\endcsname}{\unexpanded{\@dottedtocline{#2}{0\zw}}{\the\numexpr\jlreq@tempdima + 1\relax\noexpand\zw}}%
+          \noexpand\def\expandonce{\csname l@#1\endcsname}{\unexpanded{\@dottedtocline{#2}{0\zw}}{\the\jlreq@tempdimb}}%
         }%
       }%
     \expandafter\endgroup
@@ -1570,11 +1579,12 @@
         \expandonce{\jlreq@heading@clearpage}%
         \unexpanded{\if@restonecol\twocolumn\fi}%
       }%
-      \noexpand\def\expandonce{\csname #1\endcsname}{%
+      \noexpand\def\expandonce{\csname jlreq@headingcs@#1\endcsname}{%
         % 改丁．これでよいのかな．
         \unexpanded{\if@twocolumn\onecolumn\@restonecoltrue\else\@restonecolfalse\fi\cleartooddpage}%
         \ifx\jlreq@pagestyle\@empty\else\noexpand\thispagestyle{\expandonce{\jlreq@pagestyle}}\fi
         \noexpand\secdef{\expandonce{\csname jlreq@TobiraHeading@start@#1\endcsname}}{\expandonce{\csname jlreq@TobiraHeading@start@s@#1\endcsname}}}%
+      \noexpand\def\expandonce{\csname #1\endcsname}{\expandonce{\csname jlreq@headingcs@#1\endcsname}}%
     }%
   \expandafter\endgroup
   \jlreq@do
@@ -2092,7 +2102,7 @@
     \fi
     \edef\jlreq@do{%
       \expandonce{\jlreq@do}%
-      \noexpand\edef\expandonce{\csname #1\endcsname}{\noexpand\unexpanded{%
+      \noexpand\edef\expandonce{\csname jlreq@headingcs@#1\endcsname}{\noexpand\unexpanded{%
         \noexpand\jlreq@hook@beforeheadings{#1}%
         \expandonce{\jlreq@pagebreak}%
         \unexpanded{\jlreq@BlockHeading@start{#1}{#2}}%
@@ -2105,6 +2115,7 @@
         }%
         {\expandonce{\jlreq@totalformat}}%
       }}%
+      \noexpand\def\expandonce{\csname #1\endcsname}{\expandonce{\csname jlreq@headingcs@#1\endcsname}}%
     }%
   \expandafter\endgroup
   \jlreq@do
@@ -2405,7 +2416,7 @@
         \unexpanded{{\setbox\jlreq@tempboxa\lastbox}}%
         \noexpand\begingroup
           \expandonce{\jlreq@tempa{#5}}%
-          \expandonce{\csname jlreq@heading@maketoc@#1\endcsname{#3}{#6}{#4}}%
+          \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{#3}{#6}{#4}%
         \noexpand\endgroup
       }%
     }%

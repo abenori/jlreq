@@ -113,6 +113,7 @@
 
 \newif\ifjlreq@trimmarks@digital \jlreq@trimmarks@digitaltrue
 \newif\ifjlreq@trimmarks@show \jlreq@trimmarks@showtrue
+\newif\ifjlreq@trimmarks@show@artbox \jlreq@trimmarks@show@artboxfalse
 \tombowdatetrue
 \DeclareOptionX{show}{%
   \jlreq@trimmarks@showfalse\tombowdatefalse\jlreq@trimmarks@digitalfalse
@@ -121,6 +122,7 @@
       {trimmarks}{\jlreq@trimmarks@showtrue}
       {banner}{\tombowdatetrue}
       {digital}{\jlreq@trimmarks@digitaltrue}
+      {digital*}{\jlreq@trimmarks@digitaltruejlreq@trimmarks@show@artboxtrue}
     }[\PackageError{jlreq-trimmarks}{Unknown value `##1' in the option `show'}{\@ehc}]
   }
 }
@@ -314,18 +316,13 @@
       \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperheight + \paperheight)/2 + \jlreq@trimmarks@bleed}%
     ]
   }
-  \edef\jlreq@trimmarks@cropboxsize{%
-    [0 0 \jlreq@trimmarks@pttobp{\jlreq@trimmarks@paperwidth} \jlreq@trimmarks@pttobp{\jlreq@trimmarks@paperheight}]
-  }
   \edef\jlreq@trimmarks@pdfattribute{%
-    /CropBox \jlreq@trimmarks@cropboxsize
     /TrimBox \jlreq@trimmarks@trimboxsize
-    /ArtBox \jlreq@trimmarks@trimboxsize
+    \ifjlreq@trimmarks@show@artbox /ArtBox \jlreq@trimmarks@trimboxsize\fi
     /BleedBox \jlreq@trimmarks@bleedboxsize
   }
   \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@pttobp}
   \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@trimboxsize}
-  \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@cropboxsize}
   \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@bleedboxsize}
   \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@pdfattribute}
 
@@ -338,9 +335,8 @@
   \fi
   \ifx s\jlreq@trimmarks@driver
     \edef\@tempa{\noexpand\special{ps:SDict begin
-      [ /CropBox \jlreq@trimmarks@cropboxsize /PAGE pdfmark
       [ /TrimBox  \jlreq@trimmarks@trimboxsize /PAGE pdfmark
-      [ /ArtBox   \jlreq@trimmarks@trimboxsize /PAGE pdfmark
+      \ifjlreq@trimmarks@show@artbox [ /ArtBox   \jlreq@trimmarks@trimboxsize /PAGE pdfmark \fi
       [ /BleedBox \jlreq@trimmarks@bleedboxsize /PAGE pdfmark
     end}}%
     \@tempa

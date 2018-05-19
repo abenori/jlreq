@@ -1,10 +1,10 @@
 # jlreq-trimmarks
 
 ## What is this?
-This package outputs trim marks. It works with [LuaTeX-ja](https://osdn.jp/projects/luatex-ja/wiki/FrontPage), pLaTeX or upLaTeX. It provides the following.
+This package outputs trim marks. It works with [LuaTeX-ja](https://osdn.jp/projects/luatex-ja/wiki/FrontPage) / pLaTeX / upLaTeX / dvipdfmx / Dvips / dviout. It provides the following.
 
 * Output trim marks
-* Set CropBox, TrimBox, ArtBox and BleedBox if possible.
+* Set TrimBox and BleedBox if possible.
 * Set the size of paper..
 
 ## How to use
@@ -36,11 +36,12 @@ Set the size of the paper including trim marks. There are two ways to specify it
 * `trimmarks_paper={<width>,height>}`
 
 ### `show`
-Specify the types of trim marks which the package outputs. It is specified with the comma separated list like `show={trimmarks,banner,digital}`.
+Specify the types of trim marks which the package outputs. It is specified with the comma separated list like `show={trimmarks,banner,digital}`. If no argument is given, everything will be showed.
 
-* `trimmarks`: outputs the trim marks itself.
+* `trimmarks`: outputs the trim marks.
 * `banner`: date etc.
-* `digital`：CropBox etc.
+* `digital`：TrimBox and BleedBox.
+* `no`: nothing will be showed
 
 ## `\jlreqtrimmarkssetup`
 Set the additional settings with the keyval style.

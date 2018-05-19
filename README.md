@@ -9,7 +9,7 @@ Run `make`, then JFM files are created. Move the files as follows:
 * *.tfm -> $TEXMF/fonts/tfm/public/jlreq
 * *.vf -> $TEXMF/fonts/vf/public/jlreq
 * jfm-jlreq.lua jfm-jlreqv.lua -> $TEXMF/tex/luatex/jlreq
-* jlreq.cls -> $TEXMF/tex/latex/jlreq
+* jlreq.cls, jlreq-helpers.sty  -> $TEXMF/tex/latex/jlreq
 
 `make install` will do this where $TEXMF=$TEXMFHOME
 

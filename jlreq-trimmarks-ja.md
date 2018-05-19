@@ -1,10 +1,10 @@
 # jlreq-trimmarks
 
 ## これは何？
-トンボ（トリムマーク）を出力するためのパッケージです．[LuaTeX-ja](https://osdn.jp/projects/luatex-ja/wiki/FrontPage) / pLaTeX / upLaTeX + DVIPDFMx / Dvips / dviout上で動きます．以下の機能を提供します．
+トンボ（トリムマーク）を出力するためのパッケージです．[LuaTeX-ja](https://osdn.jp/projects/luatex-ja/wiki/FrontPage) / pLaTeX / upLaTeX / dvipdfmx / Dvips / dviout上で動きます．以下の機能を提供します．
 
 * トンボの出力
-* 可能な場合には，CropBox / TrimBox / ArtBox / BleedBoxを設定
+* 可能な場合には，TrimBox / ArtBox / BleedBoxを設定
 * 紙サイズの設定
 
 ## 使い方
@@ -35,11 +35,12 @@ dviドライバの指定です．省略時は
 トンボ付きの紙サイズを指定します．`trimmarks_paper=a4`のように，`a0--a10`, `b0--b10`, `c2--c8`（BはJIS B列）を指定できる他，`trimmarks_paper={<width>,<height>}`と直接寸法を指定することも可能です．指定されなかった場合は，現在の紙サイズから縦横2インチ増えた値を採用します．
 
 ### `show`
-何を出力するか指定します．`show={trimmarks,banner,digital}`のようにカンマ区切りのリストを与えます．
+何を出力するか指定します．`show={trimmarks,banner,digital}`のようにカンマ区切りのリストを与えます．引数を与えない場合は全て表示します．
 
 * `trimmarks`：トンボ自身を出力します．
 * `banner`：日付などを出力します．
-* `digital`：CropBox等の設定を行います（デジタルトンボ）．
+* `digital`：TrimBoxとBleedBoxの設定を行います（デジタルトンボ）．
+* `no`：何も表示しません．
 
 ## `\jlreqtrimmarkssetup`
 クラスオプションで指定できない設定を行えます．keyval形式です．

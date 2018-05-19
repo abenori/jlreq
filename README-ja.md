@@ -12,7 +12,7 @@
 * *.tfm -> $TEXMF/fonts/tfm/public/jlreq
 * *.vf -> $TEXMF/fonts/vf/public/jlreq
 * jfm-jlreq.lua jfm-jlreqv.lua -> $TEXMF/tex/luatex/jlreq
-* jlreq.cls -> $TEXMF/tex/latex/jlreq
+* jlreq.cls, jlreq-helpers.sty  -> $TEXMF/tex/latex/jlreq
 
 と配置します．`make install`とすると，$TEXMF=$TEXMFHOMEとしてこのコピーを行います．
 
@@ -142,7 +142,7 @@
 
 ### 箇条書き
 `\jlreqsetup`で指定します．
-* `itemization_beforeafter_space=<寸法>`：箇条書きの前後の空きを指定します．`itemization_beforeafter_space={i=<寸法>}`とするとトップレベルのみに設定を行います．`itemization_beforeafter_space={0pt,i=10pt,ii=5pt}`とすれば，レベル1の箇条書きに10ptを，レベル2のそれに5ptを，それ以外には0ptを設定します．
+* `itemization_beforeafter_space=<寸法>`：箇条書きの前後の空きを指定します．`itemization_beforeafter_space={i=<寸法>}`とするとトップレベルのみに設定を行います．`itemization_beforeafter_space={0pt,i=10pt,ii=5pt}`とすれば，レベル1の箇条書きに10ptを，レベル2のそれに5ptを，それ以外には0ptを設定します．レベルは上記のように小文字ローマ数字で指定します．
 * `itemization_itemsep=<寸法>`：項目同士の空きを指定します．
 
 ### 定理環境

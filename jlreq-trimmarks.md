@@ -7,6 +7,9 @@ This package outputs trim marks. It works with [LuaTeX-ja](https://osdn.jp/proje
 * Set TrimBox and BleedBox if possible.
 * Set the size of paper..
 
+## Installation
+Move jlreq-trimmarks.sty and jlre-helpers.sty to $TEXMF/tex/latex/jlreq.
+
 ## How to use
 Load it by `\usepackage` with specifying the TeX engine and the DVI driver. 
 
@@ -63,8 +66,12 @@ Set the color of the trim marks. You have to load a package which defines `\colo
 * `black` -> `\color{black}`
 * `[cmyk]0.5,0.5,0.5,0` -> `\color[cmyk]{0.5,0.5,0.5,0}`
 
+## LICENSE
+This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENSE).
 
-## History
+## CHANGELOG
+* 2018-05-19
+    - First release.
 
 
 --------------

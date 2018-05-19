@@ -154,6 +154,8 @@ tds: jfm jlreq.cls README.md README-ja.md LICENSE jlreq.html jlreq-ja.html jlreq
 	mkdir -p ./tds/doc/latex/jlreq
 	cp README.md ./tds/doc/latex/jlreq
 	cp README-ja.md ./tds/doc/latex/jlreq
+	cp jlreq-trimmarks.md ./tds/doc/latex/jlreq
+	cp jlreq-trimmarks-ja.md ./tds/doc/latex/jlreq
 	cp LICENSE ./tds/doc/latex/jlreq
 	cp jlreq.html ./tds/doc/latex/jlreq
 	cp jlreq-ja.html ./tds/doc/latex/jlreq

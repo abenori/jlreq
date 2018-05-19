@@ -4,8 +4,12 @@
 トンボ（トリムマーク）を出力するためのパッケージです．[LuaTeX-ja](https://osdn.jp/projects/luatex-ja/wiki/FrontPage) / pLaTeX / upLaTeX / dvipdfmx / Dvips / dviout上で動きます．以下の機能を提供します．
 
 * トンボの出力
-* 可能な場合には，TrimBox / ArtBox / BleedBoxを設定
+* 可能な場合には，TrimBox / BleedBoxを設定
 * 紙サイズの設定
+
+## インストール
+$TEXMF/tex/latex/jlreq内にjlreq-trimmarks.styとjlreq-helpers.styを配置してください．
+
 
 ## 使い方
 ドライバおよびエンジンを指定して`\usepackage`で読み込みます．エンジンは省略が可能です．
@@ -63,8 +67,13 @@ dviドライバの指定です．省略時は
     - `black` -> `\color{black}`
     - `[cmyk]0.5,0.5,0.5,0` -> `\color[cmyk]{0.5,0.5,0.5,0}`
 
+## ライセンス
+このパッケージは二条項BSDライセンスの元で配布されています．詳しくは[LICENSE](LICENSE)をご覧ください．
 
 ## 履歴
+* 2018-05-19
+    - 最初のバージョン
+
 
 
 --------------

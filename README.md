@@ -80,7 +80,10 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Changed `\labelenumi`  as in `jarticle` etc.
     - Fix a bug on `column_gap` class option.
     - Added `mark_format` to `\DeclarePageStyle`.
-
+* 2018-05-19
+    - Made the width of the label in the table of contents longer.
+    - Moved some macros to jlreq-helpers.sty
+    - Fixed bugs.
 
 --------------
 Noriyuki Abe

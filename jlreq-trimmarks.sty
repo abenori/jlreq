@@ -116,14 +116,19 @@
 \newif\ifjlreq@trimmarks@show@artbox \jlreq@trimmarks@show@artboxfalse
 \tombowdatetrue
 \DeclareOptionX{show}{%
-  \jlreq@trimmarks@showfalse\tombowdatefalse\jlreq@trimmarks@digitalfalse
-  \@for\jlreq@trimmarks@tempa:=#1\do{%
-    \jlreq@switch{\jlreq@trimmarks@tempa}{
-      {trimmarks}{\jlreq@trimmarks@showtrue}
-      {banner}{\tombowdatetrue}
-      {digital}{\jlreq@trimmarks@digitaltrue}
-      {digital*}{\jlreq@trimmarks@digitaltrue\jlreq@trimmarks@show@artboxtrue}
-    }[\PackageError{jlreq-trimmarks}{Unknown value `##1' in the option `show'}{\@ehc}]
+  \jlreq@ifempty{#1}{
+    \jlreq@trimmarks@showtrue\tombowdatetrue\jlreq@trimmarks@digitaltrue
+  }{
+    \jlreq@trimmarks@showfalse\tombowdatefalse\jlreq@trimmarks@digitalfalse
+    \@for\jlreq@trimmarks@tempa:=#1\do{%
+      \jlreq@switch{\jlreq@trimmarks@tempa}{
+        {trimmarks}{\jlreq@trimmarks@showtrue}
+        {banner}{\tombowdatetrue}
+        {digital}{\jlreq@trimmarks@digitaltrue}
+        {digital*}{\jlreq@trimmarks@digitaltrue\jlreq@trimmarks@show@artboxtrue}
+        {no}{\tombowdatefalse\jlreq@trimmarks@showfalse\jlreq@trimmarks@digitafalse}
+      }[\PackageError{jlreq-trimmarks}{Unknown value `##1' in the option `show'}{\@ehc}]
+    }
   }
 }
 

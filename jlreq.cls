@@ -5,7 +5,7 @@
 %%
 % (based on JLReq 20120403 https://www.w3.org/TR/2012/NOTE-jlreq-20120403/ja/)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{jlreq}[2018/04/11 jlreq]
+\ProvidesClass{jlreq}[2018/05/19 jlreq]
 \RequirePackage{xkeyval,everyhook,filehook,etoolbox,ifthen}
 \RequirePackage{jlreq-helpers}
 
@@ -3048,7 +3048,7 @@
   }{%
     \begingroup
       \csname c@\jlreq@endnotecounter\endcsname #1\relax
-      \expandafter\unrestored@protected@xdef\csname\jlreq@endnotemarkname\endcsname{\csname \jlreq@endnotecounter\endcsname}%
+      \expandafter\unrestored@protected@xdef\csname\jlreq@endnotemarkname\endcsname{\csname the\jlreq@endnotecounter\endcsname}%
     \endgroup
   }%
   \@endnotemark
@@ -3061,7 +3061,7 @@
   }{%
     \begingroup
       \csname c@\jlreq@endnotecounter\endcsname #1\relax
-      \expandafter\unrestored@protected@xdef\csname\jlreq@endnotemarkname\endcsname{\csname \jlreq@endnotecounter\endcsname}%
+      \expandafter\unrestored@protected@xdef\csname\jlreq@endnotemarkname\endcsname{\csname the\jlreq@endnotecounter\endcsname}%
     \endgroup
   }%
   \@endnotetext{#2}%
@@ -3112,7 +3112,7 @@
 \jlreq@endnote@indent=2\jlreq@mol
 % 二行目以降を全角分下げる（4.2.4.d：TODO: 選択できるべき）
 \newcommand{\@makeendtext}[1]{\parindent 1\jlreq@mol
-    \hskip\glueexpr-1\jlreq@mol\relax\csname\jlreq@endnotemarkname\endcsname\hskip\gluexpr1\jlreq@mol\relax#1}% 見出し出力と一文字分の空き（4.2.4.c）
+    \hskip\glueexpr-1\jlreq@mol\relax\csname\jlreq@endnotemarkname\endcsname\hskip\glueexpr1\zw\relax#1}% 見出し出力と一文字分の空き（4.2.4.c）
 \def\@makeendmark{\@makefnmark}
 
 % \theendnoteの出力を仕込む

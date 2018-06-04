@@ -3,6 +3,11 @@
 \RequirePackage{xkeyval,etoolbox}
 \RequirePackage{jlreq-helpers}
 
+% check \tombowdatetrue
+\ifx\tombowdatetrue\@undefined
+  \PackageError{jlreq-trimmarks}{This package only works with pLaTeX, upLaTeX or LuaTeX-ja}{\@ehc}
+\fi
+
 \newcommand*{\jlreq@trimmarks@undeferr}[1]{\PackageError{jlreq-trimmarks}{Trying to delete \string#1 even though it is not defined, may be a bug}{\@ehc}}
 \newcommand*{\jlreq@trimmarks@afterpkg@addtodeletecs}[1]{%
   \appto\jlreq@trimmarks@afterpkg@deletecslist{\jlreq@helper@undefcs{#1}{\jlreq@trimmarks@undeferr}}%

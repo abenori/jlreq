@@ -3000,18 +3000,33 @@
 
 % 4.2.5.d
 \newcommand{\@makefntext}[1]{\jlreq@makefntext{#1}}
-\jlreq@jlreqsetup@add{footnotetext_indent}{
-  \ifthenelse{\equal{#1}{one}}{
-    \long\def\jlreq@makefntext##1{\parindent 1\zw
-      \addtolength{\leftskip}{\dimexpr\jlreq@footnoteindent + 1\zw\relax}% 全体をインデント+1文字分下げる
-      \noindent\hskip\glueexpr-1\zw\relax\jlreq@referencemark@format{\@thefnmark}\hskip\glueexpr1\zw\relax##1}% 見出し出力と一文字分の空き
-  }{
-    \long\def\jlreq@makefntext##1{\parindent 1\zw
-      \addtolength{\leftskip}{\jlreq@footnoteindent}% 全体をインデント
-      \noindent\hskip\glueexpr1\zw\relax\jlreq@referencemark@format{\@thefnmark}\hskip\glueexpr1\zw\relax##1}% 見出し出力と一文字分の空き
+\jlreq@jlreqsetup@add{footnote_second_indent}{%
+  \if@tate\else
+    \ifthenelse{
+      \( \lengthtest{0.99\zw < #1} \AND \lengthtest{#1 < 1.01\zw} \) \OR 
+      \( \lengthtest{-1.01\zw < #1} \AND \lengthtest{#1 < -0.99\zw} \)
+    }{}{\jlreq@note{脚注が2行以上となった場合，脚注の2行目以下の字下げを1行目より，脚注の文字サイズの全角アキとするか，逆に，1行目の字下げを2行目より，脚注の文字サイズの全角アキとする (4.2.5.d)．}}
+  \fi
+  \ifdim\dimexpr #1\relax<0pt
+    \def\jlreq@makefntext{}
+  \else
+    \def\jlreq@makefntext{\addtolength{\leftskip}{#1}}
+  \fi
+  \long\edef\jlreq@makefntext##1{\expandonce{\jlreq@makefntext}%
+    \unexpanded{%
+      \addtolength{\leftskip}{\jlreq@footnoteindent}
+      \parindent=1\zw
+      \noindent
+      \hskip-\glueexpr #1\relax
+      \jlreq@referencemark@format{\@thefnmark}%
+      \hskip\glueexpr 1\zw\relax
+    }##1%
   }
 }
-\jlreqsetup{footnotetext_indent=one}
+\jlreq@jlreqsetup@add{footnotetext_indent}{
+  \ClassWarningNoLine{jlreq}{footnotetext_indent was removed}
+}
+\jlreqsetup{footnote_second_indent=1\zw}
 % 合印
 \renewcommand*{\@makefnmark}{%
   \jlreq@ifydir{\jlreq@notemark{\@thefnmark}}{\hbox{\jlreq@notemark{\@thefnmark}}}%
@@ -3098,7 +3113,7 @@
         \parsep=0pt\relax
         \partopsep=0pt\relax
         \topsep=0pt\relax
-        \leftmargin=\dimexpr\linewidth - \jlreq@tempdima\relax
+        \leftmargin=\dimexpr\linewidth - \jlreq@tempdima + \jlreq@endnote@second@indent\relax
         \itemindent=0pt\relax
         \topsep=\jlreq@endnote@beforeafterspace
       }%
@@ -3110,10 +3125,17 @@
 }
 % 4.2.4.b
 \jlreq@endnote@indent=2\jlreq@mol
-% 二行目以降を全角分下げる（4.2.4.d：TODO: 選択できるべき）
-\newcommand{\@makeendtext}[1]{\parindent 1\jlreq@mol
-    \hskip\glueexpr-1\jlreq@mol\relax\csname\jlreq@endnotemarkname\endcsname\hskip\glueexpr1\zw\relax#1}% 見出し出力と一文字分の空き（4.2.4.c）
-\def\@makeendmark{\@makefnmark}
+\jlreq@jlreqsetup@add{endnote_second_indent}{
+  \def\jlreq@endnote@second@indent{#1}
+  \ifthenelse{
+    \( \lengthtest{0.99\zw < #1} \AND \lengthtest{#1 < 1.01\zw} \) \OR 
+    \( \lengthtest{1.99\zw < #1} \AND \lengthtest{#1 < 2.01\zw} \)
+  }{}{\jlreq@note{後注が2行以上となった場合，後注の2行目以下の字下げは，1行目より，後注の文字サイズの2倍又は全角とする (4.2.4.d)．}}
+}
+\jlreqsetup{endnote_second_indent=2\zw}
+\newcommand{\@makeendtext}[1]{\parindent 1\zw
+    \hskip\glueexpr-\jlreq@endnote@second@indent\relax\csname\jlreq@endnotemarkname\endcsname\hskip\glueexpr1\zw\relax#1}% 見出し出力と一文字分の空き（4.2.4.c）
+\let\@makeendmark=\@makefnmark
 
 % \theendnoteの出力を仕込む
 \apptocmd{\jlreq@hook@beforeheadings}{\jlreq@endnote@hook@beforeheadings{#1}}{}{}
@@ -3226,7 +3248,7 @@
         % thefootnote = \inhibitglue （...だと\inhibitglueが効かないので空白を挟む
         \long\def\@makesidetext#1{　\kern-1\zw\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
       \fi
-      \def\@makesidemark{\@makefnmark}
+      \let\@makesidemark=\@makefnmark
     }{% sidenote_type = symbol
       \long\def\sidenote#1#2{\jlreq@sidenote{#1}{#2}}
       \def\sidenotemark#1{\jlreq@sidenotemark{#1}}
@@ -3246,7 +3268,7 @@
         \@sidenotetext{#2}%
       }
       \long\def\@makesidetext#1{{\sffamily\bfseries\csname\jlreq@sidenotemarkname\endcsname}\hspace*{1\jlreq@mol}#1}
-      \def\@makesidemark{\@makefnmark}
+      \let\@makesidemark=\@makefnmark
 
       \apptocmd{\sidenote}{\jlreq@hook@postnote}{}{}
       \apptocmd{\sidenotemark}{\jlreq@hook@postnote}{}{}

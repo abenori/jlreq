@@ -184,6 +184,7 @@
 % 簡易なkeyvalのパース．
 % \jlreq@parsekeyval*[family=jlreq@key]{ % *ありは\setkeys*を使う
 %  {key}{\def\val{#1}}
+%  {key1,key2}{\def\val{#1}} % key1=valとkey2=valを受け付けるようになる
 %  *{key}{\def\val{#1}} % デフォルト値を空文字列にする
 %  {key}[choice1,choice2]{\def\valchoice{#1}}
 %}{parse対象}
@@ -195,7 +196,7 @@
 }
 \long\def\jlreq@helper@parsekeyval@@#1[#2]#3#4{%
   \begingroup
-    \def\jlreq@do{}%
+    \def\jlreq@do{}% \setkeysの結果処理がここに入れられる（よってループ内で利用不可）
     \jlreq@helper@parsekeyval@@@{#2}#3{\jlreq@endmark}%
     \setkeys#1{#2}{#4}%
   \expandafter\endgroup
@@ -214,15 +215,24 @@
   }%
 }
 \long\def\jlreq@helper@parsekeyval@@@choicekey#1#2[#3]#4{%
-  \define@choicekey{#1}{#2}{#3}{\eappto\jlreq@do{\unexpanded{#4}}}%
+  \@for\@tempa:=#2\do{%
+    \edef\jlreq@next{\unexpanded{\define@choicekey{#1}}{\expandonce{\@tempa}}}%
+    \jlreq@next{#3}{\eappto\jlreq@do{\unexpanded{#4}}}%
+  }%
   \jlreq@helper@parsekeyval@@@{#1}%
 }
 \long\def\jlreq@helper@parsekeyval@@@definekeywithdefault#1#2#3{%
-  \define@key{#1}{#2}[]{\eappto\jlreq@do{\unexpanded{#3}}}%
+  \@for\@tempa:=#2\do{%
+    \edef\jlreq@next{\unexpanded{\define@key{#1}}{\expandonce{\@tempa}}}%
+    \jlreq@next[]{\eappto\jlreq@do{\unexpanded{#3}}}%
+  }%
   \jlreq@helper@parsekeyval@@@{#1}%
 }
 \long\def\jlreq@helper@parsekeyval@@@definekey#1#2#3{%
-  \define@key{#1}{#2}{\eappto\jlreq@do{\unexpanded{#3}}}%
+  \@for\@tempa:=#2\do{%
+    \edef\jlreq@next{\unexpanded{\define@key{#1}}{\expandonce{\@tempa}}}%
+    \jlreq@next{\eappto\jlreq@do{\unexpanded{#3}}}%
+  }%
   \jlreq@helper@parsekeyval@@@{#1}%
 }
 

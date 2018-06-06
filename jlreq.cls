@@ -1974,7 +1974,7 @@
       }
       {format}{\edef\jlreq@format{\unexpanded{##1}}}
       {after_label_space}{\def\jlreq@after@label@space{##1}}
-      {second_heading_text_indent}{%
+      {second_heading_text_indent,heading_text_second_indent}{%
         \jlreq@parsecomma{##1}{%
           \jlreq@iffirsttoken{####1}{*}{%
             \jlreq@hangfalse
@@ -2882,6 +2882,36 @@
   \jlreqsetup{footnote_indent=0pt}% （4.2.5.b）
 \fi
 
+\newcommand{\@makefntext}[1]{\jlreq@makefntext{#1}}
+\jlreq@jlreqsetup@add{footnote_second_indent}{%
+  \if@tate\else
+    \ifthenelse{
+      \( \lengthtest{0.99\zw < \dimexpr #1\relax} \AND \lengthtest{\dimexpr #1\relax < 1.01\zw} \) \OR 
+      \( \lengthtest{-1.01\zw < \dimexpr #1\relax} \AND \lengthtest{\dimexpr #1\relax < -0.99\zw} \)
+    }{}{\jlreq@note{脚注が2行以上となった場合，脚注の2行目以下の字下げを1行目より，脚注の文字サイズの全角アキとするか，逆に，1行目の字下げを2行目より，脚注の文字サイズの全角アキとする (4.2.5.d)．}}
+  \fi
+  \ifdim\dimexpr #1\relax<0pt
+    \def\jlreq@makefntext{}
+  \else
+    \def\jlreq@makefntext{\addtolength{\leftskip}{\glueexpr #1\relax}}
+  \fi
+  \long\edef\jlreq@makefntext##1{\expandonce{\jlreq@makefntext}%
+    \unexpanded{%
+      \addtolength{\leftskip}{\jlreq@footnoteindent}%
+      \parindent=1\zw
+      \noindent
+      \hskip-\glueexpr #1\relax
+      \jlreq@referencemark@format{\@thefnmark}%
+      \hskip\glueexpr 1\zw\relax
+    }##1%
+  }
+}
+\jlreqsetup{footnote_second_indent=1\zw}
+
+\jlreq@jlreqsetup@add{footnotetext_indent}{
+  \ClassWarningNoLine{jlreq}{footnotetext_indent was removed}
+}
+
 \ifx l\jlreq@engine
   \fnfixbottomtrue
 \fi
@@ -2998,35 +3028,6 @@
   \jlreq@hook@postnote
 }
 
-% 4.2.5.d
-\newcommand{\@makefntext}[1]{\jlreq@makefntext{#1}}
-\jlreq@jlreqsetup@add{footnote_second_indent}{%
-  \if@tate\else
-    \ifthenelse{
-      \( \lengthtest{0.99\zw < #1} \AND \lengthtest{#1 < 1.01\zw} \) \OR 
-      \( \lengthtest{-1.01\zw < #1} \AND \lengthtest{#1 < -0.99\zw} \)
-    }{}{\jlreq@note{脚注が2行以上となった場合，脚注の2行目以下の字下げを1行目より，脚注の文字サイズの全角アキとするか，逆に，1行目の字下げを2行目より，脚注の文字サイズの全角アキとする (4.2.5.d)．}}
-  \fi
-  \ifdim\dimexpr #1\relax<0pt
-    \def\jlreq@makefntext{}
-  \else
-    \def\jlreq@makefntext{\addtolength{\leftskip}{#1}}
-  \fi
-  \long\edef\jlreq@makefntext##1{\expandonce{\jlreq@makefntext}%
-    \unexpanded{%
-      \addtolength{\leftskip}{\jlreq@footnoteindent}
-      \parindent=1\zw
-      \noindent
-      \hskip-\glueexpr #1\relax
-      \jlreq@referencemark@format{\@thefnmark}%
-      \hskip\glueexpr 1\zw\relax
-    }##1%
-  }
-}
-\jlreq@jlreqsetup@add{footnotetext_indent}{
-  \ClassWarningNoLine{jlreq}{footnotetext_indent was removed}
-}
-\jlreqsetup{footnote_second_indent=1\zw}
 % 合印
 \renewcommand*{\@makefnmark}{%
   \jlreq@ifydir{\jlreq@notemark{\@thefnmark}}{\hbox{\jlreq@notemark{\@thefnmark}}}%

@@ -878,44 +878,43 @@
   \def\jlreq@yokokanjiencoding{JY2}
   \def\jlreq@tatekanjiencoding{JT2}
 \fi
+\ifx l\jlreq@engine
+  \def\jlreq@yokokanjiencoding{JY3}
+  \def\jlreq@tatekanjiencoding{JT3}
+\fi
+\expandafter\let\csname \jlreq@yokokanjiencoding/mc/m/n/10\endcsname\relax
+\expandafter\let\csname \jlreq@tatekanjiencoding/mc/m/n/10\endcsname\relax
 \jlreq@divide{\jlreq@jafontsize}{\jlreq@fontsize}
 \edef\jlreq@jafontscale{\strip@pt\jlreq@resultdimen}
 \jlreq@aftercls@addtodeletecs{\jlreq@jafontscale}
 \ifx l\jlreq@engine
-  \def\jlreq@yokokanjiencoding{JY3}
-  \def\jlreq@tatekanjiencoding{JT3}
-  \expandafter\let\csname JY3/mc/m/n/10\endcsname\relax
-  \expandafter\let\csname JT3/mc/m/n/10\endcsname\relax
   \DeclareFontShape{JY3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont:jfm=jlreq;script=latn;-kern}{}
   \DeclareFontShape{JY3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont:jfm=jlreq;script=latn;-kern}{}
   \DeclareFontShape{JT3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont:jfm=jlreqv;script=latn;-kern}{}
   \DeclareFontShape{JT3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont:jfm=jlreqv;script=latn;-kern}{}
 \else
-  \expandafter\let\csname \jlreq@yokokanjiencoding/mc/m/n/10\endcsname\relax
-  \expandafter\let\csname \jlreq@tatekanjiencoding/mc/m/n/10\endcsname\relax
   \DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmname}{}
   \DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmnameg}{}
   \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmname-v}{}
   \DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmnameg-v}{}
 \fi
-\DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{bx}{n}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{bx}{n}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{m}{it}{<->ssub*mc/m/n}{}
-\DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{m}{sl}{<->ssub*mc/m/n}{}
-\DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{m}{sc}{<->ssub*mc/m/n}{}
-\DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{m}{it}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{m}{sl}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{bx}{it}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{bx}{n}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{bx}{n}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{it}{<->ssub*mc/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{sl}{<->ssub*mc/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{sc}{<->ssub*mc/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{it}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{sl}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{bx}{it}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
+\@for\jlreq@encoding:=\jlreq@yokokanjiencoding,\jlreq@tatekanjiencoding\do{
+  \@for\jlreq@shape:=n,it,sl,sc\do{
+    \@for\jlreq@series:=m,b,bx,sb,c\do{
+      \ifthenelse{\equal{\jlreq@shape}{n} \AND \equal{\jlreq@series}{m}}{}{
+        \DeclareFontShape{\jlreq@encoding}{gt}{\jlreq@series}{\jlreq@shape}{<->ssub*gt/m/n}{}
+      }
+    }
+    \@for\jlreq@series:=bx,b,sb\do{
+      \DeclareFontShape{\jlreq@encoding}{mc}{\jlreq@series}{\jlreq@shape}{<->ssub*gt/m/n}{}
+    }
+    \@for\jlreq@series:=m,c\do{
+      \ifthenelse{\equal{\jlreq@shape}{n} \AND \equal{\jlreq@series}{m}}{}{
+        \DeclareFontShape{\jlreq@encoding}{mc}{\jlreq@series}{\jlreq@shape}{<->ssub*mc/m/n}{}
+      }
+    }
+  }
+}
 
 % 和文ファミリと欧文ファミリの連動
 \DeclareRobustCommand\rmfamily{%

@@ -2401,8 +2401,9 @@
 }
 % {1 = 命令名}{2 = レベル}{3 = *}{4 = running head}{5 = 見出し}{6 = ラベルフォーマット}{7 = ラベルありフォーマット}{8 = ラベルなしフォーマット}
 \long\def\jlreq@RuninHeading@start@@#1#2#3#4#5#6#7#8{%
+  \if@noskipsec\leavevmode\fi
   \begingroup
-    \def\jlreq@do{}%
+    \def\jlreq@do{\global\@noskipsectrue}%
     \ifnum0\jlreq@ifempty{#3}{}{1}\ifnum #2>\c@secnumdepth 1\fi>0
       \def\jlreq@tempa##1{#8}%
     \else
@@ -2412,6 +2413,7 @@
     \par
     \eappto\jlreq@do{%
       \noexpand\everypar{%
+        \unexpanded{\global\@noskipsecfalse}%
         \unexpanded{\everypar{}}%
         \unexpanded{{\setbox\jlreq@tempboxa\lastbox}}%
         \noexpand\begingroup

@@ -826,8 +826,10 @@
   % \item後の行頭括弧のために仕込み．
   \jlreq@saveoriginalcs{\list}
   \jlreq@saveoriginalcs{\endlist}
-  \pretocmd{\list}{\jlreq@pushhook@postpar{\ltjfakeparbegin}}{}{}
-  \apptocmd{\endlist}{\jlreq@pophook@postpar}{}{}
+  \PushPostHook{par}{\jlreq@parhook@atbeginlist}
+  \pretocmd{\list}{\def\jlreq@parhook@atbeginlist{\ltjfakeparbegin}}{}{}
+  \apptocmd{\endlist}{\def\jlreq@parhook@atbeginlist{}}{}{}
+  \def\jlreq@parhook@atbeginlist{}
 \else
   % 非LuaTeXの場合はJFMの入れ替えと\everyparでの処理で対処．
   % 行頭括弧に対して\inhibitglueを入れたりする命令を作る
@@ -837,10 +839,13 @@
   \expandafter\jlreq@do\jlreq@charlist@openingbrackets\jlreq@endmark
   % JFM glueの伸び縮みで行頭括弧が揃わないのを防ぐために常に\inhibitglueを入れる．
   \ifthenelse{\equal{\jlreq@open@bracket@pos}{nibu_tentsuki}}{
-    \edef\jlreq@openbracket@hook{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\hskip -.5\zw\inhibitglue}\noexpand\fi}
+    \edef\jlreq@openbracket@hook@{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\hskip -.5\zw\inhibitglue}\noexpand\fi}
   }{% zenkakunibu_nibu,zenkaku_tentsuki
-    \edef\jlreq@openbracket@hook{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\inhibitglue}\noexpand\fi}
+    \edef\jlreq@openbracket@hook@{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\inhibitglue}\noexpand\fi}
   }
+  % source special対策
+  \def\jlreq@openbracket@hook{\ifx\jlreq@nextchar\special\expandafter\jlreq@openbracket@hook@@\else\expandafter\jlreq@openbracket@hook@\fi}
+  \def\jlreq@openbracket@hook@@#1#2{#1{#2}\futurelet\jlreq@nextchar\jlreq@openbracket@hook}
   \def\jlreq@jfmname@prefix{}
   \jlreq@aftercls@addtodeletecs{\jlreq@jfmname@prefix}
   \ifjlreq@burasage\edef\jlreq@jfmname@prefix{b\jlreq@jfmname@prefix}\fi
@@ -850,26 +855,6 @@
   \edef\jlreq@jfmnameg{\jlreq@jfmname@prefix jlreqg} % ゴシックなJFMの名前
   \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
 \fi
-\newcount\jlreq@count@listnest
-\jlreq@count@listnest=0
-% 現在のeveryparへのhookを保存スタックに積んでからPushPostHookする．
-% スタックに積まれたものは\jlreq@pophook@postparで復帰できる
-\def\jlreq@pushhook@postpar#1{%
-  \advance\jlreq@count@listnest by 1
-  \begingroup
-    \edef\jlreq@do{\unexpanded{\SavePostHook{par}}{\expandonce{\csname jlreq@save@posthook@par@\the\jlreq@count@listnest\endcsname}}}%
-  \expandafter\endgroup
-  \jlreq@do
-  \PushPostHook{par}{#1}%
-}
-\def\jlreq@pophook@postpar{%
-  \begingroup
-    \edef\jlreq@do{\unexpanded{\RestorePostHook{par}}{\expandonce{\csname jlreq@save@posthook@par@\the\jlreq@count@listnest\endcsname}}}%
-  \expandafter\endgroup
-  \jlreq@do
-  \expandafter\let\csname jlreq@save@posthook@par@\the\jlreq@count@listnest\endcsname=\@undefined
-  \advance\jlreq@count@listnest by -1
-}
 
 % 行頭の括弧は \jlreq@open@bracket@before@space \inhibitglue 「みたいにする．
 \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{
@@ -893,44 +878,43 @@
   \def\jlreq@yokokanjiencoding{JY2}
   \def\jlreq@tatekanjiencoding{JT2}
 \fi
+\ifx l\jlreq@engine
+  \def\jlreq@yokokanjiencoding{JY3}
+  \def\jlreq@tatekanjiencoding{JT3}
+\fi
+\expandafter\let\csname \jlreq@yokokanjiencoding/mc/m/n/10\endcsname\relax
+\expandafter\let\csname \jlreq@tatekanjiencoding/mc/m/n/10\endcsname\relax
 \jlreq@divide{\jlreq@jafontsize}{\jlreq@fontsize}
 \edef\jlreq@jafontscale{\strip@pt\jlreq@resultdimen}
 \jlreq@aftercls@addtodeletecs{\jlreq@jafontscale}
 \ifx l\jlreq@engine
-  \def\jlreq@yokokanjiencoding{JY3}
-  \def\jlreq@tatekanjiencoding{JT3}
-  \expandafter\let\csname JY3/mc/m/n/10\endcsname\relax
-  \expandafter\let\csname JT3/mc/m/n/10\endcsname\relax
   \DeclareFontShape{JY3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont:jfm=jlreq;script=latn;-kern}{}
   \DeclareFontShape{JY3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont:jfm=jlreq;script=latn;-kern}{}
   \DeclareFontShape{JT3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont:jfm=jlreqv;script=latn;-kern}{}
   \DeclareFontShape{JT3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont:jfm=jlreqv;script=latn;-kern}{}
 \else
-  \expandafter\let\csname \jlreq@yokokanjiencoding/mc/m/n/10\endcsname\relax
-  \expandafter\let\csname \jlreq@tatekanjiencoding/mc/m/n/10\endcsname\relax
   \DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmname}{}
   \DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmnameg}{}
   \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmname-v}{}
   \DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmnameg-v}{}
 \fi
-\DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{bx}{n}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{bx}{n}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{m}{it}{<->ssub*mc/m/n}{}
-\DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{m}{sl}{<->ssub*mc/m/n}{}
-\DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{m}{sc}{<->ssub*mc/m/n}{}
-\DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{m}{it}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{m}{sl}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{bx}{it}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{bx}{n}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{bx}{n}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{it}{<->ssub*mc/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{sl}{<->ssub*mc/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{sc}{<->ssub*mc/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{it}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{sl}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{bx}{it}{<->ssub*gt/m/n}{}
-\DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{bx}{sl}{<->ssub*gt/m/n}{}
+\@for\jlreq@encoding:=\jlreq@yokokanjiencoding,\jlreq@tatekanjiencoding\do{
+  \@for\jlreq@shape:=n,it,sl,sc\do{
+    \@for\jlreq@series:=m,b,bx,sb,c\do{
+      \ifthenelse{\equal{\jlreq@shape}{n} \AND \equal{\jlreq@series}{m}}{}{
+        \DeclareFontShape{\jlreq@encoding}{gt}{\jlreq@series}{\jlreq@shape}{<->ssub*gt/m/n}{}
+      }
+    }
+    \@for\jlreq@series:=bx,b,sb\do{
+      \DeclareFontShape{\jlreq@encoding}{mc}{\jlreq@series}{\jlreq@shape}{<->ssub*gt/m/n}{}
+    }
+    \@for\jlreq@series:=m,c\do{
+      \ifthenelse{\equal{\jlreq@shape}{n} \AND \equal{\jlreq@series}{m}}{}{
+        \DeclareFontShape{\jlreq@encoding}{mc}{\jlreq@series}{\jlreq@shape}{<->ssub*mc/m/n}{}
+      }
+    }
+  }
+}
 
 % 和文ファミリと欧文ファミリの連動
 \DeclareRobustCommand\rmfamily{%
@@ -1855,11 +1839,19 @@
   \dp\jlreq@tempboxa=\dimexpr\dp\jlreq@tempboxa + \ht\jlreq@tempboxa\relax
   \ht\jlreq@tempboxa=0pt
   \box\jlreq@tempboxa
-  \par
   \jlreq@ifempty{#4}{\ifodd\jlreq@currentpage\nobreak\fi}{\nobreak}%
   \ifx r\jlreq@ushiroakitype\prevdepth=-1000pt\else\prevdepth=0pt\fi
   \jlreq@ifgluezero\jlreq@tempskipb{}{\vskip\jlreq@tempskipb}%
-}}
+  \edef\jlreq@do{%
+    \unexpanded{\def\jlreq@parhook@gyodori}{%
+      \noexpand\parskip=\the\parskip
+      \unexpanded{\def\jlreq@parhook@gyodori{}}%
+    }%
+    \unexpanded{\parskip=0pt plus 1pt}%
+  }%
+\expandafter}\jlreq@do}
+\PushPostHook{par}{\jlreq@parhook@gyodori}
+\def\jlreq@parhook@gyodori{}
 
 % 行取り情報をゲットだぜ
 % \jlreq@resultに{1 = 前空き}{2 = 後ろ空き}{3 = トータル行数}を入れる
@@ -1974,7 +1966,7 @@
       }
       {format}{\edef\jlreq@format{\unexpanded{##1}}}
       {after_label_space}{\def\jlreq@after@label@space{##1}}
-      {second_heading_text_indent}{%
+      {second_heading_text_indent,heading_text_second_indent}{%
         \jlreq@parsecomma{##1}{%
           \jlreq@iffirsttoken{####1}{*}{%
             \jlreq@hangfalse
@@ -2160,10 +2152,9 @@
 %   : 現在いくつ目の連続する見出しを処理しているかのカウンター
 \newcount\jlreq@BlockHeading@spaces@current@count
 \jlreq@BlockHeading@spaces@current@count=0
-
-\def\jlreq@BlockHeading@spaces@current@sequence{}%
-
+\def\jlreq@BlockHeading@spaces@current@sequence{}
 \def\jlreq@BlockHeading@spaces@headingslist{}
+
 \newcommand{\SetBlockHeadingSpaces}[1]{%
   \begingroup
     % 現段階の情報をクリアする
@@ -2884,6 +2875,36 @@
   \jlreqsetup{footnote_indent=0pt}% （4.2.5.b）
 \fi
 
+\newcommand{\@makefntext}[1]{\jlreq@makefntext{#1}}
+\jlreq@jlreqsetup@add{footnote_second_indent}{%
+  \if@tate\else
+    \ifthenelse{
+      \( \lengthtest{0.99\zw < \dimexpr #1\relax} \AND \lengthtest{\dimexpr #1\relax < 1.01\zw} \) \OR 
+      \( \lengthtest{-1.01\zw < \dimexpr #1\relax} \AND \lengthtest{\dimexpr #1\relax < -0.99\zw} \)
+    }{}{\jlreq@note{脚注が2行以上となった場合，脚注の2行目以下の字下げを1行目より，脚注の文字サイズの全角アキとするか，逆に，1行目の字下げを2行目より，脚注の文字サイズの全角アキとする (4.2.5.d)．}}
+  \fi
+  \ifdim\dimexpr #1\relax<0pt
+    \def\jlreq@makefntext{}
+  \else
+    \def\jlreq@makefntext{\addtolength{\leftskip}{\glueexpr #1\relax}}
+  \fi
+  \long\edef\jlreq@makefntext##1{\expandonce{\jlreq@makefntext}%
+    \unexpanded{%
+      \addtolength{\leftskip}{\jlreq@footnoteindent}%
+      \parindent=1\zw
+      \noindent
+      \hskip-\glueexpr #1\relax
+      \jlreq@referencemark@format{\@thefnmark}%
+      \hskip\glueexpr 1\zw\relax
+    }##1%
+  }
+}
+\jlreqsetup{footnote_second_indent=1\zw}
+
+\jlreq@jlreqsetup@add{footnotetext_indent}{
+  \ClassWarningNoLine{jlreq}{footnotetext_indent was removed}
+}
+
 \ifx l\jlreq@engine
   \fnfixbottomtrue
 \fi
@@ -3000,20 +3021,6 @@
   \jlreq@hook@postnote
 }
 
-% 4.2.5.d
-\newcommand{\@makefntext}[1]{\jlreq@makefntext{#1}}
-\jlreq@jlreqsetup@add{footnotetext_indent}{
-  \ifthenelse{\equal{#1}{one}}{
-    \long\def\jlreq@makefntext##1{\parindent 1\zw
-      \addtolength{\leftskip}{\dimexpr\jlreq@footnoteindent + 1\zw\relax}% 全体をインデント+1文字分下げる
-      \noindent\hskip\glueexpr-1\zw\relax\jlreq@referencemark@format{\@thefnmark}\hskip\glueexpr1\zw\relax##1}% 見出し出力と一文字分の空き
-  }{
-    \long\def\jlreq@makefntext##1{\parindent 1\zw
-      \addtolength{\leftskip}{\jlreq@footnoteindent}% 全体をインデント
-      \noindent\hskip\glueexpr1\zw\relax\jlreq@referencemark@format{\@thefnmark}\hskip\glueexpr1\zw\relax##1}% 見出し出力と一文字分の空き
-  }
-}
-\jlreqsetup{footnotetext_indent=one}
 % 合印
 \renewcommand*{\@makefnmark}{%
   \jlreq@ifydir{\jlreq@notemark{\@thefnmark}}{\hbox{\jlreq@notemark{\@thefnmark}}}%
@@ -3100,7 +3107,7 @@
         \parsep=0pt\relax
         \partopsep=0pt\relax
         \topsep=0pt\relax
-        \leftmargin=\dimexpr\linewidth - \jlreq@tempdima\relax
+        \leftmargin=\dimexpr\linewidth - \jlreq@tempdima + \jlreq@endnote@second@indent\relax
         \itemindent=0pt\relax
         \topsep=\jlreq@endnote@beforeafterspace
       }%
@@ -3112,10 +3119,17 @@
 }
 % 4.2.4.b
 \jlreq@endnote@indent=2\jlreq@mol
-% 二行目以降を全角分下げる（4.2.4.d：TODO: 選択できるべき）
-\newcommand{\@makeendtext}[1]{\parindent 1\jlreq@mol
-    \hskip\glueexpr-1\jlreq@mol\relax\csname\jlreq@endnotemarkname\endcsname\hskip\glueexpr1\zw\relax#1}% 見出し出力と一文字分の空き（4.2.4.c）
-\def\@makeendmark{\@makefnmark}
+\jlreq@jlreqsetup@add{endnote_second_indent}{
+  \def\jlreq@endnote@second@indent{#1}
+  \ifthenelse{
+    \( \lengthtest{0.99\zw < #1} \AND \lengthtest{#1 < 1.01\zw} \) \OR 
+    \( \lengthtest{1.99\zw < #1} \AND \lengthtest{#1 < 2.01\zw} \)
+  }{}{\jlreq@note{後注が2行以上となった場合，後注の2行目以下の字下げは，1行目より，後注の文字サイズの2倍又は全角とする (4.2.4.d)．}}
+}
+\jlreqsetup{endnote_second_indent=2\zw}
+\newcommand{\@makeendtext}[1]{\parindent 1\zw
+    \hskip\glueexpr-\jlreq@endnote@second@indent\relax\csname\jlreq@endnotemarkname\endcsname\hskip\glueexpr1\zw\relax#1}% 見出し出力と一文字分の空き（4.2.4.c）
+\let\@makeendmark=\@makefnmark
 
 % \theendnoteの出力を仕込む
 \apptocmd{\jlreq@hook@beforeheadings}{\jlreq@endnote@hook@beforeheadings{#1}}{}{}
@@ -3228,7 +3242,7 @@
         % thefootnote = \inhibitglue （...だと\inhibitglueが効かないので空白を挟む
         \long\def\@makesidetext#1{　\kern-1\zw\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
       \fi
-      \def\@makesidemark{\@makefnmark}
+      \let\@makesidemark=\@makefnmark
     }{% sidenote_type = symbol
       \long\def\sidenote#1#2{\jlreq@sidenote{#1}{#2}}
       \def\sidenotemark#1{\jlreq@sidenotemark{#1}}
@@ -3248,7 +3262,7 @@
         \@sidenotetext{#2}%
       }
       \long\def\@makesidetext#1{{\sffamily\bfseries\csname\jlreq@sidenotemarkname\endcsname}\hspace*{1\jlreq@mol}#1}
-      \def\@makesidemark{\@makefnmark}
+      \let\@makesidemark=\@makefnmark
 
       \apptocmd{\sidenote}{\jlreq@hook@postnote}{}{}
       \apptocmd{\sidenotemark}{\jlreq@hook@postnote}{}{}
@@ -4200,6 +4214,7 @@
 }
 
 %.. abstract
+\def\jlreq@parhook@abstract{}
 \ifthenelse{\equal{\jlreq@article@type}{book}}{}{% article,report
   \newbox\jlreq@abstractbox
   \newcommand*{\abstractname}{概要}
@@ -4222,7 +4237,8 @@
       \ifnum0\if@twocolumn\else1\fi\ifjlreq@preamble1\fi>0
         \ifjlreq@preamble
           \ifx l\jlreq@engine\else
-            \jlreq@pushhook@postpar{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}%
+            \def\jlreq@parhook@abstract{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}%
+            \PushPostHook{par}{\jlreq@parhook@abstract}%
           \fi
         \fi
         % とりあえず全部ボックスに入れる．
@@ -4277,7 +4293,7 @@
       \fi
       \ifjlreq@preamble
         \ifx l\jlreq@engine\else
-          \jlreq@pophook@postpar
+          \def\jlreq@parhook@abstract{}%
         \fi
       \else
         \unvbox\jlreq@abstractbox

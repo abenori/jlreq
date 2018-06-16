@@ -70,7 +70,7 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Added chapter number to `\theequation`，`\thefigure`，`\thetable`.
 * 2018-02-01
     - Sidenotes appears only odd pages in `tate` mode.
-    - Added `\fnixbottomtrue` for LuaLaTeX.
+    - Added `\fnfixbottomtrue` for LuaLaTeX.
     - Added some options related to captions.
     - Extended `itemization_beforeafter_space`.
     - Fixed bugs.
@@ -84,6 +84,10 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Made the width of the label in the table of contents longer.
     - Moved some macros to jlreq-helpers.sty
     - Fixed bugs.
+* 2018-06-17
+    - Gothic font is attached to font shape 'b'..
+    - Fixed bugs.
+
 
 --------------
 Noriyuki Abe

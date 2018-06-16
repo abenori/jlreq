@@ -3567,6 +3567,180 @@
   }%
 }
 
+% #1: ruuning@headの中身が入っている制御綴りの名前，#2: mark_format，
+% #3: 節名以外にmark_format内で調べないとならないやつ（odd/evenになるはず）
+% #4: \csname #1\endcsname に差し替えるもの
+% #5: \***markに定義するもの（フォーマット部分は#1にしておく）
+% \csname #1@heading\endcsname に節の名前
+% \csname #1@heading@level\endcsname に節のレベル
+% \csname #1\endcsnameは適切に書き換え
+% \jlreq@resultに\***markの定義を入れる
+\def\jlreq@pagestyle@analyzemark#1#2#3#4#5{%
+  \expandafter\let\csname #1@heading\endcsname\@undefined
+  \expandafter\expandafter\expandafter\jlreq@iffirsttoken\expandafter\expandafter\expandafter{\csname #1\endcsname}{_}{%
+    \edef\jlreq@tempa{\csname #1\endcsname}%
+    \edef\jlreq@tempa{\expandafter\@gobble\jlreq@tempa}% 節名を保持
+    \expandafter\let\csname #1@heading\endcsname=\jlreq@tempa
+    \expandafter\edef\csname #1@heading@level\endcsname{\csname jlreq@heading@level@\jlreq@tempa\endcsname}%
+    \expandafter\def\csname #1\endcsname{#4}%
+    \jlreq@tempafalse
+    % \jlreq@tempbに\***markの定義を入れる
+    \edef\jlreq@tempb{\expandonce{\csname the\jlreq@tempa\endcsname}\noexpand\quad\unexpanded{##1}}%
+    \jlreq@parsekeyval@nokey{
+      \ifthenelse{\equal{#3}{##1}}{%
+        \edef\jlreq@tempb{\unexpanded{##2}}%
+        \jlreq@tempatrue
+      }{}%
+      \ifjlreq@tempa\ifthenelse{\equal{#3}{_\jlreq@tempa}}{%
+        \edef\jlreq@tempb{\unexpanded{##2}}%
+      }\fi%
+    }{#2}%
+    \def\jlreq@tempc##1{\def\jlreq@result{#5}}%
+    \expandafter\jlreq@tempc\expandafter{\jlreq@tempb}%
+  }{}%
+}
+
+% 三つ以上のマークを保持するために，markを次のようにする
+% <マーク1>\jlreq@extramark{{<マーク2>}{<マーク3>}...}
+\def\jlreq@extramark#1{}
+
+% #1番目の\leftmarkや\rightmarkを取得する
+\def\jlreq@extraleftmark#1{\jlreq@getextramark{#1}{\leftmark}}%
+\def\jlreq@extrarightmark#1{\jlreq@getextramark{#1}{\rightmark}}%
+\def\jlreq@getextramark#1#2{\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\jlreq@getextramark@#2\jlreq@extramark\jlreq@endmark{#1}}
+\def\jlreq@getextramark@#1\jlreq@extramark#2\jlreq@endmark#3{%
+  \jlreq@ifempty{#2}{}{\jlreq@getextramark@@{#3}#2}%
+}
+\def\jlreq@getextramark@@#1#2\jlreq@extramark{\jlreq@getextramark@@@{#1}#2\jlreq@endmark}
+\def\jlreq@getextramark@@@#1#2{%
+  \jlreq@ifendmark{#2}{}{%
+    \ifnum#1<2 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+      {\jlreq@getextramark@@@@{#2}}{\expandafter\jlreq@getextramark@@@\expandafter{\the\numexpr #1-1\relax}}%
+  }%
+}
+\def\jlreq@getextramark@@@@#1#2\jlreq@endmark{#1}
+
+% #1番目を#2に置き換える
+\def\jlreq@setextraleftmark#1#2{%
+  \begingroup
+    \def\jlreq@extramark##1{\noexpand\jlreq@extramark{\jlreq@changeargument{##1}{#1}{#2}}}%
+    \edef\jlreq@tempa{\leftmark}%
+    \def\jlreq@extramark{\noexpand\jlreq@extramark}%
+    \edef\jlreq@do{\noexpand\markboth{\jlreq@tempa}{\rightmark}}%
+  \expandafter\endgroup
+  \jlreq@do
+}
+\def\jlreq@setextrarightmark#1#2{%
+  \begingroup
+    \def\jlreq@extramark##1{\noexpand\jlreq@extramark{\jlreq@changeargument{##1}{#1}{#2}}}%
+    \edef\jlreq@do{\noexpand\markright{\rightmark}}%
+    \show\jlreq@do
+  \expandafter\endgroup
+  \jlreq@do
+}
+
+% #1内の#2番目を#3に取り替える．\jlreq@changeargument{{arg1}{arg2}...}{n}{arg}
+\def\jlreq@changeargument#1#2#3{%
+  \jlreq@changeargument@{#2}{#3}#1\jlreq@endmark
+}
+\def\jlreq@changeargument@#1#2#3{%
+  \jlreq@ifendmark{#3}{}{%
+    \ifnum#1=1 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+      {{#2}}{{#3}}%
+    \expandafter\jlreq@changeargument@\expandafter{\the\numexpr #1 - 1\relax}{#2}%
+  }%
+}
+
+\newcommand{\DeclarePageStyle@}[2]{%
+  \expandafter\edef\csname jlreq@pagestyle@setting@#1\endcsname{\unexpanded{#2}}%
+  \begingroup
+    \def\jlreq@nombre@i@position{}%
+    \def\jlreq@nombre@i{\thepage}%
+    \def\jlreq@running@head@position@i{}%
+    \def\jlreq@odd@running@head@i{}%
+    \def\jlreq@even@running@head@i{}%
+    \def\jlreq@command{}%
+    \def\jlreq@mark@format{}%
+    \def\jlreq@font{}%
+    % 柱とノンブルの間
+    \def\jlreq@gap{1.5\zw}%
+    \newif\ifjlreq@clearmarkcommand\jlreq@clearmarkcommandtrue
+    \newif\ifjlreq@pstate\jlreq@pstatefalse % PageStyleTATE
+    \let\jlreq@nombre@ii@position\@undefined
+    \let\jlreq@running@head@ii@position\@undefined
+    \def\jlreq@nombre@ii{}%
+    \def\jlreq@odd@running@head@ii{}%
+    \def\jlreq@even@running@head@ii{}%
+    \jlreq@parsekeyval[PageStyle:#1]{
+      *{tate}{\jlreq@pstatetrue}
+      *{yoko}{\jlreq@pstatefalse}
+      {nombre}{\def\jlreq@nombre@i{##1}}
+      {nombre_position}{\def\jlreq@nombre@position@i{##1}}
+      {running_head_position}{\def\jlreq@running@head@position@i{##1}}
+      {odd_running_head}{\def\jlreq@odd@running@head@i{##1}}
+      {even_running_head}{\def\jlreq@even@running@head@i{##1}}
+      {font}{\def\jlreq@font{##1}}
+      {mark_format}{\edef\jlreq@mark@format{\unexpanded{##1}}}
+      {command}{\edef\jlreq@command{\unexpanded{##1}}}
+      {gap}{\def\jlreq@gap{##1}}
+      % trueにすると，\ps@***実行時にまず\***markを全て\@gobbleにする．
+      {clear_markcommand}[true,false]{\csname jlreq@clearmarkcommand##1\endcsname}
+      % 二つ目
+      {nombre_ii}{\def\jlreq@nombre@ii{##1}}
+      {nombre_position_ii}{\def\jlreq@nombre@position@ii{##1}}
+      {running_head_position_ii}{\def\jlreq@running@head@position@ii{##1}}
+      {odd_running_head_ii}{\def\jlreq@odd@running@head@ii{##1}}
+      {even_running_head_ii}{\def\jlreq@even@running@head@ii{##1}}
+    }{#2}%
+    % markの処理．
+    % #1: ruuning@headの中身が入っている制御綴りの名前，#2: mark_format，
+% #3: 節名以外にmark_format内で調べないとならないやつ（odd/evenになるはず）
+% #4: \csname #1\endcsname に差し替えるもの
+% #5: \***markに定義するもの（フォーマット部分は#1にしておく）
+    \jlreq@pagestyle@analyzemark{jlreq@odd@running@head}{\jlreq@mark@format}{odd}{\rightmark}{\jlreq@markboth{#1}{}}%
+    
+    \@for\jlreq@tempa:=jlreq@odd@running@head@i,jlreq@odd@running@head@ii,jlreq@even@running@head@i,jlreq@even@running@head@ii\do{%
+      % ...@headingに見出し命令名を，...@heading@levelにそのレベルを入れる
+      \expandafter\expandafter\expandafter\jlreq@iffirsttoken\expandafter\expandafter\expandafter{\csname\jlreq@tempa\endcsname}{_}{%
+        \edef\jlreq@tempb{\csname\jlreq@tempa\endcsname}%
+        \expandafter\edef\csname \jlreq@tempa @heading\endcsname{\expandafter\@gobble\jlreq@tempb}%
+        \expandafter\edef\csname\jlreq@tempa @heading@level\endcsname{\csname jlreq@heading@level@\csname\jlreq@tempa @heading}%
+      }{%
+        \expandafter\def\csname\jlreq@tempa @heading\endcsname{}%
+      }%
+      \def\jlreq@makemarkcs{}% \***markを定義する命令を入れる
+      % (odd|even)running@head@iに対して\jlreq@(odd|even)@running@head@iの中身を差し替える
+      \@for\jlreq@tempa:=odd,even\do{%
+        \@ifundefined{jlreq@\jlreq@tempa running@head@i@heading}{}{%
+          \ifthenelse{\equal{\jlreq@tempa}{odd}}{\def\jlreq@odd@running@head@i{\rightmark}}{\def\jlreq@odd@running@head@i{\leftmark}}%
+          \jlreq@tempatrue
+          \edef\jlreq@tempa{\expandonce{\csname the\csname \jlreq@tempa @running@head@i@heading\endcsname\endcsname}\noexpand\quad\unexpanded{####1}}%
+          \jlreq@parsekeyval@nokey{%
+            \jlreq@switch{
+              {\jlreq@tempa}{\jlreq@tempatrue\edef\jlreq@tempa{\unexpanded{##1}}}%
+              {_\csname \jlreq@tempa @running@head@i@heading\endcsname}{\ifjlreq@tempa\edef\jlreq@tempa{\unexpanded{##1}}\fi}%
+            }%
+          }%
+          \ifx\jlreq@tempa\@undefined\else
+        }%
+      }%
+    }%
+    \ifjlreq@pstate\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{% tate
+    }{% yoko
+      % 場所を正規化する．
+      \def\jlreq@nombre@i@position@default{{bottom}{center}}%
+      \def\jlreq@running@head@i@position@default{{top}{center}}%
+      \def\jlreq@nombre@ii@position@default{{}{}}%
+      \def\jlreq@running@head@ii@position@default{{}{}}%
+      \@for\jlreq@tempa:=jlreq@nombre@i@position,jlreq@nombre@ii@position,jlreq@running@head@i@position,jlreq@running@head@ii@position\do{%
+        \edef\jlreq@next{\noexpand\jlreq@pagestyle@parse@position{\csexpandonce{\jlreq@tempa}}{\expandonce{\csname\jlreq@tempa\endcsname}}{\csexpandonce{\jlreq@tempa @default}}}%
+        \jlreq@next
+      }%
+    }%
+  \expandafter\endgroup
+  \jlreq@do
+}
+
 % odd_running_head=_sectionのように下線から始まる場合，その値の見出し命令を柱に出すようにする．
 % 要するに\ps@***に\sectionmarkを定義するように仕込む．
 % 常にodd=rightmark，even=leftmarkになる．
@@ -3576,6 +3750,7 @@
 % \markbothか\markrightかはoddかevenかに依存．
 % odd=とかeven=とかも仕込めるようにしたけど
 % あまり意味がない気がしてきた．oddやevenが優先される．
+% TODO: 複数の柱とノンブル（2.6.3の注）
 \newcommand*{\DeclarePageStyle}[2]{%
   \expandafter\edef\csname jlreq@pagestyle@setting@#1\endcsname{\unexpanded{#2}}%
   \begingroup

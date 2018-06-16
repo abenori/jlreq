@@ -369,7 +369,7 @@ JFMの名前は次の通りです．`[]`で囲まれている文字は設定に�
     - `\theequation`，`\thefigure`，`\thetable`に章番号を追加．
 * 2018-02-01
     - 縦書きの傍注は奇数ページにのみ出るようにした（改善の余地ありかも）．
-    - LuaTeX時に`\fnixbottomtrue`を追加．
+    - LuaTeX時に`\fnfixbottomtrue`を追加．
     - キャプション関係のオプションを`\jlreqsetup`に追加．
     - `itemization_beforeafter_space`を拡張．
     - バグ修正．
@@ -383,7 +383,9 @@ JFMの名前は次の通りです．`[]`で囲まれている文字は設定に�
     - 目次内のラベルの長さを今までよりも長くした．
     - 一部のマクロをjlreq-helpers.styに分離した．
     - バグ修正．
-
+* 2018-06-17
+    - シリーズbもゴシックにするようにした．
+    - バグ修正．
 
 --------------
 Noriyuki Abe

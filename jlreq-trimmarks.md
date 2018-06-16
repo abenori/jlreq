@@ -72,6 +72,8 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
 ## CHANGELOG
 * 2018-05-19
     - First release.
+* 2018-06-17
+    - Fixed a bug.
 
 
 --------------

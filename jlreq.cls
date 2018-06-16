@@ -5,7 +5,7 @@
 %%
 % (based on JLReq 20120403 https://www.w3.org/TR/2012/NOTE-jlreq-20120403/ja/)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{jlreq}[2018/05/19 jlreq]
+\ProvidesClass{jlreq}[2018/06/17 jlreq]
 \RequirePackage{xkeyval,everyhook,filehook,etoolbox,ifthen}
 \RequirePackage{jlreq-helpers}
 
@@ -2392,8 +2392,9 @@
 }
 % {1 = 命令名}{2 = レベル}{3 = *}{4 = running head}{5 = 見出し}{6 = ラベルフォーマット}{7 = ラベルありフォーマット}{8 = ラベルなしフォーマット}
 \long\def\jlreq@RuninHeading@start@@#1#2#3#4#5#6#7#8{%
+  \if@noskipsec\leavevmode\fi
   \begingroup
-    \def\jlreq@do{}%
+    \def\jlreq@do{\global\@noskipsectrue}%
     \ifnum0\jlreq@ifempty{#3}{}{1}\ifnum #2>\c@secnumdepth 1\fi>0
       \def\jlreq@tempa##1{#8}%
     \else
@@ -2403,6 +2404,7 @@
     \par
     \eappto\jlreq@do{%
       \noexpand\everypar{%
+        \unexpanded{\global\@noskipsecfalse}%
         \unexpanded{\everypar{}}%
         \unexpanded{{\setbox\jlreq@tempboxa\lastbox}}%
         \noexpand\begingroup

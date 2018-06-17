@@ -2404,13 +2404,16 @@
     \par
     \eappto\jlreq@do{%
       \noexpand\everypar{%
-        \unexpanded{\global\@noskipsecfalse}%
-        \unexpanded{\everypar{}}%
-        \unexpanded{{\setbox\jlreq@tempboxa\lastbox}}%
-        \noexpand\begingroup
-          \expandonce{\jlreq@tempa{#5}}%
-          \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{#3}{#6}{#4}%
-        \noexpand\endgroup
+        \noexpand\if@noskipsec
+          \unexpanded{\global\@noskipsecfalse}%
+          \unexpanded{{\setbox\jlreq@tempboxa\lastbox}}%
+          \noexpand\begingroup
+            \expandonce{\jlreq@tempa{#5}}%
+            \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{#3}{#6}{#4}%
+          \noexpand\endgroup
+        \noexpand\else
+          \unexpanded{\everypar{}}%
+        \noexpand\fi
       }%
     }%
   \expandafter\endgroup

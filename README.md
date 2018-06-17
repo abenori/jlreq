@@ -85,7 +85,7 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Moved some macros to jlreq-helpers.sty
     - Fixed bugs.
 * 2018-06-17
-    - Gothic font is attached to font shape 'b'..
+    - Gothic font is attached to font shape 'b'.
     - Fixed bugs.
 
 

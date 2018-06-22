@@ -2331,7 +2331,7 @@
 \def\jlreq@BlockHeading@spaces@output@@@#1{%
   \edef\jlreq@do{%
     \noexpand\jlreq@BlockHeading@spaces@output@@@@
-    \jlreq@iffirsttoken@ignorespaces{#1}{*}{{*}\expandonce{\@gobble #1}}{{}#1}%
+    \jlreq@iffirsttoken@ignorespaces{#1}{*}{{*}\expandonce{\@gobble #1}}{\unexpanded{{}#1}}%
       \csexpandonce{jlreq@BlockHeading@spaces@current@space@\the\jlreq@tempcnta}%
       {\csexpandonce{jlreq@BlockHeading@spaces@current@output@\the\jlreq@tempcnta}}%
   }%
@@ -2387,7 +2387,7 @@
 }
 % {1 = 命令名}{2 = レベル}{3 = *}{4 = running head}{5 = 見出し}
 \long\def\jlreq@RuninHeading@start@#1#2#3[#4]#5{%
-  \edef\jlreq@do{\noexpand\jlreq@RuninHeading@start@@{#1}{#2}{#3}{#4}{#5}{\expandonce{\jlreq@RuninHeading@start@format@label}}{\expandonce{\jlreq@RuninHeading@start@format@wlabel}}{\expandonce{\jlreq@RuninHeading@start@format@wolabel}}}%
+  \edef\jlreq@do{\unexpanded{\jlreq@RuninHeading@start@@{#1}{#2}{#3}{#4}{#5}}{\expandonce{\jlreq@RuninHeading@start@format@label}}{\expandonce{\jlreq@RuninHeading@start@format@wlabel}}{\expandonce{\jlreq@RuninHeading@start@format@wolabel}}}%
   \jlreq@do
 }
 % {1 = 命令名}{2 = レベル}{3 = *}{4 = running head}{5 = 見出し}{6 = ラベルフォーマット}{7 = ラベルありフォーマット}{8 = ラベルなしフォーマット}

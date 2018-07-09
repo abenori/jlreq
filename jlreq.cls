@@ -1223,6 +1223,7 @@
 \fi
 \setlength{\headsep}{\jlreq@speciallength{\jlreq@option@headfoot@verticalpos}}
 \ifdim\headsep<1\zw\relax\jlreq@note{基本版面との上下方向の最低の空き量を，基本版面の文字サイズの全角アキとする (26.1.a)．}\fi
+\if@tate\else\addtolength{\headsep}{-\dimexpr\topskip - \Cht\relax}\fi
 \setlength{\headheight}{1\zw}
 
 % \textwidthと\textheightのデフォルト値は縦横ともに0.75倍（調整が入る）．
@@ -1429,7 +1430,7 @@
 \fi
 
 %.. 下
-\setlength{\footskip}{\dimexpr\headsep + 1\zw\relax}
+\setlength{\footskip}{\dimexpr\headsep + \if@tate\else\topskip - \Cht +\fi \headheight\relax}
 % \maxdepth + \topskip = フォントサイズ×1.5（だってさ）
 \setlength{\maxdepth}{\dimexpr1.5\zw - \topskip\relax}
 
@@ -2331,7 +2332,7 @@
 \def\jlreq@BlockHeading@spaces@output@@@#1{%
   \edef\jlreq@do{%
     \noexpand\jlreq@BlockHeading@spaces@output@@@@
-    \jlreq@iffirsttoken@ignorespaces{#1}{*}{{*}\expandonce{\@gobble #1}}{{}#1}%
+    \jlreq@iffirsttoken@ignorespaces{#1}{*}{{*}\expandonce{\@gobble #1}}{\unexpanded{{}#1}}%
       \csexpandonce{jlreq@BlockHeading@spaces@current@space@\the\jlreq@tempcnta}%
       {\csexpandonce{jlreq@BlockHeading@spaces@current@output@\the\jlreq@tempcnta}}%
   }%
@@ -2387,7 +2388,7 @@
 }
 % {1 = 命令名}{2 = レベル}{3 = *}{4 = running head}{5 = 見出し}
 \long\def\jlreq@RuninHeading@start@#1#2#3[#4]#5{%
-  \edef\jlreq@do{\noexpand\jlreq@RuninHeading@start@@{#1}{#2}{#3}{#4}{#5}{\expandonce{\jlreq@RuninHeading@start@format@label}}{\expandonce{\jlreq@RuninHeading@start@format@wlabel}}{\expandonce{\jlreq@RuninHeading@start@format@wolabel}}}%
+  \edef\jlreq@do{\unexpanded{\jlreq@RuninHeading@start@@{#1}{#2}{#3}{#4}{#5}}{\expandonce{\jlreq@RuninHeading@start@format@label}}{\expandonce{\jlreq@RuninHeading@start@format@wlabel}}{\expandonce{\jlreq@RuninHeading@start@format@wolabel}}}%
   \jlreq@do
 }
 % {1 = 命令名}{2 = レベル}{3 = *}{4 = running head}{5 = 見出し}{6 = ラベルフォーマット}{7 = ラベルありフォーマット}{8 = ラベルなしフォーマット}

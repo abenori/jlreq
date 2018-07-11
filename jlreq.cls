@@ -3987,14 +3987,24 @@
       }%
     }%
     % 上で得たマーク情報をもとに，\<見出し>markの定義を構築する．
+    % \jlreq@minimumlevelに見出しの最低レベルを入れる．
+    \let\jlreq@minimumlevel=\@undefined
     \def\jlreq@markdefinecommand{}%
     \@for\jlreq@heading:=\jlreq@headingmarklist\do{%
       \ifx\jlreq@heading\@empty\else
+        \expandafter\let\expandafter\jlreq@level\csname jlreq@heading@level@\jlreq@heading\endcsname
+        \ifx\jlreq@level\relax\else
+          \ifx\jlreq@minimumlevel\@undefined\let\jlreq@minimumlevel=\jlreq@level
+          \else\ifnum\jlreq@minimumlevel>\jlreq@level\space\let\jlreq@minimumlevel=\jlreq@level\fi\fi
+        \fi
         \edef\jlreq@next{\noexpand\jlreq@pagestyle@make@mark{\ifjlreq@headii@exist *\fi}{\expandonce{\jlreq@heading}}{\expandonce{\jlreq@mark@format}}{\csexpandonce{jlreq@markdata@\jlreq@heading}}}%
         \jlreq@next
         \eappto\jlreq@markdefinecommand{\expandonce{\jlreq@result}}%
       \fi
     }%
+    \ifx\jlreq@minimumlevel\@undefined\else
+      \eappto\jlreq@markdefinecommand{\noexpand\jlreq@pagestyle@setclearmark{\expandonce{\jlreq@minimumlevel}}}%
+    \fi
     % 見出しを出す場合：evenに章などの高いレベルの見出しを出す（2.6.3.a）
     \@ifundefined{jlreq@odd@running@head@i@heading@level}{}{\@ifundefined{jlreq@even@running@head@i@heading@level}{}{%
       \ifnum\jlreq@odd@running@head@i@heading@level<\jlreq@even@running@head@i@heading@level

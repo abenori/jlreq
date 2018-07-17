@@ -248,7 +248,7 @@
   \jlreq@do
 }
 \long\def\jlreq@parsekeyval@nokey@#1,{%
-  \jlreq@ifendmark{#1}{}{\jlreq@parsekeyval@nokey@@#1=\jlreq@endmark}%
+  \jlreq@ifendmark{#1}{}{\jlreq@ifempty{#1}{\jlreq@parsekeyval@nokey@}{\jlreq@parsekeyval@nokey@@#1=\jlreq@endmark}}%
 }
 \long\def\jlreq@parsekeyval@nokey@@#1=#2\jlreq@endmark{%
   \jlreq@ifempty{#2}{\jlreq@parsekeyval@nokey@@@{}{#1}}{\expandafter\jlreq@parsekeyval@nokey@@@\expandafter{\jlreq@parsekeyval@nokey@@@@#2\jlreq@endmark}{#1}}%

@@ -3629,10 +3629,8 @@
 }
 \def\jlreq@addextramarkcommand@tothemark{%
   \begingroup
-    \protected@edef\jlreq@next{\noexpand\jlreq@addextramarkcommand{\expandafter\@firstoftwo\@themark}{\noexpand\jlreq@tempa}}%
-    \jlreq@next
-    \protected@edef\jlreq@next{\noexpand\jlreq@addextramarkcommand{\expandafter\@secondoftwo\@themark}{\noexpand\jlreq@tempb}}%
-    \jlreq@next
+    \expandafter\expandafter\expandafter\jlreq@addextramarkcommand\expandafter\expandafter\expandafter{\expandafter\@firstoftwo\@themark}{\jlreq@tempa}%
+    \expandafter\expandafter\expandafter\jlreq@addextramarkcommand\expandafter\expandafter\expandafter{\expandafter\@secondoftwo\@themark}{\jlreq@tempb}%
     \edef\jlreq@do{\unexpanded{\def\@themark}{{\expandonce{\jlreq@tempa}}{\expandonce{\jlreq@tempb}}}}%
   \expandafter\endgroup
   \jlreq@do
@@ -3812,6 +3810,7 @@
     }%
     \jlreq@pagestyle@make@headingmark@{#2}{#3}#4\jlreq@endmark
     \def\jlreq@do{}% とりあえず#1markの中身を入れていく
+    % leftを設定する時は対応するrightを空にする．
     \expandafter\ifx\csname jlreq@leftmark@0\endcsname\@empty
       \expandafter\ifx\csname jlreq@rightmark@0\endcsname\@empty\else
         \eappto\jlreq@do{\jlreq@ifempty{#1}{\noexpand\markright}{\noexpand\jlreq@markright}{\csexpandonce{jlreq@rightmark@0}}}%

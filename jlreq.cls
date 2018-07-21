@@ -3602,14 +3602,14 @@
 \def\jlreq@extramark#1{}
 \def\@themark{{}{}}
 
-% #1番目の\leftmarkや\rightmarkを取得する
+% #1番目の\leftmarkや\rightmarkを取得する．\leftmark/\rightmarkの実装に強く依存している．
 \def\jlreq@extraleftmark#1{\jlreq@getextramark{#1}{\leftmark}}%
 \def\jlreq@extrarightmark#1{\jlreq@getextramark{#1}{\rightmark}}%
 \def\jlreq@getextramark#1#2{\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\jlreq@getextramark@#2\jlreq@extramark\jlreq@endmark{#1}}
 \def\jlreq@getextramark@#1\jlreq@extramark#2\jlreq@endmark#3{%
   \jlreq@ifempty{#2}{}{\jlreq@getextramark@@{#3}#2}%
 }
-\def\jlreq@getextramark@@#1#2\jlreq@extramark{\jlreq@getextramark@@@{#1}#2\jlreq@endmark}
+\def\jlreq@getextramark@@#1#2\@empty\@empty\jlreq@extramark{\jlreq@getextramark@@@{#1}#2\jlreq@endmark}
 \def\jlreq@getextramark@@@#1#2{%
   \jlreq@ifendmark{#2}{}{%
     \ifnum#1<2 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
@@ -3921,7 +3921,7 @@
 }
 
 % #1: ターゲットなコントロールシークエンスの名前，#2：*ならばreverseする，#3：空き
-% {柱1}{柱2}... という並びから，実際に出力する柱を構築する．
+% #1に入っている{柱1}{柱2}... という並びから，実際に出力する柱を構築する．
 % 間に空白を入れるが，前が空ならば空白は入れない．
 \def\jlreq@pagestyle@make@runninghead#1#2#3{%
   \expandafter\ifx\csname #1\endcsname\@empty\expandafter\@gobble\else\expandafter\@firstofone\fi{%
@@ -3958,8 +3958,8 @@
     \def\jlreq@font{}%
     % 柱とノンブルの間
     \def\jlreq@gap{1.5\zw}%
-    \def\jlreq@nombre@gap{1.5\zw}%
-    \def\jlreq@running@head@gap{1.5\zw}%
+    \def\jlreq@nombre@gap{}%
+    \def\jlreq@running@head@gap{}%
     \newif\ifjlreq@clearmarkcommand\jlreq@clearmarkcommandtrue
     \newif\ifjlreq@pstate\jlreq@pstatefalse % PageStyleTATE
     \@for\jlreq@i:=ii,iii\do{%
@@ -3998,6 +3998,8 @@
       {odd_running_head_iii}{\def\jlreq@odd@running@head@iii{##1}}
       {even_running_head_iii}{\def\jlreq@even@running@head@iii{##1}}
     }{#2}%
+    \ifx\jlreq@nombre@gap\@empty\let\jlreq@nombre@gap=\jlreq@gap\fi
+    \ifx\jlreq@running@head@gap\@empty\let\jlreq@running@head@gap=\jlreq@gap\fi
     % markの処理
     % \jlreq@<見出し命令名>@marktargetに\<見出し命令名>markを構築するための情報を入れていく
     % {{mark_formatからさらに調べるやつ (odd|even)}{マークの何番目か．extraでない場合は0}{l or r(leftかrightか)}}の並び
@@ -4026,10 +4028,7 @@
           \else\ifnum\jlreq@minimumlevel>\jlreq@level\space\let\jlreq@minimumlevel=\jlreq@level\fi\fi
         \fi
         \edef\jlreq@next{\noexpand\jlreq@pagestyle@make@headingmark{\ifjlreq@headii@exist *\fi}{\expandonce{\jlreq@heading}}{\expandonce{\jlreq@mark@format}}{\csexpandonce{jlreq@markdata@\jlreq@heading}}}%
-%        \message{^^J[#1]: \jlreq@heading^^J}%
-%        \tracingmacros=1
         \jlreq@next
-%        \tracingmacros=0
         \eappto\jlreq@markdefinecommand{\expandonce{\jlreq@result}}%
       \fi
     }%
@@ -4050,9 +4049,12 @@
         \expandafter\ifx\jlreq@position\@empty\expandafter\def\jlreq@position{0pt}\fi
       }%
       \edef\jlreq@gapcs{\noexpand\hskip\noexpand\glueexpr\expandonce{\jlreq@nombre@gap}\noexpand\relax}%
+      \jlreq@pagestyle@addifempty{\jlreq@nombre@iii@position}{\jlreq@nombre@ii}{\jlreq@gapcs}{\jlreq@nombre@iii}%
       \jlreq@pagestyle@addifempty{\jlreq@nombre@ii@position}{\jlreq@nombre@i}{\jlreq@gapcs}{\jlreq@nombre@ii}%
       \edef\jlreq@gapcs{\noexpand\hskip\noexpand\glueexpr\expandonce{\jlreq@running@head@gap}\noexpand\relax}%
+      \jlreq@pagestyle@addifempty{\jlreq@running@head@iii@position}{\jlreq@odd@running@head@ii}{\jlreq@gapcs}{\jlreq@odd@running@head@iii}%
       \jlreq@pagestyle@addifempty{\jlreq@running@head@ii@position}{\jlreq@odd@running@head@i}{\jlreq@gapcs}{\jlreq@odd@running@head@ii}%
+      \jlreq@pagestyle@addifempty{\jlreq@running@head@iii@position}{\jlreq@even@running@head@ii}{\jlreq@gapcs}{\jlreq@even@running@head@iii}%
       \jlreq@pagestyle@addifempty{\jlreq@running@head@ii@position}{\jlreq@even@running@head@i}{\jlreq@gapcs}{\jlreq@even@running@head@ii}%
       % 下の方にはページ数を入れる
       \def\jlreq@nombre@contents{}%

@@ -3578,20 +3578,6 @@
   }%
 }
 
-% #2 = {vertical}{horizontal}の左右を逆にして#1に代入．
-\newcommand*{\jlreq@pagestyle@reverse@horizontal@position}[2]{%
-  \begingroup
-    \jlreq@switch{\expandafter\@secondoftwo#2}{%
-      {left}{\def\jlreq@tempa{right}}
-      {center}{\def\jlreq@tempa{center}}
-      {right}{\def\jlreq@tempa{left}}
-      {}{\def\jlreq@tempa{}}%
-    }%
-    \edef\jlreq@do{\unexpanded{\def#1}{{\expandafter\@firstoftwo#2}{\jlreq@tempa}}}%
-  \expandafter\endgroup
-  \jlreq@do
-}
-  
 % レベル#1より低いレベルの見出しの**markを\markboth{}{}にする
 \def\jlreq@pagestyle@setclearmark#1{%
   \@for\@tempa:=\jlreq@heading@allheadings\do{%
@@ -3600,6 +3586,15 @@
     }%
   }%
 }
+
+% #1のleftとrightを入れ替えて#1に代入
+\def\jlreq@reverse@leftright#1{%
+  \jlreq@switch{#1}{
+    {left}{\def#1{right}}
+    {right}{\def#1{left}}
+  }%
+}
+  
 
 %.. マークの拡張
 % 三つ以上のマークを保持するために，markを次のようにする
@@ -3853,7 +3848,7 @@
     \jlreq@ifempty{##1}{}{\ifthenelse{\equal{##1}{#3}}{\edef\jlreq@tempb{\unexpanded{##2}}}{}}%
     \ifthenelse{\equal{##1}{_#1}}{\edef\jlreq@tempb{\unexpanded{##2}}}{}%
   }{#2}%
-  \ifx l#5
+  \ifx l#5%
     \expandafter\edef\csname jlreq@leftmark@#4\endcsname{\expandonce{\jlreq@tempb}}%
   \else
     \expandafter\edef\csname jlreq@rightmark@#4\endcsname{\expandonce{\jlreq@tempb}}%
@@ -4175,6 +4170,7 @@
             \edef\jlreq@position{\csname jlreq@nombre@\jlreq@i @position\endcsname}%
             \edef\jlreq@vert{\expandafter\@firstoftwo\jlreq@position}%
             \edef\jlreq@hor{\expandafter\@secondoftwo\jlreq@position}%
+            \ifthenelse{\equal{\jlreq@parity}{even}}{\jlreq@reverse@leftright{\jlreq@hor}}{}%
             \jlreq@ifleftpage{\jlreq@parity}{\let\jlreq@addtocs=\cseappto}{\let\jlreq@addtocs\csepreto}%
             \edef\jlreq@csname{jlreq@nombre@\jlreq@parity @\jlreq@vert @\jlreq@hor}%
             \expandafter\ifx\csname\jlreq@csname\endcsname\@empty\else\jlreq@addtocs{\jlreq@csname}{\unexpanded{\hskip\glueexpr}\expandonce{\jlreq@nombre@gap}\noexpand\relax}\fi
@@ -4186,6 +4182,7 @@
             \edef\jlreq@position{\csname jlreq@running@head@\jlreq@i @position\endcsname}%
             \edef\jlreq@vert{\expandafter\@firstoftwo\jlreq@position}%
             \edef\jlreq@hor{\expandafter\@secondoftwo\jlreq@position}%
+            \ifthenelse{\equal{\jlreq@parity}{even}}{\jlreq@reverse@leftright{\jlreq@hor}}{}%
             \ifthenelse{\equal{\jlreq@hor}{\jlreq@pagehor}}{\let\jlreq@addtocs=\eappto}{\let\jlreq@addtocs=\epreto}%
             \expandafter\jlreq@addtocs\csname jlreq@running@head@\jlreq@parity @\jlreq@vert @\jlreq@hor\endcsname{{\csexpandonce{jlreq@\jlreq@parity @running@head@\jlreq@i}}}%
           \fi

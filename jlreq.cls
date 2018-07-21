@@ -1233,7 +1233,13 @@
 \fi
 \setlength{\headsep}{\jlreq@speciallength{\jlreq@option@headfoot@verticalpos}}
 \ifdim\headsep<1\zw\relax\jlreq@note{基本版面との上下方向の最低の空き量を，基本版面の文字サイズの全角アキとする (26.1.a)．}\fi
-\if@tate\else\addtolength{\headsep}{-\dimexpr\topskip - \Cht\relax}\fi
+\if@tate
+  \if@twocolumn
+    \addtolength{\headsep}{\dimexpr\marginparwidth + \marginparsep\relax}
+  \fi
+\else
+  \addtolength{\headsep}{-\dimexpr\topskip - \Cht\relax}
+\fi
 \setlength{\headheight}{1\zw}
 
 % \textwidthと\textheightのデフォルト値は縦横ともに0.75倍（調整が入る）．
@@ -1440,7 +1446,7 @@
 \fi
 
 %.. 下
-\setlength{\footskip}{\dimexpr\headsep + \if@tate\else\topskip - \Cht +\fi \headheight\relax}
+\setlength{\footskip}{\dimexpr\headsep + \if@tate\marginparwidth + \marginparsep\else\topskip - \Cht\fi + \headheight\relax}
 % \maxdepth + \topskip = フォントサイズ×1.5（だってさ）
 \setlength{\maxdepth}{\dimexpr1.5\zw - \topskip\relax}
 
@@ -4233,10 +4239,7 @@
       \jlreq@pagestyle@setheadfoot{\jlreq@evenfoot}{jlreq@even@bottom@left}{jlreq@even@bottom@center}{jlreq@even@bottom@right}%
       % 傍注用調整
       \ifdim\marginparwidth>0pt
-        \if@tate
-          \jlreq@pagestyle@addsidenotemargin@vertical{\jlreq@oddfoot}%
-          \jlreq@pagestyle@addsidenotemargin@vertical{\jlreq@evenfoot}%
-        \else
+        \if@tate\else
           \if@twocolumn
             \jlreq@pagestyle@addsidenotemargin@bothside{\jlreq@oddhead}%
             \jlreq@pagestyle@addsidenotemargin@bothside{\jlreq@oddfoot}%

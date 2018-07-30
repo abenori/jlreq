@@ -52,7 +52,7 @@
 }
 \newcommand*{\jlreq@trimmarks@addpapersize@@}[3]{%
   \@for\@tempa:=#1\do{%
-    \eappto\jlreq@trimmarks@switchpapersize{{\expandonce{\@tempa}}{\unexpanded{\def\jlreq@trimmarks@paperwidth{#2}\def\jlreq@trimmarks@paperheight{#3}}}}%
+    \eappto\jlreq@trimmarks@switchpapersize{{\expandonce{\@tempa}}{\unexpanded{\def\jlreq@resulta{#2}\def\jlreq@resultb{#3}}}}%
   }%
 }
 \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@switchpapersize}
@@ -100,21 +100,24 @@
 \jlreq@trimmarks@addpapersize{executive}[executive]
 \jlreq@trimmarks@addpapersize{hagaki}[hagaki]
 
-\DeclareOptionX{trimmarks_paper}{
-  \edef\jlreq@do{%
-    \unexpanded{\jlreq@switch{#1}}{\expandonce{\jlreq@trimmarks@switchpapersize}}%
-    [\unexpanded{%
-      \jlreq@helper@dividebycomma{#1}%
-      \ifjlreq@result
-        \edef\jlreq@trimmarks@paperwidth{\jlreq@resulta}
-        \edef\jlreq@trimmarks@paperheight{\jlreq@resultb}
-      \else
-        \PackageError{jlreq}{The paper #1 is unknown}{\@ehc}%
-      \fi
-    }]%
-  }%
-  \jlreq@do
+% width -> \jlreq@resulta, height -> \jlreq@resultb
+\edef\jlreq@trimmarks@analyzepapersize#1{%
+  \noexpand\jlreq@switch{#1}{%
+    \expandonce{\jlreq@trimmarks@switchpapersize}%
+    {%
+      \noexpand\jlreq@helper@dividebycomma{#1}
+      \unexpanded{\ifjlreq@result\else}
+        \unexpanded{\def\jlreq@resulta}{#1}
+        \unexpanded{\def\jlreq@resultb}{#1}
+      \noexpand\fi
+    }%
+  }\noexpand\relax%
 }
+\jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@analyzepapersize}
+
+\def\jlreq@trimmarks@option@papersize{+2in}
+\DeclareOptionX{trimmarks_paper}{\def\jlreq@trimmarks@option@papersize{#1}}
+\jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@option@papersize}
 
 \newif\ifjlreq@trimmarks@digital \jlreq@trimmarks@digitaltrue
 \newif\ifjlreq@trimmarks@show \jlreq@trimmarks@showtrue
@@ -136,6 +139,9 @@
     }
   }
 }
+\newif\ifjlreq@trimmarks@landscape \jlreq@trimmarks@landscapefalse
+\jlreq@trimmarks@DeclareOption{landscape}{\jlreq@trimmarks@landscapetrue}
+\jlreq@trimmarks@afterpkg@addtodeleteif{\ifjlreq@trimmarks@landscape}
 
 \let\jlreq@temporary@original@@removeelement=\@removeelement
 \let\@removeelement=\jlreq@helper@removeelement
@@ -143,9 +149,37 @@
 \let\@removeelement=\jlreq@temporary@original@@removeelement
 \let\jlreq@temporary@original@@removeelement=\@undefined
 
+\def\jlreq@trimmarks@setpapersize#1{%
+  \jlreq@ifcontains{#1}{+}{
+    \def\@tempa##1+##2\jlreq@endmark{%
+      \jlreq@ifempty{##1}{
+        \let\jlreq@tempa=\paperwidth
+        \let\jlreq@tempb=\paperheight
+      }{
+        \jlreq@trimmarks@analyzepapersize{##1}
+        \let\jlreq@tempa=\jlreq@resulta
+        \let\jlreq@tempb=\jlreq@resultb
+        \ifjlreq@trimmarks@landscape\jlreq@swap{\jlreq@tempa}{\jlreq@tempb}\fi
+      }
+      \jlreq@trimmarks@analyzepapersize{##2}
+      \ifjlreq@trimmarks@landscape\jlreq@swap{\jlreq@resulta}{\jlreq@resultb}\fi
+      \edef\jlreq@trimmarks@paperwidth{\the\dimexpr\jlreq@tempa + \jlreq@resulta\relax}
+      \edef\jlreq@trimmarks@paperheight{\the\dimexpr\jlreq@tempb + \jlreq@resultb\relax}
+    }
+    \@tempa#1\jlreq@endmark
+  }{
+    \jlreq@trimmarks@analyzepapersize{#1}
+    \ifjlreq@trimmarks@landscape\jlreq@swap{\jlreq@resulta}{\jlreq@resultb}\fi
+    \edef\jlreq@trimmarks@paperwidth{\jlreq@resulta}
+    \edef\jlreq@trimmarks@paperheight{\jlreq@resultb}
+  }
+}
+\jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@setpapersize}
+\expandafter\jlreq@trimmarks@setpapersize\expandafter{\jlreq@trimmarks@option@papersize}
+
 \ifx o\jlreq@trimmarks@driver
   \ifjlreq@trimmarks@digital
-    \ClassError{jlreq}{`show=digital' can't be used with the driver `dviout'}{\@ehc}
+    \PackageError{jlreq-trimmarks}{`show=digital' can't be used with the driver `dviout'}{\@ehc}
   \fi
 \fi
 
@@ -213,11 +247,6 @@
     % default: dvipdfmx
     \let\jlreq@trimmarks@driver=f
   \fi
-\fi
-
-\ifx\jlreq@trimmarks@paperwidth\@undefined
-  \edef\jlreq@trimmarks@paperwidth{\the\dimexpr\paperwidth + 2in\relax}
-  \edef\jlreq@trimmarks@paperheight{\the\dimexpr\paperheight + 2in\relax}
 \fi
 
 \ifx l\jlreq@engine

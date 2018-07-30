@@ -462,5 +462,12 @@
 
 \def\jlreq@for@noexpand#1:={\@for#1:=\@empty}
 
+\def\jlreq@swap#1#2{%
+  \let\jlreq@swaptoken=#1%
+  \let#1=#2%
+  \let#2=\jlreq@swaptoken
+  \let\jlreq@swaptoken=\@undefined
+}
+
 \endinput
 

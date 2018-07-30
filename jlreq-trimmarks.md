@@ -5,7 +5,9 @@ This package outputs trim marks. It works with [LuaTeX-ja](https://osdn.jp/proje
 
 * Output trim marks
 * Set TrimBox and BleedBox if possible.
-* Set the size of paper..
+* Set the size of paper.
+
+Note that this package is independent from [Requirements for Japanese Text Layout](https://www.w3.org/TR/jlreq/) (JLReq). JLReq says nothing about trim marks.
 
 ## Installation
 Move jlreq-trimmarks.sty and jlre-helpers.sty to $TEXMF/tex/latex/jlreq.
@@ -18,7 +20,7 @@ Load it by `\usepackage` with specifying the TeX engine and the DVI driver.
 ````
 
 ## Options
-The following class options (keyval style) are available.
+The following package options (keyval style) are available.
 
 ### `platex`, `uplatex`, `lulatex`
 Set the engine. If it is not specified, then the engine is
@@ -33,10 +35,16 @@ Set the dvi driver. If it is not specified, then
 * the driver is `dvipdmx` if the engine is `platex` or `uplatex`
 
 ### `trimmarks_paper`
-Set the size of the paper including trim marks. There are two ways to specify it.
+Set the size of the paper including trim marks.
 
-* `trimmarks_paper=<paper type>`: for the paper type, you can use `a0--a10`, `b0--b10` and `c2--c8`. Note that `b0--b10` is `JIS B' (Japanese B-series variant).
-* `trimmarks_paper={<width>,height>}`
+* `trimmarks_paper=<paper type>`: specify via the paper type. for the paper type, you can use `a0--a10`, `b0--b10` and `c2--c8`. Note that `b0--b10` is `JIS B' (Japanese B-series variant).
+* `trimmarks_paper={<width>,height>}`: specify via the width and height.
+* `trimmarks_paper=<paper size>+{<width>,<height>}` (e.g. `trimmarks_paper=a4+{1cm,2cm}`): `<width>` (resp. `<height>`) is added to the width (resp. height) of the paper size specified by `<paper size>`  For `<paper size>`, one can use `<paper type>` or `{<width>,<height>}` as in the above.
+* `trimmarks_paper=a4+2cm` is equivalent to `trimmarks_paper=a4+{2cm,2cm}`.
+* If `<paper size>` is empty (e.g. `trimmarks_paper=+2cm`), the current paper size (which is specified usually by the option for the document class) is used.
+
+### `landscape`
+Swap the width and the height. This swaps only the width and height which is specified with the option `trimmarks_paper`. For example, `landscape,trimmarks_paper=+{2cm,1cm}`, adds 1cm to the height and 2cm to the width. But the current paper size is not swapped.
 
 ### `show`
 Specify the types of trim marks which the package outputs. It is specified with the comma separated list like `show={trimmarks,banner,digital}`. If no argument is given, everything will be showed.
@@ -50,7 +58,7 @@ Specify the types of trim marks which the package outputs. It is specified with 
 Set the additional settings with the keyval style.
 
 ### `banner`
-The things which the package outputs when `show=banner` is specified in the class option.
+The things which the package outputs when `show=banner` is specified in the package option.
 
 ### `bleed_margin`
 Set the bleed margin.

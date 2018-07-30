@@ -7,6 +7,8 @@
 * 可能な場合には，TrimBox / BleedBoxを設定
 * 紙サイズの設定
 
+なお，本パッケージは[日本語組版処理の要件](https://www.w3.org/TR/jlreq/ja/) (JLReq)とは無縁です．JLReqにはトンボに関する記述はありません．
+
 ## インストール
 $TEXMF/tex/latex/jlreq内にjlreq-trimmarks.styとjlreq-helpers.styを配置してください．
 
@@ -19,7 +21,7 @@ $TEXMF/tex/latex/jlreq内にjlreq-trimmarks.styとjlreq-helpers.styを配置し�
 ````
 
 ## オプション
-以下のクラスオプションを受け付けます．keyval形式です．
+以下のパッケージオプションを受け付けます．keyval形式です．
 
 ### `platex`, `uplatex`, `lulatex`
 エンジンの指定です．省略時は，
@@ -36,7 +38,15 @@ dviドライバの指定です．省略時は
 * `platex`または`uplatex`利用時は`dvipdfmx`．
 
 ### `trimmarks_paper`
-トンボ付きの紙サイズを指定します．`trimmarks_paper=a4`のように，`a0--a10`, `b0--b10`, `c2--c8`（BはJIS B列）を指定できる他，`trimmarks_paper={<width>,<height>}`と直接寸法を指定することも可能です．指定されなかった場合は，現在の紙サイズから縦横2インチ増えた値を採用します．
+トンボ付きの紙サイズを指定します．
+* `trimmarks_paper=a4`のように，`a0--a10`, `b0--b10`, `c2--c8`（BはJIS B列）を指定できる他，`trimmarks_paper={<width>,<height>}`と直接寸法を指定することができます．
+* `a4+{1cm,2cm}`のように`<紙サイズ>+{<寸法横>,<寸法縦>}`とした場合は，指定された紙サイズから指定された寸法だけ増やした紙サイズを設定します．
+* `a4+2cm`は`a4+{2cm,2cm}`と等価です．
+* `+2cm`と紙サイズの部分を省略すると，現在の紙サイズを利用します．
+* デフォルトは`+2in`です．
+
+### `landscape`
+紙のサイズの縦と横とを入れ替えます．ただし入れ替えるのは`trimmarks_paper`で明示的に指定された値に限ります．例えば`landscape,trimmarks_paper=+{1cm,2cm}`とすると，もともとの紙サイズ（これは入れ替わらない）の横幅が2cm増え，縦幅が1cm増えた紙サイズとなります．
 
 ### `show`
 何を出力するか指定します．`show={trimmarks,banner,digital}`のようにカンマ区切りのリストを与えます．引数を与えない場合は全て表示します．
@@ -47,7 +57,7 @@ dviドライバの指定です．省略時は
 * `no`：何も表示しません．
 
 ## `\jlreqtrimmarkssetup`
-クラスオプションで指定できない設定を行えます．keyval形式です．
+パッケージオプションで指定できない設定を行えます．keyval形式です．
 
 ### `banner`
 `show=banner`時に出力される文字列．

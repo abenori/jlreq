@@ -1158,9 +1158,7 @@
 %. ページレイアウト
 % landscapeの場合縦横をひっくり返す
 \if@landscape
-  \setlength\@tempdima  {\paperheight}
-  \setlength\paperheight{\paperwidth}
-  \setlength\paperwidth {\@tempdima}
+  \jlreq@swap{\paperwidth}{\paperheight}
 \fi
 
 % \pdfpagewidthとか設定
@@ -3128,11 +3126,12 @@
         \partopsep=0pt\relax
         \topsep=0pt\relax
         \leftmargin=\dimexpr\linewidth - \jlreq@tempdima + \jlreq@endnote@second@indent\relax
-        \itemindent=0pt\relax
-        \topsep=\jlreq@endnote@beforeafterspace
+        \itemindent=-\glueexpr\jlreq@endnote@second@indent\relax
+        \topsep=\jlreq@endnote@beforeafterspace\relax
+        \listparindent=1\zw
       }%
       \expandafter\jlreq@theendnotes\jlreq@tempa\jlreq@endmark
-      \end{list}
+      \end{list}%
     \endgroup
     \par
   \fi
@@ -3147,8 +3146,11 @@
   }{}{\jlreq@note{後注が2行以上となった場合，後注の2行目以下の字下げは，1行目より，後注の文字サイズの2倍又は全角とする (4.2.4.d)．}}
 }
 \jlreqsetup{endnote_second_indent=2\zw}
-\newcommand{\@makeendtext}[1]{\parindent 1\zw
-    \hskip\glueexpr-\jlreq@endnote@second@indent\relax\csname\jlreq@endnotemarkname\endcsname\hskip\glueexpr1\zw\relax#1}% 見出し出力と一文字分の空き（4.2.4.c）
+\newcommand{\@makeendtext}[1]{%
+  \csname\jlreq@endnotemarkname\endcsname
+  \hskip\glueexpr1\zw\relax% 見出し出力と一文字分の空き（4.2.4.c）
+  #1%
+}
 \let\@makeendmark=\@makefnmark
 
 % \theendnoteの出力を仕込む
@@ -3600,13 +3602,11 @@
     {right}{\def#1{left}}
   }%
 }
-  
 
 %.. マークの拡張
 % 三つ以上のマークを保持するために，markを次のようにする
 % <マーク1>\jlreq@extramark{{<マーク2>}{<マーク3>}...}
 \def\jlreq@extramark#1{}
-\def\@themark{{}{}}
 
 % #1番目の\leftmarkや\rightmarkを取得する．\leftmark/\rightmarkの実装に強く依存している．
 \def\jlreq@extraleftmark#1{\jlreq@getextramark{#1}{\leftmark}}%
@@ -3615,10 +3615,10 @@
 \def\jlreq@getextramark@#1\jlreq@extramark#2\jlreq@endmark#3{%
   \jlreq@ifempty{#2}{}{\jlreq@getextramark@@{#3}#2}%
 }
-\def\jlreq@getextramark@@#1#2\@empty\@empty\jlreq@extramark{\jlreq@getextramark@@@{#1}#2\jlreq@endmark}
+\def\jlreq@getextramark@@#1#2#3\jlreq@extramark{\jlreq@getextramark@@@{#1}#2\jlreq@endmark}
 \def\jlreq@getextramark@@@#1#2{%
   \jlreq@ifendmark{#2}{}{%
-    \ifnum#1<2 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+    \ifnum#1=1 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
       {\jlreq@getextramark@@@@{#2}}{\expandafter\jlreq@getextramark@@@\expandafter{\the\numexpr #1-1\relax}}%
   }%
 }
@@ -3788,7 +3788,7 @@
       \expandafter\jlreq@tempa\expandafter{#5}{#5}%
       \@ifundefined{#4@\jlreq@headingname}{\expandafter\def\csname #4@\jlreq@headingname\endcsname{}}{}%
       \eappto\jlreq@do{%
-        \noexpand\edef\expandonce{\csname\expandafter\@gobble\string #1@heading@level\endcsname}{\csname jlreq@heading@level@\jlreq@headingname\endcsname}%
+        \noexpand\let\expandonce{\csname\expandafter\@gobble\string #1@heading@level\endcsname}=\expandonce{\csname jlreq@heading@level@\jlreq@headingname\endcsname}%
         \unexpanded{\def#5}{\expandonce{#5},\expandonce{\jlreq@headingname}}%
         \noexpand\appto\expandonce{\csname #4@\jlreq@headingname\endcsname}{{{\ifnum#2=0 #3\fi}{#2}{\ifx r\jlreq@leftright r\else l\fi}}}%
       }%
@@ -3803,8 +3803,6 @@
 % #4: {{mark_formatからさらに調べるやつ (odd|even)}{マークの何番目か．extraでない場合は0}{l or r(leftかrightか)}}の並び
 \def\jlreq@pagestyle@make@headingmark#1#2#3#4{%
   \begingroup
-    \jlreq@tempcnta=-1 % 何番目マークか最大値
-    \let\jlreq@maxmark@direction=\@undefined % \jlreq@tempcntaを与えるのが左か右か．l or r．
     \@for\jlreq@i:=0,1,2\do{%
       \expandafter\def\csname jlreq@leftmark@\jlreq@i\endcsname{}%
       \expandafter\def\csname jlreq@rightmark@\jlreq@i\endcsname{}%
@@ -3915,11 +3913,6 @@
     }%
   \fi
 }
-\def\jlreq@pagestyle@addsidenotemargin@vertical#1{%
-  \ifx#1\@empty\else
-    \edef#1{\unexpanded{\raise-\dimexpr\marginparwidth+\marginparsep\relax\hbox to \textwidth}{\expandonce{#1}}}%
-  \fi
-}
 
 % #1から空かつ#4が空でないならば#2に#3と#4の中身を追加し，#4を空にする．引数は全てコントロールシークエンス
 \def\jlreq@pagestyle@addifempty#1#2#3#4{%
@@ -3928,25 +3921,37 @@
 
 % #1: ターゲットなコントロールシークエンスの名前，#2：*ならばreverseする，#3：空き
 % #1に入っている{柱1}{柱2}... という並びから，実際に出力する柱を構築する．
-% 間に空白を入れるが，前が空ならば空白は入れない．
+% 間に空白を入れる．
 \def\jlreq@pagestyle@make@runninghead#1#2#3{%
   \expandafter\ifx\csname #1\endcsname\@empty\expandafter\@gobble\else\expandafter\@firstofone\fi{%
-    \edef\jlreq@do{\unexpanded{\jlreq@pagestyle@make@runninghead@{#1}{#2}{#3}}\csexpandonce{#1}\noexpand\jlreq@endmark}
+    \edef\jlreq@do{%
+      \noexpand\jlreq@tempbtrue % 最初の処理かフラグ
+      \unexpanded{\jlreq@pagestyle@make@runninghead@{#1}{#2}{#3}}\csexpandonce{#1}\noexpand\jlreq@endmark
+    }%
     \expandafter\def\csname #1\endcsname{}%
     \jlreq@do
   }%
 }
 \def\jlreq@pagestyle@make@runninghead@#1#2#3#4#5{%
-  \jlreq@ifendmark{#5}{%
+  \ifnum\numexpr\jlreq@ifendmark{#5}{1}{0}*\ifjlreq@tempb 1\else 0\fi\relax=1 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
     \jlreq@ifempty{#2}{\csappto}{\cspreto}{#1}{#4}%
   }{%
     \jlreq@ifempty{#2}{\cseappto}{\csepreto}{#1}{%
+      % 空でない柱が既に出力されたかフラグをたてる
+      \ifjlreq@tempb\noexpand\jlreq@tempafalse\fi
       \unexpanded{\protected@edef\jlreq@tempa{#4}}%
-      \jlreq@ifempty{#2}%
-        {\unexpanded{\jlreq@tempa\ifx\jlreq@tempa\@empty\else\hskip\glueexpr #3\relax\fi}}%
-        {\unexpanded{\ifx\jlreq@tempa\@empty\else\hskip\glueexpr #3\relax\fi\jlreq@tempa}}%
+      \unexpanded{\ifx\jlreq@tempa\@empty\else}%
+        \noexpand\ifjlreq@tempa
+          \jlreq@ifempty{#2}%
+            {\unexpanded{\hskip\glueexpr #3\relax\jlreq@tempa}}%
+            {\unexpanded{\jlreq@tempa\hskip\glueexpr #3\relax}}%
+        \unexpanded{\else
+          \jlreq@tempa\jlreq@tempatrue
+        \fi}%
+      \noexpand\fi
     }%
-    \jlreq@pagestyle@make@runninghead@{#1}{#2}{#3}{#5}%
+    \jlreq@tempbfalse
+    \jlreq@ifendmark{#5}{}{\jlreq@pagestyle@make@runninghead@{#1}{#2}{#3}{#5}}%
   }%
 }
 
@@ -4004,25 +4009,35 @@
       {odd_running_head_iii}{\def\jlreq@odd@running@head@iii{##1}}
       {even_running_head_iii}{\def\jlreq@even@running@head@iii{##1}}
     }{#2}%
+    % ノンブル同士の間や柱同士の間のデフォルトはノンブルと柱の間の空き量
     \ifx\jlreq@nombre@gap\@empty\let\jlreq@nombre@gap=\jlreq@gap\fi
     \ifx\jlreq@running@head@gap\@empty\let\jlreq@running@head@gap=\jlreq@gap\fi
-    % markの処理
-    % \jlreq@<見出し命令名>@marktargetに\<見出し命令名>markを構築するための情報を入れていく
-    % {{mark_formatからさらに調べるやつ (odd|even)}{マークの何番目か．extraでない場合は0}{l or r(leftかrightか)}}の並び
+    % _iiが存在するか調べて\ifjlreq@headii@existに入れる
     \newif\ifjlreq@headii@exist
     \jlreq@headii@existfalse
     \@for\jlreq@tempa:=\jlreq@odd@running@head@ii,\jlreq@odd@running@head@ii\do{%
       \expandafter\ifx\jlreq@tempa\@empty\else\jlreq@headii@existtrue\fi
     }%
+    % markの処理
+    % (odd|even)_running_head(_ii)が_<見出し命令>で与えられている場合，次のようにする．
+    % * \jlreq@(odd|even)@running@head(@ii)をマーク出力命令（\(left|right)mark or \jlreq@extra(left|right)mark{<num>}）に書き換える
+    %   - evenの場合はleft，oddの場合はright．
+    %   - @iiがなければ\(left|right)mark，@iiがあれば\jlreq@extra(left|right)mark{1}
+    % * 例えば_<見出し命令>が_sectionならば，\jlreq@markdata@sectionに{{<I1>}{<I2>}{<I3>}}を追加する．ここで<I1>，<I2>，<I3>は
+    %   - I1: @iiが無いときにodd or even
+    %   - I2: @iiが無ければ0，あれば1．
+    %   - I3: マーク出力命令がleftかrightか．（上述のようにoddかevenかで判定される．）
+    % * 他にも_sectionが指定されている柱があれば，\jlreq@markdata@sectionにさらに追加で加えていく．
+    % * \jlreq@(odd|even)@running@head(@ii)@heading@levelに<見出し命令>のレベルを入れる．レベルが不明な時は\relaxになる．
+    % また，\jlreq@headingmarklistに<見出し命令>の一覧を入れる．
     \def\jlreq@headingmarklist{}%
     \@for\jlreq@parity:=odd,even\do{%
       \@for\jlreq@i:=0,1,2\do{%
-        % \jlreq@markdata@<見出し>にマーク情報，\jlreq@headingmarklistに見出しリスト．
+        % \jlreq@pagestyle@setmarkが上の処理を行う．
         \edef\jlreq@next{\noexpand\jlreq@pagestyle@setmark{\expandonce{\csname jlreq@\jlreq@parity @running@head@\@roman\numexpr\jlreq@i + 1\relax\endcsname}}{\expandonce{\jlreq@i}}{\expandonce{\jlreq@parity}}{jlreq@markdata}{\noexpand\jlreq@headingmarklist}}%
         \jlreq@next
       }%
     }%
-    % 上で得たマーク情報をもとに，\<見出し>markの定義を構築する．
     % \jlreq@minimumlevelに見出しの最低レベルを入れる．
     \let\jlreq@minimumlevel=\@undefined
     \def\jlreq@markdefinecommand{}%
@@ -4033,6 +4048,7 @@
           \ifx\jlreq@minimumlevel\@undefined\let\jlreq@minimumlevel=\jlreq@level
           \else\ifnum\jlreq@minimumlevel>\jlreq@level\space\let\jlreq@minimumlevel=\jlreq@level\fi\fi
         \fi
+        % \jlreq@markdata@<見出し命令>にある情報とmark_formatをもとに，\<見出し命令>markを定義するマクロを作成，\jlreq@markdefinecommandに入れる．
         \edef\jlreq@next{\noexpand\jlreq@pagestyle@make@headingmark{\ifjlreq@headii@exist *\fi}{\expandonce{\jlreq@heading}}{\expandonce{\jlreq@mark@format}}{\csexpandonce{jlreq@markdata@\jlreq@heading}}}%
         \jlreq@next
         \eappto\jlreq@markdefinecommand{\expandonce{\jlreq@result}}%
@@ -4062,8 +4078,7 @@
       \jlreq@pagestyle@addifempty{\jlreq@running@head@ii@position}{\jlreq@odd@running@head@i}{\jlreq@gapcs}{\jlreq@odd@running@head@ii}%
       \jlreq@pagestyle@addifempty{\jlreq@running@head@iii@position}{\jlreq@even@running@head@ii}{\jlreq@gapcs}{\jlreq@even@running@head@iii}%
       \jlreq@pagestyle@addifempty{\jlreq@running@head@ii@position}{\jlreq@even@running@head@i}{\jlreq@gapcs}{\jlreq@even@running@head@ii}%
-      % 下の方にはページ数を入れる
-      \def\jlreq@nombre@contents{}%
+      \def\jlreq@nombre@contents{}% ノンブルを入れる（下の方に出力）
       \@for\jlreq@i:=i,ii,iii\do{%
         \expandafter\let\expandafter\jlreq@position\csname jlreq@nombre@\jlreq@i @position\endcsname
         \expandafter\ifx\csname jlreq@nombre@\jlreq@i\endcsname\@empty\else
@@ -4076,7 +4091,7 @@
           }%
         \fi
       }%
-      % 上の方には柱を入れる
+      % \jlreq@(odd|even)@contentsに柱を入れる（上の方に出力）
       \@for\jlreq@parity:=odd,even\do{%
         \expandafter\def\csname jlreq@\jlreq@parity @contents\endcsname{}%
         \@for\jlreq@i:=i,ii,iii\do{%
@@ -4275,19 +4290,8 @@
     }%
   \expandafter\endgroup
   \jlreq@do
-%  \expandafter\show\csname ps@#1\endcsname
 }
 
-% odd_running_head=_sectionのように下線から始まる場合，その値の見出し命令を柱に出すようにする．
-% 要するに\ps@***に\sectionmarkを定義するように仕込む．
-% 常にodd=rightmark，even=leftmarkになる．
-% 場所指定は奇数ページの方．偶数ページは反対になる．
-% mark_format={_chapter={第\thechapter 章\quad #1}}のような形．
-% このとき\ps@***で\def\chaptermark#1{\markboth{第\thechapter 章\quad #1}{}}とか定義される．
-% \markbothか\markrightかはoddかevenかに依存．
-% odd=とかeven=とかも仕込めるようにしたけど
-% あまり意味がない気がしてきた．oddやevenが優先される．
-% TODO: 複数の柱とノンブル（2.6.3の注）
 \newcommand*{\NewPageStyle}[2]{%
   \expandafter\@ifdefinable\csname ps@#1\endcsname{\DeclarePageStyle{#1}{#2}}%
 }

@@ -5,7 +5,7 @@
 %%
 % (based on JLReq 20120403 https://www.w3.org/TR/2012/NOTE-jlreq-20120403/ja/)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{jlreq}[2018/06/17 jlreq]
+\ProvidesClass{jlreq}[2018/08/08 jlreq]
 \RequirePackage{xkeyval,everyhook,filehook,etoolbox,ifthen}
 \RequirePackage{jlreq-helpers}
 
@@ -3883,8 +3883,8 @@
       \edef\jlreq@do{\unexpanded{\def#1}{\expandonce{\jlreq@left}\hfil\expandonce{\jlreq@right}}}%
       \jlreq@ifempty{#2}{\jlreq@ifempty{#4}{\def\jlreq@do{\def#1{}}}{}}{}%
     }{% #3を完全に真ん中に配置するために左右の幅を0にしておく
-      \ifx\jlreq@left\@empty\else\edef\jlreq@left{\noexpand\hbox to 0pt{\expandonce{\jlreq@left}\hss}}\fi
-      \ifx\jlreq@right\@empty\else\edef\jlreq@right{\noexpand\hbox to 0pt{\hss\expandonce{\jlreq@right}}}\fi
+      \ifx\jlreq@left\@empty\else\edef\jlreq@left{\noexpand\hbox to 0pt{\expandonce{\jlreq@left}\noexpand\hss}}\fi
+      \ifx\jlreq@right\@empty\else\edef\jlreq@right{\noexpand\hbox to 0pt{\noexpand\hss\expandonce{\jlreq@right}}}\fi
       \edef\jlreq@do{%
         \unexpanded{\def#1}{\expandonce{\jlreq@left}\hfil\unexpanded{#3}\hfil\expandonce{\jlreq@right}}%
       }%

@@ -82,6 +82,9 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - First release.
 * 2018-06-17
     - Fixed a bug.
+* 2018-08-08
+    - Extended `trimmarks_paper`.
+    - Added a package option `landscape`.
 
 
 --------------

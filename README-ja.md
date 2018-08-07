@@ -11,7 +11,7 @@
 
 * *.tfm -> $TEXMF/fonts/tfm/public/jlreq
 * *.vf -> $TEXMF/fonts/vf/public/jlreq
-* jfm-jlreq.lua jfm-jlreqv.lua -> $TEXMF/tex/luatex/jlreq
+* jfm-jlreq.lua, jfm-jlreqv.lua -> $TEXMF/tex/luatex/jlreq
 * jlreq.cls, jlreq-helpers.sty  -> $TEXMF/tex/latex/jlreq
 
 と配置します．`make install`とすると，$TEXMF=$TEXMFHOMEとしてこのコピーを行います．
@@ -120,9 +120,11 @@
 `\jlreqsetup`で指定します．
 
 * `reference_mark=[inline/interlinear]`：合印の配置方法を指定します．`inline`にすると該当項目の後ろの行中に配置します．`interlinear`を指定すると該当項目の上（横組）または右（縦組）に配置します．
+* `footnote_second_indent=<寸法>`: 脚注（横書き時）または傍注（縦書き時）の二行目以降の字下げ量を指定します．一行目からの相対字下げ量です．
 * `sidenote_type=[number/symbol]`：傍注と本文との対応の方法を指定します．`number`が規定で，注の位置に通し番号が入り，それにより対応が示されます．`symbol`とすると，注の位置に特定の記号が入り，また注がついている単語が強調されます．
 * `sidenote_symbol=<記号>`：`sidenote_symbol=symbol`の時に，注の位置に入る記号．デフォルト＊
 * `sidenote_keyword_font=<命令>`：`sidenote_symbol=symbol`の時に，注のついている単語のフォント指定．デフォルトは無し（強調しない）
+* `endnote_second_indent=<寸法>`: 後柱の二行目以降の字下げ量を指定します．一行目からの相対字下げ量です．
 * `endnote_position=[headings/paragraph/{_<見出し名1>,_<見出し名2>,...}]`：後注の出力場所を指定します．`headings`は各見出しの直前（デフォルト），`paragraph`は改段落の際に出力します．また，`endnote_position={_chapter,_section}`とすると，`\chapter`と`\section`の直前に出力します．
 
 ### キャプション
@@ -271,12 +273,13 @@
 * `yoko`：横書きで上下に出力します．デフォルト．
 * `tate`：縦書きで小口側に出力します．
 * `font=<命令>`：柱とノンブルのフォントを指定します．
-* `running_head_position`, `nombre_position`：柱とノンブルの位置を指定します．`yoko`か`tate`のどちらが指定されているかで挙動が変わります．
+* `running_head_position`, `nombre_position`：柱とノンブルの位置を指定します．`yoko`か`tate`のどちらが指定されているかで指定方法が変わります．
     - `yoko`指定時：`top-left`のように指定できます．`top / bottom / center / left / right / gutter / fore_edge`が使えます．`gutter`はのど，`fore_edge`は小口です．`left`，`right`の指定は奇数ページに対するものです．`twoside`が指定されている場合，偶数ページはその逆になります．
     - `tate`指定時：`<寸法>`が指定できます．`running_head_position`は柱の天からの下げ量を，`nombre_position`はノンブルの地からの上げ量を指定します．
 * `nombre=<書式>`：出力するノンブルを指定します．デフォルトは`\thepage`．
 * `odd_running_head=<書式>`，`even_running_head=<書式>`：それぞれ奇数ページ，偶数ページの柱を指定します．`_section`のように`_`から始まる名前を指定すると，対応する見出しを出力します．（`_section`だと現在の`\section`を出力する．）
 * `mark_format={[odd=<書式>/even=<書式>/_<見出し命令名>=<書式>],...}`：見出しを柱に出力する際のフォーマットを指定します．`mark_format={_section={節\thesection：#1},_chapter={第\thechapter 章\quad #1}}`のように指定します．見出し命令名の代わりに`odd`や`even`も指定でき，それぞれ奇数ページ/偶数ページの柱の書式になります．`\pagestyle`実行時に`\sectionmark`等を定義することで実現しています．
+* `nombre_ii=<書式>`: 二つ目のノンブルを指定します．`nombre_ii_position`で場所指定もできます．指定方法は`nombre`や`nombre_position`と同じです．`odd_running_head_ii`，`even_running_head_ii`，`running_head_ii_position`もあります．`nombre_ii_position`やrunning_head_ii_position`が指定されなかった場合，`yoko`指定時にはそれぞれ`nombre_position`および`running_head_position`と同じ位置に設定されます．`tate`指定時は一つ目のノンブルや柱に続く場所に表示されます．
 
 
 `\NewPageStyle`，`\RenewPageStyle`，`\ProvidePageStyle`もあります．`\ModifyPageStyle`により既存のページスタイルを改変することが可能です．
@@ -375,7 +378,7 @@ JFMの名前は次の通りです．`[]`で囲まれている文字は設定に�
     - バグ修正．
 * 2018-04-11
     - 縦書き二段組みの傍注を下段に出すようにした．
-    - `begin_widh_(odd|even)_page`を`\DeclareBlockHeading`に追加．
+    - `begin_width_(odd|even)_page`を`\DeclareBlockHeading`に追加．
     - `\labelenumi`らをjarticleなどにあわせた．
     - `column_gap`クラスオプションを使うとコンパイルできなかったバグ修正．
     - `mark_format`を`\DeclarePageStyle`に追加．
@@ -386,6 +389,11 @@ JFMの名前は次の通りです．`[]`で囲まれている文字は設定に�
 * 2018-06-17
     - シリーズbもゴシックにするようにした．
     - バグ修正．
+* 2018-07-31
+    - `\DeclarePageStyle`に`nombre_ii`等を追加．
+    - バグ修正．
+    - `\jlreqsetup`に`footnote_second_indent`と`endnote_second_indent`を追加．
+
 
 --------------
 Noriyuki Abe

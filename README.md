@@ -87,6 +87,10 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
 * 2018-06-17
     - Gothic font is attached to font shape 'b'.
     - Fixed bugs.
+* 2018-08-08
+    - Added `nombre_ii` etc. to `\DeclarePageStyle`.
+    - Fixed bugs.
+    - Added `footnote_second_indent` and `endnote_second_indent` to `\jlreqsetup`.
 
 
 --------------

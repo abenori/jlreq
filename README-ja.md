@@ -279,7 +279,7 @@
 * `nombre=<書式>`：出力するノンブルを指定します．デフォルトは`\thepage`．
 * `odd_running_head=<書式>`，`even_running_head=<書式>`：それぞれ奇数ページ，偶数ページの柱を指定します．`_section`のように`_`から始まる名前を指定すると，対応する見出しを出力します．（`_section`だと現在の`\section`を出力する．）
 * `mark_format={[odd=<書式>/even=<書式>/_<見出し命令名>=<書式>],...}`：見出しを柱に出力する際のフォーマットを指定します．`mark_format={_section={節\thesection：#1},_chapter={第\thechapter 章\quad #1}}`のように指定します．見出し命令名の代わりに`odd`や`even`も指定でき，それぞれ奇数ページ/偶数ページの柱の書式になります．`\pagestyle`実行時に`\sectionmark`等を定義することで実現しています．
-* `nombre_ii=<書式>`: 二つ目のノンブルを指定します．`nombre_ii_position`で場所指定もできます．指定方法は`nombre`や`nombre_position`と同じです．`odd_running_head_ii`，`even_running_head_ii`，`running_head_ii_position`もあります．`nombre_ii_position`やrunning_head_ii_position`が指定されなかった場合，`yoko`指定時にはそれぞれ`nombre_position`および`running_head_position`と同じ位置に設定されます．`tate`指定時は一つ目のノンブルや柱に続く場所に表示されます．
+* `nombre_ii=<書式>`: 二つ目のノンブルを指定します．`nombre_ii_position`で場所指定もできます．指定方法は`nombre`や`nombre_position`と同じです．`odd_running_head_ii`，`even_running_head_ii`，`running_head_ii_position`もあります．`nombre_ii_position`や`running_head_ii_position`が指定されなかった場合，`yoko`指定時にはそれぞれ`nombre_position`および`running_head_position`と同じ位置に設定されます．`tate`指定時は一つ目のノンブルや柱に続く場所に表示されます．
 
 
 `\NewPageStyle`，`\RenewPageStyle`，`\ProvidePageStyle`もあります．`\ModifyPageStyle`により既存のページスタイルを改変することが可能です．

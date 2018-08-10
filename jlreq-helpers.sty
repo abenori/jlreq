@@ -249,7 +249,12 @@
 }
 \long\def\jlreq@parsekeyval@nokey@i#1,{\jlreq@ifendmark{#1}{}{\jlreq@parsekeyval@nokey@ii#1=\jlreq@endmark}}
 \long\def\jlreq@parsekeyval@nokey@ii#1=#2\jlreq@endmark{%
-  \jlreq@ifempty{#2}{\jlreq@parsekeyval@nokey@iii{#2}{#1}}{\expandafter\jlreq@parsekeyval@nokey@iii\expandafter{\jlreq@parsekeyval@nokey@removeequal#2\jlreq@endmark}{#1}}%
+  \jlreq@ifempty{#2}{\jlreq@parsekeyval@nokey@iii{#2}{#1}}{%
+    \edef\jlreq@tempa{%
+      \noexpand\jlreq@parsekeyval@nokey@iii{\jlreq@parsekeyval@nokey@removeequal{#2}}{\unexpanded{#1}}%
+    }%
+    \jlreq@tempa
+  }%
 }
 \long\def\jlreq@parsekeyval@nokey@iii#1#2{%
   \jlreq@remove@spaceandbracket{#1}{\jlreq@tempa}%
@@ -264,7 +269,8 @@
 \long\def\jlreq@parsekeyval@nokey@iv#1#2{%
   \eappto\jlreq@do{\expandonce{\jlreq@parsekeyval@nokey@execute{#1}{#2}}}%
 }
-\long\def\jlreq@parsekeyval@nokey@removeequal#1=\jlreq@endmark{#1}
+\long\def\jlreq@parsekeyval@nokey@removeequal#1{\jlreq@parsekeyval@nokey@removeequal@i\jlreq@uniqtoken#1\jlreq@endmark}
+\long\def\jlreq@parsekeyval@nokey@removeequal@i#1=\jlreq@endmark{\expandafter\unexpanded\expandafter{\@gobble#1}}
 
 % #1の先頭のスペースを削除し，#2に入れる．ただし#1={ X}の時は" X"が入る．
 \def\jlreq@do#1{% #1 = " "として後で実行

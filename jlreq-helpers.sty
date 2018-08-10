@@ -243,21 +243,54 @@
   \begingroup
     \def\jlreq@do{}%
     \def\jlreq@parsekeyval@nokey@execute##1##2{#1}%
-    \expandafter\jlreq@parsekeyval@nokey@#2,\jlreq@endmark,%
+    \expandafter\jlreq@parsekeyval@nokey@i#2,\jlreq@endmark,%
   \expandafter\endgroup
   \jlreq@do
 }
-\long\def\jlreq@parsekeyval@nokey@#1,{%
-  \jlreq@ifendmark{#1}{}{\jlreq@ifempty{#1}{\jlreq@parsekeyval@nokey@}{\jlreq@parsekeyval@nokey@@#1=\jlreq@endmark}}%
+\long\def\jlreq@parsekeyval@nokey@i#1,{\jlreq@ifendmark{#1}{}{\jlreq@parsekeyval@nokey@ii#1=\jlreq@endmark}}
+\long\def\jlreq@parsekeyval@nokey@ii#1=#2\jlreq@endmark{%
+  \jlreq@ifempty{#2}{\jlreq@parsekeyval@nokey@iii{#2}{#1}}{\expandafter\jlreq@parsekeyval@nokey@iii\expandafter{\jlreq@parsekeyval@nokey@removeequal#2\jlreq@endmark}{#1}}%
 }
-\long\def\jlreq@parsekeyval@nokey@@#1=#2\jlreq@endmark{%
-  \jlreq@ifempty{#2}{\jlreq@parsekeyval@nokey@@@{}{#1}}{\expandafter\jlreq@parsekeyval@nokey@@@\expandafter{\jlreq@parsekeyval@nokey@@@@#2\jlreq@endmark}{#1}}%
+\long\def\jlreq@parsekeyval@nokey@iii#1#2{%
+  \jlreq@remove@spaceandbracket{#1}{\jlreq@tempa}%
+  \jlreq@remove@spaceandbracket{#2}{\jlreq@tempb}%
+  \ifx\jlreq@tempa\@empty\expandafter\@gobble\else\expandafter\@firstofone\fi
+    {%
+      \edef\@tempa{\noexpand\jlreq@parsekeyval@nokey@iv{\expandonce{\jlreq@tempb}}{\expandonce{\jlreq@tempa}}}%
+      \@tempa
+    }%
+  \jlreq@parsekeyval@nokey@i
 }
-\long\def\jlreq@parsekeyval@nokey@@@#1#2{%
-  \eappto\jlreq@do{\expandonce{\jlreq@parsekeyval@nokey@execute{#2}{#1}}}%
-  \jlreq@parsekeyval@nokey@
+\long\def\jlreq@parsekeyval@nokey@iv#1#2{%
+  \eappto\jlreq@do{\expandonce{\jlreq@parsekeyval@nokey@execute{#1}{#2}}}%
 }
-\long\def\jlreq@parsekeyval@nokey@@@@#1=\jlreq@endmark{#1}
+\long\def\jlreq@parsekeyval@nokey@removeequal#1=\jlreq@endmark{#1}
+
+% #1の先頭のスペースを削除し，#2に入れる．ただし#1={ X}の時は" X"が入る．
+\def\jlreq@do#1{% #1 = " "として後で実行
+  \long\def\jlreq@remove@spaceandbracket##1##2{%
+    \begingroup
+      \def\jlreq@tempa{}%
+      \futurelet\jlreq@nextchar\jlreq@remove@spaceandbracket@i##1\jlreq@uniqtoken#1\jlreq@uniqtoken\jlreq@endmark
+      \edef\jlreq@do{\noexpand\edef\noexpand##2{\noexpand\unexpanded{\expandonce{\jlreq@tempa}}}}%
+    \expandafter\endgroup
+    \jlreq@do
+  }
+  \def\jlreq@remove@spaceandbracket@i{%
+    \ifx#1\jlreq@nextchar\expandafter\jlreq@remove@spaceandbracket@ii\else\expandafter\jlreq@remove@spaceandbracket@iii\fi
+  }%
+  \def\jlreq@remove@spaceandbracket@ii#1{\futurelet\jlreq@nextchar\jlreq@remove@spaceandbracket@i}%
+  \long\def\jlreq@remove@spaceandbracket@iii##1#1\jlreq@uniqtoken##2\jlreq@endmark{%
+    \jlreq@ifempty{##2}{%
+      \expandafter\jlreq@remove@spaceandbracket@iv\expandafter{\jlreq@removelastuniqtoken##1}%
+    }{%
+      \jlreq@remove@spaceandbracket@iv{##1}%
+    }%
+  }%
+}
+\jlreq@do{ }
+\long\def\jlreq@removelastuniqtoken#1\jlreq@uniqtoken{#1}
+\long\def\jlreq@remove@spaceandbracket@iv#1{\edef\jlreq@tempa{\unexpanded{#1}}}
 
 % \jlreq@switch{str}{
 %   {str}{abcd}

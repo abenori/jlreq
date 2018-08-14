@@ -1,7 +1,7 @@
 % エンジン非依存のマクロ集
 
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{jlreq-helpers}[2018/08/08 jlreq-helpers]
+\ProvidesPackage{jlreq-helpers}[2018/08/15 jlreq-helpers]
 \RequirePackage{xkeyval,etoolbox}
 
 %. helper1
@@ -269,8 +269,8 @@
 \long\def\jlreq@parsekeyval@nokey@iv#1#2{%
   \eappto\jlreq@do{\expandonce{\jlreq@parsekeyval@nokey@execute{#1}{#2}}}%
 }
-\long\def\jlreq@parsekeyval@nokey@removeequal#1{\jlreq@parsekeyval@nokey@removeequal@i\jlreq@uniqtoken#1\jlreq@endmark}
-\long\def\jlreq@parsekeyval@nokey@removeequal@i#1=\jlreq@endmark{\expandafter\unexpanded\expandafter{\@gobble#1}}
+\long\def\jlreq@parsekeyval@nokey@removeequal#1{\jlreq@parsekeyval@nokey@removeequal@\jlreq@uniqtoken#1\jlreq@endmark}
+\long\def\jlreq@parsekeyval@nokey@removeequal@#1=\jlreq@endmark{\expandafter\unexpanded\expandafter{\@gobble#1}}
 
 % #1の先頭のスペースを削除し，#2に入れる．ただし#1={ X}の時は" X"が入る．
 \def\jlreq@do#1{% #1 = " "として後で実行

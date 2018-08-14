@@ -5,7 +5,7 @@
 %%
 % (based on JLReq 20120403 https://www.w3.org/TR/2012/NOTE-jlreq-20120403/ja/)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{jlreq}[2018/08/08 jlreq]
+\ProvidesClass{jlreq}[2018/08/15 jlreq]
 \RequirePackage{xkeyval,everyhook,filehook,etoolbox,ifthen}
 \RequirePackage{jlreq-helpers}
 
@@ -4026,7 +4026,7 @@
     % * 例えば_<見出し命令>が_sectionならば，\jlreq@markdata@sectionに{{<I1>}{<I2>}{<I3>}}を追加する．ここで<I1>，<I2>，<I3>は
     %   - I1: @iiが無いときにodd or even
     %   - I2: @iiが無ければ0，あれば1．
-    %   - I3: マーク出力命令がleftかrightか．（上述のようにoddかevenかで判定される．）
+    %   - I3: マーク出力命令がleftかrightに応じて l or r．（上述のようにoddかevenかで判定される．）
     % * 他にも_sectionが指定されている柱があれば，\jlreq@markdata@sectionにさらに追加で加えていく．
     % * \jlreq@(odd|even)@running@head(@ii)@heading@levelに<見出し命令>のレベルを入れる．レベルが不明な時は\relaxになる．
     % また，\jlreq@headingmarklistに<見出し命令>の一覧を入れる．

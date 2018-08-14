@@ -389,10 +389,12 @@ JFMの名前は次の通りです．`[]`で囲まれている文字は設定に�
 * 2018-06-17
     - シリーズbもゴシックにするようにした．
     - バグ修正．
-* 2018-07-31
+* 2018-08-08
     - `\DeclarePageStyle`に`nombre_ii`等を追加．
     - バグ修正．
     - `\jlreqsetup`に`footnote_second_indent`と`endnote_second_indent`を追加．
+* 2018-08-15
+    - バグ修正．
 
 
 --------------

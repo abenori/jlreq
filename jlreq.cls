@@ -1948,18 +1948,13 @@
     \newif\ifjlreq@column@spanning@possible\jlreq@column@spanning@possiblefalse
     % a,bみたいなのをaとbにわける．カンマがなければbは空．引数を{a}{b}として##2を呼び出す．
     \def\jlreq@parsecomma##1##2{%
-      \def\jlreq@tempa####1####2{##2}%
-      \def\@tempa####1,####2\jlreq@endmark{%
-        \jlreq@ifempty{####2}{%
-          \def\@tempa{}%
-        }{%
-          \def\@tempa########1,\jlreq@endmark{\def\@tempa{########1}}%
-          \@tempa####2\jlreq@endmark
-        }%
-        \edef\@tempa{\unexpanded{\jlreq@tempa{####1}}{\expandonce{\@tempa}}}%
-        \edef\jlreq@do{\jlreq@expandtwice{\@tempa}}%
+      \jlreq@helper@dividebycomma{##1}%
+      \ifjlreq@result\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
+        \edef\jlreq@do{\noexpand\jlreq@tempa{\expandonce{\jlreq@resulta}}{\expandonce{\jlreq@resultb}}}%
+      }{%
+        \edef\jlreq@do{\noexpand\jlreq@tempa{##1}{}}%
       }%
-      \@tempa##1,\jlreq@endmark
+      \def\jlreq@tempa####1####2{##2}%
       \jlreq@do
     }%
     \jlreq@parsekeyval[BlockHeading:#1]{
@@ -2173,14 +2168,15 @@
 \newcommand{\SetBlockHeadingSpaces}[1]{%
   \begingroup
     % 現段階の情報をクリアする
-    \@for\jlreq@tempa:=\jlreq@BlockHeading@spaces@headingslist\do{%
-      \expandafter\let\csname jlreq@BlockHeading@spaces@setlist@\jlreq@tempa\endcsname=\@undefined
-    }%
-    \def\jlreq@BlockHeading@spaces@headingslist{}%
     \def\jlreq@tempa{}% 見出しリスト
     \def\jlreq@tempb{}% 設定リスト \def\jlreq@BlockHeading@spaces@***{{**}{**}...}ってのを入れる
     \jlreq@SetBlockHeadingSpaces#1\jlreq@endmark
     \edef\jlreq@do{%
+      \unexpanded{%
+        \@for\@tempa:=\jlreq@BlockHeading@spaces@headingslist\do{%
+          \expandafter\let\csname jlreq@BlockHeading@spaces@setlist@\@tempa\endcsname=\@undefined
+        }%
+      }%
       \unexpanded{\def\jlreq@BlockHeading@spaces@headingslist}{\expandonce{\jlreq@tempa}}%
       \expandonce{\jlreq@tempb}%
     }%
@@ -2188,12 +2184,12 @@
   \jlreq@do
 }
 \def\jlreq@SetBlockHeadingSpaces{% カンマを無視する処理
-  \@ifnextchar,{\expandafter\jlreq@SetBlockHeadingSpaces@\@gobble}{\jlreq@SetBlockHeadingSpaces@}%
+  \@ifnextchar,{\expandafter\jlreq@SetBlockHeadingSpaces@i\@gobble}{\jlreq@SetBlockHeadingSpaces@i}%
 }
-\def\jlreq@SetBlockHeadingSpaces@{%
-  \@ifnextchar[{\jlreq@SetBlockHeadingSpaces@@}{\jlreq@SetBlockHeadingSpaces@@[]}%
+\def\jlreq@SetBlockHeadingSpaces@i{%
+  \@ifnextchar[{\jlreq@SetBlockHeadingSpaces@ii}{\jlreq@SetBlockHeadingSpaces@ii[]}%
 }
-\def\jlreq@SetBlockHeadingSpaces@@[#1]#2{%
+\def\jlreq@SetBlockHeadingSpaces@ii[#1]#2{%
   \jlreq@ifendmark{#2}{}{%
     \def\jlreq@headings{}% 見出し名リスト
     \jlreq@BlockHeading@gyodori@parsekeyval[BlockHeadingSpaces]{#1}{}{}{}%
@@ -2205,7 +2201,7 @@
       \jlreq@ifempty{##2}{\jlreq@tempbtrue}{\jlreq@tempbfalse}% 後ろ開きが空ならば\jlreq@tempbtrue
     }%
     \expandafter\jlreq@do\jlreq@totalset
-    \jlreq@SetBlockHeadingSpaces@@@{#2}%
+    \jlreq@SetBlockHeadingSpaces@iii{#2}%
     \eappto\jlreq@tempa{,\expandonce{\jlreq@headings}}% \jlreq@tempaに\jlreq@headingsを追加
     \ifjlreq@tempb
       \ifx\jlreq@lastdimen\@empty\else % 最後が寸法だったので\jlreq@SetBlockHeadingSpaces@totalsetを改変
@@ -2226,12 +2222,13 @@
     \jlreq@SetBlockHeadingSpaces
   }%
 }
-\def\jlreq@SetBlockHeadingSpaces@@@#1{%
+\def\jlreq@SetBlockHeadingSpaces@iii#1{%
   \@for\@tempa:=#1\do{%
+    \expandafter\jlreq@remove@spaceandbracket\expandafter{\@tempa}{\@tempa}%
     \expandafter\jlreq@iffirsttoken@ignorespaces\expandafter{\@tempa}{_}{%
       \ifx\jlreq@lastdimen\@empty\else\eappto\jlreq@set{{\expandonce{\jlreq@lastdimen}}}\fi%
       \def\jlreq@lastdimen{}%
-      \expandafter\jlreq@SetBlockHeadingSpaces@@@@\@tempa{\jlreq@endmark}%
+      \expandafter\jlreq@SetBlockHeadingSpaces@iv\@tempa{\jlreq@endmark}%
     }{%
       \ifjlreq@tempa
         % 最初が寸法なので，全体の設定（\jlreq@totalset）に組み込む．
@@ -2247,7 +2244,7 @@
     \jlreq@tempafalse
   }%
 }
-\def\jlreq@SetBlockHeadingSpaces@@@@#1#{%
+\def\jlreq@SetBlockHeadingSpaces@iv#1#{%
   \expandafter\jlreq@ifcontains\expandafter{\@gobble #1}{_}{%
     \ClassWarning{jlreq}{Unusual heading name `\@gobble #1' is found. You forgot a comma? (in SetBlockHeadingSpaces)}%
   }{}%
@@ -2257,9 +2254,9 @@
     \ClassWarning{jlreq}{The heading name `\@gobble #1' ends with `*'. Do you mean `\@tempa{*}'? (in SetBlockHeadingSpaces)}%
   }}{}%
   \appto\jlreq@headings{#1}%
-  \jlreq@SetBlockHeadingSpaces@@@@@
+  \jlreq@SetBlockHeadingSpaces@v
 }
-\def\jlreq@SetBlockHeadingSpaces@@@@@#1{%
+\def\jlreq@SetBlockHeadingSpaces@v#1{%
   % 空っぽの場合は{_{r:0pt}{r:0pt}{}}
   \jlreq@ifendmark{#1}{\appto\jlreq@set{{_{r:0pt}{r:0pt}{}}}}{%
     \jlreq@iffirsttoken{#1}{*}{% *始まりの場合は{_*{}{}{}}
@@ -3163,6 +3160,7 @@
   % \jlreq@tempcにセクション名たちを入れていく
   \def\jlreq@tempc{}
   \@for\jlreq@tempa:=#1\do{
+    \expandafter\jlreq@remove@spaceandbracket\expandafter{\jlreq@tempa}{\jlreq@tempa}%
     \jlreq@switch{\jlreq@tempa}{
       {headings}{\jlreq@tempatrue}
       {paragraph}{
@@ -4015,7 +4013,7 @@
     % _iiが存在するか調べて\ifjlreq@headii@existに入れる
     \newif\ifjlreq@headii@exist
     \jlreq@headii@existfalse
-    \@for\jlreq@tempa:=\jlreq@odd@running@head@ii,\jlreq@odd@running@head@ii\do{%
+    \jlreq@for@noexpand\jlreq@tempa:=\jlreq@odd@running@head@ii,\jlreq@odd@running@head@ii\do{%
       \expandafter\ifx\jlreq@tempa\@empty\else\jlreq@headii@existtrue\fi
     }%
     % markの処理
@@ -4696,6 +4694,7 @@
     \def\jlreq@do{}%
     \def\jlreq@keyvallist{}%
     \@for\@tempa:=#1\do{%
+      \expandafter\jlreq@remove@spaceandbracket\expandafter{\@tempa}{\@tempa}%
       \expandafter\jlreq@ifcontains\expandafter{\@tempa}{=}{%
         \expandafter\appto\expandafter\jlreq@keyvallist\expandafter{\@tempa,}%
       }{%

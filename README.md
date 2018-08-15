@@ -92,7 +92,7 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Fixed bugs.
     - Added `footnote_second_indent` and `endnote_second_indent` to `\jlreqsetup`.
 * 2018-08-15
-    - Fixed a bug.
+    - Fixed bugs.
 
 
 --------------

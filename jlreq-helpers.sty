@@ -162,9 +162,15 @@
 % もしカンマがない場合は\ifjlreq@resultがfalseになる．
 \newcommand*{\jlreq@helper@dividebycomma}[1]{\jlreq@helper@dividebycomma@#1,\jlreq@endmark}
 \def\jlreq@helper@dividebycomma@#1,#2\jlreq@endmark{%
-  \def\jlreq@resulta{#1}%
-  \def\jlreq@resultb{#2}%
-  \ifx\jlreq@resultb\@empty\jlreq@resultfalse\else\jlreq@resulttrue\expandafter\def\expandafter\jlreq@resultb\expandafter{\jlreq@helper@removelastcomma#2\jlreq@endmark}\fi
+  \jlreq@remove@spaceandbracket{#1}{\jlreq@resulta}%
+  \jlreq@remove@spaceandbracket{#2}{\jlreq@resultb}%
+  \ifx\jlreq@resultb\@empty\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
+    \jlreq@resultfalse
+  }{%
+    \jlreq@resulttrue
+    \expandafter\def\expandafter\jlreq@resultb\expandafter{\jlreq@helper@removelastcomma#2\jlreq@endmark}%
+    \expandafter\jlreq@remove@spaceandbracket\expandafter{\jlreq@resultb}{\jlreq@resultb}%
+  }%
 }
 \def\jlreq@helper@removelastcomma#1,\jlreq@endmark{#1}
 

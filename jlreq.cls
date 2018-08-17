@@ -1612,6 +1612,7 @@
 % ラベルフォーマットでは#1=カウンタ名，見出し文字列フォーマットでは#1=見出し文字列，副題フォーマットでは#1=副題
 % ラベルのみのフォーマットは目次に使われる．
 \newcommand{\jlreq@BlockHeading@start}[5]{%
+  \if@noskipsec\leavevmode\fi
   \edef\jlreq@BlockHeading@start@format{\unexpanded{#4}}% この二つは\parを含むかもしれないので引数渡しはしない（後の\@ifstarで詰まる）
   \edef\jlreq@BlockHeading@start@totalformat{\unexpanded{#5}}%
   \jlreq@BlockHeading@start@{#1}{#2}{#3}%
@@ -2513,12 +2514,13 @@
 
 %.. 窓見出し
 \def\jlreq@CutinHeading@start#1#2#3#4#5#6#7{%
+  \if@noskipsec\leavevmode\fi
   \par
-  \ifnum\hangafter=1
+  \ifnum\hangafter=1 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
     \jlreq@CutinHeading@start@{#2}{#3}{#4}{#5}{#6}{#7}%
-  \else
+  }{%
     \ClassError{jlreq}{Can not use \expandafter\string\csname#1\endcsname\space here}{\@ehc}%
-  \fi
+  }%
 }
 % 1 = 書式指定，2 = インデント, 3 = 見出しと本文の間, 4 = これを越えたら二行以上，5 = これを越えたら三行以上，6 = テキスト
 \def\jlreq@CutinHeading@start@#1#2#3#4#5#6{%

@@ -2827,12 +2827,12 @@
     \ifx l\jlreq@engine
       \def\jlreq@hook@prenote{%
         \jlreq@lastnodechar=\lastnodechar\relax
-        \ifnum\lastnodechar>-1\inhibitglue\fi
+        \ifnum\lastnodechar>-1 \inhibitglue\fi
       }
     \else
       % (u)platexの時は代入すると\inhibitglueが効かなくなる
       \def\jlreq@hook@prenote{%
-        \ifnum\lastnodechar>-1\inhibitglue\fi
+        \ifnum\lastnodechar>-1 \inhibitglue\fi
         \jlreq@lastnodechar=\lastnodechar\relax
       }
     \fi
@@ -5110,13 +5110,24 @@
 
 %. その他諸々
 %.. 縦中横
-\DeclareRobustCommand*{\tatechuyoko}[1]{%
-  \jlreq@ifydir{\ClassError{jlreq}{\string\tatechuyoko\space is not allowed in yoko mode}{\@ehc}}{}%
-  \jlreq@lastnodechar=\lastnodechar
-  \ifvmode\leavevmode\fi
+\edef\@tempa{%
+  \unexpanded{%
+    \jlreq@ifydir{\ClassError{jlreq}{\string\tatechuyoko\space is not allowed in yoko mode}{\@ehc}}{}%
+    \ifvmode\leavevmode\fi
+  }%
+  \ifx l\jlreq@engine\unexpanded{%
+    \jlreq@lastnodechar=\lastnodechar\relax
+    \ifnum\lastnodechar>-1 \inhibitglue\fi
+  }\else\unexpanded{%
+    \ifnum\jlreq@lastnodechar>-1 \inhibitglue\fi
+    \jlreq@lastnodechar=\lastnodechar\relax
+  }\fi
+}
+
+\expandafter\protected\expandafter\def\expandafter\tatechuyoko\expandafter#\expandafter1\expandafter{%
+  \@tempa
   % 前のJFM glue
-  \ifnum\jlreq@lastnodechar=-1\else
-    \inhibitglue
+  \ifnum\jlreq@lastnodechar>-1
     \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{阿}%
     \jlreq@ifgluezero\jlreq@resultskip{}{\hskip\jlreq@resultskip}%
   \fi

@@ -414,7 +414,6 @@
     \else
       \evensidemargin
     \fi
-    \iftombow - 1in\fi
     - 1in - \hoffset\relax
   }
 \else
@@ -436,7 +435,6 @@
         - \topmargin - \headheight - \headsep - \voffset
         - \zposy{jlreq@rest@width.pos.\the\jlreq@zref@reference@count} sp
       }%
-      \iftombow - 1in\fi
       - \@totalleftmargin - 1in
     \relax
   }
@@ -1382,31 +1380,31 @@
     \fi
   \fi
 \fi
-\addtolength{\oddsidemargin}{-1in}
-\addtolength{\evensidemargin}{-1in}
+\addtolength{\oddsidemargin}{-1truein}
+\addtolength{\evensidemargin}{-1truein}
 
 %.. 縦
 % \topmarginに全体の頭からテキストの頭までの長さを入れる
 % 天の値からtopmarginを設定する
 \def\jlreq@settopmarginbyhead#1{
   \if@tate
-    \setlength{\topmargin}{\dimexpr #1 - \headsep - \headheight - 1in\relax}
+    \setlength{\topmargin}{\dimexpr #1 - \headsep - \headheight\relax}
     \if@twocolumn
       \addtolength{\topmargin}{\dimexpr\marginparwidth + \marginparsep\relax}
     \fi
     \jlreq@note{縦組の場合は地の空き量を指定する (2.4.1.b)．}
   \else
-    \setlength{\topmargin}{\dimexpr #1 - \headsep - \headheight - 1in - \topskip + \Cht\relax}
+    \setlength{\topmargin}{\dimexpr #1 - \headsep - \headheight - \topskip + \Cht\relax}
   \fi
 }
 \jlreq@aftercls@addtodeletecs{\jlreq@settopmarginbyhead}
 % 地の値から
 \def\jlreq@settopmarginbyfoot#1{
   \if@tate
-    \setlength{\topmargin}{\dimexpr\paperheight - \textwidth - \headsep - \headheight - 1in - #1 - \marginparsep - \marginparwidth\relax}
+    \setlength{\topmargin}{\dimexpr\paperheight - \textwidth - \headsep - \headheight - #1 - \marginparsep - \marginparwidth\relax}
   \else
     \jlreq@note{横組の場合は天の空き量を指定する (2.4.1.b)．}
-    \setlength{\topmargin}{\dimexpr\paperheight - \textheight + \topskip - 1\zh - \headsep - \headheight - 1in - #1\relax}
+    \setlength{\topmargin}{\dimexpr\paperheight - \textheight + \topskip - 1\zh - \headsep - \headheight - #1\relax}
   \fi
 }
 \jlreq@aftercls@addtodeletecs{\jlreq@settopmarginbyfoot}
@@ -1442,6 +1440,7 @@
     \fi
   \fi
 \fi
+\addtolength{\topmargin}{-1truein}
 
 %.. 下
 \setlength{\footskip}{\dimexpr\headsep + \if@tate\marginparwidth + \marginparsep\else\topskip - \Cht\fi + \headheight\relax}
@@ -2225,7 +2224,7 @@
 }
 \def\jlreq@SetBlockHeadingSpaces@iii#1{%
   \@for\@tempa:=#1\do{%
-    \expandafter\jlreq@remove@spaceandbracket\expandafter{\@tempa}{\@tempa}%
+    \expandafter\jlreq@helper@trim\expandafter{\@tempa}{\@tempa}%
     \expandafter\jlreq@iffirsttoken@ignorespaces\expandafter{\@tempa}{_}{%
       \ifx\jlreq@lastdimen\@empty\else\eappto\jlreq@set{{\expandonce{\jlreq@lastdimen}}}\fi%
       \def\jlreq@lastdimen{}%
@@ -3162,7 +3161,7 @@
   % \jlreq@tempcにセクション名たちを入れていく
   \def\jlreq@tempc{}
   \@for\jlreq@tempa:=#1\do{
-    \expandafter\jlreq@remove@spaceandbracket\expandafter{\jlreq@tempa}{\jlreq@tempa}%
+    \expandafter\jlreq@helper@trim\expandafter{\jlreq@tempa}{\jlreq@tempa}%
     \jlreq@switch{\jlreq@tempa}{
       {headings}{\jlreq@tempatrue}
       {paragraph}{
@@ -4696,7 +4695,7 @@
     \def\jlreq@do{}%
     \def\jlreq@keyvallist{}%
     \@for\@tempa:=#1\do{%
-      \expandafter\jlreq@remove@spaceandbracket\expandafter{\@tempa}{\@tempa}%
+      \expandafter\jlreq@helper@trim\expandafter{\@tempa}{\@tempa}%
       \expandafter\jlreq@ifcontains\expandafter{\@tempa}{=}{%
         \expandafter\appto\expandafter\jlreq@keyvallist\expandafter{\@tempa,}%
       }{%

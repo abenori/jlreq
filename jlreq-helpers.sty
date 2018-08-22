@@ -162,14 +162,14 @@
 % もしカンマがない場合は\ifjlreq@resultがfalseになる．
 \newcommand*{\jlreq@helper@dividebycomma}[1]{\jlreq@helper@dividebycomma@#1,\jlreq@endmark}
 \def\jlreq@helper@dividebycomma@#1,#2\jlreq@endmark{%
-  \jlreq@remove@spaceandbracket{#1}{\jlreq@resulta}%
-  \jlreq@remove@spaceandbracket{#2}{\jlreq@resultb}%
+  \jlreq@helper@trim{#1}{\jlreq@resulta}%
+  \jlreq@helper@trim{#2}{\jlreq@resultb}%
   \ifx\jlreq@resultb\@empty\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
     \jlreq@resultfalse
   }{%
     \jlreq@resulttrue
     \expandafter\def\expandafter\jlreq@resultb\expandafter{\jlreq@helper@removelastcomma#2\jlreq@endmark}%
-    \expandafter\jlreq@remove@spaceandbracket\expandafter{\jlreq@resultb}{\jlreq@resultb}%
+    \expandafter\jlreq@helper@trim\expandafter{\jlreq@resultb}{\jlreq@resultb}%
   }%
 }
 \def\jlreq@helper@removelastcomma#1,\jlreq@endmark{#1}
@@ -280,29 +280,36 @@
 
 % #1の先頭のスペースを削除し，#2に入れる．ただし#1={ X}の時は" X"が入る．
 \def\jlreq@do#1{% #1 = " "として後で実行
-  \long\def\jlreq@remove@spaceandbracket##1##2{%
-    \begingroup
-      \def\jlreq@tempa{}%
-      \futurelet\jlreq@nextchar\jlreq@remove@spaceandbracket@i##1\jlreq@uniqtoken#1\jlreq@uniqtoken\jlreq@endmark
-      \edef\jlreq@do{\noexpand\edef\noexpand##2{\noexpand\unexpanded{\expandonce{\jlreq@tempa}}}}%
-    \expandafter\endgroup
-    \jlreq@do
+  \long\def\jlreq@helper@trim##1##2{\edef##2{\jlreq@helper@trim@i{##1}}}
+  \long\def\jlreq@helper@trim@i##1{%
+    \jlreq@iffirsttoken{##1}{#1}%
+      % 先頭スペースの除去．{}を外さないために\jlreq@uniqtokenを前後にいったん挟む．
+      {\jlreq@helper@trim@ii##1\jlreq@uniqtoken\jlreq@endmark}%
+      % 後方スペースの除去．先頭に\jlreq@uniqtokenを加えて{}が外れるのを防ぐ．
+      {\jlreq@helper@trim@iii\jlreq@uniqtoken##1\jlreq@uniqtoken#1\jlreq@uniqtoken\jlreq@endmark}%
   }
-  \def\jlreq@remove@spaceandbracket@i{%
-    \ifx#1\jlreq@nextchar\expandafter\jlreq@remove@spaceandbracket@ii\else\expandafter\jlreq@remove@spaceandbracket@iii\fi
+  \long\def\jlreq@helper@trim@ii#1##1\jlreq@endmark{%
+    \expandafter\expandafter\expandafter\jlreq@helper@trim@i\jlreq@helper@trim@vi\jlreq@uniqtoken##1\jlreq@endmark
+  }
+  \long\def\jlreq@helper@trim@iii##1#1\jlreq@uniqtoken##2\jlreq@endmark{%
+    \jlreq@ifempty{##2}%
+      {\expandafter\jlreq@helper@trim@iv\jlreq@helper@trim@v##1\jlreq@endmark}%
+      {\jlreq@helper@trim@iii##1\jlreq@uniqtoken#1\jlreq@uniqtoken\jlreq@endmark}%
   }%
-  \def\jlreq@remove@spaceandbracket@ii#1{\futurelet\jlreq@nextchar\jlreq@remove@spaceandbracket@i}%
-  \long\def\jlreq@remove@spaceandbracket@iii##1#1\jlreq@uniqtoken##2\jlreq@endmark{%
-    \jlreq@ifempty{##2}{%
-      \expandafter\jlreq@remove@spaceandbracket@iv\expandafter{\jlreq@removelastuniqtoken##1}%
-    }{%
-      \jlreq@remove@spaceandbracket@iv{##1}%
-    }%
-  }%
+  \long\def\jlreq@helper@trim@iv##1{\expandafter\unexpanded\expandafter{\@gobble ##1}}
+  \long\def\jlreq@helper@trim@v##1\jlreq@uniqtoken\jlreq@endmark{{##1}}
+  \long\def\jlreq@helper@trim@vi##1\jlreq@uniqtoken\jlreq@endmark{\expandafter{\@gobble ##1}}
 }
 \jlreq@do{ }
-\long\def\jlreq@removelastuniqtoken#1\jlreq@uniqtoken{#1}
-\long\def\jlreq@remove@spaceandbracket@iv#1{\edef\jlreq@tempa{\unexpanded{#1}}}
+
+\long\def\jlreq@remove@spaceandbracket#1#2{%
+  \begingroup
+    \jlreq@helper@trim{#1}{\jlreq@tempa}%
+    \edef\jlreq@do{\unexpanded{\jlreq@remove@spaceandbracket@{#2}}\expandonce{\jlreq@tempa}\noexpand\jlreq@endmark}%
+  \expandafter\endgroup
+  \jlreq@do
+}
+\long\def\jlreq@remove@spaceandbracket@#1#2\jlreq@endmark{\edef#1{\unexpanded{#2}}}
 
 % \jlreq@switch{str}{
 %   {str}{abcd}

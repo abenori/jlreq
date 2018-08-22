@@ -129,6 +129,7 @@
   }{
     \jlreq@trimmarks@showfalse\tombowdatefalse\jlreq@trimmarks@digitalfalse
     \@for\jlreq@trimmarks@tempa:=#1\do{%
+      \expandafter\jlreq@helper@trim\expandafter{\jlreq@trimmarks@tempa}{\jlreq@trimmarks@tempa}
       \jlreq@switch{\jlreq@trimmarks@tempa}{
         {trimmarks}{\jlreq@trimmarks@showtrue}
         {banner}{\tombowdatetrue}
@@ -149,19 +150,21 @@
 \let\@removeelement=\jlreq@temporary@original@@removeelement
 \let\jlreq@temporary@original@@removeelement=\@undefined
 
-\def\jlreq@trimmarks@setpapersize#1{%
+\def\jlreq@trimmarks@setpapersize#1{
   \jlreq@ifcontains{#1}{+}{
-    \def\@tempa##1+##2\jlreq@endmark{%
-      \jlreq@ifempty{##1}{
+    \def\@tempa##1+##2\jlreq@endmark{
+      \jlreq@helper@trim{##1}{\jlreq@trimmarks@tempa}
+      \jlreq@helper@trim{##2}{\jlreq@trimmarks@tempb}
+      \ifx\jlreq@trimmarks@tempa\@empty
         \let\jlreq@tempa=\paperwidth
         \let\jlreq@tempb=\paperheight
-      }{
-        \jlreq@trimmarks@analyzepapersize{##1}
+      \else
+        \expandafter\jlreq@trimmarks@analyzepapersize\expandafter{\jlreq@trimmarks@tempa}
         \let\jlreq@tempa=\jlreq@resulta
         \let\jlreq@tempb=\jlreq@resultb
         \ifjlreq@trimmarks@landscape\jlreq@swap{\jlreq@tempa}{\jlreq@tempb}\fi
-      }
-      \jlreq@trimmarks@analyzepapersize{##2}
+      \fi
+      \expandafter\jlreq@trimmarks@analyzepapersize\expandafter{\jlreq@trimmarks@tempb}
       \ifjlreq@trimmarks@landscape\jlreq@swap{\jlreq@resulta}{\jlreq@resultb}\fi
       \edef\jlreq@trimmarks@paperwidth{\the\dimexpr\jlreq@tempa + \jlreq@resulta\relax}
       \edef\jlreq@trimmarks@paperheight{\the\dimexpr\jlreq@tempb + \jlreq@resultb\relax}
@@ -257,17 +260,22 @@
   \setlength{\pdfpageheight}{\dimexpr\jlreq@trimmarks@paperheight\relax}
 \fi
 
-\hoffset=\dimexpr(\jlreq@trimmarks@paperwidth - \paperwidth)/2 - 1in\relax
-\voffset=\dimexpr(\jlreq@trimmarks@paperheight - \paperheight)/2 - 1in\relax
+\hoffset=\dimexpr(\jlreq@trimmarks@paperwidth - \paperwidth)/2 - 1truein\relax
+\voffset=\dimexpr(\jlreq@trimmarks@paperheight - \paperheight)/2 - 1truein\relax
+\addtolength{\oddsidemargin}{\dimexpr 1truein - 1in\relax}
+\addtolength{\evensidemargin}{\dimexpr 1truein - 1in\relax}
+\addtolength{\topmargin}{\dimexpr 1truein - 1in\relax}
 
 \ifx l\jlreq@trimmarks@driver\else
-  \edef\@tempa{\noexpand\AtBeginDvi{\noexpand\special{papersize=\the\dimexpr\jlreq@trimmarks@paperwidth\relax,\the\dimexpr\jlreq@trimmarks@paperheight\relax}}}
+  \expandafter\jlreq@helper@divide\expandafter{\the\mag pt}{1000pt}
+  \edef\@tempa{\noexpand\AtBeginDvi{\noexpand\special{papersize=\the\dimexpr\strip@pt\jlreq@resultdimen\dimexpr\jlreq@trimmarks@paperwidth\relax\relax,\the\dimexpr\strip@pt\jlreq@resultdimen\dimexpr\jlreq@trimmarks@paperheight\relax\relax}}}
   \@tempa
 \fi
 \@ifundefined{stockwidth}{\newdimen\stockwidth}{}
 \@ifundefined{stockheight}{\newdimen\stockheight}{}
 \setlength{\stockwidth}{\dimexpr\jlreq@trimmarks@paperwidth\relax}
 \setlength{\stockheight}{\dimexpr\jlreq@trimmarks@paperheight\relax}
+
 
 \def\maketombowbox{%
   \setbox\@TL\hbox to\z@{\yoko\hss
@@ -338,6 +346,7 @@
 }
 
 \ifjlreq@trimmarks@digital
+  % 0.9963 = 1pt/1bp (almost)
   \def\jlreq@trimmarks@pttobp#1{\strip@pt\dimexpr0.9963\dimexpr#1\relax\relax}
   \edef\jlreq@trimmarks@trimboxsize{%
     [%

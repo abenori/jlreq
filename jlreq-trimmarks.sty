@@ -346,8 +346,13 @@
 }
 
 \ifjlreq@trimmarks@digital
+  \ifx l\jlreq@engine
+    \setlength\jlreq@resultdimen{\directlua{tex.print(tostring(\the\mag / 1000))}pt}
+  \else
+    \expandafter\jlreq@helper@divide\expandafter{\the\mag pt}{1000pt}
+  \fi
   % 0.9963 = 1pt/1bp (almost)
-  \def\jlreq@trimmarks@pttobp#1{\strip@pt\dimexpr0.9963\dimexpr#1\relax\relax}
+  \edef\jlreq@trimmarks@pttobp#1{\noexpand\strip@pt\noexpand\dimexpr\strip@pt\jlreq@resultdimen\noexpand\dimexpr0.9963\noexpand\dimexpr#1\unexpanded{\relax\relax\relax}}
   \edef\jlreq@trimmarks@trimboxsize{%
     [%
       \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperwidth - \paperwidth)/2}

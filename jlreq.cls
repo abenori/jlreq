@@ -1380,8 +1380,13 @@
     \fi
   \fi
 \fi
-\addtolength{\oddsidemargin}{-1truein}
-\addtolength{\evensidemargin}{-1truein}
+\ifx l\jlreq@engine
+  \addtolength{\oddsidemargin}{-1in}
+  \addtolength{\evensidemargin}{-1in}
+\else
+  \addtolength{\oddsidemargin}{-1truein}
+  \addtolength{\evensidemargin}{-1truein}
+\fi
 
 %.. 縦
 % \topmarginに全体の頭からテキストの頭までの長さを入れる
@@ -1440,8 +1445,11 @@
     \fi
   \fi
 \fi
-\addtolength{\topmargin}{-1truein}
-
+\ifx l\jlreq@engine
+  \addtolength{\topmargin}{-1in}
+\else
+  \addtolength{\topmargin}{-1truein}
+\fi
 %.. 下
 \setlength{\footskip}{\dimexpr\headsep + \if@tate\marginparwidth + \marginparsep\else\topskip - \Cht\fi + \headheight\relax}
 % \maxdepth + \topskip = フォントサイズ×1.5（だってさ）

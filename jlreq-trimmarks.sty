@@ -260,11 +260,21 @@
   \setlength{\pdfpageheight}{\dimexpr\jlreq@trimmarks@paperheight\relax}
 \fi
 
-\hoffset=\dimexpr(\jlreq@trimmarks@paperwidth - \paperwidth)/2 - 1truein\relax
-\voffset=\dimexpr(\jlreq@trimmarks@paperheight - \paperheight)/2 - 1truein\relax
-\addtolength{\oddsidemargin}{\dimexpr 1truein - 1in\relax}
-\addtolength{\evensidemargin}{\dimexpr 1truein - 1in\relax}
-\addtolength{\topmargin}{\dimexpr 1truein - 1in\relax}
+\hoffset=\dimexpr(\jlreq@trimmarks@paperwidth - \paperwidth)/2 - \ifx l\jlreq@engine 1in\else 1truein\fi\relax
+\voffset=\dimexpr(\jlreq@trimmarks@paperheight - \paperheight)/2 - \ifx l\jlreq@engine 1in\else 1truein\fi\relax
+\ifx l\jlreq@engine\else
+  \def\@tombowreset@@paper{%
+     \@@topmargin\topmargin
+     \iftombow
+       \@@paperwidth\paperwidth
+       \advance\@@paperwidth 2\dimexpr\@tombowbleed\relax
+       \@@paperheight\paperheight \advance\@@paperheight 10mm\relax
+       \advance\@@paperheight 2\dimexpr\@tombowbleed\relax
+       % 1in -> 1truein
+       \advance\@@topmargin 1truein\relax \advance\@themargin 1truein\relax
+     \fi
+  }
+\fi
 
 \ifx l\jlreq@trimmarks@driver\else
   \expandafter\jlreq@helper@divide\expandafter{\the\mag pt}{1000pt}
@@ -347,7 +357,7 @@
 
 \ifjlreq@trimmarks@digital
   \ifx l\jlreq@engine
-    \setlength\jlreq@resultdimen{\directlua{tex.print(tostring(\the\mag / 1000))}pt}
+    \setlength\jlreq@resultdimen{1pt}
   \else
     \expandafter\jlreq@helper@divide\expandafter{\the\mag pt}{1000pt}
   \fi

@@ -417,7 +417,7 @@
         \evensidemargin
       \fi
       \iftombow -1in \fi
-      - 1in - \hoffset
+      - \pdfvariable horigin - \hoffset
     \relax
   }
 \else

@@ -406,15 +406,19 @@
 
 % 現在行の残りを得る．
 \ifx l\jlreq@engine
-  % 以下のコードはおかしい．
+  % 以下のコードはLuaTeX-jaのバグ？に依存している
+  % https://ja.osdn.net/projects/luatex-ja/ticket/36489
   \newcommand*{\jlreq@calc@current@linewidth@onecolumn}{%
-    \dimexpr\zposx{jlreq@rest@width.pos.\the\jlreq@zref@reference@count} sp - \@totalleftmargin -
-    \ifodd\jlreq@currentpage
-      \oddsidemargin
-    \else
-      \evensidemargin
-    \fi
-    - 1in - \hoffset\relax
+    \dimexpr
+      \zposx{jlreq@rest@width.pos.\the\jlreq@zref@reference@count} sp - \@totalleftmargin -
+      \ifodd\jlreq@currentpage
+        \oddsidemargin
+      \else
+        \evensidemargin
+      \fi
+      \iftombow -1in \fi
+      - 1in - \hoffset
+    \relax
   }
 \else
   \newcommand*{\jlreq@calc@current@linewidth@onecolumn}{%
@@ -435,6 +439,9 @@
         - \topmargin - \headheight - \headsep - \voffset
         - \zposy{jlreq@rest@width.pos.\the\jlreq@zref@reference@count} sp
       }%
+      % トンボ出力時にはjlreq-trimmarksであることを仮定する．
+      % jlreq-trimmarksは内部の1inを1trueinに書き換える
+      \iftombow -1truein \fi 
       - \@totalleftmargin - 1in
     \relax
   }

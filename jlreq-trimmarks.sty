@@ -331,9 +331,8 @@
       \vrule height.5\@tombowwidth depth.5\@tombowwidth width10mm\hss}%
 }
 \def\@outputtombow{%
-  % 6mm: from plcore
-  \@@paperwidth=\dimexpr\@@paperwidth - 6mm + 2\dimexpr\jlreq@trimmarks@bleed\relax\relax
-  \@@paperheight=\dimexpr\@@paperheight - 6mm + 2\dimexpr\jlreq@trimmarks@bleed\relax\relax
+  \@@paperwidth=\dimexpr\@@paperwidth - 2\dimexpr\@tombowbleed\relax + 2\dimexpr\jlreq@trimmarks@bleed\relax\relax
+  \@@paperheight=\dimexpr\@@paperheight - 2\dimexpr\@tombowbleed\relax + 2\dimexpr\jlreq@trimmarks@bleed\relax\relax
   \ifjlreq@trimmarks@show
   \vbox to\z@{\kern-\dimexpr 10mm + \jlreq@trimmarks@bleed\relax
     \boxmaxdepth\maxdimen

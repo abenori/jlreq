@@ -263,16 +263,24 @@
 \hoffset=\dimexpr(\jlreq@trimmarks@paperwidth - \paperwidth)/2 - \ifx l\jlreq@engine 1in\else 1truein\fi\relax
 \voffset=\dimexpr(\jlreq@trimmarks@paperheight - \paperheight)/2 - \ifx l\jlreq@engine 1in\else 1truein\fi\relax
 \ifx l\jlreq@engine\else
-  \def\@tombowreset@@paper{%
-     \@@topmargin\topmargin
-     \iftombow
-       \@@paperwidth\paperwidth
-       \advance\@@paperwidth 2\dimexpr\@tombowbleed\relax
-       \@@paperheight\paperheight \advance\@@paperheight 10mm\relax
-       \advance\@@paperheight 2\dimexpr\@tombowbleed\relax
-       % 1in -> 1truein
-       \advance\@@topmargin 1truein\relax \advance\@themargin 1truein\relax
-     \fi
+  \@ifundefined{@tombowreset@@paper}{
+    \AtBeginDocument{%
+      \addtolength{\oddsidemargin}{\dimexpr 1truein - 1in\relax}%
+      \addtolength{\evensidemargin}{\dimexpr 1truein - 1in\relax}%
+      \addtolength{\topmargin}{\dimexpr 1truein - 1in\relax}%
+    }
+  }{
+    \def\@tombowreset@@paper{%
+       \@@topmargin\topmargin
+       \iftombow
+         \@@paperwidth\paperwidth
+         \advance\@@paperwidth 2\dimexpr\@tombowbleed\relax
+         \@@paperheight\paperheight \advance\@@paperheight 10mm\relax
+         \advance\@@paperheight 2\dimexpr\@tombowbleed\relax
+         % 1in -> 1truein
+         \advance\@@topmargin 1truein\relax \advance\@themargin 1truein\relax
+       \fi
+    }
   }
 \fi
 
@@ -331,8 +339,9 @@
       \vrule height.5\@tombowwidth depth.5\@tombowwidth width10mm\hss}%
 }
 \def\@outputtombow{%
-  \@@paperwidth=\dimexpr\@@paperwidth - 2\dimexpr\@tombowbleed\relax + 2\dimexpr\jlreq@trimmarks@bleed\relax\relax
-  \@@paperheight=\dimexpr\@@paperheight - 2\dimexpr\@tombowbleed\relax + 2\dimexpr\jlreq@trimmarks@bleed\relax\relax
+  % 6mm = \@tombowbleed: from plcore
+  \@@paperwidth=\dimexpr\@@paperwidth - 6mm + 2\dimexpr\jlreq@trimmarks@bleed\relax\relax
+  \@@paperheight=\dimexpr\@@paperheight - 6mm + 2\dimexpr\jlreq@trimmarks@bleed\relax\relax
   \ifjlreq@trimmarks@show
   \vbox to\z@{\kern-\dimexpr 10mm + \jlreq@trimmarks@bleed\relax
     \boxmaxdepth\maxdimen

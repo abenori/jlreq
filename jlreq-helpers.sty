@@ -265,11 +265,8 @@
 \long\def\jlreq@parsekeyval@nokey@iii#1#2{%
   \jlreq@remove@spaceandbracket{#1}{\jlreq@tempa}%
   \jlreq@remove@spaceandbracket{#2}{\jlreq@tempb}%
-  \ifx\jlreq@tempa\@empty\expandafter\@gobble\else\expandafter\@firstofone\fi
-    {%
-      \edef\@tempa{\noexpand\jlreq@parsekeyval@nokey@iv{\expandonce{\jlreq@tempb}}{\expandonce{\jlreq@tempa}}}%
-      \@tempa
-    }%
+  \edef\@tempa{\noexpand\jlreq@parsekeyval@nokey@iv{\expandonce{\jlreq@tempb}}{\expandonce{\jlreq@tempa}}}%
+  \@tempa
   \jlreq@parsekeyval@nokey@i
 }
 \long\def\jlreq@parsekeyval@nokey@iv#1#2{%

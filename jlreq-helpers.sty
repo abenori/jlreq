@@ -245,6 +245,7 @@
 % キー指定しないkeyval（独自実装）
 % \jlreq@parsekeyval@nokey{<action>}{<parse対象>}
 % action内では#1=key, #2=val
+% <parse対象>は一回だけ展開される．
 \newcommand{\jlreq@parsekeyval@nokey}[2]{%
   \begingroup
     \def\jlreq@do{}%
@@ -265,8 +266,10 @@
 \long\def\jlreq@parsekeyval@nokey@iii#1#2{%
   \jlreq@remove@spaceandbracket{#1}{\jlreq@tempa}%
   \jlreq@remove@spaceandbracket{#2}{\jlreq@tempb}%
-  \edef\@tempa{\noexpand\jlreq@parsekeyval@nokey@iv{\expandonce{\jlreq@tempb}}{\expandonce{\jlreq@tempa}}}%
-  \@tempa
+  \ifx\jlreq@tempb\@empty\else
+    \edef\@tempa{\noexpand\jlreq@parsekeyval@nokey@iv{\expandonce{\jlreq@tempb}}{\expandonce{\jlreq@tempa}}}%
+    \@tempa
+  \fi
   \jlreq@parsekeyval@nokey@i
 }
 \long\def\jlreq@parsekeyval@nokey@iv#1#2{%

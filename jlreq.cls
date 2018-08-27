@@ -1163,24 +1163,17 @@
 %. ページレイアウト
 % landscapeの場合縦横をひっくり返す
 \if@landscape
-  \jlreq@swap{\paperwidth}{\paperheight}
+  \jlreq@helper@swap@register{\paperwidth}{\paperheight}
 \fi
 
 % \pdfpagewidthとか設定
 \ifx l\jlreq@engine
-  \let\jlreq@pagewidth=\pagewidth
-  \let\jlreq@pageheight=\pageheight
+  \setlength{\pagewidth}{\paperwidth}
+  \setlength{\pageheight}{\paperheight}
 \else
-  \let\jlreq@pagewidth=\pdfpagewidth
-  \let\jlreq@pageheight=\pdfpageheight
+  \setlength{\pdfpagewidth}{\paperwidth}
+  \setlength{\pdfpageheight}{\paperheight}
 \fi
-\setlength{\jlreq@pagewidth}{\paperwidth}
-\setlength{\jlreq@pageheight}{\paperheight}
-\iftombow
-  \addtolength{\jlreq@pagewidth}{2in}
-  \addtolength{\jlreq@pageheight}{2in}
-\fi
-
 
 \ifx l\jlreq@engine
   \def\jlreq@expand@speciallength#1{%
@@ -1208,6 +1201,11 @@
   \jlreq@tempdimb=1\zw
   \divide\jlreq@tempdima\jlreq@tempdimb
   \multiply\jlreq@tempdima\jlreq@tempdimb
+  \ifdim\jlreq@tempdima>0pt
+    \ifnum 0\ifdim\jlreq@tempdima>25\zw 1\fi\ifdim\jlreq@tempdima<15\zw 1\fi>0
+      \jlreq@note{並列注の字詰め方向の長さ（行長）は，15字から20字くらいである．ケースによっては25字程度にする場合もある (4.2.7)．}
+    \fi
+  \fi
   \edef\jlreq@do{
     \noexpand\setlength{\noexpand\marginparwidth}{\the\jlreq@tempdima}
     \noexpand\setlength{\noexpand\marginparpush}{\the\dimexpr 0.5\zw\relax} % 同上：4.2.7.g
@@ -1220,11 +1218,6 @@
   \setlength{\marginparsep}{0pt}
 \fi
 
-\ifdim\marginparwidth>0pt
-  \ifnum 0\ifdim\marginparwidth>25\zw 1\fi\ifdim\marginparwidth<15\zw 1\fi>0
-    \jlreq@note{並列注の字詰め方向の長さ（行長）は，15字から20字くらいである．ケースによっては25字程度にする場合もある (4.2.7)．}
-  \fi
-\fi
 % 縦書きの時は脚注に固定
 % (TODO: 頭注）
 \if@tate\@mparswitchfalse\fi
@@ -1350,13 +1343,13 @@
 }
 \def\jlreq@setsidemargin@by@fore@edge#1{
   \jlreq@setsidemargin@by@gutter{#1}
-  \@tempdima=\evensidemargin
-  \evensidemargin=\oddsidemargin
-  \oddsidemargin=\@tempdima
+  \jlreq@helper@swap@register{\oddsidemargin}{\evensidemargin}
   \ifjlreq@determine@kihonhanmen@warning@first
     \jlreq@note{基本版面の配置はのどの空き量を指定する (2.4.1.b)．}
   \fi
 }
+\jlreq@aftercls@addtodeletecs{\jlreq@setsidemargin@by@gutter}
+\jlreq@aftercls@addtodeletecs{\jlreq@setsidemargin@by@fore@edge}
 
 \ifx\jlreq@option@gutter\@empty
   \ifx\jlreq@option@fore@edge\@empty
@@ -1382,7 +1375,7 @@
 \else
   \jlreq@setsidemargin@by@gutter{\jlreq@speciallength{\jlreq@option@gutter}}
   \ifx\jlreq@option@fore@edge\@empty\else
-    \ifjlreq@determine@kihonhanmen@warning@first\else
+    \ifjlreq@determine@kihonhanmen@warning@first
       \ClassWarningNoLine{jlreq}{fore_edge is ignored}
     \fi
   \fi

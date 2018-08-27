@@ -115,7 +115,7 @@
 }
 \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@analyzepapersize}
 
-\def\jlreq@trimmarks@option@papersize{+2in}
+\def\jlreq@trimmarks@option@papersize{+2truein}
 \DeclareOptionX{trimmarks_paper}{\def\jlreq@trimmarks@option@papersize{#1}}
 \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@option@papersize}
 
@@ -140,6 +140,10 @@
     }
   }
 }
+\def\jlreq@trimmarks@bleed{3mm}
+\DeclareOptionX{bleed_margin}{\def\jlreq@trimmarks@bleed{##1}}
+
+
 \newif\ifjlreq@trimmarks@landscape \jlreq@trimmarks@landscapefalse
 \jlreq@trimmarks@DeclareOption{landscape}{\jlreq@trimmarks@landscapetrue}
 \jlreq@trimmarks@afterpkg@addtodeleteif{\ifjlreq@trimmarks@landscape}
@@ -162,17 +166,17 @@
         \expandafter\jlreq@trimmarks@analyzepapersize\expandafter{\jlreq@trimmarks@tempa}
         \let\jlreq@tempa=\jlreq@resulta
         \let\jlreq@tempb=\jlreq@resultb
-        \ifjlreq@trimmarks@landscape\jlreq@swap{\jlreq@tempa}{\jlreq@tempb}\fi
+        \ifjlreq@trimmarks@landscape\jlreq@helper@swap{\jlreq@tempa}{\jlreq@tempb}\fi
       \fi
       \expandafter\jlreq@trimmarks@analyzepapersize\expandafter{\jlreq@trimmarks@tempb}
-      \ifjlreq@trimmarks@landscape\jlreq@swap{\jlreq@resulta}{\jlreq@resultb}\fi
+      \ifjlreq@trimmarks@landscape\jlreq@helper@swap{\jlreq@resulta}{\jlreq@resultb}\fi
       \edef\jlreq@trimmarks@paperwidth{\the\dimexpr\jlreq@tempa + \jlreq@resulta\relax}
       \edef\jlreq@trimmarks@paperheight{\the\dimexpr\jlreq@tempb + \jlreq@resultb\relax}
     }
     \@tempa#1\jlreq@endmark
   }{
     \jlreq@trimmarks@analyzepapersize{#1}
-    \ifjlreq@trimmarks@landscape\jlreq@swap{\jlreq@resulta}{\jlreq@resultb}\fi
+    \ifjlreq@trimmarks@landscape\jlreq@helper@swap{\jlreq@resulta}{\jlreq@resultb}\fi
     \edef\jlreq@trimmarks@paperwidth{\jlreq@resulta}
     \edef\jlreq@trimmarks@paperheight{\jlreq@resultb}
   }
@@ -189,7 +193,6 @@
 \newcommand{\jlreqtrimmarkssetup}[1]{%
   \jlreq@parsekeyval{%
     {banner}{\@bannertoken{##1}\maketombowbox}
-    {bleed_margin}{\def\jlreq@trimmarks@bleed{##1}\maketombowbox}
     {trimmarks_width}{\setlength{\@tombowwidth}{##1}\maketombowbox}
     {color}{
       \jlreq@ifempty{##1}{
@@ -234,7 +237,6 @@
     \jobname\space(\number\year-\two@digits\month-\two@digits\day
     \space\two@digits\hour:\two@digits\minute)%
   },
-  bleed_margin=3mm,
   color={}
 }
 
@@ -285,12 +287,12 @@
 \fi
 
 \ifx l\jlreq@trimmarks@driver\else
-  \expandafter\jlreq@helper@divide\expandafter{\the\mag pt}{1000pt}
+  \jlreq@helper@divide{\the\mag pt}{1000pt}
   \edef\@tempa{\noexpand\AtBeginDvi{\noexpand\special{papersize=\the\dimexpr\strip@pt\jlreq@resultdimen\dimexpr\jlreq@trimmarks@paperwidth\relax\relax,\the\dimexpr\strip@pt\jlreq@resultdimen\dimexpr\jlreq@trimmarks@paperheight\relax\relax}}}
   \@tempa
 \fi
-\@ifundefined{stockwidth}{\newdimen\stockwidth}{}
-\@ifundefined{stockheight}{\newdimen\stockheight}{}
+\@ifundefined{stockheight}{\newlength{\stockheight}}{}
+\@ifundefined{stockwidth}{\newlength{\stockwidth}}{}
 \setlength{\stockwidth}{\dimexpr\jlreq@trimmarks@paperwidth\relax}
 \setlength{\stockheight}{\dimexpr\jlreq@trimmarks@paperheight\relax}
 
@@ -367,7 +369,7 @@
   \ifx l\jlreq@engine
     \setlength\jlreq@resultdimen{1pt}
   \else
-    \expandafter\jlreq@helper@divide\expandafter{\the\mag pt}{1000pt}
+    \jlreq@helper@divide{\the\mag pt}{1000pt}
   \fi
   % 0.9963 = 1pt/1bp (almost)
   \edef\jlreq@trimmarks@pttobp#1{\noexpand\strip@pt\noexpand\dimexpr\strip@pt\jlreq@resultdimen\noexpand\dimexpr0.9963\noexpand\dimexpr#1\unexpanded{\relax\relax\relax}}
@@ -406,7 +408,7 @@
   \fi
   \ifx s\jlreq@trimmarks@driver
     \edef\@tempa{\noexpand\special{ps:SDict begin
-      [ /TrimBox  \jlreq@trimmarks@trimboxsize /PAGE pdfmark
+      [ /TrimBox \jlreq@trimmarks@trimboxsize /PAGE pdfmark
       \ifjlreq@trimmarks@show@artbox [ /ArtBox   \jlreq@trimmarks@trimboxsize /PAGE pdfmark \fi
       [ /BleedBox \jlreq@trimmarks@bleedboxsize /PAGE pdfmark
     end}}%

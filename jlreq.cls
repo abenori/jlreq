@@ -421,6 +421,13 @@
     \relax
   }
 \else
+  % トンボ出力時にはjlreq-trimmarksであることを仮定する．
+  % 新しいpLaTeXに対しては，jlreq-trimmarksは内部の1inを1trueinに書き換える
+  \@ifundefined{@tombowreset@@paper}{
+    \def\jlreq@tombow@adjust{\iftombow -1in \fi}
+  }{
+    \def\jlreq@tombow@adjust{\iftombow -1truein \fi}
+  }
   \newcommand*{\jlreq@calc@current@linewidth@onecolumn}{%
     \dimexpr
       \jlreq@ifydir{%
@@ -439,9 +446,7 @@
         - \topmargin - \headheight - \headsep - \voffset
         - \zposy{jlreq@rest@width.pos.\the\jlreq@zref@reference@count} sp
       }%
-      % トンボ出力時にはjlreq-trimmarksであることを仮定する．
-      % jlreq-trimmarksは内部の1inを1trueinに書き換える
-      \iftombow -1truein \fi 
+      \jlreq@tombow@adjust
       - \@totalleftmargin - 1in
     \relax
   }

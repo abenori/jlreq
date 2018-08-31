@@ -115,7 +115,7 @@
 }
 \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@analyzepapersize}
 
-\def\jlreq@trimmarks@option@papersize{+2truein}
+\def\jlreq@trimmarks@option@papersize{+2in}
 \DeclareOptionX{trimmarks_paper}{\def\jlreq@trimmarks@option@papersize{#1}}
 \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@option@papersize}
 
@@ -288,7 +288,7 @@
 
 \ifx l\jlreq@trimmarks@driver\else
   \jlreq@helper@divide{\the\mag pt}{1000pt}
-  \edef\@tempa{\noexpand\AtBeginDvi{\noexpand\special{papersize=\the\dimexpr\strip@pt\jlreq@resultdimen\dimexpr\jlreq@trimmarks@paperwidth\relax\relax,\the\dimexpr\strip@pt\jlreq@resultdimen\dimexpr\jlreq@trimmarks@paperheight\relax\relax}}}
+  \edef\@tempa{\noexpand\AtBeginDvi{\noexpand\special{papersize=\the\dimexpr\strip@pt\jlreq@resultdimen\dimexpr\jlreq@trimmarks@paperwidth\relax\relax, \the\dimexpr\strip@pt\jlreq@resultdimen\dimexpr\jlreq@trimmarks@paperheight\relax\relax}}}
   \@tempa
 \fi
 \@ifundefined{stockheight}{\newlength{\stockheight}}{}

@@ -5,7 +5,7 @@
 %%
 % (based on JLReq 20120403 https://www.w3.org/TR/2012/NOTE-jlreq-20120403/ja/)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{jlreq}[2018/08/15 jlreq]
+\ProvidesClass{jlreq}[2018/09/01 jlreq]
 \RequirePackage{xkeyval,everyhook,filehook,etoolbox,ifthen}
 \RequirePackage{jlreq-helpers}
 
@@ -2839,7 +2839,7 @@
     \ifx l\jlreq@engine
       \def\jlreq@hook@prenote{%
         \jlreq@lastnodechar=\lastnodechar\relax
-        \ifnum\lastnodechar>-1 \inhibitglue\fi
+        \ifnum\jlreq@lastnodechar>-1 \inhibitglue\fi
       }
     \else
       % (u)platexの時は代入すると\inhibitglueが効かなくなる
@@ -5129,9 +5129,9 @@
   }%
   \ifx l\jlreq@engine\unexpanded{%
     \jlreq@lastnodechar=\lastnodechar\relax
-    \ifnum\lastnodechar>-1 \inhibitglue\fi
-  }\else\unexpanded{%
     \ifnum\jlreq@lastnodechar>-1 \inhibitglue\fi
+  }\else\unexpanded{%
+    \ifnum\lastnodechar>-1 \inhibitglue\fi
     \jlreq@lastnodechar=\lastnodechar\relax
   }\fi
 }

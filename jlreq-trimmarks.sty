@@ -1,5 +1,5 @@
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{jlreq-trimmarks}[2018/08/08 jlreq-trimmarks]
+\ProvidesPackage{jlreq-trimmarks}[2018/09/01 jlreq-trimmarks]
 \RequirePackage{xkeyval,etoolbox}
 \RequirePackage{jlreq-helpers}
 
@@ -123,7 +123,11 @@
 \newif\ifjlreq@trimmarks@show \jlreq@trimmarks@showtrue
 \newif\ifjlreq@trimmarks@show@artbox \jlreq@trimmarks@show@artboxfalse
 \tombowdatetrue
+% flag: `show` is specified or not
+\newif\ifjlreq@trimmarks@option@show \jlreq@trimmarks@option@showfalse
+
 \DeclareOptionX{show}{%
+  \jlreq@trimmarks@showtrue
   \jlreq@ifempty{#1}{
     \jlreq@trimmarks@showtrue\tombowdatetrue\jlreq@trimmarks@digitaltrue
   }{
@@ -153,6 +157,14 @@
 \ProcessOptionsX*\relax
 \let\@removeelement=\jlreq@temporary@original@@removeelement
 \let\jlreq@temporary@original@@removeelement=\@undefined
+
+\ifjlreq@trimmarks@option@show\else
+  \ifx o\jlreq@trimmarks@driver
+    \jlreq@trimmarks@digitalfalse
+    \jlreq@trimmarks@showtrue
+    \jlreq@trimmarks@show@artboxfalse
+  \fi
+\fi
 
 \def\jlreq@trimmarks@setpapersize#1{
   \jlreq@ifcontains{#1}{+}{

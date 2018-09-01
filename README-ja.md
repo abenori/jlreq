@@ -29,7 +29,7 @@
 
 その他，`oneside / twoside / onecolumn / twocolumn / titlepage / notitlepage / draft / final / openright / openany / leqno / fleqn`というよくあるオプションを受け付けます．
 
-標準的な文書クラスと同じように中身を書くことができますが，次のような命令が追加 / 拡張されています．
+標準的な文書クラスと同じように中身を書くことができますが，次のような命令が追加 / 拡張されています．なお，本ドキュメントでは[日本語組版処理の要件](https://www.w3.org/TR/jlreq/ja/)における用語を断りなく使います．
 
 ### `\jlreqsetup`
 設定用命令です．プリアンブルでしか使えません．文書に対する設定は，クラスオプションとして行うか`\jlreqsetup`を通じて行うかします．どちらで設定するかは設定項目によります．
@@ -394,6 +394,9 @@ JFMの名前は次の通りです．`[]`で囲まれている文字は設定に�
     - バグ修正．
     - `\jlreqsetup`に`footnote_second_indent`と`endnote_second_indent`を追加．
 * 2018-08-15
+    - バグ修正．
+* 2018-09-01
+    - `\mag`が`1000`でない場合も動くようにした（つもり）．
     - バグ修正．
 
 

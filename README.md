@@ -93,7 +93,9 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Added `footnote_second_indent` and `endnote_second_indent` to `\jlreqsetup`.
 * 2018-08-15
     - Fixed bugs.
-
+* 2018-09-01
+    - jlreq works with unusual `\mag`.
+    - Fixed bugs.
 
 --------------
 Noriyuki Abe

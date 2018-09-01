@@ -1,7 +1,7 @@
 # jlreq-trimmarks
 
 ## What is this?
-This package outputs trim marks. It works with [LuaTeX-ja](https://osdn.jp/projects/luatex-ja/wiki/FrontPage) / pLaTeX / upLaTeX / dvipdfmx / Dvips / dviout. It provides the following.
+This package outputs trim marks. It works with [LuaTeX-ja](https://osdn.jp/projects/luatex-ja/wiki/FrontPage) / pLaTeX / upLaTeX / dvipdfmx / Dvips / dviout and any document class (not only with jlreq class). It provides the following.
 
 * Output trim marks
 * Set TrimBox and BleedBox if possible.
@@ -19,6 +19,11 @@ Load it by `\usepackage` with specifying the TeX engine and the DVI driver.
 \usepackage[dvipdfmx,platex]{jlreq-trimmarks}
 ````
 
+Do not use `tombow` option in the document class.
+
+## Note
+jlreq-trimmarks sets the size of the paper. However, it may not work due to a conflict with other packages. In this case, please use more powerful package, e.g., [bxpapersize](https://github.com/zr-tex8r/BXpapersize).
+
 ## Options
 The following package options (keyval style) are available.
 
@@ -29,10 +34,7 @@ Set the engine. If it is not specified, then the engine is
 * guessed one if the jlreq class is not loaded.
 
 ### `dvipdfmx`, `dvips`, `dviout`
-Set the dvi driver. If it is not specified, then
-
-* the package outputs PDF file via LuaLaTeX when the engine is `lualatex`.
-* the driver is `dvipdmx` if the engine is `platex` or `uplatex`
+Set the dvi driver. You do not have to specify it when using the engine `lualatex`. If it is not specified (with `platex` or `uplatex`), then `dvipdfmx` is used.
 
 ### `trimmarks_paper`
 Set the size of the paper including trim marks.
@@ -54,14 +56,14 @@ Specify the types of trim marks which the package outputs. It is specified with 
 * `digital`：TrimBox and BleedBox.
 * `no`: nothing will be showed
 
+### `bleed_margin`
+Set the bleed margin.
+
 ## `\jlreqtrimmarkssetup`
 Set the additional settings with the keyval style.
 
 ### `banner`
 The things which the package outputs when `show=banner` is specified in the package option.
-
-### `bleed_margin`
-Set the bleed margin.
 
 ### `trimmarks_width`
 Set the width of trim marks.
@@ -85,6 +87,10 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
 * 2018-08-08
     - Extended `trimmarks_paper`.
     - Added a package option `landscape`.
+* 2018-09-01
+    - Moved `bleed_margin` from `\jlreqtrimmarkssetup` to a package option.
+    - jlreq-trimmarks works with unusugal`\mag`.
+    - Fixed bugs.
 
 
 --------------

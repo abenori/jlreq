@@ -1511,7 +1511,10 @@
       \jlreq@tempdimb=\dimexpr\the\numexpr\jlreq@tempdima/\dimexpr 1\zw\relax + 2\relax\zw\relax
       \edef\jlreq@do{%
         \unexpanded{\def\jlreq@result}{%
-          \noexpand\def\expandonce{\csname l@#1\endcsname}{\unexpanded{\@dottedtocline{#2}{0\zw}}{\the\jlreq@tempdimb}}%
+          \noexpand\def\expandonce{\csname l@#1\endcsname}{%
+            \noexpand\@lnumwidth=\the\jlreq@tempdimb
+            \unexpanded{\@dottedtocline{#2}{0\zw}}{\the\jlreq@tempdimb}%
+          }%
         }%
       }%
     \expandafter\endgroup
@@ -1692,11 +1695,12 @@
       \def\jlreq@do{\jlreq@BlockHeading@start@afterheading@saveafter@cs}%
     \fi
   }%
+  \ifx\jlreq@do\@empty\expandafter\show\csname jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count\endcsname\fi
   \jlreq@do
 }
 
 % コントロールシークエンスを保存
-\def\jlreq@BlockHeading@start@afterheading@saveafter@cs#1{%
+\long\def\jlreq@BlockHeading@start@afterheading@saveafter@cs#1{%
   \csgappto{jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count}{#1}%
   \jlreq@BlockHeading@start@afterheading@saveafter@option
 }
@@ -1704,15 +1708,25 @@
 \def\jlreq@BlockHeading@start@afterheading@saveafter@option{%
   \@ifnextchar[{\jlreq@BlockHeading@start@afterheading@saveafter@option@}{\jlreq@BlockHeading@start@afterheading@saveafter@arguments}%
 }
-\def\jlreq@BlockHeading@start@afterheading@saveafter@option@[#1]{%
+\long\def\jlreq@BlockHeading@start@afterheading@saveafter@option@[#1]{%
   \csxappto{jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count}{\unexpanded{[#1]}}%
   \jlreq@BlockHeading@start@afterheading@saveafter@arguments
 }
 % 引数を保存し続けるループ
 \def\jlreq@BlockHeading@start@afterheading@saveafter@arguments{%
-  \jlreq@ifnextchar\bgroup{\jlreq@BlockHeading@start@afterheading@saveafter@arguments@}{\jlreq@BlockHeading@start@afterheading}%
+  \futurelet\jlreq@nextchar\jlreq@BlockHeading@start@afterheading@saveafter@arguments@
 }
-\def\jlreq@BlockHeading@start@afterheading@saveafter@arguments@#1{%
+\edef\jlreq@BlockHeading@start@afterheading@saveafter@arguments@{%
+  \noexpand\ifx\space\unexpanded{\jlreq@nextchar\expandafter\jlreq@BlockHeading@start@afterheading@saveafter@arguments@@\else\expandafter\jlreq@BlockHeading@start@afterheading@saveafter@arguments@@@\fi}%
+}
+\expandafter\def\expandafter\jlreq@BlockHeading@start@afterheading@saveafter@arguments@@\space{%
+  \csgappto{jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count}{ }%
+  \jlreq@BlockHeading@start@afterheading@saveafter@arguments
+}
+\def\jlreq@BlockHeading@start@afterheading@saveafter@arguments@@@{%
+  \jlreq@ifnextchar\bgroup{\jlreq@BlockHeading@start@afterheading@saveafter@arguments@@@@}{\jlreq@BlockHeading@start@afterheading}%
+}
+\long\def\jlreq@BlockHeading@start@afterheading@saveafter@arguments@@@@#1{%
   \csxappto{jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count}{\unexpanded{{#1}}}%
   \jlreq@BlockHeading@start@afterheading@saveafter@arguments
 }
@@ -2264,7 +2278,7 @@
   \jlreq@ifendswith{#1}{*}{{%
     \def\@tempa_##1*{\def\@tempa{##1}}%
     \@tempa#1%
-    \ClassWarning{jlreq}{The heading name `\@gobble #1' ends with `*'. Do you mean `\@tempa{*}'? (in SetBlockHeadingSpaces)}%
+    \ClassWarning{jlreq}{The heading name `\@gobble #1' ends with `*'. Do you mean `_\@tempa{*}'? (in SetBlockHeadingSpaces)}%
   }}{}%
   \appto\jlreq@headings{#1}%
   \jlreq@SetBlockHeadingSpaces@v
@@ -2456,7 +2470,7 @@
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewRuninHeading}%
   \@ifundefined{c@#1}{\newcounter{#1}}{}%
   \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}%
-  \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\@dottedtocline{#2}{0\zw}{2\zw}}}{}%
+  \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\@lnumwidth=2\zw\relax\@dottedtocline{#2}{0\zw}{2\zw}}}{}%
   \jlreq@heading@make@maketoc{#1}{#2}%
   \begingroup
     \def\jlreq@font{\normalfont\normalsize}%
@@ -3230,7 +3244,7 @@
   \def\jlreq@sidenotemarkname{@thefnmark}% 合印用番号を一時的に入れるマクロ名
   \long\def\@sidenotetext#1{%
     \marginpar{\reset@font\footnotesize
-      \color@begingroup
+      \color@begingroup\normalcolor
       \@makesidetext{#1}%
       \color@endgroup
     }%
@@ -3326,12 +3340,14 @@
 % \inlinenote*は自動で改行されない．\\で改行位置を指定する．
 \newif\ifjlreq@in@inlinenote
 \jlreq@in@inlinenotefalse
-\newcommand*{\inlinenote}{%
-  \ifjlreq@in@inlinenote\ClassError{jlreq}{\string\inlinenote\space can't be nested}{\@ehc}\fi
+\newcommand*{\jlreq@inlinenote@}[1]{%
+  \ifjlreq@in@inlinenote\ClassError{jlreq}{\string#1\space can't be nested}{\@ehc}\fi
   \jlreq@in@inlinenotetrue
   \ifvmode\leavevmode\fi
-  \@ifstar\jlreq@inlinenote@noauto\jlreq@inlinenote@auto}
-\let\warichu=\inlinenote
+  \@ifstar\jlreq@inlinenote@noauto\jlreq@inlinenote@auto
+}
+\newcommand*{\inlinenote}{\jlreq@inlinenote@{\inlinenote}}
+\newcommand*{\warichu}{\jlreq@inlinenote@{\warichu}}
 
 \newcommand*{\jlreq@inlinenote@auto}[1]{%
   % 割注初め括弧の前の場所を保存
@@ -3359,9 +3375,7 @@
   \else
     \jlreq@tempdima=\dimexpr\jlreq@tempdimc - \jlreq@tempdimb\relax
     \divide\jlreq@tempdima\linewidth
-    \@tempcntb=\number\jlreq@tempdima
-    \multiply\@tempcntb by 2\relax
-    \advance\@tempcntb by 4\relax
+    \@tempcntb=\numexpr 2*\number\jlreq@tempdima + 4\relax
   \fi
   % \jlreq@parshapeargに\parshapeに指定する書式の最後以外を入れる．
   \ifnum\@tempcntb>2\relax
@@ -3492,58 +3506,60 @@
 % として整形した際に，#5行以内に収まる．
 % \jlreq@resultboxに整形結果を返す（垂直ボックス）．見つからなかったらvoid．\globalに設定する．
 \newcommand{\jlreq@inlinenote@determinelength}[7]{%
-%  \message{#1 の試行開始，行数 = #5, \the\dimexpr#6\relax から \the\dimexpr#7\relaxまで}%
-  \@tempcnta=1\relax
-  \def\@tempa{}%
-  % 調整に使う行の\parshape指定を\@tempaに入れる．長さは\jlreq@tempdima．
-  \@whilenum\@tempcnta<#4\do{%
-    \expandafter\def\expandafter\@tempa\expandafter{\@tempa 0pt \the\jlreq@tempdima}%
-    \advance\@tempcnta by 1\relax
-  }%
-  \@tempcnta=0
-  \jlreq@tempdima=#6\relax
-  % \jlreq@tempdimaを少しずつ伸ばしていく
-  \@whilenum\@tempcnta<1000\do{%
-    \ifnum\@tempcnta>999\relax% ループが長すぎる
-      \global\setbox\jlreq@resultbox=\voidb@x%
-      \@tempcnta=1001\relax
-    \else
-      \setbox\@tempboxa=\vbox{#2%
-        \vbadness=10000\hbadness=10000\vfuzz=\maxdimen\hfuzz=\maxdimen
-        \parindent=0pt\leftskip=0pt\rightskip=0pt
-        \parshape #5 #3 \@tempa 0pt \the\maxdimen
-        #1\par\global\@tempcntb=\prevgraf}%
-%      \message{\string\jlreq@tempdima = \the\jlreq@tempdima で試行，行数は\the\@tempcntb , 書式 #5 #3 \@tempa 0pt \the\maxdimen}%
-    \fi
-    \jlreq@getlastbox{\@tempboxa}%
-    \setbox\jlreq@tempboxa=\box\jlreq@resultbox
-    \ifnum\@tempcntb<#5\relax% 行数が達していないならOK
-%      \message{行数 = \the\@tempcntb により確定}
-      % #5行になるまで空の水平ボックスを加えていく．
-      \global\setbox\jlreq@resultbox=\vbox{#2%
-        \unvbox\@tempboxa\hbox{\unhbox\jlreq@tempboxa\unskip\unskip\unpenalty}%
-        \@whilenum\@tempcntb<#5\do{\hbox{}\advance\@tempcntb by 1}}%
-      \@tempcnta=1001\relax
-    \else
-      % そうでない場合は最後の二行の長さを比較する
-      \jlreq@getlastbox{\@tempboxa}%
-      \setbox\jlreq@tempboxb=\box\jlreq@resultbox
-%      \message{最終行の長さ \the\wd\jlreq@tempboxa, その前の長さ \the\wd\jlreq@tempboxb}%
-      \ifdim\wd\jlreq@tempboxa>\wd\jlreq@tempboxb
-        \advance\jlreq@tempdima by 0.3pt\relax% 0.3ptに意味はない
+  \begingroup
+  %  \message{#1 の試行開始，行数 = #5, \the\dimexpr#6\relax から \the\dimexpr#7\relaxまで}%
+    \@tempcnta=1\relax
+    \def\@tempa{}%
+    % 調整に使う行の\parshape指定を\@tempaに入れる．長さは\jlreq@tempdima．
+    \@whilenum\@tempcnta<#4\do{%
+      \expandafter\def\expandafter\@tempa\expandafter{\@tempa 0pt \the\jlreq@tempdima}%
+      \advance\@tempcnta by 1\relax
+    }%
+    \@tempcnta=0
+    \jlreq@tempdima=#6\relax
+    % \jlreq@tempdimaを少しずつ伸ばしていく
+    \@whilenum\@tempcnta<1000\do{%
+      \ifnum\@tempcnta>999\relax% ループが長すぎる
+        \global\setbox\jlreq@resultbox=\voidb@x%
+        \@tempcnta=1001\relax
       \else
-        % 後ろが短いのでOK
-        \global\setbox\jlreq@resultbox=\vbox{#2\unvbox\@tempboxa\box\jlreq@tempboxb\box\jlreq@tempboxa}%
-        \jlreq@resultdimen=\jlreq@tempdima
+        \setbox\@tempboxa=\vbox{#2%
+          \vbadness=10000\hbadness=10000\vfuzz=\maxdimen\hfuzz=\maxdimen
+          \parindent=0pt\leftskip=0pt\rightskip=0pt
+          \parshape #5 #3 \@tempa 0pt \the\maxdimen
+          #1\par\global\@tempcntb=\prevgraf}%
+  %      \message{\string\jlreq@tempdima = \the\jlreq@tempdima で試行，行数は\the\@tempcntb , 書式 #5 #3 \@tempa 0pt \the\maxdimen}%
+      \fi
+      \jlreq@getlastbox{\@tempboxa}%
+      \setbox\jlreq@tempboxa=\box\jlreq@resultbox
+      \ifnum\@tempcntb<#5\relax% 行数が達していないならOK
+  %      \message{行数 = \the\@tempcntb により確定}
+        % #5行になるまで空の水平ボックスを加えていく．
+        \global\setbox\jlreq@resultbox=\vbox{#2%
+          \unvbox\@tempboxa\hbox{\unhbox\jlreq@tempboxa\unskip\unskip\unpenalty}%
+          \@whilenum\@tempcntb<#5\do{\hbox{}\advance\@tempcntb by 1}}%
+        \@tempcnta=1001\relax
+      \else
+        % そうでない場合は最後の二行の長さを比較する
+        \jlreq@getlastbox{\@tempboxa}%
+        \setbox\jlreq@tempboxb=\box\jlreq@resultbox
+  %      \message{最終行の長さ \the\wd\jlreq@tempboxa, その前の長さ \the\wd\jlreq@tempboxb}%
+        \ifdim\wd\jlreq@tempboxa>\wd\jlreq@tempboxb
+          \advance\jlreq@tempdima by 0.3pt\relax% 0.3ptに意味はない
+        \else
+          % 後ろが短いのでOK
+          \global\setbox\jlreq@resultbox=\vbox{#2\unvbox\@tempboxa\box\jlreq@tempboxb\box\jlreq@tempboxa}%
+          \jlreq@resultdimen=\jlreq@tempdima
+          \@tempcnta=1001\relax
+        \fi
+      \fi
+      \ifdim\jlreq@tempdima>#7\relax
+        \global\setbox\jlreq@resultbox=\box\voidb@x
         \@tempcnta=1001\relax
       \fi
-    \fi
-    \ifdim\jlreq@tempdima>#7\relax
-      \global\setbox\jlreq@resultbox=\box\voidb@x
-      \@tempcnta=1001\relax
-    \fi
-    \advance\@tempcnta by 1\relax
-  }%
+      \advance\@tempcnta by 1\relax
+    }%
+  \endgroup
 }
 
 %. ページスタイル．

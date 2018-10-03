@@ -1814,7 +1814,7 @@
   }%
 }
 
-% 行取り処理
+% 行取り処理．#3が空の時は行取りの処理はしない．（空白挿入は行う．）
 % {1 = 前空き}{2 = 後ろ空き}{3 = トータル行数}{4 = 偶数ページ改ページするなら空}{5 = 出力}
 \long\def\jlreq@BlockHeading@start@gyodori#1#2#3#4#5{{%
   \par
@@ -1891,18 +1891,18 @@
     \dp\jlreq@tempboxa=\dimexpr\dp\jlreq@tempboxa + \ht\jlreq@tempboxa - \jlreq@tempdimb\relax
     \ht\jlreq@tempboxa=\jlreq@tempdimb
     \box\jlreq@tempboxa
-    \prevdepth=\jlreq@tempdimc
+    \ifx r\jlreq@ushiroakitype\prevdepth=-1000pt \else\prevdepth=\jlreq@tempdimc\fi
     % \jlreq@tempdimb, \jlreq@tempdimcの利用ここまで
   \else
     \dp\jlreq@tempboxa=\dimexpr\dp\jlreq@tempboxa + \ht\jlreq@tempboxa\relax
     \ht\jlreq@tempboxa=0pt
     \box\jlreq@tempboxa
-    \ifx r\jlreq@ushiroakitype\prevdepth=-1000pt\else\prevdepth=0pt\fi
+    \ifx r\jlreq@ushiroakitype\prevdepth=-1000pt \else\prevdepth=0pt \fi
   \fi
   \jlreq@ifempty{#4}{\ifodd\jlreq@currentpage\nobreak\fi}{\nobreak}%
   \jlreq@ifgluezero\jlreq@tempskipb{}{\vskip\jlreq@tempskipb}%
   \edef\jlreq@do{%
-    \ifx\jlreq@lines\@empty\else
+    \ifdim\parskip=0pt \else
       \unexpanded{\def\jlreq@parhook@gyodori}{%
         \noexpand\parskip=\the\parskip
         \unexpanded{\def\jlreq@parhook@gyodori{}}%

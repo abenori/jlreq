@@ -1512,7 +1512,6 @@
       \edef\jlreq@do{%
         \unexpanded{\def\jlreq@result}{%
           \noexpand\def\expandonce{\csname l@#1\endcsname}{%
-            \noexpand\@lnumwidth=\the\jlreq@tempdimb
             \unexpanded{\@dottedtocline{#2}{0\zw}}{\the\jlreq@tempdimb}%
           }%
         }%
@@ -1824,6 +1823,7 @@
   % \jlreq@tempskip(a/b)に前/後ろに入れるべき値を入れる
   % #1がa:ならばその値は\jlreq@tempskipaには足さず\jlreq@tempskipcに入れておく
   \jlreq@tempskipa=0pt
+  \jlreq@tempskipb=0pt
   \jlreq@tempskipc=0pt
   \jlreq@BlockHeading@start@analyzespace#1:\jlreq@endmark
   \let\jlreq@maeakitype=\jlreq@resulta
@@ -1837,7 +1837,11 @@
   \setbox\jlreq@tempboxb=\hbox{阿}%
   \ifx\jlreq@lines\@empty
     \ifx\jlreq@maeaki\@empty\else
-      \jlreq@tempskipa=\glueexpr\jlreq@maeaki\relax
+      \ifx a\jlreq@maeakitype
+        \jlreq@tempskipc=\glueexpr\jlreq@maeaki\relax
+      \else
+        \jlreq@tempskipa=\glueexpr\jlreq@maeaki\relax
+      \fi
     \fi
     \ifx\jlreq@ushiroaki\@empty\else
       \jlreq@tempskipb=\glueexpr\jlreq@ushiroaki\relax
@@ -1872,26 +1876,42 @@
         \jlreq@tempskipa=\glueexpr\jlreq@tempdima - \jlreq@tempskipb + \baselineskip - \ht\jlreq@tempboxb\relax
       \fi
     \fi
+    % \jlreq@tempdimaの利用ここまで
   \fi
   \jlreq@ifgluezero\jlreq@tempskipc{}{\vskip\jlreq@tempskipc\relax}%
   \ifx r\jlreq@maeakitype\prevdepth=-1000pt\fi
+  % \jlreq@tempdimb, \jlreq@tempdimcに出力対称の高さを深さを代入
+  \jlreq@tempdimb=\ht\jlreq@tempboxa
+  \jlreq@tempdimc=\dp\jlreq@tempboxa
   \setbox\jlreq@tempboxa=\vbox{%
     \jlreq@ifgluezero\jlreq@tempskipa{}{\vskip\jlreq@tempskipa}%
-    \unvbox\jlreq@tempboxa}%
-  \dp\jlreq@tempboxa=\dimexpr\dp\jlreq@tempboxa + \ht\jlreq@tempboxa\relax
-  \ht\jlreq@tempboxa=0pt
-  \box\jlreq@tempboxa
+    \unvbox\jlreq@tempboxa
+  }%
+  \ifx\jlreq@lines\@empty
+    \dp\jlreq@tempboxa=\dimexpr\dp\jlreq@tempboxa + \ht\jlreq@tempboxa - \jlreq@tempdimb\relax
+    \ht\jlreq@tempboxa=\jlreq@tempdimb
+    \box\jlreq@tempboxa
+    \prevdepth=\jlreq@tempdimc
+    % \jlreq@tempdimb, \jlreq@tempdimcの利用ここまで
+  \else
+    \dp\jlreq@tempboxa=\dimexpr\dp\jlreq@tempboxa + \ht\jlreq@tempboxa\relax
+    \ht\jlreq@tempboxa=0pt
+    \box\jlreq@tempboxa
+    \ifx r\jlreq@ushiroakitype\prevdepth=-1000pt\else\prevdepth=0pt\fi
+  \fi
   \jlreq@ifempty{#4}{\ifodd\jlreq@currentpage\nobreak\fi}{\nobreak}%
-  \ifx r\jlreq@ushiroakitype\prevdepth=-1000pt\else\prevdepth=0pt\fi
   \jlreq@ifgluezero\jlreq@tempskipb{}{\vskip\jlreq@tempskipb}%
   \edef\jlreq@do{%
-    \unexpanded{\def\jlreq@parhook@gyodori}{%
-      \noexpand\parskip=\the\parskip
-      \unexpanded{\def\jlreq@parhook@gyodori{}}%
-    }%
-    \unexpanded{\parskip=0pt plus 1pt}%
+    \ifx\jlreq@lines\@empty\else
+      \unexpanded{\def\jlreq@parhook@gyodori}{%
+        \noexpand\parskip=\the\parskip
+        \unexpanded{\def\jlreq@parhook@gyodori{}}%
+      }%
+      \unexpanded{\parskip=0pt plus 1pt}%
+    \fi
   }%
-\expandafter}\jlreq@do}
+  \expandafter}\jlreq@do
+}
 \PushPostHook{par}{\jlreq@parhook@gyodori}
 \def\jlreq@parhook@gyodori{}
 
@@ -1917,9 +1937,11 @@
       {before_space}{\def\jlreq@before@space{##1}}
       {after_space}{\def\jlreq@after@space{##1}}
       {before_lines}{%
-        \jlreq@iffirsttoken@ignorespaces{##1}{*}%
-          {\edef\jlreq@before@lines{s:\expandonce{\@gobble ##1}}}%
-          {\def\jlreq@before@lines{a:##1}}%
+        \jlreq@ifempty{##1}{\def\jlreq@before@lines{}}{%
+          \jlreq@iffirsttoken@ignorespaces{##1}{*}%
+            {\edef\jlreq@before@lines{s:\expandonce{\@gobble ##1}}}%
+            {\def\jlreq@before@lines{a:##1}}%
+        }%
       }
       {after_lines}{\def\jlreq@after@lines{##1}}
     }{#3}%
@@ -2065,7 +2087,6 @@
         \def\jlreq@column@spanning{false}%
       \fi
     }{}%
-    \edef\jlreq@format{\expandonce{\jlreq@font}\expandonce{\jlreq@format}}%
     % 空き量などの調整を含んだラベル
     \edef\jlreq@label@format@modified{%
       \noexpand\noindent
@@ -2118,12 +2139,12 @@
           % 前開きが常に入ってしまうので，a:の時は除去する
           \jlreq@iffirsttoken{##1}{a}{\def\jlreq@spaceset{{}{##2}{##3}}}{}
           \edef\jlreq@totalformat{%
-            \noexpand\twocolumn[%
+            \noexpand\twocolumn[{%
               % 普段自動で入る\topskipと\baselineskipを手動で入れる
               \jlreq@iffirsttoken{##1}{r}{}{\unexpanded{\vskip\topskip\relax}}%
               \unexpanded{####1}%
               \jlreq@iffirsttoken{##2}{r}{}{\unexpanded{\vskip\glueexpr\baselineskip - \topskip\relax}}%
-            ]%
+            }]%
           }%
         }%
         \expandafter\@tempa\jlreq@spaceset
@@ -2140,7 +2161,7 @@
           {\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@label@format@modified}}%
           {\expandonce{\jlreq@heading@text@format@wlabel}}{\expandonce{\jlreq@heading@text@format@wolabel}}%
           {\expandonce{\jlreq@subtitle@format@wlabel}}{\expandonce{\jlreq@subtitle@format@wolabel}}%
-          {\expandonce{\jlreq@format}}%
+          {{\expandonce{\jlreq@font}\expandonce{\jlreq@format}}}%
         }%
         {\expandonce{\jlreq@totalformat}}%
       }}%
@@ -2470,7 +2491,7 @@
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewRuninHeading}%
   \@ifundefined{c@#1}{\newcounter{#1}}{}%
   \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}%
-  \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\@lnumwidth=2\zw\relax\@dottedtocline{#2}{0\zw}{2\zw}}}{}%
+  \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\@dottedtocline{#2}{0\zw}{2\zw}}}{}%
   \jlreq@heading@make@maketoc{#1}{#2}%
   \begingroup
     \def\jlreq@font{\normalfont\normalsize}%
@@ -4984,12 +5005,12 @@
     \interlinepenalty\@M
     \leavevmode
     \@lnumwidth #3\relax
-      \@tempcnta=#1\relax
-      \advance\@tempcnta by -\jlreq@top@contents
-      \@tempdima=1\jlreq@mol
-      \multiply \@tempdima by \@tempcnta
+    \@tempcnta=#1\relax
+    \advance\@tempcnta by -\jlreq@top@contents
+    \@tempdima=1\jlreq@mol
+    \multiply \@tempdima by \@tempcnta
     \advance\leftskip \@lnumwidth \hbox{}\hskip -\leftskip
-      \advance\leftskip\@tempdima
+    \advance\leftskip\@tempdima
     {#4}\nobreak
     \leaders\hbox{$\m@th\mkern \@dotsep mu$\null\inhibitglue ・\inhibitglue\null$\m@th\mkern \@dotsep mu$}%
     \hfill\nobreak

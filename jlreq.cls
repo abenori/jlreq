@@ -2091,14 +2091,14 @@
     \edef\jlreq@label@format@modified{%
       \noexpand\noindent
       \unexpanded{\setbox\jlreq@tempboxa=\hbox}{\expandonce{\jlreq@label@format}}%
-      \unexpanded{\hangindent=\glueexpr}(\expandonce{\jlreq@after@label@space}) + (\expandonce{\jlreq@second@heading@text@indent@wlabel})%
-      \ifjlreq@hang
-        +\wd\jlreq@tempboxa\relax
-      \else
-        \relax
+      \ifnum0\ifdim\dimexpr\jlreq@second@heading@text@indent@wlabel + \jlreq@after@label@space\relax=0pt \else1\fi\ifjlreq@hang 1\fi>0
+        \unexpanded{\hangindent=\glueexpr}(\expandonce{\jlreq@after@label@space}) + (\expandonce{\jlreq@second@heading@text@indent@wlabel})%
+        \ifjlreq@hang + \unexpanded{\wd\jlreq@tempboxa}\fi\noexpand\relax
+      \fi
+      \ifjlreq@hang\else
         \unexpanded{\edef\jlreq@BlockHeading@start@labellength{\the\wd\jlreq@tempboxa}}%
       \fi
-      \box\jlreq@tempboxa
+      \unexpanded{\box\jlreq@tempboxa}%
     }%
     \edef\jlreq@heading@text@format@wlabel{%
       \ifdim\dimexpr\jlreq@after@label@space\relax=0pt\else
@@ -2108,19 +2108,23 @@
     }%
     \edef\jlreq@heading@text@format@wolabel{%
       \ifdim\dimexpr\jlreq@second@heading@text@indent@wolabel\relax=0pt\else
-        \noexpand\hangindent=\noexpand\dimexpr\expandonce{\jlreq@second@heading@text@indent@wolabel}\noexpand\relax
+        \unexpanded{\hangindent}=\noexpand\dimexpr\expandonce{\jlreq@second@heading@text@indent@wolabel}\noexpand\relax
       \fi
       \expandonce{\jlreq@heading@text@format}%
     }%
     \def\jlreq@make@subtitle@format##1##2{%
       \edef##1{%
-        \ifjlreq@subtitle@break\unexpanded{{\par}\hangafter=0}\fi
-        \unexpanded{\hangindent=\dimexpr\hangindent + }(\expandonce{\jlreq@subtitle@indent}) ##2\noexpand\relax
+        \ifjlreq@subtitle@break
+          \unexpanded{{\par}\hangafter=0}%
+          \unexpanded{\hangindent=\dimexpr\hangindent + }(\expandonce{\jlreq@subtitle@indent}) ##2\noexpand\relax
+        \fi
         \ifdim\jlreq@subtitle@indent=0pt\else
-          \ifjlreq@subtitle@break\else\unexpanded{\hspace*}{\expandonce{\jlreq@subtitle@indent}}\fi
+          \ifjlreq@subtitle@break\else
+            \unexpanded{\hspace*}{\expandonce{\jlreq@subtitle@indent}}%
+          \fi
         \fi
         \unexpanded{\nobreak\noindent}%
-        {\ifx\jlreq@subtitle@font\@empty\else\expandonce{\jlreq@subtitle@font}\fi\expandonce{\jlreq@subtitle@format}}%
+        {\expandonce{\jlreq@subtitle@font}\expandonce{\jlreq@subtitle@format}}%
       }%
     }%
     \jlreq@make@subtitle@format\jlreq@subtitle@format@wlabel{%
@@ -2161,7 +2165,7 @@
           {\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@label@format@modified}}%
           {\expandonce{\jlreq@heading@text@format@wlabel}}{\expandonce{\jlreq@heading@text@format@wolabel}}%
           {\expandonce{\jlreq@subtitle@format@wlabel}}{\expandonce{\jlreq@subtitle@format@wolabel}}%
-          {{\expandonce{\jlreq@font}\expandonce{\jlreq@format}}}%
+          {\expandonce{\jlreq@font}\expandonce{\jlreq@format}}%
         }%
         {\expandonce{\jlreq@totalformat}}%
       }}%

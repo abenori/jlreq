@@ -1988,6 +1988,7 @@
     \def\jlreq@second@heading@text@indent@wlabel{0pt}%
     \def\jlreq@second@heading@text@indent@wolabel{0pt}%
     \edef\jlreq@subtitle@format{\unexpanded{---##1---}}%
+    \newif\ifjlreq@subtitleindent@withlabel\jlreq@subtitleindent@withlabeltrue
     \def\jlreq@subtitle@indent{1\zw}%
     \def\jlreq@afterindent{\@afterindenttrue}%
     \def\jlreq@allowbreak@evenpage{*}% 偶数ページでも改ページを許可するならば空，そうでないなら*
@@ -2043,7 +2044,15 @@
       }
       {label_format}{\edef\jlreq@label@format{\unexpanded{##1}}}
       {subtitle_format}{\edef\jlreq@subtitle@format{\unexpanded{##1}}}
-      {subtitle_indent}{\def\jlreq@subtitle@indent{##1}}
+      {subtitle_indent}{%
+        \jlreq@iffirsttoken{##1}{*}{%
+          \jlreq@subtitleindent@withlabelfalse
+          \edef\jlreq@subtitle@indent{\expandonce{\@gobble ##1}}%
+        }{%
+          \jlreq@subtitleindent@withlabeltrue
+          \def\jlreq@subtitle@indent{##1}%
+        }%
+      }
       {subtitle_break}[true,false]{\csname jlreq@subtitle@break##1\endcsname}
       {afterindent}[true,false]{\edef\jlreq@afterindent{\expandonce{\csname @afterindent##1\endcsname}}}
       {allowbreak_if_evenpage}[true,false]{%
@@ -2090,48 +2099,66 @@
     % 空き量などの調整を含んだラベル
     \edef\jlreq@label@format@modified{%
       \noexpand\noindent
-      \unexpanded{\setbox\jlreq@tempboxa=\hbox}{\expandonce{\jlreq@label@format}}%
-      \ifnum0\ifdim\dimexpr\jlreq@second@heading@text@indent@wlabel + \jlreq@after@label@space\relax=0pt \else1\fi\ifjlreq@hang 1\fi>0
-        \unexpanded{\hangindent=\glueexpr}(\expandonce{\jlreq@after@label@space}) + (\expandonce{\jlreq@second@heading@text@indent@wlabel})%
-        \ifjlreq@hang + \unexpanded{\wd\jlreq@tempboxa}\fi\noexpand\relax
+      \ifnum 0\ifjlreq@subtitleindent@withlabel 1\fi\ifjlreq@hang 1\fi>0
+        \unexpanded{\setbox\jlreq@tempboxa=\hbox}{\expandonce{\jlreq@label@format}}%
+        \unexpanded{\xdef\jlreq@BlockHeading@start@labellength{\the\wd\jlreq@tempboxa}}%
+        \unexpanded{\box\jlreq@tempboxa}%
+      \else
+        \expandonce{\jlreq@label@format}%
       \fi
-      \ifjlreq@hang\else
-        \unexpanded{\edef\jlreq@BlockHeading@start@labellength{\the\wd\jlreq@tempboxa}}%
-      \fi
-      \unexpanded{\box\jlreq@tempboxa}%
+      \inhibitglue\hbox{}%
     }%
     \edef\jlreq@heading@text@format@wlabel{%
-      \ifdim\dimexpr\jlreq@after@label@space\relax=0pt\else
+      \ifnum 0\ifdim\jlreq@second@heading@text@indent@wlabel>0pt 1\fi\ifjlreq@hang 1\fi>0
+        \unexpanded{\hangindent=\glueexpr}(\expandonce{\jlreq@second@heading@text@indent@wlabel})%
+          \ifjlreq@hang + (\expandonce{\jlreq@after@label@space}) + \unexpanded{\jlreq@BlockHeading@start@labellength}\fi
+          \noexpand\relax
+      \fi
+      \ifdim\dimexpr\jlreq@after@label@space\relax=0pt \else
         \noexpand\hspace*{\noexpand\dimexpr\expandonce{\jlreq@after@label@space}\noexpand\relax}%
       \fi
       \expandonce{\jlreq@heading@text@format}%
     }%
     \edef\jlreq@heading@text@format@wolabel{%
-      \ifdim\dimexpr\jlreq@second@heading@text@indent@wolabel\relax=0pt\else
-        \unexpanded{\hangindent}=\noexpand\dimexpr\expandonce{\jlreq@second@heading@text@indent@wolabel}\noexpand\relax
+      \ifdim\dimexpr\jlreq@second@heading@text@indent@wolabel\relax=0pt \else
+        \unexpanded{\hangindent=\dimexpr}\expandonce{\jlreq@second@heading@text@indent@wolabel}\noexpand\relax
       \fi
       \expandonce{\jlreq@heading@text@format}%
     }%
     \def\jlreq@make@subtitle@format##1##2{%
       \edef##1{%
         \ifjlreq@subtitle@break
-          \unexpanded{{\par}\hangafter=0}%
-          \unexpanded{\hangindent=\dimexpr\hangindent + }(\expandonce{\jlreq@subtitle@indent}) ##2\noexpand\relax
+          \unexpanded{\par}%
+          ##2%
         \fi
-        \ifdim\jlreq@subtitle@indent=0pt\else
+        \ifdim\jlreq@subtitle@indent=0pt \else
           \ifjlreq@subtitle@break\else
             \unexpanded{\hspace*}{\expandonce{\jlreq@subtitle@indent}}%
           \fi
         \fi
-        \unexpanded{\nobreak\noindent}%
+        \ifjlreq@subtitle@break
+          \unexpanded{\nobreak\noindent}%
+        \fi
         {\expandonce{\jlreq@subtitle@font}\expandonce{\jlreq@subtitle@format}}%
       }%
     }%
     \jlreq@make@subtitle@format\jlreq@subtitle@format@wlabel{%
-      - (\expandonce{\jlreq@second@heading@text@indent@wlabel})%
-      \ifjlreq@hang\else + (\noexpand\jlreq@BlockHeading@start@labellength)\fi
+      \ifjlreq@subtitleindent@withlabel
+        \noexpand\hangafter=0
+        \unexpanded{\hangindent=\dimexpr}\noexpand\jlreq@BlockHeading@start@labellength + (\expandonce{\jlreq@after@label@space}) + (\expandonce{\jlreq@subtitle@indent})\noexpand\relax
+      \else
+        \ifdim\jlreq@subtitle@indent>0pt
+          \noexpand\hangafter=0
+          \unexpanded{\hangindent=\dimexpr}\expandonce{\jlreq@subtitle@indent}\noexpand\relax
+        \fi
+      \fi
     }%
-    \jlreq@make@subtitle@format\jlreq@subtitle@format@wolabel{- (\expandonce{\jlreq@second@heading@text@indent@wolabel})}%
+    \jlreq@make@subtitle@format\jlreq@subtitle@format@wolabel{%
+      \ifdim\jlreq@subtitle@indent>0pt
+        \noexpand\hangafter=0
+        \unexpanded{\hangindent=\dimexpr}\expandonce{\jlreq@subtitle@indent}\noexpand\relax
+      \fi
+    }%
     \jlreq@heading@make@l@{#1}{#2}{\jlreq@label@format}%
     \eappto\jlreq@do{\expandonce{\jlreq@result}}%
     \jlreq@BlockHeading@gyodori@parsekeyval*[BlockHeading:#1]{#3}{}{}{1}%

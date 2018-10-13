@@ -1526,9 +1526,9 @@
   \@ifundefined{jlreq@heading@maketoc@#1}{%
     % {1 = *}{2 = ラベル}{3 = running head}
     \expandafter\def\csname jlreq@heading@maketoc@#1\endcsname##1##2##3{%
-      \ifnum0\jlreq@ifempty{##1}{}{1}\ifnum #2>\c@secnumdepth 1\fi>0\else
+      \ifnum0\jlreq@ifempty{##1}{}{1}\ifnum #2>\c@secnumdepth 1\fi>0 \else
         \csname #1mark\endcsname{##3}%
-        \addcontentsline{toc}{#1}{\protect\numberline{##2}##3}%
+        \addcontentsline{toc}{#1}{\jlreq@ifempty{##2}{}{\protect\numberline{##2}}##3}%
       \fi
     }%
   }{}%
@@ -1615,7 +1615,7 @@
 
 %.. 別行見出し
 % \jlreq@BlockHeading@start：別行見出しを出力する命令．
-% \jlreq@BlockHeading@start{1 = 命令名}{2 = レベル}{3 = スペース関連}{4 =  フォーマット関連}{5 = 全体フォーマット}*{見出し}[副題]
+% \jlreq@BlockHeading@start{1 = 命令名}{2 = レベル}{3 = スペース関連}{4 = *ならば常に*付き実行}{5 =  フォーマット関連}{6 = 全体フォーマット}*{見出し}[副題]
 % スペース関連={配置:lcr（左中央右）}{字下げ（寸法）}{字上げ（寸法）}{前空き}{後空き}{行取りの行数}{空か*か，偶数ページでも改ページを許可するならば空}
 % 前/後空きはprefixにa:/s:/r:が入る．r:は空きがその値そのものになる．a:/s:は行取りに加えて入る．a:で指定された空きはページ行頭では入らない
 % 後空きの時はs:は指定できない．
@@ -1625,15 +1625,15 @@
 % 見出し全体のフォーマット内では#1=ラベル，#2=見出し文字列，#3=副題，それぞれ各々のフォーマットに基づき整形される．
 % ラベルフォーマットでは#1=カウンタ名，見出し文字列フォーマットでは#1=見出し文字列，副題フォーマットでは#1=副題
 % ラベルのみのフォーマットは目次に使われる．
-\newcommand{\jlreq@BlockHeading@start}[5]{%
+\newcommand{\jlreq@BlockHeading@start}[6]{%
   \if@noskipsec\leavevmode\fi
-  \edef\jlreq@BlockHeading@start@format{\unexpanded{#4}}% この二つは\parを含むかもしれないので引数渡しはしない（後の\@ifstarで詰まる）
-  \edef\jlreq@BlockHeading@start@totalformat{\unexpanded{#5}}%
-  \jlreq@BlockHeading@start@{#1}{#2}{#3}%
+  \edef\jlreq@BlockHeading@start@format{\unexpanded{#5}}% この二つは\parを含むかもしれないので引数渡しはしない（後の\@ifstarで詰まる）
+  \edef\jlreq@BlockHeading@start@totalformat{\unexpanded{#6}}%
+  \jlreq@BlockHeading@start@{#1}{#2}{#3}{#4}%
 }
 % {1 = 命令}{2 = レベル}{3 = スペース関連}
-\newcommand{\jlreq@BlockHeading@start@}[3]{%
-  \@ifstar{\@dblarg{\jlreq@BlockHeading@start@@{#1}{#2}{#3}{*}}}{\@dblarg{\jlreq@BlockHeading@start@@{#1}{#2}{#3}{}}}%
+\newcommand{\jlreq@BlockHeading@start@}[4]{%
+  \@ifstar{\@dblarg{\jlreq@BlockHeading@start@@{#1}{#2}{#3}{*}}}{\@dblarg{\jlreq@BlockHeading@start@@{#1}{#2}{#3}{#4}}}%
 }
 % {1 = 命令}{2 = レベル}{3 = スペース関連}{4 = *}[5 = running head]{6 = 見出し}
 \long\def\jlreq@BlockHeading@start@@#1#2#3#4[#5]#6{%
@@ -1752,7 +1752,18 @@
     \jlreq@do
     \edef\jlreq@do{%
       \unexpanded{\def\jlreq@resulta}{%
-        \expandafter\if\jlreq@tempc *\else\unexpanded{\refstepcounter{#1}}\fi
+        \expandafter\if\jlreq@tempc *%
+          \unexpanded{\long\gdef\jlreqBlockHeadingLabel####1}{}%
+        \else
+          \unexpanded{\long\gdef\jlreqBlockHeadingLabel####1{####1}}%
+          \unexpanded{\refstepcounter{#1}}%
+        \fi
+        \jlreq@ifempty{#7}%
+          {\unexpanded{\long\gdef\jlreqBlockHeadingHeadingText####1{}}}%
+          {\unexpanded{\long\gdef\jlreqBlockHeadingHeadingTeXt####1{####1}}}%
+        \jlreq@ifempty{#8}%
+          {\unexpanded{\long\gdef\jlreqBlockHeadingSubtitle####1{}}}%
+          {\unexpanded{\long\gdef\jlreqBlockHeadingSubtitle####1{####1}}}%
         \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{\unexpanded{#5}}{\expandonce{\jlreq@tempa}}{\unexpanded{#6}}%
       }%
       \unexpanded{\def\jlreq@resultb}{%
@@ -1925,7 +1936,7 @@
 \def\jlreq@BlockHeading@gyodori@parsekeyval@#1{%
   \@ifnextchar[{\jlreq@BlockHeading@gyodori@parsekeyval@@{#1}}{\jlreq@BlockHeading@gyodori@parsekeyval@@{#1}[jlreq@key]}%
 }
-\def\jlreq@BlockHeading@gyodori@parsekeyval@@#1[#2]#3#4#5#6{%
+\long\def\jlreq@BlockHeading@gyodori@parsekeyval@@#1[#2]#3#4#5#6{%
   \begingroup
     \def\jlreq@lines{#6}%
     \def\jlreq@before@space{}%
@@ -2107,15 +2118,15 @@
         \expandonce{\jlreq@label@format}%
       \fi
       \inhibitglue\hbox{}%
+      \ifdim\dimexpr\jlreq@after@label@space\relax=0pt \else
+        \noexpand\hspace*{\noexpand\dimexpr\expandonce{\jlreq@after@label@space}\noexpand\relax}%
+      \fi
     }%
     \edef\jlreq@heading@text@format@wlabel{%
       \ifnum 0\ifdim\jlreq@second@heading@text@indent@wlabel>0pt 1\fi\ifjlreq@hang 1\fi>0
         \unexpanded{\hangindent=\glueexpr}(\expandonce{\jlreq@second@heading@text@indent@wlabel})%
           \ifjlreq@hang + (\expandonce{\jlreq@after@label@space}) + \unexpanded{\jlreq@BlockHeading@start@labellength}\fi
           \noexpand\relax
-      \fi
-      \ifdim\dimexpr\jlreq@after@label@space\relax=0pt \else
-        \noexpand\hspace*{\noexpand\dimexpr\expandonce{\jlreq@after@label@space}\noexpand\relax}%
       \fi
       \expandonce{\jlreq@heading@text@format}%
     }%
@@ -2188,6 +2199,7 @@
         \expandonce{\jlreq@pagebreak}%
         \unexpanded{\jlreq@BlockHeading@start{#1}{#2}}%
         {{\expandonce{\jlreq@align}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@end@indent}}\expandonce{\jlreq@spaceset}{\expandonce{\jlreq@allowbreak@evenpage}}}%
+        {}%
         {%
           {\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@label@format@modified}}%
           {\expandonce{\jlreq@heading@text@format@wlabel}}{\expandonce{\jlreq@heading@text@format@wolabel}}%
@@ -5130,32 +5142,45 @@
     \cleardoublepage
     \@mainmatterfalse
     \let\jlreq@pagestyle@atmain\jlreq@current@pagestyle
-    \SaveHeading{chapter}{\jlreq@heading@chapter@atmain}%
-    \ModifyHeading{chapter}{label_format={},after_label_space=0pt}%
+    \edef\jlreq@secnumdepth@atmain{\the\value{secnumdepth}}%
+    \setcounter{secnumdepth}{-100}%
     \pagestyle{plain}%
-    \pagenumbering{roman}}
+    \pagenumbering{roman}%
+    \@for\jlreq@tempa:=figure,table\do{%
+      \expandafter\let\csname jlreq@the\jlreq@tempa @atmain\expandafter\endcsname\csname the\jlreq@tempa\endcsname
+      \expandafter\edef\csname the\jlreq@tempa\endcsname{\noexpand\arabic{\expandonce{\jlreq@tempa}}}%
+    }%
+  }
   \newcommand*{\mainmatter}{%
     \cleardoublepage
     \@mainmattertrue
     \@ifundefined{jlreq@pagestyle@atmain}{}{%
       \expandafter\pagestyle\expandafter{\jlreq@pagestyle@atmain}%
     }%
-    \@ifundefined{jlreq@heading@chapter@atmain}{}{\jlreq@heading@chapter@atmain}%
     \setcounter{chapter}{0}%
-    \pagenumbering{arabic}}
+    \pagenumbering{arabic}%
+    \@ifundefined{jlreq@secnumdepth@atmain}{}{\setcounter{secnumdepth}{\jlreq@secnumdepth@atmain}}%
+    \@for\jlreq@tempa:=figure,table\do{%
+      \@ifundefined{jlreq@the\jlreq@tempa @atmain}{}{%
+        \expandafter\let\csname the\jlreq@tempa\expandafter\endcsname\csname jlreq@the\jlreq@tempa @atmain\endcsname
+      }%
+    }%
+  }
   \newcommand*{\backmatter}{%
     \if@openright
       \cleardoublepage
     \else
       \clearpage
     \fi
-    \ifthenelse{\equal{\jlreq@article@type}{article}}{}{%book, report
-      \SaveHeading{chapter}{\jlreq@heading@chapter@atmain}%
-      \ModifyHeading{chapter}{label_format={},after_label_space=0pt}%
-    }%
     \pagestyle{plain}%
     \@mainmatterfalse
-    \setcounter{chapter}{0}}
+    \setcounter{chapter}{0}%
+    \setcounter{secnumdepth}{-100}%
+    \@for\jlreq@tempa:=figure,table\do{%
+      \expandafter\let\csname jlreq@the\jlreq@tempa @atmain\expandafter\endcsname\csname the\jlreq@tempa\endcsname
+      \expandafter\edef\csname the\jlreq@tempa\endcsname{\noexpand\arabic{\expandonce{\jlreq@tempa}}}%
+    }%
+  }
 }{}
 \newcommand*{\appendix}{\par
   \setcounter{section}{0}%

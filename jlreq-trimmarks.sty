@@ -202,10 +202,64 @@
   \fi
 \fi
 
+\def\jlreq@trimmarks@setbanner#1#2{%
+  \jlreq@resultfalse
+  \jlreq@parsekeyval[banner]{
+    {top-left}{\jlreq@resulttrue\jlreq@trimmarks@setbanner@{#1@top@left}{##1}}
+    {left-top}{\jlreq@resulttrue\jlreq@trimmarks@setbanner@{#1@top@left}{##1}}
+    {top-right}{\jlreq@trimmarks@setbanner@{#1@top@right}{##1}}
+    {right-top}{\jlreq@trimmarks@setbanner@{#1@top@right}{##1}}
+    {bottom-left}{\jlreq@trimmarks@setbanner@{#1@bottom@left}{##1}}
+    {left-bottom}{\jlreq@trimmarks@setbanner@{#1@bottom@left}{##1}}
+    {bottom-right}{\jlreq@trimmarks@setbanner@{#1@bottom@right}{##1}}
+    {right-bottom}{\jlreq@trimmarks@setbanner@{#1@bottom@right}{##1}}
+  }{#2}
+}
+
+\def\jlreq@trimmarks@setbanner@#1#2{%
+  \jlreq@parsekeyval@nokey{
+    \jlreq@ifempty{##2}{
+      \@namedef{jlreq@trimmarks@banner@odd@#1}{##1}
+      \@namedef{jlreq@trimmarks@banner@even@#1}{##1}
+    }{
+      \jlreq@switch{##1}{
+        {odd}{\@namedef{jlreq@trimmarks@banner@odd@#1}{##2}}
+        {even}{\@namedef{jlreq@trimmarks@banner@even@#1}{##2}}
+        {\PackageError{jlreq-trimmarks}{Undefined key `##1' in banner}{\@ehc}}
+      }
+    }
+  }{#2}
+}
+
 \newcommand{\jlreqtrimmarkssetup}[1]{%
   \jlreq@parsekeyval{%
-    {banner}{\@bannertoken{##1}\maketombowbox}
-    {trimmarks_width}{\setlength{\@tombowwidth}{##1}\maketombowbox}
+    {banner}{
+      \@for\@tempa:=odd,even\do{
+        \@for\jlreq@tempa:=tate,yoko\do{
+          \@for\jlreq@tempb:=top,bottom\do{
+            \@for\jlreq@tempc:=left,right\do{
+              \@namedef{jlreq@trimmarks@banner@\@tempa @\jlreq@tempa @\jlreq@tempb @\jlreq@tempc}{}
+            }
+          }
+        }
+      }
+      \@bannertoken{}%
+      \jlreq@parsekeyval@nokey{
+        \jlreq@ifempty{####2}{
+          \@bannertoken{####1}
+        }{
+          \ifthenelse{\equal{####1}{tate} \OR \equal{####1}{yoko}}{
+            \jlreq@trimmarks@setbanner{####1}{####2}
+          }{
+            \jlreq@trimmarks@setbanner{yoko}{####1={####2}}
+          }
+          \ifthenelse{\(\NOT \equal{####1}{tate}\) \AND \boolean{jlreq@result}}{
+            \expandafter\@bannertoken\expandafter{\jlreq@trimmarks@banner@odd@yoko@top@left}
+          }{}
+        }
+      }{##1}
+    }
+    {trimmarks_width}{\setlength{\@tombowwidth}{##1}}
     {color}{
       \jlreq@ifempty{##1}{
         \def\jlreq@trimmarks@color{\normalcolor}
@@ -239,7 +293,6 @@
           }
         }
       }
-    \maketombowbox
     }
   }{#1}
 }
@@ -266,7 +319,7 @@
   \fi
 \fi
 
-\ifx l\jlreq@engine
+\ifx l\jlreq@trimmarks@engine
   \setlength{\pagewidth}{\dimexpr\jlreq@trimmarks@paperwidth\relax}
   \setlength{\pageheight}{\dimexpr\jlreq@trimmarks@paperheight\relax}
 \else
@@ -274,9 +327,9 @@
   \setlength{\pdfpageheight}{\dimexpr\jlreq@trimmarks@paperheight\relax}
 \fi
 
-\hoffset=\dimexpr(\jlreq@trimmarks@paperwidth - \paperwidth)/2 - \ifx l\jlreq@engine 1in\else 1truein\fi\relax
-\voffset=\dimexpr(\jlreq@trimmarks@paperheight - \paperheight)/2 - \ifx l\jlreq@engine 1in\else 1truein\fi\relax
-\ifx l\jlreq@engine\else
+\hoffset=\dimexpr(\jlreq@trimmarks@paperwidth - \paperwidth)/2 - \ifx l\jlreq@trimmarks@engine 1in\else 1truein\fi\relax
+\voffset=\dimexpr(\jlreq@trimmarks@paperheight - \paperheight)/2 - \ifx l\jlreq@trimmarks@engine 1in\else 1truein\fi\relax
+\ifx l\jlreq@trimmarks@engine\else
   \@ifundefined{@tombowreset@@paper}{
     \AtBeginDocument{%
       \addtolength{\oddsidemargin}{\dimexpr 1truein - 1in\relax}%
@@ -308,77 +361,196 @@
 \setlength{\stockwidth}{\dimexpr\jlreq@trimmarks@paperwidth\relax}
 \setlength{\stockheight}{\dimexpr\jlreq@trimmarks@paperheight\relax}
 
-
-\def\maketombowbox{%
-  \setbox\@TL\hbox to\z@{\yoko\hss
-      \vrule width\dimexpr 10mm + \jlreq@trimmarks@bleed\relax height\@tombowwidth depth\z@
-      \vrule height10mm width\@tombowwidth depth\z@
-      \iftombowdate
-        \raise4pt\hbox to\z@{\hskip5mm\@bannerfont\the\@bannertoken\hss}%
-      \fi}%
-  \setbox\@Tl\hbox to\z@{\yoko\hss
-      \vrule width10mm height\@tombowwidth depth\z@
-      \vrule height\dimexpr 10mm + \jlreq@trimmarks@bleed\relax width\@tombowwidth depth\z@}%
-  \setbox\@TC\hbox{\yoko
-      \vrule width10mm height\@tombowwidth depth\z@
-      \vrule height10mm width\@tombowwidth depth\z@
-      \vrule width10mm height\@tombowwidth depth\z@}%
-  \setbox\@TR\hbox to\z@{\yoko
-      \vrule height10mm width\@tombowwidth depth\z@
-      \vrule width\dimexpr 10mm + \jlreq@trimmarks@bleed\relax height\@tombowwidth depth\z@\hss}%
-  \setbox\@Tr\hbox to\z@{\yoko
-      \vrule height\dimexpr 10mm + \jlreq@trimmarks@bleed\relax width\@tombowwidth depth\z@
-      \vrule width10mm height\@tombowwidth depth\z@\hss}%
-  \setbox\@BL\hbox to\z@{\yoko\hss
-      \vrule width\dimexpr 10mm + \jlreq@trimmarks@bleed\relax depth\@tombowwidth height\z@
-      \vrule depth10mm width\@tombowwidth height\z@}%
-  \setbox\@Bl\hbox to\z@{\yoko\hss
-      \vrule width10mm depth\@tombowwidth height\z@
-      \vrule depth\dimexpr 10mm + \jlreq@trimmarks@bleed\relax width\@tombowwidth height\z@}%
-  \setbox\@BC\hbox{\yoko
-      \vrule width10mm depth\@tombowwidth height\z@
-      \vrule depth10mm width\@tombowwidth height\z@
-      \vrule width10mm depth\@tombowwidth height\z@}%
-  \setbox\@BR\hbox to\z@{\yoko
-      \vrule depth10mm width\@tombowwidth height\z@
-      \vrule width\dimexpr 10mm + \jlreq@trimmarks@bleed\relax depth\@tombowwidth height\z@\hss}%
-  \setbox\@Br\hbox to\z@{\yoko
-      \vrule depth\dimexpr 10mm + \jlreq@trimmarks@bleed\relax width\@tombowwidth height\z@
-      \vrule width10mm depth\@tombowwidth height\z@\hss}%
-  \setbox\@CL\hbox to\z@{\yoko\hss
-      \vrule width10mm height.5\@tombowwidth depth.5\@tombowwidth
-      \vrule height10mm depth10mm width\@tombowwidth}%
-  \setbox\@CR\hbox to\z@{\yoko
-      \vrule height10mm depth10mm width\@tombowwidth
-      \vrule height.5\@tombowwidth depth.5\@tombowwidth width10mm\hss}%
-}
 \def\@outputtombow{%
   % 6mm = \@tombowbleed: from plcore
   \@@paperwidth=\dimexpr\@@paperwidth - 6mm + 2\dimexpr\jlreq@trimmarks@bleed\relax\relax
   \@@paperheight=\dimexpr\@@paperheight - 6mm + 2\dimexpr\jlreq@trimmarks@bleed\relax\relax
-  \ifjlreq@trimmarks@show
-  \vbox to\z@{\kern-\dimexpr 10mm + \jlreq@trimmarks@bleed\relax
-    \boxmaxdepth\maxdimen
-    \moveleft\jlreq@trimmarks@bleed\vbox to\@@paperheight{%
-      \color@begingroup\jlreq@trimmarks@color
-      \hbox to\@@paperwidth{\hskip\jlreq@trimmarks@bleed\relax
-         \copy\@TL\hfill\copy\@TC\hfill\copy\@TR\hskip\jlreq@trimmarks@bleed}%
-      \kern-10mm
-      \hbox to\@@paperwidth{\copy\@Tl\hfill\copy\@Tr}%
-      \vfill
-      \hbox to\@@paperwidth{\copy\@CL\hfill\copy\@CR}%
-      \vfill
-      \hbox to\@@paperwidth{\copy\@Bl\hfill\copy\@Br}%
-      \kern-10mm
-      \hbox to\@@paperwidth{\hskip\jlreq@trimmarks@bleed\relax
-         \copy\@BL\hfill\copy\@BC\hfill\copy\@BR\hskip\jlreq@trimmarks@bleed}%
-    \color@endgroup}\vss
+  \ifjlreq@trimmarks@show\expandafter\@firstofone\else\expandafter\@gobble\fi{%
+    \vbox to\z@{%
+      \kern-\dimexpr 10mm + \jlreq@trimmarks@bleed\relax
+      \boxmaxdepth\maxdimen
+      \moveleft\jlreq@trimmarks@bleed\vbox to\@@paperheight{%
+        \color@begingroup\jlreq@trimmarks@color
+        \hbox to\@@paperwidth{%
+          \hskip\jlreq@trimmarks@bleed\relax
+          \hbox to\z@{% \@TL
+            \yoko\hss
+            \vrule width\dimexpr 10mm + \jlreq@trimmarks@bleed\relax height\@tombowwidth depth\z@
+            \vrule height10mm width\@tombowwidth depth\z@
+            \iftombowdate
+              \raise4pt\hbox to\z@{\hskip5mm\@bannerfont
+              \ifodd\c@page\the\@bannertoken\else\jlreq@trimmarks@banner@even@yoko@top@left\fi
+              \hss}%
+            \fi
+          }%
+          \hfill
+          \hbox{% \@TC
+            \yoko
+            \vrule width10mm height\@tombowwidth depth\z@
+            \vrule height10mm width\@tombowwidth depth\z@
+            \vrule width10mm height\@tombowwidth depth\z@
+          }%
+          \hfill
+          \hbox to\z@{% \@TR
+            \yoko
+            \iftombowdate
+              \expandafter\let\expandafter\jlreq@tempa\csname jlreq@trimmarks@banner@\ifodd\c@page odd\else even\fi @yoko@top@right\endcsname
+              \ifx\jlreq@tempa\@empty\else
+                \raise4pt\hbox to 0pt{\yoko\hss\@bannerfont\jlreq@tempa\hskip 5mm}%
+              \fi
+            \fi
+            \vrule height10mm width\@tombowwidth depth\z@
+            \vrule width\dimexpr 10mm + \jlreq@trimmarks@bleed\relax height\@tombowwidth depth\z@\hss
+          }%
+          \hskip\jlreq@trimmarks@bleed
+        }%
+        \kern-10mm
+        \hbox to\@@paperwidth{%
+          \hbox to\z@{% \@Tl
+            \yoko\hss
+            \vrule width10mm height\@tombowwidth depth\z@
+            \vrule height\dimexpr 10mm + \jlreq@trimmarks@bleed\relax width\@tombowwidth depth\z@
+            \iftombowdate
+              \expandafter\let\expandafter\jlreq@tempa\csname jlreq@trimmarks@banner@\ifodd\c@page odd\else even\fi @tate@top@left\endcsname
+              \ifx\jlreq@tempa\@empty\else
+                \setbox\jlreq@tempboxa=\hbox{\tate\adjustbaseline\hss\@bannerfont\jlreq@tempa}%
+                \ifx l\jlreq@trimmarks@engine
+                  \jlreq@tempdima=\ht\jlreq@tempboxa
+                \else
+                  \jlreq@tempdima=\dimexpr\wd\jlreq@tempboxa\relax
+                \fi
+                \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
+                \kern-\dimexpr\jlreq@tempdima + 4pt\relax
+                \raise -5mm\box\jlreq@tempboxa
+                \kern\dimexpr\jlreq@tempdima + 4pt\relax
+              \fi
+            \fi
+          }%
+          \hfill
+          \hbox to\z@{% \@Tr
+            \yoko
+            \iftombowdate
+              \expandafter\let\expandafter\jlreq@tempa\csname jlreq@trimmarks@banner@\ifodd\c@page odd\else even\fi @tate@top@right\endcsname
+              \ifx\jlreq@tempa\@empty\else
+                \setbox\jlreq@tempboxa=\hbox{\tate\adjustbaseline\hss\@bannerfont\jlreq@tempa}%
+                \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
+                \kern 4pt
+                \raise -5mm\box\jlreq@tempboxa
+                \kern -4pt
+              \fi
+            \fi
+            \vrule height\dimexpr 10mm + \jlreq@trimmarks@bleed\relax width\@tombowwidth depth\z@
+            \vrule width10mm height\@tombowwidth depth\z@\hss
+          }%
+        }%
+        \vfill
+        \hbox to\@@paperwidth{%
+          \hbox to\z@{% \@CL
+            \yoko\hss
+            \vrule width10mm height.5\@tombowwidth depth.5\@tombowwidth
+            \vrule height10mm depth10mm width\@tombowwidth
+          }%
+          \hfill
+          \hbox to\z@{% \@CR
+            \yoko
+            \vrule height10mm depth10mm width\@tombowwidth
+            \vrule height.5\@tombowwidth depth.5\@tombowwidth width10mm\hss
+          }%
+        }%
+        \vfill
+        \hbox to\@@paperwidth{%
+          \hbox to\z@{% \@Bl
+            \yoko\hss
+            \vrule width10mm depth\@tombowwidth height\z@
+            \vrule depth\dimexpr 10mm + \jlreq@trimmarks@bleed\relax width\@tombowwidth height\z@
+            \iftombowdate
+              \expandafter\let\expandafter\jlreq@tempa\csname jlreq@trimmarks@banner@\ifodd\c@page odd\else even\fi @tate@bottom@left\endcsname
+              \ifx\jlreq@tempa\@empty\else
+                \setbox\jlreq@tempboxa=\hbox{\tate\adjustbaseline\@bannerfont\jlreq@tempa\hss}%
+                \ifx l\jlreq@trimmarks@engine
+                  \jlreq@tempdima=\dimexpr\wd\jlreq@tempboxa\relax
+                  \jlreq@tempdimb=\dimexpr\wd\jlreq@tempboxa\relax
+                \else
+                  \jlreq@tempdima=\dimexpr\wd\jlreq@tempboxa\relax
+                  \jlreq@tempdimb=\dimexpr\ht\jlreq@tempboxa + \dp\jlreq@tempboxa\relax
+                \fi
+                \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
+                \kern-\dimexpr\jlreq@tempdima + 4pt\relax
+                \raise\dimexpr\jlreq@tempdimb + 5mm\relax\box\jlreq@tempboxa
+                \kern\dimexpr\jlreq@tempdima + 4pt\relax
+              \fi
+            \fi
+          }%
+          \hfill
+          \hbox to\z@{% \@Br
+            \yoko
+            \iftombowdate
+              \expandafter\let\expandafter\jlreq@tempa\csname jlreq@trimmarks@banner@\ifodd\c@page odd\else even\fi @tate@bottom@right\endcsname
+              \ifx\jlreq@tempa\@empty\else
+                \setbox\jlreq@tempboxa=\hbox{\tate\adjustbaseline\hss\@bannerfont\jlreq@tempa}%
+                \ifx l\jlreq@trimmarks@engine
+                  \jlreq@tempdima=\wd\jlreq@tempboxa
+                \else
+                  \jlreq@tempdima=\dimexpr\ht\jlreq@tempboxa + \dp\jlreq@tempboxa\relax
+                \fi
+                \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
+                \kern 4pt
+                \raise\dimexpr\jlreq@tempdima + 5mm\relax\box\jlreq@tempboxa
+                \kern -4pt
+              \fi
+            \fi
+            \vrule depth\dimexpr 10mm + \jlreq@trimmarks@bleed\relax width\@tombowwidth height\z@
+            \vrule width10mm depth\@tombowwidth height\z@\hss
+          }%
+        }%
+        \kern-10mm
+        \hbox to\@@paperwidth{%
+          \hskip\jlreq@trimmarks@bleed\relax
+          \hbox to\z@{% \@BL
+            \yoko\hss
+            \vrule width\dimexpr 10mm + \jlreq@trimmarks@bleed\relax depth\@tombowwidth height\z@
+            \vrule depth10mm width\@tombowwidth height\z@
+            \iftombowdate
+              \expandafter\let\expandafter\jlreq@tempa\csname jlreq@trimmarks@banner@\ifodd\c@page odd\else even\fi @yoko@bottom@left\endcsname
+              \ifx\jlreq@tempa\@empty\else
+                \setbox\jlreq@tempboxa=\hbox to 0pt{\yoko\hskip 5mm\@bannerfont\jlreq@tempa\hss}%
+                \jlreq@tempdima=\dimexpr\ht\jlreq@tempboxa + \dp\jlreq@tempboxa\relax
+                \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
+                \raise-\dimexpr\jlreq@tempdima + 4pt\relax\box\jlreq@tempboxa
+              \fi
+            \fi
+          }%
+          \hfill
+          \hbox{% \@BC
+            \yoko
+            \vrule width10mm depth\@tombowwidth height\z@
+            \vrule depth10mm width\@tombowwidth height\z@
+            \vrule width10mm depth\@tombowwidth height\z@
+          }%
+          \hfill
+          \hbox to\z@{% \@BR
+            \yoko
+            \iftombowdate
+              \expandafter\let\expandafter\jlreq@tempa\csname jlreq@trimmarks@banner@\ifodd\c@page odd\else even\fi @yoko@bottom@right\endcsname
+              \ifx\jlreq@tempa\@empty\else
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\yoko\hss\@bannerfont\jlreq@tempa\hskip 5mm}%
+                \jlreq@tempdima=\dimexpr\ht\jlreq@tempboxa + \dp\jlreq@tempboxa\relax
+                \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
+                \raise-\dimexpr\jlreq@tempdima + 4pt\relax\box\jlreq@tempboxa
+              \fi
+            \fi
+            \vrule depth10mm width\@tombowwidth height\z@
+            \vrule width\dimexpr 10mm + \jlreq@trimmarks@bleed\relax depth\@tombowwidth height\z@\hss
+          }%
+          \hskip\jlreq@trimmarks@bleed
+        }%
+      \color@endgroup}\vss
+    }%
   }%
-  \fi
 }
 
 \ifjlreq@trimmarks@digital
-  \ifx l\jlreq@engine
+  \ifx l\jlreq@trimmarks@engine
     \setlength\jlreq@resultdimen{1pt}
   \else
     \jlreq@helper@divide{\the\mag pt}{1000pt}
@@ -430,6 +602,6 @@
 
 % always true
 \tombowtrue
-\maketombowbox
+
 
 \endinput

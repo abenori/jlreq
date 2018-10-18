@@ -421,11 +421,13 @@
           \hbox to\z@{% \@Tl
             \yoko\hss
             \vrule width10mm height\@tombowwidth depth\z@
-            \expandafter\let\expandafter\jlreq@tempa\csname jlreq@trimmarks@banner@\ifodd\c@page odd\else even\fi @corner@top@left\endcsname
-            \ifx\jlreq@tempa\@empty\else
-              \setbox\jlreq@tempboxa=\hbox to 0pt{\hss\@bannerfont\jlreq@trimmarks@bannerfont\jlreq@tempa\hskip 4pt}%
-              \dp\jlreq@tempboxa=0pt \ht\jlreq@tempboxa=0pt
-              \raise\dimexpr \jlreq@trimmarks@bleed + 4pt\relax\box\jlreq@tempboxa
+            \iftombowdate
+              \expandafter\let\expandafter\jlreq@tempa\csname jlreq@trimmarks@banner@\ifodd\c@page odd\else even\fi @corner@top@left\endcsname
+              \ifx\jlreq@tempa\@empty\else
+                \setbox\jlreq@tempboxa=\hbox to 0pt{\hss\@bannerfont\jlreq@trimmarks@bannerfont\jlreq@tempa\hskip 4pt}%
+                \dp\jlreq@tempboxa=0pt \ht\jlreq@tempboxa=0pt
+                \raise\dimexpr \jlreq@trimmarks@bleed + 4pt\relax\box\jlreq@tempboxa
+              \fi
             \fi
             \vrule height\dimexpr 10mm + \jlreq@trimmarks@bleed\relax width\@tombowwidth depth\z@
             \iftombowdate

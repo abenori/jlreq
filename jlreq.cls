@@ -5141,43 +5141,6 @@
 \ifthenelse{\equal{\jlreq@article@type}{book}}{
   \newif\if@mainmatter
   \@mainmattertrue
-  \jlreq@jlreqsetup@add{pagination}{%
-    \let\jlreq@pagination@mainmatterpagecommand=\pagenumbering
-    \let\jlreq@pagination@backmatterpagecommand=\pagenumbering
-    \def\jlreq@pagination@frontmatterstyle{arabic}%
-    \def\jlreq@pagination@mainmatterstyle{arabic}%
-    \def\jlreq@pagination@backmatterstyle{arabic}%
-    \jlreq@parsekeyval{
-      {frontmatter}{%
-        \@for\jlreq@tempa:=##1\do{%
-          \jlreq@switch{\jlreq@tempa}{
-            {continuous}{%
-              \def\jlreq@pagination@mainmatterpagecommand####1{\gdef\thepage{\csname @####1\endcsname\c@page}}
-            }
-            {independent}{\let\jlreq@pagination@mainmatterpagecommand=\pagenumbering}
-            {\edef\jlreq@pagination@frontmatterstyle{\jlreq@tempa}}
-          }%
-        }%
-      }
-      {backmatter}{%
-        \@for\jlreq@tempa:=##1\do{%
-          \jlreq@switch{\jlreq@tempa}{
-            {continuous}{%
-              \def\jlreq@pagination@backmatterpagecommand####1{\gdef\thepage{\csname @####1\endcsname\c@page}}
-            }
-            {independent}{\let\jlreq@pagination@backmatterpagecommand=\pagenumbering}
-            {\edef\jlreq@pagination@backmatterstyle{\jlreq@tempa}}
-          }%
-        }%
-      }
-      {mainmatter}{\def\jlreq@pagination@mainmatterstyle{##1}}
-    }{#1}%
-  }
-  \jlreqsetup{pagination={
-    frontmatter={independent,roman},
-    mainmatter={arabic},
-    backmatter={continuous,arabic},
-  }}
   \jlreq@jlreqsetup@add{frontmatter_pagebreak}{\def\jlreq@frontmatter@pagebreak{#1}}
   \jlreq@jlreqsetup@add{frontmatter_setcounter}{%
     \def\jlreq@frontmatter@setcounter{}%
@@ -5263,6 +5226,19 @@
     }%
   }
   \jlreq@jlreqsetup@add{frontmatter_code}{\edef\jlreq@frontmatter@code{\unexpanded{#1}}}
+  \jlreq@jlreqsetup@add{frontmatter_pagination}{%
+    \def\jlreq@pagination@frontmatterstyle{arabic}%
+    \let\jlreq@pagination@mainmatterpagecommand=\pagenumbering
+    \@for\jlreq@tempa:=#1\do{%
+      \jlreq@switch{\jlreq@tempa}{
+        {continuous}{%
+          \def\jlreq@pagination@mainmatterpagecommand##1{\gdef\thepage{\csname @##1\endcsname\c@page}}%
+        }
+        {independent}{\let\jlreq@pagination@mainmatterpagecommand=\pagenumbering}
+        {\edef\jlreq@pagination@frontmatterstyle{\jlreq@tempa}}
+      }%
+    }%
+  }
   \newcommand*{\frontmatter}{%
     \jlreq@frontmatter@pagebreak
     \@mainmatterfalse
@@ -5276,17 +5252,6 @@
   \def\jlreq@frontmatter@restorecounters{}
   \def\jlreq@frontmatter@restoreheadings{}
   \def\jlreq@frontmatter@restorecommands{}
-  \jlreqsetup{
-    frontmatter_pagebreak=\cleardoublepage,
-    frontmatter_pagestyle={plain,restore = true},
-    frontmatter_modifyheading = {},
-    frontmatter_setcounter={secnumdepth={-100,restore = true}},
-    frontmatter_renewcommand = {
-      thefigure = {\arabic{figure}},
-      thetable = {\arabic{table}},
-    },
-    frontmatter_code = {},
-  }
   \jlreq@jlreqsetup@add{mainmatter_pagebreak}{%
     \edef\jlreq@mainmatter@pagebreak{\unexpanded{#1}}%
   }
@@ -5308,6 +5273,9 @@
   \jlreq@jlreqsetup@add{mainmatter_code}{%
     \edef\jlreq@mainmatter@code{\unexpanded{#1}}%
   }
+  \jlreq@jlreqsetup@add{mainmatter_pagination}{%
+    \def\jlreq@pagination@mainmatterstyle{#1}%
+  }
   \newcommand*{\mainmatter}{%
     \jlreq@mainmatter@pagebreak
     \@mainmattertrue
@@ -5327,13 +5295,6 @@
     }%
     \expandafter\jlreq@pagination@mainmatterpagecommand\expandafter{\jlreq@pagination@mainmatterstyle}%
     \jlreq@frontmatter@code
-  }
-  \jlreqsetup{%
-    mainmatter_pagebreak=\cleardoublepage,
-    mainmatter_setcounter={},
-    mainmatter_pagestyle={},
-    mainmatter_modifyheading={},
-    mainmatter_code={},
   }
   \jlreq@jlreqsetup@add{backmatter_pagebreak}{%
     \edef\jlreq@backmatter@pagebreak{\unexpanded{#1}}%
@@ -5356,6 +5317,46 @@
   \jlreq@jlreqsetup@add{backmatter_code}{%
     \edef\jlreq@backmatter@code{\unexpanded{#1}}%
   }
+  \jlreq@jlreqsetup@add{backmatter_pagination}{
+    \let\jlreq@pagination@backmatterpagecommand=\pagenumbering
+    \def\jlreq@pagination@backmatterstyle{arabic}%
+    \@for\jlreq@tempa:=#1\do{%
+      \jlreq@switch{\jlreq@tempa}{
+        {continuous}{%
+          \def\jlreq@pagination@backmatterpagecommand##1{\gdef\thepage{\csname @##1\endcsname\c@page}}%
+        }
+        {independent}{\let\jlreq@pagination@backmatterpagecommand=\pagenumbering}
+        {\edef\jlreq@pagination@backmatterstyle{\jlreq@tempa}}
+      }%
+    }%
+  }
+  \newcommand*{\backmatter}{%
+    \jlreq@backmatter@pagebreak
+    \jlreq@backmatter@pagestyle
+    \@mainmatterfalse
+    \jlreq@backmatter@setcounter
+    \jlreq@backmatter@modifyheading
+    \expandafter\jlreq@pagination@backmatterpagecommand\expandafter{\jlreq@pagination@backmatterstyle}%
+    \jlreq@backmatter@code
+  }
+  \jlreqsetup{
+    frontmatter_pagebreak=\cleardoublepage,
+    frontmatter_pagestyle={plain,restore = true},
+    frontmatter_modifyheading = {},
+    frontmatter_setcounter={secnumdepth={-100,restore = true}},
+    frontmatter_renewcommand = {
+      thefigure = {\arabic{figure}},
+      thetable = {\arabic{table}},
+    },
+    frontmatter_code = {},
+  }
+  \jlreqsetup{%
+    mainmatter_pagebreak=\cleardoublepage,
+    mainmatter_setcounter={},
+    mainmatter_pagestyle={},
+    mainmatter_modifyheading={},
+    mainmatter_code={},
+  }
   \if@openright
     \jlreqsetup{backmatter_pagebreak=\cleardoublepage}
   \else
@@ -5371,14 +5372,10 @@
       \setcounter{secnumdepth}{-100}%
     }
   }
-  \newcommand*{\backmatter}{%
-    \jlreq@backmatter@pagebreak
-    \jlreq@backmatter@pagestyle
-    \@mainmatterfalse
-    \jlreq@backmatter@setcounter
-    \jlreq@backmatter@modifyheading
-    \expandafter\jlreq@pagination@backmatterpagecommand\expandafter{\jlreq@pagination@backmatterstyle}%
-    \jlreq@backmatter@code
+  \jlreqsetup{
+    frontmatter_pagination={independent,roman},
+    mainmatter_pagination={arabic},
+    backmatter_pagination={continuous,arabic},
   }
 }{}
 

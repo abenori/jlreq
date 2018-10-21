@@ -5280,21 +5280,21 @@
     \jlreq@mainmatter@pagebreak
     \@mainmattertrue
     \@ifundefined{jlreq@frontmatter@savedpagestyle}{%
-      \jlreq@frontmatter@pagestyle
+      \jlreq@mainmatter@pagestyle
     }{%
       \expandafter\pagestyle\expandafter{\jlreq@frontmatter@savedpagestyle}%
     }%
     \@for\jlreq@tempa:=\jlreq@frontmatter@restorecounters\do{%
       \setcounter{\jlreq@tempa}{\csname jlreq@frontmatter@savedcounter@\jlreq@tempa\endcsname}%
     }%
-    \jlreq@frontmatter@setcounter
+    \jlreq@mainmatter@setcounter
     \@for\jlreq@tempa:=\jlreq@frontmatter@restoreheadings\do{\csname jlreq@frontmatter@savedheading@\jlreq@tempa\endcsname}
-    \jlreq@frontmatter@modifyheading
+    \jlreq@mainmatter@modifyheading
     \@for\jlreq@tempa:=\jlreq@frontmatter@restorecommands\do{%
       \expandafter\let\csname \jlreq@tempa\expandafter\endcsname\csname jlreq@frontmatter@savedcommand@\jlreq@tempa\endcsname
     }%
     \expandafter\jlreq@pagination@mainmatterpagecommand\expandafter{\jlreq@pagination@mainmatterstyle}%
-    \jlreq@frontmatter@code
+    \jlreq@mainmatter@code
   }
   \jlreq@jlreqsetup@add{backmatter_pagebreak}{%
     \edef\jlreq@backmatter@pagebreak{\unexpanded{#1}}%

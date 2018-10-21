@@ -1526,10 +1526,14 @@
   \@ifundefined{jlreq@heading@maketoc@#1}{%
     % {1 = *}{2 = ラベル}{3 = running head}
     \expandafter\def\csname jlreq@heading@maketoc@#1\endcsname##1##2##3{%
-      \ifnum0\jlreq@ifempty{##1}{}{1}\ifnum #2>\c@secnumdepth 1\fi>0 \else
+      \jlreq@ifempty{##1}{%
         \csname #1mark\endcsname{##3}%
-        \addcontentsline{toc}{#1}{\jlreq@ifempty{##2}{}{\protect\numberline{##2}}##3}%
-      \fi
+        \ifnum #2>\c@secnumdepth 
+          \addcontentsline{toc}{#1}{##3}%
+        \else
+          \addcontentsline{toc}{#1}{\jlreq@ifempty{##2}{}{\protect\numberline{##2}}##3}%
+        \fi
+      }{}%
     }%
   }{}%
 }
@@ -1694,7 +1698,6 @@
       \def\jlreq@do{\jlreq@BlockHeading@start@afterheading@saveafter@cs}%
     \fi
   }%
-  \ifx\jlreq@do\@empty\expandafter\show\csname jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count\endcsname\fi
   \jlreq@do
 }
 
@@ -5138,54 +5141,251 @@
 \ifthenelse{\equal{\jlreq@article@type}{book}}{
   \newif\if@mainmatter
   \@mainmattertrue
-  \newcommand*{\frontmatter}{%
-    \cleardoublepage
-    \@mainmatterfalse
-    \let\jlreq@pagestyle@atmain\jlreq@current@pagestyle
-    \edef\jlreq@secnumdepth@atmain{\the\value{secnumdepth}}%
-    \setcounter{secnumdepth}{-100}%
-    \pagestyle{plain}%
-    \pagenumbering{roman}%
-    \@for\jlreq@tempa:=figure,table\do{%
-      \expandafter\let\csname jlreq@the\jlreq@tempa @atmain\expandafter\endcsname\csname the\jlreq@tempa\endcsname
-      \expandafter\edef\csname the\jlreq@tempa\endcsname{\noexpand\arabic{\expandonce{\jlreq@tempa}}}%
+  \jlreq@jlreqsetup@add{pagination}{%
+    \let\jlreq@pagination@mainmatterpagecommand=\pagenumbering
+    \let\jlreq@pagination@backmatterpagecommand=\pagenumbering
+    \def\jlreq@pagination@frontmatterstyle{arabic}%
+    \def\jlreq@pagination@mainmatterstyle{arabic}%
+    \def\jlreq@pagination@backmatterstyle{arabic}%
+    \jlreq@parsekeyval{
+      {frontmatter}{%
+        \@for\jlreq@tempa:=##1\do{%
+          \jlreq@switch{\jlreq@tempa}{
+            {continuous}{%
+              \def\jlreq@pagination@mainmatterpagecommand####1{\gdef\thepage{\csname @####1\endcsname\c@page}}
+            }
+            {independent}{\let\jlreq@pagination@mainmatterpagecommand=\pagenumbering}
+            {\edef\jlreq@pagination@frontmatterstyle{\jlreq@tempa}}
+          }%
+        }%
+      }
+      {backmatter}{%
+        \@for\jlreq@tempa:=##1\do{%
+          \jlreq@switch{\jlreq@tempa}{
+            {continuous}{%
+              \def\jlreq@pagination@backmatterpagecommand####1{\gdef\thepage{\csname @####1\endcsname\c@page}}
+            }
+            {independent}{\let\jlreq@pagination@backmatterpagecommand=\pagenumbering}
+            {\edef\jlreq@pagination@backmatterstyle{\jlreq@tempa}}
+          }%
+        }%
+      }
+      {mainmatter}{\def\jlreq@pagination@mainmatterstyle{##1}}
+    }{#1}%
+  }
+  \jlreqsetup{pagination={
+    frontmatter={independent,roman},
+    mainmatter={arabic},
+    backmatter={continuous,arabic},
+  }}
+  \jlreq@jlreqsetup@add{frontmatter_pagebreak}{\def\jlreq@frontmatter@pagebreak{#1}}
+  \jlreq@jlreqsetup@add{frontmatter_setcounter}{%
+    \def\jlreq@frontmatter@setcounter{}%
+    \def\jlreq@tempc{}% 復帰させるカウンタ名（カンマ区切り）
+    \jlreq@parsekeyval@nokey{%
+      \def\jlreq@tempa{##1}% カウンター名
+      \def\jlreq@tempb{}% カウンターの値
+      \jlreq@parsekeyval@nokey{%
+        \ifjlreq@parsekeyval@nokey@novalue{\def\jlreq@tempb{####1}}{%
+          \jlreq@switch{####1}{%
+            {restore}{%
+              \ifthenelse{\equal{####2}{true}}{%
+                \eappto\jlreq@frontmatter@setcounter{\noexpand\edef\expandonce{\csname jlreq@frontmatter@savedcounter@\jlreq@tempa\endcsname}{\unexpanded{\the\value}{\expandonce{\jlreq@tempa}}}}%
+                \eappto\jlreq@tempc{\ifx\jlreq@tempc\@empty\else ,\fi\expandonce{\jlreq@tempa}}%
+              }{}%
+            }%
+          }%
+        }%
+      }{##2}%
+      \ifx\jlreq@tempb\@empty\else
+        \eappto\jlreq@frontmatter@setcounter{\noexpand\setcounter{\expandonce{\jlreq@tempa}}{\expandonce{\jlreq@tempb}}}%
+      \fi
+    }{#1}%
+    \eappto\jlreq@frontmatter@setcounter{\unexpanded{\def\jlreq@frontmatter@restorecounters}{\expandonce{\jlreq@tempc}}}%
+  }
+  \jlreq@jlreqsetup@add{frontmatter_modifyheading}{%
+    \def\jlreq@frontmattermodifyheading{}%
+    \def\jlreq@tempc{}% 復帰させる見出し名（カンマ区切り）
+    \jlreq@parsekeyval@nokey{%
+      \def\jlreq@tempa{##1}% 見出し名
+      \def\jlreq@tempb{}% Modifyする中身
+      \jlreq@parsekeyval@nokey{%
+        \ifjlreq@parsekeyval@nokey@novalue{%
+          \eappto\jlreq@tempb{\unexpanded{####1}}%
+        }{%
+          \jlreq@switch{####1}{%
+            {restore}{%
+              \ifthenelse{\equal{####2}{true}}{%
+                \eappto\jlreq@frontmatter@modifyheading{\noexpand\SaveHeading{\expandonce{\jlreq@tempa}}{\expandonce{\csname jlreq@frontmatter@savedheading@\jlreq@tempa\endcsname}}}
+                \eappto\jlreq@tempc{\ifx\jlreq@tempc\@empty\else ,\fi\expandonce{\jlreq@tempa}}%
+              }{}%
+            }%
+            {\eappto\jlreq@tempb{\unexpanded{####1={####2}}}}%
+          }%
+        }%
+      }{##2}%
+      \ifx\jlreq@tempb\@empty\else
+        \eappto\jlreq@frontmatter@modifyheading{\noexpand\ModifyHeading{\expandonce{\jlreq@tempa}}{\expandonce{\jlreq@tempb}}}%
+      \fi
+    }{#1}%
+    \eappto\jlreq@frontmatter@modifyheading{\unexpanded{\def\jlreq@frontmatter@restoreheadings}{\expandonce{\jlreq@tempc}}}%
+  }
+  \jlreq@jlreqsetup@add{frontmatter_pagestyle}{%
+    \def\jlreq@tempa{}% ページスタイル名
+    \def\jlreq@frontmatter@pagestyle{}%
+    \jlreq@parsekeyval@nokey{
+      \ifjlreq@parsekeyval@nokey@novalue{\def\jlreq@tempa{##1}}{%
+        \jlreq@switch{##1}{%
+          {restore}{%
+            \ifthenelse{\equal{##2}{true}}{%
+              \appto\jlreq@frontmatter@pagestyle{\let\jlreq@frontmatter@savedpagestyle\jlreq@current@pagestyle}%
+            }{}%
+          }%
+        }%
+      }%
+    }{#1}%
+    \ifx\jlreq@tempa\@empty\else
+      \eappto\jlreq@frontmatter@pagestyle{\noexpand\pagestyle{\expandonce{\jlreq@tempa}}}%
+    \fi
+  }
+  \jlreq@jlreqsetup@add{frontmatter_renewcommand}{%
+    \def\jlreq@frontmatter@renewcommands{}%
+    \def\jlreq@tempa{}%
+    \jlreq@parsekeyval@nokey{%
+      \eappto\jlreq@frontmatter@renewcommands{%
+        \noexpand\let\expandonce{\csname jlreq@frontmatter@savedcommand@##1\endcsname}\expandonce{\csname ##1\endcsname}%
+        \noexpand\renewcommand{\expandonce{\csname ##1\endcsname}}{\unexpanded{##2}}%
+      }%
+      \eappto\jlreq@tempa{\ifx\jlreq@tempa\@empty\else ,\fi\unexpanded{##1}}%
+    }{#1}%
+    \eappto\jlreq@frontmatter@renewcommands{%
+      \unexpanded{\def\jlreq@frontmatter@restorecommands}{\expandonce{\jlreq@tempa}}%
     }%
+  }
+  \jlreq@jlreqsetup@add{frontmatter_code}{\edef\jlreq@frontmatter@code{\unexpanded{#1}}}
+  \newcommand*{\frontmatter}{%
+    \jlreq@frontmatter@pagebreak
+    \@mainmatterfalse
+    \let\jlreq@frontmatter@savedpagestyle\@undefined
+    \jlreq@frontmatter@pagestyle
+    \jlreq@frontmatter@setcounter
+    \jlreq@frontmatter@modifyheading
+    \expandafter\gdef\expandafter\thepage\expandafter{\csname @\jlreq@pagination@frontmatterstyle\endcsname\c@page}%
+    \jlreq@frontmatter@code
+  }
+  \def\jlreq@frontmatter@restorecounters{}
+  \def\jlreq@frontmatter@restoreheadings{}
+  \def\jlreq@frontmatter@restorecommands{}
+  \jlreqsetup{
+    frontmatter_pagebreak=\cleardoublepage,
+    frontmatter_pagestyle={plain,restore = true},
+    frontmatter_modifyheading = {},
+    frontmatter_setcounter={secnumdepth={-100,restore = true}},
+    frontmatter_renewcommand = {
+      thefigure = {\arabic{figure}},
+      thetable = {\arabic{table}},
+    },
+    frontmatter_code = {},
+  }
+  \jlreq@jlreqsetup@add{mainmatter_pagebreak}{%
+    \edef\jlreq@mainmatter@pagebreak{\unexpanded{#1}}%
+  }
+  \jlreq@jlreqsetup@add{mainmatter_pagestyle}{%
+    \def\jlreq@mainmatter@pagestyle{\pagestyle{#1}}%
+  }
+  \jlreq@jlreqsetup@add{mainmatter_setcounter}{%
+    \def\jlreq@mainmatter@setcounter{}%
+    \jlreq@parsekeyval@nokey{%
+      \eappto\jlreq@mainmatter@setcounter{\noexpand\setcounter{##1}{##2}}%
+    }{#1}%
+  }
+  \jlreq@jlreqsetup@add{mainmatter_modifyheading}{%
+    \def\jlreq@mainmatter@modifyheading{}%
+    \jlreq@parsekeyval@nokey{%
+      \eappto\jlreq@mainmatter@modifyheading{\noexpand\ModifyHeading{##1}{##2}}%
+    }{#1}%
+  }
+  \jlreq@jlreqsetup@add{mainmatter_code}{%
+    \edef\jlreq@mainmatter@code{\unexpanded{#1}}%
   }
   \newcommand*{\mainmatter}{%
-    \cleardoublepage
+    \jlreq@mainmatter@pagebreak
     \@mainmattertrue
-    \@ifundefined{jlreq@pagestyle@atmain}{}{%
-      \expandafter\pagestyle\expandafter{\jlreq@pagestyle@atmain}%
+    \@ifundefined{jlreq@frontmatter@savedpagestyle}{%
+      \jlreq@frontmatter@pagestyle
+    }{%
+      \expandafter\pagestyle\expandafter{\jlreq@frontmatter@savedpagestyle}%
     }%
-    \setcounter{chapter}{0}%
-    \pagenumbering{arabic}%
-    \@ifundefined{jlreq@secnumdepth@atmain}{}{\setcounter{secnumdepth}{\jlreq@secnumdepth@atmain}}%
-    \@for\jlreq@tempa:=figure,table\do{%
-      \@ifundefined{jlreq@the\jlreq@tempa @atmain}{}{%
-        \expandafter\let\csname the\jlreq@tempa\expandafter\endcsname\csname jlreq@the\jlreq@tempa @atmain\endcsname
-      }%
+    \@for\jlreq@tempa:=\jlreq@frontmatter@restorecounters\do{%
+      \setcounter{\jlreq@tempa}{\csname jlreq@frontmatter@savedcounter@\jlreq@tempa\endcsname}%
     }%
+    \jlreq@frontmatter@setcounter
+    \@for\jlreq@tempa:=\jlreq@frontmatter@restoreheadings\do{\csname jlreq@frontmatter@savedheading@\jlreq@tempa\endcsname}
+    \jlreq@frontmatter@modifyheading
+    \@for\jlreq@tempa:=\jlreq@frontmatter@restorecommands\do{%
+      \expandafter\let\csname \jlreq@tempa\expandafter\endcsname\csname jlreq@frontmatter@savedcommand@\jlreq@tempa\endcsname
+    }%
+    \expandafter\jlreq@pagination@mainmatterpagecommand\expandafter{\jlreq@pagination@mainmatterstyle}%
+    \jlreq@frontmatter@code
+  }
+  \jlreqsetup{%
+    mainmatter_pagebreak=\cleardoublepage,
+    mainmatter_setcounter={},
+    mainmatter_pagestyle={},
+    mainmatter_modifyheading={},
+    mainmatter_code={},
+  }
+  \jlreq@jlreqsetup@add{backmatter_pagebreak}{%
+    \edef\jlreq@backmatter@pagebreak{\unexpanded{#1}}%
+  }
+  \jlreq@jlreqsetup@add{backmatter_pagestyle}{%
+    \def\jlreq@backmatter@pagestyle{\pagestyle{#1}}%
+  }
+  \jlreq@jlreqsetup@add{backmatter_setcounter}{%
+    \def\jlreq@backmatter@setcounter{}%
+    \jlreq@parsekeyval@nokey{%
+      \eappto\jlreq@backmatter@setcounter{\noexpand\setcounter{##1}{##2}}%
+    }{#1}%
+  }
+  \jlreq@jlreqsetup@add{backmatter_modifyheading}{%
+    \def\jlreq@backmatter@modifyheading{}%
+    \jlreq@parsekeyval@nokey{%
+      \eappto\jlreq@backmatter@modifyheading{\noexpand\ModifyHeading{##1}{##2}}%
+    }{#1}%
+  }
+  \jlreq@jlreqsetup@add{backmatter_code}{%
+    \edef\jlreq@backmatter@code{\unexpanded{#1}}%
+  }
+  \if@openright
+    \jlreqsetup{backmatter_pagebreak=\cleardoublepage}
+  \else
+    \jlreqsetup{backmatter_pagebreak=\clearpage}
+  \fi
+  \jlreqsetup{
+    backmatter_pagestyle=plain,
+    backmatter_setcounter={chapter=0,secnumdepth=0},
+    backmatter_modifyheading={},
+    backmatter_code = {%
+      \renewcommand*{\thefigure}{\arabic{figure}}%
+      \renewcommand*{\thetable}{\arabic{table}}%
+      \setcounter{secnumdepth}{-100}%
+    }
   }
   \newcommand*{\backmatter}{%
-    \if@openright
-      \cleardoublepage
-    \else
-      \clearpage
-    \fi
-    \pagestyle{plain}%
+    \jlreq@backmatter@pagebreak
+    \jlreq@backmatter@pagestyle
     \@mainmatterfalse
-    \setcounter{chapter}{0}%
-    \setcounter{secnumdepth}{-100}%
-    \@for\jlreq@tempa:=figure,table\do{%
-      \expandafter\let\csname jlreq@the\jlreq@tempa @atmain\expandafter\endcsname\csname the\jlreq@tempa\endcsname
-      \expandafter\edef\csname the\jlreq@tempa\endcsname{\noexpand\arabic{\expandonce{\jlreq@tempa}}}%
-    }%
+    \jlreq@backmatter@setcounter
+    \jlreq@backmatter@modifyheading
+    \expandafter\jlreq@pagination@backmatterpagecommand\expandafter{\jlreq@pagination@backmatterstyle}%
+    \jlreq@backmatter@code
   }
 }{}
+
+
 \newcommand*{\appendix}{\par
   \setcounter{section}{0}%
 }
-
 \ifthenelse{\equal{\jlreq@article@type}{article}}{
   \appto\appendix{%
     \setcounter{subsection}{0}%

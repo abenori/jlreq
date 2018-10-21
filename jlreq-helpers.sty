@@ -250,30 +250,36 @@
   \begingroup
     \def\jlreq@do{}%
     \def\jlreq@parsekeyval@nokey@execute##1##2{#1}%
-    \expandafter\jlreq@parsekeyval@nokey@i#2,\jlreq@endmark,%
+    \expandafter\jlreq@parsekeyval@nokey@i@wuniq\expandafter\jlreq@uniqtoken#2,\jlreq@endmark,%
   \expandafter\endgroup
   \jlreq@do
 }
-\long\def\jlreq@parsekeyval@nokey@i#1,{\jlreq@ifendmark{#1}{}{\jlreq@parsekeyval@nokey@ii#1=\jlreq@endmark}}
-\long\def\jlreq@parsekeyval@nokey@ii#1=#2\jlreq@endmark{%
-  \jlreq@ifempty{#2}{\jlreq@parsekeyval@nokey@iii{#2}{#1}}{%
+\long\def\jlreq@parsekeyval@nokey@i@wuniq#1,{\expandafter\jlreq@parsekeyval@nokey@i\expandafter{\@gobble#1}}
+\long\def\jlreq@parsekeyval@nokey@i#1{\jlreq@ifendmark{#1}{}{\jlreq@parsekeyval@nokey@ii@wuniq\jlreq@uniqtoken#1=\jlreq@endmark}}
+\long\def\jlreq@parsekeyval@nokey@ii@wuniq#1=#2\jlreq@endmark{\expandafter\jlreq@parsekeyval@nokey@ii\expandafter{\@gobble#1}{#2}}%
+\long\def\jlreq@parsekeyval@nokey@ii#1#2{%
+  \jlreq@ifempty{#2}{\jlreq@parsekeyval@nokey@iii{*}{#2}{#1}}{%
     \edef\jlreq@tempa{%
-      \noexpand\jlreq@parsekeyval@nokey@iii{\jlreq@parsekeyval@nokey@removeequal{#2}}{\unexpanded{#1}}%
+      \noexpand\jlreq@parsekeyval@nokey@iii{}{\jlreq@parsekeyval@nokey@removeequal{#2}}{\unexpanded{#1}}%
     }%
     \jlreq@tempa
   }%
 }
-\long\def\jlreq@parsekeyval@nokey@iii#1#2{%
-  \jlreq@remove@spaceandbracket{#1}{\jlreq@tempa}%
-  \jlreq@remove@spaceandbracket{#2}{\jlreq@tempb}%
+% valueが与えられていない場合は#1=*になる．そうでなければ#1は空
+\long\def\jlreq@parsekeyval@nokey@iii#1#2#3{%
+  \jlreq@remove@spaceandbracket{#2}{\jlreq@tempa}%
+  \jlreq@remove@spaceandbracket{#3}{\jlreq@tempb}%
   \ifx\jlreq@tempb\@empty\else
-    \edef\@tempa{\noexpand\jlreq@parsekeyval@nokey@iv{\expandonce{\jlreq@tempb}}{\expandonce{\jlreq@tempa}}}%
+    \edef\@tempa{\noexpand\jlreq@parsekeyval@nokey@iv{#1}{\expandonce{\jlreq@tempb}}{\expandonce{\jlreq@tempa}}}%
     \@tempa
   \fi
-  \jlreq@parsekeyval@nokey@i
+  \jlreq@parsekeyval@nokey@i@wuniq\jlreq@uniqtoken
 }
-\long\def\jlreq@parsekeyval@nokey@iv#1#2{%
-  \eappto\jlreq@do{\expandonce{\jlreq@parsekeyval@nokey@execute{#1}{#2}}}%
+\long\def\jlreq@parsekeyval@nokey@iv#1#2#3{%
+  \eappto\jlreq@do{%
+    \unexpanded{\let\ifjlreq@parsekeyval@nokey@novalue}\jlreq@ifempty{#1}{\noexpand\@secondoftwo}{\noexpand\@firstoftwo}%
+    \expandonce{\jlreq@parsekeyval@nokey@execute{#2}{#3}}%
+  }%
 }
 \long\def\jlreq@parsekeyval@nokey@removeequal#1{\jlreq@parsekeyval@nokey@removeequal@\jlreq@uniqtoken#1\jlreq@endmark}
 \long\def\jlreq@parsekeyval@nokey@removeequal@#1=\jlreq@endmark{\expandafter\unexpanded\expandafter{\@gobble#1}}

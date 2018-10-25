@@ -202,57 +202,71 @@
   \fi
 \fi
 
-\def\jlreq@trimmarks@setbanner#1#2{%
-  \jlreq@parsekeyval@nokey{%
-    \jlreq@ifempty{##2}{%
-      \jlreq@trimmarks@setbanner@@{yoko@#1}{{##1}}%
-    }{%
-      \jlreq@switch{##1}{
-        {yoko}{\jlreq@trimmarks@setbanner@@{yoko@#1}{##2}}
-        {tate}{\jlreq@trimmarks@setbanner@@{tate@#1}{##2}}
-        {corner}{\jlreq@trimmarks@setbanner@@{corner@#1}{##2}}
-        {in-yoko}{\jlreq@trimmarks@setbanner@@{inyoko@#1}{##2}}
-        {in-tate}{\jlreq@trimmarks@setbanner@@{intate@#1}{##2}}
-        {\jlreq@trimmarks@setbanner@@{yoko@#1}{##1={##2}}}
+\long\def\jlreq@trimmarks@setbanner#1#2{%
+  \begingroup
+    \def\jlreq@do{}%
+    \jlreq@parsekeyval@nokey{%
+      \ifjlreq@parsekeyval@nokey@novalue{}{%
+        \jlreq@switch{##1}{
+          {yoko}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{yoko@#1}{##2}}}
+          {tate}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{tate@#1}{##2}}}
+          {corner}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{corner@#1}{##2}}}
+          {in-yoko}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{inyoko@#1}{##2}}}
+          {in-tate}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{intate@#1}{##2}}}
+        }%
       }%
-    }%
-  }{#2}%
+    }{#2}%
+    \ifx\jlreq@do\@empty
+      \appto\jlreq@do{\jlreq@trimmarks@setbanner@@{yoko@#1}{#2}}%
+    \fi
+  \expandafter\endgroup
+  \jlreq@do
 }
 
-\def\jlreq@trimmarks@setbanner@#1#2{%
-  \jlreq@parsekeyval@nokey{%
-    \jlreq@ifempty{##2}{%
-      \jlreq@trimmarks@setbanner@@{yoko@#1}{{##1}}%
-    }{%
-      \jlreq@switch{##1}{
-        {left}{\jlreq@trimmarks@setbanner@@{before@#1}{##2}}
-        {right}{\jlreq@trimmarks@setbanner@@{after@#1}{##2}}
-        {above}{\jlreq@trimmarks@setbanner@@{before@#1}{##2}}
-        {below}{\jlreq@trimmarks@setbanner@@{after@#1}{##2}}
-        {in}{\jlreq@trimmarks@setbanner@@{in@#1}{##2}}
-        {\jlreq@trimmarks@setbanner@@{before@#1}{##1={##2}}}
+\long\def\jlreq@trimmarks@setbanner@#1#2{%
+  \begingroup
+    \def\jlreq@do{}%
+    \jlreq@parsekeyval@nokey{%
+      \ifjlreq@parsekeyval@nokey@novalue{}{%
+        \jlreq@switch*{##1}{
+          {left}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{before@#1}{##2}}}
+          {right}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{after@#1}{##2}}}
+          {above}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{before@#1}{##2}}}
+          {below}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{after@#1}{##2}}}
+          {in}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{in@#1}{##2}}}
+        }%
       }%
-    }%
-  }{#2}%
+    }{#2}%
+    \ifx\jlreq@do\@empty
+      \appto\jlreq@do{\jlreq@trimmarks@setbanner@@{before@#1}{#2}}%
+    \fi
+  \expandafter\endgroup
+  \jlreq@do
 }
 
-\def\jlreq@trimmarks@setbanner@@#1#2{%
-  \jlreq@parsekeyval@nokey{
-    \jlreq@ifempty{##2}{%
-      \expandafter\edef\csname jlreq@trimmarks@banner@odd@#1\endcsname{\unexpanded{##1}}%
-      \expandafter\edef\csname jlreq@trimmarks@banner@even@#1\endcsname{\unexpanded{##1}}%
-    }{%
-      \jlreq@switch{##1}{
-        {odd}{\expandafter\edef\csname jlreq@trimmarks@banner@odd@#1\endcsname{\unexpanded{##2}}}
-        {even}{\expandafter\edef\csname jlreq@trimmarks@banner@even@#1\endcsname{\unexpanded{##2}}}
-        {\PackageError{jlreq-trimmarks}{Undefined key `##1' in banner}{\@ehc}}
+\long\def\jlreq@trimmarks@setbanner@@#1#2{%
+  \begingroup
+    \def\jlreq@do{}%
+    \jlreq@parsekeyval@nokey{%
+      \ifjlreq@parsekeyval@nokey@novalue{}{%
+        \jlreq@switch*{##1}{
+          {odd}{\appto\jlreq@do{\expandafter\edef\csname jlreq@trimmarks@banner@odd@#1\endcsname{\unexpanded{##2}}}}
+          {even}{\appto\jlreq@do{\expandafter\edef\csname jlreq@trimmarks@banner@even@#1\endcsname{\unexpanded{##2}}}}
+        }%
       }%
-    }%
-  }{#2}%
+    }{#2}%
+    \ifx\jlreq@do\@empty
+      \appto\jlreq@do{%
+        \expandafter\edef\csname jlreq@trimmarks@banner@odd@#1\endcsname{\unexpanded{#2}}%
+        \expandafter\edef\csname jlreq@trimmarks@banner@even@#1\endcsname{\unexpanded{#2}}%
+      }%
+    \fi
+  \expandafter\endgroup
+  \jlreq@do
 }
 
 \newcommand{\jlreqtrimmarkssetup}[1]{%
-  \jlreq@parsekeyval[jlreqtrimmarkssetup]{%
+  \jlreq@parsekeyval[jlreqtrimmarkssetup]{
     {banner}{%
       \@for\@tempa:=odd,even\do{%
         \@for\jlreq@tempa:=tate,yoko,corner,inyoko,intate\do{%
@@ -272,35 +286,39 @@
         }%
       }%
       \@bannertoken{}%
-      \jlreq@parsekeyval@nokey{
-        \jlreq@ifempty{####2}{%
-          \@bannertoken{####1}%
-        }{%
+      \def\jlreq@do{}%
+      \jlreq@parsekeyval@nokey{%
+        \ifjlreq@parsekeyval@nokey@novalue{}{%
           \jlreq@tempafalse
-          \jlreq@switch{####1}{
-            {top-left}{\jlreq@tempatrue\jlreq@trimmarks@setbanner{top@left}{####2}}
-            {left-top}{\jlreq@tempatrue\jlreq@trimmarks@setbanner{top@left}{####2}}
-            {top-right}{\jlreq@trimmarks@setbanner{top@right}{####2}}
-            {right-top}{\jlreq@trimmarks@setbanner{top@right}{####2}}
-            {bottom-left}{\jlreq@trimmarks@setbanner{bottom@left}{####2}}
-            {left-bottom}{\jlreq@trimmarks@setbanner{bottom@left}{####2}}
-            {bottom-right}{\jlreq@trimmarks@setbanner{bottom@right}{####2}}
-            {right-bottom}{\jlreq@trimmarks@setbanner{bottom@right}{####2}}
-            {top-center}{\jlreq@trimmarks@setbanner@{top@center}{####2}}
-            {center-top}{\jlreq@trimmarks@setbanner@{top@center}{####2}}
-            {bottom-center}{\jlreq@trimmarks@setbanner@{bottom@center}{####2}}
-            {center-bottom}{\jlreq@trimmarks@setbanner@{bottom@center}{####2}}
-            {center-right}{\jlreq@trimmarks@setbanner@{center@right}{####2}}
-            {right-center}{\jlreq@trimmarks@setbanner@{center@right}{####2}}
-            {center-left}{\jlreq@trimmarks@setbanner@{center@left}{####2}}
-            {left-center}{\jlreq@trimmarks@setbanner@{center@left}{####2}}
-            {\jlreq@trimmarks@setbanner{top@left}{####1={####2}}}
+          \jlreq@switch*{####1}{
+            {top-left}{\jlreq@tempatrue\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@left}{####2}}}
+            {left-top}{\jlreq@tempatrue\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@left}{####2}}}
+            {top-right}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@right}{####2}}}
+            {right-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@right}{####2}}}
+            {bottom-left}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@left}{####2}}}
+            {left-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@left}{####2}}}
+            {bottom-right}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@right}{####2}}}
+            {right-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@right}{####2}}}
+            {top-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{top@center}{####2}}}
+            {center-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{top@center}{####2}}}
+            {bottom-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{bottom@center}{####2}}}
+            {center-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{bottom@center}{####2}}}
+            {center-right}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@right}{####2}}}
+            {right-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@right}{####2}}}
+            {center-left}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@left}{####2}}}
+            {left-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@left}{####2}}}
           }%
           \ifjlreq@tempa
-            \expandafter\@bannertoken\expandafter{\jlreq@trimmarks@banner@odd@yoko@top@left}%
+            \appto\jlreq@do{\expandafter\@bannertoken\expandafter{\jlreq@trimmarks@banner@odd@yoko@top@left}}%
           \fi
         }%
       }{##1}%
+      \ifx\jlreq@do\@empty
+        \jlreq@trimmarks@setbanner{top@left}{##1}%
+        \expandafter\@bannertoken\expandafter{\jlreq@trimmarks@banner@odd@yoko@top@left}%
+      \else
+        \jlreq@do
+      \fi
     }
     {banner_font}{\def\jlreq@trimmarks@bannerfont{##1}}
     {trimmarks_width}{\setlength{\@tombowwidth}{##1}}

@@ -248,8 +248,8 @@
 % <parse対象>は一回だけ展開される．
 \newcommand{\jlreq@parsekeyval@nokey}[2]{%
   \begingroup
-    \def\jlreq@do{}%
-    \def\jlreq@parsekeyval@nokey@execute##1##2{#1}%
+    \long\def\jlreq@do{}%
+    \long\def\jlreq@parsekeyval@nokey@execute##1##2{#1}%
     \expandafter\jlreq@parsekeyval@nokey@i@wuniq\expandafter\jlreq@uniqtoken#2,\jlreq@endmark,%
   \expandafter\endgroup
   \jlreq@do
@@ -328,7 +328,7 @@
 %   {str1}{xyz}
 %   {default} % ここは#1を受け付けない（パラメータトークンを受け付けたい場合のため）．
 %} -> abcd
-% 文字列比較→\edefして比較する
+% strは\edefで展開されるが，\jlreq@switch*の場合は展開されない．
 % 第一引数は\jlreq@tempaに入れておく．
 \long\def\jlreq@helper@switch@executeoption#1[#2]{%
   \begingroup
@@ -337,33 +337,34 @@
   \jlreq@do{#1}%
 }
 \long\def\jlreq@helper@removeoption[#1]{}
-\newcommand{\jlreq@switch}[2]{%
+\newcommand{\jlreq@switch}{\@ifstar{\jlreq@switch@{*}}{\jlreq@switch@{}}}
+\newcommand{\jlreq@switch@}[3]{%
   \begingroup
     \let\jlreq@do\@undefined
-    \edef\jlreq@tempa{#1}% ループ中ずっと保存する
-    \jlreq@helper@switch@#2\jlreq@endmark
+    \edef\jlreq@tempa{\jlreq@ifempty{#1}{#2}{\unexpanded{#2}}}% ループ中ずっと保存する
+    \jlreq@helper@switch@{#1}#3\jlreq@endmark
     \ifx\jlreq@do\@undefined
-      \def\jlreq@do{\@ifnextchar[{\jlreq@helper@switch@executeoption{#1}}{}}%
+      \edef\jlreq@do{\unexpanded{\jlreq@ifnextchar[{\jlreq@helper@switch@executeoption{#2}}{}}}%
     \else
       \appto\jlreq@do{\@ifnextchar[{\jlreq@helper@removeoption}{}}%
     \fi
   \expandafter\endgroup
   \jlreq@do
 }
-\long\def\jlreq@helper@switch@#1{%
-  \jlreq@ifendmark{#1}{}{\jlreq@helper@switch@@{#1}}%
+\long\def\jlreq@helper@switch@#1#2{%
+  \jlreq@ifendmark{#2}{}{\jlreq@helper@switch@@{#1}{#2}}%
 }
 
-\long\def\jlreq@helper@switch@@#1#2{%
-  \jlreq@ifendmark{#2}{%
-    \edef\jlreq@do{\unexpanded{#1}}%
+\long\def\jlreq@helper@switch@@#1#2#3{%
+  \jlreq@ifendmark{#3}{%
+    \edef\jlreq@do{\unexpanded{#2}}%
   }{%
-    \edef\jlreq@tempb{#1}%
+    \edef\jlreq@tempb{\jlreq@ifempty{#1}{#2}{\unexpanded{#2}}}%
     \ifx\jlreq@tempa\jlreq@tempb\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
-      \edef\jlreq@do{\unexpanded{#2}}%
+      \edef\jlreq@do{\unexpanded{#3}}%
       \jlreq@deleteuntileendmark
     }{%
-      \jlreq@helper@switch@
+      \jlreq@helper@switch@{#1}%
     }%
   }%
 }

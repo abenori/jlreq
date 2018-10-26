@@ -1744,10 +1744,10 @@
 % {1 = 命令}{2 = レベル}{3 = スペース関連（横方向のみ）}{4 = フォーマット群}{5 = *}{6 = running head}{7 = 見出し}{8 = 副題}
 \long\def\jlreq@BlockHeading@start@makeoutput#1#2#3#4#5#6#7#8{%
   \begingroup
-    \ifnum0\jlreq@ifempty{#5}{}{1}\ifnum #2>\c@secnumdepth 1\fi>0
+    \ifnum #2>\c@secnumdepth
       \def\jlreq@tempc{*}%
     \else
-      \def\jlreq@tempc{}%
+      \def\jlreq@tempc{#5}%
     \fi
     \long\def\jlreq@tempa##1##2##3##4##5##6##7{%
       \long\def\jlreq@tempa{##1}% 素のラベルのフォーマットを取り出す

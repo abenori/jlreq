@@ -1645,7 +1645,7 @@
 }
 % {1 = 命令}{2 = レベル}{3 = スペース関連}{4 = *}[5 = running head]{6 = 見出し}
 \long\def\jlreq@BlockHeading@start@@#1#2#3#4[#5]#6{%
-  \jlreq@ifnextchar[{\jlreq@BlockHeading@start@@@{#1}{#2}{#3}{#4}{#5}{#6}}{\jlreq@BlockHeading@start@@@{#1}{#2}{#3}{#4}{#5}{#6}[]}%
+  \@ifnextchar[{\jlreq@BlockHeading@start@@@{#1}{#2}{#3}{#4}{#5}{#6}}{\jlreq@BlockHeading@start@@@{#1}{#2}{#3}{#4}{#5}{#6}[]}%
 }
 
 % {1 = 命令}{2 = レベル}{3 = スペース関連}{4 = *}{5 = running head}{6 = 見出し}[7 = 副題]
@@ -1759,11 +1759,11 @@
     \jlreq@do
     \edef\jlreq@do{%
       \unexpanded{\def\jlreq@resulta}{%
-        \expandafter\if\jlreq@tempc *%
-          \unexpanded{\long\gdef\jlreqBlockHeadingLabel####1}{}%
-        \else
+        \ifx\jlreq@tempc\@empty
           \unexpanded{\long\gdef\jlreqBlockHeadingLabel####1{####1}}%
           \unexpanded{\refstepcounter{#1}}%
+        \else
+          \unexpanded{\long\gdef\jlreqBlockHeadingLabel####1{}}%
         \fi
         \jlreq@ifempty{#7}%
           {\unexpanded{\long\gdef\jlreqBlockHeadingHeadingText####1{}}}%

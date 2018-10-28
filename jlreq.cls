@@ -1558,6 +1558,7 @@
     \edef\jlreq@label@format{\expandonce{\csname the#1\endcsname}}%
     \def\jlreq@heading@clearpage{\clearpage\hbox{}\clearpage}%
     \def\jlreq@pagestyle{empty}%
+    \newif\ifjlreq@counter \jlreq@countertrue
     \jlreq@parsekeyval[DeclareTobiraHeading:#1]{
       {label_format}{\def\jlreq@label@format{##1}}
       {format}{\def\jlreq@format####1####2{##1}}
@@ -1568,6 +1569,7 @@
           {naka}{\def\jlreq@heading@clearpage{\clearpage\hbox{}\clearpage}}
         }%
       }
+      {counter}[true,false]{\csname jlreq@counter##1\endcsname}
     }{#3}%
     \def\jlreq@do{}%
     \ifx\jlreq@format\@undefined
@@ -1579,15 +1581,21 @@
     \edef\jlreq@do{%
       \expandonce{\jlreq@do}%
       \noexpand\def\expandonce{\csname jlreq@TobiraHeading@start@#1\endcsname}[####1]####2{%
-        \unexpanded{\ifnum#2>\c@secnumdepth\else}%
-          \unexpanded{\refstepcounter{#1}}%
-        \noexpand\fi
-        \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{}{\expandonce{\jlreq@label@format}}{####1}%
-        \unexpanded{\ifnum#2>\c@secnumdepth\relax}%
+        \ifjlreq@counter
+          \unexpanded{\ifnum#2>\c@secnumdepth\else}%
+            \unexpanded{\refstepcounter{#1}}%
+          \noexpand\fi
+        \fi
+        \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{\ifjlreq@counter\else -\fi}{\expandonce{\jlreq@label@format}}{####1}%
+        \ifjlreq@counter
+          \unexpanded{\ifnum#2>\c@secnumdepth\relax}%
+            \expandonce{\jlreq@format{}{##1}}%
+          \noexpand\else
+            \expandafter\expandonce\expandafter{\jlreq@formatwlabel{##2}}%
+          \noexpand\fi
+        \else
           \expandonce{\jlreq@format{}{##1}}%
-        \noexpand\else
-          \expandafter\expandonce\expandafter{\jlreq@formatwlabel{##2}}%
-        \noexpand\fi
+        \fi
         \noexpand\@afterheading
         \expandonce{\jlreq@heading@clearpage}%
         \unexpanded{\if@restonecol\twocolumn\fi}%
@@ -2489,15 +2497,15 @@
 }
 
 %.. 同行見出し
-% {1 = 命令名}{2 = レベル}{3 = ラベルフォーマット}{4 = ラベルありフォーマット}{5 = ラベルなしフォーマット}
+% {1 = 命令名}{2 = レベル}{3 = */-}{4 = ラベルフォーマット}{5 = ラベルありフォーマット}{6 = ラベルなしフォーマット}
 % 4,5は見出し文字列が#1になる．
-\long\def\jlreq@RuninHeading@start#1#2#3#4#5{%
-  \edef\jlreq@RuninHeading@start@format@label{\unexpanded{#3}}%
-  \edef\jlreq@RuninHeading@start@format@wlabel{\unexpanded{#4}}%
-  \edef\jlreq@RuninHeading@start@format@wolabel{\unexpanded{#5}}%
-  \@ifstar{\@dblarg{\jlreq@RuninHeading@start@{#1}{#2}{*}}}{\@dblarg{\jlreq@RuninHeading@start@{#1}{#2}{}}}%
+\long\def\jlreq@RuninHeading@start#1#2#3#4#5#6{%
+  \edef\jlreq@RuninHeading@start@format@label{\unexpanded{#4}}%
+  \edef\jlreq@RuninHeading@start@format@wlabel{\unexpanded{#5}}%
+  \edef\jlreq@RuninHeading@start@format@wolabel{\unexpanded{#6}}%
+  \@ifstar{\@dblarg{\jlreq@RuninHeading@start@{#1}{#2}{*}}}{\@dblarg{\jlreq@RuninHeading@start@{#1}{#2}{#3}}}%
 }
-% {1 = 命令名}{2 = レベル}{3 = *}{4 = running head}{5 = 見出し}
+% {1 = 命令名}{2 = レベル}{3 = */-}{4 = running head}{5 = 見出し}
 \long\def\jlreq@RuninHeading@start@#1#2#3[#4]#5{%
   \edef\jlreq@do{\unexpanded{\jlreq@RuninHeading@start@@{#1}{#2}{#3}{#4}{#5}}{\expandonce{\jlreq@RuninHeading@start@format@label}}{\expandonce{\jlreq@RuninHeading@start@format@wlabel}}{\expandonce{\jlreq@RuninHeading@start@format@wolabel}}}%
   \jlreq@do
@@ -2553,6 +2561,7 @@
     \def\jlreq@label@font{}%
     \def\jlreq@label@format{\@seccntformat{#1}}%
     \def\jlreq@after@space{1\zw}%
+    \newif\ifjlreq@counter \jlreq@countertrue
     \jlreq@parsekeyval[RuninHeading:#1]{%
       {font}{\def\jlreq@font{##1}}
       {indent}{\def\jlreq@indent{##1}}
@@ -2566,6 +2575,7 @@
         \ifdim\dimexpr##1\relax<0pt \ClassWarning{jlreq}{after_space in Runin Heading #1 should be not negative}\fi
         \def\jlreq@after@space{##1}%
       }
+      {counter}{\csname jlreq@counter##1\endcsname}
     }{#3}%
     \newif\ifjlreq@indent@zero
     \jlreq@ifgluezero{\glueexpr\jlreq@indent\relax}{\jlreq@indent@zerotrue}{\jlreq@indent@zerofalse}%
@@ -2594,7 +2604,7 @@
       \noexpand\edef\expandonce{\csname #1\endcsname}{%
         \noexpand\unexpanded{%
           \unexpanded{\jlreq@hook@beforeheadings{#1}}%
-          \unexpanded{\jlreq@RuninHeading@start{#1}{#2}}{\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@format@wlabel}}{\expandonce{\jlreq@format@wolabel}}%
+          \unexpanded{\jlreq@RuninHeading@start{#1}{#2}}{\ifjlreq@counter\else -\fi}{\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@format@wlabel}}{\expandonce{\jlreq@format@wolabel}}%
         }%
       }%
     }%
@@ -2739,7 +2749,7 @@
   \jlreq@do
 }
 
-\newcommand*\jlreq@HeadingType[1]{%
+\newcommand*{\jlreq@HeadingType}[1]{%
   \ifcsname jlreq@heading@type@#1\endcsname
     \jlreq@HeadingType@{#1}{\RenewTobiraHeading}{TobiraHeading}{%
     \jlreq@HeadingType@{#1}{\RenewBlockHeading}{BlockHeading}{%
@@ -2750,7 +2760,7 @@
     UndefinedHeading%
   \fi
 }
-\newcommand*\jlreq@HeadingType@[2]{%
+\newcommand*{\jlreq@HeadingType@}[2]{%
   \expandafter\expandafter\expandafter\ifx\csname jlreq@heading@type@#1\endcsname#2\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
 }
 
@@ -5148,7 +5158,9 @@
 %  \tracingmacros=1
   \newif\if@mainmatter
   \@mainmattertrue
-  \jlreq@jlreqsetup@add{frontmatter_pagebreak}{\def\jlreq@frontmatter@pagebreak{#1}}
+  \jlreq@jlreqsetup@add{frontmatter_pagebreak}{%
+    \edef\jlreq@frontmatter@pagebreak{\jlreq@ifempty{#1}{}{\expandonce{\csname #1\endcsname}}}%
+  }
   \jlreq@jlreqsetup@add{frontmatter_counter}{%
     \def\jlreq@frontmatter@counter{}%
     \def\jlreq@tempa{}% カウンタ名リスト
@@ -5233,7 +5245,7 @@
     }%
   }
   \newcommand*{\frontmatter}{%
-    \ifx\jlreq@frontmatter@pagebreak\@empty\else\csname\jlreq@frontmatter@pagebreak\endcsname\fi
+    \jlreq@frontmatter@pagebreak
     \@mainmatterfalse
     \let\jlreq@frontmatter@savedpagestyle\@undefined
     \jlreq@frontmatter@pagestyle
@@ -5246,7 +5258,7 @@
   \def\jlreq@frontmatter@restoreheadings{}
   \def\jlreq@frontmatter@restorecommands{}
   \jlreq@jlreqsetup@add{mainmatter_pagebreak}{%
-    \edef\jlreq@mainmatter@pagebreak{\unexpanded{#1}}%
+    \edef\jlreq@mainmatter@pagebreak{\jlreq@ifempty{#1}{}{\expandonce{\csname #1\endcsname}}}%
   }
   \jlreq@jlreqsetup@add{mainmatter_pagestyle}{%
     \def\jlreq@mainmatter@pagestyle{\pagestyle{#1}}%
@@ -5273,7 +5285,7 @@
     \def\jlreq@pagination@mainmatterstyle{#1}%
   }
   \newcommand*{\mainmatter}{%
-    \ifx\jlreq@mainmatter@pagebreak\@empty\else\csname\jlreq@mainmatter@pagebreak\endcsname\fi
+    \jlreq@mainmatter@pagebreak
     \@mainmattertrue
     \@ifundefined{jlreq@frontmatter@savedpagestyle}{%
       \jlreq@mainmatter@pagestyle
@@ -5294,17 +5306,17 @@
     \jlreq@mainmatter@code
   }
   \jlreq@jlreqsetup@add{backmatter_pagebreak}{%
-    \edef\jlreq@backmatter@pagebreak{\unexpanded{#1}}%
+    \edef\jlreq@backmatter@pagebreak{\jlreq@ifempty{#1}{}{\expandonce{\csname #1\endcsname}}}%
   }
   \jlreq@jlreqsetup@add{backmatter_pagestyle}{%
     \def\jlreq@backmatter@pagestyle{\pagestyle{#1}}%
   }
   \jlreq@jlreqsetup@add{backmatter_counter}{%
-    \def\jlreq@backmatter@setcounter{}%
+    \def\jlreq@backmatter@counter{}%
     \jlreq@parsekeyval@nokey{%
       \jlreq@parsekeyval{
-        {value}{\appto\jlreq@backmatter@setcounter{\setcounter{##1}{####1}}}
-        {the}{\eappto\jlreq@backmatter@setcounter{\noexpand\edef\expandonce{\csname the##1\endcsname}{\unexpanded{####1}}}}
+        {value}{\appto\jlreq@backmatter@counter{\setcounter{##1}{####1}}}
+        {the}{\eappto\jlreq@backmatter@counter{\noexpand\edef\expandonce{\csname the##1\endcsname}{\unexpanded{####1}}}}
       }{##2}%
     }{#1}%
   }
@@ -5331,30 +5343,30 @@
     }%
   }
   \newcommand*{\backmatter}{%
-    \ifx\jlreq@backmatter@pagebreak\@empty\else\csname\jlreq@backmatter@pagebreak\endcsname\fi
+    \jlreq@backmatter@pagebreak
     \jlreq@backmatter@pagestyle
     \@mainmatterfalse
-    \jlreq@backmatter@setcounter
+    \jlreq@backmatter@counter
     \jlreq@backmatter@modifyheading
     \expandafter\jlreq@pagination@backmatterpagecommand\expandafter{\jlreq@pagination@backmatterstyle}%
     \jlreq@backmatter@code
   }
   \jlreqsetup{
-    frontmatter_pagebreak=cleardoublepage,
-    frontmatter_pagestyle={plain,restore = true},
+    frontmatter_pagebreak = cleardoublepage,
+    frontmatter_pagestyle = {plain,restore = true},
     frontmatter_modifyheading = {chapter={counter=false, restore = true}},
-    frontmatter_counter={
+    frontmatter_counter = {
       figure = {the = \arabic{figure},restore = true},
       table = {the = \arabic{table},restore = true}
     },
     frontmatter_code = {},
   }
-  \jlreqsetup{%
-    mainmatter_pagebreak=cleardoublepage,
-    mainmatter_counter={},
-    mainmatter_pagestyle={},
-    mainmatter_modifyheading={},
-    mainmatter_code={},
+  \jlreqsetup{
+    mainmatter_pagebreak = cleardoublepage,
+    mainmatter_counter = {},
+    mainmatter_pagestyle = {},
+    mainmatter_modifyheading = {},
+    mainmatter_code = {},
   }
   \if@openright
     \jlreqsetup{backmatter_pagebreak=cleardoublepage}
@@ -5362,19 +5374,19 @@
     \jlreqsetup{backmatter_pagebreak=clearpage}
   \fi
   \jlreqsetup{
-    backmatter_pagestyle=plain,
-    backmatter_counter={
+    backmatter_pagestyle = plain,
+    backmatter_counter = {
       chapter={value = 0},
       figure = {value = 1, the = {\arabic{figure}}},
       table = {value = 1, the = {\arabic{figure}}}
     },
-    backmatter_modifyheading={chapter = {counter = false}},
+    backmatter_modifyheading = {chapter = {counter = false}},
     backmatter_code = {}
   }
   \jlreqsetup{
-    frontmatter_pagination={independent,roman},
-    mainmatter_pagination={arabic},
-    backmatter_pagination={continuous,arabic},
+    frontmatter_pagination = {independent,roman},
+    mainmatter_pagination = {arabic},
+    backmatter_pagination = {continuous,arabic},
   }
 }{}
 

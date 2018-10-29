@@ -5268,7 +5268,7 @@
     \jlreq@parsekeyval@nokey{%
       \jlreq@parsekeyval{
         {value}{\appto\jlreq@mainmatter@counter{\setcounter{##1}{####1}}}
-        {the}{\eappto\jlreq@mainmatter@counter{\noexpand\edef\expandonce{\csname the##1\endcsname}{\unexpanded{####1}}}}
+        {the}{\eappto\jlreq@mainmatter@counter{\noexpand\def\expandonce{\csname the##1\endcsname}{\unexpanded{####1}}}}
       }{##2}%
     }{#1}%
   }
@@ -5316,7 +5316,7 @@
     \jlreq@parsekeyval@nokey{%
       \jlreq@parsekeyval{
         {value}{\appto\jlreq@backmatter@counter{\setcounter{##1}{####1}}}
-        {the}{\eappto\jlreq@backmatter@counter{\noexpand\edef\expandonce{\csname the##1\endcsname}{\unexpanded{####1}}}}
+        {the}{\eappto\jlreq@backmatter@counter{\noexpand\def\expandonce{\csname the##1\endcsname}{\unexpanded{####1}}}}
       }{##2}%
     }{#1}%
   }
@@ -5377,8 +5377,8 @@
     backmatter_pagestyle = plain,
     backmatter_counter = {
       chapter={value = 0},
-      figure = {value = 1, the = {\arabic{figure}}},
-      table = {value = 1, the = {\arabic{figure}}}
+      figure = {value = 0, the = {\arabic{figure}}},
+      table = {value = 0, the = {\arabic{table}}}
     },
     backmatter_modifyheading = {chapter = {counter = false}},
     backmatter_code = {}

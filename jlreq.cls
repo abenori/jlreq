@@ -5163,69 +5163,66 @@
   }
   \jlreq@jlreqsetup@add{frontmatter_counter}{%
     \def\jlreq@frontmatter@counter{}%
-    \def\jlreq@tempa{}% カウンタ名リスト
+    \def\jlreq@tempa{}% 復帰させるカウンタ名リスト
     \jlreq@parsekeyval@nokey{%
       \def\jlreq@tempb{}% 中身
-      \jlreq@tempafalse % restoreするか
+      \jlreq@tempatrue % restore
       \jlreq@parsekeyval{
         {value}{\appto\jlreq@tempb{\setcounter{##1}{####1}}}
-        {restore}{%
-          \jlreq@tempatrue
-          \epreto\jlreq@tempb{%
-            \noexpand\let\expandonce{\csname jlreq@frontmatter@savedcounter@the@##1\endcsname}\expandonce{\csname the##1\endcsname}%
-            \noexpand\edef\expandonce{\csname jlreq@frontmatter@savedcounter@value@##1\endcsname}{\unexpanded{\the\value{##1}}}%
-          }%
-        }
+        {restore}{\csname jlreq@tempa####1\endcsname}
         {the}{\eappto\jlreq@tempb{\noexpand\def\expandonce{\csname the##1\endcsname}{\unexpanded{####1}}}}
       }{##2}%
-      \eappto\jlreq@frontmatter@counter{\expandonce{\jlreq@tempb}}%
       \ifjlreq@tempa
+        \epreto\jlreq@tempb{%
+          \noexpand\let\expandonce{\csname jlreq@frontmatter@savedcounter@the@##1\endcsname}\expandonce{\csname the##1\endcsname}%
+          \noexpand\edef\expandonce{\csname jlreq@frontmatter@savedcounter@value@##1\endcsname}{\unexpanded{\the\value{##1}}}%
+        }%
         \eappto\jlreq@tempa{\ifx\jlreq@tempa\@empty\else ,\fi\unexpanded{##1}}%
       \fi
+      \eappto\jlreq@frontmatter@counter{\expandonce{\jlreq@tempb}}%
     }{#1}%
     \eappto\jlreq@frontmatter@counter{\unexpanded{\def\jlreq@frontmatter@restorecounters}{\expandonce{\jlreq@tempa}}}%
   }
   \jlreq@jlreqsetup@add{frontmatter_modifyheading}{%
     \def\jlreq@frontmattermodifyheading{}%
-    \def\jlreq@tempc{}% 復帰させる見出し名（カンマ区切り）
+    \def\jlreq@tempa{}% 復帰させる見出し名（カンマ区切り）
     \jlreq@parsekeyval@nokey{%
-      \def\jlreq@tempa{##1}% 見出し名
       \def\jlreq@tempb{}% Modifyする中身
+      \jlreq@tempatrue % restore
       \jlreq@parsekeyval@nokey{%
         \ifjlreq@parsekeyval@nokey@novalue{%
           \eappto\jlreq@tempb{\unexpanded{####1}}%
         }{%
           \jlreq@switch{####1}{%
-            {restore}{%
-              \ifthenelse{\equal{####2}{true}}{%
-                \eappto\jlreq@frontmatter@modifyheading{\noexpand\SaveHeading{\expandonce{\jlreq@tempa}}{\expandonce{\csname jlreq@frontmatter@savedheading@\jlreq@tempa\endcsname}}}
-                \eappto\jlreq@tempc{\ifx\jlreq@tempc\@empty\else ,\fi\expandonce{\jlreq@tempa}}%
-              }{}%
-            }%
+            {restore}{\csname jlreq@tempa####2\endcsname}%
             {\eappto\jlreq@tempb{\ifx\jlreq@tempb\@empty\else ,\fi\unexpanded{####1={####2}}}}%
           }%
         }%
       }{##2}%
+      \ifjlreq@tempa
+        \eappto\jlreq@frontmatter@modifyheading{\noexpand\SaveHeading{\unexpanded{##1}}{\expandonce{\csname jlreq@frontmatter@savedheading@##1\endcsname}}}%
+        \eappto\jlreq@tempa{\ifx\jlreq@tempc\@empty\else ,\fi\unexpanded{##1}}%
+      \fi
       \ifx\jlreq@tempb\@empty\else
-        \eappto\jlreq@frontmatter@modifyheading{\noexpand\ModifyHeading{\expandonce{\jlreq@tempa}}{\expandonce{\jlreq@tempb}}}%
+        \eappto\jlreq@frontmatter@modifyheading{\noexpand\ModifyHeading{\unexpanded{##1}}{\expandonce{\jlreq@tempb}}}%
       \fi
     }{#1}%
-    \eappto\jlreq@frontmatter@modifyheading{\unexpanded{\def\jlreq@frontmatter@restoreheadings}{\expandonce{\jlreq@tempc}}}%
+    \eappto\jlreq@frontmatter@modifyheading{\unexpanded{\def\jlreq@frontmatter@restoreheadings}{\expandonce{\jlreq@tempa}}}%
   }
   \jlreq@jlreqsetup@add{frontmatter_pagestyle}{%
     \def\jlreq@tempa{}% ページスタイル名
     \def\jlreq@frontmatter@pagestyle{}%
+    \jlreq@tempatrue % restore
     \jlreq@parsekeyval@nokey{
       \ifjlreq@parsekeyval@nokey@novalue{\def\jlreq@tempa{##1}}{%
         \jlreq@switch{##1}{%
-          {restore}{%
-            \ifthenelse{\equal{##2}{true}}{%
-              \appto\jlreq@frontmatter@pagestyle{\let\jlreq@frontmatter@savedpagestyle\jlreq@current@pagestyle}%
-            }{}%
-          }%
+          {restore}{\csname jlreq@tempa##2\endcsname}%
         }%
       }%
     }{#1}%
+    \ifjlreq@tempa
+      \appto\jlreq@frontmatter@pagestyle{\let\jlreq@frontmatter@savedpagestyle\jlreq@current@pagestyle}%
+    \fi
     \ifx\jlreq@tempa\@empty\else
       \eappto\jlreq@frontmatter@pagestyle{\noexpand\pagestyle{\expandonce{\jlreq@tempa}}}%
     \fi

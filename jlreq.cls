@@ -189,6 +189,7 @@
 \newcommand*{\jlreq@option@fore@edge}{}
 \jlreq@aftercls@addtodeletecs{\jlreq@option@fore@edge}
 \DeclareOptionX{fore_edge}{\renewcommand*{\jlreq@option@fore@edge}{#1}}
+\DeclareOptionX{fore-edge}{\renewcommand*{\jlreq@option@fore@edge}{#1}}
 
 %.. 柱とノンブル
 \newcommand*{\jlreq@option@headfoot@verticalpos}{}
@@ -1381,7 +1382,7 @@
   \jlreq@setsidemargin@by@gutter{\jlreq@speciallength{\jlreq@option@gutter}}
   \ifx\jlreq@option@fore@edge\@empty\else
     \ifjlreq@determine@kihonhanmen@warning@first
-      \ClassWarningNoLine{jlreq}{fore_edge is ignored}
+      \ClassWarningNoLine{jlreq}{fore-edge is ignored}
     \fi
   \fi
 \fi
@@ -1558,7 +1559,7 @@
     \edef\jlreq@label@format{\expandonce{\csname the#1\endcsname}}%
     \def\jlreq@heading@clearpage{\clearpage\hbox{}\clearpage}%
     \def\jlreq@pagestyle{empty}%
-    \newif\ifjlreq@counter \jlreq@countertrue
+    \newif\ifjlreq@number \jlreq@numbertrue
     \jlreq@parsekeyval[DeclareTobiraHeading:#1]{
       {label_format}{\def\jlreq@label@format{##1}}
       {format}{\def\jlreq@format####1####2{##1}}
@@ -1569,7 +1570,7 @@
           {naka}{\def\jlreq@heading@clearpage{\clearpage\hbox{}\clearpage}}
         }%
       }
-      {counter}[true,false]{\csname jlreq@counter##1\endcsname}
+      {number}[true,false]{\csname jlreq@number##1\endcsname}
     }{#3}%
     \def\jlreq@do{}%
     \ifx\jlreq@format\@undefined
@@ -1581,13 +1582,13 @@
     \edef\jlreq@do{%
       \expandonce{\jlreq@do}%
       \noexpand\def\expandonce{\csname jlreq@TobiraHeading@start@#1\endcsname}[####1]####2{%
-        \ifjlreq@counter
+        \ifjlreq@number
           \unexpanded{\ifnum#2>\c@secnumdepth\else}%
             \unexpanded{\refstepcounter{#1}}%
           \noexpand\fi
         \fi
-        \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{\ifjlreq@counter\else -\fi}{\expandonce{\jlreq@label@format}}{####1}%
-        \ifjlreq@counter
+        \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{\ifjlreq@number\else -\fi}{\expandonce{\jlreq@label@format}}{####1}%
+        \ifjlreq@number
           \unexpanded{\ifnum#2>\c@secnumdepth\relax}%
             \expandonce{\jlreq@format{}{##1}}%
           \noexpand\else
@@ -2022,7 +2023,7 @@
     \def\jlreq@subtitle@indent{1\zw}%
     \def\jlreq@column@spanning{false}%
     \newif\ifjlreq@column@spanning@possible\jlreq@column@spanning@possiblefalse
-    \newif\ifjlreq@counter \jlreq@countertrue
+    \newif\ifjlreq@number \jlreq@numbertrue
     % a,bみたいなのをaとbにわける．カンマがなければbは空．引数を{a}{b}として##2を呼び出す．
     \def\jlreq@parsecomma##1##2{%
       \jlreq@helper@dividebycomma{##1}%
@@ -2114,7 +2115,7 @@
         }%
         \ifjlreq@tempa\ClassWarningNoLine{jlreq}{Invalid input `##1' for column_spanning in BlockHeading #1}\fi
       }
-      {counter}[true,false]{\csname jlreq@counter##1\endcsname}
+      {number}[true,false]{\csname jlreq@number##1\endcsname}
     }{#3}%
     \def\jlreq@do{}% 初期化．これに最終処理を入れていく．
     % 入力チェック
@@ -2216,7 +2217,7 @@
         \expandonce{\jlreq@pagebreak}%
         \unexpanded{\jlreq@BlockHeading@start{#1}{#2}}%
         {{\expandonce{\jlreq@align}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@end@indent}}\expandonce{\jlreq@spaceset}{\expandonce{\jlreq@allowbreak@evenpage}}}%
-        {\ifjlreq@counter\else -\fi}%
+        {\ifjlreq@number\else -\fi}%
         {%
           {\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@label@format@modified}}%
           {\expandonce{\jlreq@heading@text@format@wlabel}}{\expandonce{\jlreq@heading@text@format@wolabel}}%
@@ -2561,7 +2562,7 @@
     \def\jlreq@label@font{}%
     \def\jlreq@label@format{\@seccntformat{#1}}%
     \def\jlreq@after@space{1\zw}%
-    \newif\ifjlreq@counter \jlreq@countertrue
+    \newif\ifjlreq@number \jlreq@numbertrue
     \jlreq@parsekeyval[RuninHeading:#1]{%
       {font}{\def\jlreq@font{##1}}
       {indent}{\def\jlreq@indent{##1}}
@@ -2575,7 +2576,7 @@
         \ifdim\dimexpr##1\relax<0pt \ClassWarning{jlreq}{after_space in Runin Heading #1 should be not negative}\fi
         \def\jlreq@after@space{##1}%
       }
-      {counter}{\csname jlreq@counter##1\endcsname}
+      {number}{\csname jlreq@number##1\endcsname}
     }{#3}%
     \newif\ifjlreq@indent@zero
     \jlreq@ifgluezero{\glueexpr\jlreq@indent\relax}{\jlreq@indent@zerotrue}{\jlreq@indent@zerofalse}%
@@ -2604,7 +2605,7 @@
       \noexpand\edef\expandonce{\csname #1\endcsname}{%
         \noexpand\unexpanded{%
           \unexpanded{\jlreq@hook@beforeheadings{#1}}%
-          \unexpanded{\jlreq@RuninHeading@start{#1}{#2}}{\ifjlreq@counter\else -\fi}{\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@format@wlabel}}{\expandonce{\jlreq@format@wolabel}}%
+          \unexpanded{\jlreq@RuninHeading@start{#1}{#2}}{\ifjlreq@number\else -\fi}{\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@format@wlabel}}{\expandonce{\jlreq@format@wolabel}}%
         }%
       }%
     }%
@@ -3693,6 +3694,7 @@
     {center}{\def\jlreq@tempd{#1}}
     {gutter}{\if@tate\def\jlreq@tempd{right}\else\def\jlreq@tempd{left}\fi}
     {fore_edge}{\if@tate\def\jlreq@tempd{left}\else\def\jlreq@tempd{right}\fi}
+    {fore-edge}{\if@tate\def\jlreq@tempd{left}\else\def\jlreq@tempd{right}\fi}
     {\ClassError{jlreq}{Invalid position: #1}{\@ehc}}
   }%
 }
@@ -4006,20 +4008,20 @@
 
 % #1の左右に傍注調整用の空白を入れて#1に代入する
 \def\jlreq@pagestyle@addsidenotemargin@left#1{%
-  \jlreq@pagestyle@addsidenotemargin@{#1}{\marginparwidth+\marginparsep}{}{\marginparwidth+\marginparsep}%
+  \jlreq@pagestyle@addsidenotemargin@{#1}{\marginparwidth+\marginparsep}{}%
 }
-\def\jlreq@pagestyle@addsidenotemargin@right#1{
-  \jlreq@pagestyle@addsidenotemargin@{#1}{}{\marginparwidth+\marginparsep}{\marginparwidth+\marginparsep}%
+\def\jlreq@pagestyle@addsidenotemargin@right#1{%
+  \jlreq@pagestyle@addsidenotemargin@{#1}{}{\marginparwidth+\marginparsep}%
 }
-\def\jlreq@pagestyle@addsidenotemargin@bothside#1{
-  \jlreq@pagestyle@addsidenotemargin@{#1}{\marginparwidth+\marginparsep}{\marginparwidth+\marginparsep}{2\marginparwidth+2\marginparsep}%
+\def\jlreq@pagestyle@addsidenotemargin@bothside#1{%
+  \jlreq@pagestyle@addsidenotemargin@{#1}{\marginparwidth+\marginparsep}{\marginparwidth+\marginparsep}%
 }
 % #2: 左，#3：右，#4：#2 + #3
-\def\jlreq@pagestyle@addsidenotemargin@#1#2#3#4{%
+\def\jlreq@pagestyle@addsidenotemargin@#1#2#3{%
   \ifx#1\@empty\else
     \edef#1{%
       \jlreq@ifempty{#2}{}{\unexpanded{\hskip-\dimexpr #2\relax}}%
-      \unexpanded{\hbox to \dimexpr\textwidth + #4\relax}{\expandonce{#1}}%
+      \expandonce{#1}%
       \jlreq@ifempty{#3}{}{\unexpanded{\hskip-\dimexpr #3\relax}}%
     }%
   \fi
@@ -4066,6 +4068,15 @@
   }%
 }
 
+% #1= cs，#2 = フォーマットの入ったcs，#3 = デフォルトフォーマットの入ったcs
+\def\jlreq@pagestyle@applyformat#1#2#3{%
+  % デフォルト時に限り，\hbox to ***{空トークン}を避ける
+  \ifnum 0\ifx#1\@empty\else 1\fi\ifx#2\relax\else 1\fi>0
+    \edef\jlreq@do{\unexpanded{\def\jlreq@tempa##1}{\ifx#2\relax\expandonce{#3}\else\expandonce{#2}\fi}}\jlreq@do
+    \edef#1{\expandafter\expandonce\expandafter{\expandafter\jlreq@tempa\expandafter{#1}}}%
+  \fi
+}
+
 %.. \DeclarePageStyle
 \newcommand{\DeclarePageStyle}[2]{%
   \expandafter\edef\csname jlreq@pagestyle@setting@#1\endcsname{\unexpanded{#2}}%
@@ -4078,6 +4089,10 @@
     \def\jlreq@command{}%
     \def\jlreq@mark@format{}%
     \def\jlreq@font{}%
+    \let\jlreq@oddheadformat\relax
+    \let\jlreq@evenheadformat\relax
+    \let\jlreq@oddfootformat\relax
+    \let\jlreq@evenfootformat\relax
     % 柱とノンブルの間
     \def\jlreq@gap{1.5\zw}%
     \def\jlreq@nombre@gap{}%
@@ -4107,6 +4122,12 @@
       {running_head_gap}{\def\jlreq@running@head@gap{##1}}
       % trueにすると，\ps@***実行時にまず\***markを全て\@gobbleにする．
       {clear_markcommand}[true,false]{\csname jlreq@clearmarkcommand##1\endcsname}
+      {odd_head_format}{\edef\jlreq@oddheadformat{\unexpanded{##1}}}
+      {even_head_format}{\edef\jlreq@evenheadformat{\unexpanded{##1}}}
+      {head_format}{\edef\jlreq@oddheadformat{\unexpanded{##1}}\edef\jlreq@evenheadformat{\unexpanded{##1}}}
+      {odd_foot_format}{\edef\jlreq@oddfootformat{\unexpanded{##1}}}
+      {even_foot_format}{\edef\jlreq@evenfootformat{\unexpanded{##1}}}
+      {foot_format}{\edef\jlreq@oddfootformat{\unexpanded{##1}}\edef\jlreq@evenfootformat{\unexpanded{##1}}}
       % 二つ目
       {nombre_ii}{\def\jlreq@nombre@ii{##1}}
       {nombre_ii_position}{\def\jlreq@nombre@ii@position{##1}}
@@ -4219,13 +4240,20 @@
           \fi
         }%
         % \jlreq@(odd|even)headの構築
+        \@ifundefined{jlreq@\jlreq@parity headformat}
+          {\def\jlreq@format{####1}}%
+          {\expandafter\let\expandafter\jlreq@format\csname jlreq@\jlreq@parity headformat\endcsname}%
+        \edef\jlreq@do{\unexpanded{\def\jlreq@tempa##1}{\expandonce{\jlreq@format}}}\jlreq@do
+        \edef\jlreq@tempb{%
+          \csexpandonce{jlreq@\jlreq@parity @contents}%
+          \noexpand\hfil
+          \expandonce{\jlreq@nombre@contents}%
+        }%
         \expandafter\edef\csname jlreq@\jlreq@parity head\endcsname{%
           \unexpanded{\setbox\jlreq@tempboxa=\hbox to \dimexpr\headsep + \headheight + \textheight}\if@tate\else\unexpanded{- \topskip + 1\zh}\fi\noexpand\relax
           {%
             \unexpanded{\tate\adjustbaseline}%
-            \csexpandonce{jlreq@\jlreq@parity @contents}%
-            \noexpand\hfil
-            \expandonce{\jlreq@nombre@contents}%
+            \expandafter\expandonce\expandafter{\expandafter\jlreq@tempa\expandafter{\jlreq@tempb}}%
           }%
           % Underful対策
           \ifx l\jlreq@engine
@@ -4237,7 +4265,7 @@
       }%
       % \jlreq@tempboxaに入っているボックスを正しく配置する
       \edef\jlreq@lefthead@adjustbox{%
-        \noexpand\hskip\noexpand\dimexpr\if@tate\unexpanded{- \Cdp}\fi - \unexpanded{\headsep - 1\zw\relax}%
+        \noexpand\hskip\noexpand\dimexpr\if@tate\unexpanded{- \Cdp}\fi \unexpanded{- \headsep - 1\zw\relax}%
         \unexpanded{\box\jlreq@tempboxa\hfil}%
       }%
       \edef\jlreq@righthead@adjustbox{%
@@ -4363,6 +4391,15 @@
       \jlreq@pagestyle@setheadfoot{\jlreq@oddfoot}{jlreq@odd@bottom@left}{jlreq@odd@bottom@center}{jlreq@odd@bottom@right}%
       \jlreq@pagestyle@setheadfoot{\jlreq@evenhead}{jlreq@even@top@left}{jlreq@even@top@center}{jlreq@even@top@right}%
       \jlreq@pagestyle@setheadfoot{\jlreq@evenfoot}{jlreq@even@bottom@left}{jlreq@even@bottom@center}{jlreq@even@bottom@right}%
+      \ifdim\marginparwidth>0pt
+        \def\jlreq@defaultformat{\hbox to \jlreqyokoheadlength{####1}}%
+      \else
+        \def\jlreq@defaultformat{####1}%
+      \fi
+      \jlreq@pagestyle@applyformat{\jlreq@oddhead}{\jlreq@oddheadformat}{\jlreq@defaultformat}%
+      \jlreq@pagestyle@applyformat{\jlreq@evenhead}{\jlreq@evenheadformat}{\jlreq@defaultformat}%
+      \jlreq@pagestyle@applyformat{\jlreq@oddfoot}{\jlreq@oddfootformat}{\jlreq@defaultformat}%
+      \jlreq@pagestyle@applyformat{\jlreq@evenfoot}{\jlreq@evenfootformat}{\jlreq@defaultformat}%
       % 傍注用調整
       \ifdim\marginparwidth>0pt
         \if@tate\else
@@ -4402,6 +4439,17 @@
   \expandafter\endgroup
   \jlreq@do
 }
+
+\ifdim\marginparwidth>0pt
+  \if@twocolumn
+    \def\jlreqyokoheadlength{\dimexpr\textwidth + 2\marginparwidth + 2\marginparsep\relax}%
+  \else
+    \def\jlreqyokoheadlength{\dimexpr\textwidth + \marginparwidth + \marginparsep\relax}%
+  \fi
+\else
+  \def\jlreqyokoheadlength{\textwidth}
+\fi
+\edef\jlreqtateheadlength{\unexpanded{\dimexpr\headsep + \headheight + \textheight}\if@tate\else\unexpanded{- \topskip + 1\zh}\fi\noexpand\relax}
 
 \newcommand*{\NewPageStyle}[2]{%
   \expandafter\@ifdefinable\csname ps@#1\endcsname{\DeclarePageStyle{#1}{#2}}%
@@ -4817,7 +4865,7 @@
       }%
     }%
     \def\jlreq@tempa{%
-      \jlreq@parsekeyval{%
+      \jlreq@parsekeyval[jlreqsetup: itemization_beforeafter_space]{%
         {i}{\appto\jlreq@do{\def\jlreq@itemization@beforeafter@space@i{####1}}}
         {ii}{\appto\jlreq@do{\def\jlreq@itemization@beforeafter@space@ii{####1}}}
         {iii}{\appto\jlreq@do{\def\jlreq@itemization@beforeafter@space@iii{####1}}}
@@ -5184,7 +5232,7 @@
                   {runin}{\def\jlreq@declaretype{RenewRunin}}
                   {cutin}{\def\jlreq@declaretype{RenewCutin}}
                   {modify}{\def\jlreq@declaretype{Modify}}
-                  {\ClassError{jlreq}{Unknown Heading `####2' in frontmatter_heading}{\@ehc}}
+                  {\ClassError{jlreq}{Unknown heading type `####2' in frontmatter_heading}{\@ehc}}
                 }%
               }
               {heading_level}{\def\jlreq@level{####2}}
@@ -5225,9 +5273,7 @@
       \edef\jlreq@do{%
         \unexpanded{\def#3}{%
           \expandonce{\jlreq@headingscmds}%
-          \jlreq@ifempty{#1}{}{%
-            \unexpanded{\def#1}{\expandonce{\jlreq@restoreheadings}}%
-          }%
+          \jlreq@ifempty{#1}{}{\unexpanded{\def#1}{\expandonce{\jlreq@restoreheadings}}}%
         }%
       }%
     \expandafter\endgroup
@@ -5263,7 +5309,7 @@
     \def\jlreq@tempa{}% ページスタイル名
     \def\jlreq@frontmatter@pagestyle{}%
     \jlreq@tempatrue % restore
-    \jlreq@parsekeyval@nokey{
+    \jlreq@parsekeyval@nokey{%
       \ifjlreq@parsekeyval@nokey@novalue{\def\jlreq@tempa{##1}}{%
         \jlreq@switch{##1}{%
           {restore}{\csname jlreq@tempa##2\endcsname}%
@@ -5391,7 +5437,7 @@
   \jlreqsetup{
     frontmatter_pagebreak = cleardoublepage,
     frontmatter_pagestyle = {plain,restore = true},
-    frontmatter_heading = {chapter={counter=false, restore = true}},
+    frontmatter_heading = {chapter={number=false, restore = true}},
     frontmatter_counter = {
       figure = {the = \arabic{figure},restore = true},
       table = {the = \arabic{table},restore = true},
@@ -5419,7 +5465,7 @@
       figure = {value = 0, the = {\arabic{figure}}},
       table = {value = 0, the = {\arabic{table}}}
     },
-    backmatter_heading = {chapter = {counter = false}},
+    backmatter_heading = {chapter = {number = false}},
     backmatter_code = {}
   }
   \jlreqsetup{

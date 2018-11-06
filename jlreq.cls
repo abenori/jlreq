@@ -1843,8 +1843,7 @@
 
 % 行取り処理．#3が空の時は行取りの処理はしない．（空白挿入は行う．）
 % {1 = 前空き}{2 = 後ろ空き}{3 = トータル行数}{4 = 偶数ページ改ページするなら空}{5 = 出力}
-\long\def\jlreq@BlockHeading@start@gyodori#1#2#3#4#5{{%
-  \par
+\long\def\jlreq@BlockHeading@start@gyodori#1#2#3#4#5{\par{%
   \jlreq@ifempty{#4}{\jlreq@setcurrentpage}{}%
   \setbox\jlreq@tempboxa=\vbox{#5}%
   % \jlreq@tempskip(a/b)に前/後ろに入れるべき値を入れる
@@ -2680,11 +2679,11 @@
     \jlreq@tempdima=\hangindent\relax
     \@@par
     \ifjlreq@tempa\else\advance\jlreq@tempcnta by \prevgraf\relax\fi
-    \ifnum\jlreq@tempcnta<0
+    \ifnum\jlreq@tempcnta>0
+      \@restorepar
+    \else
       \hangafter=\jlreq@tempcnta\relax
       \hangindent=\jlreq@tempdima\relax
-    \else
-      \@restorepar
     \fi
   }%
   \@afterindentfalse
@@ -4032,9 +4031,9 @@
   \ifx#1\@empty\ifx#4\@empty\else\eappto#2{\expandonce{#3}\expandonce{#4}}\def#4{}\fi\fi
 }
 
-% #1: ターゲットなコントロールシークエンスの名前，#2：*ならばreverseする，#3：空き
 % #1に入っている{柱1}{柱2}... という並びから，実際に出力する柱を構築する．
 % 間に空白を入れる．
+% #1: ターゲットなコントロールシークエンスの名前，#2：*ならばreverseする，#3：空き
 \def\jlreq@pagestyle@make@runninghead#1#2#3{%
   \expandafter\ifx\csname #1\endcsname\@empty\expandafter\@gobble\else\expandafter\@firstofone\fi{%
     \edef\jlreq@do{%
@@ -4124,10 +4123,8 @@
       {clear_markcommand}[true,false]{\csname jlreq@clearmarkcommand##1\endcsname}
       {odd_head_format}{\edef\jlreq@oddheadformat{\unexpanded{##1}}}
       {even_head_format}{\edef\jlreq@evenheadformat{\unexpanded{##1}}}
-      {head_format}{\edef\jlreq@oddheadformat{\unexpanded{##1}}\edef\jlreq@evenheadformat{\unexpanded{##1}}}
       {odd_foot_format}{\edef\jlreq@oddfootformat{\unexpanded{##1}}}
       {even_foot_format}{\edef\jlreq@evenfootformat{\unexpanded{##1}}}
-      {foot_format}{\edef\jlreq@oddfootformat{\unexpanded{##1}}\edef\jlreq@evenfootformat{\unexpanded{##1}}}
       % 二つ目
       {nombre_ii}{\def\jlreq@nombre@ii{##1}}
       {nombre_ii_position}{\def\jlreq@nombre@ii@position{##1}}
@@ -4442,9 +4439,9 @@
 
 \ifdim\marginparwidth>0pt
   \if@twocolumn
-    \def\jlreqyokoheadlength{\dimexpr\textwidth + 2\marginparwidth + 2\marginparsep\relax}%
+    \def\jlreqyokoheadlength{\dimexpr\textwidth + 2\marginparwidth + 2\marginparsep\relax}
   \else
-    \def\jlreqyokoheadlength{\dimexpr\textwidth + \marginparwidth + \marginparsep\relax}%
+    \def\jlreqyokoheadlength{\dimexpr\textwidth + \marginparwidth + \marginparsep\relax}
   \fi
 \else
   \def\jlreqyokoheadlength{\textwidth}
@@ -5256,7 +5253,7 @@
         % \jlreq@declareに\ModifyHeadingか\Renew***Headingを入れる
         \ifx\jlreq@\@empty\else
           \edef\jlreq@declare{\expandonce{\csname\jlreq@declaretype Heading\endcsname}{##1}}%
-          \ifthenelse{\equal{\jlreq@declaretype}{RenewCutin} \OR \equal{\jlreq@declaretype}{Modify}}{}{%
+          \ifthenelse{\NOT \equal{\jlreq@declaretype}{Modify}}{%
             \ifx\jlreq@level\@empty
               % \frontmatter時でのレベルを引用する．
               \edef\jlreq@declare{%
@@ -5266,7 +5263,7 @@
             \else
               \eappto\jlreq@declare{{\expandonce{\jlreq@level}}}%
             \fi
-          }%
+          }{}%
           \eappto\jlreq@headingscmds{\expandonce{\jlreq@declare}{\expandonce{\jlreq@headingsettings}}}%
         \fi
       }{#4}%

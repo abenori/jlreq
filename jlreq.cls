@@ -2679,11 +2679,11 @@
     \jlreq@tempdima=\hangindent\relax
     \@@par
     \ifjlreq@tempa\else\advance\jlreq@tempcnta by \prevgraf\relax\fi
-    \ifnum\jlreq@tempcnta>0
-      \@restorepar
-    \else
+    \ifnum\jlreq@tempcnta<0
       \hangafter=\jlreq@tempcnta\relax
       \hangindent=\jlreq@tempdima\relax
+    \else
+      \@restorepar
     \fi
   }%
   \@afterindentfalse
@@ -5197,85 +5197,96 @@
 \newcommand{\subsubitem}{\@idxitem \hspace*{3\jlreq@mol}}
 \newcommand{\indexspace}{\par \vskip 1\jlreq@gol \@plus .5\jlreq@gol \@minus .3\jlreq@gol\relax}
 
-
 %. 前付，後付，付録
+
+% \jlreq@matter@heading[restoreする見出し一覧を入れる制御綴]{#2@<見出し命令名>に今の見出しの中身を入れる}{生成する制御綴の名前}{設定}
+\def\jlreq@matter@heading{\@ifnextchar[{\jlreq@matter@heading@}{\jlreq@matter@heading@[]{}}}
+\def\jlreq@matter@heading@[#1]#2#3#4{%
+  \begingroup
+    \def\jlreq@restoreheadings{}% 復帰させる見出し名（カンマ区切り）
+    \def\jlreq@headingscmds{}% \ModiryHeadings**，\RenewHeadings**の塊
+    \jlreq@parsekeyval@nokey{%
+      % ##1 = 見出し命令名, ##2 = 設定
+      \def\jlreq@headingsettings{}% Modifyする中身
+      \def\jlreq@declaretype{Modify}%
+      \def\jlreq@level{}%
+      \jlreq@tempatrue % restore
+      \jlreq@parsekeyval@nokey{%
+        % 各見出し命令に対する設定を解析
+        \ifjlreq@parsekeyval@nokey@novalue{%
+          \eappto\jlreq@headingsettings{\unexpanded{####1}}%
+        }{%
+          \jlreq@switch{####1}{%
+            {heading_type}{%
+              \lowercase{\def\jlreq@tempa{####2}}%
+              \jlreq@switch{\jlreq@tempa}{
+                {tobira}{\def\jlreq@declaretype{RenewTobira}}
+                {block}{\def\jlreq@declaretype{RenewBlock}}
+                {runin}{\def\jlreq@declaretype{RenewRunin}}
+                {cutin}{\def\jlreq@declaretype{RenewCutin}}
+                {modify}{\def\jlreq@declaretype{Modify}}
+                {\ClassError{jlreq}{Unknown heading type `####2' in frontmatter_heading}{\@ehc}}
+              }%
+            }
+            {heading_level}{\def\jlreq@level{####2}}
+            {%
+              \jlreq@ifempty{#1}{\@firstofone}{%
+                \ifthenelse{\equal{####1}{restore}}{%
+                  \csname jlreq@tempa####2\endcsname\@gobble
+                }{\@firstofone}%
+              }%
+              {\eappto\jlreq@headingsettings{\ifx\jlreq@headingsettings\@empty\else ,\fi\unexpanded{####1={####2}}}}%
+            }%
+          }%
+        }%
+      }{##2}%
+      \jlreq@ifempty{#1}{}{%
+        \ifjlreq@tempa
+          \eappto\jlreq@headingscmds{\noexpand\SaveHeading{\unexpanded{##1}}{\expandonce{\csname #2@##1\endcsname}}}%
+          \eappto\jlreq@restoreheadings{\ifx\jlreq@restoreheadings\@empty\else ,\fi\unexpanded{##1}}%
+        \fi
+      }%
+      % \jlreq@declareに\ModifyHeadingか\Renew***Headingを入れる
+      \ifx\jlreq@\@empty\else
+        \edef\jlreq@declare{\expandonce{\csname\jlreq@declaretype Heading\endcsname}{##1}}%
+        \ifthenelse{\NOT \equal{\jlreq@declaretype}{Modify}}{%
+          \ifx\jlreq@level\@empty
+            % \frontmatter時でのレベルを引用する．
+            \edef\jlreq@declare{%
+              \unexpanded{\edef\jlreq@tempa}{\noexpand\unexpanded{\expandonce{\jlreq@declare}}{\noexpand\expandonce{\expandonce{\csname jlreq@heading@level@##1\endcsname}}}}%
+              \noexpand\jlreq@tempa
+            }%
+          \else
+            \eappto\jlreq@declare{{\expandonce{\jlreq@level}}}%
+          \fi
+        }{}%
+        \eappto\jlreq@headingscmds{\expandonce{\jlreq@declare}{\expandonce{\jlreq@headingsettings}}}%
+      \fi
+    }{#4}%
+    \edef\jlreq@do{%
+      \unexpanded{\def#3}{%
+        \expandonce{\jlreq@headingscmds}%
+        \jlreq@ifempty{#1}{}{\unexpanded{\def#1}{\expandonce{\jlreq@restoreheadings}}}%
+      }%
+    }%
+  \expandafter\endgroup
+  \jlreq@do
+}
+
+\def\jlreq@matter@counter@norestore#1#2{%
+  \def#1{}%
+  \jlreq@parsekeyval@nokey{%
+    \jlreq@parsekeyval{
+      {value}{\appto#1{\setcounter{##1}{####1}}}
+      {the}{\eappto#1{\noexpand\def\expandonce{\csname the##1\endcsname}{\unexpanded{####1}}}}
+    }{##2}%
+  }{#2}%
+}
+
 \ifthenelse{\equal{\jlreq@article@type}{book}}{
 %  \tracingmacros=1
   \newif\if@mainmatter
   \@mainmattertrue
-  % \jlreq@matter@heading[restoreする見出し一覧を入れる制御綴]{#2@<見出し命令名>に今の見出しの中身を入れる}{生成する制御綴の名前}{設定}
-  \def\jlreq@matter@heading{\@ifnextchar[{\jlreq@matter@heading@}{\jlreq@matter@heading@[]{}}}
-  \def\jlreq@matter@heading@[#1]#2#3#4{%
-    \begingroup
-      \def\jlreq@restoreheadings{}% 復帰させる見出し名（カンマ区切り）
-      \def\jlreq@headingscmds{}% \ModiryHeadings**，\RenewHeadings**の塊
-      \jlreq@parsekeyval@nokey{%
-        % ##1 = 見出し命令名, ##2 = 設定
-        \def\jlreq@headingsettings{}% Modifyする中身
-        \def\jlreq@declaretype{Modify}%
-        \def\jlreq@level{}%
-        \jlreq@tempatrue % restore
-        \jlreq@parsekeyval@nokey{%
-          % 各見出し命令に対する設定を解析
-          \ifjlreq@parsekeyval@nokey@novalue{%
-            \eappto\jlreq@headingsettings{\unexpanded{####1}}%
-          }{%
-            \jlreq@switch{####1}{%
-              {heading_type}{%
-                \lowercase{\def\jlreq@tempa{####2}}%
-                \jlreq@switch{\jlreq@tempa}{
-                  {tobira}{\def\jlreq@declaretype{RenewTobira}}
-                  {block}{\def\jlreq@declaretype{RenewBlock}}
-                  {runin}{\def\jlreq@declaretype{RenewRunin}}
-                  {cutin}{\def\jlreq@declaretype{RenewCutin}}
-                  {modify}{\def\jlreq@declaretype{Modify}}
-                  {\ClassError{jlreq}{Unknown heading type `####2' in frontmatter_heading}{\@ehc}}
-                }%
-              }
-              {heading_level}{\def\jlreq@level{####2}}
-              {%
-                \jlreq@ifempty{#1}{\@firstofone}{%
-                  \ifthenelse{\equal{####1}{restore}}{%
-                    \csname jlreq@tempa####2\endcsname\@gobble
-                  }{\@firstofone}%
-                }%
-                {\eappto\jlreq@headingsettings{\ifx\jlreq@headingsettings\@empty\else ,\fi\unexpanded{####1={####2}}}}%
-              }%
-            }%
-          }%
-        }{##2}%
-        \jlreq@ifempty{#1}{}{%
-          \ifjlreq@tempa
-            \eappto\jlreq@headingscmds{\noexpand\SaveHeading{\unexpanded{##1}}{\expandonce{\csname #2@##1\endcsname}}}%
-            \eappto\jlreq@restoreheadings{\ifx\jlreq@restoreheadings\@empty\else ,\fi\unexpanded{##1}}%
-          \fi
-        }%
-        % \jlreq@declareに\ModifyHeadingか\Renew***Headingを入れる
-        \ifx\jlreq@\@empty\else
-          \edef\jlreq@declare{\expandonce{\csname\jlreq@declaretype Heading\endcsname}{##1}}%
-          \ifthenelse{\NOT \equal{\jlreq@declaretype}{Modify}}{%
-            \ifx\jlreq@level\@empty
-              % \frontmatter時でのレベルを引用する．
-              \edef\jlreq@declare{%
-                \unexpanded{\edef\jlreq@tempa}{\noexpand\unexpanded{\expandonce{\jlreq@declare}}{\noexpand\expandonce{\expandonce{\csname jlreq@heading@level@##1\endcsname}}}}%
-                \noexpand\jlreq@tempa
-              }%
-            \else
-              \eappto\jlreq@declare{{\expandonce{\jlreq@level}}}%
-            \fi
-          }{}%
-          \eappto\jlreq@headingscmds{\expandonce{\jlreq@declare}{\expandonce{\jlreq@headingsettings}}}%
-        \fi
-      }{#4}%
-      \edef\jlreq@do{%
-        \unexpanded{\def#3}{%
-          \expandonce{\jlreq@headingscmds}%
-          \jlreq@ifempty{#1}{}{\unexpanded{\def#1}{\expandonce{\jlreq@restoreheadings}}}%
-        }%
-      }%
-    \expandafter\endgroup
-    \jlreq@do
-  }
   \jlreq@jlreqsetup@add{frontmatter_pagebreak}{%
     \edef\jlreq@frontmatter@pagebreak{\jlreq@ifempty{#1}{}{\expandonce{\csname #1\endcsname}}}%
   }
@@ -5301,7 +5312,7 @@
     }{#1}%
     \eappto\jlreq@frontmatter@counter{\unexpanded{\def\jlreq@frontmatter@restorecounters}{\expandonce{\jlreq@tempa}}}%
   }
-  \jlreq@jlreqsetup@add{frontmatter_heading}{\jlreq@matter@heading[\jlreq@frontmatter@restoreheadings]{jlreq@frontmatter@savedheading}{\jlreq@frontmatter@modifyheading}{#1}}
+  \jlreq@jlreqsetup@add{frontmatter_heading}{\jlreq@matter@heading[\jlreq@frontmatter@restoreheadings]{jlreq@frontmatter@savedheading}{\jlreq@frontmatter@heading}{#1}}
   \jlreq@jlreqsetup@add{frontmatter_pagestyle}{%
     \def\jlreq@tempa{}% ページスタイル名
     \def\jlreq@frontmatter@pagestyle{}%
@@ -5340,7 +5351,7 @@
     \let\jlreq@frontmatter@savedpagestyle\@undefined
     \jlreq@frontmatter@pagestyle
     \jlreq@frontmatter@counter
-    \jlreq@frontmatter@modifyheading
+    \jlreq@frontmatter@heading
     \expandafter\gdef\expandafter\thepage\expandafter{\csname @\jlreq@pagination@frontmatterstyle\endcsname\c@page}%
     \jlreq@frontmatter@code
   }
@@ -5353,16 +5364,8 @@
   \jlreq@jlreqsetup@add{mainmatter_pagestyle}{%
     \def\jlreq@mainmatter@pagestyle{\pagestyle{#1}}%
   }
-  \jlreq@jlreqsetup@add{mainmatter_counter}{%
-    \def\jlreq@mainmatter@counter{}%
-    \jlreq@parsekeyval@nokey{%
-      \jlreq@parsekeyval{
-        {value}{\appto\jlreq@mainmatter@counter{\setcounter{##1}{####1}}}
-        {the}{\eappto\jlreq@mainmatter@counter{\noexpand\def\expandonce{\csname the##1\endcsname}{\unexpanded{####1}}}}
-      }{##2}%
-    }{#1}%
-  }
-  \jlreq@jlreqsetup@add{mainmatter_heading}{\jlreq@matter@heading{\jlreq@mainmatter@modifyheading}{#1}}%
+  \jlreq@jlreqsetup@add{mainmatter_counter}{\jlreq@matter@counter@norestore{\jlreq@mainmatter@counter}{#1}}%
+  \jlreq@jlreqsetup@add{mainmatter_heading}{\jlreq@matter@heading{\jlreq@mainmatter@heading}{#1}}%
   \jlreq@jlreqsetup@add{mainmatter_code}{%
     \edef\jlreq@mainmatter@code{\unexpanded{#1}}%
   }
@@ -5383,7 +5386,7 @@
     }%
     \jlreq@mainmatter@counter
     \@for\jlreq@tempa:=\jlreq@frontmatter@restoreheadings\do{\csname jlreq@frontmatter@savedheading@\jlreq@tempa\endcsname}
-    \jlreq@mainmatter@modifyheading
+    \jlreq@mainmatter@heading
     \@for\jlreq@tempa:=\jlreq@frontmatter@restorecommands\do{%
       \expandafter\let\csname \jlreq@tempa\expandafter\endcsname\csname jlreq@frontmatter@savedcommand@\jlreq@tempa\endcsname
     }%
@@ -5396,16 +5399,8 @@
   \jlreq@jlreqsetup@add{backmatter_pagestyle}{%
     \def\jlreq@backmatter@pagestyle{\pagestyle{#1}}%
   }
-  \jlreq@jlreqsetup@add{backmatter_counter}{%
-    \def\jlreq@backmatter@counter{}%
-    \jlreq@parsekeyval@nokey{%
-      \jlreq@parsekeyval{
-        {value}{\appto\jlreq@backmatter@counter{\setcounter{##1}{####1}}}
-        {the}{\eappto\jlreq@backmatter@counter{\noexpand\def\expandonce{\csname the##1\endcsname}{\unexpanded{####1}}}}
-      }{##2}%
-    }{#1}%
-  }
-  \jlreq@jlreqsetup@add{backmatter_heading}{\jlreq@matter@heading{\jlreq@backmatter@modifyheading}{#1}}
+  \jlreq@jlreqsetup@add{backmatter_counter}{\jlreq@matter@counter@norestore{\jlreq@backatter@counter}{#1}}%
+  \jlreq@jlreqsetup@add{backmatter_heading}{\jlreq@matter@heading{\jlreq@backmatter@heading}{#1}}
   \jlreq@jlreqsetup@add{backmatter_code}{%
     \edef\jlreq@backmatter@code{\unexpanded{#1}}%
   }
@@ -5427,7 +5422,7 @@
     \jlreq@backmatter@pagestyle
     \@mainmatterfalse
     \jlreq@backmatter@counter
-    \jlreq@backmatter@modifyheading
+    \jlreq@backmatter@heading
     \expandafter\jlreq@pagination@backmatterpagecommand\expandafter{\jlreq@pagination@backmatterstyle}%
     \jlreq@backmatter@code
   }
@@ -5472,35 +5467,58 @@
   }
 }{}
 
-
-\newcommand*{\appendix}{\par
-  \setcounter{section}{0}%
+\jlreq@jlreqsetup@add{appendix_counter}{\jlreq@matter@counter@norestore{\jlreq@appendix@counter}{#1}}
+\jlreq@jlreqsetup@add{appendix_heading}{\jlreq@matter@heading{\jlreq@appendix@heading}{#1}}
+\jlreq@jlreqsetup@add{appendix_code}{\edef\jlreq@appendix@code{\unexpanded{#1}}}
+\newcommand*{\appendix}{%
+  \par
+  \jlreq@appendix@counter
+  \jlreq@appendix@heading
+  \jlreq@appendix@code
 }
+
 \ifthenelse{\equal{\jlreq@article@type}{article}}{
-  \appto\appendix{%
-    \setcounter{subsection}{0}%
-    \if@tate
-      \def\thesection{\jlreq@rensuji{\Alph{section}}}%
-    \else
-      \def\thesection{\Alph{section}}%
-    \fi
-  }
+  \if@tate
+    \jlreqsetup{
+      appendix_counter = {
+        section = {value = 0, the = {\jlreq@rensuji{\Alph{section}}}},
+        subsection = {value = 0},
+      }
+    }
+  \else
+    \jlreqsetup{
+      appendix_counter = {
+        section = {value = 0, the = {\Alph{section}}},
+        subsection = {value = 0},
+      }
+    }
+  \fi
+ \jlreqsetup{appendix_heading = {},appendix_code = {}}
 }{%book, report
-  \appto\appendix{%
-    \setcounter{chapter}{0}%
-    \if@tate
-      \def\thechapter{\jlreq@rensuji{\Alph{chapter}}}%
-    \else
-      \def\thechapter{\Alph{chapter}}%
-    \fi
-    \ModifyHeading{chapter}{label_format={付録\thechapter}}%
-    \ifx\jlreq@current@pagestyle\@undefined\else
-      \ifthenelse{\equal{\jlreq@current@pagestyle}{headings}}{%
-        \def\chaptermark#1{\markboth{付録\thechapter\quad #1}{}}%
-        \ModifyPageStyle{headings}{mark_format={_chapter={付録\thechapter\quad #1}}}%
-      }{}%
-    \fi
-  }
+  \if@tate
+    \jlreqsetup{
+      appendix_counter = {
+        chapter = {value = 0, the = {\jlreq@rensuji{\Alph{section}}}},
+      }
+    }
+ \else
+    \jlreqsetup{
+      appendix_counter = {
+        chapter = {value = 0, the = {\Alph{section}}},
+      }
+    }
+ \fi
+ \jlreqsetup{
+   appendix_heading = {
+     chapter = {label_format = {付録\thechapter}}
+   },
+   appendix_code = {%
+     \ifthenelse{\equal{\jlreq@current@pagestyle}{headings}}{%
+       \def\chaptermark#1{\markboth{付録\thechapter\quad #1}{}}%
+       \ModifyPageStyle{headings}{mark_format={_chapter={付録\thechapter\quad #1}}}%
+     }{}%
+   }
+ }
 }
 
 %. その他諸々

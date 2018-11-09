@@ -4522,9 +4522,9 @@
   \jlreq@do
   \setbox\jlreq@tempboxa=\hbox{\jlreq@@makecaption@label@font #1}%
   \ifdim\wd\jlreq@tempboxa=0pt
-    \setbox\@tempboxa=\hbox{{\jlreq@@makecaption@font #2}}%
+    \edef\jlreq@tempa{\unexpanded{{\jlreq@@makecaption@font #2}}}%
   \else
-    \setbox\@tempboxa=\hbox{{\jlreq@@makecaption@label@font\jlreq@tempa{\unhbox\jlreq@tempboxa}\hskip \glueexpr\jlreq@makecaption@after@label@space\relax}{\jlreq@@makecaption@font #2}}%
+    \edef\jlreq@tempa{{\noexpand\jlreq@@makecaption@label@font\expandonce{\jlreq@tempa{#1}}\unexpanded{\hskip\glueexpr\jlreq@makecaption@after@label@space\relax}}\unexpanded{{\jlreq@@makecaption@font #2}}}%
   \fi
   \@ifundefined{@currenvir}{%
     \@ifundefined{@captype}%
@@ -4534,6 +4534,7 @@
   \@ifundefined{jlreq@caption@align@\jlreq@tempb}%
     {\let\jlreq@align=\jlreq@caption@align}%
     {\expandafter\let\expandafter\jlreq@align\csname jlreq@caption@align@\jlreq@tempb\endcsname}%
+  \setbox\@tempboxa=\hbox{\jlreq@tempa}%
   \ifdim\wd\@tempboxa>\hsize\relax
     {%
       \ifx c\jlreq@align\centering\fi

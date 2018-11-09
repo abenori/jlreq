@@ -4520,11 +4520,12 @@
   \vskip\abovecaptionskip
   \edef\jlreq@do{\unexpanded{\def\jlreq@tempa##1}{\expandonce{\jlreq@makecaption@label@format}}}%
   \jlreq@do
-  \jlreq@ifempty{#1}{}{%
-    \edef\jlreq@tempa{{\noexpand\jlreq@@makecaption@label@font\expandonce{\jlreq@tempa{#1}}\unexpanded{\hskip \glueexpr\jlreq@makecaption@after@label@space\relax}}}%
-  }%
-  \appto\jlreq@tempa{{\jlreq@@makecaption@font #2}}%
-  \setbox\@tempboxa=\hbox{\jlreq@tempa}%
+  \setbox\jlreq@tempboxa=\hbox{\jlreq@@makecaption@label@font #1}%
+  \ifdim\wd\jlreq@tempboxa=0pt
+    \setbox\@tempboxa=\hbox{{\jlreq@@makecaption@font #2}}%
+  \else
+    \setbox\@tempboxa=\hbox{{\jlreq@@makecaption@label@font\jlreq@tempa{\unhbox\jlreq@tempboxa}\hskip \glueexpr\jlreq@makecaption@after@label@space\relax}{\jlreq@@makecaption@font #2}}%
+  \fi
   \@ifundefined{@currenvir}{%
     \@ifundefined{@captype}%
       {\def\jlreq@tempb{}}%
@@ -4537,7 +4538,7 @@
     {%
       \ifx c\jlreq@align\centering\fi
       \ifx r\jlreq@align\raggedleft\fi
-      \jlreq@tempa\par
+      \unhbox\@tempboxa\par
     }%
   \else
     \global\@minipagefalse

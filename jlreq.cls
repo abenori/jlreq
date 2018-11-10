@@ -2661,11 +2661,11 @@
     \hspace*{#2}%
     \copy\@tempboxa
     \hspace*{#3}%
-    \par
     % でかい見出しボックスの分をキャンセルする空きを入れる
     % \baselineskip - \ht\jlreq@tempboxaはTeXが挿入するスキップの分
-    \vskip -\dimexpr\ht\@tempboxa + \dp\@tempboxa + \baselineskip - \ht\jlreq@tempboxa\relax\relax
     \edef\jlreq@do{%
+      \noexpand\par
+      \noexpand\vskip -\the\dimexpr\ht\@tempboxa + \dp\@tempboxa + \baselineskip - \ht\jlreq@tempboxa\relax\relax
       \noexpand\hangindent=\the\dimexpr#2 + \wd\@tempboxa + #3\relax\relax
       \noexpand\hangafter=-\jlreq@CutinHeading@linecount\relax
     }%
@@ -2871,33 +2871,6 @@
     \ModifyHeading{chapter}{pagebreak=clearpage}
   \fi
 }
-%\jlreq@switch{\jlreq@article@type}{
-%  {book}{%
-%    \renewcommand{\jlreq@heading@maketoc@chapter}[3]{%
-%      \jlreq@ifempty{#1}{%
-%        \chaptermark{#3}%
-%        \ifnum0\if@mainmatter\else1\fi\ifnum\jlreq@heading@level@chapter>\c@secnumdepth 1\fi>0
-%          \addcontentsline{toc}{chapter}{#3}%
-%        \else
-%          \addcontentsline{toc}{chapter}{\protect\numberline{#2}#3}%
-%        \fi
-%      }{}%
-%    }
-%  }
-%  {report}{
-%    \renewcommand{\jlreq@heading@maketoc@chapter}[3]{%
-%      \jlreq@ifempty{#1}{%
-%        \chaptermark{#3}%
-%        \ifnum0\ifnum\jlreq@heading@level@chapter>\c@secnumdepth 1\fi>0
-%          \addcontentsline{toc}{chapter}{#3}%
-%        \else
-%          \addcontentsline{toc}{chapter}{\protect\numberline{#2}#3}%
-%        \fi
-%      }{}%
-%    }
-%  }
-%}
-
 
 %. 注
 % 文字サイズは6ポイントくらい（4.2.3.a）とりあえす\scriptsize
@@ -5490,7 +5463,7 @@
   \else
     \jlreqsetup{
       appendix_counter = {
-        section = {value = 0, the = {\Alph{section}}},
+        section = {value = 0, the = {\Alph{chapter}}},
         subsection = {value = 0},
       }
     }
@@ -5500,13 +5473,13 @@
   \if@tate
     \jlreqsetup{
       appendix_counter = {
-        chapter = {value = 0, the = {\jlreq@rensuji{\Alph{section}}}},
+        chapter = {value = 0, the = {\jlreq@rensuji{\Alph{chapter}}}},
       }
     }
  \else
     \jlreqsetup{
       appendix_counter = {
-        chapter = {value = 0, the = {\Alph{section}}},
+        chapter = {value = 0, the = {\Alph{chapter}}},
       }
     }
  \fi

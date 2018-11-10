@@ -255,6 +255,9 @@
 \jlreq@DeclareOption{openany}{\@openrightfalse\jlreq@option@opentrue}
 \jlreq@DeclareOption{leqno}{\input{leqno.clo}}
 \jlreq@DeclareOption{fleqn}{\input{fleqn.clo}}
+\newif\ifjlreq@option@enablejfam \jlreq@option@enablejfamtrue
+\jlreq@aftercls@addtodeleteif{\ifjlreq@option@enablejfam}
+\jlreq@DeclareOption{disablejfam}{\jlreq@option@enablejfamfalse}
 
 \newcommand*{\jlreq@note}[1]{}
 \jlreq@DeclareOption{jlreq_notes}{\renewcommand*{\jlreq@note}[1]{\message{^^JJLReq note: ##1^^J}}}
@@ -321,7 +324,11 @@
 
 % 必要パッケージのロード
 \ifx l\jlreq@engine
-  \RequirePackage{luatexja}
+  \ifjlreq@option@enablejfam
+    \RequirePackage{luatexja}
+  \else
+    \RequirePackage[disablejfam]{luatexja}
+  \fi
   \directlua{jlreq = {}}
 \fi
 
@@ -949,17 +956,19 @@
   \romanfamily\ttdefault\kanjifamily\gtdefault\selectfont}
 
 % 数式フォント設定
-\ifx l\jlreq@engine\else
-  \DeclareSymbolFont{mincho}{\jlreq@yokokanjiencoding}{mc}{m}{n}
-  \DeclareSymbolFontAlphabet{\mathmc}{mincho}
-  \SetSymbolFont{mincho}{bold}{\jlreq@yokokanjiencoding}{gt}{m}{n}
-  \jfam\symmincho
-  \DeclareMathAlphabet{\mathgt}{\jlreq@yokokanjiencoding}{gt}{m}{n}
+\ifjlreq@option@enablejfam
+  \ifx l\jlreq@engine\else
+    \DeclareSymbolFont{mincho}{\jlreq@yokokanjiencoding}{mc}{m}{n}
+    \DeclareSymbolFontAlphabet{\mathmc}{mincho}
+    \SetSymbolFont{mincho}{bold}{\jlreq@yokokanjiencoding}{gt}{m}{n}
+    \jfam\symmincho
+    \DeclareMathAlphabet{\mathgt}{\jlreq@yokokanjiencoding}{gt}{m}{n}
+  \fi
+  \AtBeginDocument{%
+    \reDeclareMathAlphabet{\mathrm}{\mathrm}{\mathmc}%
+    \reDeclareMathAlphabet{\mathbf}{\mathbf}{\mathgt}%
+  }
 \fi
-\AtBeginDocument{%
-  \reDeclareMathAlphabet{\mathrm}{\mathrm}{\mathmc}%
-  \reDeclareMathAlphabet{\mathbf}{\mathbf}{\mathgt}%
-}
 
 % 和文間隔
 \DeclareRobustCommand*\　{\futurelet\jlreq@nextchar\jlreq@zenkakuspace@ignorespaces}

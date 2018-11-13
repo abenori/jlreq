@@ -5209,7 +5209,7 @@
                 {runin}{\def\jlreq@declaretype{RenewRunin}}
                 {cutin}{\def\jlreq@declaretype{RenewCutin}}
                 {modify}{\def\jlreq@declaretype{Modify}}
-                {\ClassError{jlreq}{Unknown heading type `####2' in frontmatter_heading}{\@ehc}}
+                {\ClassError{jlreq}{Unknown heading type `####2'}{\@ehc}}
               }%
             }
             {heading_level}{\def\jlreq@level{####2}}
@@ -5383,7 +5383,7 @@
   \jlreq@jlreqsetup@add{backmatter_pagestyle}{%
     \def\jlreq@backmatter@pagestyle{\pagestyle{#1}}%
   }
-  \jlreq@jlreqsetup@add{backmatter_counter}{\jlreq@matter@counter@norestore{\jlreq@backatter@counter}{#1}}%
+  \jlreq@jlreqsetup@add{backmatter_counter}{\jlreq@matter@counter@norestore{\jlreq@backmatter@counter}{#1}}%
   \jlreq@jlreqsetup@add{backmatter_heading}{\jlreq@matter@heading{\jlreq@backmatter@heading}{#1}}
   \jlreq@jlreqsetup@add{backmatter_code}{%
     \edef\jlreq@backmatter@code{\unexpanded{#1}}%

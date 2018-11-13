@@ -5346,7 +5346,7 @@
     \edef\jlreq@mainmatter@pagebreak{\jlreq@ifempty{#1}{}{\expandonce{\csname #1\endcsname}}}%
   }
   \jlreq@jlreqsetup@add{mainmatter_pagestyle}{%
-    \def\jlreq@mainmatter@pagestyle{\pagestyle{#1}}%
+    \edef\jlreq@mainmatter@pagestyle{\jlreq@ifempty{#1}{}{\unexpanded{\pagestyle{#1}}}}%
   }
   \jlreq@jlreqsetup@add{mainmatter_counter}{\jlreq@matter@counter@norestore{\jlreq@mainmatter@counter}{#1}}%
   \jlreq@jlreqsetup@add{mainmatter_heading}{\jlreq@matter@heading{\jlreq@mainmatter@heading}{#1}}%
@@ -5381,7 +5381,7 @@
     \edef\jlreq@backmatter@pagebreak{\jlreq@ifempty{#1}{}{\expandonce{\csname #1\endcsname}}}%
   }
   \jlreq@jlreqsetup@add{backmatter_pagestyle}{%
-    \def\jlreq@backmatter@pagestyle{\pagestyle{#1}}%
+    \edef\jlreq@backmatter@pagestyle{\jlreq@ifempty{#1}{}{\unexpanded{\pagestyle{#1}}}}%
   }
   \jlreq@jlreqsetup@add{backmatter_counter}{\jlreq@matter@counter@norestore{\jlreq@backmatter@counter}{#1}}%
   \jlreq@jlreqsetup@add{backmatter_heading}{\jlreq@matter@heading{\jlreq@backmatter@heading}{#1}}

@@ -566,14 +566,14 @@
 \fi
 
 %. 基本設定
-\providecommand*{\jlreq@kanjiskip}{0pt plus 0.25\zw minus 0pt}
-\providecommand*{\jlreq@xkanjiskip}{0.25\zw plus 0.25\zw minus 0.125\zw}
+\providecommand*{\jlreqkanjiskip}{0pt plus 0.25\zw minus 0pt}
+\providecommand*{\jlreqxkanjiskip}{0.25\zw plus 0.25\zw minus 0.125\zw}
 \ifx l\jlreq@engine
-  \ltjsetparameter{kanjiskip=\jlreq@kanjiskip}
-  \ltjsetparameter{xkanjiskip=\jlreq@xkanjiskip}
+  \ltjsetparameter{kanjiskip=\jlreqkanjiskip}
+  \ltjsetparameter{xkanjiskip=\jlreqxkanjiskip}
 \else
-  \kanjiskip=\jlreq@kanjiskip
-  \xkanjiskip=\jlreq@xkanjiskip
+  \kanjiskip=\jlreqkanjiskip
+  \xkanjiskip=\jlreqxkanjiskip
 \fi
 
 % 文字クラスのリスト（必要なものだけ）
@@ -1059,18 +1059,18 @@
   \ifdim\@tempskipa=\maxdimen\else
     \appto\jlreq@setfontsizehook{%
       \ltj@setpar@global
-      \ltjsetkanjiskip\jlreq@kanjiskip
+      \ltjsetkanjiskip\jlreqkanjiskip
       \@tempskipa=\ltjgetparameter{xkanjiskip}%
       \ifdim\@tempskipa>0pt
-        \ltjsetxkanjiskip\jlreq@xkanjiskip
+        \ltjsetxkanjiskip\jlreqxkanjiskip
       \fi
     }
   \fi
 \else
   \appto\jlreq@setfontsizehook{%
-    \kanjiskip=\jlreq@kanjiskip
+    \kanjiskip=\jlreqkanjiskip
     \ifdim\xkanjiskip>0pt
-      \xkanjiskip=\jlreq@xkanjiskip
+      \xkanjiskip=\jlreqxkanjiskip
     \fi
   }
 \fi
@@ -3941,7 +3941,11 @@
 
 \def\jlreq@pagestyle@make@headingmark@@#1#2#3#4#5{%
   % \jlreq@tempbに\***markの定義を入れる
-  \edef\jlreq@tempb{\expandonce{\csname the#1\endcsname}\noexpand\quad\unexpanded{##1}}%
+  \edef\jlreq@tempb{%
+    \expandonce{\csname the#1\endcsname}%
+    \noexpand\ifx\expandonce{\csname the#1\endcsname}\unexpanded{\@empty\else\quad\fi}%
+    \unexpanded{##1}%
+  }%
   \jlreq@parsekeyval@nokey{%
     \jlreq@ifempty{##1}{}{\ifthenelse{\equal{##1}{#3}}{\edef\jlreq@tempb{\unexpanded{##2}}}{}}%
     \ifthenelse{\equal{##1}{_#1}}{\edef\jlreq@tempb{\unexpanded{##2}}}{}%
@@ -5315,7 +5319,8 @@
       \eappto\jlreq@frontmatter@pagestyle{\noexpand\pagestyle{\expandonce{\jlreq@tempa}}}%
     \fi
   }
-  \jlreq@jlreqsetup@add{frontmatter_code}{\edef\jlreq@frontmatter@code{\unexpanded{#1}}}
+  \jlreq@jlreqsetup@add{frontmatter_precode}{\edef\jlreq@frontmatter@precode{\unexpanded{#1}}}
+  \jlreq@jlreqsetup@add{frontmatter_postcode}{\edef\jlreq@frontmatter@postcode{\unexpanded{#1}}}
   \jlreq@jlreqsetup@add{frontmatter_pagination}{%
     \def\jlreq@pagination@frontmatterstyle{arabic}%
     \let\jlreq@pagination@mainmatterpagecommand=\pagenumbering
@@ -5330,6 +5335,7 @@
     }%
   }
   \newcommand*{\frontmatter}{%
+    \jlreq@frontmatter@precode
     \jlreq@frontmatter@pagebreak
     \@mainmatterfalse
     \let\jlreq@frontmatter@savedpagestyle\@undefined
@@ -5337,7 +5343,7 @@
     \jlreq@frontmatter@counter
     \jlreq@frontmatter@heading
     \expandafter\gdef\expandafter\thepage\expandafter{\csname @\jlreq@pagination@frontmatterstyle\endcsname\c@page}%
-    \jlreq@frontmatter@code
+    \jlreq@frontmatter@postcode
   }
   \def\jlreq@frontmatter@restorecounters{}
   \def\jlreq@frontmatter@restoreheadings{}
@@ -5350,13 +5356,13 @@
   }
   \jlreq@jlreqsetup@add{mainmatter_counter}{\jlreq@matter@counter@norestore{\jlreq@mainmatter@counter}{#1}}%
   \jlreq@jlreqsetup@add{mainmatter_heading}{\jlreq@matter@heading{\jlreq@mainmatter@heading}{#1}}%
-  \jlreq@jlreqsetup@add{mainmatter_code}{%
-    \edef\jlreq@mainmatter@code{\unexpanded{#1}}%
-  }
+  \jlreq@jlreqsetup@add{mainmatter_precode}{\edef\jlreq@mainmatter@precode{\unexpanded{#1}}}%
+  \jlreq@jlreqsetup@add{mainmatter_postcode}{\edef\jlreq@mainmatter@postcode{\unexpanded{#1}}}%
   \jlreq@jlreqsetup@add{mainmatter_pagination}{%
     \def\jlreq@pagination@mainmatterstyle{#1}%
   }
   \newcommand*{\mainmatter}{%
+    \jlreq@mainmatter@precode
     \jlreq@mainmatter@pagebreak
     \@mainmattertrue
     \@ifundefined{jlreq@frontmatter@savedpagestyle}{%
@@ -5375,7 +5381,7 @@
       \expandafter\let\csname \jlreq@tempa\expandafter\endcsname\csname jlreq@frontmatter@savedcommand@\jlreq@tempa\endcsname
     }%
     \expandafter\jlreq@pagination@mainmatterpagecommand\expandafter{\jlreq@pagination@mainmatterstyle}%
-    \jlreq@mainmatter@code
+    \jlreq@mainmatter@postcode
   }
   \jlreq@jlreqsetup@add{backmatter_pagebreak}{%
     \edef\jlreq@backmatter@pagebreak{\jlreq@ifempty{#1}{}{\expandonce{\csname #1\endcsname}}}%
@@ -5385,9 +5391,8 @@
   }
   \jlreq@jlreqsetup@add{backmatter_counter}{\jlreq@matter@counter@norestore{\jlreq@backmatter@counter}{#1}}%
   \jlreq@jlreqsetup@add{backmatter_heading}{\jlreq@matter@heading{\jlreq@backmatter@heading}{#1}}
-  \jlreq@jlreqsetup@add{backmatter_code}{%
-    \edef\jlreq@backmatter@code{\unexpanded{#1}}%
-  }
+  \jlreq@jlreqsetup@add{backmatter_precode}{\edef\jlreq@backmatter@precode{\unexpanded{#1}}}
+  \jlreq@jlreqsetup@add{backmatter_postcode}{\edef\jlreq@backmatter@postcode{\unexpanded{#1}}}
   \jlreq@jlreqsetup@add{backmatter_pagination}{
     \let\jlreq@pagination@backmatterpagecommand=\pagenumbering
     \def\jlreq@pagination@backmatterstyle{arabic}%
@@ -5402,13 +5407,14 @@
     }%
   }
   \newcommand*{\backmatter}{%
+    \jlreq@backmatter@precode
     \jlreq@backmatter@pagebreak
     \jlreq@backmatter@pagestyle
     \@mainmatterfalse
     \jlreq@backmatter@counter
     \jlreq@backmatter@heading
     \expandafter\jlreq@pagination@backmatterpagecommand\expandafter{\jlreq@pagination@backmatterstyle}%
-    \jlreq@backmatter@code
+    \jlreq@backmatter@postcode
   }
   \jlreqsetup{
     frontmatter_pagebreak = cleardoublepage,
@@ -5418,7 +5424,8 @@
       figure = {the = \arabic{figure},restore = true},
       table = {the = \arabic{table},restore = true},
     },
-    frontmatter_code = {},
+    frontmatter_precode = {},
+    frontmatter_postcode = {},
   }
   \jlreqsetup{
     mainmatter_pagebreak = cleardoublepage,
@@ -5427,7 +5434,8 @@
     },
     mainmatter_pagestyle = {},
     mainmatter_heading = {},
-    mainmatter_code = {},
+    mainmatter_precode = {},
+    mainmatter_postcode = {},
   }
   \if@openright
     \jlreqsetup{backmatter_pagebreak=cleardoublepage}
@@ -5437,12 +5445,13 @@
   \jlreqsetup{
     backmatter_pagestyle = plain,
     backmatter_counter = {
-      chapter={value = 0},
+      chapter={value = 0, the = {}},
       figure = {value = 0, the = {\arabic{figure}}},
       table = {value = 0, the = {\arabic{table}}}
     },
     backmatter_heading = {chapter = {number = false}},
-    backmatter_code = {}
+    backmatter_precode = {},
+    backmatter_postcode = {}
   }
   \jlreqsetup{
     frontmatter_pagination = {independent,roman},
@@ -5453,12 +5462,14 @@
 
 \jlreq@jlreqsetup@add{appendix_counter}{\jlreq@matter@counter@norestore{\jlreq@appendix@counter}{#1}}
 \jlreq@jlreqsetup@add{appendix_heading}{\jlreq@matter@heading{\jlreq@appendix@heading}{#1}}
-\jlreq@jlreqsetup@add{appendix_code}{\edef\jlreq@appendix@code{\unexpanded{#1}}}
+\jlreq@jlreqsetup@add{appendix_precode}{\edef\jlreq@appendix@precode{\unexpanded{#1}}}
+\jlreq@jlreqsetup@add{appendix_postcode}{\edef\jlreq@appendix@postcode{\unexpanded{#1}}}
 \newcommand*{\appendix}{%
   \par
+  \jlreq@appendix@precode
   \jlreq@appendix@counter
   \jlreq@appendix@heading
-  \jlreq@appendix@code
+  \jlreq@appendix@postcode
 }
 
 \ifthenelse{\equal{\jlreq@article@type}{article}}{
@@ -5477,7 +5488,7 @@
       }
     }
   \fi
- \jlreqsetup{appendix_heading = {},appendix_code = {}}
+ \jlreqsetup{appendix_heading = {},appendix_precode = {},appendix_postcode = {}}
 }{%book, report
   \if@tate
     \jlreqsetup{
@@ -5496,12 +5507,13 @@
    appendix_heading = {
      chapter = {label_format = {付録\thechapter}}
    },
-   appendix_code = {%
+   appendix_postcode = {%
      \ifthenelse{\equal{\jlreq@current@pagestyle}{headings}}{%
        \def\chaptermark#1{\markboth{付録\thechapter\quad #1}{}}%
        \ModifyPageStyle{headings}{mark_format={_chapter={付録\thechapter\quad #1}}}%
      }{}%
-   }
+   },
+   appendix_precode = {}
  }
 }
 

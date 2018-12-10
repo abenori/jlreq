@@ -1,7 +1,7 @@
 # jlreq-trimmarks
 
 ## What is this?
-This package outputs trim marks. It works with [LuaTeX-ja](https://osdn.jp/projects/luatex-ja/wiki/FrontPage) / pLaTeX / upLaTeX / dvipdfmx / Dvips / dviout and any document class (not only with jlreq class). It provides the following.
+This package outputs trim (register) marks. It works with [LuaTeX-ja](https://osdn.jp/projects/luatex-ja/wiki/FrontPage) / pLaTeX / upLaTeX / dvipdfmx / Dvips / dviout and any document class (not only with jlreq class). It provides the following.
 
 * Output trim marks
 * Set TrimBox and BleedBox if possible.
@@ -64,6 +64,41 @@ Set the additional settings with the keyval style.
 
 ### `banner`
 The things which the package outputs when `show=banner` is specified in the package option.
+Normally it is showed in the left of the top. You can also put them in many places, for example:
+
+```latex
+\jlreqtrimmarkssetup{
+  banner={
+    top-right={
+      vertical={
+        odd = {In the right of the top, only in odd pages, vertical mode.},
+        even = {In the right of the top, only in even pages, vertical mode.},
+      },
+      horizontal={In the right of the top, horizontal mode.}, % does not depend on the parity of the page number
+      corner={In the corner of the right of the top, horizontal mode.},
+      in-horizontal = {In the right of the top, horizontal mode, in the trim area.},
+      in-vertical = {In the right of the top, vertical mode, in the trim area.},
+    },
+    bottom-center={
+      left = {In the left in the center of the bottom}, % odd=, even= is also available
+      right = {In the right in the center of the bottom},
+      in = {In the trim area in the center of the bottom.},
+    }
+  }
+}
+```
+You can use `\thepage` to output the number of the page. The keys can be ommited. For example:
+```latex
+\jlreqtrimmarkssetup{
+  banner={
+    vertical = {Vertical mode, in the top of the left},
+    odd = {In the top of the left, only in odd pages.}, % regarded as `horizontal`
+    top-right = {
+      odd = {In the top of the right, only in odd pages, horizontal mode.}
+    }
+  }
+}
+```
 
 ### `trimmarks_width`
 Set the width of trim marks.
@@ -91,7 +126,8 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Moved `bleed_margin` from `\jlreqtrimmarkssetup` to a package option.
     - jlreq-trimmarks works with unusugal`\mag`.
     - Fixed bugs.
-
+* 2018-12-10
+    - Extended `banner` in `\jlreqtrimmarkssetup`.
 
 --------------
 Noriyuki Abe

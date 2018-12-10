@@ -1,5 +1,5 @@
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{jlreq-trimmarks}[2018/09/01 jlreq-trimmarks]
+\ProvidesPackage{jlreq-trimmarks}[2018/12/10 jlreq-trimmarks]
 \RequirePackage{xkeyval,etoolbox}
 \RequirePackage{jlreq-helpers}
 
@@ -209,10 +209,14 @@
       \ifjlreq@parsekeyval@nokey@novalue{}{%
         \jlreq@switch{##1}{
           {yoko}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{yoko@#1}{##2}}}
+          {horizontal}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{yoko@#1}{##2}}}
           {tate}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{tate@#1}{##2}}}
+          {vertial}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{tate@#1}{##2}}}
           {corner}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{corner@#1}{##2}}}
           {in-yoko}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{inyoko@#1}{##2}}}
+          {in-horizontal}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{inyoko@#1}{##2}}}
           {in-tate}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{intate@#1}{##2}}}
+          {in-vertial}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{intate@#1}{##2}}}
         }%
       }%
     }{#2}%

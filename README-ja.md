@@ -122,23 +122,23 @@
 * `reference_mark=[inline/interlinear]`：合印の配置方法を指定します．`inline`にすると該当項目の後ろの行中に配置します．`interlinear`を指定すると該当項目の上（横組）または右（縦組）に配置します．
 * `footnote_second_indent=<寸法>`: 脚注（横書き時）または傍注（縦書き時）の二行目以降の字下げ量を指定します．一行目からの相対字下げ量です．
 * `sidenote_type=[number/symbol]`：傍注と本文との対応の方法を指定します．`number`が規定で，注の位置に通し番号が入り，それにより対応が示されます．`symbol`とすると，注の位置に特定の記号が入り，また注がついている単語が強調されます．
-* `sidenote_symbol=<記号>`：`sidenote_symbol=symbol`の時に，注の位置に入る記号．デフォルト＊
-* `sidenote_keyword_font=<命令>`：`sidenote_symbol=symbol`の時に，注のついている単語のフォント指定．デフォルトは無し（強調しない）
+* `sidenote_symbol=<コード>`：`sidenote_symbol=symbol`の時に，注の位置に入る記号．デフォルト＊
+* `sidenote_keyword_font=<コード>`：`sidenote_symbol=symbol`の時に，注のついている単語のフォント指定．デフォルトは無し（強調しない）
 * `endnote_second_indent=<寸法>`: 後柱の二行目以降の字下げ量を指定します．一行目からの相対字下げ量です．
 * `endnote_position=[headings/paragraph/{_<見出し名1>,_<見出し名2>,...}]`：後注の出力場所を指定します．`headings`は各見出しの直前（デフォルト），`paragraph`は改段落の際に出力します．また，`endnote_position={_chapter,_section}`とすると，`\chapter`と`\section`の直前に出力します．
 
 ### キャプション
 図表のキャプションを`\jlreqsetup`で変更できます．
-* `caption_font=<命令>`：キャプション自身のフォントを指定します．
-* `caption_label_font=<命令>`：キャプションのラベルのフォントを指定します．
+* `caption_font=<コード>`：キャプション自身のフォントを指定します．
+* `caption_label_font=<コード>`：キャプションのラベルのフォントを指定します．
 * `caption_after_label_space=<寸法>`：ラベルとキャプションの間の空きを指定します．
-* `caption_label_format=<書式>`：ラベルの書式を指定します．`caption_label_format={#1：}`のようにします．`#1`が「図1」のような番号に置換されます．
+* `caption_label_format=<コード>`：ラベルの書式を指定します．`caption_label_format={#1：}`のようにします．`#1`が「図1」のような番号に置換されます．
 * `caption_align=[{left/right/center/bottom/top/<環境名1>=<位置指定1>,<環境名2>=<位置指定2>,...}]`：キャプションの場所を指定します．`caption_align=left`のように指定します．`caption_align={center,table=right}`とすると，`table`のみ右，そのほかは中央配置となります．
 
 ### 引用
 `quote / quotation / verse`環境の挙動を`\jlreqsetup`で指定できます．
-* `quote_indent=<寸法>`：字下げを指定します．デフォルトは2zwです．一行の長さが文字サイズの整数倍になるように調整されます．
-* `quote_end_indent=<寸法>`：字上げを指定します．デフォルトは0zwです．
+* `quote_indent=<寸法>`：字下げを指定します．デフォルトは2\zwです．一行の長さが文字サイズの整数倍になるように調整されます．
+* `quote_end_indent=<寸法>`：字上げを指定します．デフォルトは0\zwです．
 * `quote_beforeafter_space=<寸法>`：前後の空きを指定します．`quote_beforeafter_space=1\baselineskip`とすると一行あきます．
 * `quote_fontsize=[normalsize/small/footnotesize/scriptsize/tiny]`：フォントサイズを指定します．
 
@@ -151,45 +151,66 @@
 `\jlreqsetup`で指定します．
 * `theorem_beforeafter_space=<寸法>`：定理環境の前後の空きを指定します．
 
+### 前付きなど
+`\fontmatter` / `\mainmatter` / `\backmatter` / `\appendix`での処理を`\jlreqsetup`で指定できます．
+* `frontmatter_pagebreak=[cleardoublepage/clearpage/]`：`\frontmatter`実行時の改ページを実行する命令名を指定します．空にすると何もしません．
+* `frontmatter_counter={<カウンタ名>={value=<値>, the=<コード>, restore=[true/false]},...}`：`\frontmatter`時でのカウンタの操作を指定します．例えば`chapter={value=0,the={[\arabic{chapter]}}`とすると，`chapter`カウンタの値が`0`になり，`\thechapter`が`[\arabic{chapter}]`となります．デフォルトでは`\mainmatter`時に値と`\the<カウンタ名>`の定義を戻しますが，`restore=false`とするとこの動きが抑制されます．
+* `frontmatter_heading={<見出し命令名>={<設定>},...}`：見出し命令の動きを変更します．`\Delare***Heading`で指定できる項目の他以下を受け付けます．
+    - `heading_type=[Tobira/Block/Runin/Cutin/Modify]`：見出しの種類です．`Modify`が指定された場合は`\ModifyHeading`での変更となります．
+    - `heading_level=<数値>`：見出し命令のレベルを設定します．指定されなかった場合は，`\frontmatter`実行時の値が使われます．`heading_type=Modify`の時は無視されます．
+    - `restore=[true/false]`：`true`が指定されると，`\mainmatter`で元の定義を復帰します．デフォルトは`true`です．
+* `frontmatter_pagestyle={<ページスタイル名>[,restore=[true/false]]}`：`\frontmatter`実行時にここで指定されたページスタイルへと切り替えます．デフォルトでは`\mainmatter`時にもとのページスタイルに戻しますが，`restore=false`を指定すると戻しません．
+* `frontmatter_pagination={<ページ番号指定>[,continuous,independent]}`：ページ番号の出力形式を，`frontmatter_pagination=roman`のようにLaTeXの命令名で指定します．更に`continuous`が指定されると通しノンブルとなります．`independent`で別ノンブルです．
+* `frontmatter_precode=<コード>`：`\frontmatter`時に最初に実行されるコードです．
+* `frontmatter_postcode=<コード>`：`\frontmatter`時に最後に実行されるコードです．
+
+`frontmatter`を`mainmatter`や`backmatter`，`appendix`へと変えた設定も存在します．ただし，以下のような違いがあります．
+* `restore=[true/false]`は無効な設定です．
+* `mainmatter_pagination`に`continuous`と`independent`は指定できません．
+* `appendix_pagebreak`，`appendix_pagestyle`，`appendix_pagination`はありません．
+
+
 ## 見出し
-見出しの設定は，`\Declare***Heading`という命令で行います（***には見出しの種類に応じた文字列が入る）．書式はすべて
+新しい見出しを`\New***Heading`という命令で作ることができます（***には見出しの種類に応じた文字列が入る）．書式はすべて
 
 ```
-\Declare***Heading{<命令名>}{<レベル>}{<設定>}
+\New***Heading{<命令名>}{<レベル>}{<設定>}
 ```
 
-となっています．また，`\New***Heading`，`\Renew***Heading`，`\Provide***Heading`も同時に用意されます．それぞれ
+となっています．また，`\Renew***Heading`，`\Provide***Heading`，`\Declare***Heading`も同時に用意されます．それぞれ
 
-* `\New***Heading`：指定した名前の命令が既に定義されている場合はエラー．
 * `\Renew***Heading`：指定した名前の命令が定義されていなければエラー．
 * `\Provide***Heading`：指定した名前の命令が定義されていない場合に限り見出し命令の定義が行われる．
+* `\Declare***Heading`：指定した名前の命令が定義されているか否かによらず新しく見出し命令を定義する．
 
 となっています．
 
 ### 扉見出し
-`\DeclareTobiraHeading`で作成します．通常のクラスファイルにおける`\section`等と同じ書式の命令ができます．設定は以下の通り．
+`\NewTobiraHeading`で作成します．通常のクラスファイルにおける`\section`等と同じ書式の命令ができます．設定は以下の通り．
 
 * `type=[han/naka]`：`han`だと半扉見出しを，`naka`だと中扉見出しを作ります．
-* `pagestyle=<ページスタイル>`：見出し箇所のページスタイルを指定します．
-* `label_format=<書式>`：ラベルを出力する命令を指定します．たとえば`label_format={第\thechapter 章}`のように指定します．
-* `format=<書式>`：実際に出力する書式を指定します．`format={\null\vfil {\Huge\bfseries #1#2}}`のようにします．`#1`はラベルに，`#2`は見出し文字列に置き換えられます．
+* `pagestyle=<ページスタイル名>`：見出し箇所のページスタイルを指定します．
+* `label_format=<コード>`：ラベルを出力する命令を指定します．たとえば`label_format={第\thechapter 章}`のように指定します．
+* `format=<コード>`：実際に出力する書式を指定します．`format={\null\vfil {\Huge\bfseries #1#2}}`のようにします．`#1`はラベルに，`#2`は見出し文字列に置き換えられます．この中では`\jlreqHeadingLabel`，`\jlreqHeadingText`という命令が利用可能です．いずれも引数を一つとる命令で，それぞれラベル，見出し文字列が空ならば空に，そうでなければ与えられた引数自身を出力します．例えば`format={[\jlreqHeadingLabel{Label=#1}]}`と指定されていれば，ラベルが空でない時には`[Label=<ラベル>]`を，そうでなければ`[]`を出力します．
+* `number=[true/false]'：採番を行うかを指定します．ただし，`number=false`の場合でも対応するカウンタは定義されます．また`\the<カウンタ名>`の変更もされないので，必要ならば再定義が必要になります．
 
 ### 別行見出し
-`\DeclareBlockHeading`で作成します．`\<命令名>*[running head]{見出し文字列}[副題]`という書式の命令を作成します．設定は以下の通り．
+`\NewBlockHeading`で作成します．`\<命令名>*[running head]{見出し文字列}[副題]`という書式の命令を作成します．設定は以下の通り．
 
 #### 書式関連
-* `font=<命令>`：見出しのフォントを指定します．
-* `subtitle_font=<命令>`：副題のフォントを指定します．
-* `label_format=<命令>`：ラベルのフォーマットを指定します．`label_format={第\thechapter 章}`などのようにします．
-* `subtitle_format=<命令>`：副題のフォーマットを指定します．`subtitle_format={「#1」}`のようにします．`#1`が副題自身になります．
+* `font=<コード>`：見出しのフォントを指定します．
+* `subtitle_font=<コード>`：副題のフォントを指定します．
+* `label_format=<コード>`：ラベルのフォーマットを指定します．`label_format={第\thechapter 章}`などのようにします．
+* `subtitle_format=<コード>`：副題のフォーマットを指定します．`subtitle_format={「#1」}`のようにします．`#1`は副題自身に置き換えられます．
+* `format=<コード>`：見出し全体のフォーマットを指定します．`#1`がラベル，`#2`が見出し文字列，`#3`が副題に置き換えられます．内部では`\jlreqHeadingLabel`，`\jlreqHeadingText`，`\jlreqHeadingSubtitle`という命令が利用可能です．いずれも引数を一つとる命令で，それぞれラベル，見出し文字列，副題が空ならば空に，そうでなければ与えられた引数自身を出力します．例えば`format={[\jlreqHeadingLabel{Label=#1}]}`と指定されていれば，ラベルが空でない時には`[Label=<ラベル>]`を，そうでなければ`[]`を出力します．
 
 #### インデント関連
 * `align=[left/center/right]`：見出し位置の横方向の配置場所を指定します．
 * `indent=<寸法>`：見出し全体の字下げ量を指定します．
 * `end_indent=<寸法>`：見出し全体の字上げ量を指定します．
 * `after_label_space=<寸法>`：ラベル後，見出し文字列までの空きを指定します．
-* `second_heading_text_indent=[<寸法>/{<寸法>,<寸法>}]`：見出し文字列の二行目以降のインデントを指定します．一行目の頭を起点として指定しますが，`second_heading_text_indent=*1\zw`のように先頭に`*`をつけるとラベルの頭を起点としての指定になります．（ラベルがない時は一行目の頭が起点．）また，`second_heading_text_indent={<ラベルがある時>,<ラベルがない時>}`という指定をすると，ラベルの有無に応じて値を変更することができます．`<ラベルがある時>`の指定ではやはり`*`を使うことができます．
-* `subtitle_indent=<寸法>`：副題のインデント量を指定します．見出し文字列の一行目を起点として指定します．
+* `second_heading_text_indent=[<寸法>/{<寸法>,<寸法>}]`：見出し文字列の二行目以降のインデントを指定します．一行目の頭を起点として指定しますが，`second_heading_text_indent=*1\zw`のように先頭に`*`をつけるとラベルの頭を起点としての指定になります．また，`second_heading_text_indent={<ラベルがある時>,<ラベルがない時>}`という指定をすると，ラベルの有無に応じて値を変更することができます．`<ラベルがある時>`の指定ではやはり`*`を使うことができます．
+* `subtitle_indent=<寸法>`：副題のインデント量を指定します．見出し文字列の一行目を起点として指定します．ただし，`subtitle_indent=*1\zw`のように先頭に`*`をつけるとラベルの頭を起点としての指定になります．`subtitle_indent=true`の時のみ有効です．
 
 #### その他
 * `subtitle_break=[true/false]`：見出し文字列と副題の間を改行するか指定します．
@@ -197,6 +218,7 @@
 * `pagebreak=[clearpage/cleardoublepage/clearcolumn/nariyuki/begin_with_odd_page/begin_with_even_page]`：見出し直前の改ページを指定します．それぞれ，改ページ，`\cleardoublepage`実行，改段，なりゆき，奇数ページ開始，偶数ページ開始，です．
 * `afterindent=[true/false]`：見出し直後の段落の字下げを行うかを指定します．
 * `column_spanning=[true/false]`： 段抜きの見出しにします．`pagebreak=nariyuki`または`pagebreak=clearcolumn`の時には無視されます．
+* `number=[true/false]'：採番を行うかを指定します．`\NewTobiraHeading`と同様の注意が必要です．
 
 #### 行取り
 行取りの指定は以下のいずれかの方法で行うことができます．
@@ -232,15 +254,16 @@
 なお，見出しが連続しているかは単純に別行見出しの命令が並んで書かれているかのみで判断します．従ってそれらの命令間に出力には関係しないような命令が挟まっていたとしても，見出しが連続して掲げられているとは判断されません．ただし，見出し命令の間に空白，改行または`\label[<オプション>]{<引数>}…{<引数>}`という形のもののみが挟まれている場合は，見出しが連続していると判断されます．
 
 ### 同行見出し
-`\DeclareRuninHeading`で作成します．通常の文書クラスにおける`\section`と同様の，`\<命令名>*[running head]{見出し文字列}`という書式の命令が作成されます．設定は以下の通り．
+`\NewRuninHeading`で作成します．通常の文書クラスにおける`\section`と同様の，`\<命令名>*[running head]{見出し文字列}`という書式の命令が作成されます．設定は以下の通り．
 
 * `font=<命令>`：見出しのフォントを指定します．
 * `indent=<寸法>` 見出し文字列全体の字下げ量を指定します．
 * `after_label_space=<寸法>`：ラベル後，見出し文字列までの空きを指定します．
 * `label_format=<命令>`：ラベルのフォーマットを指定します．`label_format={\theparagraph}`などのようにします．
+* `number=[true/false]'：採番を行うかを指定します．`\NewTobiraHeading`と同様の注意が必要です．
 
 ### 窓見出し
-`\DeclareCutinHeading`で作成します．`\<命令名>{見出し文字列}`という書式の命令を作成します．設定は以下の通り．
+`\NewCutinHeading`で作成します．`\<命令名>{見出し文字列}`という書式の命令を作成します．設定は以下の通り．
 
 * `font=<命令>`：見出しのフォントを指定します．
 * `indent=<寸法>`：見出し全体の字下げ量を指定します．
@@ -266,7 +289,7 @@
 
 ## ページスタイル
 ```
-\DeclarePageStyle{<ページスタイル名>}{<設定>}
+\NewPageStyle{<ページスタイル名>}{<設定>}
 ```
 によりページスタイルを定義することができます．`<設定>`はkeyval形式です．定義したページスタイルは`\pagestyle`で適用できます．設定は以下の通り．
 
@@ -274,7 +297,7 @@
 * `tate`：縦書きで小口側に出力します．
 * `font=<命令>`：柱とノンブルのフォントを指定します．
 * `running_head_position`, `nombre_position`：柱とノンブルの位置を指定します．`yoko`か`tate`のどちらが指定されているかで指定方法が変わります．
-    - `yoko`指定時：`top-left`のように指定できます．`top / bottom / center / left / right / gutter / fore_edge`が使えます．`gutter`はのど，`fore_edge`は小口です．`left`，`right`の指定は奇数ページに対するものです．`twoside`が指定されている場合，偶数ページはその逆になります．
+    - `yoko`指定時：`top-left`のように指定できます．`top / bottom / center / left / right / gutter / fore-edge`が使えます．`gutter`はのど，`fore-edge`は小口です．`left`，`right`の指定は奇数ページに対するものです．`twoside`が指定されている場合，偶数ページはその逆になります．
     - `tate`指定時：`<寸法>`が指定できます．`running_head_position`は柱の天からの下げ量を，`nombre_position`はノンブルの地からの上げ量を指定します．
 * `nombre=<書式>`：出力するノンブルを指定します．デフォルトは`\thepage`．
 * `odd_running_head=<書式>`，`even_running_head=<書式>`：それぞれ奇数ページ，偶数ページの柱を指定します．`_section`のように`_`から始まる名前を指定すると，対応する見出しを出力します．（`_section`だと現在の`\section`を出力する．）
@@ -282,7 +305,7 @@
 * `nombre_ii=<書式>`: 二つ目のノンブルを指定します．`nombre_ii_position`で場所指定もできます．指定方法は`nombre`や`nombre_position`と同じです．`odd_running_head_ii`，`even_running_head_ii`，`running_head_ii_position`もあります．`nombre_ii_position`や`running_head_ii_position`が指定されなかった場合，`yoko`指定時にはそれぞれ`nombre_position`および`running_head_position`と同じ位置に設定されます．`tate`指定時は一つ目のノンブルや柱に続く場所に表示されます．
 
 
-`\NewPageStyle`，`\RenewPageStyle`，`\ProvidePageStyle`もあります．`\ModifyPageStyle`により既存のページスタイルを改変することが可能です．
+`\RenewPageStyle`，`\ProvidePageStyle`，`\DeclarePageStyle`もあります．`\ModifyPageStyle`により既存のページスタイルを改変することが可能です．
 
 ## JFM
 以下のような独自のJFMを使います．パッケージによっては，パッケージ独自のJFMや，また標準のJFMを使うように設定がし直される場合があります．例えばLuaTeX-jaに付属するluatexja-presetパッケージは通常LuaTeX-ja標準のJFMを使います．本クラスファイルで使っているJFMを使う場合は，
@@ -398,6 +421,11 @@ JFMの名前は次の通りです．`[]`で囲まれている文字は設定に�
 * 2018-09-01
     - `\mag`が`1000`でない場合も動くようにした（つもり）．
     - バグ修正．
+* 2018-12-10
+    - 見出し命令を作る命令に`number=[true/false]`を追加．
+    - `\frontmatter`等の挙動を設定できるようにした．
+    - `\jlreqHeadingLabel`等を扉見出しと別行見出しの`format`内で使えるようにした．
+    - バグ修正
 
 
 --------------

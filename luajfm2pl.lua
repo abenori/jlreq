@@ -165,7 +165,7 @@ for class,val in pairs(jfm) do
 	chars = array_uniq(chars)
  	-- charsが空になった場合は消しておく
 	if class ~= alcharclass and class ~= noxalcharclass and isempty(chars) == true then
-		io.stderr:write("Class " .. class .. " has no chars, so we omit it\n")
+		io.stderr:write("Class " .. class .. " has no char, so we omit it\n")
 		jfm[class] = nil
 	else jfm[class].chars = table.concat(chars," ") end
 	::continue::

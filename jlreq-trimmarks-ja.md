@@ -65,7 +65,42 @@ dviドライバの指定です．エンジンに`lualatex`を利用する場合�
 パッケージオプションで指定できない設定を行えます．keyval形式です．
 
 ### `banner`
-`show=banner`時に出力される文字列．
+`show=banner`時に出力される文字列．通常は左上に出力されますが，四つ角および上下左右の中心に出力することもできます．例えば次のように指定します．
+
+```latex
+\jlreqtrimmarkssetup{
+  banner={
+    top-right={
+      tate={
+        odd = {奇数ページの右上に縦書きで表示},
+        even = {偶数ページの右上に縦書きで表示},
+      },
+      yoko={右上に横書きで表示}, % ページの偶奇によらず共通
+      corner={右上角に横書きで表示},
+      in-yoko = {右上版面内に横書きで表示},
+      in-tate = {右上版面内に縦書きで表示},
+    },
+    bottom-center={
+      left = {中央下の左に表示}, % 必要ならばodd=, even=が利用可能
+      right = {中央下の右に表示},
+      in = {中央下の版面内に表示},
+    }
+  }
+}
+```
+各項目に`\thepage`を指定するとページ数を出力できます．キー名は省略することもできます．例えば次の通り．
+```latex
+\jlreqtrimmarkssetup{
+  banner={
+    tate = {左上に縦書き}, % 場所が省略されるとtop-leftと見なされる．
+    odd = {左上奇数ページ}, % 省略されたのでyokoと見なされる．
+    top-right = {
+      odd = {右上奇数ページ} % ここもyokoが省略されている．
+    }
+  }
+}
+```
+
 
 ### `trimmarks_width`
 トンボ自身の太さを指定します．
@@ -94,7 +129,8 @@ dviドライバの指定です．エンジンに`lualatex`を利用する場合�
     - `bleed_margin`を`\jlreqtrimmarkssetup`からパッケージオプションに移した．
     - `\mag`が`1000`でない場合も動くようにした（つもり）
     - バグ修正
-
+* 2018-12-10
+    - `\jlreqtrimmarkssetup`内の`banner`を拡張．
 
 --------------
 Noriyuki Abe

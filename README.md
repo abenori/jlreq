@@ -4,14 +4,14 @@
 This package provides the class file and JFM (Japanese font metric) files for LuaTeX-ja / pLaTeX / upLaTeX. This aims to implement [Requirements for Japanese Text Layout](https://www.w3.org/TR/jlreq/).
 
 ## Installation
-Run `make`, then JFM files are created. Move the files as follows:
+Run `make` to generate JFM files. Move the files as follows:
 
 * *.tfm -> $TEXMF/fonts/tfm/public/jlreq
 * *.vf -> $TEXMF/fonts/vf/public/jlreq
-* jfm-jlreq.lua jfm-jlreqv.lua -> $TEXMF/tex/luatex/jlreq
+* jfm-jlreq.lua, jfm-jlreqv.lua -> $TEXMF/tex/luatex/jlreq
 * jlreq.cls, jlreq-helpers.sty  -> $TEXMF/tex/latex/jlreq
 
-`make install` will do this where $TEXMF=$TEXMFHOME
+The other way to install is just to run `make install`. It will install all files in `$TEXMFHOME`.
 
 ## Usage
 See [README-ja.md](README-ja.md) (in Japanese).
@@ -96,6 +96,12 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
 * 2018-09-01
     - jlreq works with unusual `\mag`.
     - Fixed bugs.
+* 2018-12-10
+    - Added `number=[true/false]` to `\New***Heading`.
+    - Added options for `\frontmatter` etc in `\jlreqsetup`.
+    - Made `\jlreqHeadingLabel` etc available in `format` in `\NewTobiraHeading` and `\NewBlockHeading`.
+    - Fixed bugs.
+
 
 --------------
 Noriyuki Abe

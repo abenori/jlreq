@@ -580,7 +580,7 @@
 % 開き括弧（文字クラス1）
 \edef\jlreq@charlist@openingbrackets{（〔［｛〈《「『【‘“\ifx p\jlreq@engine\else ｟〘〖«〝\fi}
 % 閉じ括弧（文字クラス2）
-\edef\jlreq@charlist@closingbrackets{）〕］｝〉》」』】’”\ifx p\jlreq@engine\else｠〙〗»〟\fi}
+\edef\jlreq@charlist@closingbrackets{）〕］｝〉》」』】’”\ifx p\jlreq@engine\else ｠〙〗»〟\fi}
 % ハイフン（文字クラス3）
 \edef\jlreq@charlist@hyphens{‐〜\ifx p\jlreq@engine\else ゠–\fi}
 % 区切り約物（文字クラス4）
@@ -1597,13 +1597,20 @@
           \noexpand\fi
         \fi
         \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{\ifjlreq@number\else -\fi}{\expandonce{\jlreq@label@format}}{####1}%
+        \unexpanded{\jlreq@ifempty{##2}%
+          {\long\gdef\jlreqHeadingText####1{}}%
+          {\long\gdef\jlreqHeadingText####1{####1}}%
+        }%
         \ifjlreq@number
           \unexpanded{\ifnum#2>\c@secnumdepth\relax}%
+            \unexpanded{\long\gdef\jlreqHeadingLabel####1{}}%
             \expandonce{\jlreq@format{}{##1}}%
           \noexpand\else
+            \unexpanded{\long\gdef\jlreqHeadingLabel####1{####1}}%
             \expandafter\expandonce\expandafter{\jlreq@formatwlabel{##2}}%
           \noexpand\fi
         \else
+          \unexpanded{\long\gdef\jlreqHeadingLabel####1{}}%
           \expandonce{\jlreq@format{}{##1}}%
         \fi
         \noexpand\@afterheading
@@ -1611,7 +1618,12 @@
         \unexpanded{\if@restonecol\twocolumn\fi}%
       }%
       \noexpand\def\expandonce{\csname jlreq@TobiraHeading@start@s@#1\endcsname}####1{%
-        \expandonce{\jlreq@format{}{##1}}%
+        \unexpanded{\long\gdef\jlreqHeadingLabel####1{}}%
+        \unexpanded{\jlreq@ifempty{##1}%
+          {\long\gdef\jlreqHeadingText####1{}}%
+          {\long\gdef\jlreqHeadingText####1{####1}}%
+        }%
+        \expandonce{\jlreq@format{}{##1}}
         \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{*}{\expandonce{\jlreq@label@format}}{####1}%
         \noexpand\@afterheading
         \expandonce{\jlreq@heading@clearpage}%
@@ -1778,17 +1790,17 @@
     \edef\jlreq@do{%
       \unexpanded{\def\jlreq@resulta}{%
         \ifx\jlreq@tempc\@empty
-          \unexpanded{\long\gdef\jlreqBlockHeadingLabel####1{####1}}%
+          \unexpanded{\long\gdef\jlreqHeadingLabel####1{####1}}%
           \unexpanded{\refstepcounter{#1}}%
         \else
-          \unexpanded{\long\gdef\jlreqBlockHeadingLabel####1{}}%
+          \unexpanded{\long\gdef\jlreqHeadingLabel####1{}}%
         \fi
         \jlreq@ifempty{#7}%
-          {\unexpanded{\long\gdef\jlreqBlockHeadingHeadingText####1{}}}%
-          {\unexpanded{\long\gdef\jlreqBlockHeadingHeadingTeXt####1{####1}}}%
+          {\unexpanded{\long\gdef\jlreqHeadingText####1{}}}%
+          {\unexpanded{\long\gdef\jlreqHeadingText####1{####1}}}%
         \jlreq@ifempty{#8}%
-          {\unexpanded{\long\gdef\jlreqBlockHeadingSubtitle####1{}}}%
-          {\unexpanded{\long\gdef\jlreqBlockHeadingSubtitle####1{####1}}}%
+          {\unexpanded{\long\gdef\jlreqHeadingSubtitle####1{}}}%
+          {\unexpanded{\long\gdef\jlreqHeadingSubtitle####1{####1}}}%
         \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{\unexpanded{#5}}{\expandonce{\jlreq@tempa}}{\unexpanded{#6}}%
       }%
       \unexpanded{\def\jlreq@resultb}{%

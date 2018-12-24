@@ -1472,17 +1472,19 @@
 
 %. 見出し関係 (4.1)
 % \clear***page
-\newcommand*{\cleartooddpage}{%
+\newcommand*{\cleartooddpage}[1][]{%
   \clearpage
   \ifodd\c@page\else
+    \jlreq@ifempty{#1}{}{\thispagestyle{#1}}%
     \hbox{}%
     \newpage
     \if@twocolumn\hbox{}\newpage\fi
   \fi
 }
-\newcommand*{\cleartoevenpage}{%
+\newcommand*{\cleartoevenpage}[1][]{%
   \clearpage
   \ifodd\c@page
+    \jlreq@ifempty{#1}{}{\thispagestyle{#1}}%
     \hbox{}%
     \newpage
     \if@twocolumn\hbox{}\newpage\fi
@@ -1631,7 +1633,7 @@
       }%
       \noexpand\def\expandonce{\csname jlreq@headingcs@#1\endcsname}{%
         % 改丁．これでよいのかな．
-        \unexpanded{\if@twocolumn\onecolumn\@restonecoltrue\else\@restonecolfalse\fi\cleartooddpage}%
+        \unexpanded{\if@twocolumn\onecolumn\@restonecoltrue\else\@restonecolfalse\fi\cleartooddpage[empty]}%
         \ifx\jlreq@pagestyle\@empty\else\noexpand\thispagestyle{\expandonce{\jlreq@pagestyle}}\fi
         \noexpand\secdef{\expandonce{\csname jlreq@TobiraHeading@start@#1\endcsname}}{\expandonce{\csname jlreq@TobiraHeading@start@s@#1\endcsname}}}%
       \noexpand\def\expandonce{\csname #1\endcsname}{\expandonce{\csname jlreq@headingcs@#1\endcsname}}%
@@ -2114,8 +2116,8 @@
           {clearpage}{\def\jlreq@pagebreak{\clearpage}\jlreq@column@spanning@possibletrue}
           {cleardoublepage}{\def\jlreq@pagebreak{\cleardoublepage}\jlreq@column@spanning@possibletrue}
           {clearcolumn}{\if@twocolumn\def\jlreq@pagebreak{\newpage}\else\def\jlreq@pagebreak{}\fi\jlreq@column@spanning@possiblefalse}
-          {begin_with_even_page}{\def\jlreq@pagebreak{\cleartoevenpage}\jlreq@column@spanning@possibletrue}
-          {begin_with_odd_page}{\def\jlreq@pagebreak{\cleartooddpage}\jlreq@column@spanning@possibletrue}
+          {begin_with_even_page}{\def\jlreq@pagebreak{\cleartoevenpage[empty]}\jlreq@column@spanning@possibletrue}
+          {begin_with_odd_page}{\def\jlreq@pagebreak{\cleartooddpage[empty]}\jlreq@column@spanning@possibletrue}
           {nariyuki}{\def\jlreq@pagebreak{}\jlreq@column@spanning@possiblefalse}
         }%
       }

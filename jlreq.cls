@@ -1660,14 +1660,16 @@
 % 前/後空きはprefixにa:/s:/r:が入る．r:は空きがその値そのものになる．a:/s:は行取りに加えて入る．a:で指定された空きはページ行頭では入らない
 % 後空きの時はs:は指定できない．
 % フォーマット関連：
-% フォーマット関連={ラベルのみのフォーマット}{ラベルフォーマット}{見出し文字列フォーマット}{見出し文字列フォーマット（ラベル無し）}{副題フォーマット}{副題フォーマット（ラベル無し）}{見出し全体のフォーマット}
+% フォーマット関連={{ラベルのみのフォーマット}{ラベルフォーマット}{見出し文字列フォーマット}{見出し文字列フォーマット（ラベル無し）}{副題フォーマット}{副題フォーマット（ラベル無し）}}{{前フォーマットラベルあり}{前フォーマットラベルなし}{見出し全体のフォーマット}{後ろフォーマットラベルあり}{後ろフォーマットラベルなし}}
 % 見出しそのものは「全体フォーマット」に従い出力される．パラメータトークン#1を含み，#1=見出し本体：スペース関連と上の「見出し全体のフォーマット」に基づいて整形される．
 % 見出し全体のフォーマット内では#1=ラベル，#2=見出し文字列，#3=副題，それぞれ各々のフォーマットに基づき整形される．
 % ラベルフォーマットでは#1=カウンタ名，見出し文字列フォーマットでは#1=見出し文字列，副題フォーマットでは#1=副題
 % ラベルのみのフォーマットは目次に使われる．
 \newcommand{\jlreq@BlockHeading@start}[6]{%
   \if@noskipsec\leavevmode\fi
-  \edef\jlreq@BlockHeading@start@format{\unexpanded{#5}}% この二つは\parを含むかもしれないので引数渡しはしない（後の\@ifstarで詰まる）
+  % #5と#6は\parを含むかもしれないので引数渡しはしない（後の\@ifstarで詰まる）
+  \edef\jlreq@BlockHeading@start@eachformat{\expandonce{\@firstoftwo#5}}%
+  \edef\jlreq@BlockHeading@start@format{\expandonce{\@secondoftwo#5}}
   \edef\jlreq@BlockHeading@start@totalformat{\unexpanded{#6}}%
   \jlreq@BlockHeading@start@{#1}{#2}{#3}{#4}%
 }
@@ -1682,14 +1684,15 @@
 
 % {1 = 命令}{2 = レベル}{3 = スペース関連}{4 = *}{5 = running head}{6 = 見出し}[7 = 副題]
 \long\def\jlreq@BlockHeading@start@@@#1#2#3#4#5#6[#7]{%
-  \edef\jlreq@do{\unexpanded{\jlreq@BlockHeading@start@@@@{#1}{#2}{#3}}{\expandonce{\jlreq@BlockHeading@start@format}}{\expandonce{\jlreq@BlockHeading@start@totalformat}}}%
+  
+  \edef\jlreq@do{\unexpanded{\jlreq@BlockHeading@start@@@@{#1}{#2}{#3}}{\expandonce{\jlreq@BlockHeading@start@totalformat}}}%
   \jlreq@do{#4}{#5}{#6}{#7}%
 }
 
-% {1 = 命令}{2 = レベル}{3 = スペース関連}{4 = フォーマット群}{5 = 全フォーマット}{6 = *}{7 = running head}{8 = 見出し}{9 = 副題}
-\long\def\jlreq@BlockHeading@start@@@@#1#2#3#4#5#6#7#8#9{%
+% {1 = 命令}{2 = レベル}{3 = スペース関連}{4 = 全フォーマット}{5 = *}{6 = running head}{7 = 見出し}{8 = 副題}
+\long\def\jlreq@BlockHeading@start@@@@#1#2#3#4#5#6#7#8{%
   \edef\jlreq@tempa##1##2##3##4##5##6##7{%
-    \unexpanded{\jlreq@BlockHeading@start@makeoutput{#1}{#2}}{{##1}{##2}{##3}}\unexpanded{{#4}{#6}{#7}{#8}{#9}}%
+    \unexpanded{\jlreq@BlockHeading@start@makeoutput{#1}{#2}}{{##1}{##2}{##3}}{\expandonce{\jlreq@BlockHeading@start@eachformat}}{\expandonce{\jlreq@BlockHeading@start@format}}\unexpanded{{#5}{#6}{#7}{#8}}%
     \unexpanded{\def\jlreq@tempb}{{##4}{##5}{##6}{##7}}% 縦方向空き
   }%
   \jlreq@tempa#3%
@@ -1702,7 +1705,7 @@
     \expandonce{\jlreq@tempb}%
   }%
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@format@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
-    \unexpanded{#5}%
+    \unexpanded{#4}%
   }%
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@before@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
     \expandonce{\jlreq@resulta}%
@@ -1773,22 +1776,23 @@
 \def\jlreq@BlockHeading@HeadingSpaces@ignoretokens{\label}
 
 % \jlreq@resultaにaux吐き出しとかを入れて，\jlreq@resultbに出力を入れる（縦方向調整なし）
-% {1 = 命令}{2 = レベル}{3 = スペース関連（横方向のみ）}{4 = フォーマット群}{5 = *}{6 = running head}{7 = 見出し}{8 = 副題}
-\long\def\jlreq@BlockHeading@start@makeoutput#1#2#3#4#5#6#7#8{%
+% {1 = 命令}{2 = レベル}{3 = スペース関連（横方向のみ）}{4 = フォーマット群}{5 = まとめたフォーマット群}{6 = *}{7 = running head}{8 = 見出し}{9 = 副題}
+\long\def\jlreq@BlockHeading@start@makeoutput#1#2#3#4#5#6#7#8#9{%
   \begingroup
+    % ラベルがありか否か．\jlreq@tempc = \@emptyならばラベルあり
     \ifnum #2>\c@secnumdepth
       \def\jlreq@tempc{*}%
     \else
-      \def\jlreq@tempc{#5}%
+      \def\jlreq@tempc{#6}%
     \fi
-    \long\def\jlreq@tempa##1##2##3##4##5##6##7{%
-      \long\def\jlreq@tempa{##1}% 素のラベルのフォーマットを取り出す
-      \edef\jlreq@tempb{\unexpanded{{##2}{##3}{##4}{##5}{##6}{##7}}{\expandonce{\jlreq@tempc}}}% 残り
-    }%
-    \jlreq@tempa#4%
-    \expandafter\jlreq@BlockHeading@start@makeoutput@@\jlreq@tempb{#7}{#8}%
+    \edef\jlreq@tempa{\expandafter\jlreq@BlockHeading@start@geteachformat\expandafter{\jlreq@tempc}#4}% {ラベルフォーマット}{本文フォーマット}{副題フォーマット}
+    \edef\jlreq@tempb{\expandafter\jlreq@BlockHeading@start@getformat\expandafter{\jlreq@tempc}#5}% {まとめるフォーマット}
+    \edef\jlreq@do{\noexpand\jlreq@BlockHeading@start@makeoutput@@\expandonce{\jlreq@tempa}\expandonce{\jlreq@tempb}\unexpanded{{#8}{#9}}}%
+    \jlreq@do
     \edef\jlreq@do{\noexpand\jlreq@BlockHeading@start@makeoutput@\unexpanded{#3}{\expandonce{\jlreq@result}}}%
     \jlreq@do
+    % \jlreq@tempa -> 素のラベルフォーマット
+    \edef\jlreq@tempa{\jlreq@BlockHeading@start@getonlylabelformat#4}%
     \edef\jlreq@do{%
       \unexpanded{\def\jlreq@resulta}{%
         \ifx\jlreq@tempc\@empty
@@ -1797,13 +1801,13 @@
         \else
           \unexpanded{\long\gdef\jlreqHeadingLabel####1{}}%
         \fi
-        \jlreq@ifempty{#7}%
+        \jlreq@ifempty{#8}%
           {\unexpanded{\long\gdef\jlreqHeadingText####1{}}}%
           {\unexpanded{\long\gdef\jlreqHeadingText####1{####1}}}%
-        \jlreq@ifempty{#8}%
+        \jlreq@ifempty{#9}%
           {\unexpanded{\long\gdef\jlreqHeadingSubtitle####1{}}}%
           {\unexpanded{\long\gdef\jlreqHeadingSubtitle####1{####1}}}%
-        \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{\unexpanded{#5}}{\expandonce{\jlreq@tempa}}{\unexpanded{#6}}%
+        \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{\unexpanded{#6}}{\expandonce{\jlreq@tempa}}{\unexpanded{#7}}%
       }%
       \unexpanded{\def\jlreq@resultb}{%
         \expandonce{\jlreq@result}%
@@ -1812,6 +1816,18 @@
   \expandafter\endgroup
   \jlreq@do
 }
+
+% {ラベルフォーマット}{本文フォーマット}{副題フォーマット}に展開される．
+% {1 = 空ならばラベルあり}{2 = ラベルのみのフォーマット}{3 = ラベルフォーマット}{4 = 見出し文字列フォーマット}{5 = 見出し文字列フォーマット（ラベル無し）}{6 = 副題フォーマット}{7 = 副題フォーマット（ラベル無し）}
+\long\def\jlreq@BlockHeading@start@geteachformat#1#2#3#4#5#6#7{%
+  \jlreq@ifempty{#1}{\unexpanded{{#3}{#4}{#6}}}{\unexpanded{{}{#5}{#7}}}%
+}
+% {全体フォーマット}に展開される．
+% {1 = 空ならばラベルあり}{2 = 前フォーマットラベルあり}{3 = 前フォーマットラベルなし}{4 = 見出し全体のフォーマット}{5 = 後ろフォーマットラベルあり}{6 = 後ろフォーマットラベルなし}
+\long\def\jlreq@BlockHeading@start@getformat#1#2#3#4#5#6{%
+  \jlreq@ifempty{#1}{{\unexpanded{#2#4#6}}}{{\unexpanded{#3#4#6}}}%
+}
+\long\def\jlreq@BlockHeading@start@getonlylabelformat#1#2#3#4#5#6{\unexpanded{#1}}%
 
 % {1 = 配置(clr)}{2 = 字下げ}{3 = 字上げ}{4 = 出力}
 \long\def\jlreq@BlockHeading@start@makeoutput@#1#2#3#4{%
@@ -1828,25 +1844,24 @@
   }%
 }
 
-% {1 = ラベルフォーマット}{2 = 見出し文字列フォーマット}{3 = 見出し文字列フォーマット（ラベル無し）}{4 = 副題フォーマット}{5 = 副題フォーマット（ラベル無し）}{6 = 全体フォーマット}{7 = *}{8 = 見出し}{9 = 副題}
+% {1 = ラベルフォーマット}{2 = 見出し文字列フォーマット}{3 = 副題フォーマット}{4 = 全体フォーマット}{5 = 見出し}{6 = 副題}
 % \jlreq@resultに出力対象を入れる
-\long\def\jlreq@BlockHeading@start@makeoutput@@#1#2#3#4#5#6#7#8#9{%
+\long\def\jlreq@BlockHeading@start@makeoutput@@#1#2#3#4#5#6{%
   \begingroup
-    % \jlreq@tempaに{ラベル}{見出し}{副題}という形のものを入れる
-    \jlreq@ifempty{#7}{%
-      % ラベルあり
-      \long\def\jlreq@tempa{#1}%
-      \long\def\jlreq@tempb##1{#2}%
-      \jlreq@ifempty{#9}{\def\jlreq@tempc##1{}}{\long\def\jlreq@tempc##1{#4}}%
+    \long\def\jlreq@tempa##1{#2}% 見出し文字列
+    \expandafter\def\expandafter\jlreq@tempa\expandafter{\jlreq@tempa{#5}}%
+    \jlreq@ifempty{#6}{%
+      \def\jlreq@tempb{}%
     }{%
-      \long\def\jlreq@tempa{}%
-      \long\def\jlreq@tempb##1{#3}%
-      \jlreq@ifempty{#9}{\def\jlreq@tempc##1{}}{\long\def\jlreq@tempc##1{#5}}%
+      \long\def\jlreq@tempb##1{#3}% 副題
+      \expandafter\def\expandafter\jlreq@tempb\expandafter{\jlreq@tempb{#6}}%
     }%
-    \edef\jlreq@tempa{{\expandonce{\jlreq@tempa}}{\expandonce{\jlreq@tempb{#8}}}{\expandonce{\jlreq@tempc{#9}}}}%
-    \long\def\jlreq@tempb##1##2##3{#6}%
-    \edef\jlreq@tempa{\noexpand\expandonce{\noexpand\jlreq@tempb\expandonce{\jlreq@tempa}}}%
-    \edef\jlreq@do{\unexpanded{\def\jlreq@result}{\jlreq@tempa}}%
+    \long\def\jlreq@tempc##1##2##3{#4}% 全体のフォーマット
+    % 二度展開すると欲しいものが得られる
+    \edef\jlreq@tempa{\noexpand\jlreq@tempc{\unexpanded{#1}}{\expandonce{\jlreq@tempa}}{\expandonce{\jlreq@tempb}}}%
+    \edef\jlreq@do{%
+      \unexpanded{\def\jlreq@result}{\expandafter\expandonce\expandafter{\jlreq@tempa}}%
+    }%
   \expandafter\endgroup
   \jlreq@do
 }
@@ -2008,6 +2023,7 @@
   \jlreq@do
 }
 
+\newbox\jlreq@BlockHeading@start@label@box
 % \DeclareBlockHeading{命令名}{レベル}{設定}
 \def\jlreq@BlockHeading@allheadings{}% 別行見出し一覧
 \newcommand{\DeclareBlockHeading}[3]{%
@@ -2032,7 +2048,7 @@
     \edef\jlreq@heading@text@format{\unexpanded{##1}}%
     \def\jlreq@pagebreak{}%
     \def\jlreq@label@format{\@seccntformat{#1}}%
-    \newif\ifjlreq@hang\jlreq@hangtrue
+    \newif\ifjlreq@second@text@indent@withlabel\jlreq@second@text@indent@withlabeltrue
     \def\jlreq@after@label@space{1\zw}%
     \def\jlreq@second@heading@text@indent@wlabel{0pt}%
     \def\jlreq@second@heading@text@indent@wolabel{0pt}%
@@ -2079,10 +2095,10 @@
       {second_heading_text_indent,heading_text_second_indent}{%
         \jlreq@parsecomma{##1}{%
           \jlreq@iffirsttoken{####1}{*}{%
-            \jlreq@hangfalse
+            \jlreq@second@text@indent@withlabelfalse
             \edef\jlreq@second@heading@text@indent@wlabel{\expandonce{\@gobble ####1}}%
           }{%
-            \jlreq@hangtrue
+            \jlreq@second@text@indent@withlabeltrue
             \def\jlreq@second@heading@text@indent@wlabel{####1}%
           }%
           \jlreq@ifempty{####2}{%
@@ -2147,25 +2163,38 @@
         \def\jlreq@column@spanning{false}%
       \fi
     }{}%
+    % ラベルありフォーマット：前
+    \edef\jlreq@pre@format@wlabel{%
+      \noexpand\noindent
+      \expandonce{\jlreq@font}%
+      \ifnum 0\ifjlreq@second@text@indent@withlabel 1\fi\ifjlreq@subtitleindent@withlabel 1\fi>0
+        \unexpanded{\setbox\jlreq@BlockHeading@start@label@box=\hbox}{\expandonce{\jlreq@label@format}}%
+        \unexpanded{\xdef\jlreq@BlockHeading@start@labellength{\the\wd\jlreq@BlockHeading@start@label@box}}%
+        \unexpanded{\def\jlreq@BlockHeading@start@outputlabel{\box\jlreq@BlockHeading@start@label@box}}%
+      \else
+        \unexpanded{\xdef\jlreq@BlockHeading@start@labellength{0pt}}%
+        \unexpanded{\def\jlreq@BlockHeading@start@outputlabel}{\expandonce{\jlreq@label@format}}%
+      \fi
+    }%
+    % ラベルなしフォーマット：前
+    \edef\jlreq@pre@format@wolabel{%
+      \noexpand\noindent
+      \expandonce{\jlreq@font}%
+      \unexpanded{\xdef\jlreq@BlockHeading@start@labellength{0pt}}%
+      \unexpanded{\def\jlreq@BlockHeading@start@outputlabel}{}%
+    }%
     % 空き量などの調整を含んだラベル
     \edef\jlreq@label@format@modified{%
-      \noexpand\noindent
-      \ifnum 0\ifjlreq@subtitleindent@withlabel 1\fi\ifjlreq@hang 1\fi>0
-        \unexpanded{\setbox\jlreq@tempboxa=\hbox}{\expandonce{\jlreq@label@format}}%
-        \unexpanded{\xdef\jlreq@BlockHeading@start@labellength{\the\wd\jlreq@tempboxa}}%
-        \unexpanded{\box\jlreq@tempboxa}%
-      \else
-        \expandonce{\jlreq@label@format}%
-      \fi
-      \inhibitglue\hbox{}%
+      \noexpand\jlreq@BlockHeading@start@outputlabel
+      \unexpanded{\inhibitglue\hbox{}}%
       \ifdim\dimexpr\jlreq@after@label@space\relax=0pt \else
         \noexpand\hspace*{\noexpand\dimexpr\expandonce{\jlreq@after@label@space}\noexpand\relax}%
       \fi
     }%
     \edef\jlreq@heading@text@format@wlabel{%
-      \ifnum 0\ifdim\jlreq@second@heading@text@indent@wlabel>0pt 1\fi\ifjlreq@hang 1\fi>0
+      \ifnum 0\ifdim\jlreq@second@heading@text@indent@wlabel=0pt \else 1\fi\ifjlreq@second@text@indent@withlabel 1\fi>0
         \unexpanded{\hangindent=\glueexpr}(\expandonce{\jlreq@second@heading@text@indent@wlabel})%
-          \ifjlreq@hang + (\expandonce{\jlreq@after@label@space}) + \unexpanded{\jlreq@BlockHeading@start@labellength}\fi
+          \ifjlreq@second@text@indent@withlabel + (\expandonce{\jlreq@after@label@space}) + \unexpanded{\jlreq@BlockHeading@start@labellength}\fi
           \noexpand\relax
       \fi
       \expandonce{\jlreq@heading@text@format}%
@@ -2176,19 +2205,17 @@
       \fi
       \expandonce{\jlreq@heading@text@format}%
     }%
+    % 副題：ラベルありかなしかはhangindentの扱いだけなので，他はまとめる
     \def\jlreq@make@subtitle@format##1##2{%
       \edef##1{%
         \ifjlreq@subtitle@break
-          \unexpanded{\par}%
+          \noexpand\par
           ##2%
-        \fi
-        \ifdim\jlreq@subtitle@indent=0pt \else
-          \ifjlreq@subtitle@break\else
-            \unexpanded{\hspace*}{\expandonce{\jlreq@subtitle@indent}}%
-          \fi
-        \fi
-        \ifjlreq@subtitle@break
           \unexpanded{\nobreak\noindent}%
+        \else
+          \ifdim\jlreq@subtitle@indent=0pt \else
+            \noexpand\hspace*{\expandonce{\jlreq@subtitle@indent}}%
+          \fi
         \fi
         {\expandonce{\jlreq@subtitle@font}\expandonce{\jlreq@subtitle@format}}%
       }%
@@ -2198,14 +2225,14 @@
         \noexpand\hangafter=0
         \unexpanded{\hangindent=\dimexpr}\noexpand\jlreq@BlockHeading@start@labellength + (\expandonce{\jlreq@after@label@space}) + (\expandonce{\jlreq@subtitle@indent})\noexpand\relax
       \else
-        \ifdim\jlreq@subtitle@indent>0pt
+        \ifdim\jlreq@subtitle@indent=0pt \else
           \noexpand\hangafter=0
           \unexpanded{\hangindent=\dimexpr}\expandonce{\jlreq@subtitle@indent}\noexpand\relax
         \fi
       \fi
     }%
     \jlreq@make@subtitle@format\jlreq@subtitle@format@wolabel{%
-      \ifdim\jlreq@subtitle@indent>0pt
+      \ifdim\jlreq@subtitle@indent=0pt \else
         \noexpand\hangafter=0
         \unexpanded{\hangindent=\dimexpr}\expandonce{\jlreq@subtitle@indent}\noexpand\relax
       \fi
@@ -2219,7 +2246,7 @@
       \ifthenelse{\equal{\jlreq@column@spanning}{true}}{%
         \def\@tempa##1##2##3{%
           % 前開きが常に入ってしまうので，a:の時は除去する
-          \jlreq@iffirsttoken{##1}{a}{\def\jlreq@spaceset{{}{##2}{##3}}}{}
+          \jlreq@iffirsttoken{##1}{a}{\def\jlreq@spaceset{{}{##2}{##3}}}{}%
           \edef\jlreq@totalformat{%
             \noexpand\twocolumn[{%
               % 普段自動で入る\topskipと\baselineskipを手動で入れる
@@ -2241,10 +2268,16 @@
         {{\expandonce{\jlreq@align}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@end@indent}}\expandonce{\jlreq@spaceset}{\expandonce{\jlreq@allowbreak@evenpage}}}%
         {\ifjlreq@number\else -\fi}%
         {%
-          {\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@label@format@modified}}%
-          {\expandonce{\jlreq@heading@text@format@wlabel}}{\expandonce{\jlreq@heading@text@format@wolabel}}%
-          {\expandonce{\jlreq@subtitle@format@wlabel}}{\expandonce{\jlreq@subtitle@format@wolabel}}%
-          {\expandonce{\jlreq@font}\expandonce{\jlreq@format}}%
+          {%
+            {\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@label@format@modified}}%
+            {\expandonce{\jlreq@heading@text@format@wlabel}}{\expandonce{\jlreq@heading@text@format@wolabel}}%
+            {\expandonce{\jlreq@subtitle@format@wlabel}}{\expandonce{\jlreq@subtitle@format@wolabel}}%
+          }%
+          {%
+            {\expandonce{\jlreq@pre@format@wlabel}}{\expandonce{\jlreq@pre@format@wolabel}}%
+            {\expandonce{\jlreq@format}}%
+            {}{}%
+          }%
         }%
         {\expandonce{\jlreq@totalformat}}%
       }}%

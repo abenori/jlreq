@@ -1829,6 +1829,7 @@
 }
 \long\def\jlreq@BlockHeading@start@getonlylabelformat#1#2#3#4#5#6{\unexpanded{#1}}%
 
+% 横方向の空き調整を入れて，\jlreq@resultに返す．
 % {1 = 配置(clr)}{2 = 字下げ}{3 = 字上げ}{4 = 出力}
 \long\def\jlreq@BlockHeading@start@makeoutput@#1#2#3#4{%
   \edef\jlreq@result{%
@@ -1840,7 +1841,8 @@
       \ifx#1r\noexpand\raggedleft\fi
       \jlreq@ifempty{#2}{}{\unexpanded{\hsize=\dimexpr\hsize - #2\relax}}%
       \jlreq@ifempty{#3}{}{\unexpanded{\hsize=\dimexpr\hsize - #3\relax}}%
-      \unexpanded{#4}}%
+      \unexpanded{#4}%
+    }%
   }%
 }
 
@@ -4121,6 +4123,8 @@
     \def\jlreq@command{}%
     \def\jlreq@mark@format{}%
     \def\jlreq@font{}%
+    \def\jlreq@nombre@font{}%
+    \def\jlreq@running@head@font{}%
     \let\jlreq@oddheadformat\relax
     \let\jlreq@evenheadformat\relax
     \let\jlreq@oddfootformat\relax
@@ -4137,6 +4141,8 @@
       \expandafter\def\csname jlreq@nombre@\jlreq@i\endcsname{}%
       \expandafter\def\csname jlreq@odd@running@head@\jlreq@i\endcsname{}%
       \expandafter\def\csname jlreq@even@running@head@\jlreq@i\endcsname{}%
+      \expandafter\def\csname jlreq@nombre@font@\jlreq@i\endcsname{}%
+      \expandafter\def\csname jlreq@running@head@font@\jlreq@i\endcsname{}%
     }%
     \jlreq@parsekeyval[PageStyle:#1]{
       *{tate}{\jlreq@pstatetrue}
@@ -4146,7 +4152,13 @@
       {running_head_position}{\def\jlreq@running@head@i@position{##1}}
       {odd_running_head}{\def\jlreq@odd@running@head@i{##1}}
       {even_running_head}{\def\jlreq@even@running@head@i{##1}}
-      {font}{\def\jlreq@font{##1}}
+      {font}{%
+        \def\jlreq@font{##1}%
+        \def\jlreq@nombre@font{##1}%
+        \def\jlreq@running@head@font{##1}%
+      }
+      {nombre_font}{\def\jlreq@nombre@font{#1}}
+      {running_head_font}{\def\jlreq@running@head@font{#1}}
       {mark_format}{\edef\jlreq@mark@format{\unexpanded{##1}}}
       {command}{\edef\jlreq@command{\unexpanded{##1}}}
       {gap}{\def\jlreq@gap{##1}}
@@ -4164,12 +4176,16 @@
       {running_head_ii_position}{\def\jlreq@running@head@ii@position{##1}}
       {odd_running_head_ii}{\def\jlreq@odd@running@head@ii{##1}}
       {even_running_head_ii}{\def\jlreq@even@running@head@ii{##1}}
+      {nombre_ii_font_}{\def\jlreq@nombre@font@ii{#1}}
+      {running_head_ii_font}{\def\jlreq@running@head@font@ii{#1}}
       % 三つ目
       {nombre_iii}{\def\jlreq@nombre@iii{##1}}
       {nombre_iii_position}{\def\jlreq@nombre@iii@position{##1}}
       {running_head_iii_position}{\def\jlreq@running@head@iii@position{##1}}
       {odd_running_head_iii}{\def\jlreq@odd@running@head@iii{##1}}
       {even_running_head_iii}{\def\jlreq@even@running@head@iii{##1}}
+      {nombre_iii_font_}{\def\jlreq@nombre@font@iii{#1}}
+      {running_head_iii_font}{\def\jlreq@running@head@font@iii{#1}}
     }{#2}%
     % ノンブル同士の間や柱同士の間のデフォルトはノンブルと柱の間の空き量
     \ifx\jlreq@nombre@gap\@empty\let\jlreq@nombre@gap=\jlreq@gap\fi
@@ -4548,26 +4564,35 @@
 % 4.3.1 注4
 \newlength\abovecaptionskip
 \newlength\belowcaptionskip
+% #1@setup@#2が定義されていれば\#1@setup@#2の中身に，そうでなければ\#1@setupの中身に展開される．
+% 展開は\unexpandedで抑制される．
+\def\jlreq@@makecaption@nameuse#1#2{%
+  \expandafter\ifx\csname #1@setup@#2\endcsname\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{\csexpandonce{#1@setup}}{\csexpandonce{#1@setup@#2}}%
+}
+
 \newcommand{\@makecaption}[2]{{%
-  \reset@font\small
-  \vskip\abovecaptionskip
-  \edef\jlreq@do{\unexpanded{\def\jlreq@tempa##1}{\expandonce{\jlreq@makecaption@label@format}}}%
-  \jlreq@do
-  \setbox\jlreq@tempboxa=\hbox{\jlreq@@makecaption@label@font #1}%
-  \ifdim\wd\jlreq@tempboxa=0pt
-    \edef\jlreq@tempa{\unexpanded{{\jlreq@@makecaption@font #2}}}%
-  \else
-    \edef\jlreq@tempa{{\noexpand\jlreq@@makecaption@label@font\expandonce{\jlreq@tempa{#1}}\unexpanded{\hskip\glueexpr\jlreq@makecaption@after@label@space\relax}}\unexpanded{{\jlreq@@makecaption@font #2}}}%
-  \fi
   \@ifundefined{@currenvir}{%
     \@ifundefined{@captype}%
       {\def\jlreq@tempb{}}%
       {\let\jlreq@tempb=\@captype}%
   }{\let\jlreq@tempb=\@currenvir}%
-  \@ifundefined{jlreq@caption@align@\jlreq@tempb}%
-    {\let\jlreq@align=\jlreq@caption@align}%
-    {\expandafter\let\expandafter\jlreq@align\csname jlreq@caption@align@\jlreq@tempb\endcsname}%
+  \reset@font\small
+  \vskip\abovecaptionskip
+  \edef\jlreq@do{\unexpanded{\def\jlreq@tempa##1}{\jlreq@@makecaption@nameuse{jlreq@@makecaption@label@format}{\jlreq@tempb}}}%
+  \jlreq@do
+  \setbox\jlreq@tempboxa=\hbox{\jlreq@@makecaption@nameuse{jlreq@@makecaption@label@font}{\jlreq@tempb}#1}%
+  \ifdim\wd\jlreq@tempboxa=0pt
+    \edef\jlreq@tempa{{\jlreq@@makecaption@nameuse{jlreq@@makecaption@font}{\jlreq@tempb}\unexpanded{#2}}}%
+  \else
+    \edef\jlreq@tempa{%
+      {\jlreq@@makecaption@nameuse{jlreq@@makecaption@label@font}{\jlreq@tempb}\expandonce{\jlreq@tempa{#1}}}%
+      \unexpanded{\hskip\glueexpr}\jlreq@@makecaption@nameuse{jlreq@@makecaption@after@label@space}{\jlreq@tempb}\noexpand\relax
+      {\jlreq@@makecaption@nameuse{jlreq@@makecaption@font}{\jlreq@tempb}\unexpanded{#2}}%
+    }%
+  \fi
   \setbox\@tempboxa=\hbox{\jlreq@tempa}%
+  \edef\jlreq@tempc{\jlreq@@makecaption@nameuse{jlreq@@makecaption@align}{\jlreq@tempb}}%
+  \expandafter\let\expandafter\jlreq@align\jlreq@tempc
   \ifdim\wd\@tempboxa>\hsize\relax
     {%
       \ifx c\jlreq@align\centering\fi
@@ -4583,10 +4608,31 @@
     }%
   \fi
   \vskip\belowcaptionskip}}
-\jlreq@jlreqsetup@add{caption_font}{\def\jlreq@@makecaption@font{#1}}
-\jlreq@jlreqsetup@add{caption_label_font}{\def\jlreq@@makecaption@label@font{#1}}
-\jlreq@jlreqsetup@add{caption_label_format}{\edef\jlreq@makecaption@label@format{\unexpanded{#1}}}
-\jlreq@jlreqsetup@add{caption_after_label_space}{\def\jlreq@makecaption@after@label@space{#1}}
+
+% #2={figure=X}ならば\#1@setup@figureにXを入れる．そうでなければ\#1に入れる．
+\def\jlreq@caption@jlreqsetup#1#2{%
+  \jlreq@parsekeyval@nokey{%
+    \ifjlreq@parsekeyval@nokey@novalue{%
+      \expandafter\@for\expandafter\jlreq@tempa\expandafter:\expandafter=\csname #1@list\endcsname\do{%
+        \expandafter\let\csname #1@setup@\jlreq@tempa\endcsname\@undefined
+      }%
+      \expandafter\def\csname #1@list\endcsname{}%
+      \expandafter\edef\csname #1@setup\endcsname{\unexpanded{##1}}%
+    }{%
+      \expandafter\edef\csname #1@setup@##1\endcsname{\unexpanded{##2}}%
+      \csappto{#1@list}{,##1}%
+    }%
+  }{#2}%
+}
+\jlreq@jlreqsetup@add{caption_font}{\jlreq@caption@jlreqsetup{jlreq@@makecaption@font}{#1}}
+\def\jlreq@@makecaption@font@list{}
+\jlreq@jlreqsetup@add{caption_label_font}{\jlreq@caption@jlreqsetup{jlreq@@makecaption@label@font}{#1}}
+\def\jlreq@@makecaption@label@font@list{}
+\jlreq@jlreqsetup@add{caption_label_format}{\jlreq@caption@jlreqsetup{jlreq@@makecaption@label@format}{#1}}
+\def\jlreq@@makecaption@label@format@list{}
+\jlreq@jlreqsetup@add{caption_after_label_space}{\jlreq@caption@jlreqsetup{jlreq@@makecaption@after@label@space}{#1}}
+\def\jlreq@@makecaption@after@label@space@list{}
+
 \def\jlreq@caption@setalign#1#2{%
   \jlreq@switch{#2}{
     {center}{\let#1=c}
@@ -4600,12 +4646,12 @@
   \jlreq@parsekeyval@nokey{%
     \jlreq@ifempty{##1}{}{%
       \jlreq@switch{##1}{%
-        {center}{\let\jlreq@caption@align=c}
-        {left}{\let\jlreq@caption@align=l}
-        {right}{\let\jlreq@caption@align=r}
-        {top}{\let\jlreq@caption@align=l}
-        {bottom}{\let\jlreq@caption@align=r}
-        {\expandafter\jlreq@caption@setalign\csname jlreq@caption@align@##1\endcsname{##2}}
+        {center}{\let\jlreq@@makecaption@align@setup=c}
+        {left}{\let\jlreq@@makecaption@align@setup=l}
+        {right}{\let\jlreq@@makecaption@align@setup=r}
+        {top}{\let\jlreq@@makecaption@align@setup=l}
+        {bottom}{\let\jlreq@@makecaption@align@setup=r}
+        {\expandafter\jlreq@caption@setalign\csname jlreq@@makecaption@align@setup@##1\endcsname{##2}}
       }%
     }%
   }{#1}%

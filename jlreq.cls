@@ -4066,35 +4066,36 @@
   \ifx#1\@empty\ifx#4\@empty\else\eappto#2{\expandonce{#3}\expandonce{#4}}\def#4{}\fi\fi
 }
 
-% #1に入っている{柱1}{柱2}... という並びから，実際に出力する柱を構築する．
+\newif\ifjlreq@PageStyle@first
+% #1に入っている{柱1}{柱2}...{柱n}という並びから，実際に出力する柱を構築する．n>=1を仮定する．
 % 間に空白を入れる．
 % #1: ターゲットなコントロールシークエンスの名前，#2：*ならばreverseする，#3：空き
 \def\jlreq@pagestyle@make@runninghead#1#2#3{%
   \expandafter\ifx\csname #1\endcsname\@empty\expandafter\@gobble\else\expandafter\@firstofone\fi{%
     \edef\jlreq@do{%
+      \noexpand\jlreq@tempatrue % 最初の処理かフラグ
       \unexpanded{\jlreq@pagestyle@make@runninghead@{#1}{#2}{#3}}\csexpandonce{#1}\noexpand\jlreq@endmark
     }%
     \expandafter\def\csname #1\endcsname{}%
     \jlreq@do
+    % 項目が二つ以上あった．
+    \ifjlreq@tempa\else\cspreto{#1}{\jlreq@PageStyle@firsttrue}\fi
   }%
 }
 \def\jlreq@pagestyle@make@runninghead@#1#2#3#4#5{%
-  \ifnum\numexpr\jlreq@ifendmark{#5}{1}{0}*\ifjlreq@tempb 1\else 0\fi\relax=1 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
+  \ifnum\numexpr\jlreq@ifendmark{#5}{1}{0}*\ifjlreq@tempa 1\else 0\fi\relax=1 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
+    % 項目が一つしか無い
     \jlreq@ifempty{#2}{\csappto}{\cspreto}{#1}{#4}%
   }{%
-    \jlreq@ifempty{#2}{\cseappto}{\csepreto}{#1}{%
-      % 空でない柱が既に出力されたかフラグをたてる
-      \unexpanded{\protected@edef\jlreq@tempa{#4}}%
-      \unexpanded{\ifx\jlreq@tempa\@empty\else}%
-        \noexpand\ifjlreq@tempa
-          \jlreq@ifempty{#2}%
-            {\unexpanded{\hskip\glueexpr #3\relax\jlreq@tempa}}%
-            {\unexpanded{\jlreq@tempa\hskip\glueexpr #3\relax}}%
-        \unexpanded{\else
-          \jlreq@tempa\jlreq@tempatrue
-        \fi}%
-      \noexpand\fi
+    \jlreq@ifempty{#2}{\csappto}{\cspreto}{#1}{%
+      \protected@edef\jlreq@tempa{#4}%
+      \ifx\jlreq@tempa\@empty\else
+        \ifjlreq@PageStyle@first\else\hskip\glueexpr#3\relax\fi
+        \jlreq@tempa
+        \jlreq@PageStyle@firstfalse
+      \fi
     }%
+    \jlreq@tempafalse
     \jlreq@ifendmark{#5}{}{\jlreq@pagestyle@make@runninghead@{#1}{#2}{#3}{#5}}%
   }%
 }
@@ -4134,6 +4135,7 @@
   \jlreq@do
 }
 
+\newbox\jlreq@PageStyle@box
 %.. \DeclarePageStyle
 \newcommand{\DeclarePageStyle}[2]{%
   \expandafter\edef\csname jlreq@pagestyle@setting@#1\endcsname{\unexpanded{#2}}%
@@ -4398,6 +4400,7 @@
           \jlreq@note{柱やノンブルは，左ページでは，基本版面の左端の延長線にノンブル又は柱の先頭をそろえて配置するか，基本版面の左端の延長線から基本版面の文字サイズの全角アキだけ右に寄せた位置に配置する (ページスタイル #1 内，2.6.1.b)．}%
         \fi
       }{}%
+      % フォント変更命令に文字出力命令が入っているとエラーになるのを回避するために\setboxでごまかす．
       \setbox\jlreq@tempboxa=\hbox{\jlreq@running@head@font
         \ifthenelse{\lengthtest{\jlreq@gap < 1.49\zw} \OR \( \lengthtest{\jlreq@gap > 1.51\zw} \AND \lengthtest{\jlreq@gap < 1.99\zw} \) \OR \lengthtest{\jlreq@gap > 2.01\zw}}{\jlreq@note{ノンブルと柱との空き量は柱に使用する文字サイズの2倍又は1.5倍とする (ページスタイル #1 内，2.6.1.c)．}}{}%
       }%
@@ -4467,8 +4470,6 @@
                 \expandafter\edef\csname\jlreq@nombrecsname\endcsname{{\expandonce{\jlreq@nombre@font}\csexpandonce{\jlreq@nombrecsname}}}%
               \fi
             \fi
-%            \message{[#1: \jlreq@nombrecsname]}%
-%            \expandafter\show\csname\jlreq@nombrecsname\endcsname
             \expandafter\ifx\csname\jlreq@runheadcsname\endcsname\@empty\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
               % 柱が空：ノンブルのみでよい
               \expandafter\let\csname\jlreq@csname\expandafter\endcsname\csname\jlreq@nombrecsname\endcsname
@@ -4482,9 +4483,11 @@
                 \jlreq@ifleftpage{\jlreq@parity}{%
                   \ifthenelse{\equal{\jlreq@hor}{right}}{%
                     % <ノンブル><空き><柱>，右寄せ
-                    \edef\jlreq@tempa{\unexpanded{\setbox\jlreq@tempboxa=\hbox}{\expandonce{\jlreq@running@head@font}\csexpandonce{\jlreq@runheadcsname}}}%
-                    \jlreq@pagestyle@addfont@totokens{\unexpanded{\ifdim\wd\jlreq@tempboxa=0pt \else\hskip}\expandonce{\jlreq@gap}\unexpanded{\relax\fi}}{jlreq@running@head@font}{jlreq@tempb}%
-                    \expandafter\edef\csname\jlreq@csname\endcsname{\expandonce{\jlreq@tempa}\csexpandonce{\jlreq@nombrecsname}\expandonce{\jlreq@tempb}\unexpanded{\box\jlreq@tempboxa}}%
+                    \jlreq@pagestyle@addfont@totokens{\unexpanded{\ifdim\wd\jlreq@PageStyle@box=0pt \else\hskip}\expandonce{\jlreq@gap}\unexpanded{\relax\fi}}{jlreq@running@head@font}{jlreq@tempa}%
+                    \expandafter\edef\csname\jlreq@csname\endcsname{%
+                      \unexpanded{\setbox\jlreq@PageStyle@box=\hbox}{\expandonce{\jlreq@running@head@font}\csexpandonce{\jlreq@runheadcsname}}%
+                      \csexpandonce{\jlreq@nombrecsname}\expandonce{\jlreq@tempa}\unexpanded{\box\jlreq@PageStyle@box}%
+                    }%
                   }{%
                     % <ノンブル><空き><柱>，左寄せ
                     \jlreq@pagestyle@addfont@totokens{\unexpanded{\hskip\glueexpr}\expandonce{\jlreq@gap}\noexpand\relax\csexpandonce{\jlreq@runheadcsname}}{jlreq@running@head@font}{jlreq@tempa}%
@@ -4494,8 +4497,8 @@
                   \ifthenelse{\equal{\jlreq@hor}{left}}{%
                     % <柱><空き><ノンブル>，左寄せ
                     \jlreq@pagestyle@addfont@totokens{%
-                      \unexpanded{\setbox\jlreq@tempboxa=\hbox}{\csexpandonce{\jlreq@runheadcsname}}%
-                      \unexpanded{\copy\jlreq@tempboxa\ifdim\wd\jlreq@tempboxa=0pt \else\hskip\glueexpr}\expandonce{\jlreq@gap}\unexpanded{\relax\fi}%
+                      \unexpanded{\setbox\jlreq@PageStyle@box=\hbox}{\csexpandonce{\jlreq@runheadcsname}}%
+                      \unexpanded{\copy\jlreq@PageStyle@box\ifdim\wd\jlreq@PageStyle@box=0pt \else\hskip\glueexpr}\expandonce{\jlreq@gap}\unexpanded{\relax\fi}%
                     }{jlreq@running@head@font}{jlreq@tempa}%
                     \expandafter\edef\csname\jlreq@csname\endcsname{\expandonce{\jlreq@tempa}\csexpandonce{\jlreq@nombrecsname}}%
                   }{%

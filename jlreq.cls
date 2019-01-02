@@ -2250,12 +2250,16 @@
           % 前開きが常に入ってしまうので，a:の時は除去する
           \jlreq@iffirsttoken{##1}{a}{\def\jlreq@spaceset{{}{##2}{##3}}}{}%
           \edef\jlreq@totalformat{%
-            \noexpand\twocolumn[{%
-              % 普段自動で入る\topskipと\baselineskipを手動で入れる
-              \jlreq@iffirsttoken{##1}{r}{}{\unexpanded{\vskip\topskip\relax}}%
-              \unexpanded{####1}%
-              \jlreq@iffirsttoken{##2}{r}{}{\unexpanded{\vskip\glueexpr\baselineskip - \topskip\relax}}%
-            }]%
+            \unexpanded{\if@twocolumn\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}{%
+              \noexpand\twocolumn[{%
+                % 普段自動で入る\topskipと\baselineskipを手動で入れる
+                \jlreq@iffirsttoken{##1}{r}{}{\unexpanded{\vskip\topskip\relax}}%
+                \unexpanded{####1}%
+                \jlreq@iffirsttoken{##2}{r}{}{\unexpanded{\vskip\glueexpr\baselineskip - \topskip\relax}}%
+              }]%
+            }{%
+              \expandonce{\jlreq@totalformat}
+            }%
           }%
         }%
         \expandafter\@tempa\jlreq@spaceset

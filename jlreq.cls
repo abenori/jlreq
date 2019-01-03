@@ -4139,8 +4139,8 @@
   \jlreq@do
 }
 
-\newbox\jlreq@PageStyle@box
 %.. \DeclarePageStyle
+\newbox\jlreq@PageStyle@box
 \newcommand{\DeclarePageStyle}[2]{%
   \expandafter\edef\csname jlreq@pagestyle@setting@#1\endcsname{\unexpanded{#2}}%
   \begingroup
@@ -4170,8 +4170,8 @@
       \expandafter\def\csname jlreq@nombre@\jlreq@i\endcsname{}%
       \expandafter\def\csname jlreq@odd@running@head@\jlreq@i\endcsname{}%
       \expandafter\def\csname jlreq@even@running@head@\jlreq@i\endcsname{}%
-      \expandafter\def\csname jlreq@nombre@font@\jlreq@i\endcsname{}%
-      \expandafter\def\csname jlreq@running@head@font@\jlreq@i\endcsname{}%
+      \expandafter\def\csname jlreq@nombre@\jlreq@i @font\endcsname{}%
+      \expandafter\def\csname jlreq@running@head@\jlreq@i @font\endcsname{}%
     }%
     \jlreq@parsekeyval[PageStyle:#1]{
       *{tate}{\jlreq@pstatetrue}
@@ -4204,16 +4204,16 @@
       {running_head_ii_position}{\def\jlreq@running@head@ii@position{##1}}
       {odd_running_head_ii}{\def\jlreq@odd@running@head@ii{##1}}
       {even_running_head_ii}{\def\jlreq@even@running@head@ii{##1}}
-      {nombre_ii_font}{\def\jlreq@nombre@font@ii{##1}}
-      {running_head_ii_font}{\def\jlreq@running@head@font@ii{##1}}
+      {nombre_ii_font}{\def\jlreq@nombre@ii@font{##1}}
+      {running_head_ii_font}{\def\jlreq@running@head@ii@font{##1}}
       % 三つ目
       {nombre_iii}{\def\jlreq@nombre@iii{##1}}
       {nombre_iii_position}{\def\jlreq@nombre@iii@position{##1}}
       {running_head_iii_position}{\def\jlreq@running@head@iii@position{##1}}
       {odd_running_head_iii}{\def\jlreq@odd@running@head@iii{##1}}
       {even_running_head_iii}{\def\jlreq@even@running@head@iii{##1}}
-      {nombre_iii_font}{\def\jlreq@nombre@font@iii{##1}}
-      {running_head_iii_font}{\def\jlreq@running@head@font@iii{##1}}
+      {nombre_iii_font}{\def\jlreq@nombre@iii@font{##1}}
+      {running_head_iii_font}{\def\jlreq@running@head@iii@font{##1}}
     }{#2}%
     % ノンブル同士の間や柱同士の間のデフォルトはノンブルと柱の間の空き量
     \ifx\jlreq@nombre@gap\@empty\let\jlreq@nombre@gap=\jlreq@gap\fi
@@ -4266,9 +4266,16 @@
     % 見出しを出す場合：evenに章などの高いレベルの見出しを出す（2.6.3.a）
     \@ifundefined{jlreq@odd@running@head@i@heading@level}{}{\@ifundefined{jlreq@even@running@head@i@heading@level}{}{%
       \ifnum\jlreq@odd@running@head@i@heading@level<\jlreq@even@running@head@i@heading@level
-        \jlreq@note{偶数ページには奇数ページよりアウトラインレベルの高い見出しを入れる (ページスタイル #1内，2.6.3.a)．}%
+        \jlreq@note{偶数ページには奇数ページよりアウトラインレベルの高い見出しを入れる (ページスタイル #1 内，2.6.3.a)．}%
       \fi
     }}%
+    % 二番目以降にフォント設定を追加
+    \@for\jlreq@i:=ii,iii\do{%
+      \@for\jlreq@parity:=odd,even\do{%
+        \jlreq@pagestyle@addfont@tocs{jlreq@\jlreq@parity @running@head@\jlreq@i}{jlreq@running@head@\jlreq@i @font}%
+      }%
+      \jlreq@pagestyle@addfont@tocs{jlreq@nombre@\jlreq@i}{jlreq@nombre@\jlreq@i @font}%
+    }%
     % \jlreq@oddhead,\jlreq@oddfoot,\jlreq@evenhead,\jlreq@evenfootに必要なものを入れる．
     \ifjlreq@pstate\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{% tate
       % headの方に処理を入れる．footは空．
@@ -4287,20 +4294,12 @@
       \def\jlreq@nombre@contents{}% ノンブルを入れる（下の方に出力）
       \@for\jlreq@i:=i,ii,iii\do{%
         \expandafter\let\expandafter\jlreq@position\csname jlreq@nombre@\jlreq@i @position\endcsname
-        % フォント用コードが必要かのフラグを\ifjlreq@tempaに入れる
-        \ifthenelse{\equal{\jlerq@i}{i}}{\jlreq@tempafalse}{%
-          \expandafter\ifx\csname jlreq@nombre@font@\jlreq@i\endcsname\@empty\jlreq@tempafalse\else\jlreq@tempatrue\fi
-        }%
         \expandafter\ifx\csname jlreq@nombre@\jlreq@i\endcsname\@empty\else
           \jlreq@ifgluezero{\glueexpr\jlreq@position\relax}{\def\jlreq@position{}}{}%
           \eappto\jlreq@nombre@contents{%
-            \noexpand\hbox to 0pt{\hss
+            \noexpand\hbox to 0pt{\noexpand\hss
               \ifx\jlreq@position\@empty\else\unexpanded{\hskip \glueexpr}\expandonce{\jlreq@position}\noexpand\relax\fi
-              \ifjlreq@tempa
-                {\csexpandonce{jlreq@nombre@font@\jlreq@i}\csexpandonce{jlreq@nombre@\jlreq@i}}%
-              \else
-                \csexpandonce{jlreq@nombre@\jlreq@i}%
-              \fi
+              \csexpandonce{jlreq@nombre@\jlreq@i}%
             }%
           }%
         \fi
@@ -4310,10 +4309,6 @@
       \@for\jlreq@parity:=odd,even\do{%
         \expandafter\def\csname jlreq@\jlreq@parity @contents\endcsname{}%
         \@for\jlreq@i:=i,ii,iii\do{%
-          % フォント用コードが必要かのフラグを\ifjlreq@tempaに入れる
-          \ifthenelse{\equal{\jlerq@i}{i}}{\jlreq@tempafalse}{%
-            \expandafter\ifx\csname jlreq@running@head@font@\jlreq@i\endcsname\@empty\jlreq@tempafalse\else\jlreq@tempatrue\fi
-          }%
           \expandafter\let\expandafter\jlreq@position\csname jlreq@running@head@\jlreq@i @position\endcsname
           \expandafter\ifx\csname jlreq@\jlreq@parity @running@head@\jlreq@i\endcsname\@empty\else
             \jlreq@ifgluezero{\glueexpr\jlreq@position\relax}{\def\jlreq@position{}}{}%
@@ -4321,11 +4316,7 @@
               \noexpand\hbox to 0pt{\unexpanded{\hskip\glueexpr\headsep + \headheight}%
                 \if@tate\else\unexpanded{+ \topskip - \Cht}\fi
                 \ifx\jlreq@position\@empty\else + \expandonce{\jlreq@position}\fi\noexpand\relax
-                \ifjlreq@tempa
-                  {\csexpandonce{jlreq@running@head@font@\jlreq@i}\csexpandonce{jlreq@\jlreq@parity @running@head@\jlreq@i}}%
-                \else
-                  \csexpandonce{jlreq@\jlreq@parity @running@head@\jlreq@i}%
-                \fi
+                \csexpandonce{jlreq@\jlreq@parity @running@head@\jlreq@i}%
                 \noexpand\hss
               }%
             }%
@@ -4431,12 +4422,7 @@
             \jlreq@ifleftpage{\jlreq@parity}{\let\jlreq@addtocs=\cseappto}{\let\jlreq@addtocs\csepreto}%
             \edef\jlreq@csname{jlreq@nombre@\jlreq@parity @\jlreq@vert @\jlreq@hor}%
             \expandafter\ifx\csname\jlreq@csname\endcsname\@empty\else\jlreq@addtocs{\jlreq@csname}{\unexpanded{\hskip\glueexpr}\expandonce{\jlreq@nombre@gap}\noexpand\relax}\fi
-            \ifthenelse{\equal{\jlreq@i}{i}}{%
-              \jlreq@addtocs{\jlreq@csname}{\csexpandonce{jlreq@nombre@\jlreq@i}}%
-            }{%
-              \jlreq@pagestyle@addfont@totokens{\csexpandonce{jlreq@nombre@\jlreq@i}}{jlreq@nombre@font@\jlreq@i}{jlreq@tempa}%
-              \jlreq@addtocs{\jlreq@csname}{\expandonce{\jlreq@tempa}}%
-            }%
+            \jlreq@addtocs{\jlreq@csname}{\csexpandonce{jlreq@nombre@\jlreq@i}}%
           \fi
           % running@head
           % 一度「紙面の外から」の順番で{A}{B}{C}と入れる
@@ -4447,12 +4433,7 @@
             \ifthenelse{\equal{\jlreq@parity}{even}}{\jlreq@reverse@leftright{\jlreq@hor}}{}%
             \ifthenelse{\equal{\jlreq@hor}{\jlreq@pagehor}}{\let\jlreq@addtocs=\cseappto}{\let\jlreq@addtocs=\csepreto}%
             \edef\jlreq@csname{jlreq@running@head@\jlreq@parity @\jlreq@vert @\jlreq@hor}%
-            \ifthenelse{\equal{\jlreq@i}{i}}{%
-              \jlreq@addtocs{\jlreq@csname}{{\csexpandonce{jlreq@\jlreq@parity @running@head@\jlreq@i}}}%
-            }{%
-              \jlreq@pagestyle@addfont@totokens{\csexpandonce{jlreq@\jlreq@parity @running@head@\jlreq@i}}{jlreq@running@head@font@\jlreq@i}{jlreq@result}%
-              \jlreq@addtocs{\jlreq@csname}{{\expandonce{\jlreq@result}}}%
-            }%
+            \jlreq@addtocs{\jlreq@csname}{{\csexpandonce{jlreq@\jlreq@parity @running@head@\jlreq@i}}}%
           \fi
         }%
         \@for\jlreq@vert:=top,bottom\do{%

@@ -75,7 +75,7 @@
 % \jlreq@addpapersize{paper=に指定するもの}{単独オプション名}{横}{縦}
 
 \def\jlreq@addpapersize#1#2{%
-  \@ifnextchar[{\jlreq@addpapersize@{#1}{#2}}{\jlreq@addpapersize@@{#1}{#2}}
+  \@ifnextchar[{\jlreq@addpapersize@{#1}{#2}}{\jlreq@addpapersize@@{#1}{#2}}%
 }
 \def\jlreq@addpapersize@#1#2[#3]{%
   \edef\@tempa{\unexpanded{\jlreq@addpapersize@@{#1}{#2}}\csexpandonce{jlreq@helper@papersizelist@#3}}%
@@ -910,8 +910,6 @@
   \def\jlreq@yokokanjiencoding{JY3}
   \def\jlreq@tatekanjiencoding{JT3}
 \fi
-\expandafter\let\csname \jlreq@yokokanjiencoding/mc/m/n/10\endcsname\relax
-\expandafter\let\csname \jlreq@tatekanjiencoding/mc/m/n/10\endcsname\relax
 \jlreq@divide{\jlreq@jafontsize}{\jlreq@fontsize}
 \edef\jlreq@jafontscale{\strip@pt\jlreq@resultdimen}
 \jlreq@aftercls@addtodeletecs{\jlreq@jafontscale}
@@ -4502,11 +4500,11 @@
       \jlreq@pagestyle@setheadfoot{\jlreq@oddfoot}{jlreq@odd@bottom@left}{jlreq@odd@bottom@center}{jlreq@odd@bottom@right}%
       \jlreq@pagestyle@setheadfoot{\jlreq@evenhead}{jlreq@even@top@left}{jlreq@even@top@center}{jlreq@even@top@right}%
       \jlreq@pagestyle@setheadfoot{\jlreq@evenfoot}{jlreq@even@bottom@left}{jlreq@even@bottom@center}{jlreq@even@bottom@right}%
-      \ifdim\marginparwidth>0pt
-        \def\jlreq@defaultformat{\hbox to \jlreqyokoheadlength{####1}}%
-      \else
+      \ifthenelse{\lengthtest{\marginparwidth>0pt} \AND \(\NOT\boolean{@tate}\)}{%
+        \def\jlreq@defaultformat{\hss\hbox to \jlreqyokoheadlength{####1}\hss}%
+      }{%
         \def\jlreq@defaultformat{####1}%
-      \fi
+      }%
       \jlreq@pagestyle@applyformat{\jlreq@oddhead}{\jlreq@oddheadformat}{\jlreq@defaultformat}%
       \jlreq@pagestyle@applyformat{\jlreq@evenhead}{\jlreq@evenheadformat}{\jlreq@defaultformat}%
       \jlreq@pagestyle@applyformat{\jlreq@oddfoot}{\jlreq@oddfootformat}{\jlreq@defaultformat}%
@@ -4551,14 +4549,18 @@
   \jlreq@do
 }
 
-\ifdim\marginparwidth>0pt
-  \if@twocolumn
-    \def\jlreqyokoheadlength{\dimexpr\textwidth + 2\marginparwidth + 2\marginparsep\relax}
-  \else
-    \def\jlreqyokoheadlength{\dimexpr\textwidth + \marginparwidth + \marginparsep\relax}
-  \fi
+\if@tate
+  \def\jlreqyokoheadlength{\textheight}
 \else
-  \def\jlreqyokoheadlength{\textwidth}
+  \ifdim\marginparwidth>0pt
+    \if@twocolumn
+      \def\jlreqyokoheadlength{\dimexpr\textwidth + 2\marginparwidth + 2\marginparsep\relax}
+    \else
+      \def\jlreqyokoheadlength{\dimexpr\textwidth + \marginparwidth + \marginparsep\relax}
+    \fi
+  \else
+    \def\jlreqyokoheadlength{\textwidth}
+  \fi
 \fi
 \edef\jlreqtateheadlength{\unexpanded{\dimexpr\headsep + \headheight + \textheight}\if@tate\else\unexpanded{- \topskip + 1\zh}\fi\noexpand\relax}
 

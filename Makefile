@@ -102,7 +102,10 @@ jlreq%tex: README%md README-template.tex
 
 pdfdoc: jlreq.pdf jlreq-ja.pdf
 
-jlreq%pdf: README%md README-template.tex
+jlreq.pdf: README.md README-template.tex
+	sed -e "s/\\[README-ja.md\\](README-ja.md)/[jlreq-ja.pdf](jlreq-ja.pdf)/" README.md | pandoc --verbose -f gfm -t latex --pdf-engine=lualatex --template README-template.tex -o $@
+
+jlreq-ja.pdf: README-ja.md README-template.tex
 	pandoc --verbose -f gfm -t latex --pdf-engine=lualatex --template README-template.tex $< -o $@
 
 htmldoc: jlreq.html jlreq-ja.html jlreq-trimmarks.html jlreq-trimmarks-ja.html
@@ -111,7 +114,7 @@ jlreq-ja.html: README-ja.md README-template.html
 	pandoc --verbose -f gfm -t html5 -V lang=ja -M title=jlreq --template README-template.html -o jlreq-ja.html README-ja.md
 
 jlreq.html: README.md README-template.html
-	pandoc --verbose -f gfm -t html5 -V lang=en -M title=jlreq --template README-template.html -o jlreq.html README.md
+	sed -e "s/\\[README-ja.md\\](README-ja.md)/[jlreq-ja.html](jlreq-ja.html)/" README.md | pandoc --verbose -f gfm -t html5 -V lang=en -M title=jlreq --template README-template.html -o jlreq.html
 
 jlreq-trimmarks-ja.html: jlreq-trimmarks-ja.md README-template.html
 	pandoc --verbose -f gfm -t html5 -V lang=ja -M title=jlreq-trimmarks --template README-template.html -o jlreq-trimmarks-ja.html jlreq-trimmarks-ja.md
@@ -169,7 +172,7 @@ uninstall:
 	rm -rf ${TEXMF}/tex/latex/jlreq
 
 jfmclean:
-	rm -f *.tfm *.pl *.vf
+	rm -f *jlreq*.tfm *jlreq*.pl *jlreq*.vf
 	rm -f jfm-jlreqv.lua
 	rm -f jfm-*jlreq*-pl.lua
 

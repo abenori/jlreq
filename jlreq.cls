@@ -5,7 +5,7 @@
 %%
 % (based on JLReq 20120403 https://www.w3.org/TR/2012/NOTE-jlreq-20120403/ja/)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{jlreq}[2018/12/10 jlreq]
+\ProvidesClass{jlreq}[2019/01/15 jlreq]
 \RequirePackage{xkeyval,everyhook,filehook,etoolbox,ifthen}
 \RequirePackage{jlreq-helpers}
 
@@ -1695,7 +1695,7 @@
   }%
   \jlreq@tempa#3%
   \global\advance\jlreq@BlockHeading@spaces@current@count by 1
-  \appto\jlreq@BlockHeading@spaces@current@sequence{_#1}%
+  \gappto\jlreq@BlockHeading@spaces@current@sequence{_#1}%
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@output@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
     \expandonce{\jlreq@resultb}%
   }%
@@ -3735,7 +3735,9 @@
 \def\jlreq@pagestyle@setclearmark#1{%
   \@for\@tempa:=\jlreq@heading@allheadings\do{%
     \@ifundefined{\@tempa}{}{%
-      \ifnum\csname jlreq@heading@level@\@tempa\endcsname<#1\relax\expandafter\def\csname\@tempa mark\endcsname##1{\markboth{}{}}\fi
+      \@ifundefined{jlreq@heading@level@\@tempa}{}{%
+        \ifnum\csname jlreq@heading@level@\@tempa\endcsname<#1\relax\expandafter\def\csname\@tempa mark\endcsname##1{\markboth{}{}}\fi
+      }%
     }%
   }%
 }
@@ -4063,7 +4065,7 @@
   \fi
 }
 
-% #1から空かつ#4が空でないならば#2に#3と#4の中身を追加し，#4を空にする．引数は全てコントロールシークエンス
+% #1が空かつ#4が空でないならば#2に#3と#4の中身を追加し，#4を空にする．引数は全てコントロールシークエンス
 \def\jlreq@pagestyle@addifempty#1#2#3#4{%
   \ifx#1\@empty\ifx#4\@empty\else\eappto#2{\expandonce{#3}\expandonce{#4}}\def#4{}\fi\fi
 }
@@ -4089,6 +4091,9 @@
     % 項目が一つしか無い
     \jlreq@ifempty{#2}{\csappto}{\cspreto}{#1}{#4}%
   }{%
+    % 最初の空でない柱に出会うまでは柱の間の空白を入れない．
+    % 空でない柱に出会ってないならば\ifjlreq@PageStyle@firstはtrue．
+    % 一番最初の\jlreq@PageStyle@firsttrueは後で入れる．
     \jlreq@ifempty{#2}{\csappto}{\cspreto}{#1}{%
       \protected@edef\jlreq@tempa{#4}%
       \ifx\jlreq@tempa\@empty\else
@@ -4152,6 +4157,7 @@
     \def\jlreq@font{}%
     \def\jlreq@nombre@font{}%
     \def\jlreq@running@head@font{}%
+    % フォーマットを空という可能性もあるかもしれないので，デフォルト値は\relaxで表す．
     \let\jlreq@oddheadformat\relax
     \let\jlreq@evenheadformat\relax
     \let\jlreq@oddfootformat\relax
@@ -4242,7 +4248,7 @@
         \jlreq@next
       }%
     }%
-    % \jlreq@minimumlevelに見出しの最低レベルを入れる．
+    % \jlreq@minimumlevelに見出しの最低（数値が小さいという意味）レベルを入れる．
     \let\jlreq@minimumlevel=\@undefined
     \def\jlreq@markdefinecommand{}%
     \@for\jlreq@heading:=\jlreq@headingmarklist\do{%
@@ -4253,8 +4259,8 @@
           \else\ifnum\jlreq@minimumlevel>\jlreq@level\space\let\jlreq@minimumlevel=\jlreq@level\fi\fi
         \fi
         % \jlreq@markdata@<見出し命令>にある情報とmark_formatをもとに，\<見出し命令>markを定義するマクロを作成，\jlreq@markdefinecommandに入れる．
-        \edef\jlreq@next{\noexpand\jlreq@pagestyle@make@headingmark{\ifjlreq@headii@exist *\fi}{\expandonce{\jlreq@heading}}{\expandonce{\jlreq@mark@format}}{\csexpandonce{jlreq@markdata@\jlreq@heading}}}%
-        \jlreq@next
+        \edef\jlreq@do{\noexpand\jlreq@pagestyle@make@headingmark{\ifjlreq@headii@exist *\fi}{\expandonce{\jlreq@heading}}{\expandonce{\jlreq@mark@format}}{\csexpandonce{jlreq@markdata@\jlreq@heading}}}%
+        \jlreq@do
         \eappto\jlreq@markdefinecommand{\expandonce{\jlreq@result}}%
       \fi
     }%
@@ -4346,7 +4352,7 @@
           \fi
         }%
       }%
-      % \jlreq@tempboxaに入っているボックスを正しく配置する
+      % \jlreq@tempboxaを正しく配置する
       \edef\jlreq@lefthead@adjustbox{%
         \noexpand\hskip\noexpand\dimexpr\if@tate\unexpanded{- \Cdp}\fi \unexpanded{- \headsep - 1\zw\relax}%
         \unexpanded{\box\jlreq@tempboxa\hfil}%
@@ -4434,6 +4440,7 @@
             \jlreq@addtocs{\jlreq@csname}{{\csexpandonce{jlreq@\jlreq@parity @running@head@\jlreq@i}}}%
           \fi
         }%
+        % {A}{B}{C}の順だった柱を結合する．本体は\jlreq@pagestyle@make@runninghead．
         \@for\jlreq@vert:=top,bottom\do{%
           \@for\jlreq@hor:=left,center,right\do{%
             \ifthenelse{\equal{\jlreq@hor}{right}}{\def\jlreq@tempa{*}}{\def\jlreq@tempa{}}%
@@ -4458,7 +4465,7 @@
               \expandafter\let\csname\jlreq@csname\expandafter\endcsname\csname\jlreq@nombrecsname\endcsname
             }{%
               \expandafter\ifx\csname\jlreq@nombrecsname\endcsname\@empty\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
-%                % ノンブルが空．
+%                % ノンブルが空．柱のみでよい．
                 \jlreq@pagestyle@addfont@tocs{\jlreq@runheadcsname}{jlreq@running@head@font}%
                 \expandafter\let\csname\jlreq@csname\expandafter\endcsname\csname\jlreq@runheadcsname\endcsname
               }{%
@@ -4466,6 +4473,7 @@
                 \jlreq@ifleftpage{\jlreq@parity}{%
                   \ifthenelse{\equal{\jlreq@hor}{right}}{%
                     % <ノンブル><空き><柱>，右寄せ
+                    % 柱が空出ないときに限り<空き>を入れる．
                     \jlreq@pagestyle@addfont@totokens{\unexpanded{\ifdim\wd\jlreq@PageStyle@box=0pt \else\hskip}\expandonce{\jlreq@gap}\unexpanded{\relax\fi}}{jlreq@running@head@font}{jlreq@tempa}%
                     \expandafter\edef\csname\jlreq@csname\endcsname{%
                       \unexpanded{\setbox\jlreq@PageStyle@box=\hbox}{\expandonce{\jlreq@running@head@font}\csexpandonce{\jlreq@runheadcsname}}%
@@ -4473,6 +4481,7 @@
                     }%
                   }{%
                     % <ノンブル><空き><柱>，左寄せ
+                    % ノンブルは常に空ではないと仮定する．
                     \jlreq@pagestyle@addfont@totokens{\unexpanded{\hskip\glueexpr}\expandonce{\jlreq@gap}\noexpand\relax\csexpandonce{\jlreq@runheadcsname}}{jlreq@running@head@font}{jlreq@tempa}%
                     \expandafter\edef\csname\jlreq@csname\endcsname{\csexpandonce{\jlreq@nombrecsname}\expandonce{\jlreq@tempa}}%
                   }%

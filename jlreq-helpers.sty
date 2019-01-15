@@ -245,6 +245,7 @@
 % キー指定しないkeyval（独自実装）
 % \jlreq@parsekeyval@nokey{<action>}{<parse対象>}
 % action内では#1=key, #2=val
+% \ifjlreq@parsekeyval@nokey@novalue{<true code>}{<false code>}でvalueがないか判定できる．
 % <parse対象>は一回だけ展開される．
 \newcommand{\jlreq@parsekeyval@nokey}[2]{%
   \begingroup

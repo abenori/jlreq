@@ -101,6 +101,11 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Added options for `\frontmatter` etc in `\jlreqsetup`.
     - Made `\jlreqHeadingLabel` etc available in `format` in `\NewTobiraHeading` and `\NewBlockHeading`.
     - Fixed bugs.
+* 2019-01-15
+    - Added `nombre_font` etc to `\NewPageStyle`. `font` is deprecated.
+    - `format` without `#1` is allowed in `\NewBlockHeading`.
+    - Extended `caption_label_format` etc. in `\jlreqsetup`.
+    - Fixed bugs.
 
 
 --------------

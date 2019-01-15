@@ -88,6 +88,8 @@
 * `<寸法>`：TeXが認識する寸法です．簡単な式（`10pt+10pt`のような）を使うこともできます．また，クラスオプションでは，場合によっては次のような特殊な値を使うこともできます．（これらはpLaTeX / upLaTeXではもとから利用可能ですが，LuaLaTeXでも利用可能なように処理されています．）`\jlreqsetup`内のような場所では，常に`\zw`や`\zh`により全角幅が記述できます．以下，たとえば`Q`が利用可能な場合は`<寸法;Q>`のように記述します．
     - `Q`：0.25mmと解釈されます．
     - `zw`, `zh`：全角幅として解釈されます．
+* <コード>：LaTeXのコードです．
+* <フォント設定コード>：`\Large`や`\bfseries`のようなフォント設定の命令です．`\Large\bfseries`のように複数指定することもできます．
 
 
 ### 基本版面
@@ -123,17 +125,17 @@
 * `footnote_second_indent=<寸法>`: 脚注（横書き時）または傍注（縦書き時）の二行目以降の字下げ量を指定します．一行目からの相対字下げ量です．
 * `sidenote_type=[number/symbol]`：傍注と本文との対応の方法を指定します．`number`が規定で，注の位置に通し番号が入り，それにより対応が示されます．`symbol`とすると，注の位置に特定の記号が入り，また注がついている単語が強調されます．
 * `sidenote_symbol=<コード>`：`sidenote_symbol=symbol`の時に，注の位置に入る記号．デフォルト＊
-* `sidenote_keyword_font=<コード>`：`sidenote_symbol=symbol`の時に，注のついている単語のフォント指定．デフォルトは無し（強調しない）
+* `sidenote_keyword_font=<フォント設定コード>`：`sidenote_symbol=symbol`の時に，注のついている単語のフォント指定．デフォルトは無し（強調しない）
 * `endnote_second_indent=<寸法>`: 後柱の二行目以降の字下げ量を指定します．一行目からの相対字下げ量です．
 * `endnote_position=[headings/paragraph/{_<見出し名1>,_<見出し名2>,...}]`：後注の出力場所を指定します．`headings`は各見出しの直前（デフォルト），`paragraph`は改段落の際に出力します．また，`endnote_position={_chapter,_section}`とすると，`\chapter`と`\section`の直前に出力します．
 
 ### キャプション
-図表のキャプションを`\jlreqsetup`で変更できます．
-* `caption_font=<コード>`：キャプション自身のフォントを指定します．
-* `caption_label_font=<コード>`：キャプションのラベルのフォントを指定します．
+図表のキャプションを`\jlreqsetup`で変更できます．全ての設定で，各環境ごとの設定をすることができます．例えば`caption_font=\normalsize,table=\Large`とすると，table環境内では`\Large`が適用され，そのほかの環境内では`\normalsize`が適用されます．他の設定も同様です．
+* `caption_font=<フォント設定コード>`：キャプション自身のフォントを指定します．
+* `caption_label_font=<フォント設定コード>`：キャプションのラベルのフォントを指定します．
 * `caption_after_label_space=<寸法>`：ラベルとキャプションの間の空きを指定します．
 * `caption_label_format=<コード>`：ラベルの書式を指定します．`caption_label_format={#1：}`のようにします．`#1`が「図1」のような番号に置換されます．
-* `caption_align=[{left/right/center/bottom/top/<環境名1>=<位置指定1>,<環境名2>=<位置指定2>,...}]`：キャプションの場所を指定します．`caption_align=left`のように指定します．`caption_align={center,table=right}`とすると，`table`のみ右，そのほかは中央配置となります．
+* `caption_align=[left/right/center/bottom/top]`：キャプションの場所を指定します．
 
 ### 引用
 `quote / quotation / verse`環境の挙動を`\jlreqsetup`で指定できます．
@@ -198,8 +200,8 @@
 `\NewBlockHeading`で作成します．`\<命令名>*[running head]{見出し文字列}[副題]`という書式の命令を作成します．設定は以下の通り．
 
 #### 書式関連
-* `font=<コード>`：見出しのフォントを指定します．
-* `subtitle_font=<コード>`：副題のフォントを指定します．
+* `font=<フォント設定コード>`：見出しのフォントを指定します．
+* `subtitle_font=<フォント設定コード>`：副題のフォントを指定します．
 * `label_format=<コード>`：ラベルのフォーマットを指定します．`label_format={第\thechapter 章}`などのようにします．
 * `subtitle_format=<コード>`：副題のフォーマットを指定します．`subtitle_format={「#1」}`のようにします．`#1`は副題自身に置き換えられます．
 * `format=<コード>`：見出し全体のフォーマットを指定します．`#1`がラベル，`#2`が見出し文字列，`#3`が副題に置き換えられます．内部では`\jlreqHeadingLabel`，`\jlreqHeadingText`，`\jlreqHeadingSubtitle`という命令が利用可能です．いずれも引数を一つとる命令で，それぞれラベル，見出し文字列，副題が空ならば空に，そうでなければ与えられた引数自身を出力します．例えば`format={[\jlreqHeadingLabel{Label=#1}]}`と指定されていれば，ラベルが空でない時には`[Label=<ラベル>]`を，そうでなければ`[]`を出力します．なお，実際に`#1`が置き換えられるのはラベル自身ではなく，それに空きの調整などが入ったコードです．従って，予期しない結果を得ることもあり得ます．`#2`，`#3`も同様です．
@@ -256,16 +258,16 @@
 ### 同行見出し
 `\NewRuninHeading`で作成します．通常の文書クラスにおける`\section`と同様の，`\<命令名>*[running head]{見出し文字列}`という書式の命令が作成されます．設定は以下の通り．
 
-* `font=<命令>`：見出しのフォントを指定します．
+* `font=<フォント設定コード>`：見出しのフォントを指定します．
 * `indent=<寸法>` 見出し文字列全体の字下げ量を指定します．
 * `after_label_space=<寸法>`：ラベル後，見出し文字列までの空きを指定します．
-* `label_format=<命令>`：ラベルのフォーマットを指定します．`label_format={\theparagraph}`などのようにします．
+* `label_format=<コード>`：ラベルのフォーマットを指定します．`label_format={\theparagraph}`などのようにします．
 * `number=[true/false]'：採番を行うかを指定します．`\NewTobiraHeading`と同様の注意が必要です．
 
 ### 窓見出し
 `\NewCutinHeading`で作成します．`\<命令名>{見出し文字列}`という書式の命令を作成します．設定は以下の通り．
 
-* `font=<命令>`：見出しのフォントを指定します．
+* `font=<フォント設定コード>`：見出しのフォントを指定します．
 * `indent=<寸法>`：見出し全体の字下げ量を指定します．
 * `after_space=<寸法>`：見出しと本文との間の空きを指定します．
 * `onelinemax=<寸法>`, `twolinemax=<寸法>`：見出し文字列の長さが`onelinemax`以下ならば一行で，`twolinemax`以下ならば二行で窓見出しを出力します．それ以上の場合は三行です．デフォルトはそれぞれ6文字，20文字の長さ．
@@ -295,14 +297,15 @@
 
 * `yoko`：横書きで上下に出力します．デフォルト．
 * `tate`：縦書きで小口側に出力します．
-* `font=<命令>`：柱とノンブルのフォントを指定します．
+* `running_head_font=<フォント設定命令>`：柱のフォントを指定します．
+* `nombre_font=<フォント設定命令>`：ノンブルのフォントを指定します．
 * `running_head_position`, `nombre_position`：柱とノンブルの位置を指定します．`yoko`か`tate`のどちらが指定されているかで指定方法が変わります．
     - `yoko`指定時：`top-left`のように指定できます．`top / bottom / center / left / right / gutter / fore-edge`が使えます．`gutter`はのど，`fore-edge`は小口です．`left`，`right`の指定は奇数ページに対するものです．`twoside`が指定されている場合，偶数ページはその逆になります．
     - `tate`指定時：`<寸法>`が指定できます．`running_head_position`は柱の天からの下げ量を，`nombre_position`はノンブルの地からの上げ量を指定します．
 * `nombre=<書式>`：出力するノンブルを指定します．デフォルトは`\thepage`．
 * `odd_running_head=<書式>`，`even_running_head=<書式>`：それぞれ奇数ページ，偶数ページの柱を指定します．`_section`のように`_`から始まる名前を指定すると，対応する見出しを出力します．（`_section`だと現在の`\section`を出力する．）
 * `mark_format={[odd=<書式>/even=<書式>/_<見出し命令名>=<書式>],...}`：見出しを柱に出力する際のフォーマットを指定します．`mark_format={_section={節\thesection：#1},_chapter={第\thechapter 章\quad #1}}`のように指定します．見出し命令名の代わりに`odd`や`even`も指定でき，それぞれ奇数ページ/偶数ページの柱の書式になります．`\pagestyle`実行時に`\sectionmark`等を定義することで実現しています．
-* `nombre_ii=<書式>`: 二つ目のノンブルを指定します．`nombre_ii_position`で場所指定もできます．指定方法は`nombre`や`nombre_position`と同じです．`odd_running_head_ii`，`even_running_head_ii`，`running_head_ii_position`もあります．`nombre_ii_position`や`running_head_ii_position`が指定されなかった場合，`yoko`指定時にはそれぞれ`nombre_position`および`running_head_position`と同じ位置に設定されます．`tate`指定時は一つ目のノンブルや柱に続く場所に表示されます．
+* `nombre_ii=<書式>`: 二つ目のノンブルを指定します．`nombre_ii_position`で場所指定，`nombre_ii_font`でフォント設定もできます．指定方法は`nombre`や`nombre_position`と同じです．`odd_running_head_ii`，`even_running_head_ii`，`running_head_ii_position`，`running_head_ii_font`もあります．`nombre_ii_position`や`running_head_ii_position`が指定されなかった場合，`yoko`指定時にはそれぞれ`nombre_position`および`running_head_position`と同じ位置に設定されます．`tate`指定時は一つ目のノンブルや柱に続く場所に表示されます．
 
 
 `\RenewPageStyle`，`\ProvidePageStyle`，`\DeclarePageStyle`もあります．`\ModifyPageStyle`により既存のページスタイルを改変することが可能です．
@@ -426,6 +429,11 @@ JFMの名前は次の通りです．`[]`で囲まれている文字は設定に�
     - `\frontmatter`等の挙動を設定できるようにした．
     - `\jlreqHeadingLabel`等を扉見出しと別行見出しの`format`内で使えるようにした．
     - バグ修正
+* 2019-01-15
+    - `\NewPageStyle`に`nombre_font`などを追加．`font`もまだ有効だが以降非推奨とする．
+    - `\NewBlockHeading`の`format`に`#1`が含まれてもエラーが起こらないようにした．
+    - `\jlreqsetup`の`caption_label_format`などを拡張．
+    - バグ修正．
 
 
 --------------

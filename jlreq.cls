@@ -2851,7 +2851,7 @@
   }%
 }
 
-%.. 各種定義
+%.. カウンターの定義（見出し本体はこのファイルの末尾で）
 \setcounter{secnumdepth}{3}
 \newcounter{part}
 \jlreq@switch{\jlreq@article@type}{
@@ -2864,73 +2864,6 @@
 \newcounter{subparagraph}[paragraph]
 \renewcommand*{\@seccntformat}[1]{\csname the#1\endcsname}
 
-\if@tate
-  \renewcommand{\thepart}{\jlreq@Kanji{part}}
-  \ifthenelse{\equal{\jlreq@article@type}{article}}{}{\renewcommand{\thechapter}{\jlreq@Kanji{chapter}}}
-  \renewcommand{\thesection}{\jlreq@rensuji{\@arabic\c@section}}
-  \renewcommand{\thesubsection}{\jlreq@rensuji{\@alph\c@subsection}}
-  \renewcommand{\thesubsubsection}{\jlreq@rensuji{\@arabic\c@subsubsection}}
-  \renewcommand{\theparagraph}{(\jlreq@rensuji{\@arabic\c@paragraph})}
-  \renewcommand{\thesubparagraph}{(\jlreq@rensuji{\@arabic\c@subparagraph})}
-
-  \ifthenelse{\equal{\jlreq@article@type}{article}}{
-    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE}},indent=4\zw,lines=4,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\large}}}
-    \if@twoside\ModifyHeading{part}{allowbreak_if_evenpage=true}\fi
-  }
-  {% book, report
-    \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\zw}},format={\null\vfill {\Huge\hspace*{2\zw}#1#2}\vspace*{2\jlreq@gol}}}
-    \NewBlockHeading{chapter}{0}{indent=2\zw,lines=6,label_format={第\thechapter 章},font={\huge},after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\Large}}}
-    \if@twoside\ModifyHeading{chapter}{allowbreak_if_evenpage=true}\fi
-    \renewcommand{\thechapter}{\jlreq@Kanji{chapter}}
-  }
-  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large}},indent=6\zw,lines=3,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
-  \if@twoside\ModifyHeading{section}{allowbreak_if_evenpage=true}\fi
-  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large}},indent=8\zw,lines=2,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\small}}}
-  \if@twoside\ModifyHeading{subsection}{allowbreak_if_evenpage=true}\fi
-  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize}},indent=10\zw,lines=1,before_lines=1,subtitle_break=false,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},,subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
-  \if@twoside\ModifyHeading{subsubsection}{allowbreak_if_evenpage=true}\fi
-  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize}}}
-  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize}},indent=1\zw}
-\else% yoko
-  \renewcommand{\thepart}{\Roman{part}}
-  \renewcommand{\thesubsection}{\thesection .\arabic{subsection}}
-  \renewcommand{\thesubsubsection}{\thesubsection .\arabic{subsubsection}}
-  \renewcommand{\theparagraph}{\thesubsubsection .\arabic{paragraph}}
-  \renewcommand{\thesubparagraph}{\theparagraph .\arabic{subparagraph}}
-  \ifthenelse{\equal{\jlreq@article@type}{article}}{
-    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\sffamily\bfseries}},label_format={第\thepart 部},lines=4,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\large}}}
-    \renewcommand{\thesection}{\arabic{section}}
-  }
-  {% book, report
-    \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\jlreq@gol}},format={\null\vfil {\Huge\sffamily\bfseries #1#2}\vfil}}
-    \NewBlockHeading{chapter}{0}{%
-      font={\jlreq@keepbaselineskip{\huge\sffamily\bfseries}},
-      label_format={第\thechapter 章},
-      lines=5,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},
-      subtitle_font={\jlreq@keepbaselineskip{\Large}}}
-    \renewcommand{\thechapter}{\arabic{chapter}}
-    \renewcommand{\thesection}{\thechapter.\arabic{section}}
-  }
-  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\sffamily\bfseries}},lines=3,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
-  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\sffamily\bfseries}},lines=2,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\small}}}
-  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\bfseries}},lines=1,before_lines=1,subtitle_break=false,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
-  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\bfseries}},indent=1\zw}
-  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\bfseries}},indent=2\zw}
-\fi
-
-\ifthenelse{\equal{\jlreq@article@type}{article}}{}{% book, report
-  \if@openright
-    \ModifyHeading{part}{type=naka}
-    \if@tate
-      \ModifyHeading{chapter}{pagebreak=begin_with_even_page}
-    \else
-      \ModifyHeading{chapter}{pagebreak=begin_with_odd_page}
-    \fi
-  \else
-    \ModifyHeading{part}{type=han}
-    \ModifyHeading{chapter}{pagebreak=clearpage}
-  \fi
-}
 
 %. 注
 % 文字サイズは6ポイントくらい（4.2.3.a）とりあえす\scriptsize
@@ -2981,7 +2914,6 @@
     \def\jlreq@hook@postnote{\jlreq@fixjfm}
   }
 }
-\jlreqsetup{reference_mark=inline}
 % \@footnotemarkをシンプルなものにする
 \def\jlreq@setdefaultnotemark#1#2{%
   \def#1{%
@@ -3016,7 +2948,7 @@
 % インデントの計算：脚注の長さが文字の整数倍になるように字下げする（4.2.5.b）
 \jlreq@jlreqsetup@add{footnote_indent}{%
   \if@tate\else
-    \ifdim\dimexpr#1\relax=0pt\else\jlreq@note{脚注は，一般にその前に区切りのための罫線を挿入するので，字下げは行わなくてよい（4.2.5.b）．}\fi
+    \ifdim\dimexpr#1\relax=0pt \else\jlreq@note{脚注は，一般にその前に区切りのための罫線を挿入するので，字下げは行わなくてよい（4.2.5.b）．}\fi
   \fi
   \begingroup
     \footnotesize
@@ -3028,11 +2960,6 @@
   \expandafter\endgroup
   \jlreq@do
 }
-\if@tate
-  \jlreqsetup{footnote_indent=1\zw}% 根拠なし
-\else
-  \jlreqsetup{footnote_indent=0pt}% （4.2.5.b）
-\fi
 
 \newcommand{\@makefntext}[1]{\jlreq@makefntext{#1}}
 \jlreq@jlreqsetup@add{footnote_second_indent}{%
@@ -3058,7 +2985,6 @@
     }##1%
   }
 }
-\jlreqsetup{footnote_second_indent=1\zw}
 
 \jlreq@jlreqsetup@add{footnotetext_indent}{
   \ClassWarningNoLine{jlreq}{footnotetext_indent was removed}
@@ -3286,7 +3212,6 @@
     \( \lengthtest{1.99\zw < #1} \AND \lengthtest{#1 < 2.01\zw} \)
   }{}{\jlreq@note{後注が2行以上となった場合，後注の2行目以下の字下げは，1行目より，後注の文字サイズの2倍又は全角とする (4.2.4.d)．}}
 }
-\jlreqsetup{endnote_second_indent=2\zw}
 \newcommand{\@makeendtext}[1]{%
   \csname\jlreq@endnotemarkname\endcsname
   \hskip\glueexpr1\zw\relax% 見出し出力と一文字分の空き（4.2.4.c）
@@ -3343,7 +3268,6 @@
     }
   \fi
 }
-\jlreqsetup{endnote_position=headings}
 \AtEndDocument{\theendnotes}
 
 
@@ -3368,7 +3292,6 @@
   \jlreq@setdefaultnotemark\@sidenotemark\@makesidemark
   \def\jlreq@sidenotecounter{footnote}% 傍注用のカウンタ名
   \jlreq@jlreqsetup@add{sidenote_type}[number,symbol]{\def\jlreq@sidenote@type{#1}}
-  \jlreqsetup{sidenote_type=number}
   \jlreq@jlreqsetup@addtofinally{
     \ifthenelse{\equal{\jlreq@sidenote@type}{number}}{
       \def\sidenote{\jlreq@hook@prenote\@ifnextchar[{\jlreq@sidenote}{\jlreq@sidenote[]}}
@@ -3434,7 +3357,6 @@
   }
   \jlreq@jlreqsetup@add{sidenote_symbol}{\def\jlreq@sidenote@defaultmark{#1}}
   \jlreq@jlreqsetup@add{sidenote_keyword_font}{\def\jlreq@sidenote@keywordfont{#1}}
-  \jlreqsetup{sidenote_symbol=＊,sidenote_keyword_font={}}
 }
 
 %.. 割注（3.4）
@@ -4591,43 +4513,6 @@
   \jlreq@do
 }
 
-%.. 各種定義
-\RenewPageStyle{empty}{nombre={},odd_running_head={},even_running_head={}}
-\ifthenelse{\equal{\jlreq@article@type}{article}}{
-  \if@twoside
-    \NewPageStyle{headings}{odd_running_head={_subsection},even_running_head={_section}}
-  \else
-    \NewPageStyle{headings}{odd_running_head={_section},even_running_head={}}
-  \fi
-}{% book, article
-  \if@twoside
-    \NewPageStyle{headings}{odd_running_head={_section},even_running_head={_chapter}}
-  \else
-    \NewPageStyle{headings}{odd_running_head={_chapter},even_running_head={}}
-  \fi
-  \ModifyPageStyle{headings}{mark_format={_chapter={第\thechapter 章\quad #1}}}
-}
-\if@tate
-  \RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},clear_markcommand=false}
-  \NewPageStyle{myheadings}{nombre=\thepage,odd_running_head=\rightmark,even_running_head=\leftmark,clear_markcommand=false}
-  \if@twoside
-    \ModifyPageStyle{plain}{nombre_position={top-left}}
-    \ModifyPageStyle{headings}{nombre=\thepage,nombre_position=bottom-left,running_head_position=top-left}
-    \ModifyPageStyle{myheadings}{nombre_position=bottom-left,running_head_position=top-left}
-  \else
-    \ModifyPageStyle{plain}{nombre_position={top-center}}
-    \ModifyPageStyle{headings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center}
-    \ModifyPageStyle{myheadings}{nombre_position=bottom-center,running_head_position=top-center}
-  \fi
-\else% yoko
-  \RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},nombre_position={bottom-center},clear_markcommand=false}
-  \ModifyPageStyle{headings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center}
-  \NewPageStyle{myheadings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center,odd_running_head=\rightmark,even_running_head=\leftmark,clear_markcommand=false}
-\fi
-\ModifyPageStyle{plain}{font=\small}
-\ModifyPageStyle{headings}{font=\small}
-\ModifyPageStyle{myheadings}{font=\small}
-
 %. フロート関連
 % 4.3.3.dの例，縦組みの時だけど横にも適用……
 \setlength{\floatsep}{1\jlreq@gol plus 1\jlreq@gol}
@@ -4723,7 +4608,6 @@
     }%
   }{#1}%
 }
-\jlreqsetup{caption_font={\sffamily\bfseries},caption_label_font={\sffamily\bfseries},caption_after_label_space=1\zw,caption_label_format={#1},caption_align=center}
 % 特に根拠のない値
 \setlength\abovecaptionskip{.5\jlreq@gol}
 \setlength\belowcaptionskip{0pt}
@@ -5024,7 +4908,6 @@
   \jlreq@do
 }
 \jlreq@jlreqsetup@add{itemization_itemsep}{\def\jlreq@itemization@itemsep{#1}}
-\jlreqsetup{itemization_beforeafter_space={0pt,i=.5\baselineskip},itemization_itemsep=0pt}
 % enumerate, itemize用初期化
 \def\jlreq@init@list{%
   \setlength{\labelwidth}{2\zw}%
@@ -5113,7 +4996,6 @@
 \jlreq@jlreqsetup@add{quote_end_indent}{\def\jlreq@quote@end@indent{#1}}
 \jlreq@jlreqsetup@add{quote_fontsize}[normalsize,small,footnotesize,scriptsize,tiny,]{\jlreq@ifempty{#1}{\def\jlreq@quote@fontsize{}}{\edef\jlreq@quote@fontsize{\expandonce{\csname #1\endcsname}}}}
 \jlreq@jlreqsetup@add{quote_beforeafter_space}{\def\jlreq@quote@beforeafter@space{#1}}
-\jlreqsetup{quote_indent=2\zw,quote_end_indent=0pt,quote_fontsize=,quote_beforeafter_space=0pt}
 
 \newenvironment{verse}
   {\let\\\@centercr
@@ -5395,21 +5277,19 @@
         \fi
       }%
       % \jlreq@declareに\ModifyHeadingか\Renew***Headingを入れる
-      \ifx\jlreq@\@empty\else
-        \edef\jlreq@declare{\expandonce{\csname\jlreq@declaretype Heading\endcsname}{##1}}%
-        \ifthenelse{\NOT \equal{\jlreq@declaretype}{Modify}}{%
-          \ifx\jlreq@level\@empty
-            % \frontmatter時でのレベルを引用する．
-            \edef\jlreq@declare{%
-              \unexpanded{\edef\jlreq@tempa}{\noexpand\unexpanded{\expandonce{\jlreq@declare}}{\noexpand\expandonce{\expandonce{\csname jlreq@heading@level@##1\endcsname}}}}%
-              \noexpand\jlreq@tempa
-            }%
-          \else
-            \eappto\jlreq@declare{{\expandonce{\jlreq@level}}}%
-          \fi
-        }{}%
-        \eappto\jlreq@headingscmds{\expandonce{\jlreq@declare}{\expandonce{\jlreq@headingsettings}}}%
-      \fi
+      \edef\jlreq@declare{\expandonce{\csname\jlreq@declaretype Heading\endcsname}{##1}}%
+      \ifthenelse{\NOT \equal{\jlreq@declaretype}{Modify}}{%
+        \ifx\jlreq@level\@empty
+          % \frontmatter時でのレベルを引用する．
+          \edef\jlreq@declare{%
+            \unexpanded{\edef\jlreq@tempa}{\noexpand\unexpanded{\expandonce{\jlreq@declare}}{\noexpand\expandonce{\expandonce{\csname jlreq@heading@level@##1\endcsname}}}}%
+            \noexpand\jlreq@tempa
+          }%
+        \else
+          \eappto\jlreq@declare{{\expandonce{\jlreq@level}}}%
+        \fi
+      }{}%
+      \eappto\jlreq@headingscmds{\expandonce{\jlreq@declare}{\expandonce{\jlreq@headingsettings}}}%
     }{#4}%
     \edef\jlreq@do{%
       \unexpanded{\def#3}{%
@@ -5576,48 +5456,6 @@
     \expandafter\jlreq@pagination@backmatterpagecommand\expandafter{\jlreq@pagination@backmatterstyle}%
     \jlreq@backmatter@postcode
   }
-  \jlreqsetup{
-    frontmatter_pagebreak = cleardoublepage,
-    frontmatter_pagestyle = {plain,restore = true},
-    frontmatter_heading = {chapter={number=false, restore = true}},
-    frontmatter_counter = {
-      figure = {the = \arabic{figure},restore = true},
-      table = {the = \arabic{table},restore = true},
-    },
-    frontmatter_precode = {},
-    frontmatter_postcode = {},
-  }
-  \jlreqsetup{
-    mainmatter_pagebreak = cleardoublepage,
-    mainmatter_counter = {
-      chapter = {value = 0},
-    },
-    mainmatter_pagestyle = {},
-    mainmatter_heading = {},
-    mainmatter_precode = {},
-    mainmatter_postcode = {},
-  }
-  \if@openright
-    \jlreqsetup{backmatter_pagebreak=cleardoublepage}
-  \else
-    \jlreqsetup{backmatter_pagebreak=clearpage}
-  \fi
-  \jlreqsetup{
-    backmatter_pagestyle = plain,
-    backmatter_counter = {
-      chapter={value = 0, the = {}},
-      figure = {value = 0, the = {\arabic{figure}}},
-      table = {value = 0, the = {\arabic{table}}}
-    },
-    backmatter_heading = {chapter = {number = false}},
-    backmatter_precode = {},
-    backmatter_postcode = {}
-  }
-  \jlreqsetup{
-    frontmatter_pagination = {independent,roman},
-    mainmatter_pagination = {arabic},
-    backmatter_pagination = {continuous,arabic},
-  }
 }{}
 
 \jlreq@jlreqsetup@add{appendix_counter}{\jlreq@matter@counter@norestore{\jlreq@appendix@counter}{#1}}
@@ -5632,50 +5470,6 @@
   \jlreq@appendix@postcode
 }
 
-\ifthenelse{\equal{\jlreq@article@type}{article}}{
-  \if@tate
-    \jlreqsetup{
-      appendix_counter = {
-        section = {value = 0, the = {\jlreq@rensuji{\Alph{section}}}},
-        subsection = {value = 0},
-      }
-    }
-  \else
-    \jlreqsetup{
-      appendix_counter = {
-        section = {value = 0, the = {\Alph{chapter}}},
-        subsection = {value = 0},
-      }
-    }
-  \fi
- \jlreqsetup{appendix_heading = {},appendix_precode = {},appendix_postcode = {}}
-}{%book, report
-  \if@tate
-    \jlreqsetup{
-      appendix_counter = {
-        chapter = {value = 0, the = {\jlreq@rensuji{\Alph{chapter}}}},
-      }
-    }
- \else
-    \jlreqsetup{
-      appendix_counter = {
-        chapter = {value = 0, the = {\Alph{chapter}}},
-      }
-    }
- \fi
- \jlreqsetup{
-   appendix_heading = {
-     chapter = {label_format = {付録\thechapter}}
-   },
-   appendix_postcode = {%
-     \ifthenelse{\equal{\jlreq@current@pagestyle}{headings}}{%
-       \def\chaptermark#1{\markboth{付録\thechapter\quad #1}{}}%
-       \ModifyPageStyle{headings}{mark_format={_chapter={付録\thechapter\quad #1}}}%
-     }{}%
-   },
-   appendix_precode = {}
- }
-}
 
 %. その他諸々
 %.. 縦中横
@@ -5766,11 +5560,6 @@
     {wareki}{\西暦false}
   }
 }
-\if@tate
-  \jlreqsetup{year_style=wareki}
-\else
-  \jlreqsetup{year_style=seireki}
-\fi
 
 % 時刻
 \hour=\time \divide\hour by 60
@@ -5813,10 +5602,242 @@
   \def\jlreq@theorem@indent{#1}
   \@ifpackageloaded{amsthm}{\jlreq@setupamsthm}{}
 }
+
+
+%. デフォルト設定
+%.. 見出し
+\if@tate
+  \renewcommand{\thepart}{\jlreq@Kanji{part}}
+  \ifthenelse{\equal{\jlreq@article@type}{article}}{}{\renewcommand{\thechapter}{\jlreq@Kanji{chapter}}}
+  \renewcommand{\thesection}{\jlreq@rensuji{\@arabic\c@section}}
+  \renewcommand{\thesubsection}{\jlreq@rensuji{\@alph\c@subsection}}
+  \renewcommand{\thesubsubsection}{\jlreq@rensuji{\@arabic\c@subsubsection}}
+  \renewcommand{\theparagraph}{(\jlreq@rensuji{\@arabic\c@paragraph})}
+  \renewcommand{\thesubparagraph}{(\jlreq@rensuji{\@arabic\c@subparagraph})}
+
+  \ifthenelse{\equal{\jlreq@article@type}{article}}{
+    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE}},indent=4\zw,lines=4,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\large}}}
+    \if@twoside\ModifyHeading{part}{allowbreak_if_evenpage=true}\fi
+  }
+  {% book, report
+    \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\zw}},format={\null\vfill {\Huge\hspace*{2\zw}#1#2}\vspace*{2\jlreq@gol}}}
+    \NewBlockHeading{chapter}{0}{indent=2\zw,lines=6,label_format={第\thechapter 章},font={\huge},after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\Large}}}
+    \if@twoside\ModifyHeading{chapter}{allowbreak_if_evenpage=true}\fi
+    \renewcommand{\thechapter}{\jlreq@Kanji{chapter}}
+  }
+  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large}},indent=6\zw,lines=3,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
+  \if@twoside\ModifyHeading{section}{allowbreak_if_evenpage=true}\fi
+  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large}},indent=8\zw,lines=2,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\small}}}
+  \if@twoside\ModifyHeading{subsection}{allowbreak_if_evenpage=true}\fi
+  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize}},indent=10\zw,lines=1,before_lines=1,subtitle_break=false,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},,subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
+  \if@twoside\ModifyHeading{subsubsection}{allowbreak_if_evenpage=true}\fi
+  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize}}}
+  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize}},indent=1\zw}
+\else% yoko
+  \renewcommand{\thepart}{\Roman{part}}
+  \renewcommand{\thesubsection}{\thesection .\arabic{subsection}}
+  \renewcommand{\thesubsubsection}{\thesubsection .\arabic{subsubsection}}
+  \renewcommand{\theparagraph}{\thesubsubsection .\arabic{paragraph}}
+  \renewcommand{\thesubparagraph}{\theparagraph .\arabic{subparagraph}}
+  \ifthenelse{\equal{\jlreq@article@type}{article}}{
+    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\sffamily\bfseries}},label_format={第\thepart 部},lines=4,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\large}}}
+    \renewcommand{\thesection}{\arabic{section}}
+  }
+  {% book, report
+    \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\jlreq@gol}},format={\null\vfil {\Huge\sffamily\bfseries #1#2}\vfil}}
+    \NewBlockHeading{chapter}{0}{%
+      font={\jlreq@keepbaselineskip{\huge\sffamily\bfseries}},
+      label_format={第\thechapter 章},
+      lines=5,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},
+      subtitle_font={\jlreq@keepbaselineskip{\Large}}}
+    \renewcommand{\thechapter}{\arabic{chapter}}
+    \renewcommand{\thesection}{\thechapter.\arabic{section}}
+  }
+  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\sffamily\bfseries}},lines=3,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
+  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\sffamily\bfseries}},lines=2,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\small}}}
+  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\bfseries}},lines=1,before_lines=1,subtitle_break=false,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
+  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\bfseries}},indent=1\zw}
+  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\bfseries}},indent=2\zw}
+\fi
+
+\ifthenelse{\equal{\jlreq@article@type}{article}}{}{% book, report
+  \if@openright
+    \ModifyHeading{part}{type=naka}
+    \if@tate
+      \ModifyHeading{chapter}{pagebreak=begin_with_even_page}
+    \else
+      \ModifyHeading{chapter}{pagebreak=begin_with_odd_page}
+    \fi
+  \else
+    \ModifyHeading{part}{type=han}
+    \ModifyHeading{chapter}{pagebreak=clearpage}
+  \fi
+}
+
+%.. ページスタイル
+\RenewPageStyle{empty}{nombre={},odd_running_head={},even_running_head={}}
+\ifthenelse{\equal{\jlreq@article@type}{article}}{
+  \if@twoside
+    \NewPageStyle{headings}{odd_running_head={_subsection},even_running_head={_section}}
+  \else
+    \NewPageStyle{headings}{odd_running_head={_section},even_running_head={}}
+  \fi
+}{% book, article
+  \if@twoside
+    \NewPageStyle{headings}{odd_running_head={_section},even_running_head={_chapter}}
+  \else
+    \NewPageStyle{headings}{odd_running_head={_chapter},even_running_head={}}
+  \fi
+  \ModifyPageStyle{headings}{mark_format={_chapter={第\thechapter 章\quad #1}}}
+}
+\if@tate
+  \RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},clear_markcommand=false}
+  \NewPageStyle{myheadings}{nombre=\thepage,odd_running_head=\rightmark,even_running_head=\leftmark,clear_markcommand=false}
+  \if@twoside
+    \ModifyPageStyle{plain}{nombre_position={top-left}}
+    \ModifyPageStyle{headings}{nombre=\thepage,nombre_position=bottom-left,running_head_position=top-left}
+    \ModifyPageStyle{myheadings}{nombre_position=bottom-left,running_head_position=top-left}
+  \else
+    \ModifyPageStyle{plain}{nombre_position={top-center}}
+    \ModifyPageStyle{headings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center}
+    \ModifyPageStyle{myheadings}{nombre_position=bottom-center,running_head_position=top-center}
+  \fi
+\else% yoko
+  \RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},nombre_position={bottom-center},clear_markcommand=false}
+  \ModifyPageStyle{headings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center}
+  \NewPageStyle{myheadings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center,odd_running_head=\rightmark,even_running_head=\leftmark,clear_markcommand=false}
+\fi
+\ModifyPageStyle{plain}{font=\small}
+\ModifyPageStyle{headings}{font=\small}
+\ModifyPageStyle{myheadings}{font=\small}
+
+%.. その他
+\jlreqsetup{reference_mark=inline}
+\if@tate
+  \jlreqsetup{footnote_indent=1\zw}% 根拠なし
+\else
+  \jlreqsetup{footnote_indent=0pt}% （4.2.5.b）
+\fi
+\jlreqsetup{footnote_second_indent=1\zw}
+\jlreqsetup{endnote_second_indent=2\zw}
+\jlreqsetup{endnote_position=headings}
+\ifdim\marginparwidth>0pt
+  \jlreqsetup{sidenote_type=number}
+  \jlreqsetup{sidenote_symbol=＊,sidenote_keyword_font={}}
+\fi
+\jlreqsetup{
+  caption_font={\sffamily\bfseries},
+  caption_label_font={\sffamily\bfseries},
+  caption_after_label_space=1\zw,
+  caption_label_format={#1},
+  caption_align=center
+}
+\jlreqsetup{
+  itemization_beforeafter_space={0pt,i=.5\baselineskip},
+  itemization_itemsep=0pt
+}
+\jlreqsetup{
+  quote_indent=2\zw,
+  quote_end_indent=0pt,
+  quote_fontsize=,
+  quote_beforeafter_space=0pt
+}
+\ifthenelse{\equal{\jlreq@article@type}{book}}{
+  \jlreqsetup{
+    frontmatter_pagebreak = cleardoublepage,
+    frontmatter_pagestyle = {plain,restore = true},
+    frontmatter_heading = {chapter={number=false, restore = true}},
+    frontmatter_counter = {
+      figure = {the = \arabic{figure},restore = true},
+      table = {the = \arabic{table},restore = true},
+    },
+    frontmatter_precode = {},
+    frontmatter_postcode = {},
+  }
+  \jlreqsetup{
+    mainmatter_pagebreak = cleardoublepage,
+    mainmatter_counter = {
+      chapter = {value = 0},
+    },
+    mainmatter_pagestyle = {},
+    mainmatter_heading = {},
+    mainmatter_precode = {},
+    mainmatter_postcode = {},
+  }
+  \if@openright
+    \jlreqsetup{backmatter_pagebreak=cleardoublepage}
+  \else
+    \jlreqsetup{backmatter_pagebreak=clearpage}
+  \fi
+  \jlreqsetup{
+    backmatter_pagestyle = plain,
+    backmatter_counter = {
+      chapter={value = 0, the = {}},
+      figure = {value = 0, the = {\arabic{figure}}},
+      table = {value = 0, the = {\arabic{table}}}
+    },
+    backmatter_heading = {chapter = {number = false}},
+    backmatter_precode = {},
+    backmatter_postcode = {}
+  }
+  \jlreqsetup{
+    frontmatter_pagination = {independent,roman},
+    mainmatter_pagination = {arabic},
+    backmatter_pagination = {continuous,arabic},
+  }
+}{}
+\ifthenelse{\equal{\jlreq@article@type}{article}}{
+  \if@tate
+    \jlreqsetup{
+      appendix_counter = {
+        section = {value = 0, the = {\jlreq@rensuji{\Alph{section}}}},
+        subsection = {value = 0},
+      }
+    }
+  \else
+    \jlreqsetup{
+      appendix_counter = {
+        section = {value = 0, the = {\Alph{chapter}}},
+        subsection = {value = 0},
+      }
+    }
+  \fi
+ \jlreqsetup{appendix_heading = {},appendix_precode = {},appendix_postcode = {}}
+}{%book, report
+  \if@tate
+    \jlreqsetup{
+      appendix_counter = {
+        chapter = {value = 0, the = {\jlreq@rensuji{\Alph{chapter}}}},
+      }
+    }
+ \else
+    \jlreqsetup{
+      appendix_counter = {
+        chapter = {value = 0, the = {\Alph{chapter}}},
+      }
+    }
+ \fi
+ \jlreqsetup{
+   appendix_heading = {
+     chapter = {label_format = {付録\thechapter}}
+   },
+   appendix_postcode = {%
+     \ifthenelse{\equal{\jlreq@current@pagestyle}{headings}}{%
+       \def\chaptermark#1{\markboth{付録\thechapter\quad #1}{}}%
+       \ModifyPageStyle{headings}{mark_format={_chapter={付録\thechapter\quad #1}}}%
+     }{}%
+   },
+   appendix_precode = {}
+ }
+}
+\if@tate
+  \jlreqsetup{year_style=wareki}
+\else
+  \jlreqsetup{year_style=seireki}
+\fi
 \jlreqsetup{theorem_beforeafter_space=1\baselineskip,theorem_indent=0pt}
 
 
-% デフォルト設定
 \newcommand{\contentsname}{目次}
 \newcommand{\refname}{参考文献}
 \newcommand{\indexname}{索引}

@@ -858,6 +858,8 @@
   \pretocmd{\list}{\def\jlreq@parhook@atbeginlist{\ltjfakeparbegin}}{}{}
   \apptocmd{\endlist}{\def\jlreq@parhook@atbeginlist{}}{}{}
   \def\jlreq@parhook@atbeginlist{}
+  \def\ltj@stdyokojfm{jlreq}
+  \def\ltj@stdtatejfm{jlreqv}
 \else
   % 非LuaTeXの場合はJFMの入れ替えと\everyparでの処理で対処．
   % 行頭括弧に対して\inhibitglueを入れたりする命令を作る

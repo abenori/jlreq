@@ -3294,6 +3294,7 @@
   \jlreq@setdefaultnotemark\@sidenotemark\@makesidemark
   \def\jlreq@sidenotecounter{footnote}% 傍注用のカウンタ名
   \jlreq@jlreqsetup@add{sidenote_type}[number,symbol]{\def\jlreq@sidenote@type{#1}}
+  \def\jlreq@sidenote@type{number}
   \jlreq@jlreqsetup@addtofinally{
     \ifthenelse{\equal{\jlreq@sidenote@type}{number}}{
       \def\sidenote{\jlreq@hook@prenote\@ifnextchar[{\jlreq@sidenote}{\jlreq@sidenote[]}}
@@ -4530,7 +4531,6 @@
   \@ifundefined{#1}{\expandafter\def\csname #1\endcsname{}}{}%
   \begingroup
     \def\jlreq@do{}%
-    \edef\jlreq@tempa{\unexpanded{#3}}%
     \jlreq@parsekeyval@nokey{%
       \ifjlreq@parsekeyval@nokey@novalue{%
         \epreto\jlreq@do{%
@@ -4548,7 +4548,7 @@
           \unexpanded{\csappto{#1}{,##1}}%
         }%
       }%
-    }{\jlreq@tempa}%
+    }{#3}%
   \expandafter\endgroup
   \jlreq@do
 }
@@ -4562,7 +4562,7 @@
 \newlength\abovecaptionskip
 \newlength\belowcaptionskip
 
-
+%. 図表
 \newcommand{\@makecaption}[2]{{%
   % \jlreq@tempbに現在の環境を入れる．
   \@ifundefined{@currenvir}{%
@@ -4585,8 +4585,9 @@
     }%
   \fi
   \setbox\@tempboxa=\hbox{\jlreq@tempa}%
-  \edef\jlreq@tempc{\jlreq@jlreqsetup@withenv@nameuse{jlreq@@makecaption@align}{\jlreq@tempb}}%
+  \edef\jlreq@tempc{\jlreq@jlreqsetup@withenv@nameuse{jlreq@@makecaption@align@setting}{\jlreq@tempb}}%
   \expandafter\let\expandafter\jlreq@align\jlreq@tempc
+  \message{[[\@currenvir]]}%
   \ifdim\wd\@tempboxa>\hsize\relax
     {%
       \ifx c\jlreq@align\centering\fi
@@ -4607,28 +4608,50 @@
 \jlreq@jlreqsetup@add{caption_label_font}{\jlreq@jlreqsetup@withenv{jlreq@@makecaption@label@font@envlist}{jlreq@@makecaption@label@font@setting}{#1}}
 \jlreq@jlreqsetup@add{caption_label_format}{\jlreq@jlreqsetup@withenv{jlreq@@makecaption@label@format@envlist}{jlreq@@makecaption@label@format@setting}{#1}}
 \jlreq@jlreqsetup@add{caption_after_label_space}{\jlreq@jlreqsetup@withenv{jlreq@@makecaption@after@label@space@envlist}{jlreq@@makecaption@after@label@space@setting}{#1}}
-\def\jlreq@caption@setalign#1#2{%
-  \jlreq@switch{#2}{
-    {center}{\let#1=c}
-    {left}{\let#1=l}
-    {right}{\let#1=r}
-    {top}{\let#1=l}
-    {bottom}{\let#1=r}
+
+\def\jlreq@@makecaption@align@clearandsetalign#1{%
+  \@for\jlreq@tempa:=\jlreq@@makecaption@align@envlist\do{%
+    \ifx\jlreq@tempa\@empty\else
+      \eappto\jlreq@generalset{\noexpand\let\expandonce{\csname jlreq@@makecaption@align@setting@\jlreq@tempa\endcsname}=\noexpand\@undefined}%
+    \fi
+  }%
+  \appto\jlreq@generalset{%
+    \def\jlreq@@makecaption@align@envlist{}%
+    \let\jlreq@@makecaption@align@setting=#1%
   }%
 }
 \jlreq@jlreqsetup@add{caption_align}{%
-  \jlreq@parsekeyval@nokey{%
-    \jlreq@ifempty{##1}{}{%
-      \jlreq@switch{##1}{%
-        {center}{\let\jlreq@@makecaption@align=c}
-        {left}{\let\jlreq@@makecaption@align=l}
-        {right}{\let\jlreq@@makecaption@align=r}
-        {top}{\let\jlreq@@makecaption@align=l}
-        {bottom}{\let\jlreq@@makecaption@align=r}
-        {\expandafter\jlreq@caption@setalign\csname jlreq@@makecaption@align@##1\endcsname{##2}}
+  \@ifundefined{jlreq@@makecaption@align@envlist}{\def\jlreq@@makecaption@align@envlist{}}{}%
+  \begingroup
+    \def\jlreq@generalset{}\def\jlreq@envset{}%
+    \jlreq@parsekeyval@nokey{%
+      \jlreq@ifempty{##1}{}{%
+        \jlreq@switch{##1}{%
+          {center}{\jlreq@@makecaption@align@clearandsetalign{c}}
+          {left}{\jlreq@@makecaption@align@clearandsetalign{l}}
+          {right}{\jlreq@@makecaption@align@clearandsetalign{r}}
+          {top}{\jlreq@@makecaption@align@clearandsetalign{l}}
+          {bottom}{\jlreq@@makecaption@align@clearandsetalign{r}}
+          {%
+            \jlreq@switch{##2}{%
+              {center}{\eappto\jlreq@envset{\noexpand\let\expandonce{\csname jlreq@@makecaption@align@setting@##1\endcsname}=c}}%
+              {left}{\eappto\jlreq@envset{\noexpand\let\expandonce{\csname jlreq@@makecaption@align@setting@##1\endcsname}=l}}%
+              {right}{\eappto\jlreq@envset{\noexpand\let\expandonce{\csname jlreq@@makecaption@align@setting@##1\endcsname}=r}}%
+              {top}{\eappto\jlreq@envset{\noexpand\let\expandonce{\csname jlreq@@makecaption@align@setting@##1\endcsname}=l}}%
+              {bottom}{\eappto\jlreq@envset{\noexpand\let\expandonce{\csname jlreq@@makecaption@align@setting@##1\endcsname}=r}}%
+            }%
+            \appto\jlreq@envset{%
+              \def\jlreq@tempa{\jlreq@helper@removeelement{##1}}%
+              \expandafter\jlreq@tempa\expandafter{\jlreq@@makecaption@align@envlist}{\jlreq@@makecaption@align@envlist}%
+              \appto\jlreq@@makecaption@align@envlist{,##1}%
+            }%
+          }%
+        }%
       }%
-    }%
-  }{#1}%
+    }{#1}%
+    \edef\jlreq@do{\expandonce{\jlreq@generalset}\expandonce{\jlreq@envset}}%
+  \expandafter\endgroup
+  \jlreq@do
 }
 % 特に根拠のない値
 \setlength\abovecaptionskip{.5\jlreq@gol}
@@ -4886,122 +4909,94 @@
   }}{\endlist}
 \newcommand{\descriptionlabel}[1]{\normalfont\sffamily\bfseries #1}
 
-% enumerateとitemize
-% 見出しが一つ上のレベルからどのくらいずれているかを入れる．
-% （見出しは2\zwの箱に右/下詰めで入る．）
-\setlength\leftmargini{2\zw}
-\setlength\leftmarginii{1\zw}
-\setlength\leftmarginiii{1\zw}
-\setlength\leftmarginiv{1\zw}
-\setlength\leftmarginv{1\zw}
-\setlength\leftmarginvi{1\zw}
-
 %.. 箇条書き
 % beforeafter_spaceの設定格納マクロ
 % \jlreq@itemization@beforeafter@space@envlist: 設定されている環境一覧
 % \jlreq@itemization@beforeafter@space@setting@<i-iv>: 設定（一般）．
 % \jlreq@itemization@beforeafter@space@setting@<i-iv>@<env>: 設定（環境付き）
-\def\jlreq@itemization@beforeafter@space@envlist{}
-\jlreq@jlreqsetup@add{itemization_beforeafter_space}{%
+% #1 = 環境名格納，#2@<i-iv>，#2@<i-iv>@<env>を定義する
+\long\def\jlreq@jlreqsetup@itemization#1#2#3{
+  \@ifundefined{#1}{\expandafter\def\csname #1\endcsname{}}{}%
   \begingroup
     \def\jlreq@generalset{}%
     \def\jlreq@levelset{}%
     \def\jlreq@envset{}%
-    \def\jlreq@tempa{#1}%
     \jlreq@parsekeyval@nokey{%
       \ifjlreq@parsekeyval@nokey@novalue{%
         % 生の値．環境に対するものをクリアし，全ての<i-iv>に同じ値を設定
         % 環境一覧リストもクリア．
         \@for\jlreq@tempa:=i,ii,iii,iv,v,vi\do{%
-          \@for\jlreq@tempb:=\jlreq@itemization@beforeafter@space@envlist\do{%
-            \eappto\jlreq@generalset{\noexpand\let\expandonce{\csname jlreq@itemization@beforeafter@space@setting@\jlreq@tempa @\jlreq@tempb\endcsname}\noexpand\relax}%
+          \expandafter\@for\expandafter\jlreq@tempb\expandafter:\expandafter=\csname #1\endcsname\do{%
+            \ifx\jlreq@tempb\@empty\else
+              \eappto\jlreq@generalset{\noexpand\let\expandonce{\csname #2@\jlreq@tempa @\jlreq@tempb\endcsname}\noexpand\@undefined}%
+            \fi
           }%
           \eappto\jlreq@generalset{%
-            \noexpand\edef\expandonce{\csname jlreq@itemization@beforeafter@space@setting@\jlreq@tempa\endcsname}{\unexpanded{\unexpanded{##1}}}%
+            \noexpand\edef\expandonce{\csname #2@\jlreq@tempa\endcsname}{\unexpanded{\unexpanded{##1}}}%
           }%
         }%
-        \appto\jlreq@generalset{\def\jlreq@itemization@beforeafter@space@envlist{}}%
+        \appto\jlreq@generalset{\expandafter\def\csname #1\endcsname{}}%
       }{%
         \ifthenelse{\equal{##1}{i} \OR \equal{##1}{ii} \OR \equal{##1}{iii} \OR \equal{##1}{iv} \OR \equal{##1}{v} \OR \equal{##1}{vi}}{%
           % i=とかの時，環境に対応するものをクリアし，\jlreq@itemization@beforeafter@space@setting@##1に値を入れる
-          \@for\jlreq@tempa:=\jlreq@itemization@beforeafter@space@envlist\do{%
-            \epreto\jlreq@envset{\noexpand\let\expandonce{\csname jlreq@itemization@beforeafter@space@setting@##1@\jlreq@tempa\endcsname}\noexpand\relax}%
+          \expandafter\@for\expandafter\jlreq@tempa\expandafter:\expandafter=\csname #1\endcsname\do{
+            \ifx\jlreq@tempa\@empty\else
+              \epreto\jlreq@envset{\noexpand\let\expandonce{\csname #2@##1@\jlreq@tempa\endcsname}\noexpand\@undefined}%
+            \fi
           }%
-          \eappto\jlreq@envset{\noexpand\edef\expandonce{\csname jlreq@itemization@beforeafter@space@setting@##1\endcsname}{\unexpanded{\unexpanded{##2}}}}%
+          \eappto\jlreq@envset{\noexpand\edef\expandonce{\csname #2@##1\endcsname}{\unexpanded{\unexpanded{##2}}}}%
         }{%
           % そうでないとき，環境．##1 = 環境名
-          \edef\jlreq@tempa{\unexpanded{##2}}%
           \jlreq@parsekeyval@nokey{%
             \ifjlreq@parsekeyval@nokey@novalue{%
               % i - viまでに全てセットする．
               \@for\jlreq@tempa:=i,ii,iii,iv,v,vi\do{%
-                \epreto\jlreq@envset{\noexpand\edef\expandonce{\csname jlreq@itemization@beforeafter@space@setting@\jlreq@tempa @##1\endcsname}{\unexpanded{\unexpanded{####1}}}}%
+                \epreto\jlreq@envset{\noexpand\edef\expandonce{\csname #2@\jlreq@tempa @##1\endcsname}{\unexpanded{\unexpanded{####1}}}}%
               }%
             }{%
               % ピンポイント代入
-              \eappto\jlreq@envset{\noexpand\edef\expandonce{\csname jlreq@itemization@beforeafter@space@setting@####1@##1\endcsname}{\unexpanded{\unexpanded{####2}}}}%
+              \eappto\jlreq@envset{\noexpand\edef\expandonce{\csname #2@####1@##1\endcsname}{\unexpanded{\unexpanded{####2}}}}%
             }%
-          }{\jlreq@tempa}%
-          \appto\jlreq@envset{%
-            \def\jlreq@tempa{\jlreq@helper@removeelement{##1}}%
-            \expandafter\jlreq@tempa\expandafter{\jlreq@itemization@beforeafter@space@envlist}{\jlreq@itemization@beforeafter@space@envlist}%
-            \appto\jlreq@itemization@beforeafter@space@envlist{,##1}%
+          }{##2}%
+          \eappto\jlreq@envset{%
+            \unexpanded{\def\jlreq@tempa{\jlreq@helper@removeelement{##1}}}%
+            \unexpanded{\expandafter\jlreq@tempa\expandafter}{\expandonce{\csname #1\endcsname}}{\expandonce{\csname #1\endcsname}}%
+            \noexpand\appto\expandonce{\csname #1\endcsname}{\unexpanded{,##1}}%
           }%
         }%
       }%
-    }{\jlreq@tempa}%
+    }{#3}%
     \edef\jlreq@do{\expandonce{\jlreq@generalset}\expandonce{\jlreq@levelset}\expandonce{\jlreq@envset}}%
-%    \show\jlreq@do
   \expandafter\endgroup
   \jlreq@do
 }
 
+\def\jlreq@itemization@beforeafter@space@envlist{}
+\jlreq@jlreqsetup@add{itemization_beforeafter_space}{\jlreq@jlreqsetup@itemization{jlreq@itemization@beforeafter@space@envlist}{jlreq@itemization@beforeafter@space@setting}{#1}}%
+
 \jlreq@jlreqsetup@add{itemization_itemsep}{\jlreq@jlreqsetup@withenv{jlreq@itemization@itemsep@envlist}{jlreq@itemization@itemsep@setting}{#1}}
 \jlreq@jlreqsetup@add{itemization_labelsep}{\jlreq@jlreqsetup@withenv{jlreq@itemization@labelsep@envlist}{jlreq@itemization@labelsep@setting}{#1}}
-% enumerate, itemize用初期化
-\def\jlreq@init@list{%
-  \setlength{\labelwidth}{2\zw}%
+\jlreq@jlreqsetup@add{itemization_label_length}{\jlreq@jlreqsetup@itemization{jlreq@itemization@label@length@envlist}{jlreq@itemization@label@length@setting}{#1}}
+% enumerate, itemize用初期化，#1 = i,ii,...
+\def\jlreq@init@list#1{%
   \setlength{\partopsep}{0pt}%
   \setlength{\itemsep}{\dimexpr\jlreq@jlreqsetup@withenv@nameuse{jlreq@itemization@itemsep@setting}{\@currenvir}}%
   \setlength{\parsep}{0pt}%
   \setlength{\listparindent}{\parindent}%
-% itemizeは直後ベタ，enumerateは直後全角空き．
   \setlength{\labelsep}{\dimexpr\jlreq@jlreqsetup@withenv@nameuse{jlreq@itemization@labelsep@setting}{\@currenvir}\relax}%
-  % \labelsepだけあけるのは一つ目（ラベルの直後）のみ
-  \setlength{\itemindent}{\labelsep}%
+  \setlength{\labelwidth}{\dimexpr\jlreq@jlreqsetup@withenv@nameuse{jlreq@itemization@label@length@setting@#1}{\@currenvir}\relax}%
+  \setlength{\topsep}{\dimexpr\jlreq@jlreqsetup@withenv@nameuse{jlreq@itemization@beforeafter@space@setting@#1}{\@currenvir}\relax}%
+  \setlength{\leftmargin}{\dimexpr\csname leftmargin#1\endcsname}%
+  \setlength{\itemindent}{\dimexpr\jlreq@jlreqsetup@withenv@nameuse{jlreq@itemization@label@length@setting@#1}{\@currenvir} + \labelsep - \leftmargin\relax}%
 }
 
-\def\@listi{%
-  \jlreq@init@list
-  \setlength{\topsep}{\dimexpr\jlreq@jlreqsetup@withenv@nameuse{jlreq@itemization@beforeafter@space@setting@i}{\@currenvir}\relax}%
-  \setlength{\leftmargin}{\leftmargini}%
-}
+\def\@listi{\jlreq@init@list{i}}%
 \let\@listI\@listi
-\def\@listii{%
-  \jlreq@init@list
-  \setlength{\topsep}{\dimexpr\jlreq@jlreqsetup@withenv@nameuse{jlreq@itemization@beforeafter@space@setting@ii}{\@currenvir}\relax}%
-  \setlength{\leftmargin}{\leftmarginii}%
-}
-\def\@listiii{%
-  \jlreq@init@list
-  \setlength{\topsep}{\dimexpr\jlreq@jlreqsetup@withenv@nameuse{jlreq@itemization@beforeafter@space@setting@iii}{\@currenvir}\relax}%
-  \setlength{\leftmargin}{\leftmarginiii}%
-}
-\def\@listiv{%
-  \jlreq@init@list
-  \setlength{\topsep}{\dimexpr\jlreq@jlreqsetup@withenv@nameuse{jlreq@itemization@beforeafter@space@setting@iv}{\@currenvir}\relax}%
-  \setlength{\leftmargin}{\leftmarginiv}%
-}
-\def\@listv{%
-  \jlreq@init@list
-  \setlength{\topsep}{\dimexpr\jlreq@jlreqsetup@withenv@nameuse{jlreq@itemization@beforeafter@space@setting@v}{\@currenvir}\relax}%
-  \setlength{\leftmargin}{\leftmarginv}%
-}
-\def\@listvi{%
-  \jlreq@init@list
-  \setlength{\topsep}{\dimexpr\jlreq@jlreqsetup@withenv@nameuse{jlreq@itemization@beforeafter@space@setting@vi}{\@currenvir}\relax}%
-  \setlength{\leftmargin}{\leftmarginvi}%
-}
+\def\@listii{\jlreq@init@list{ii}}
+\def\@listiii{\jlreq@init@list{iii}}
+\def\@listiv{\jlreq@init@list{iv}}
+\def\@listv{\jlreq@init@list{v}}
+\def\@listvi{\jlreq@init@list{vi}}
 
 % 引用系．3.5.2の例．
 \jlreq@jlreqsetup@add{quote_indent}{\def\jlreq@quote@indent{#1}}
@@ -5316,7 +5311,7 @@
 \def\jlreq@matter@counter@norestore#1#2{%
   \def#1{}%
   \jlreq@parsekeyval@nokey{%
-    \jlreq@parsekeyval{
+    \jlreq@parsekeyval*{
       {value}{\appto#1{\setcounter{##1}{####1}}}
       {the}{\eappto#1{\noexpand\def\expandonce{\csname the##1\endcsname}{\unexpanded{####1}}}}
     }{##2}%
@@ -5324,7 +5319,6 @@
 }
 
 \ifthenelse{\equal{\jlreq@article@type}{book}}{
-%  \tracingmacros=1
   \newif\if@mainmatter
   \@mainmattertrue
   \jlreq@jlreqsetup@add{frontmatter_pagebreak}{%
@@ -5762,10 +5756,10 @@
   \renewcommand{\theenumii}{\@alph\c@enumii}
   \renewcommand{\theenumiii}{\@roman\c@enumiii}
   \renewcommand{\theenumiv}{\@Alph\c@enumiv}
-  \newcommand{\labelenumi}{\theenumi.}
-  \newcommand{\labelenumii}{(\theenumii)}
-  \newcommand{\labelenumiii}{\theenumiii.}
-  \newcommand{\labelenumiv}{\theenumiv.}
+  \newcommand{\labelenumi}{\theenumi.\hspace{.5\zw}}
+  \newcommand{\labelenumii}{(\theenumii)\hspace{.5\zw}}
+  \newcommand{\labelenumiii}{\theenumiii.\hspace{.5\zw}}
+  \newcommand{\labelenumiv}{\theenumiv.\hspace{.5\zw}}
 \fi
 \renewcommand{\p@enumii}{\theenumi}
 \renewcommand{\p@enumiii}{\theenumi(\theenumii)}
@@ -5782,10 +5776,18 @@
 \fi
 \newcommand{\labelitemiv}{\hbox to 1\zw{\hss ・\hss}}
 
+% 見出しが一つ上のレベルからどのくらいずれているかを入れる．
+\setlength\leftmargini{2\zw}
+\setlength\leftmarginii{2\zw}
+\setlength\leftmarginiii{1\zw}
+\setlength\leftmarginiv{1\zw}
+\setlength\leftmarginv{1\zw}
+\setlength\leftmarginvi{1\zw}
 \jlreqsetup{
   itemization_beforeafter_space={0pt,i=.5\baselineskip},
   itemization_itemsep=0pt,
-  itemization_labelsep={itemize=0pt,enumerate=1\zw}
+  itemization_labelsep={0pt},
+  itemization_label_length={1\zw,i=2\zw,ii=2\zw}
 }
 
 %.. 引用

@@ -246,12 +246,17 @@
 % \jlreq@parsekeyval@nokey{<action>}{<parse対象>}
 % action内では#1=key, #2=val
 % \ifjlreq@parsekeyval@nokey@novalue{<true code>}{<false code>}でvalueがないか判定できる．
-% <parse対象>は一回だけ展開される．
-\newcommand{\jlreq@parsekeyval@nokey}[2]{%
+% *つきは<parse対象>を一回だけ展開する．
+\def\jlreq@parsekeyval@nokey{\@ifstar{\jlreq@parsekeyval@nokey@{*}}{\jlreq@parsekeyval@nokey@{}}}
+\newcommand{\jlreq@parsekeyval@nokey@}[3]{%
   \begingroup
     \long\def\jlreq@do{}%
-    \long\def\jlreq@parsekeyval@nokey@execute##1##2{#1}%
-    \expandafter\jlreq@parsekeyval@nokey@i@wuniq\expandafter\jlreq@uniqtoken#2,\jlreq@endmark,%
+    \long\def\jlreq@parsekeyval@nokey@execute##1##2{#2}%
+    \jlreq@ifempty{#1}{%
+      \jlreq@parsekeyval@nokey@i@wuniq\jlreq@uniqtoken#3,\jlreq@endmark,%
+    }{%
+      \expandafter\jlreq@parsekeyval@nokey@i@wuniq\expandafter\jlreq@uniqtoken#3,\jlreq@endmark,%
+    }%
   \expandafter\endgroup
   \jlreq@do
 }
@@ -285,9 +290,9 @@
 \long\def\jlreq@parsekeyval@nokey@removeequal#1{\jlreq@parsekeyval@nokey@removeequal@\jlreq@uniqtoken#1\jlreq@endmark}
 \long\def\jlreq@parsekeyval@nokey@removeequal@#1=\jlreq@endmark{\expandafter\unexpanded\expandafter{\@gobble#1}}
 
-% #1の先頭のスペースを削除し，#2に入れる．ただし#1={ X}の時は" X"が入る．
+% #1の先頭のスペースを削除し，#2に入れる．
+\long\def\jlreq@helper@trim#1#2{\edef#2{\jlreq@helper@trim@i{#1}}}
 \def\jlreq@do#1{% #1 = " "として後で実行
-  \long\def\jlreq@helper@trim##1##2{\edef##2{\jlreq@helper@trim@i{##1}}}
   \long\def\jlreq@helper@trim@i##1{%
     \jlreq@iffirsttoken{##1}{#1}%
       % 先頭スペースの除去．{}を外さないために\jlreq@uniqtokenを前後にいったん挟む．

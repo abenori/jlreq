@@ -2619,7 +2619,6 @@
     \def\jlreq@font{\normalfont\normalsize}%
     \def\jlreq@indent{0\zw}%
     \def\jlreq@after@label@space{1\zw}%
-    \def\jlreq@mark{}%
     \def\jlreq@label@font{}%
     \def\jlreq@label@format{\@seccntformat{#1}}%
     \def\jlreq@after@space{1\zw}%
@@ -2627,11 +2626,10 @@
     \jlreq@parsekeyval[RuninHeading:#1]{%
       {font}{\def\jlreq@font{##1}}
       {indent}{\def\jlreq@indent{##1}}
-      {mark}{\def\jlreq@mark{##1}}
       {label_format}{\def\jlreq@label@format{##1}}
-      {after_label_space}{
+      {after_label_space}{%
         \ifdim\dimexpr##1\relax<0pt \ClassWarning{jlreq}{after_label_space in Runin Heading #1 should be not negative}\fi
-        \def\jlreq@after@label@space{##1}
+        \def\jlreq@after@label@space{##1}%
       }
       {after_space}{%
         \ifdim\dimexpr##1\relax<0pt \ClassWarning{jlreq}{after_space in Runin Heading #1 should be not negative}\fi
@@ -2792,7 +2790,7 @@
 }
 
 \newcommand{\ModifyHeading}[2]{%
-  \@ifundefined{jlreq@heading@setting@#1}{\ClassError{jlreq}{Unknown heading: #1}{\@ehc}}%
+  \@ifundefined{jlreq@heading@setting@#1}{\ClassError{jlreq}{Unknown heading: #1}{\@ehc}}{}%
   \edef\jlreq@do{\csexpandonce{jlreq@heading@type@#1}{#1}{\csexpandonce{jlreq@heading@level@#1}}{\csexpandonce{jlreq@heading@setting@#1},\unexpanded{#2}}}%
   \jlreq@do
 }
@@ -3007,23 +3005,32 @@
   \jlreq@hook@prenote
   \@ifnextchar[{\jlreq@footnotemark@impl@woption}{\jlreq@footnotemark@impl@wooption}%
 }
-\if@tate
+\ifthenelse{\boolean{@tate} \AND \(\boolean{@twoside} \OR \boolean{@twocolumn}\)}{
   % 縦組の傍注は，その見開き内に付いている合印に対応する注を，奇数ページの左端にそろえて配置する．多段組では最下段の左端にそろえて配置する．（4.2.6.a）
   % 必要ならば\footnoteを\footnotemarkと\footnotetextにわけ，\footnotetextをアウトプット時まで遅延することで実現する．
   \def\jlreq@footnote@delayfootnoteslist{}
-  \preto\@opcol{%
+  \def\jlreq@hook@@opcol{%
     \expandafter\gdef\expandafter\jlreq@footnote@delayfootnoteslist\expandafter{\expandafter}%
     \jlreq@footnote@delayfootnoteslist
   }
+  \preto\@opcol{\jlreq@hook@@opcol}
   % \jlreq@footnote@delayfootnote@delay#1#2#3：#1ページ目に\footnotetext[#2]{#3}を出す
   % \jlreq@footnote@delayfootnote@page：何ページ目に\footnotetextを入れるかを\jlreq@resultcntに入れる．その場での場合は-1．
   \if@twocolumn
-    \def\jlreq@footnote@delayfootnote@page{%
-      \jlreq@setcurrentpage
-      \jlreq@resultcnt=\numexpr\jlreq@currentpage\ifodd\jlreq@currentpage\else + 1\fi\relax
-      % このページに表示＆上の段処理済みだと\output内では間に合わない
-      \ifnum\jlreq@resultcnt=\value{page}\if@firstcolumn\else\jlreq@resultcnt=-1 \fi\fi
-    }
+    \if@twoside
+      \def\jlreq@footnote@delayfootnote@page{%
+        \jlreq@setcurrentpage
+        \jlreq@resultcnt=\numexpr\jlreq@currentpage\ifodd\jlreq@currentpage\else + 1\fi\relax
+        % このページに表示＆上の段処理済みだと\output内では間に合わない
+        \ifnum\jlreq@resultcnt=\value{page}\if@firstcolumn\else\jlreq@resultcnt=-1 \fi\fi
+      }
+    \else
+      \def\jlreq@footnote@delayfootnote@page{%
+        \jlreq@setcurrentpage
+        \jlreq@resultcnt=\numexpr\jlreq@currentpage\relax
+        \ifnum\jlreq@resultcnt=\value{page}\if@firstcolumn\else\jlreq@resultcnt=-1 \fi\fi
+      }
+    \fi
     \long\def\jlreq@footnote@delayfootnote@delay#1#2#3{%
       % 二段組みの場合は上段を組んだ直後に\footnotetextを挿入（そのページの下段に入る）
       \ifnum 0\if@firstcolumn\else 1\fi\ifnum#1>\value{page}1\fi>0
@@ -3089,7 +3096,7 @@
     \fi
     \jlreq@hook@postnote
   }
-\else
+}{
   \long\def\jlreq@footnote@impl@woption[#1]#2{%
     \jlreq@useoriginalcs{\footnote}[#1]{#2}%
     \jlreq@hook@postnote
@@ -3098,7 +3105,7 @@
     \jlreq@useoriginalcs{\footnote}{#1}%
     \jlreq@hook@postnote
   }
-\fi
+}
 \long\def\jlreq@footnotemark@impl@woption[#1]{%
   \jlreq@useoriginalcs{\footnotemark}[#1]%
   \jlreq@hook@postnote
@@ -4526,7 +4533,10 @@
 % 残りはデフォルトにしておく．
 
 %. 環境も引数にとる可能性のある\jlreqsetup用マクロ．
-% #3={figure=X}ならば\#2@figureにXを入れる．そうでなければ\#2に入れる．#1にはfigureとかのリストが入る．
+% #3={<設定1>,<環境名>=<設定2>}のようなものを受け付ける．
+% #2に<設定1>が，#2@<環境名>に<設定2>が入る．#1には#2@<環境名>が定義されている<環境名>をカンマ区切りで入れる．
+% \jlreqsetup{X,env=B}の後に\jlreqsetup{Y}を指定すると，env環境に対する設定はYになるようにする．
+% ただし\jlreqsetup{env=C,Y}とした場合はenv環境に対してはC．
 \long\def\jlreq@jlreqsetup@withenv#1#2#3{%
   \@ifundefined{#1}{\expandafter\def\csname #1\endcsname{}}{}%
   \begingroup
@@ -4538,7 +4548,7 @@
           \noexpand\def\expandonce{\csname #1\endcsname}{}%
         }%
         \expandafter\@for\expandafter\jlreq@tempa\expandafter:\expandafter=\csname #1\endcsname\do{%
-          \epreto\jlreq@do{\noexpand\let\expandonce{\csname #2@\jlreq@tempa\endcsname}\noexpand\relax}%
+          \epreto\jlreq@do{\noexpand\let\expandonce{\csname #2@\jlreq@tempa\endcsname}\noexpand\@undefined}%
         }%
       }{%
         \eappto\jlreq@do{%
@@ -4910,11 +4920,10 @@
 \newcommand{\descriptionlabel}[1]{\normalfont\sffamily\bfseries #1}
 
 %.. 箇条書き
-% beforeafter_spaceの設定格納マクロ
-% \jlreq@itemization@beforeafter@space@envlist: 設定されている環境一覧
-% \jlreq@itemization@beforeafter@space@setting@<i-iv>: 設定（一般）．
-% \jlreq@itemization@beforeafter@space@setting@<i-iv>@<env>: 設定（環境付き）
-% #1 = 環境名格納，#2@<i-iv>，#2@<i-iv>@<env>を定義する
+% #3={<設定1>,i=<設定2>,<環境名>={<設定3>,ii=<設定4>}}のような設定を解釈する．
+% <設定2>は#2@iに，<設定4>は#2@ii@<環境名>に格納される．
+% <設定1>の指定はi=<設定1>,..,vi=<設定1>と等価．<設定3>も同様．
+% #1には現在何か値が定義されている環境名をカンマ区切りで入れる．
 \long\def\jlreq@jlreqsetup@itemization#1#2#3{
   \@ifundefined{#1}{\expandafter\def\csname #1\endcsname{}}{}%
   \begingroup
@@ -4938,7 +4947,7 @@
         \appto\jlreq@generalset{\expandafter\def\csname #1\endcsname{}}%
       }{%
         \ifthenelse{\equal{##1}{i} \OR \equal{##1}{ii} \OR \equal{##1}{iii} \OR \equal{##1}{iv} \OR \equal{##1}{v} \OR \equal{##1}{vi}}{%
-          % i=とかの時，環境に対応するものをクリアし，\jlreq@itemization@beforeafter@space@setting@##1に値を入れる
+          % i=とかの時，環境に対応するものをクリアし，\#2@##1に値を入れる
           \expandafter\@for\expandafter\jlreq@tempa\expandafter:\expandafter=\csname #1\endcsname\do{
             \ifx\jlreq@tempa\@empty\else
               \epreto\jlreq@envset{\noexpand\let\expandonce{\csname #2@##1@\jlreq@tempa\endcsname}\noexpand\@undefined}%
@@ -4972,8 +4981,7 @@
 }
 
 \def\jlreq@itemization@beforeafter@space@envlist{}
-\jlreq@jlreqsetup@add{itemization_beforeafter_space}{\jlreq@jlreqsetup@itemization{jlreq@itemization@beforeafter@space@envlist}{jlreq@itemization@beforeafter@space@setting}{#1}}%
-
+\jlreq@jlreqsetup@add{itemization_beforeafter_space}{\jlreq@jlreqsetup@itemization{jlreq@itemization@beforeafter@space@envlist}{jlreq@itemization@beforeafter@space@setting}{#1}}
 \jlreq@jlreqsetup@add{itemization_itemsep}{\jlreq@jlreqsetup@withenv{jlreq@itemization@itemsep@envlist}{jlreq@itemization@itemsep@setting}{#1}}
 \jlreq@jlreqsetup@add{itemization_labelsep}{\jlreq@jlreqsetup@withenv{jlreq@itemization@labelsep@envlist}{jlreq@itemization@labelsep@setting}{#1}}
 \jlreq@jlreqsetup@add{itemization_label_length}{\jlreq@jlreqsetup@itemization{jlreq@itemization@label@length@envlist}{jlreq@itemization@label@length@setting}{#1}}
@@ -5371,6 +5379,7 @@
     \def\jlreq@pagination@frontmatterstyle{arabic}%
     \let\jlreq@pagination@mainmatterpagecommand=\pagenumbering
     \@for\jlreq@tempa:=#1\do{%
+      \expandafter\jlreq@helper@trim\expandafter{\jlreq@tempa}{\jlreq@tempa}%
       \jlreq@switch{\jlreq@tempa}{
         {continuous}{%
           \def\jlreq@pagination@mainmatterpagecommand##1{\gdef\thepage{\csname @##1\endcsname\c@page}}%
@@ -5443,6 +5452,7 @@
     \let\jlreq@pagination@backmatterpagecommand=\pagenumbering
     \def\jlreq@pagination@backmatterstyle{arabic}%
     \@for\jlreq@tempa:=#1\do{%
+      \expandafter\jlreq@helper@trim\expandafter{\jlreq@tempa}{\jlreq@tempa}%
       \jlreq@switch{\jlreq@tempa}{
         {continuous}{%
           \def\jlreq@pagination@backmatterpagecommand##1{\gdef\thepage{\csname @##1\endcsname\c@page}}%

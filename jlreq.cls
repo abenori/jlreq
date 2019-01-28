@@ -1684,7 +1684,6 @@
 
 % {1 = 命令}{2 = レベル}{3 = スペース関連}{4 = *}{5 = running head}{6 = 見出し}[7 = 副題]
 \long\def\jlreq@BlockHeading@start@@@#1#2#3#4#5#6[#7]{%
-  
   \edef\jlreq@do{\unexpanded{\jlreq@BlockHeading@start@@@@{#1}{#2}{#3}}{\expandonce{\jlreq@BlockHeading@start@totalformat}}}%
   \jlreq@do{#4}{#5}{#6}{#7}%
 }
@@ -1704,13 +1703,20 @@
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@space@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
     \expandonce{\jlreq@tempb}%
   }%
-  \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@format@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
-    \unexpanded{#4}%
-  }%
+  \def\@tempa##1##2##3{##1}%
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@before@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
+    \expandonce{\@tempa#4}%
     \expandonce{\jlreq@resulta}%
   }%
-  \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count\endcsname{}%
+  \def\@tempa##1##2##3{##2}%
+  \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@format@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
+    \expandonce{\@tempa#4}%
+  }%
+  \def\@tempa##1##2##3{##3}%
+  \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
+    \expandonce{\jlreq@resultc}%
+    \expandonce{\@tempa#4}%
+  }%
   \ifx\jlreq@BlockHeading@spaces@headingslist\@empty
     \expandafter\jlreq@BlockHeading@spaces@outputwospace
     \expandafter\ignorespaces
@@ -1775,7 +1781,7 @@
 % 特別扱いしたいマクロを並べる
 \def\jlreq@BlockHeading@HeadingSpaces@ignoretokens{\label}
 
-% \jlreq@resultaにaux吐き出しとかを入れて，\jlreq@resultbに出力を入れる（縦方向調整なし）
+% \jlreq@resulta -> before, \jlreq@resultb -> 本体，\jlreq@resultc -> after
 % {1 = 命令}{2 = レベル}{3 = スペース関連（横方向のみ）}{4 = フォーマット群}{5 = まとめたフォーマット群}{6 = *}{7 = running head}{8 = 見出し}{9 = 副題}
 \long\def\jlreq@BlockHeading@start@makeoutput#1#2#3#4#5#6#7#8#9{%
   \begingroup
@@ -1807,10 +1813,12 @@
         \jlreq@ifempty{#9}%
           {\unexpanded{\long\gdef\jlreqHeadingSubtitle####1{}}}%
           {\unexpanded{\long\gdef\jlreqHeadingSubtitle####1{####1}}}%
-        \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{\unexpanded{#6}}{\expandonce{\jlreq@tempa}}{\unexpanded{#7}}%
       }%
       \unexpanded{\def\jlreq@resultb}{%
         \expandonce{\jlreq@result}%
+      }%
+      \unexpanded{\def\jlreq@resultc}{%
+        \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{\unexpanded{#6}}{\expandonce{\jlreq@tempa}}{\unexpanded{#7}}%
       }%
     }%
   \expandafter\endgroup
@@ -2243,7 +2251,8 @@
     \eappto\jlreq@do{\expandonce{\jlreq@result}}%
     \jlreq@BlockHeading@gyodori@parsekeyval*[BlockHeading:#1]{#3}{}{}{1}%
     \let\jlreq@spaceset=\jlreq@result
-    \edef\jlreq@totalformat{\unexpanded{##1}\expandonce{\jlreq@afterindent}\noexpand\@afterheading}%
+    \edef\jlreq@totalformat{\unexpanded{##1}}%
+    \edef\jlreq@totalformat@after{\expandonce{\jlreq@afterindent}\noexpand\@afterheading}%
     \if@twocolumn
       \ifthenelse{\equal{\jlreq@column@spanning}{true}}{%
         \def\@tempa##1##2##3{%
@@ -2263,7 +2272,9 @@
           }%
         }%
         \expandafter\@tempa\jlreq@spaceset
-      }{}%
+        \def\jlreq@totalformat@after{}%
+      }{%
+      }%
     \fi
     \edef\jlreq@do{%
       \expandonce{\jlreq@do}%
@@ -2285,7 +2296,7 @@
             {}{}%
           }%
         }%
-        {\expandonce{\jlreq@totalformat}}%
+        {{}{\expandonce{\jlreq@totalformat}}{\expandonce{\jlreq@totalformat@after}}}%
       }}%
       \noexpand\def\expandonce{\csname #1\endcsname}{\expandonce{\csname jlreq@headingcs@#1\endcsname}}%
     }%

@@ -226,12 +226,19 @@
 \jlreq@aftercls@addtodeletecs{\jlreq@option@sidenote@length}
 \DeclareOptionX{sidenote_length}{\renewcommand*{\jlreq@option@sidenote@length}{#1}}
 
+%.. 逆ノンブル
+\newif\ifjlreq@option@use@reverse@pagination
+\jlreq@aftercls@addtodeleteif{\ifjlreq@option@use@reverse@pagination}
+\jlreq@option@use@reverse@paginationfalse
+\jlreq@DeclareOption{use_reverse_pagination}{\jlreq@option@use@reverse@paginationtrue}
+
 %.. もろもろ
 \newif\if@restonecol\@restonecolfalse
 \newif\if@titlepage\@titlepagefalse
-\newif\ifjlreq@option@titlepage \jlreq@option@titlepagefalse % titlepageかnotitlepageかが指定された
 \newif\if@landscape\@landscapefalse
 \newif\if@tate \@tatefalse
+\newif\ifjlreq@option@titlepage \jlreq@option@titlepagefalse % titlepageかnotitlepageかが指定された
+\jlreq@aftercls@addtodeleteif{\ifjlreq@option@titlepage}
 \jlreq@DeclareOption{landscape}{\@landscapetrue}
 \jlreq@DeclareOption{tombo}{\ClassWarningNoLine{jlreq}{The option `tombo' is not supported by jlreq class. Please use the jlreq-trimmarks package}}
 \jlreq@DeclareOption{tombow}{\ClassWarningNoLine{jlreq}{The option `tombow' is not supported by jlreq class. Please use the jlreq-trimmarks package}}
@@ -413,6 +420,7 @@
 \fi
 
 % 現在行の残りを得る．
+\RequirePackage{zref-savepos}
 \ifx l\jlreq@engine
   % 以下のコードはLuaTeX-jaのバグ？に依存している
   % https://ja.osdn.net/projects/luatex-ja/ticket/36489
@@ -848,6 +856,8 @@
 \def\@ptsize{0}
 % JFMに関連する設定
 \ifx l\jlreq@engine
+  \def\ltj@stdyokojfm{jlreq}
+  \def\ltj@stdtatejfm{jlreqv}
   % この値は後でjfm-jlreq内で読む
   \directlua{jlreq.open_bracket_pos = [[\jlreq@open@bracket@pos]]}
   \ifjlreq@burasage\directlua{jlreq.burasage = true}\else\directlua{jlreq.burasage = false}\fi
@@ -858,8 +868,6 @@
   \pretocmd{\list}{\def\jlreq@parhook@atbeginlist{\ltjfakeparbegin}}{}{}
   \apptocmd{\endlist}{\def\jlreq@parhook@atbeginlist{}}{}{}
   \def\jlreq@parhook@atbeginlist{}
-  \def\ltj@stdyokojfm{jlreq}
-  \def\ltj@stdtatejfm{jlreqv}
 \else
   % 非LuaTeXの場合はJFMの入れ替えと\everyparでの処理で対処．
   % 行頭括弧に対して\inhibitglueを入れたりする命令を作る
@@ -1243,7 +1251,7 @@
   \else\def\jlreq@option@headfoot@verticalpos{2zw}\fi
 \fi
 \setlength{\headsep}{\jlreq@speciallength{\jlreq@option@headfoot@verticalpos}}
-\ifdim\headsep<1\zw\relax\jlreq@note{基本版面との上下方向の最低の空き量を，基本版面の文字サイズの全角アキとする (26.1.a)．}\fi
+\if@tate\ifdim\headsep<1\zw\relax\jlreq@note{基本版面との上下方向の最低の空き量を，基本版面の文字サイズの全角アキとする (26.1.a)．}\fi\fi
 \if@tate
   \if@twocolumn
     \addtolength{\headsep}{\dimexpr\marginparwidth + \marginparsep\relax}
@@ -1470,6 +1478,14 @@
 % \maxdepth + \topskip = フォントサイズ×1.5（だってさ）
 \setlength{\maxdepth}{\dimexpr1.5\zw - \topskip\relax}
 
+%. システム設定
+%.. 逆ノンブル
+\ifjlreq@option@use@reverse@pagination
+  \RequirePackage{zref-lastpage}
+  \def\c@jlreqreversepage{\numexpr\zref@extractdefault{LastPage}{page}{0} - \c@page + 1\relax}
+  \def\thejlreqreversepage{\arabic{jlreqreversepage}}
+\fi
+
 %. 見出し関係 (4.1)
 % \clear***page
 \newcommand*{\cleartooddpage}[1][]{%
@@ -1552,6 +1568,7 @@
     }%
   }{}%
 }
+
 %.. 中/半扉見出し
 % addcontentslineに渡すやつ：番号出すのと出さないの
 \newcommand{\DeclareTobiraHeading}[3]{%
@@ -1598,7 +1615,6 @@
             \unexpanded{\refstepcounter{#1}}%
           \noexpand\fi
         \fi
-        \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{\ifjlreq@number\else -\fi}{\expandonce{\jlreq@label@format}}{####1}%
         \unexpanded{\jlreq@ifempty{##2}%
           {\long\gdef\jlreqHeadingText####1{}}%
           {\long\gdef\jlreqHeadingText####1{####1}}%
@@ -1615,6 +1631,7 @@
           \unexpanded{\long\gdef\jlreqHeadingLabel####1{}}%
           \expandonce{\jlreq@format{}{##1}}%
         \fi
+        \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{\ifjlreq@number\else -\fi}{\expandonce{\jlreq@label@format}}{####1}%
         \noexpand\@afterheading
         \expandonce{\jlreq@heading@clearpage}%
         \unexpanded{\if@restonecol\twocolumn\fi}%
@@ -5233,17 +5250,20 @@
 %. 索引
 \newif\ifjlreq@resttate
 \newenvironment{theindex}{%
-  \jlreq@oldfontcommand@enable
+%  \jlreq@oldfontcommand@enable
   \jlreq@iftdir{\clearpage\yoko\jlreq@resttatetrue}{\jlreq@resttatefalse}% 常に横書きにする
   \if@twocolumn\@restonecolfalse\else\@restonecoltrue\fi
   \columnseprule\z@ \columnsep 2\jlreq@mol
+%  \show\jlreq@theindex@pagestyle
   \twocolumn[\section*{\indexname}]%
   \@mkboth{\indexname}{\indexname}%
-  \thispagestyle{plain}%
+  \jlreq@theindex@pagestyle
   \parindent\z@
   \parskip\z@ \@plus .03\jlreq@gol\relax
   \let\item\@idxitem
 }{%
+  \ifx\jlreq@theindex@savedpagestyle\@undefined\else\expandafter\pagestyle\expandafter{\jlreq@theindex@savedpagestyle}\fi
+  \let\jlreq@theindex@savedpagestyle\@undefined
   \if@restonecol\onecolumn\else\clearpage\fi
   \ifjlreq@resttate\tate\fi
   \jlreq@oldfontcommand@disable
@@ -5252,9 +5272,25 @@
 \newcommand{\subitem}{\@idxitem \hspace*{2\jlreq@mol}}
 \newcommand{\subsubitem}{\@idxitem \hspace*{3\jlreq@mol}}
 \newcommand{\indexspace}{\par \vskip 1\jlreq@gol \@plus .5\jlreq@gol \@minus .3\jlreq@gol\relax}
+\def\jlreq@theindex@pagestyle{}
+\jlreq@jlreqsetup@add{theindex_pagestyle}{
+  \def\jlreq@tempa{}% ページスタイル名
+  \def\jlreq@theindex@pagestyle{}%
+  \jlreq@tempafalse % restore
+  \jlreq@parsekeyval@nokey{%
+    \ifjlreq@parsekeyval@nokey@novalue{\def\jlreq@tempa{##1}}{%
+      \jlreq@switch{##1}{%
+        {restore}{\csname jlreq@tempa##2\endcsname}%
+      }%
+    }%
+  }{#1}%
+  \eappto\jlreq@theindex@pagestyle{\unexpanded{\let\jlreq@theindex@savedpagestyle}\ifjlreq@tempa\noexpand\jlreq@current@pagestyle\else\noexpand\@undefined\fi}%
+  \ifx\jlreq@tempa\@empty\else
+    \eappto\jlreq@theindex@pagestyle{\noexpand\pagestyle{\expandonce{\jlreq@tempa}}}%
+  \fi
+}
 
 %. 前付，後付，付録
-
 % \jlreq@matter@heading[restoreする見出し一覧を入れる制御綴]{#2@<見出し命令名>に今の見出しの中身を入れる}{生成する制御綴の名前}{設定}
 \def\jlreq@matter@heading{\@ifnextchar[{\jlreq@matter@heading@}{\jlreq@matter@heading@[]{}}}
 \def\jlreq@matter@heading@[#1]#2#3#4{%
@@ -5496,7 +5532,6 @@
   \jlreq@appendix@heading
   \jlreq@appendix@postcode
 }
-
 
 %. その他諸々
 %.. 縦中横
@@ -5908,6 +5943,7 @@
    appendix_precode = {}
  }
 }
+\jlreqsetup{theindex_pagestyle=plain}
 \if@tate
   \jlreqsetup{year_style=wareki}
 \else

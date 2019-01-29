@@ -376,18 +376,16 @@
 }
 
 
-\RequirePackage[savepos]{zref}
+\RequirePackage{zref}
 \newcount\jlreq@zref@reference@count
 \jlreq@zref@reference@count=0
 % 現在のページを得る
-\zref@newprop*{jlreq@page}[0]{\number\c@page}
-\zref@addprop{main}{jlreq@page}
 \newcount\jlreq@currentpage
 % \jlreq@setcurrentpageをすると，\jlreq@currentpageにこの場所のページ数が入る
 \newcommand*{\jlreq@setcurrentpage}{%
   \global\advance\jlreq@zref@reference@count by 1
-  \zref@labelbyprops{jlreq@currentpage.\the\jlreq@zref@reference@count}{jlreq@page}%
-  \global\jlreq@currentpage=\zref@extractdefault{jlreq@currentpage.\the\jlreq@zref@reference@count}{jlreq@page}{\c@page}\relax
+  \zref@labelbyprops{jlreq@currentpage.\the\jlreq@zref@reference@count}{page}%
+  \global\jlreq@currentpage=\zref@extractdefault{jlreq@currentpage.\the\jlreq@zref@reference@count}{page}{\c@page}\relax
 }
 
 % 先頭にあるマクロを展開しまくった結果の先頭を#2に入れる．

@@ -375,17 +375,24 @@
   }%
 }
 
+% オレオレラベル……
+% \jlreq@reference@ref{ラベル名}{デフォルト値}
+\def\jlreq@reference@ref#1{\expandafter\ifx\csname jlreq@reference@#1\endcsname\relax\expandafter\@secondoftwo\else\expandafter\@firstoftwo\fi{\csname jlreq@reference@#1\endcsname}}
+% \jlreq@reference@label(@immediate){ラベル名}{値}
+\def\jlreq@reference@label#1#2{\protected@write\@auxout{}{\string\@newl@bel{jlreq@reference}{#1}{#2}}}%
+\def\jlreq@reference@immediate@write#1#2{\immediate\write\@auxout{\string\@newl@bel{jlreq@reference}{#1}{#2}}}%
+\def\jlreq@reference@ifexist#1{\expandafter\ifx\csname jlreq@reference@#1\endcsname\relax\expandafter\@secondoftwo\else\expandafter\@firstoftwo\fi}
 
-\RequirePackage{zref}
-\newcount\jlreq@zref@reference@count
-\jlreq@zref@reference@count=0
+% 自動生成されるラベル用の番号
+\newcount\jlreq@reference@count
+\jlreq@reference@count=0
+
 % 現在のページを得る
 \newcount\jlreq@currentpage
-% \jlreq@setcurrentpageをすると，\jlreq@currentpageにこの場所のページ数が入る
 \newcommand*{\jlreq@setcurrentpage}{%
-  \global\advance\jlreq@zref@reference@count by 1
-  \zref@labelbyprops{jlreq@currentpage.\the\jlreq@zref@reference@count}{page}%
-  \global\jlreq@currentpage=\zref@extractdefault{jlreq@currentpage.\the\jlreq@zref@reference@count}{page}{\c@page}\relax
+  \global\advance\jlreq@reference@count by 1
+  \jlreq@reference@label{jlreq@currentpage.\the\jlreq@reference@count}{\noexpand\arabic{page}}%
+  \global\jlreq@currentpage=\jlreq@reference@ref{jlreq@currentpage.\the\jlreq@reference@count}{\the\c@page}\relax
 }
 
 % 先頭にあるマクロを展開しまくった結果の先頭を#2に入れる．

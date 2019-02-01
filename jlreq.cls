@@ -420,13 +420,12 @@
 \fi
 
 % 現在行の残りを得る．
-\RequirePackage{zref-savepos}
 \ifx l\jlreq@engine
   % 以下のコードはLuaTeX-jaのバグ？に依存している
   % https://ja.osdn.net/projects/luatex-ja/ticket/36489
   \newcommand*{\jlreq@calc@current@linewidth@onecolumn}{%
     \dimexpr
-      \zposx{jlreq@rest@width.pos.\the\jlreq@zref@reference@count} sp - \@totalleftmargin -
+       \jlreq@reference@ref{jlreq@rest@width.pos.X.\the\jlreq@reference@count}{0} sp - \@totalleftmargin -
       \ifodd\jlreq@currentpage
         \oddsidemargin
       \else
@@ -447,7 +446,7 @@
   \newcommand*{\jlreq@calc@current@linewidth@onecolumn}{%
     \dimexpr
       \jlreq@ifydir{%
-        \zposx{jlreq@rest@width.pos.\the\jlreq@zref@reference@count} sp - \hoffset
+        \jlreq@reference@ref{jlreq@rest@width.pos.X.\the\jlreq@reference@count}{0} sp - \hoffset
         \ifodd\jlreq@currentpage
           - \oddsidemargin
         \else
@@ -460,7 +459,7 @@
           \pdfpageheight
         \fi
         - \topmargin - \headheight - \headsep - \voffset
-        - \zposy{jlreq@rest@width.pos.\the\jlreq@zref@reference@count} sp
+        - \jlreq@reference@ref{jlreq@rest@width.pos.Y.\the\jlreq@reference@count}{0} sp
       }%
       \jlreq@tombow@adjust
       - \@totalleftmargin - 1in
@@ -481,13 +480,29 @@
 \newdimen\jlreq@rest@linewidth
 % この命令以降，次にこの命令を実行する前まで\jlreq@current@linewidth/\jlreq@rest@linewidthで
 % この行の行頭からの長さ/残りの長さが取得できる
-\newcommand*{\jlreq@savepos@for@rest@linewidth}{%
+\jlreq@ifprimitive{\pdfsavepos}{\jlreq@tempatrue}{\jlreq@tempafalse}
+\edef\jlreq@savepos@for@rest@linewidth{\unexpanded{%
   \jlreq@setcurrentpage
-  \global\advance\jlreq@zref@reference@count by 1\relax
-  \zsavepos{jlreq@rest@width.pos.\the\jlreq@zref@reference@count}%
+  \global\advance\jlreq@reference@count by 1
+  }%
+  \ifjlreq@tempa
+    \unexpanded{%
+    \pdfsavepos
+    \jlreq@reference@label{jlreq@rest@width.pos.X.\the\jlreq@reference@count}{\noexpand\the\noexpand\pdflastxpos}%
+    \jlreq@reference@label{jlreq@rest@width.pos.Y.\the\jlreq@reference@count}{\noexpand\the\noexpand\pdflastypos}%
+    }%
+  \else
+    \unexpanded{%
+    \savepos
+    \jlreq@reference@label{jlreq@rest@width.pos.X.\the\jlreq@reference@count}{\noexpand\the\noexpand\lastxpos}%
+    \jlreq@reference@label{jlreq@rest@width.pos.Y.\the\jlreq@reference@count}{\noexpand\the\noexpand\lastypos}%
+    }%
+  \fi
+  \unexpanded{%
   \global\jlreq@current@linewidth=\jlreq@calc@current@linewidth
   \global\jlreq@rest@linewidth=\dimexpr\linewidth - \jlreq@current@linewidth\relax
-  \edef\jlreq@savepos@iflabelundefined{\noexpand\zref@ifrefundefined{jlreq@rest@width.pos.\the\jlreq@zref@reference@count}}%
+  \edef\jlreq@savepos@iflabelundefined{\jlreq@reference@ifexist{jlreq@rest@width.pos.X.\the\jlreq@reference@count}{\noexpand\@firstoftwo}{\noexpand\@secondoftwo}}%
+  }%
 }
 
 \ifx l\jlreq@engine
@@ -1481,8 +1496,8 @@
 %. システム設定
 %.. 逆ノンブル
 \ifjlreq@option@use@reverse@pagination
-  \RequirePackage{zref-lastpage}
-  \def\c@jlreqreversepage{\numexpr\zref@extractdefault{LastPage}{page}{0} - \c@page + 1\relax}
+  \AtEndDocument{\clearpage\jlreq@reference@immediate@write{lastpage}{\noexpand\arabic{page}}}%
+  \def\c@jlreqreversepage{\numexpr\jlreq@reference@ref{lastpage}{0} - \c@page + 1\relax}
   \def\thejlreqreversepage{\arabic{jlreqreversepage}}
 \fi
 

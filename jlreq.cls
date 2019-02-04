@@ -501,7 +501,7 @@
   \unexpanded{%
   \global\jlreq@current@linewidth=\jlreq@calc@current@linewidth
   \global\jlreq@rest@linewidth=\dimexpr\linewidth - \jlreq@current@linewidth\relax
-  \edef\jlreq@savepos@iflabelundefined{\jlreq@reference@ifexist{jlreq@rest@width.pos.X.\the\jlreq@reference@count}{\noexpand\@firstoftwo}{\noexpand\@secondoftwo}}%
+  \edef\jlreq@savepos@iflabelundefined{\jlreq@reference@ifexist{jlreq@rest@width.pos.X.\the\jlreq@reference@count}{\noexpand\@secondoftwo}{\noexpand\@firstoftwo}}%
   }%
 }
 

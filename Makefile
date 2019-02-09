@@ -1,4 +1,5 @@
 TEXMF=$(shell kpsewhich -var-value=TEXMFHOME)
+MAKEJVFCNF=$(shell ls -R $(shell kpsewhich --var-value=TEXMFDIST)/fonts/source | awk '/:$$/{sub(/:$$/,"");f=$$0} /makejvf-upjpn\.cnf$$/{print f"/"$$0}' | head -n 1)
 
 all: jfm
 
@@ -42,16 +43,16 @@ u%.pl: jfm-%-pl.lua luajfm2pl.lua
 
 # .vf
 u%g-q.vf: u%g-q.tfm
-	makejvf -u jisq $< upgbm-hq.tfm
+	makejvf -i -u jisq $< upgbm-hq.tfm
 
 u%-q.vf: u%-q.tfm
-	makejvf -u jisq $< uprml-hq.tfm
+	makejvf -i -u jisq $< uprml-hq.tfm
 
 u%g-v.vf: u%g-v.tfm
-	makejvf -i -u jis $< upgbm-v.tfm
+	makejvf -i -u custom -t ${MAKEJVFCNF} $< upgbm-v.tfm
 
 u%g.vf: u%g.tfm u%g-q.tfm
-	makejvf -i -u jis -U u$*g-q $< upgbm-h.tfm
+	makejvf -i -u custom -t ${MAKEJVFCNF} -H -U u$*g-q $< upgbm-h.tfm
 
 %g-v.vf: %g-v.tfm
 	makejvf -i $< gbmv.tfm
@@ -60,13 +61,13 @@ u%g.vf: u%g.tfm u%g-q.tfm
 	makejvf -i $< gbm.tfm
 
 u%-v.vf: u%-v.tfm
-	makejvf -i -u jis $< uprml-v.tfm
+	makejvf -i -u custom -t ${MAKEJVFCNF} $< uprml-v.tfm
 
 %-v.vf: %-v.tfm
 	makejvf -i $< rmlv.tfm
 
 u%.vf: u%.tfm u%-q.tfm
-	makejvf -i -u jis -U u$*-q $< uprml-h.tfm
+	makejvf -i -u custom -t ${MAKEJVFCNF} -H -U u$*-q $< uprml-h.tfm
 
 %.vf: %.tfm
 	makejvf -i $< rml.tfm

@@ -144,9 +144,32 @@
     }
   }
 }
-\def\jlreq@trimmarks@bleed{3mm}
-\DeclareOptionX{bleed_margin}{\def\jlreq@trimmarks@bleed{#1}}
-
+\@for\jlreq@tempa:=top,bottom,gutter,fore-edge\do{%
+  \expandafter\def\csname jlreq@trimmarks@bleed@\jlreq@tempa\endcsname{3mm}
+}
+\DeclareOptionX{bleed_margin}{%
+  \begingroup
+    \def\jlreq@do{}%
+    \jlreq@parsekeyval@nokey{
+      \ifjlreq@parsekeyval@nokey@novalue{%
+        \@for\jlreq@tempa:=top,bottom,gutter,fore-edge\do{%
+        \epreto\jlreq@do{%
+            \noexpand\def\expandonce{\csname jlreq@trimmarks@bleed@\jlreq@tempa\endcsname}{##1}%
+          }%
+        }%
+      }{%
+        \ifthenelse{\equal{##1}{top} \OR \equal{##1}{bottom} \OR \equal{##1}{gutter} \OR \equal{##1}{fore-edge}}{%
+          \eappto\jlreq@do{%
+            \noexpand\def\expandonce{\csname jlreq@trimmarks@bleed@##1\endcsname}{##2}%
+          }%
+        }{%
+          \PackageError{jlreq-trimmarks}{Unknown position `##1' in bleed_margin}{\@ehc}
+        }%
+      }%
+    }{#1}%
+  \expandafter\endgroup
+  \jlreq@do
+}
 
 \newif\ifjlreq@trimmarks@landscape \jlreq@trimmarks@landscapefalse
 \jlreq@trimmarks@DeclareOption{landscape}{\jlreq@trimmarks@landscapetrue}
@@ -437,18 +460,40 @@
     \fi
   \fi
 }
+\def\jlreq@trimmarks@bleed{3mm}
+\def\ifjlreq@trimmarks@iftate@{%
+  \if@tate\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+}
+% \@firstoftwo when \if@tate is defined and \if@tate=\iftrue
+\def\ifjlreq@trimmarks@iftate{%
+  \ifnum0\ifx\if@tate\@undefined 1\fi\ifx\if@tate\relax 1\fi>0
+    \expandafter\@secondoftwo
+  \else
+    \expandafter\ifjlreq@trimmarks@iftate@
+  \fi
+}
+% left=gutter?
+\def\ifjlreq@trimmarks@leftisgutter{%
+  \ifjlreq@trimmarks@iftate{%
+    \ifnum 0\ifodd\c@page 1\fi\if@twoside\else 1\fi>0 \expandafter\@secondoftwo\else\expandafter\@firstoftwo\fi
+  }{%
+    \ifnum 0\ifodd\c@page 1\fi\if@twoside\else 1\fi>0 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+  }%
+}
+\def\jlreq@trimmarks@bleed@left{\ifjlreq@trimmarks@leftisgutter{\jlreq@trimmarks@bleed@gutter}{\expandafter\csname jlreq@trimmarks@bleed@fore-edge\endcsname}}
+\def\jlreq@trimmarks@bleed@right{\ifjlreq@trimmarks@leftisgutter{\expandafter\csname jlreq@trimmarks@bleed@fore-edge\endcsname}{\jlreq@trimmarks@bleed@gutter}}
 
 \def\jlreq@trimmarks@outputtombow{%
   \vbox to\z@{%
-    \kern-\dimexpr 10mm + \jlreq@trimmarks@bleed\relax
+    \kern-\dimexpr 10mm + \jlreq@trimmarks@bleed@top\relax
     \boxmaxdepth\maxdimen
-    \moveleft\jlreq@trimmarks@bleed\vbox to\@@paperheight{%
+    \moveleft\jlreq@trimmarks@bleed@left\vbox to\@@paperheight{%
       \color@begingroup\jlreq@trimmarks@color
       \hbox to\@@paperwidth{%
-        \hskip\jlreq@trimmarks@bleed\relax
+        \hskip\jlreq@trimmarks@bleed@left\relax
         \setbox\jlreq@tempboxa=\hbox to\z@{% \@TL
           \yoko\hss
-          \vrule width\dimexpr 10mm + \jlreq@trimmarks@bleed\relax height\@tombowwidth depth\z@
+          \vrule width\dimexpr 10mm + \jlreq@trimmarks@bleed@left\relax height\@tombowwidth depth\z@
           \vrule height10mm width\@tombowwidth depth\z@
           \iftombowdate
             \setbox\jlreq@tempboxa=\hbox to\z@{\hskip5mm\@bannerfont\jlreq@trimmarks@bannerfont
@@ -459,7 +504,7 @@
           \fi
           \jlreq@trimmarks@outputbanner{inyoko@top@left}{%
             \setbox\jlreq@tempboxa=\hbox to 0pt{\@bannerfont\jlreq@trimmarks@bannerfont##1\hss}%
-            \jlreq@tempdima=\dimexpr\ht\jlreq@tempboxa + \jlreq@trimmarks@bleed\relax
+            \jlreq@tempdima=\dimexpr\ht\jlreq@tempboxa + \jlreq@trimmarks@bleed@top\relax
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \raise-\jlreq@tempdima\box\jlreq@tempboxa
           }%
@@ -477,7 +522,7 @@
           }%
           \jlreq@trimmarks@outputbanner{in@top@center}{%
             \setbox\jlreq@tempboxa=\hbox{\@bannerfont\jlreq@trimmarks@bannerfont##1}%
-            \jlreq@tempdima=\dimexpr\ht\jlreq@tempboxa + \jlreq@trimmarks@bleed\relax
+            \jlreq@tempdima=\dimexpr\ht\jlreq@tempboxa + \jlreq@trimmarks@bleed@top\relax
             \jlreq@tempdimb=0.5\wd\jlreq@tempboxa
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
             \kern-\jlreq@tempdimb\raise-\jlreq@tempdima\box\jlreq@tempboxa\kern\jlreq@tempdimb
@@ -502,21 +547,21 @@
           }%
           \jlreq@trimmarks@outputbanner{inyoko@top@right}{%
             \setbox\jlreq@tempboxa=\hbox to 0pt{\yoko\hss\@bannerfont\jlreq@trimmarks@bannerfont##1}%
-            \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed + \ht\jlreq@tempboxa\relax
+            \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@top + \ht\jlreq@tempboxa\relax
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \raise-\jlreq@tempdima\box\jlreq@tempboxa
           }%
           \vrule height10mm width\@tombowwidth depth\z@
           \jlreq@trimmarks@outputbanner{corner@top@right}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\hskip\dimexpr\jlreq@trimmarks@bleed + 4pt\relax\@bannerfont\jlreq@trimmarks@bannerfont##1\hss}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\hskip\dimexpr\jlreq@trimmarks@bleed@right + 4pt\relax\@bannerfont\jlreq@trimmarks@bannerfont##1\hss}%
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \raise 4pt\box\jlreq@tempboxa
           }%
-          \vrule width\dimexpr 10mm + \jlreq@trimmarks@bleed\relax height\@tombowwidth depth\z@\hss
+          \vrule width\dimexpr 10mm + \jlreq@trimmarks@bleed@right\relax height\@tombowwidth depth\z@\hss
         }%
         \dp\jlreq@tempboxa=0pt
         \box\jlreq@tempboxa
-        \hskip\jlreq@trimmarks@bleed
+        \hskip\jlreq@trimmarks@bleed@right
       }%
       \kern-10mm
       \hbox to\@@paperwidth{%
@@ -526,9 +571,9 @@
           \jlreq@trimmarks@outputbanner{corner@top@left}{%
             \setbox\jlreq@tempboxa=\hbox to 0pt{\hss\@bannerfont\jlreq@trimmarks@bannerfont##1\hskip 4pt}%
             \dp\jlreq@tempboxa=0pt \ht\jlreq@tempboxa=0pt
-            \raise\dimexpr \jlreq@trimmarks@bleed + 4pt\relax\box\jlreq@tempboxa
+            \raise\dimexpr \jlreq@trimmarks@bleed@top + 4pt\relax\box\jlreq@tempboxa
           }%
-          \vrule height\dimexpr 10mm + \jlreq@trimmarks@bleed\relax width\@tombowwidth depth\z@
+          \vrule height\dimexpr 10mm + \jlreq@trimmarks@bleed@top\relax width\@tombowwidth depth\z@
           \jlreq@trimmarks@outputbanner{tate@top@left}{%
             \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\@bannerfont\jlreq@trimmarks@bannerfont##1\hss}%
             \ifx l\jlreq@trimmarks@engine
@@ -541,7 +586,7 @@
           }%
           \jlreq@trimmarks@outputbanner{intate@top@left}{%
             \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\@bannerfont\jlreq@trimmarks@bannerfont##1\hss}%
-            \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed \ifx l\jlreq@trimmarks@engine + \ht\jlreq@tempboxa\fi\relax
+            \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@left \ifx l\jlreq@trimmarks@engine + \ht\jlreq@tempboxa\fi\relax
             \wd\jlreq@tempboxa=0pt \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \kern\jlreq@tempdima\box\jlreq@tempboxa\kern-\jlreq@tempdima
           }%
@@ -558,14 +603,14 @@
           \jlreq@trimmarks@outputbanner{intate@top@right}{%
             \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\@bannerfont\jlreq@trimmarks@bannerfont##1\hss}%
             \ifx l\jlreq@trimmarks@engine
-              \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed + \ht\jlreq@tempboxa\relax
+              \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@top + \ht\jlreq@tempboxa\relax
             \else
-              \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed + \wd\jlreq@tempboxa\relax
+              \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@top + \wd\jlreq@tempboxa\relax
             \fi
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
             \kern-\jlreq@tempdima\box\jlreq@tempboxa\kern\jlreq@tempdima
           }%
-          \vrule height\dimexpr 10mm + \jlreq@trimmarks@bleed\relax width\@tombowwidth depth\z@
+          \vrule height\dimexpr 10mm + \jlreq@trimmarks@bleed@top\relax width\@tombowwidth depth\z@
           \vrule width10mm height\@tombowwidth depth\z@
           \hss
         }%
@@ -599,10 +644,10 @@
           \jlreq@trimmarks@outputbanner{in@center@left}{%
             \setbox\jlreq@tempboxa=\hbox{\tate\adjustbaseline\@bannerfont\jlreq@trimmarks@bannerfont##1}%
             \ifx l\jlreq@trimmarks@engine
-              \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed + \ht\jlreq@tempboxa\relax
+              \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@left + \ht\jlreq@tempboxa\relax
               \jlreq@tempdimb=.5\wd\jlreq@tempboxa
              \else
-              \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed\relax
+              \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@left\relax
               \jlreq@tempdimb=.5\dimexpr\ht\jlreq@tempboxa + \dp\jlreq@tempboxa\relax
             \fi
             \dp\jlreq@tempboxa=0pt \ht\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
@@ -615,10 +660,10 @@
           \jlreq@trimmarks@outputbanner{in@center@right}{%
             \setbox\jlreq@tempboxa=\hbox{\tate\adjustbaseline\@bannerfont\jlreq@trimmarks@bannerfont##1}%
             \ifx l\jlreq@trimmarks@engine
-              \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed  + \ht\jlreq@tempboxa\relax
+              \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@right  + \ht\jlreq@tempboxa\relax
               \jlreq@tempdimb=0.5\wd\jlreq@tempboxa
             \else
-              \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed  + \wd\jlreq@tempboxa\relax
+              \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@right  + \wd\jlreq@tempboxa\relax
               \jlreq@tempdimb=0.5\dimexpr\ht\jlreq@tempboxa + \dp\jlreq@tempboxa\relax
             \fi
             \dp\jlreq@tempboxa=0pt \ht\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
@@ -645,7 +690,7 @@
         \hbox to\z@{% \@Bl
           \yoko\hss
           \vrule width10mm depth\@tombowwidth height\z@
-          \vrule depth\dimexpr 10mm + \jlreq@trimmarks@bleed\relax width\@tombowwidth height\z@
+          \vrule depth\dimexpr 10mm + \jlreq@trimmarks@bleed@bottom\relax width\@tombowwidth height\z@
           \jlreq@trimmarks@outputbanner{tate@bottom@left}{%
             \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\hss\@bannerfont\jlreq@trimmarks@bannerfont##1}%
             \ifx l\jlreq@trimmarks@engine
@@ -658,7 +703,7 @@
           }%
           \jlreq@trimmarks@outputbanner{intate@bottom@left}{%
             \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\hss\@bannerfont\jlreq@trimmarks@bannerfont##1}%
-            \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed \ifx l\jlreq@trimmarks@engine + \ht\jlreq@tempboxa\fi\relax
+            \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@left \ifx l\jlreq@trimmarks@engine + \ht\jlreq@tempboxa\fi\relax
             \wd\jlreq@tempboxa=0pt \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \kern\jlreq@tempdima\box\jlreq@tempboxa\kern-\jlreq@tempdima
           }%
@@ -675,17 +720,17 @@
           \jlreq@trimmarks@outputbanner{intate@bottom@right}{%
             \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\hss\@bannerfont\jlreq@trimmarks@bannerfont##1}%
             \ifx l\jlreq@trimmarks@engine
-              \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed + \ht\jlreq@tempboxa\relax
+              \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@right + \ht\jlreq@tempboxa\relax
             \else
-              \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed + \wd\jlreq@tempboxa\relax
+              \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@right + \wd\jlreq@tempboxa\relax
             \fi
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
             \kern-\jlreq@tempdima\box\jlreq@tempboxa\kern\jlreq@tempdima
           }%
-          \vrule depth\dimexpr 10mm + \jlreq@trimmarks@bleed\relax width\@tombowwidth height\z@
+          \vrule depth\dimexpr 10mm + \jlreq@trimmarks@bleed@bottom\relax width\@tombowwidth height\z@
           \jlreq@trimmarks@outputbanner{corner@bottom@right}{%
             \setbox\jlreq@tempboxa=\hbox to 0pt{\hskip 4pt\relax\@bannerfont\jlreq@trimmarks@bannerfont##1\hss}%
-            \jlreq@tempdima=\dimexpr\ht\jlreq@tempboxa  + \jlreq@trimmarks@bleed + 4pt\relax
+            \jlreq@tempdima=\dimexpr\ht\jlreq@tempboxa  + \jlreq@trimmarks@bleed@bottom + 4pt\relax
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \raise-\jlreq@tempdima\box\jlreq@tempboxa
           }%
@@ -694,12 +739,12 @@
       }%
       \kern-10mm
       \hbox to\@@paperwidth{%
-        \hskip\jlreq@trimmarks@bleed\relax
+        \hskip\jlreq@trimmarks@bleed@left\relax
         \setbox\jlreq@tempboxa=\hbox to\z@{% \@BL
           \yoko\hss
-          \vrule width\dimexpr 10mm + \jlreq@trimmarks@bleed\relax depth\@tombowwidth height\z@
+          \vrule width\dimexpr 10mm + \jlreq@trimmarks@bleed@left\relax depth\@tombowwidth height\z@
           \jlreq@trimmarks@outputbanner{corner@bottom@left}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\hss\@bannerfont\jlreq@trimmarks@bannerfont##1\hskip\dimexpr\jlreq@trimmarks@bleed + 4pt\relax}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\hss\@bannerfont\jlreq@trimmarks@bannerfont##1\hskip\dimexpr\jlreq@trimmarks@bleed@left + 4pt\relax}%
             \jlreq@tempdima=\dimexpr\ht\jlreq@tempboxa + 4pt\relax
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \raise-\jlreq@tempdima\box\jlreq@tempboxa
@@ -713,7 +758,7 @@
           }%
           \jlreq@trimmarks@outputbanner{inyoko@bottom@left}{%
             \setbox\jlreq@tempboxa=\hbox to 0pt{\yoko\@bannerfont\jlreq@trimmarks@bannerfont##1\hss}%
-            \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed + \dp\jlreq@tempboxa\relax
+            \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@bottom + \dp\jlreq@tempboxa\relax
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \raise\jlreq@tempdima\box\jlreq@tempboxa
           }%
@@ -732,7 +777,7 @@
           }%
           \jlreq@trimmarks@outputbanner{in@bottom@center}{%
             \setbox\jlreq@tempboxa=\hbox{\@bannerfont\jlreq@trimmarks@bannerfont##1}%
-            \jlreq@tempdima=\dimexpr\dp\jlreq@tempboxa + \jlreq@trimmarks@bleed\relax
+            \jlreq@tempdima=\dimexpr\dp\jlreq@tempboxa + \jlreq@trimmarks@bleed@bottom\relax
             \jlreq@tempdimb=.5\wd\jlreq@tempboxa
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
             \kern-\jlreq@tempdimb\raise\jlreq@tempdima\box\jlreq@tempboxa\kern\jlreq@tempdimb
@@ -759,24 +804,24 @@
           }%
           \jlreq@trimmarks@outputbanner{inyoko@bottom@right}{%
             \setbox\jlreq@tempboxa=\hbox to 0pt{\yoko\hss\@bannerfont\jlreq@trimmarks@bannerfont##1}%
-            \jlreq@tempdima=\dimexpr\dp\jlreq@tempboxa + \jlreq@trimmarks@bleed\relax
+            \jlreq@tempdima=\dimexpr\dp\jlreq@tempboxa + \jlreq@trimmarks@bleed@bottom\relax
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \raise\jlreq@tempdima\box\jlreq@tempboxa
           }%
           \vrule depth10mm width\@tombowwidth height\z@
-          \vrule width\dimexpr 10mm + \jlreq@trimmarks@bleed\relax depth\@tombowwidth height\z@\hss
+          \vrule width\dimexpr 10mm + \jlreq@trimmarks@bleed@right\relax depth\@tombowwidth height\z@\hss
         }%
         \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
         \box\jlreq@tempboxa
-        \hskip\jlreq@trimmarks@bleed
+        \hskip\jlreq@trimmarks@bleed@right
       }%
     \color@endgroup}\vss
   }%
 }
 \def\@outputtombow{%
   % 6mm = \@tombowbleed: from plcore
-  \@@paperwidth=\dimexpr\@@paperwidth - 6mm + 2\dimexpr\jlreq@trimmarks@bleed\relax\relax
-  \@@paperheight=\dimexpr\@@paperheight - 6mm + 2\dimexpr\jlreq@trimmarks@bleed\relax\relax
+  \@@paperwidth=\dimexpr\@@paperwidth - 6mm + \dimexpr\jlreq@trimmarks@bleed@left + \jlreq@trimmarks@bleed@right\relax\relax
+  \@@paperheight=\dimexpr\@@paperheight - 6mm + \dimexpr\jlreq@trimmarks@bleed@top + \jlreq@trimmarks@bleed@bottom\relax\relax
   \ifjlreq@trimmarks@show\expandafter\jlreq@trimmarks@outputtombow\fi
 }
 
@@ -796,39 +841,92 @@
       \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperheight + \paperheight)/2}%
     ]
   }
-  \edef\jlreq@trimmarks@bleedboxsize{%
+  \jlreq@tempcnta=\c@page
+  \def\@tempa{%
     [%
-      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperwidth - \paperwidth)/2 - \jlreq@trimmarks@bleed}
-      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperheight - \paperheight)/2 - \jlreq@trimmarks@bleed}
-      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperwidth + \paperwidth)/2 + \jlreq@trimmarks@bleed}
-      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperheight + \paperheight)/2 + \jlreq@trimmarks@bleed}%
+      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperwidth - \paperwidth)/2 - \jlreq@trimmarks@bleed@left}
+      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperheight - \paperheight)/2 - \jlreq@trimmarks@bleed@bottom}
+      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperwidth + \paperwidth)/2 + \jlreq@trimmarks@bleed@right}
+      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperheight + \paperheight)/2 + \jlreq@trimmarks@bleed@top}%
     ]
   }
-  \edef\jlreq@trimmarks@pdfattribute{%
+  \c@page=1
+  \edef\jlreq@trimmarks@bleedboxsize@odd{\@tempa}
+  \c@page=2
+  \edef\jlreq@trimmarks@bleedboxsize@even{\@tempa}%
+  \c@page=\jlreq@tempcnta
+  \edef\jlreq@trimmarks@pdfattribute@odd{%
     /TrimBox \jlreq@trimmarks@trimboxsize
     \ifjlreq@trimmarks@show@artbox /ArtBox \jlreq@trimmarks@trimboxsize\fi
-    /BleedBox \jlreq@trimmarks@bleedboxsize
+    /BleedBox \jlreq@trimmarks@bleedboxsize@odd
+  }
+  \edef\jlreq@trimmarks@pdfattribute@even{%
+    /TrimBox \jlreq@trimmarks@trimboxsize
+    \ifjlreq@trimmarks@show@artbox /ArtBox \jlreq@trimmarks@trimboxsize\fi
+    /BleedBox \jlreq@trimmarks@bleedboxsize@even
   }
   \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@pttobp}
   \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@trimboxsize}
-  \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@bleedboxsize}
-  \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@pdfattribute}
+  \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@bleedboxsize@odd}
+  \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@bleedboxsize@even}
+  \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@pdfattribute@odd}
+  \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@pdfattribute@even}
 
-  \ifx l\jlreq@trimmarks@driver
-    \edef\@tempa{\noexpand\pdfvariable pageattr{\jlreq@trimmarks@pdfattribute}}
-    \@tempa
-  \fi
-  \ifx f\jlreq@trimmarks@driver
-    \edef\@outputtombow{\noexpand\special{pdf: put @thispage <<\jlreq@trimmarks@pdfattribute>>}\expandonce{\@outputtombow}}
-  \fi
-  \ifx s\jlreq@trimmarks@driver
-    \edef\@tempa{\noexpand\special{ps:SDict begin
-      [ /TrimBox \jlreq@trimmarks@trimboxsize /PAGE pdfmark
-      \ifjlreq@trimmarks@show@artbox [ /ArtBox   \jlreq@trimmarks@trimboxsize /PAGE pdfmark \fi
-      [ /BleedBox \jlreq@trimmarks@bleedboxsize /PAGE pdfmark
-    end}}%
-    \@tempa
-  \fi
+  \begingroup
+    \c@page=1
+    \jlreq@tempdima=\jlreq@trimmarks@bleed@left
+    \c@page=2
+    \ifdim\jlreq@trimmarks@bleed@left=\jlreq@tempdima
+      \global\let\jlreq@tempa\@firstoftwo
+    \else
+      \global\let\jlreq@tempa\@secondoftwo
+    \fi
+  \endgroup
+  \jlreq@tempa{
+    % no difference between odd pages and even pages
+    \ifx l\jlreq@trimmarks@driver
+      \edef\@tempa{\noexpand\pdfvariable pageattr{\jlreq@trimmarks@pdfattribute@odd}}
+      \@tempa
+    \fi
+    \ifx f\jlreq@trimmarks@driver
+      \epreto\@outputtombow{\noexpand\special{pdf: put @thispage <<\jlreq@trimmarks@pdfattribute@odd>>}}
+    \fi
+    \ifx s\jlreq@trimmarks@driver
+      \edef\@tempa{\noexpand\special{ps:SDict begin
+        [ /TrimBox \jlreq@trimmarks@trimboxsize /PAGE pdfmark
+        \ifjlreq@trimmarks@show@artbox [ /ArtBox   \jlreq@trimmarks@trimboxsize /PAGE pdfmark \fi
+        [ /BleedBox \jlreq@trimmarks@bleedboxsize@odd /PAGE pdfmark
+      end}}%
+      \@tempa
+    \fi
+  }{
+    \ifx l\jlreq@trimmarks@driver
+      % in \@outputtombow, it's too late
+      \epreto\@outputpage{%
+        \unexpanded{\ifodd\c@page\pdfvariable} pageattr{\jlreq@trimmarks@pdfattribute@odd}%
+        \unexpanded{\else\pdfvariable} pageattr{\jlreq@trimmarks@pdfattribute@even}\noexpand\fi
+      }
+    \fi
+    \ifx f\jlreq@trimmarks@driver
+      \epreto\@outputtombow{%
+        \unexpanded{\ifodd\c@page\special}{pdf: put @thispage <<\jlreq@trimmarks@pdfattribute@odd>>}%
+        \unexpanded{\else\special}{pdf: put @thispage <<\jlreq@trimmarks@pdfattribute@even>>}\noexpand\fi
+      }
+    \fi
+    \ifx s\jlreq@trimmarks@driver
+      \epreto\@outputtombow{%
+        \unexpanded{\ifodd\c@page\special}{ps:SDict begin
+          [ /TrimBox \jlreq@trimmarks@trimboxsize /PAGE pdfmark
+          \ifjlreq@trimmarks@show@artbox [ /ArtBox   \jlreq@trimmarks@trimboxsize /PAGE pdfmark \fi
+          [ /BleedBox \jlreq@trimmarks@bleedboxsize@odd /PAGE pdfmark
+        end}\unexpanded{\else\special}{ps:SDict begin
+          [ /TrimBox \jlreq@trimmarks@trimboxsize /PAGE pdfmark
+          \ifjlreq@trimmarks@show@artbox [ /ArtBox   \jlreq@trimmarks@trimboxsize /PAGE pdfmark \fi
+          [ /BleedBox \jlreq@trimmarks@bleedboxsize@even /PAGE pdfmark
+        end}\noexpand\fi
+      }
+    \fi
+  }
 \fi
 
 % always true

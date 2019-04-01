@@ -109,6 +109,7 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
 * 2019-04-01
     - Added `use_reverse_pagination` to the class option.
     - Stopped to use `zref` package.
+    - New regnal year.
     - Fixed bugs.
 
 

@@ -378,7 +378,7 @@
 % オレオレラベル……
 % \jlreq@reference@ref{ラベル名}{デフォルト値}
 \def\jlreq@reference@ref#1{\expandafter\ifx\csname jlreq@reference@#1\endcsname\relax\expandafter\@secondoftwo\else\expandafter\@firstoftwo\fi{\csname jlreq@reference@#1\endcsname}}
-% \jlreq@reference@label(@immediate){ラベル名}{値}
+% \jlreq@reference@label{ラベル名}{値}
 \def\jlreq@reference@label#1#2{\protected@write\@auxout{}{\string\@newl@bel{jlreq@reference}{#1}{#2}}}%
 \def\jlreq@reference@immediate@write#1#2{\immediate\write\@auxout{\string\@newl@bel{jlreq@reference}{#1}{#2}}}%
 \def\jlreq@reference@ifexist#1{\expandafter\ifx\csname jlreq@reference@#1\endcsname\relax\expandafter\@secondoftwo\else\expandafter\@firstoftwo\fi}

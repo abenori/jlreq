@@ -148,6 +148,10 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Fixed bugs.
 * 2018-12-10
     - Extended `banner` in `\jlreqtrimmarkssetup`.
+* 2019-04-01
+    - Extended `banner` in `\jlreqtrimmarkssetup`.
+    - Extended `bleed_margin`．
+
 
 --------------
 Noriyuki Abe

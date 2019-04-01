@@ -106,6 +106,10 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - `format` without `#1` is allowed in `\NewBlockHeading`.
     - Extended `caption_label_format` etc. in `\jlreqsetup`.
     - Fixed bugs.
+* 2019-04-01
+    - Added `use_reverse_pagination` to the class option.
+    - Stopped to use `zref` package.
+    - Fixed bugs.
 
 
 --------------

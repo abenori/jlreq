@@ -188,7 +188,7 @@
 %.. 小口
 \newcommand*{\jlreq@option@fore@edge}{}
 \jlreq@aftercls@addtodeletecs{\jlreq@option@fore@edge}
-\DeclareOptionX{fore_edge}{\renewcommand*{\jlreq@option@fore@edge}{#1}}
+\DeclareOptionX{fore_edge}{\renewcommand*{\jlreq@option@fore@edge}{#1}}% 昔にこっちにしていたので残している
 \DeclareOptionX{fore-edge}{\renewcommand*{\jlreq@option@fore@edge}{#1}}
 
 %.. 柱とノンブル
@@ -3437,8 +3437,8 @@
   \ifvmode\leavevmode\fi
   \@ifstar\jlreq@inlinenote@noauto\jlreq@inlinenote@auto
 }
-\newcommand*{\inlinenote}{\jlreq@inlinenote@{\inlinenote}}
-\newcommand*{\warichu}{\jlreq@inlinenote@{\warichu}}
+\DeclareRobustCommand*{\inlinenote}{\jlreq@inlinenote@{\inlinenote}}
+\DeclareRobustCommand*{\warichu}{\jlreq@inlinenote@{\warichu}}
 
 \newcommand*{\jlreq@inlinenote@auto}[1]{%
   % 割注初め括弧の前の場所を保存
@@ -4640,7 +4640,6 @@
   \setbox\@tempboxa=\hbox{\jlreq@tempa}%
   \edef\jlreq@tempc{\jlreq@jlreqsetup@withenv@nameuse{jlreq@@makecaption@align@setting}{\jlreq@tempb}}%
   \expandafter\let\expandafter\jlreq@align\jlreq@tempc
-  \message{[[\@currenvir]]}%
   \ifdim\wd\@tempboxa>\hsize\relax
     {%
       \ifx c\jlreq@align\centering\fi
@@ -5239,6 +5238,7 @@
   \@mkboth{\refname}{\refname}%
   \list{\@biblabel{\@arabic\c@enumiv}}%
       {\settowidth\labelwidth{\@biblabel{#1}}%
+      \labelsep=1\zw
       \leftmargin\labelwidth
       \advance\leftmargin\labelsep
       \itemindent=0pt
@@ -5265,11 +5265,10 @@
 %. 索引
 \newif\ifjlreq@resttate
 \newenvironment{theindex}{%
-%  \jlreq@oldfontcommand@enable
+  \jlreq@oldfontcommand@enable
   \jlreq@iftdir{\clearpage\yoko\jlreq@resttatetrue}{\jlreq@resttatefalse}% 常に横書きにする
   \if@twocolumn\@restonecolfalse\else\@restonecoltrue\fi
   \columnseprule\z@ \columnsep 2\jlreq@mol
-%  \show\jlreq@theindex@pagestyle
   \twocolumn[\section*{\indexname}]%
   \@mkboth{\indexname}{\indexname}%
   \jlreq@theindex@pagestyle

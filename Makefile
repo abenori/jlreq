@@ -1,5 +1,5 @@
-TEXMF=$(shell kpsewhich -var-value=TEXMFHOME)
-MAKEJVFCNF=$(shell ls -R $(shell kpsewhich --var-value=TEXMFDIST)/fonts/source | awk '/:$$/{sub(/:$$/,"");f=$$0} /makejvf-upjpn\.cnf$$/{print f"/"$$0}' | head -n 1)
+TEXMF:=$(shell kpsewhich -var-value=TEXMFHOME)
+MAKEJVFCNF:=$(shell ls -R $(shell kpsewhich --var-value=TEXMFDIST)/fonts/source | awk '/:$$/{sub(/:$$/,"");f=$$0} tolower($$0) ~ /makejvf-upjpn\.cnf$$/{print f"/"$$0}' | head -n 1)
 
 all: jfm
 

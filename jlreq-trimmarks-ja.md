@@ -59,43 +59,66 @@ dviドライバの指定です．エンジンに`lualatex`を利用する場合�
 * `no`：何も表示しません．
 
 ### `bleed_margin`
-仕上がりと裁ち落としの間（ドブ）の長さを指定します．
+仕上がりと裁ち落としの間（ドブ）の長さを指定します．次のようにすると，上下左右を独立に変更できます．
+```latex
+\usepackage[bleed_margin={top=3mm,bottom=5mm,gutter=0mm,fore-edge=2mm}]{jlreq-trimmarks}
+```
 
 ## `\jlreqtrimmarkssetup`
 パッケージオプションで指定できない設定を行えます．keyval形式です．
 
 ### `banner`
-`show=banner`時に出力される文字列．通常は左上に出力されますが，四つ角および上下左右の中心に出力することもできます．例えば次のように指定します．
+`show=banner`時に出力される文字列．通常は左上に出力されますが，四つ角および上下左右の中心に出力することもできます．指定は
+```latex
+\jlreqtrimmarkssetup{
+  banner={
+    <場所（上下，左右中央）>={
+      <細かな位置>={
+        <ページ数の偶奇に応じて>={
+          <表示項目>
+        }
+      }
+    }
+  }
+}
+```
+のようになります．キー名は省略することもできます．例えば次のように指定します．
 
 ```latex
 \jlreqtrimmarkssetup{
   banner={
     top-right={
       tate={
-        odd = {奇数ページの右上に縦書きで表示},
-        even = {偶数ページの右上に縦書きで表示},
+        odd={奇数ページの右上に縦書きで表示},
+        even={偶数ページの右上に縦書きで表示},
       },
       yoko={右上に横書きで表示}, % ページの偶奇によらず共通
       corner={右上角に横書きで表示},
-      in-yoko = {右上版面内に横書きで表示},
-      in-tate = {右上版面内に縦書きで表示},
+      in-yoko={右上版面内に横書きで表示},
+      in-tate={右上版面内に縦書きで表示},
     },
     bottom-center={
-      left = {中央下の左に表示}, % 必要ならばodd=, even=が利用可能
-      right = {中央下の右に表示},
-      in = {中央下の版面内に表示},
-    }
+      left={中央下の左に表示}, % odd=, even=も使用可能
+      right={中央下の右に表示},
+      in={中央下の版面内に表示},
+    },
+    center-gutter={
+      above={ノド側中央の上側に表示},
+      below={ノド側中央の下側に表示},
+    },
   }
 }
 ```
-各項目に`\thepage`を指定するとページ数を出力できます．キー名は省略することもできます．例えば次の通り．
+場所は`top/bottom/center`と`left/right/center/gutter/fore-edge`の可能な組み合わせが指定可能です．各項目に`\thepage`を指定するとページ数を出力できます．
+
+次のような指定も可能です．
 ```latex
 \jlreqtrimmarkssetup{
   banner={
-    tate = {左上に縦書き}, % 場所が省略されるとtop-leftと見なされる．
-    odd = {左上奇数ページ}, % 省略されたのでyokoと見なされる．
-    top-right = {
-      odd = {右上奇数ページ} % ここもyokoが省略されている．
+    tate={左上に縦書き}, % 場所が省略されるとtop-leftと見なされる．
+    odd={左上奇数ページ}, % 省略されたのでyokoと見なされる．
+    top-right={
+      odd={右上奇数ページ} % ここもyokoが省略されている．
     }
   }
 }

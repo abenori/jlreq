@@ -58,43 +58,63 @@ Specify the types of trim marks which the package outputs. It is specified with 
 
 ### `bleed_margin`
 Set the bleed margin.
+You can also specify as follows.
+```latex
+\usepackage[bleed_margin={top=3mm,bottom=5mm,gutter=0mm,fore-edge=2mm}]{jlreq-trimmarks}
+```
 
 ## `\jlreqtrimmarkssetup`
 Set the additional settings with the keyval style.
 
 ### `banner`
 The things which the package outputs when `show=banner` is specified in the package option.
-Normally it is showed in the left of the top. You can also put them in many places, for example:
-
+Normally it is showed in the left of the top. You can also put them in many places with
+```latex
+\jlreqtrimmarkssetup{
+  banner={
+    <Position (top/bottom, left/right, center)>={
+      <more precise position>={
+        <odd/even>={
+          <content>
+        }
+      }
+    }
+  }
+}
+```
+Here is an example.
 ```latex
 \jlreqtrimmarkssetup{
   banner={
     top-right={
       vertical={
-        odd = {In the right of the top, only in odd pages, vertical mode.},
-        even = {In the right of the top, only in even pages, vertical mode.},
+        odd={In the right of the top, only in odd pages, vertical mode.},
+        even={In the right of the top, only in even pages, vertical mode.},
       },
       horizontal={In the right of the top, horizontal mode.}, % does not depend on the parity of the page number
       corner={In the corner of the right of the top, horizontal mode.},
-      in-horizontal = {In the right of the top, horizontal mode, in the trim area.},
-      in-vertical = {In the right of the top, vertical mode, in the trim area.},
+      in-horizontal={In the right of the top, horizontal mode, in the trim area.},
+      in-vertical={In the right of the top, vertical mode, in the trim area.},
     },
     bottom-center={
-      left = {In the left in the center of the bottom}, % odd=, even= is also available
-      right = {In the right in the center of the bottom},
-      in = {In the trim area in the center of the bottom.},
+      left={In the left in the center of the bottom}, % odd=, even= is also available
+      right={In the right in the center of the bottom},
+      in={In the trim area in the center of the bottom.},
     }
   }
 }
 ```
-You can use `\thepage` to output the number of the page. The keys can be ommited. For example:
+A possible combination of `top/bottom/center` and `left/right/center/gutter/fore-edge` can be used for the position.
+You can use `\thepage` to output the number of the page.
+
+The keys can be ommited. For example:
 ```latex
 \jlreqtrimmarkssetup{
   banner={
-    vertical = {Vertical mode, in the top of the left},
-    odd = {In the top of the left, only in odd pages.}, % regarded as `horizontal`
-    top-right = {
-      odd = {In the top of the right, only in odd pages, horizontal mode.}
+    vertical={Vertical mode, in the top of the left},
+    odd={In the top of the left, only in odd pages.}, % regarded as `horizontal`
+    top-right={
+      odd={In the top of the right, only in odd pages, horizontal mode.}
     }
   }
 }

@@ -33,6 +33,19 @@
 
 \@ifclassloaded{jlreq}{\let\ifjlreq@trimmarks@jlreqloaded=\@firstoftwo}{\let\ifjlreq@trimmarks@jlreqloaded=\@secondoftwo}
 
+\def\ifjlreq@trimmarks@tate@{%
+  \if@tate\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+}
+% \@firstoftwo when \if@tate is defined and \if@tate=\iftrue
+\def\ifjlreq@trimmarks@tate{%
+  \ifnum0\ifx\if@tate\@undefined 1\fi\ifx\if@tate\relax 1\fi>0
+    \expandafter\@secondoftwo
+  \else
+    \expandafter\ifjlreq@trimmarks@tate@
+  \fi
+}
+
+
 % dvipdfmx=f，dvips=s，dviout = o, lualatex = l
 \jlreq@trimmarks@DeclareOption{dvipdfmx}{\let\jlreq@trimmarks@driver=f}
 \jlreq@trimmarks@DeclareOption{dvips}{\let\jlreq@trimmarks@driver=s}
@@ -225,67 +238,68 @@
   \fi
 \fi
 
-\long\def\jlreq@trimmarks@setbanner#1#2{%
+\long\def\jlreq@trimmarks@setbanner#1#2#3{%
   \begingroup
     \def\jlreq@do{}%
     \jlreq@parsekeyval@nokey{%
       \ifjlreq@parsekeyval@nokey@novalue{}{%
         \jlreq@switch{##1}{
-          {yoko}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{yoko@#1}{##2}}}
-          {horizontal}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{yoko@#1}{##2}}}
-          {tate}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{tate@#1}{##2}}}
-          {vertial}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{tate@#1}{##2}}}
-          {corner}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{corner@#1}{##2}}}
-          {in-yoko}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{inyoko@#1}{##2}}}
-          {in-horizontal}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{inyoko@#1}{##2}}}
-          {in-tate}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{intate@#1}{##2}}}
-          {in-vertial}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{intate@#1}{##2}}}
+          {yoko}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{yoko@#1}{yoko@#2}{##2}}}
+          {horizontal}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{yoko@#1}{yoko@#2}{##2}}}
+          {tate}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{tate@#1}{tate@#2}{##2}}}
+          {vertial}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{tate@#1}{tate@#2}{##2}}}
+          {corner}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{corner@#1}{corner@#2}{##2}}}
+          {in-yoko}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{inyoko@#1}{inyoko@#2}{##2}}}
+          {in-horizontal}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{inyoko@#1}{inyoko@#2}{##2}}}
+          {in-tate}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{intate@#1}{intate@#2}{##2}}}
+          {in-vertial}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{intate@#1}{intate@#2}{##2}}}
         }%
       }%
-    }{#2}%
+    }{#3}%
     \ifx\jlreq@do\@empty
-      \appto\jlreq@do{\jlreq@trimmarks@setbanner@@{yoko@#1}{#2}}%
+      \appto\jlreq@do{\jlreq@trimmarks@setbanner@@{yoko@#1}{yoko@#2}{#3}}%
     \fi
   \expandafter\endgroup
   \jlreq@do
 }
 
-\long\def\jlreq@trimmarks@setbanner@#1#2{%
+\long\def\jlreq@trimmarks@setbanner@#1#2#3{%
   \begingroup
     \def\jlreq@do{}%
     \jlreq@parsekeyval@nokey{%
       \ifjlreq@parsekeyval@nokey@novalue{}{%
         \jlreq@switch*{##1}{
-          {left}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{before@#1}{##2}}}
-          {right}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{after@#1}{##2}}}
-          {above}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{before@#1}{##2}}}
-          {below}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{after@#1}{##2}}}
-          {in}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{in@#1}{##2}}}
+          {left}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{before@#1}{before@#2}{##2}}}
+          {right}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{after@#1}{after@#2}{##2}}}
+          {above}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{before@#1}{before@#2}{##2}}}
+          {below}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{after@#1}{after@#2}{##2}}}
+          {in}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{in@#1}{in@#2}{##2}}}
         }%
       }%
-    }{#2}%
+    }{#3}%
     \ifx\jlreq@do\@empty
-      \appto\jlreq@do{\jlreq@trimmarks@setbanner@@{before@#1}{#2}}%
+      \appto\jlreq@do{\jlreq@trimmarks@setbanner@@{before@#1}{before@#2}{#3}}%
     \fi
   \expandafter\endgroup
   \jlreq@do
 }
 
-\long\def\jlreq@trimmarks@setbanner@@#1#2{%
+% #1 = odd, #2 = even
+\long\def\jlreq@trimmarks@setbanner@@#1#2#3{%
   \begingroup
     \def\jlreq@do{}%
     \jlreq@parsekeyval@nokey{%
       \ifjlreq@parsekeyval@nokey@novalue{}{%
         \jlreq@switch*{##1}{
           {odd}{\appto\jlreq@do{\expandafter\edef\csname jlreq@trimmarks@banner@odd@#1\endcsname{\unexpanded{##2}}}}
-          {even}{\appto\jlreq@do{\expandafter\edef\csname jlreq@trimmarks@banner@even@#1\endcsname{\unexpanded{##2}}}}
+          {even}{\appto\jlreq@do{\expandafter\edef\csname jlreq@trimmarks@banner@even@#2\endcsname{\unexpanded{##2}}}}
         }%
       }%
-    }{#2}%
+    }{#3}%
     \ifx\jlreq@do\@empty
       \appto\jlreq@do{%
-        \expandafter\edef\csname jlreq@trimmarks@banner@odd@#1\endcsname{\unexpanded{#2}}%
-        \expandafter\edef\csname jlreq@trimmarks@banner@even@#1\endcsname{\unexpanded{#2}}%
+        \expandafter\edef\csname jlreq@trimmarks@banner@odd@#1\endcsname{\unexpanded{#3}}%
+        \expandafter\edef\csname jlreq@trimmarks@banner@even@#2\endcsname{\unexpanded{#3}}%
       }%
     \fi
   \expandafter\endgroup
@@ -317,23 +331,41 @@
       \jlreq@parsekeyval@nokey{%
         \ifjlreq@parsekeyval@nokey@novalue{}{%
           \jlreq@tempafalse
+          \edef\jlreq@gutterodd{\ifjlreq@trimmarks@tate{right}{left}}%
+          \if@twoside
+            \edef\jlreq@guttereven{\ifjlreq@trimmarks@tate{left}{right}}%
+          \else
+            \let\jlreq@guttereven\jlreq@gutterodd
+          \fi
           \jlreq@switch*{####1}{
-            {top-left}{\jlreq@tempatrue\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@left}{####2}}}
-            {left-top}{\jlreq@tempatrue\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@left}{####2}}}
-            {top-right}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@right}{####2}}}
-            {right-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@right}{####2}}}
-            {bottom-left}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@left}{####2}}}
-            {left-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@left}{####2}}}
-            {bottom-right}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@right}{####2}}}
-            {right-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@right}{####2}}}
-            {top-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{top@center}{####2}}}
-            {center-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{top@center}{####2}}}
-            {bottom-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{bottom@center}{####2}}}
-            {center-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{bottom@center}{####2}}}
-            {center-right}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@right}{####2}}}
-            {right-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@right}{####2}}}
-            {center-left}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@left}{####2}}}
-            {left-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@left}{####2}}}
+            {top-left}{\jlreq@tempatrue\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@left}{top@left}{####2}}}
+            {left-top}{\jlreq@tempatrue\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@left}{top@left}{####2}}}
+            {top-right}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@right}{top@right}{####2}}}
+            {right-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@right}{top@right}{####2}}}
+            {top-gutter}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@\jlreq@gutterodd}{top@\jlreq@guttereven}{####2}}}
+            {gutter-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@\jlreq@gutterodd}{top@\jlreq@guttereven}{####2}}}
+            {top-fore-edge}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@\jlreq@guttereven}{top@\jlreq@gutterodd}{####2}}}
+            {fore-edge-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@\jlreq@guttereven}{top@\jlreq@gutterodd}{####2}}}
+            {bottom-left}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@left}{bottom@left}{####2}}}
+            {left-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@left}{bottom@left}{####2}}}
+            {bottom-right}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@right}{bottom@right}{####2}}}
+            {right-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@right}{bottom@right}{####2}}}
+            {bottom-gutter}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@\jlreq@gutterodd}{bottom@\jlreq@guttereven}{####2}}}
+            {gutter-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@\jlreq@gutterodd}{bottom@\jlreq@guttereven}{####2}}}
+            {bottom-fore-edge}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@\jlreq@guttereven}{bottom@\jlreq@gutterodd}{####2}}}
+            {fore-edge-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@\jlreq@guttereven}{bottom@\jlreq@gutterodd}{####2}}}
+            {top-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{top@center}{top@center}{####2}}}
+            {center-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{top@center}{top@center}{####2}}}
+            {bottom-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{bottom@center}{bottom@center}{####2}}}
+            {center-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{bottom@center}{bottom@center}{####2}}}
+            {center-right}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@right}{center@right}{####2}}}
+            {right-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@right}{center@right}{####2}}}
+            {center-left}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@left}{center@left}{####2}}}
+            {left-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@left}{center@left}{####2}}}
+            {center-gutter}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@\jlreq@gutterodd}{center@\jlreq@guttereven}{####2}}}
+            {gutter-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@\jlreq@gutterodd}{center@\jlreq@guttereven}{####2}}}
+            {center-fore-edge}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@\jlreq@guttereven}{center@\jlreq@gutterodd}{####2}}}
+            {fore-edge-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@\jlreq@guttereven}{center@\jlreq@gutterodd}{####2}}}
           }%
           \ifjlreq@tempa
             \appto\jlreq@do{\expandafter\@bannertoken\expandafter{\jlreq@trimmarks@banner@odd@yoko@top@left}}%
@@ -461,20 +493,9 @@
   \fi
 }
 \def\jlreq@trimmarks@bleed{3mm}
-\def\ifjlreq@trimmarks@iftate@{%
-  \if@tate\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
-}
-% \@firstoftwo when \if@tate is defined and \if@tate=\iftrue
-\def\ifjlreq@trimmarks@iftate{%
-  \ifnum0\ifx\if@tate\@undefined 1\fi\ifx\if@tate\relax 1\fi>0
-    \expandafter\@secondoftwo
-  \else
-    \expandafter\ifjlreq@trimmarks@iftate@
-  \fi
-}
 % left=gutter?
 \def\ifjlreq@trimmarks@leftisgutter{%
-  \ifjlreq@trimmarks@iftate{%
+  \ifjlreq@trimmarks@tate{%
     \ifnum 0\ifodd\c@page 1\fi\if@twoside\else 1\fi>0 \expandafter\@secondoftwo\else\expandafter\@firstoftwo\fi
   }{%
     \ifnum 0\ifodd\c@page 1\fi\if@twoside\else 1\fi>0 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi

@@ -5607,7 +5607,7 @@
   \else\ifnum0\ifnum#1<2019 1\fi\ifnum#1=2019 \ifnum#2<5 1\fi\fi>0
     平成\jlreq@warekiyear@{#1}{1989}{#4}%
   \else
-    新元号\jlreq@warekiyear@{#1}{2019}{#4}%
+    令和\jlreq@warekiyear@{#1}{2019}{#4}%
   \fi\fi
 }
 \def\jlreq@warekiyear@#1#2#3{\ifnum#1=#2 元年\else #3\numexpr#1-#2+1\relax 年\fi}
@@ -5958,11 +5958,7 @@
  }
 }
 \jlreqsetup{theindex_pagestyle=plain}
-\if@tate
-  \jlreqsetup{year_style=wareki}
-\else
-  \jlreqsetup{year_style=seireki}
-\fi
+\jlreqsetup{year_style=seireki}
 \jlreqsetup{theorem_beforeafter_space=1\baselineskip,theorem_indent=0pt}
 
 

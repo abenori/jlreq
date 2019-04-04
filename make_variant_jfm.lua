@@ -81,6 +81,19 @@ function make_jfmfile(t,f)
 	table.tofile(f,t,"local jfm")
 	local fp = io.open(f,"a")
 	fp:write("luatexja.jfont.define_jfm(jfm)\n")
+	fp:close()
+end
+
+function tolf(file)
+	local fp = io.open(file,"r")
+	local s = "";
+	for l in fp:lines() do
+		s = s .. l .. "\n";
+	end
+	fp:close();
+	fp = io.open(file,"wb")
+	fp:write(s);
+	fp:close();
 end
 
 local originaljfm = "jlreq"
@@ -160,4 +173,5 @@ luatexja.jfont.define_jfm(jfm)
 ]])
 fp:close()
 
+tolf(file);
 

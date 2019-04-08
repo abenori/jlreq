@@ -1332,6 +1332,7 @@
 \if@twocolumn
   \setlength{\textwidth}{\dimexpr2\textwidth + \columnsep\relax}
 \fi
+\addtolength{\textwidth}{0.0001pt}
 
 
 %.. \textheight：行送り方向の長さ
@@ -1364,6 +1365,7 @@
 \else
   \setlength{\textheight}{\dimexpr\numexpr\jlreq@option@number@of@lines\relax\baselineskip - \baselineskip + \topskip\relax}
 \fi
+\addtolength{\textheight}{0.0001pt}
 
 %.. 横
 \def\jlreq@setsidemargin@by@gutter#1{

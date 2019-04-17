@@ -3728,167 +3728,39 @@
 }
 
 %.. マークの拡張
-% 三つ以上のマークを保持するために，markを次のようにする
-% <マーク1>\jlreq@extramark{{<マーク2>}{<マーク3>}...}
-\def\jlreq@extramark#1{}
+\def\jlreq@markregistername#1{jlreq@extramark@register@#1}
+\def\jlreq@extraleftmark#1{\jlreq@extramark@{#1}{\expandafter\@firstoftwo\botmarks}}
+\def\jlreq@extrarightmark#1{\jlreq@extramark@{#1}{\expandafter\@secondoftwo\firstmarks}}
+\def\jlreq@extramark@#1#2{\jlreq@if{ifcsname}{\jlreq@markregistername{#1}\endcsname}%
+  {\expandafter\jlreq@extramark@@\expandafter{\csname \jlreq@markregistername{#1}\endcsname}{#2}}%
+  {}%
+ }
+\def\jlreq@extramark@@#1#2{#2#1\@empty\@empty}
 
-% #1番目の\leftmarkや\rightmarkを取得する．\leftmark/\rightmarkの実装に強く依存している．
-\def\jlreq@extraleftmark#1{\jlreq@getextramark{#1}{\leftmark}}%
-\def\jlreq@extrarightmark#1{\jlreq@getextramark{#1}{\rightmark}}%
-\def\jlreq@getextramark#1#2{\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\jlreq@getextramark@#2\jlreq@extramark\jlreq@endmark{#1}}
-\def\jlreq@getextramark@#1\jlreq@extramark#2\jlreq@endmark#3{%
-  \jlreq@ifempty{#2}{}{\jlreq@getextramark@@{#3}#2}%
-}
-\def\jlreq@getextramark@@#1#2#3\jlreq@extramark{\jlreq@getextramark@@@{#1}#2\jlreq@endmark}
-\def\jlreq@getextramark@@@#1#2{%
-  \jlreq@ifendmark{#2}{}{%
-    \ifnum#1=1 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
-      {\jlreq@getextramark@@@@{#2}}{\expandafter\jlreq@getextramark@@@\expandafter{\the\numexpr #1-1\relax}}%
+\def\jlreq@setextraleftmark@#1#2{{#2}{\expandafter\@secondoftwo#1}}
+\def\jlreq@setextrarightmark@#1#2{{\expandafter\@firstoftwo#1}{#2}}
+\def\jlreq@setextraleftmark#1#2{\jlreq@setextramark{#1}{#2}{\jlreq@setextraleftmark@}}
+\def\jlreq@setextrarightmark#1#2{\jlreq@setextramark{#1}{#2}{\jlreq@setextrarightmark@}}
+\def\jlreq@setextramark#1#2#3{%
+  \jlreq@if{ifcsname}{\jlreq@markregistername{#1}\endcsname}{}{%
+    \expandafter\newmarks\csname\jlreq@markregistername{#1}\endcsname
+    \expandafter\def\csname\jlreq@markregistername{#1}@themark\endcsname{{}{}}%
   }%
-}
-\def\jlreq@getextramark@@@@#1#2\jlreq@endmark{#1}
-
-% トークン列#1に必要ならば\jlre@extramarkを加え，#2に代入
-\def\jlreq@addextramarkcommand#1#2{%
-  \jlreq@ifcontains{#1}{\jlreq@extramark}{\edef#2{\unexpanded{#1}}}{\edef#2{\unexpanded{#1\jlreq@extramark{}}}}%
-}
-\def\jlreq@addextramarkcommand@tothemark{%
   \begingroup
-    \expandafter\expandafter\expandafter\jlreq@addextramarkcommand\expandafter\expandafter\expandafter{\expandafter\@firstoftwo\@themark}{\jlreq@tempa}%
-    \expandafter\expandafter\expandafter\jlreq@addextramarkcommand\expandafter\expandafter\expandafter{\expandafter\@secondoftwo\@themark}{\jlreq@tempb}%
-    \edef\jlreq@do{\unexpanded{\def\@themark}{{\expandonce{\jlreq@tempa}}{\expandonce{\jlreq@tempb}}}}%
-  \expandafter\endgroup
-  \jlreq@do
-}
-
-% #1番目を#2に置き換える
-\def\jlreq@setextraleftmark#1#2{%
-  \let\jlreq@extramark@=\jlreq@extramark
-  \begingroup
-    \jlreq@addextramarkcommand@tothemark
-    \def\jlreq@extramark##1{\noexpand\jlreq@extramark{\jlreq@changeargument{##1}{#1}{#2}}}%
-    \protected@edef\jlreq@tempa{\expandafter\@firstoftwo\@themark}%
-    \def\jlreq@extramark{\noexpand\jlreq@extramark}%
-    \protected@edef\jlreq@tempb{\expandafter\@secondoftwo\@themark}%
-    \edef\@themark{{\expandonce{\jlreq@tempa}}{\expandonce{\jlreq@tempb}}}%
-    \edef\jlreq@do{%
-      \unexpanded{\def\jlreq@extramark{\noexpand\jlreq@extramark}}%
-      \noexpand\markboth\expandonce{\@themark}%
+    \let\label\relax
+    \let\index\relax
+    \let\glossary\relax
+    \def\jlreq@@themark@csname{\jlreq@markregistername{#1}@themark}%
+    \expandafter\unrestored@protected@xdef\csname\jlreq@@themark@csname\endcsname{%
+      \expandafter#3\expandafter{\csname\jlreq@@themark@csname\endcsname}{#2}%
     }%
-  \expandafter\endgroup
-  \jlreq@do
-  \let\jlreq@extramark=\jlreq@extramark@
+    \expandafter\expandafter\expandafter\@temptokena\expandafter\expandafter\expandafter{\csname\jlreq@@themark@csname\endcsname}%
+    \expandafter\marks\csname\jlreq@markregistername{#1}\endcsname{\the\@temptokena}%
+  \endgroup
+  \if@nobreak\ifvmode\nobreak\fi\fi
 }
-\def\jlreq@setextrarightmark#1#2{%
-  \let\jlreq@extramark@=\jlreq@extramark
-  \begingroup
-    \jlreq@addextramarkcommand@tothemark
-    \def\jlreq@extramark{\noexpand\jlreq@extramark}%
-    \protected@edef\jlreq@tempa{\expandafter\@firstoftwo\@themark}%
-    \def\jlreq@extramark##1{\noexpand\jlreq@extramark{\jlreq@changeargument{##1}{#1}{#2}}}%
-    \protected@edef\jlreq@tempb{\expandafter\@secondoftwo\@themark}%
-    \edef\@themark{{\expandonce{\jlreq@tempa}}{\expandonce{\jlreq@tempb}}}%
-    \edef\jlreq@do{%
-      \unexpanded{\def\jlreq@extramark{\noexpand\jlreq@extramark}}%
-      \noexpand\markright{\expandonce{\jlreq@tempb}}%
-    }%
-  \expandafter\endgroup
-  \jlreq@do
-  \let\jlreq@extramark=\jlreq@extramark@
-}
-
-% #1内の#2番目を#3に取り替える．\jlreq@changeargument{{arg1}{arg2}...{argk}}{n}{arg}
-% k < nならば{}を加えた後{arg}を最後につける
-\def\jlreq@changeargument#1#2#3{%
-  \jlreq@changeargument@{#2}{#3}#1\jlreq@endmark
-}
-\def\jlreq@changeargument@#1#2#3{%
-  \jlreq@ifendmark{#3}{%
-    \ifnum#1>0 \expandafter\@firstofone\else\expandafter\@gobble\fi
-      {\jlreq@changeargument@@{#1}{#2}}%
-  }{%
-    \ifnum#1=1 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
-      {{#2}}{{#3}}%
-    \expandafter\jlreq@changeargument@\expandafter{\the\numexpr #1 - 1\relax}{#2}%
-  }%
-}
-\def\jlreq@changeargument@@#1#2{%
-  \ifnum#1<2 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{{#2}}{%
-    {}\expandafter\jlreq@changeargument@@\expandafter{\the\numexpr #1 -1 \relax}{#2}%
-  }%
-}
-
-% \jlreq@cleararguments{k}{{arg1}...{argn}}を{arg1}...{argk}{}...{}にする
-\def\jlreq@cleararguments#1#2{\jlreq@cleararguments@{#1}#2\jlreq@endmark}
-\def\jlreq@cleararguments@#1#2{\jlreq@ifendmark{#2}{}{%
-  \ifnum#1<1 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
-    {{}}{{#2}}%
-    \expandafter\jlreq@cleararguments@\expandafter{\the\numexpr #1 - 1\relax}%
-  }%
-}
-% ...\jlreq@extramark{...}を\jlreq@extramark{...}のみにする．
-\def\jlreq@getextramarkpart#1{\jlreq@getextramarkpart@#1\jlreq@extramark\jlreq@endmark}
-\def\jlreq@getextramarkpart@#1\jlreq@extramark#2\jlreq@endmark{\jlreq@ifempty{#2}{}{\jlreq@getextramarkpart@@#2}}
-\def\jlreq@getextramarkpart@@#1\jlreq@extramark{\jlreq@extramark{#1}}
-
-% #1番目以降を空にする
-\def\jlreq@clearleftextramarks#1{%
-  \let\jlreq@extramark@=\jlreq@extramark
-  \begingroup
-    \def\jlreq@extramark##1{\noexpand\jlreq@extramark{\jlreq@cleararguments{#1}{##1}}}%
-    \protected@edef\jlreq@tempa{\expandafter\@firstoftwo\@themark}%
-    \edef\jlreq@tempb{\expandafter\expandafter\expandafter\expandonce\expandafter\expandafter\expandafter{\expandafter\@secondoftwo\@themark}}%
-    \edef\jlreq@do{%
-      \unexpanded{\def\jlreq@extramark{\noexpand\jlreq@extramark}}%
-      \noexpand\markboth{\expandonce{\jlreq@tempa}}{\expandonce{\jlreq@tempb}}%
-    }%
-  \expandafter\endgroup
-  \jlreq@do
-  \let\jlreq@extramark=\jlreq@extramark@
-}
-\def\jlreq@clearrightextramarks#1{%
-  \let\jlreq@extramark@=\jlreq@extramark
-  \begingroup
-    \edef\jlreq@tempa{\expandafter\expandafter\expandafter\expandonce\expandafter\expandafter\expandafter{\expandafter\@firstoftwo\@themark}}%
-    \def\jlreq@extramark##1{\noexpand\jlreq@extramark{\jlreq@cleararguments{#1}{##1}}}%
-    \protected@edef\jlreq@tempb{\expandafter\@secondoftwo\@themark}%
-    \edef\jlreq@do{%
-      \unexpanded{\def\jlreq@extramark{\noexpand\jlreq@extramark}}%
-      \noexpand\markboth{\expandonce{\jlreq@tempa}}{\expandonce{\jlreq@tempb}}%
-    }%
-  \expandafter\endgroup
-  \jlreq@do
-  \let\jlreq@extramark=\jlreq@extramark@
-}
-
-\def\jlreq@markboth#1#2{%
-  \let\jlreq@extramark@=\jlreq@extramark
-  \def\jlreq@extramark{\noexpand\jlreq@extramark}%
-  \begingroup
-    \protected@edef\jlreq@tempa{\expandafter\@firstoftwo\@themark}%
-    \protected@edef\jlreq@tempa{\unexpanded{#1}\expandafter\jlreq@getextramarkpart\expandafter{\jlreq@tempa}}%
-    \protected@edef\jlreq@tempb{\expandafter\@secondoftwo\@themark}%
-    \protected@edef\jlreq@tempb{\unexpanded{#2}\expandafter\jlreq@getextramarkpart\expandafter{\jlreq@tempb}}%
-    \edef\jlreq@do{%
-      \noexpand\markboth{\expandonce{\jlreq@tempa}}{\expandonce{\jlreq@tempb}}%
-    }%
-  \expandafter\endgroup
-  \jlreq@do
-  \let\jlreq@extramark=\jlreq@extramark@
-}
-\def\jlreq@markright#1{%
-  \let\jlreq@extramark@=\jlreq@extramark
-  \def\jlreq@extramark{\noexpand\jlreq@extramark}%
-  \begingroup
-    \protected@edef\jlreq@tempb{\expandafter\@secondoftwo\@themark}%
-    \protected@edef\jlreq@tempb{\unexpanded{#1}\expandafter\jlreq@getextramarkpart\expandafter{\jlreq@tempb}}%
-    \edef\jlreq@do{%
-      \noexpand\markright{\expandonce{\jlreq@tempb}}%
-    }%
-  \expandafter\endgroup
-  \jlreq@do
-  \let\jlreq@extramark=\jlreq@extramark@
-}
+\let\jlreq@markboth=\markboth
+\let\jlreq@markright=\markright
 
 %.. \DeclarePageStyle内で使うもの
 % mark情報の取得を行う．
@@ -3973,7 +3845,7 @@
   % \jlreq@tempbに\***markの定義を入れる
   \edef\jlreq@tempb{%
     \expandonce{\csname the#1\endcsname}%
-    \noexpand\ifx\expandonce{\csname the#1\endcsname}\unexpanded{\@empty\else\quad\fi}%
+    \noexpand\ifx\expandonce{\csname the#1\endcsname}\unexpanded{\@empty\else\protect\quad\fi}%
     \unexpanded{##1}%
   }%
   \jlreq@parsekeyval@nokey{%

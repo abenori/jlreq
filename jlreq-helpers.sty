@@ -60,6 +60,11 @@
 % #1が\jlreq@endmarkか
 \long\def\jlreq@ifendmark#1{\jlreq@iffirsttoken{#1}{\jlreq@endmark}}
 
+% 条件．\jlreq@if{ifnum}{\@count=1 }{<TRUE>}{<FALSE>}みたいに使う
+\def\jlreq@if#1#2{%
+  \csname #1\endcsname#2\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+}
+
 % #1の先頭が引数なしのマクロか
 \long\def\jlreq@ifmacro@noargument#1{%
   \jlreq@ifempty{#1}{\@secondoftwo}{%

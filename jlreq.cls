@@ -392,10 +392,10 @@
 % 組方向を判定
 % \jlreq@if(y|t)(dir|box)を定義する．
 \jlreq@if{\ifx l\jlreq@engine\fi}{
-  \def\jlreq@ifydir{\jlreq@if{\ifnum\ltjgetparameter{direction\fi}=4 }}
-  \def\jlreq@iftdir{\jlreq@if{\ifnum\numexpr\ltjgetparameter{direction\fi}-(\ltjgetparameter{direction}/8)*8\relax=3 }}
-  \def\jlreq@ifybox#1{\jlreq@if{\ifnum\ltjgetparameter{boxdir\fi}{#1}=4 }}
-  \def\jlreq@iftbox#1{\jlreq@if{\ifnum\numexpr\ltjgetparameter{boxdir\fi}{#1}-(\ltjgetparameter{boxdir}{#1}/8)*8\relax=3 }}
+  \def\jlreq@ifydir{\jlreq@if{\ifnum\ltjgetparameter{direction}=4 \fi}}
+  \def\jlreq@iftdir{\jlreq@if{\ifnum\numexpr\ltjgetparameter{direction}-(\ltjgetparameter{direction}/8)*8\relax=3 \fi}}
+  \def\jlreq@ifybox#1{\jlreq@if{\ifnum\ltjgetparameter{boxdir}{#1}=4 \fi}}
+  \def\jlreq@iftbox#1{\jlreq@if{\ifnum\numexpr\ltjgetparameter{boxdir}{#1}-(\ltjgetparameter{boxdir}{#1}/8)*8\relax=3 \fi}}
 }{
   \def\jlreq@ifydir{\jlreq@if{\ifydir\fi}}
   \def\jlreq@iftdir{\jlreq@if{\iftdir\fi}}
@@ -4483,7 +4483,7 @@
 % #1@#2が定義されていれば\#1@#2の中身に，そうでなければ\#1の中身に展開される．
 % 展開は\unexpandedで抑制される．
 \def\jlreq@jlreqsetup@withenv@nameuse#1#2{%
-  \jlreq@if{\expandafter\ifx\csname #1@#2\endcsname\relax}{\csexpandonce{#1}}{\csexpandonce{#1@#2}}%
+  \jlreq@if{\expandafter\ifx\csname #1@#2\endcsname\relax\fi}{\csexpandonce{#1}}{\csexpandonce{#1@#2}}%
 }
 % 4.3.1 注4
 \newlength\abovecaptionskip

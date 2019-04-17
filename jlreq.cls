@@ -40,7 +40,7 @@
   \expandafter\let\csname jlreq@original@\expandafter\@gobble\string#1\endcsname=#1
 }
 \def\jlreq@useoriginalcs#1{%
-  \jlreq@if{\ifcsnamejlreq@original@\expandafter\@gobble\string#1\endcsname\fi}%
+  \jlreq@if{\ifcsname jlreq@original@\expandafter\@gobble\string#1\endcsname\fi}%
     {\csname jlreq@original@\expandafter\@gobble\string#1\endcsname}%
     {#1}%
 }

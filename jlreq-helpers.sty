@@ -60,10 +60,11 @@
 % #1が\jlreq@endmarkか
 \long\def\jlreq@ifendmark#1{\jlreq@iffirsttoken{#1}{\jlreq@endmark}}
 
-% 条件．\jlreq@if{ifnum}{\@count=1 }{<TRUE>}{<FALSE>}みたいに使う
-\def\jlreq@if#1#2{%
-  \csname #1\endcsname#2\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
-}
+% 条件．\jlreq@if{ifnum\@count=1 \fi}{<TRUE>}{<FALSE>}みたいに使う
+\def\jlreq@if@endmark{\jlreq@if@endmark}
+\def\jlreq@if#1{\jlreq@if@#1\jlreq@if@endmark}
+\@gobbletwo\if\if
+\def\jlreq@if@#1\fi\jlreq@if@endmark{#1\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
 
 % #1の先頭が引数なしのマクロか
 \long\def\jlreq@ifmacro@noargument#1{%
@@ -169,7 +170,7 @@
 \def\jlreq@helper@dividebycomma@#1,#2\jlreq@endmark{%
   \jlreq@helper@trim{#1}{\jlreq@resulta}%
   \jlreq@helper@trim{#2}{\jlreq@resultb}%
-  \ifx\jlreq@resultb\@empty\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
+  \jlreq@if{\ifx\jlreq@resultb\@empty\fi}{%
     \jlreq@resultfalse
   }{%
     \jlreq@resulttrue
@@ -371,7 +372,7 @@
     \edef\jlreq@do{\unexpanded{#2}}%
   }{%
     \edef\jlreq@tempb{\jlreq@ifempty{#1}{#2}{\unexpanded{#2}}}%
-    \ifx\jlreq@tempa\jlreq@tempb\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
+    \jlreq@if{\ifx\jlreq@tempa\jlreq@tempb\fi}{%
       \edef\jlreq@do{\unexpanded{#3}}%
       \jlreq@deleteuntileendmark
     }{%
@@ -382,11 +383,11 @@
 
 % オレオレラベル……
 % \jlreq@reference@ref{ラベル名}{デフォルト値}
-\def\jlreq@reference@ref#1{\expandafter\ifx\csname jlreq@reference@#1\endcsname\relax\expandafter\@secondoftwo\else\expandafter\@firstoftwo\fi{\csname jlreq@reference@#1\endcsname}}
+\def\jlreq@reference@ref#1{\jlreq@if{\expandafter\ifx\csname jlreq@reference@#1\endcsname\fi}{\csname jlreq@reference@#1\endcsname}}
 % \jlreq@reference@label{ラベル名}{値}
 \def\jlreq@reference@label#1#2{\protected@write\@auxout{}{\string\@newl@bel{jlreq@reference}{#1}{#2}}}%
 \def\jlreq@reference@immediate@write#1#2{\immediate\write\@auxout{\string\@newl@bel{jlreq@reference}{#1}{#2}}}%
-\def\jlreq@reference@ifexist#1{\expandafter\ifx\csname jlreq@reference@#1\endcsname\relax\expandafter\@secondoftwo\else\expandafter\@firstoftwo\fi}
+\def\jlreq@reference@ifexist#1{\jlreq@if{\expandafter\ifx\csname jlreq@reference@#1\endcsname\fi}}
 
 % 自動生成されるラベル用の番号
 \newcount\jlreq@reference@count
@@ -417,7 +418,7 @@
 \def\jlreq@helper@checktokenlist#1#2{%
   \jlreq@ifendmark{#2}{\@firstoftwo}%
   {%
-    \ifnum0#1{#2}>0 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+    \jlreq@if{\ifnum0#1{#2}>0 \fi}%
       {\jlreq@helper@checktokenlist{#1}}%
       {\expandafter\@secondoftwo\jlreq@deleteuntileendmark}%
   }%

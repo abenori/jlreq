@@ -40,7 +40,7 @@
   \expandafter\let\csname jlreq@original@\expandafter\@gobble\string#1\endcsname=#1
 }
 \def\jlreq@useoriginalcs#1{%
-  \ifcsname jlreq@original@\expandafter\@gobble\string#1\endcsname\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+  \jlreq@if{\ifcsnamejlreq@original@\expandafter\@gobble\string#1\endcsname\fi}%
     {\csname jlreq@original@\expandafter\@gobble\string#1\endcsname}%
     {#1}%
 }
@@ -376,31 +376,31 @@
 }
 
 \long\def\jlreq@helper@ifletter#1{%
-  \ifnum
-    0%
-    \ifcat 阿\noexpand #11\fi
-    \ifcat あ\noexpand #11\fi
-    \ifcat （\noexpand #11\fi
-    \ifcat A\noexpand #11\fi
-    \ifcat 1\noexpand #11\fi
-  >0
-    \expandafter\@firstoftwo\else\expandafter\@secondoftwo
-  \fi
+  \jlreq@if{%
+    \ifnum
+      0%
+      \ifcat 阿\noexpand #11\fi
+      \ifcat あ\noexpand #11\fi
+      \ifcat （\noexpand #11\fi
+      \ifcat A\noexpand #11\fi
+      \ifcat 1\noexpand #11\fi
+    >0
+  \fi}%
 }
 
 
 % 組方向を判定
 % \jlreq@if(y|t)(dir|box)を定義する．
-\ifx l\jlreq@engine\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{
-  \def\jlreq@ifydir{\ifnum\ltjgetparameter{direction}=4 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-  \def\jlreq@iftdir{\ifnum\numexpr\ltjgetparameter{direction}-(\ltjgetparameter{direction}/8)*8\relax=3 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-  \def\jlreq@ifybox#1{\ifnum\ltjgetparameter{boxdir}{#1}=4 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-  \def\jlreq@iftbox#1{\ifnum\numexpr\ltjgetparameter{boxdir}{#1}-(\ltjgetparameter{boxdir}{#1}/8)*8\relax=3 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+\jlreq@if{\ifx l\jlreq@engine\fi}{
+  \def\jlreq@ifydir{\jlreq@if{\ifnum\ltjgetparameter{direction\fi}=4 }}
+  \def\jlreq@iftdir{\jlreq@if{\ifnum\numexpr\ltjgetparameter{direction\fi}-(\ltjgetparameter{direction}/8)*8\relax=3 }}
+  \def\jlreq@ifybox#1{\jlreq@if{\ifnum\ltjgetparameter{boxdir\fi}{#1}=4 }}
+  \def\jlreq@iftbox#1{\jlreq@if{\ifnum\numexpr\ltjgetparameter{boxdir\fi}{#1}-(\ltjgetparameter{boxdir}{#1}/8)*8\relax=3 }}
 }{
-  \def\jlreq@ifydir{\ifydir\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-  \def\jlreq@iftdir{\iftdir\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-  \def\jlreq@ifybox#1{\ifybox#1\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
-  \def\jlreq@iftbox#1{\iftbox#1\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+  \def\jlreq@ifydir{\jlreq@if{\ifydir\fi}}
+  \def\jlreq@iftdir{\jlreq@if{\iftdir\fi}}
+  \def\jlreq@ifybox#1{\jlreq@if{\ifybox#1\fi}}
+  \def\jlreq@iftbox#1{\jlreq@if{\iftbox#1\fi}}
 }
 
 % 左ページであるか
@@ -1637,7 +1637,7 @@
           {\long\gdef\jlreqHeadingText####1{####1}}%
         }%
         \ifjlreq@number
-          \unexpanded{\ifnum#2>\c@secnumdepth\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}{%
+          \unexpanded{\jlreq@if{\ifnum#2>\c@secnumdepth\relax\fi}}{%
             \unexpanded{\long\gdef\jlreqHeadingLabel####1{}}%
             \expandonce{\jlreq@format{}{##1}}%
           }{%
@@ -2109,7 +2109,7 @@
     % a,bみたいなのをaとbにわける．カンマがなければbは空．引数を{a}{b}として##2を呼び出す．
     \def\jlreq@parsecomma##1##2{%
       \jlreq@helper@dividebycomma{##1}%
-      \ifjlreq@result\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
+      \jlreq@if{\ifjlreq@result\fi}{%
         \edef\jlreq@do{\noexpand\jlreq@tempa{\expandonce{\jlreq@resulta}}{\expandonce{\jlreq@resultb}}}%
       }{%
         \edef\jlreq@do{\noexpand\jlreq@tempa{##1}{}}%
@@ -2293,7 +2293,7 @@
           % 前開きが常に入ってしまうので，a:の時は除去する
           \jlreq@iffirsttoken{##1}{a}{\def\jlreq@spaceset{{}{##2}{##3}}}{}%
           \edef\jlreq@totalformat{%
-            \unexpanded{\if@twocolumn\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}{%
+            \unexpanded{\jlreq@if{\if@twocolumn\fi}}{%
               \noexpand\twocolumn[{%
                 % 普段自動で入る\topskipと\baselineskipを手動で入れる
                 \jlreq@iffirsttoken{##1}{r}{}{\unexpanded{\vskip\topskip\relax}}%
@@ -2730,7 +2730,7 @@
 \def\jlreq@CutinHeading@start#1#2#3#4#5#6#7{%
   \if@noskipsec\leavevmode\fi
   \par
-  \ifnum\hangafter=1 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
+  \jlreq@if{\ifnum\hangafter=1 \fi}{%
     \jlreq@CutinHeading@start@{#2}{#3}{#4}{#5}{#6}{#7}%
   }{%
     \ClassError{jlreq}{Can not use \expandafter\string\csname#1\endcsname\space here}{\@ehc}%
@@ -2866,7 +2866,7 @@
   \fi
 }
 \newcommand*{\jlreq@HeadingType@}[2]{%
-  \expandafter\expandafter\expandafter\ifx\csname jlreq@heading@type@#1\endcsname#2\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+  \jlreq@if{\expandafter\expandafter\expandafter\ifx\csname jlreq@heading@type@#1\endcsname#2\fi}%
 }
 
 % 全ての見出しにマクロ#1を適用する．
@@ -3731,10 +3731,10 @@
 \def\jlreq@markregistername#1{jlreq@extramark@register@#1}
 \def\jlreq@extraleftmark#1{\jlreq@extramark@{#1}{\expandafter\@firstoftwo\botmarks}}
 \def\jlreq@extrarightmark#1{\jlreq@extramark@{#1}{\expandafter\@secondoftwo\firstmarks}}
-\def\jlreq@extramark@#1#2{\jlreq@if{ifcsname}{\jlreq@markregistername{#1}\endcsname}%
+\def\jlreq@extramark@#1#2{\jlreq@if{\ifcsname\jlreq@markregistername{#1}\endcsname\fi}%
   {\expandafter\jlreq@extramark@@\expandafter{\csname \jlreq@markregistername{#1}\endcsname}{#2}}%
   {}%
- }
+}
 \def\jlreq@extramark@@#1#2{#2#1\@empty\@empty}
 
 \def\jlreq@setextraleftmark@#1#2{{#2}{\expandafter\@secondoftwo#1}}
@@ -3742,7 +3742,7 @@
 \def\jlreq@setextraleftmark#1#2{\jlreq@setextramark{#1}{#2}{\jlreq@setextraleftmark@}}
 \def\jlreq@setextrarightmark#1#2{\jlreq@setextramark{#1}{#2}{\jlreq@setextrarightmark@}}
 \def\jlreq@setextramark#1#2#3{%
-  \jlreq@if{ifcsname}{\jlreq@markregistername{#1}\endcsname}{}{%
+  \jlreq@if{\ifcsname\jlreq@markregistername{#1}\endcsname\fi}{}{%
     \expandafter\newmarks\csname\jlreq@markregistername{#1}\endcsname
     \expandafter\def\csname\jlreq@markregistername{#1}@themark\endcsname{{}{}}%
   }%
@@ -3936,7 +3936,7 @@
   }%
 }
 \def\jlreq@pagestyle@make@runninghead@#1#2#3#4#5{%
-  \ifnum\numexpr\jlreq@ifendmark{#5}{1}{0}*\ifjlreq@tempa 1\else 0\fi\relax=1 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
+  \jlreq@if{\ifnum\numexpr\jlreq@ifendmark{#5\fi}{1}{0}*\ifjlreq@tempa 1\else 0\fi\relax=1 \fi}{%
     % 項目が一つしか無い
     \jlreq@ifempty{#2}{\csappto}{\cspreto}{#1}{#4}%
   }{%
@@ -4130,7 +4130,7 @@
       \jlreq@pagestyle@addfont@tocs{jlreq@nombre@\jlreq@i}{jlreq@nombre@\jlreq@i @font}%
     }%
     % \jlreq@oddhead,\jlreq@oddfoot,\jlreq@evenhead,\jlreq@evenfootに必要なものを入れる．
-    \ifjlreq@pstate\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{% tate
+    \jlreq@if{\ifjlreq@pstate\fi}{% tate
       % headの方に処理を入れる．footは空．
       \def\jlreq@oddfoot{}\def\jlreq@evenfoot{}%
       \jlreq@for@noexpand\jlreq@position:=\jlreq@nombre@i@position,\jlreq@running@head@i@position\do{%
@@ -4309,11 +4309,11 @@
                 \expandafter\edef\csname\jlreq@nombrecsname\endcsname{{\expandonce{\jlreq@nombre@font}\csexpandonce{\jlreq@nombrecsname}}}%
               \fi
             \fi
-            \expandafter\ifx\csname\jlreq@runheadcsname\endcsname\@empty\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
+            \jlreq@if{\expandafter\ifx\csname\jlreq@runheadcsname\endcsname\@empty\fi}{%
               % 柱が空：ノンブルのみでよい
               \expandafter\let\csname\jlreq@csname\expandafter\endcsname\csname\jlreq@nombrecsname\endcsname
             }{%
-              \expandafter\ifx\csname\jlreq@nombrecsname\endcsname\@empty\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{%
+              \jlreq@if{\expandafter\ifx\csname\jlreq@nombrecsname\endcsname\@empty\fi}{%
 %                % ノンブルが空．柱のみでよい．
                 \jlreq@pagestyle@addfont@tocs{\jlreq@runheadcsname}{jlreq@running@head@font}%
                 \expandafter\let\csname\jlreq@csname\expandafter\endcsname\csname\jlreq@runheadcsname\endcsname
@@ -4483,7 +4483,7 @@
 % #1@#2が定義されていれば\#1@#2の中身に，そうでなければ\#1の中身に展開される．
 % 展開は\unexpandedで抑制される．
 \def\jlreq@jlreqsetup@withenv@nameuse#1#2{%
-  \expandafter\ifx\csname #1@#2\endcsname\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi{\csexpandonce{#1}}{\csexpandonce{#1@#2}}%
+  \jlreq@if{\expandafter\ifx\csname #1@#2\endcsname\relax}{\csexpandonce{#1}}{\csexpandonce{#1@#2}}%
 }
 % 4.3.1 注4
 \newlength\abovecaptionskip

@@ -1726,11 +1726,18 @@
 \long\def\jlreq@BlockHeading@start@@@@#1#2#3#4#5#6#7#8{%
   \edef\jlreq@tempa##1##2##3##4##5##6##7{%
     \unexpanded{\jlreq@BlockHeading@start@makeoutput{#1}{#2}}{{##1}{##2}{##3}}{\expandonce{\jlreq@BlockHeading@start@eachformat}}{\expandonce{\jlreq@BlockHeading@start@format}}\unexpanded{{#5}{#6}{#7}{#8}}%
-    \unexpanded{\def\jlreq@tempb}{{##4}{##5}{##6}{##7}}% 縦方向空き
+    \unexpanded{\def\jlreq@tempb}{{##4}{##5}{##6}}% 縦方向空き
+    \noexpand\jlreq@ifempty{##7}{\noexpand\jlreq@tempatrue}{\noexpand\jlreq@tempafalse}% 偶数ページのみで改ページするならば\jlreq@tempatrue
   }%
   \jlreq@tempa#3%
   \global\advance\jlreq@BlockHeading@spaces@current@count by 1
   \gappto\jlreq@BlockHeading@spaces@current@sequence{_#1}%
+  % 連続する見出しの間の処理をするために，即時では出力せず，いったんマクロに格納する．
+  % \jlreq@BlockHeading@spaces@current@before@<n>
+  % \jlreq@BlockHeading@start@gyodori\jlreq@BlockHeading@spaces@current@space@<n>{jlreq@BlockHeading@spaces@current@output@<n>}
+  % ↑\jlreq@BlockHeading@spaces@current@format@<n>で整形される．
+  % \jlreq@BlockHeading@spaces@current@after@<n>
+  % として後に呼び出される．（spaceは書き換えられる可能性がある．）
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@output@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
     \expandonce{\jlreq@resultb}%
   }%
@@ -1741,6 +1748,10 @@
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@before@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
     \expandonce{\@tempa#4}%
     \expandonce{\jlreq@resulta}%
+    \ifjlreq@tempa\unexpanded{%
+      \jlreq@setcurrentpage
+      \edef\jlreq@BlockHeading@currentpage{\the\jlreq@currentpage}%
+    }\fi
   }%
   \def\@tempa##1##2##3{##2}%
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@format@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
@@ -1749,6 +1760,12 @@
   \def\@tempa##1##2##3{##3}%
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
     \expandonce{\jlreq@resultc}%
+    \ifjlreq@tempa\unexpanded{%
+      \ifx\jlreq@BlockHeading@currentpage\@empty\nobreak\else
+        \ifodd\jlreq@BlockHeading@currentpage\nobreak\else\allowbreak\fi
+      \fi
+    }\else\noexpand\nobreak\fi
+    % 現状ここ↓は常に空
     \expandonce{\@tempa#4}%
   }%
   \ifx\jlreq@BlockHeading@spaces@headingslist\@empty
@@ -1924,10 +1941,10 @@
 }
 
 % 行取り処理．#3が空の時は行取りの処理はしない．（空白挿入は行う．）
-% {1 = 前空き}{2 = 後ろ空き}{3 = トータル行数}{4 = 偶数ページ改ページするなら空}{5 = 出力}
-\long\def\jlreq@BlockHeading@start@gyodori#1#2#3#4#5{\par{%
-  \jlreq@ifempty{#4}{\jlreq@setcurrentpage}{}%
-  \setbox\jlreq@tempboxa=\vbox{#5}%
+% {1 = 前空き}{2 = 後ろ空き}{3 = トータル行数}{4 = 出力}
+% 最後には\nobreak（と\vskip）が入っている
+\long\def\jlreq@BlockHeading@start@gyodori#1#2#3#4{\par{%
+  \setbox\jlreq@tempboxa=\vbox{#4}%
   % \jlreq@tempskip(a/b)に前/後ろに入れるべき値を入れる
   % #1がa:ならばその値は\jlreq@tempskipaには足さず\jlreq@tempskipcに入れておく
   \jlreq@tempskipa=0pt
@@ -2007,7 +2024,7 @@
     \box\jlreq@tempboxa
     \ifx r\jlreq@ushiroakitype\prevdepth=-1000pt \else\prevdepth=0pt \fi
   \fi
-  \jlreq@ifempty{#4}{\ifodd\jlreq@currentpage\nobreak\fi}{\nobreak}%
+  \nobreak
   \jlreq@ifgluezero\jlreq@tempskipb{}{\vskip\jlreq@tempskipb}%
   \edef\jlreq@do{%
     \ifdim\parskip=0pt \else
@@ -3924,7 +3941,7 @@
 % 間に空白を入れる．
 % #1: ターゲットなコントロールシークエンスの名前，#2：*ならばreverseする，#3：空き
 \def\jlreq@pagestyle@make@runninghead#1#2#3{%
-  \expandafter\ifx\csname #1\endcsname\@empty\expandafter\@gobble\else\expandafter\@firstofone\fi{%
+  \jlreq@if{\expandafter\ifx\csname #1\endcsname\@empty\fi}{}{%
     \edef\jlreq@do{%
       \noexpand\jlreq@tempatrue % 最初の処理かフラグ
       \unexpanded{\jlreq@pagestyle@make@runninghead@{#1}{#2}{#3}}\csexpandonce{#1}\noexpand\jlreq@endmark

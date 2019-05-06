@@ -2550,7 +2550,7 @@
   \ifthenelse{\equal{#1}{{}{}{}}}{\jlreq@tempafalse}{}%
   \edef\jlreq@do{%
     \ifjlreq@tempa
-      \unexpanded{\jlreq@BlockHeading@start@gyodori#1}{*}{%
+      \unexpanded{\jlreq@BlockHeading@start@gyodori#1}{%
         \expandonce{\jlreq@result}%
       }%
     \else
@@ -2582,7 +2582,7 @@
   \jlreq@do
 }
 % #1: デフォルト値を使うならば*，#2#3#4が設定された値，#5#6#7がデフォルト値，#8は偶数ページの，#9が出力
-\def\jlreq@BlockHeading@spaces@output@@@@#1#2#3#4#5#6#7#8#9{%
+\def\jlreq@BlockHeading@spaces@output@@@@#1#2#3#4#5#6#7#8{%
   \edef\jlreq@tempa{%
     \unexpanded{\long\def\jlreq@tempa##1}{\csexpandonce{jlreq@BlockHeading@spaces@current@format@\the\jlreq@tempcnta}}%
   }%
@@ -2594,7 +2594,7 @@
         {\jlreq@ifempty{#2}{\unexpanded{#5}}{\unexpanded{#2}}}%
         {\jlreq@ifempty{#3}{\unexpanded{#6}}{\unexpanded{#3}}}%
         {\jlreq@ifempty{#4}{\unexpanded{#7}}{\unexpanded{#4}}}%
-      }\unexpanded{{#8}{#9}}%
+      }\unexpanded{{#8}}%
     }}%
   }%
   \eappto\jlreq@result{%

@@ -111,6 +111,10 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Stopped to use `zref` package.
     - New regnal year.
     - Fixed bugs.
+* 2019-05-07
+    - Added a small length to `\textwidth` and `\textheight'.
+    - Changed the implementation of `running_head_ii` etc. in `\DeclarePageStyle`.
+    - Fixed bugs.
 
 
 --------------

@@ -5,7 +5,7 @@
 %%
 % (based on JLReq 20120403 https://www.w3.org/TR/2012/NOTE-jlreq-20120403/ja/)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{jlreq}[2019/04/01 jlreq]
+\ProvidesClass{jlreq}[2019/05/07 jlreq]
 \RequirePackage{xkeyval,everyhook,filehook,etoolbox,ifthen}
 \RequirePackage{jlreq-helpers}
 
@@ -1765,7 +1765,6 @@
         \ifodd\jlreq@BlockHeading@currentpage\nobreak\else\allowbreak\fi
       \fi
     }\else\noexpand\nobreak\fi
-    % 現状ここ↓は常に空
     \expandonce{\@tempa#4}%
   }%
   \ifx\jlreq@BlockHeading@spaces@headingslist\@empty

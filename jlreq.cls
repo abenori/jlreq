@@ -1765,7 +1765,6 @@
         \ifodd\jlreq@BlockHeading@currentpage\nobreak\else\allowbreak\fi
       \fi
     }\else\noexpand\nobreak\fi
-    % 現状ここ↓は常に空
     \expandonce{\@tempa#4}%
   }%
   \ifx\jlreq@BlockHeading@spaces@headingslist\@empty

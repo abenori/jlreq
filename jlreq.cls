@@ -2944,7 +2944,18 @@
       }%
     }
     \def\jlreq@hook@prenote{\inhibitglue}
-    \def\jlreq@hook@postnote{\inhibitglue}
+    % 後ろ側に始め括弧類（cl-01）が配置される場合を除いて，ベタ組（4.2.3，二つ目のc，三つ目のb）．
+    \def\jlreq@hook@postnote{\futurelet\jlreq@nextchar\jlreq@postnote@checkopenbracket}%
+    \def\@tempa{}
+    \def\jlreq@do##1{\jlreq@ifendmark{##1}{}{\appto\@tempa{\ifx\jlreq@tempb##11\fi}\jlreq@do}}
+    \expandafter\jlreq@do\jlreq@charlist@openingbrackets\jlreq@endmark
+    \edef\jlreq@postnote@checkopenbracket{%
+      \unexpanded{%
+        \jlreq@getfirsttoken@expandmacros{\jlreq@nextchar}{\jlreq@tempa}%
+        \expandafter\let\expandafter\jlreq@tempb\jlreq@tempa
+      }%
+      \noexpand\jlreq@if{\noexpand\ifnum 0\expandonce{\@tempa}>0 \noexpand\fi}{}{\noexpand\inhibitglue}%
+    }
   }{% reference_mark=interlinear
     \def\jlreq@notemark##1{{%
       \setbox\@tempboxa=\hbox{\scriptsize\jlreq@referencemark@format{##1}}%
@@ -5147,10 +5158,6 @@
   \jlreq@oldfontcommand@disable
 }
 \let\@openbib@code\@empty
-\if@tate
-  \def\@cite#1#2{\jlreq@rensuji{[{#1\if@tempswa , #2\fi}]}}
-  \def\@biblabel#1{\jlreq@rensuji{[#1]}}
-\fi
 
 %. 索引
 \newif\ifjlreq@resttate

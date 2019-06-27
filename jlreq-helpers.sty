@@ -387,7 +387,7 @@
 % \jlreq@reference@label{ラベル名}{値}
 \def\jlreq@reference@label#1#2{\protected@write\@auxout{}{\string\@newl@bel{jlreq@reference}{#1}{#2}}}%
 \def\jlreq@reference@immediate@write#1#2{\immediate\write\@auxout{\string\@newl@bel{jlreq@reference}{#1}{#2}}}%
-\def\jlreq@reference@ifexist#1{\jlreq@if{\expandafter\ifx\csname jlreq@reference@#1\endcsname\fi}}
+\def\jlreq@reference@ifexist#1{\jlreq@if{\expandafter\unless\expandafter\ifx\csname jlreq@reference@#1\endcsname\relax\fi}}
 
 % 自動生成されるラベル用の番号
 \newcount\jlreq@reference@count

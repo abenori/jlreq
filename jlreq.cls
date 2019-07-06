@@ -336,6 +336,10 @@
   \else
     \RequirePackage[disablejfam]{luatexja}
   \fi
+  \RequirePackage{luatexja-adjust}
+  \ltjenableadjust[lineend=extended,priority=true]
+  \ltjsetparameter{stretch_priority={kanjiskip=0,xkanjiskip=10}}
+  \ltjsetparameter{shrink_priority={kanjiskip=0,xkanjiskip=-30}}
   \directlua{jlreq = {}}
 \fi
 
@@ -588,7 +592,10 @@
   \let\jlreq@divide=\jlreq@helper@divide
 \fi
 
-%. 基本設定
+%. 文字関連設定
+% ダミー
+\def\@ptsize{0}
+%.. (x)kanjiskip
 \providecommand*{\jlreqkanjiskip}{0pt plus 0.25\zw minus 0pt}
 \providecommand*{\jlreqxkanjiskip}{0.25\zw plus 0.25\zw minus 0.125\zw}
 \ifx l\jlreq@engine
@@ -599,7 +606,113 @@
   \xkanjiskip=\jlreqxkanjiskip
 \fi
 
-% 文字クラスのリスト（必要なものだけ）
+% フォントサイズを設定
+\newdimen\jlreq@fontsize
+\newdimen\jlreq@jafontsize
+\ifx l\jlreq@engine
+  % Q,zw,zhが正しく扱われるようになる．\dimexprつきに展開される．
+  \def\jlreq@expand@optionfontsize#1{%
+    \dimexpr\directlua{
+      local act = string.char(92)
+      local s = [[#1]]
+      s = s:gsub("Q",act .. "dimexpr 0.25mm" .. act .. "relax")
+      tex.print(s)
+    }\relax
+  }%
+\else
+  \def\jlreq@expand@optionfontsize#1{\dimexpr#1\relax}
+\fi
+\jlreq@aftercls@addtodeletecs{\jlreq@expand@optionfontsize}
+\ifx\jlreq@option@fontsize\@empty
+  \ifx\jlreq@option@jafontsize\@empty
+    \jlreq@fontsize=10pt
+    \jlreq@jafontsize=\jlreq@option@jafontscale\jlreq@fontsize
+  \else
+    \setlength{\jlreq@jafontsize}{\jlreq@expand@optionfontsize{\jlreq@option@jafontsize}}
+    \jlreq@divide{\jlreq@jafontsize}{\jlreq@option@jafontscale pt}
+    \jlreq@fontsize=\jlreq@resultdimen
+  \fi
+\else
+  \setlength{\jlreq@fontsize}{\jlreq@expand@optionfontsize{\jlreq@option@fontsize}}
+  \ifx\jlreq@option@jafontsize\@empty
+    \jlreq@jafontsize=\jlreq@option@jafontscale\jlreq@fontsize
+  \else
+    \setlength{\jlreq@jafontsize}{\jlreq@expand@optionfontsize{\jlreq@option@jafontsize}}
+  \fi
+\fi
+
+%.. JFM
+\ifx l\jlreq@engine
+  \def\ltj@stdyokojfm{jlreq}
+  \def\ltj@stdtatejfm{jlreqv}
+  % この値は後でjfm-jlreq内で読む
+  \directlua{jlreq.open_bracket_pos = [[\jlreq@open@bracket@pos]]}
+  \ifjlreq@burasage\directlua{jlreq.burasage = true}\else\directlua{jlreq.burasage = false}\fi
+\else
+  \def\jlreq@jfmname@prefix{}
+  \jlreq@aftercls@addtodeletecs{\jlreq@jfmname@prefix}
+  \ifjlreq@burasage\edef\jlreq@jfmname@prefix{b\jlreq@jfmname@prefix}\fi
+  \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{\edef\jlreq@jfmname@prefix{\jlreq@jfmname@prefix z}}{}
+  \ifx u\jlreq@engine\edef\jlreq@jfmname@prefix{u\jlreq@jfmname@prefix}\fi
+  \edef\jlreq@jfmname{\jlreq@jfmname@prefix jlreq} % JFMの名前
+  \edef\jlreq@jfmnameg{\jlreq@jfmname@prefix jlreqg} % ゴシックなJFMの名前
+  \jlreq@aftercls@addtodeletecs{\jlreq@jfmname}
+  \jlreq@aftercls@addtodeletecs{\jlreq@jfmnameg}
+  \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
+\fi
+
+% 行頭の括弧は \jlreq@open@bracket@before@space \inhibitglue 「みたいにする．
+\ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{
+  \def\jlreq@open@bracket@before@space{\hskip\glueexpr-.5\zw\relax}
+}{
+  \def\jlreq@open@bracket@before@space{}
+}
+
+\ifx p\jlreq@engine
+  \def\jlreq@yokokanjiencoding{JY1}
+  \def\jlreq@tatekanjiencoding{JT1}
+\fi
+\ifx u\jlreq@engine
+  \def\jlreq@yokokanjiencoding{JY2}
+  \def\jlreq@tatekanjiencoding{JT2}
+\fi
+\ifx l\jlreq@engine
+  \def\jlreq@yokokanjiencoding{JY3}
+  \def\jlreq@tatekanjiencoding{JT3}
+\fi
+\jlreq@divide{\jlreq@jafontsize}{\jlreq@fontsize}
+\edef\jlreq@jafontscale{\strip@pt\jlreq@resultdimen}
+\jlreq@aftercls@addtodeletecs{\jlreq@jafontscale}
+\ifx l\jlreq@engine
+  \DeclareFontShape{JY3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont:jfm=jlreq;script=latn;-kern}{}
+  \DeclareFontShape{JY3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont:jfm=jlreq;script=latn;-kern}{}
+  \DeclareFontShape{JT3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont:jfm=jlreqv;script=latn;-kern}{}
+  \DeclareFontShape{JT3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont:jfm=jlreqv;script=latn;-kern}{}
+\else
+  \DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmname}{}
+  \DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmnameg}{}
+  \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmname-v}{}
+  \DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmnameg-v}{}
+\fi
+\@for\jlreq@encoding:=\jlreq@yokokanjiencoding,\jlreq@tatekanjiencoding\do{
+  \@for\jlreq@shape:=n,it,sl,sc\do{
+    \@for\jlreq@series:=m,b,bx,sb,c\do{
+      \ifthenelse{\equal{\jlreq@shape}{n} \AND \equal{\jlreq@series}{m}}{}{
+        \DeclareFontShape{\jlreq@encoding}{gt}{\jlreq@series}{\jlreq@shape}{<->ssub*gt/m/n}{}
+      }
+    }
+    \@for\jlreq@series:=bx,b,sb\do{
+      \DeclareFontShape{\jlreq@encoding}{mc}{\jlreq@series}{\jlreq@shape}{<->ssub*gt/m/n}{}
+    }
+    \@for\jlreq@series:=m,c\do{
+      \ifthenelse{\equal{\jlreq@shape}{n} \AND \equal{\jlreq@series}{m}}{}{
+        \DeclareFontShape{\jlreq@encoding}{mc}{\jlreq@series}{\jlreq@shape}{<->ssub*mc/m/n}{}
+      }
+    }
+  }
+}
+
+%.. 文字クラスのリスト
 % 開き括弧（文字クラス1）
 \edef\jlreq@charlist@openingbrackets{（〔［｛〈《「『【‘“\ifx p\jlreq@engine\else ｟〘〖«〝\fi}
 % 閉じ括弧（文字クラス2）
@@ -629,6 +742,34 @@
 % 片仮名（文字クラス16）
 \edef\jlreq@charlist@katakana{アイウエオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモヤユヨラリルレロワヰヱヲンヴ\ifx p\jlreq@engine\else ヷヸヹヺ\fi}% カ゚キ゚ク゚ケ゚コ゚セ゚ツ゚ト゚
 
+%.. 行頭括弧調整
+\ifx l\jlreq@endgine
+  % \item後の行頭括弧のために仕込み．
+  \jlreq@saveoriginalcs{\list}
+  \jlreq@saveoriginalcs{\endlist}
+  \PushPostHook{par}{\jlreq@parhook@atbeginlist}
+  \pretocmd{\list}{\def\jlreq@parhook@atbeginlist{\ltjfakeparbegin}}{}{}
+  \apptocmd{\endlist}{\def\jlreq@parhook@atbeginlist{}}{}{}
+  \def\jlreq@parhook@atbeginlist{}
+\else
+  % 非LuaTeXの場合はJFMの入れ替えと\everyparでの処理で対処．
+  % 行頭括弧に対して\inhibitglueを入れたりする命令を作る
+  % \jlreq@charlist@openingbracketsの各括弧に対して，\ifx\jlreq@nextchar 「1\fiみたいなのが並んだのを作る
+  \def\jlreq@tempa{}
+  \def\jlreq@do#1{\jlreq@ifendmark{#1}{}{\appto\jlreq@tempa{\ifx\jlreq@nextchar#11\fi}\jlreq@do}}
+  \expandafter\jlreq@do\jlreq@charlist@openingbrackets\jlreq@endmark
+  % JFM glueの伸び縮みで行頭括弧が揃わないのを防ぐために常に\inhibitglueを入れる．
+  \ifthenelse{\equal{\jlreq@open@bracket@pos}{nibu_tentsuki}}{
+    \edef\jlreq@openbracket@hook@{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\hskip -.5\zw\inhibitglue}\noexpand\fi}
+  }{% zenkakunibu_nibu,zenkaku_tentsuki
+    \edef\jlreq@openbracket@hook@{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\inhibitglue}\noexpand\fi}
+  }
+  % source special対策
+  \def\jlreq@openbracket@hook{\ifx\jlreq@nextchar\special\expandafter\jlreq@openbracket@hook@@\else\expandafter\jlreq@openbracket@hook@\fi}
+  \def\jlreq@openbracket@hook@@#1#2{#1{#2}\futurelet\jlreq@nextchar\jlreq@openbracket@hook}
+\fi
+
+%.. 禁則処理
 \ifx l\jlreq@engine
   \newcommand*{\jlreq@setpostbreakpenalty@}[2]{\ltjsetparameter{postbreakpenalty={`#1,#2}}}
   \newcommand*{\jlreq@setprebreakpenalty@}[2]{\ltjsetparameter{prebreakpenalty={`#1,#2}}}
@@ -793,41 +934,7 @@
   \jlreq@setkcatcode{2F00,2FF0,3100,31A0,31C0,A830}{16}
 \fi
 
-% フォントサイズを設定
-\newdimen\jlreq@fontsize
-\newdimen\jlreq@jafontsize
-\ifx l\jlreq@engine
-  % Q,zw,zhが正しく扱われるようになる．\dimexprつきに展開される．
-  \def\jlreq@expand@optionfontsize#1{%
-    \dimexpr\directlua{
-      local act = string.char(92)
-      local s = [[#1]]
-      s = s:gsub("Q",act .. "dimexpr 0.25mm" .. act .. "relax")
-      tex.print(s)
-    }\relax
-  }%
-\else
-  \def\jlreq@expand@optionfontsize#1{\dimexpr#1\relax}
-\fi
-\jlreq@aftercls@addtodeletecs{\jlreq@expand@optionfontsize}
-\ifx\jlreq@option@fontsize\@empty
-  \ifx\jlreq@option@jafontsize\@empty
-    \jlreq@fontsize=10pt
-    \jlreq@jafontsize=\jlreq@option@jafontscale\jlreq@fontsize
-  \else
-    \setlength{\jlreq@jafontsize}{\jlreq@expand@optionfontsize{\jlreq@option@jafontsize}}
-    \jlreq@divide{\jlreq@jafontsize}{\jlreq@option@jafontscale pt}
-    \jlreq@fontsize=\jlreq@resultdimen
-  \fi
-\else
-  \setlength{\jlreq@fontsize}{\jlreq@expand@optionfontsize{\jlreq@option@fontsize}}
-  \ifx\jlreq@option@jafontsize\@empty
-    \jlreq@jafontsize=\jlreq@option@jafontscale\jlreq@fontsize
-  \else
-    \setlength{\jlreq@jafontsize}{\jlreq@expand@optionfontsize{\jlreq@option@jafontsize}}
-  \fi
-\fi
-%. フォント
+%.. フォント
 \RequirePackage{lmodern}
 
 %.. 古いフォントコマンド
@@ -865,107 +972,6 @@
 
 \DeclareRobustCommand*{\cal}{\@fontswitch\relax\mathcal}
 \DeclareRobustCommand*{\mit}{\@fontswitch\relax\mathnormal}
-
-%.. 和文
-% ダミー
-\def\@ptsize{0}
-% JFMに関連する設定
-\ifx l\jlreq@engine
-  \def\ltj@stdyokojfm{jlreq}
-  \def\ltj@stdtatejfm{jlreqv}
-  % この値は後でjfm-jlreq内で読む
-  \directlua{jlreq.open_bracket_pos = [[\jlreq@open@bracket@pos]]}
-  \ifjlreq@burasage\directlua{jlreq.burasage = true}\else\directlua{jlreq.burasage = false}\fi
-  % \item後の行頭括弧のために仕込み．
-  \jlreq@saveoriginalcs{\list}
-  \jlreq@saveoriginalcs{\endlist}
-  \PushPostHook{par}{\jlreq@parhook@atbeginlist}
-  \pretocmd{\list}{\def\jlreq@parhook@atbeginlist{\ltjfakeparbegin}}{}{}
-  \apptocmd{\endlist}{\def\jlreq@parhook@atbeginlist{}}{}{}
-  \def\jlreq@parhook@atbeginlist{}
-\else
-  % 非LuaTeXの場合はJFMの入れ替えと\everyparでの処理で対処．
-  % 行頭括弧に対して\inhibitglueを入れたりする命令を作る
-  % \jlreq@charlist@openingbracketsの各括弧に対して，\ifx\jlreq@nextchar 「1\fiみたいなのが並んだのを作る
-  \def\jlreq@tempa{}
-  \def\jlreq@do#1{\jlreq@ifendmark{#1}{}{\appto\jlreq@tempa{\ifx\jlreq@nextchar#11\fi}\jlreq@do}}
-  \expandafter\jlreq@do\jlreq@charlist@openingbrackets\jlreq@endmark
-  % JFM glueの伸び縮みで行頭括弧が揃わないのを防ぐために常に\inhibitglueを入れる．
-  \ifthenelse{\equal{\jlreq@open@bracket@pos}{nibu_tentsuki}}{
-    \edef\jlreq@openbracket@hook@{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\hskip -.5\zw\inhibitglue}\noexpand\fi}
-  }{% zenkakunibu_nibu,zenkaku_tentsuki
-    \edef\jlreq@openbracket@hook@{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\inhibitglue}\noexpand\fi}
-  }
-  % source special対策
-  \def\jlreq@openbracket@hook{\ifx\jlreq@nextchar\special\expandafter\jlreq@openbracket@hook@@\else\expandafter\jlreq@openbracket@hook@\fi}
-  \def\jlreq@openbracket@hook@@#1#2{#1{#2}\futurelet\jlreq@nextchar\jlreq@openbracket@hook}
-  \def\jlreq@jfmname@prefix{}
-  \jlreq@aftercls@addtodeletecs{\jlreq@jfmname@prefix}
-  \ifjlreq@burasage\edef\jlreq@jfmname@prefix{b\jlreq@jfmname@prefix}\fi
-  \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{\edef\jlreq@jfmname@prefix{\jlreq@jfmname@prefix z}}{}
-  \ifx u\jlreq@engine\edef\jlreq@jfmname@prefix{u\jlreq@jfmname@prefix}\fi
-  \edef\jlreq@jfmname{\jlreq@jfmname@prefix jlreq} % JFMの名前
-  \edef\jlreq@jfmnameg{\jlreq@jfmname@prefix jlreqg} % ゴシックなJFMの名前
-  \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
-\fi
-
-% 行頭の括弧は \jlreq@open@bracket@before@space \inhibitglue 「みたいにする．
-\ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{
-  \def\jlreq@open@bracket@before@space{\hskip\glueexpr-.5\zw\relax}
-}{
-  \def\jlreq@open@bracket@before@space{}
-}
-
-\ifx l\jlreq@engine
-  \RequirePackage{luatexja-adjust}
-  \ltjenableadjust[lineend=extended,priority=true]
-  \ltjsetparameter{stretch_priority={kanjiskip=0,xkanjiskip=10}}
-  \ltjsetparameter{shrink_priority={kanjiskip=0,xkanjiskip=-30}}
-\fi
-
-\ifx p\jlreq@engine
-  \def\jlreq@yokokanjiencoding{JY1}
-  \def\jlreq@tatekanjiencoding{JT1}
-\fi
-\ifx u\jlreq@engine
-  \def\jlreq@yokokanjiencoding{JY2}
-  \def\jlreq@tatekanjiencoding{JT2}
-\fi
-\ifx l\jlreq@engine
-  \def\jlreq@yokokanjiencoding{JY3}
-  \def\jlreq@tatekanjiencoding{JT3}
-\fi
-\jlreq@divide{\jlreq@jafontsize}{\jlreq@fontsize}
-\edef\jlreq@jafontscale{\strip@pt\jlreq@resultdimen}
-\jlreq@aftercls@addtodeletecs{\jlreq@jafontscale}
-\ifx l\jlreq@engine
-  \DeclareFontShape{JY3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont:jfm=jlreq;script=latn;-kern}{}
-  \DeclareFontShape{JY3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont:jfm=jlreq;script=latn;-kern}{}
-  \DeclareFontShape{JT3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont:jfm=jlreqv;script=latn;-kern}{}
-  \DeclareFontShape{JT3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont:jfm=jlreqv;script=latn;-kern}{}
-\else
-  \DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmname}{}
-  \DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmnameg}{}
-  \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmname-v}{}
-  \DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmnameg-v}{}
-\fi
-\@for\jlreq@encoding:=\jlreq@yokokanjiencoding,\jlreq@tatekanjiencoding\do{
-  \@for\jlreq@shape:=n,it,sl,sc\do{
-    \@for\jlreq@series:=m,b,bx,sb,c\do{
-      \ifthenelse{\equal{\jlreq@shape}{n} \AND \equal{\jlreq@series}{m}}{}{
-        \DeclareFontShape{\jlreq@encoding}{gt}{\jlreq@series}{\jlreq@shape}{<->ssub*gt/m/n}{}
-      }
-    }
-    \@for\jlreq@series:=bx,b,sb\do{
-      \DeclareFontShape{\jlreq@encoding}{mc}{\jlreq@series}{\jlreq@shape}{<->ssub*gt/m/n}{}
-    }
-    \@for\jlreq@series:=m,c\do{
-      \ifthenelse{\equal{\jlreq@shape}{n} \AND \equal{\jlreq@series}{m}}{}{
-        \DeclareFontShape{\jlreq@encoding}{mc}{\jlreq@series}{\jlreq@shape}{<->ssub*mc/m/n}{}
-      }
-    }
-  }
-}
 
 % 和文ファミリと欧文ファミリの連動
 \DeclareRobustCommand\rmfamily{%
@@ -1047,6 +1053,8 @@
 }
 \expandafter\jlreq@do\jlreq@charlist@dividingpunctuationmarks\jlreq@endmark
 
+
+%.. 文字サイズ変更命令の定義
 % \baselineskipの計算
 % いったん文字サイズを変更（(u)platexの際にzh/zwをきちんとするため）
 \@setfontsize\normalsize{\jlreq@fontsize}{\jlreq@fontsize}%
@@ -1071,8 +1079,6 @@
 }{}
 
 \emergencystretch 3\jlreq@gol
-
-%.. 文字サイズ変更
 \def\jlreq@setfontsizehook{}
 \jlreq@saveoriginalcs{\set@fontsize}
 \apptocmd{\set@fontsize}{\expandafter\def\expandafter\size@update\expandafter{\size@update\jlreq@setfontsizehook}}{}{}

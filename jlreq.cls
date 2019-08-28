@@ -2106,7 +2106,7 @@
     \def\jlreq@align{l}%
     \edef\jlreq@format{\unexpanded{##1##2##3}}%
     \edef\jlreq@heading@text@format{\unexpanded{##1}}%
-    \def\jlreq@pagebreak{}%
+    \def\jlreq@pagebreak{\vskip 0pt}%
     \def\jlreq@label@format{\@seccntformat{#1}}%
     \newif\ifjlreq@second@text@indent@withlabel\jlreq@second@text@indent@withlabeltrue
     \def\jlreq@after@label@space{1\zw}%
@@ -2194,7 +2194,7 @@
           {clearcolumn}{\if@twocolumn\def\jlreq@pagebreak{\newpage}\else\def\jlreq@pagebreak{}\fi\jlreq@column@spanning@possiblefalse}
           {begin_with_even_page}{\def\jlreq@pagebreak{\cleartoevenpage[empty]}\jlreq@column@spanning@possibletrue}
           {begin_with_odd_page}{\def\jlreq@pagebreak{\cleartooddpage[empty]}\jlreq@column@spanning@possibletrue}
-          {nariyuki}{\def\jlreq@pagebreak{}\jlreq@column@spanning@possiblefalse}
+          {nariyuki}{\def\jlreq@pagebreak{\vskip 0pt}\jlreq@column@spanning@possiblefalse}
         }%
       }
       % 後々数字を受け付けるようになったりするかもしれないので……

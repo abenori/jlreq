@@ -1752,6 +1752,7 @@
   }%
   \def\@tempa##1##2##3{##1}%
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@before@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
+    \noexpand\allowbreak
     \expandonce{\@tempa#4}%
     \expandonce{\jlreq@resulta}%
     \ifjlreq@tempa\unexpanded{%

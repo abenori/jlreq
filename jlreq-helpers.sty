@@ -60,7 +60,7 @@
 % #1が\jlreq@endmarkか
 \long\def\jlreq@ifendmark#1{\jlreq@iffirsttoken{#1}{\jlreq@endmark}}
 
-% 条件．\jlreq@if{ifnum\@count=1 \fi}{<TRUE>}{<FALSE>}みたいに使う
+% 条件．\jlreq@if{\ifnum\@count=1 \fi}{<TRUE>}{<FALSE>}みたいに使う
 \def\jlreq@if@endmark{\jlreq@if@endmark}
 \def\jlreq@if#1{\jlreq@if@#1\jlreq@if@endmark}
 \@gobbletwo\if\if
@@ -383,7 +383,7 @@
 
 % オレオレラベル……
 % \jlreq@reference@ref{ラベル名}{デフォルト値}
-\def\jlreq@reference@ref#1{\jlreq@if{\expandafter\ifx\csname jlreq@reference@#1\endcsname\relax\fi}{\csname jlreq@reference@#1\endcsname}}
+\def\jlreq@reference@ref#1{\jlreq@if{\expandafter\unless\expandafter\ifx\csname jlreq@reference@#1\endcsname\relax\fi}{\csname jlreq@reference@#1\endcsname}}
 % \jlreq@reference@label{ラベル名}{値}
 \def\jlreq@reference@label#1#2{\protected@write\@auxout{}{\string\@newl@bel{jlreq@reference}{#1}{#2}}}%
 \def\jlreq@reference@immediate@write#1#2{\immediate\write\@auxout{\string\@newl@bel{jlreq@reference}{#1}{#2}}}%

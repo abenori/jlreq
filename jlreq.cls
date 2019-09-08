@@ -5828,7 +5828,7 @@
   \else
     \jlreqsetup{
       appendix_counter = {
-        section = {value = 0, the = {\Alph{chapter}}},
+        section = {value = 0, the = {\Alph{section}}},
         subsection = {value = 0},
       }
     }

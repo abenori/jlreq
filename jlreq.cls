@@ -1709,7 +1709,7 @@
   \if@noskipsec\leavevmode\fi
   % #5と#6は\parを含むかもしれないので引数渡しはしない（後の\@ifstarで詰まる）
   \edef\jlreq@BlockHeading@start@eachformat{\expandonce{\@firstoftwo#5}}%
-  \edef\jlreq@BlockHeading@start@format{\expandonce{\@secondoftwo#5}}
+  \edef\jlreq@BlockHeading@start@format{\expandonce{\@secondoftwo#5}}%
   \edef\jlreq@BlockHeading@start@totalformat{\unexpanded{#6}}%
   \jlreq@BlockHeading@start@{#1}{#2}{#3}{#4}%
 }

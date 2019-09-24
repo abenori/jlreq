@@ -112,10 +112,13 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - New regnal year.
     - Fixed bugs.
 * 2019-05-07
-    - Added a small length to `\textwidth` and `\textheight'.
+    - Added a small length to `\textwidth` and `\textheight`.
     - Changed the implementation of `running_head_ii` etc. in `\DeclarePageStyle`.
     - Fixed bugs.
-
+* 2019-09-24
+    - Deleted the (re-)definitions of `\@cite` and `\@biblabel`.
+    - Added `\allowbreak` before block headings.
+    - Fixed bugs.
 
 --------------
 Noriyuki Abe

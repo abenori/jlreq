@@ -4938,7 +4938,7 @@
 % enumerate, itemize用初期化，#1 = i,ii,...
 \def\jlreq@init@list#1{%
   \setlength{\partopsep}{0pt}%
-  \setlength{\itemsep}{\dimexpr\jlreq@jlreqsetup@withenv@nameuse{jlreq@itemization@itemsep@setting}{\@currenvir}}%
+  \setlength{\itemsep}{\dimexpr\jlreq@jlreqsetup@withenv@nameuse{jlreq@itemization@itemsep@setting}{\@currenvir}\relax}%
   \setlength{\parsep}{0pt}%
   \setlength{\listparindent}{\parindent}%
   \setlength{\labelsep}{\dimexpr\jlreq@jlreqsetup@withenv@nameuse{jlreq@itemization@labelsep@setting}{\@currenvir}\relax}%
@@ -5761,7 +5761,10 @@
   itemization_beforeafter_space={0pt,i=.5\baselineskip},
   itemization_itemsep=0pt,
   itemization_labelsep={0pt},
-  itemization_label_length={1\zw,i=2\zw,ii=2\zw}
+  itemization_label_length={%
+    i=\leftmargini,ii=\leftmarginii,iii=\leftmarginiii,
+    iv=\leftmarginiv,v=\leftmarginv,vi=\leftmarginvi
+  }
 }
 
 %.. 引用

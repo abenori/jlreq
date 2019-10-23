@@ -27,8 +27,8 @@
 \newif\ifjlreq@result
 \newcount\jlreq@resultcnt
 
-\def\jlreq@uniqtoken{\jlreq@uniqtoken}
-\def\jlreq@endmark{\jlreq@endmark}
+\def\jlreq@uniqtoken{\jlreq@uniqtoken@may@be@a@bug}
+\def\jlreq@endmark{\jlreq@endmark@may@be@a@bug}
 \long\def\jlreq@deleteuntileendmark#1\jlreq@endmark{}
 
 \def\jlreq@expandafter@ii{\expandafter\expandafter\expandafter}
@@ -38,7 +38,7 @@
 
 % \jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark@の形で使う
 % 二回展開すると，#1の先頭（ただし空白は無視される）を取り出す．#1が空の場合は\jlreq@uniqtoken，先頭が{の場合は\bgroupとなる
-\def\jlreq@endmark@{\jlreq@endmark@} % \jlreq@getfirsttokenだけのためのendmark
+\def\jlreq@endmark@{\jlreq@endmark@@may@be@a@bug} % \jlreq@getfirsttokenだけのためのendmark
 \long\def\jlreq@getfirsttoken#1#{\jlreq@getfirsttoken@#1\bgroup\jlreq@endmark@}
 \long\def\jlreq@getfirsttoken@#1#2\jlreq@endmark@#3\jlreq@endmark@{#1}
 % 与えられたトークン列が空か（展開はしないでチェック）

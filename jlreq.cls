@@ -63,7 +63,7 @@
 \jlreq@DeclareOption{lualatex}{\let\jlreq@engine=l}
 
 % 文書のタイプ
-\newcommand*\jlreq@article@type{article}
+\newcommand*{\jlreq@article@type}{article}
 \define@choicekey{jlreq.cls}{article_type}{article,report,book}{\renewcommand*{\jlreq@article@type}{#1}}
 \jlreq@DeclareOption{article}{\renewcommand*{\jlreq@article@type}{article}}
 \jlreq@DeclareOption{report}{\renewcommand*{\jlreq@article@type}{report}}
@@ -326,6 +326,11 @@
 \ifx\jlreq@engine\@undefined
   \jlreq@helper@guessengine
   \let\jlreq@engine=\jlreq@result
+  \message{jlreq guessed engine: 
+    \ifx l\jlreq@engine lualatex\fi
+    \ifx p\jlreq@engine platex\fi
+    \ifx u\jlreq@engine uplatex\fi
+  }%
 \fi
 
 
@@ -2460,14 +2465,33 @@
     \jlreq@SetBlockHeadingSpaces
   }%
 }
+
+% {}があるのに最初が_で始まっていない場合は蹴る．
+\def\jlreq@SetBlockHeadingSpaces@checkdimension#1{%
+  \jlreq@SetBlockHeadingSpaces@checkdimension@i#1{\jlreq@uniqtoken}\jlreq@endmark
+}
+\def\jlreq@SetBlockHeadingSpaces@checkdimension@i#1#{\jlreq@SetBlockHeadingSpaces@checkdimension@ii{#1}}
+\def\jlreq@SetBlockHeadingSpaces@checkdimension@ii#1#2#3\jlreq@endmark{%
+  \begingroup
+    \def\jlreq@tempa{#2}%
+    \def\jlreq@tempb{\jlreq@uniqtoken}%
+    \ifx\jlreq@tempa\jlreq@tempb\def\jlreq@do{}%
+    \else\def\jlreq@do{%
+      \ClassError{jlreq}{Invalid setting ``\unexpanded{#1{#2}}'' is found, You forgot `_'? (in SetBlockHeadingSpaces)}{\@ehc}%
+    }\fi
+  \expandafter\endgroup
+  \jlreq@do
+}
+
 \def\jlreq@SetBlockHeadingSpaces@iii#1{%
   \@for\@tempa:=#1\do{%
     \expandafter\jlreq@helper@trim\expandafter{\@tempa}{\@tempa}%
     \expandafter\jlreq@iffirsttoken@ignorespaces\expandafter{\@tempa}{_}{%
       \ifx\jlreq@lastdimen\@empty\else\eappto\jlreq@set{{\expandonce{\jlreq@lastdimen}}}\fi%
       \def\jlreq@lastdimen{}%
-      \expandafter\jlreq@SetBlockHeadingSpaces@iv\@tempa{\jlreq@endmark}%
+      \expandafter\jlreq@SetBlockHeadingSpaces@iv\@tempa{\jlreq@endmark}\jlreq@endmark
     }{%
+      \expandafter\jlreq@SetBlockHeadingSpaces@checkdimension\expandafter{\@tempa}%
       \ifjlreq@tempa
         % 最初が寸法なので，全体の設定（\jlreq@totalset）に組み込む．
         \def\jlreq@do##1##2##3{%
@@ -2504,8 +2528,18 @@
       \jlreq@BlockHeading@gyodori@parsekeyval{#1}{}{}{}%
       \eappto\jlreq@set{{_\expandonce{\jlreq@result}}}%
     }%
-    \@gobble % \jlreq@endmarkを食う
+    \jlreq@SetBlockHeadingSpaces@vi
   }%
+}
+% _節名{設定}の後に何かないかチェック……
+\def\jlreq@SetBlockHeadingSpaces@vi#1\jlreq@endmark{%
+  \jlreq@ifendmark{#1}{}{{%
+    \@temptokena{}%
+    \def\@tempb##1##{\@temptokena\expandafter{\the\@temptokena##1}\@tempc}%
+    \def\@tempc##1{\jlreq@ifendmark{##1}{}{\@temptokena\expandafter{\the\@temptokena{##1}}\@tempb}}%
+    \@tempb#1%
+    \ClassWarningNoLine{jlreq}{Extra setting `\the\@temptokena' is found in SetBlockHeadingSpaces, omitted}
+  }}%
 }
 
 % 現在の情報に基づき出力

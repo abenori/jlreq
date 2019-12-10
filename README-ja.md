@@ -79,7 +79,17 @@
 
     とするとこの処理が行われます．ただし，最終ページでの`\newpage`や`\clearpage`が正しく動作しません．詳しくは`nidanfloat`パッケージのマニュアルをご覧ください．
 * フォントを設定する機能は有していません．和文フォントは，LuaLaTeX利用時は`luatexja-fontspec`や`luatexja-preset`（いずれもLuaTeX-jaパッケージに付属）により設定することができます．dvipdfmxを使う場合は，[PXchfon](https://github.com/zr-tex8r/PXchfon)での設定が可能です．
+* 和文間の空白（(u)pTeXでは`\kanjiskip`に，LuateX-jaでは`kanjiskip`パラメータに格納されているもの）は，デフォルトでは1/4文字分までの空きを許容した設定になっています．これは日本語組版処理の要件に従ったものですが，TeXでの機能の制限などもあり，場合によってはあまり適切ではない結果を生じることがあります．この値を変更する場合は，`\jlreqkanjiskip`を再定義してください．例えば，
 
+    ```latex
+    \documentclass{jlreq}
+    \renewcommand{\jlreqkanjiskip}{0pt plus .1\zw minus .01\zw}
+    \begin{document}
+    （本文）
+    \begin{document}
+    ```
+
+    のようにします．
 
 ## 各種設計
 設計はクラスオプションまたは`\jlreqsetup`によりkeyval形式で行います．ただし，クラスオプションではLaTeXの実装により，本来可能な入力が受け付けられないがケースあります．多くの場合は空白を除くことにより解決します．

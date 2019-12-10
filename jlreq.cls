@@ -219,6 +219,10 @@
 % ぶら下げ組みをするか：3.8.2 注1
 \newif\ifjlreq@burasage\jlreq@burasagefalse
 \jlreq@DeclareOption{hanging_punctuation}{\jlreq@burasagetrue}
+% jsarticleと同じkanjiskipを使う
+\newif\ifjlreq@narrow@kanjiskip\jlreq@narrow@kanjiskipfalse
+\jlreq@DeclareOption{narrow_kanjiskip}{\jlreq@narrow@kanjiskiptrue}
+\jlreq@aftercls@addtodeleteif{\ifjlreq@narrow@kanjiskip}
 
 %.. 注
 % 傍注のタイプ
@@ -333,9 +337,15 @@
   }%
 \fi
 
-
-% 必要パッケージのロード
+%.. JFMとluatexjaのロード
 \ifx l\jlreq@engine
+  \def\ltj@stdyokojfm{jlreq}
+  \def\ltj@stdtatejfm{jlreqv}
+  \directlua{jlreq = {}}
+  % この値は後でjfm-jlreq内で読む
+  \directlua{jlreq.open_bracket_pos = [[\jlreq@open@bracket@pos]]}
+  \ifjlreq@burasage\directlua{jlreq.burasage = true}\else\directlua{jlreq.burasage = false}\fi
+  % luatexjaのロード
   \ifjlreq@option@enablejfam
     \RequirePackage{luatexja}
   \else
@@ -345,7 +355,17 @@
   \ltjenableadjust[lineend=extended,priority=true]
   \ltjsetparameter{stretch_priority={kanjiskip=0,xkanjiskip=10}}
   \ltjsetparameter{shrink_priority={kanjiskip=0,xkanjiskip=-30}}
-  \directlua{jlreq = {}}
+\else
+  \def\jlreq@jfmname@prefix{}
+  \jlreq@aftercls@addtodeletecs{\jlreq@jfmname@prefix}
+  \ifjlreq@burasage\edef\jlreq@jfmname@prefix{b\jlreq@jfmname@prefix}\fi
+  \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{\edef\jlreq@jfmname@prefix{\jlreq@jfmname@prefix z}}{}
+  \ifx u\jlreq@engine\edef\jlreq@jfmname@prefix{u\jlreq@jfmname@prefix}\fi
+  \edef\jlreq@jfmname{\jlreq@jfmname@prefix jlreq} % JFMの名前
+  \edef\jlreq@jfmnameg{\jlreq@jfmname@prefix jlreqg} % ゴシックなJFMの名前
+  \jlreq@aftercls@addtodeletecs{\jlreq@jfmname}
+  \jlreq@aftercls@addtodeletecs{\jlreq@jfmnameg}
+  \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
 \fi
 
 % (u)pLaTeXの場合ここで初めて\epTeXinputencodingが発行されるので，
@@ -601,15 +621,21 @@
 % ダミー
 \def\@ptsize{0}
 %.. (x)kanjiskip
-\providecommand*{\jlreqkanjiskip}{0pt plus 0.25\zw minus 0pt}
-\providecommand*{\jlreqxkanjiskip}{0.25\zw plus 0.25\zw minus 0.125\zw}
-\ifx l\jlreq@engine
-  \ltjsetparameter{kanjiskip=\jlreqkanjiskip}
-  \ltjsetparameter{xkanjiskip=\jlreqxkanjiskip}
+\ifjlreq@narrow@kanjiskip
+  \providecommand*{\jlreqkanjiskip}{0pt plus .1\zw minus .01\zw}
 \else
-  \kanjiskip=\jlreqkanjiskip
-  \xkanjiskip=\jlreqxkanjiskip
+  \providecommand*{\jlreqkanjiskip}{0pt plus 0.25\zw minus 0pt}
 \fi
+\providecommand*{\jlreqxkanjiskip}{0.25\zw plus 0.25\zw minus 0.125\zw}
+\AtBeginDocument{
+  \ifx l\jlreq@engine
+    \ltjsetparameter{kanjiskip=\jlreqkanjiskip}
+    \ltjsetparameter{xkanjiskip=\jlreqxkanjiskip}
+  \else
+    \kanjiskip=\jlreqkanjiskip
+    \xkanjiskip=\jlreqxkanjiskip
+  \fi
+}
 
 % フォントサイズを設定
 \newdimen\jlreq@fontsize
@@ -646,25 +672,6 @@
   \fi
 \fi
 
-%.. JFM
-\ifx l\jlreq@engine
-  \def\ltj@stdyokojfm{jlreq}
-  \def\ltj@stdtatejfm{jlreqv}
-  % この値は後でjfm-jlreq内で読む
-  \directlua{jlreq.open_bracket_pos = [[\jlreq@open@bracket@pos]]}
-  \ifjlreq@burasage\directlua{jlreq.burasage = true}\else\directlua{jlreq.burasage = false}\fi
-\else
-  \def\jlreq@jfmname@prefix{}
-  \jlreq@aftercls@addtodeletecs{\jlreq@jfmname@prefix}
-  \ifjlreq@burasage\edef\jlreq@jfmname@prefix{b\jlreq@jfmname@prefix}\fi
-  \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{\edef\jlreq@jfmname@prefix{\jlreq@jfmname@prefix z}}{}
-  \ifx u\jlreq@engine\edef\jlreq@jfmname@prefix{u\jlreq@jfmname@prefix}\fi
-  \edef\jlreq@jfmname{\jlreq@jfmname@prefix jlreq} % JFMの名前
-  \edef\jlreq@jfmnameg{\jlreq@jfmname@prefix jlreqg} % ゴシックなJFMの名前
-  \jlreq@aftercls@addtodeletecs{\jlreq@jfmname}
-  \jlreq@aftercls@addtodeletecs{\jlreq@jfmnameg}
-  \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
-\fi
 
 % 行頭の括弧は \jlreq@open@bracket@before@space \inhibitglue 「みたいにする．
 \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{

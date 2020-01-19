@@ -628,13 +628,13 @@
 \fi
 \providecommand*{\jlreqxkanjiskip}{0.25\zw plus 0.25\zw minus 0.125\zw}
 \AtBeginDocument{
-  \ifx l\jlreq@engine
+  \jlreq@if{\ifx l\jlreq@engine\fi}{
     \ltjsetparameter{kanjiskip=\jlreqkanjiskip}
     \ltjsetparameter{xkanjiskip=\jlreqxkanjiskip}
-  \else
+  }{
     \kanjiskip=\jlreqkanjiskip
     \xkanjiskip=\jlreqxkanjiskip
-  \fi
+  }
 }
 
 % フォントサイズを設定
@@ -2865,7 +2865,7 @@
   \expandafter\def\csname jlreq@heading@setting@#1\endcsname{#3}%
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewCutinHeading}%
   \begingroup
-    \def\jlreq@fontcommand{\sffamily\bfseries}%
+    \def\jlreq@fontcommand{\sffamily\gtfamily\bfseries}%
     \def\jlreq@onelinemax{6\zw}%
     \def\jlreq@twolinemax{20\zw}%
     \def\jlreq@indent{0\zw}%
@@ -3475,10 +3475,10 @@
       }
       % カスタマイズできるべき？
       \long\def\jlreq@sidenotetext#1#2{%
-        \expandafter\def\csname\jlreq@sidenotemarkname\endcsname{\inhibitglue\null{\reset@font\sffamily\bfseries\inhibitglue #1}}%
+        \expandafter\def\csname\jlreq@sidenotemarkname\endcsname{\inhibitglue\null{\reset@font\sffamily\gtfamily\bfseries\inhibitglue #1}}%
         \@sidenotetext{#2}%
       }
-      \long\def\@makesidetext#1{{\sffamily\bfseries\csname\jlreq@sidenotemarkname\endcsname}\hspace*{1\jlreq@mol}#1}
+      \long\def\@makesidetext#1{{\sffamily\gtfamily\bfseries\csname\jlreq@sidenotemarkname\endcsname}\hspace*{1\jlreq@mol}#1}
       \let\@makesidemark=\@makefnmark
 
       \apptocmd{\sidenote}{\jlreq@hook@postnote}{}{}
@@ -4729,7 +4729,8 @@
       \vskip\baselineskip
       {\large\@date\par}%
     \end{center}\par
-    \vfil{\centering\@thanks}\vfil\null
+    \@thanks
+    \vfil\null
     \end{titlepage}%
   \jlreq@endofmaketitle
   }
@@ -4819,7 +4820,7 @@
       \null\vfil
       \@beginparpenalty\@lowpenalty
       \begin{center}%
-        {\sffamily\bfseries\abstractname}%
+        {\sffamily\gtfamily\bfseries\abstractname}%
         \@endparpenalty\@M
       \end{center}%
       \par
@@ -4853,7 +4854,7 @@
         \small
         \parindent=1\zw
         \begin{center}%
-          {\sffamily\bfseries\abstractname}%
+          {\sffamily\gtfamily\bfseries\abstractname}%
         \end{center}%
         \list{}{%
           \listparindent\parindent
@@ -4908,7 +4909,7 @@
 %  \let\jlreq@original@@item=\@item
 %  \def\@item[##1]{\jlreq@original@@item[##1]\mbox{}\par
   }}{\endlist}
-\newcommand{\descriptionlabel}[1]{\normalfont\sffamily\bfseries #1}
+\newcommand{\descriptionlabel}[1]{\normalfont\sffamily\gtfamily\bfseries #1}
 
 %.. 箇条書き
 % #3={<設定1>,i=<設定2>,<環境名>={<設定3>,ii=<設定4>}}のような設定を解釈する．
@@ -5592,18 +5593,18 @@
 \def\@begintheorem#1#2{\topsep=\dimexpr\jlreq@theorem@beforeafter@space\relax
   \trivlist\labelsep=1\zw
   \itemindent=\dimexpr\jlreq@theorem@indent\relax
-   \item[\hskip \labelsep{\sffamily\bfseries #1\ #2}]}
+   \item[\hskip \labelsep{\sffamily\gtfamily\bfseries #1\ #2}]}
 \def\@opargbegintheorem#1#2#3{\topsep=\dimexpr\jlreq@theorem@beforeafter@space\relax
   \trivlist\labelsep=1\zw
   \itemindent=\dimexpr\jlreq@theorem@indent\relax
-  \item[\hskip \labelsep{\sffamily\bfseries #1\ #2（#3）}]}
+  \item[\hskip \labelsep{\sffamily\gtfamily\bfseries #1\ #2（#3）}]}
 \AtEndOfPackageFile*{amsthm}{%
   \jlreq@saveoriginalcs{\proof}%
   \jlreq@saveoriginalcs{\endproof}%
   \edef\jlreq@do{
     \unexpanded{\def\jlreq@proof[#1]}{%
       \unexpanded{\labelsep=1\zw}%
-      \expandonce{\proof[{\reset@font\sffamily\bfseries #1\inhibitglue}\nopunct]}%
+      \expandonce{\proof[{\reset@font\sffamily\gtfamily\bfseries #1\inhibitglue}\nopunct]}%
     }
   }
   \jlreq@do
@@ -5613,7 +5614,7 @@
   \theoremstyle{jlreq}
 }
 \def\jlreq@setupamsthm{
-  \newtheoremstyle{jlreq}{\dimexpr\jlreq@theorem@beforeafter@space\relax}{\dimexpr\jlreq@theorem@beforeafter@space\relax}{\normalfont}{\dimexpr\jlreq@theorem@indent\relax}{\sffamily\bfseries}{}{1\zw}{\thmname{##1}\thmnumber{\ ##2}\thmnote{（##3）}}
+  \newtheoremstyle{jlreq}{\dimexpr\jlreq@theorem@beforeafter@space\relax}{\dimexpr\jlreq@theorem@beforeafter@space\relax}{\normalfont}{\dimexpr\jlreq@theorem@indent\relax}{\sffamily\gtfamily\bfseries}{}{1\zw}{\thmname{##1}\thmnumber{\ ##2}\thmnote{（##3）}}
 }
 \jlreq@jlreqsetup@add{theorem_beforeafter_space}{
   \def\jlreq@theorem@beforeafter@space{#1}
@@ -5661,24 +5662,24 @@
   \renewcommand{\theparagraph}{\thesubsubsection .\arabic{paragraph}}
   \renewcommand{\thesubparagraph}{\theparagraph .\arabic{subparagraph}}
   \ifthenelse{\equal{\jlreq@article@type}{article}}{
-    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\sffamily\bfseries}},label_format={第\thepart 部},lines=4,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\large}}}
+    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\sffamily\gtfamily\bfseries}},label_format={第\thepart 部},lines=4,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\large}}}
     \renewcommand{\thesection}{\arabic{section}}
   }
   {% book, report
-    \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\jlreq@gol}},format={\null\vfil {\Huge\sffamily\bfseries #1#2}\vfil}}
+    \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\jlreq@gol}},format={\null\vfil {\Huge\sffamily\gtfamily\bfseries #1#2}\vfil}}
     \NewBlockHeading{chapter}{0}{%
-      font={\jlreq@keepbaselineskip{\huge\sffamily\bfseries}},
+      font={\jlreq@keepbaselineskip{\huge\sffamily\gtfamily\bfseries}},
       label_format={第\thechapter 章},
       lines=5,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},
       subtitle_font={\jlreq@keepbaselineskip{\Large}}}
     \renewcommand{\thechapter}{\arabic{chapter}}
     \renewcommand{\thesection}{\thechapter.\arabic{section}}
   }
-  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\sffamily\bfseries}},lines=3,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
-  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\sffamily\bfseries}},lines=2,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\small}}}
-  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\bfseries}},lines=1,before_lines=1,subtitle_break=false,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
-  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\bfseries}},indent=1\zw}
-  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\bfseries}},indent=2\zw}
+  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\sffamily\gtfamily\bfseries}},lines=3,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
+  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\sffamily\gtfamily\bfseries}},lines=2,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\small}}}
+  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\gtfamily\bfseries}},lines=1,before_lines=1,subtitle_break=false,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
+  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\gtfamily\bfseries}},indent=1\zw}
+  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\gtfamily\bfseries}},indent=2\zw}
 \fi
 
 \ifthenelse{\equal{\jlreq@article@type}{article}}{}{% book, report
@@ -5749,8 +5750,8 @@
 
 %.. キャプション
 \jlreqsetup{
-  caption_font={\sffamily\bfseries},
-  caption_label_font={\sffamily\bfseries},
+  caption_font={\sffamily\gtfamily\bfseries},
+  caption_label_font={\sffamily\gtfamily\bfseries},
   caption_after_label_space=1\zw,
   caption_label_format={#1},
   caption_align=center

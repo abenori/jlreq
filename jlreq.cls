@@ -1091,6 +1091,7 @@
 }{}
 
 \emergencystretch 3\jlreq@gol
+\setlength{\parindent}{1\zw}
 \def\jlreq@setfontsizehook{}
 \jlreq@saveoriginalcs{\set@fontsize}
 \apptocmd{\set@fontsize}{\expandafter\def\expandafter\size@update\expandafter{\size@update\jlreq@setfontsizehook}}{}{}
@@ -1197,8 +1198,13 @@
 \setlength\lineskip{.1\zh}
 \setlength\normallineskip{.1\zh}
 \renewcommand{\baselinestretch}{}
-\setlength\parskip{0\p@ \@plus \p@}
-\setlength\parindent{1\zw}
+% 行間の伸びは許容しない．
+\setlength{\parskip}{0pt}
+% https://github.com/texjporg/jsclasses/issues/14
+\renewcommand*{\flushbottom}{%
+  \def\@textbottom{\vskip 0pt plus 0.1pt}%
+  \let\@texttop\relax
+}
 \@lowpenalty   51
 \@medpenalty  151
 \@highpenalty 301

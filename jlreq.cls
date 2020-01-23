@@ -2535,7 +2535,10 @@
 }
 \def\jlreq@SetBlockHeadingSpaces@v#1{%
   % 空っぽの場合は{_{r:0pt}{r:0pt}{}}
-  \jlreq@ifendmark{#1}{\appto\jlreq@set{{_{r:0pt}{r:0pt}{}}}}{%
+  \jlreq@ifendmark{#1}{%
+    \appto\jlreq@set{{_{r:0pt}{r:0pt}{}}}
+    \@gobble
+  }{%
     \jlreq@iffirsttoken{#1}{*}{% *始まりの場合は{_*{}{}{}}
       \expandafter\jlreq@BlockHeading@gyodori@parsekeyval\expandafter{\@gobble #1}{}{}{}%
       \eappto\jlreq@set{{_*\expandonce{\jlreq@result}}}%

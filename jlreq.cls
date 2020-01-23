@@ -376,6 +376,8 @@
   % http://oku.edu.mie-u.ac.jp/tex/mod/forum/discuss.php?d=1508&parent=8435
   \if@tate\AtEndPreamble{\par}\fi
 \fi
+\let\jlreq@zw=\zw
+\let\jlreq@zh=\zh
 \if@tate
   \AtBeginDocument{\tate\message{《縦組モード》}\adjustbaseline}
 \fi
@@ -622,11 +624,11 @@
 \def\@ptsize{0}
 %.. (x)kanjiskip
 \ifjlreq@narrow@kanjiskip
-  \providecommand*{\jlreqkanjiskip}{0pt plus .1\zw minus .01\zw}
+  \providecommand*{\jlreqkanjiskip}{0pt plus .1\jlreq@zw minus .01\jlreq@zw}
 \else
-  \providecommand*{\jlreqkanjiskip}{0pt plus 0.25\zw minus 0pt}
+  \providecommand*{\jlreqkanjiskip}{0pt plus 0.25\jlreq@zw minus 0pt}
 \fi
-\providecommand*{\jlreqxkanjiskip}{0.25\zw plus 0.25\zw minus 0.125\zw}
+\providecommand*{\jlreqxkanjiskip}{0.25\jlreq@zw plus 0.25\jlreq@zw minus 0.125\jlreq@zw}
 \AtBeginDocument{
   \jlreq@if{\ifx l\jlreq@engine\fi}{
     \ltjsetparameter{kanjiskip=\jlreqkanjiskip}
@@ -675,7 +677,7 @@
 
 % 行頭の括弧は \jlreq@open@bracket@before@space \inhibitglue 「みたいにする．
 \ifthenelse{\equal{\jlreq@open@bracket@pos}{zenkakunibu_nibu}}{
-  \def\jlreq@open@bracket@before@space{\hskip\glueexpr-.5\zw\relax}
+  \def\jlreq@open@bracket@before@space{\hskip\glueexpr-.5\jlreq@zw\relax}
 }{
   \def\jlreq@open@bracket@before@space{}
 }
@@ -772,7 +774,7 @@
   \expandafter\jlreq@do\jlreq@charlist@openingbrackets\jlreq@endmark
   % JFM glueの伸び縮みで行頭括弧が揃わないのを防ぐために常に\inhibitglueを入れる．
   \ifthenelse{\equal{\jlreq@open@bracket@pos}{nibu_tentsuki}}{
-    \edef\jlreq@openbracket@hook@{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\hskip -.5\zw\inhibitglue}\noexpand\fi}
+    \edef\jlreq@openbracket@hook@{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\hskip -.5\jlreq@zw\inhibitglue}\noexpand\fi}
   }{% zenkakunibu_nibu,zenkaku_tentsuki
     \edef\jlreq@openbracket@hook@{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\inhibitglue}\noexpand\fi}
   }
@@ -1023,7 +1025,7 @@
 \expandafter\jlreq@do\jlreq@charlist@dividingpunctuationmarks\jlreq@endmark
 \edef\@tempa{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 }
 \expandafter\DeclareRobustCommand\expandafter*\expandafter\jlreq@zenkakuspace@main\expandafter{\@tempa
-    \hskip 1\zw\hbox{}%
+    \hskip 1\jlreq@zw\hbox{}%
     \jlreq@lastnodechar=`　
     \expandafter\jlreq@fixjfm
   \else\expandafter　\fi
@@ -1041,9 +1043,9 @@
   \ifcsname jlreq@jaspace@#1\endcsname\csname jlreq@jaspace@#1\endcsname
   \else\ClassError{jlreq}{unknown jaspace: #1}{\@ehc}\fi
 }
-\def\jlreq@jaspace@zenkaku{\hskip\glueexpr 1\zw\relax}
-\def\jlreq@jaspace@nibu{\hskip\glueexpr .5\zw\relax}
-\def\jlreq@jaspace@shibu{\hskip\glueexpr .25\zw\relax}
+\def\jlreq@jaspace@zenkaku{\hskip\glueexpr 1\jlreq@zw\relax}
+\def\jlreq@jaspace@nibu{\hskip\glueexpr .5\jlreq@zw\relax}
+\def\jlreq@jaspace@shibu{\hskip\glueexpr .25\jlreq@zw\relax}
 
 % 区切り約物．\？ みたいな命令を作る．直後の空きが自動で入る．
 % \？*とすると文中の？として扱われる．
@@ -1057,7 +1059,7 @@
   \jlreq@ifendmark{#1}{}{
     \expandafter\DeclareRobustCommand\expandafter*\csname #1\endcsname{%
       \jlreq@ifstar
-        {\hskip .25\zw #1\hskip .25\zw\ignorespaces}%
+        {\hskip .25\jlreq@zw #1\hskip .25\jlreq@zw\ignorespaces}%
         {#1\futurelet\jlreq@nextchar\jlreq@dividingpunctuationmarkscommand}%
     }
     \jlreq@do
@@ -1095,7 +1097,7 @@
 \def\jlreq@setfontsizehook{}
 \jlreq@saveoriginalcs{\set@fontsize}
 \apptocmd{\set@fontsize}{\expandafter\def\expandafter\size@update\expandafter{\size@update\jlreq@setfontsizehook}}{}{}
-\appto\jlreq@setfontsizehook{\ifdim\parindent>0pt \setlength{\parindent}{1\zw}\fi}
+\appto\jlreq@setfontsizehook{\ifdim\parindent>0pt \setlength{\parindent}{1\jlreq@zw}\fi}
 \ifx l\jlreq@engine
   \@tempskipa=\ltjgetparameter{kanjiskip}
   \ifdim\@tempskipa=\maxdimen\else
@@ -1185,12 +1187,12 @@
 \DeclareRobustCommand{\jlreq@rensuji}[1]{%
   \ifvmode\leavevmode\fi
   \jlreq@ifydir{\hbox{#1}}{%
-    \hskip 0pt plus 0.25\zw minus 0pt % \rensujiskipは固定値
+    \hskip 0pt plus 0.25\jlreq@zw minus 0pt % \rensujiskipは固定値
     \setbox\jlreq@tempboxa=\hbox{\yoko#1}%
     \@tempdima=\dimexpr\ht\jlreq@tempboxa+\dp\jlreq@tempboxa\relax
     \vrule\@width\z@ \@height.5\@tempdima \@depth.5\@tempdima
-    \hbox to 1\zw{\yoko\hss#1\hss}%
-    \hskip 0pt plus 0.25\zw minus 0pt
+    \hbox to 1\jlreq@zw{\yoko\hss#1\hss}%
+    \hskip 0pt plus 0.25\jlreq@zw minus 0pt
 }}
 \def\jlreq@Kanji#1{\expandafter\kansuji\csname c@#1\endcsname}
 
@@ -1577,11 +1579,11 @@
         \jlreq@tempdima=\wd\jlreq@tempboxa
       \fi
       % \numexprは四捨五入
-      \jlreq@tempdimb=\dimexpr\the\numexpr\jlreq@tempdima/\dimexpr 1\zw\relax + 2\relax\zw\relax
+      \jlreq@tempdimb=\dimexpr\the\numexpr\jlreq@tempdima/\dimexpr 1\jlreq@zw\relax + 2\relax\jlreq@zw\relax
       \edef\jlreq@do{%
         \unexpanded{\def\jlreq@result}{%
           \noexpand\def\expandonce{\csname l@#1\endcsname}{%
-            \unexpanded{\@dottedtocline{#2}{0\zw}}{\the\jlreq@tempdimb}%
+            \unexpanded{\@dottedtocline{#2}{0pt}}{\the\jlreq@tempdimb}%
           }%
         }%
       }%
@@ -2126,24 +2128,24 @@
   \begingroup
     \def\jlreq@font{}%
     \def\jlreq@subtitle@font{}%
-    \def\jlreq@indent{0\zw}%
-    \def\jlreq@end@indent{0\zw}%
+    \def\jlreq@indent{0\jlreq@zw}%
+    \def\jlreq@end@indent{0\jlreq@zw}%
     \def\jlreq@align{l}%
     \edef\jlreq@format{\unexpanded{##1##2##3}}%
     \edef\jlreq@heading@text@format{\unexpanded{##1}}%
     \def\jlreq@pagebreak{}%
     \def\jlreq@label@format{\@seccntformat{#1}}%
     \newif\ifjlreq@second@text@indent@withlabel\jlreq@second@text@indent@withlabeltrue
-    \def\jlreq@after@label@space{1\zw}%
+    \def\jlreq@after@label@space{1\jlreq@zw}%
     \def\jlreq@second@heading@text@indent@wlabel{0pt}%
     \def\jlreq@second@heading@text@indent@wolabel{0pt}%
     \edef\jlreq@subtitle@format{\unexpanded{---##1---}}%
     \newif\ifjlreq@subtitleindent@withlabel\jlreq@subtitleindent@withlabeltrue
-    \def\jlreq@subtitle@indent{1\zw}%
+    \def\jlreq@subtitle@indent{1\jlreq@zw}%
     \def\jlreq@afterindent{\@afterindenttrue}%
     \def\jlreq@allowbreak@evenpage{*}% 偶数ページでも改ページを許可するならば空，そうでないなら*
     \newif\ifjlreq@subtitle@break\jlreq@subtitle@breaktrue
-    \def\jlreq@subtitle@indent{1\zw}%
+    \def\jlreq@subtitle@indent{1\jlreq@zw}%
     \def\jlreq@column@spanning{false}%
     \newif\ifjlreq@column@spanning@possible\jlreq@column@spanning@possiblefalse
     \newif\ifjlreq@number \jlreq@numbertrue
@@ -2728,15 +2730,15 @@
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewRuninHeading}%
   \@ifundefined{c@#1}{\newcounter{#1}}{}%
   \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}%
-  \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\@dottedtocline{#2}{0\zw}{2\zw}}}{}%
+  \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\@dottedtocline{#2}{0\jlreq@zw}{2\jlreq@zw}}}{}%
   \jlreq@heading@make@maketoc{#1}{#2}%
   \begingroup
     \def\jlreq@font{\normalfont\normalsize}%
-    \def\jlreq@indent{0\zw}%
-    \def\jlreq@after@label@space{1\zw}%
+    \def\jlreq@indent{0pt}%
+    \def\jlreq@after@label@space{1\jlreq@zw}%
     \def\jlreq@label@font{}%
     \def\jlreq@label@format{\@seccntformat{#1}}%
-    \def\jlreq@after@space{1\zw}%
+    \def\jlreq@after@space{1\jlreq@zw}%
     \newif\ifjlreq@number \jlreq@numbertrue
     \jlreq@parsekeyval[RuninHeading:#1]{%
       {font}{\def\jlreq@font{##1}}
@@ -2827,7 +2829,7 @@
       \def\jlreq@CutinHeading@linecount{3}%
     \fi
     % 普通の一行の高さ/深さに合わせて見出しのボックスを作る
-    \setbox\@tempboxa=\vtop to \dimexpr\numexpr\jlreq@CutinHeading@linecount - 1\relax\baselineskip + 1\zh\relax{\vskip 0pt plus 1fill minus 1fill \box\jlreq@resultbox\vskip 0pt plus 1fill minus 1fill}%
+    \setbox\@tempboxa=\vtop to \dimexpr\numexpr\jlreq@CutinHeading@linecount - 1\relax\baselineskip + 1\jlreq@zh\relax{\vskip 0pt plus 1fill minus 1fill \box\jlreq@resultbox\vskip 0pt plus 1fill minus 1fill}%
     % 高さを通常の一行のそれにする
     \setbox\jlreq@tempboxa=\hbox{阿}%
     \dp\@tempboxa=\dimexpr\ht\@tempboxa + \dp\@tempboxa - \ht\jlreq@tempboxa\relax
@@ -2872,10 +2874,10 @@
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewCutinHeading}%
   \begingroup
     \def\jlreq@fontcommand{\sffamily\gtfamily\bfseries}%
-    \def\jlreq@onelinemax{6\zw}%
-    \def\jlreq@twolinemax{20\zw}%
-    \def\jlreq@indent{0\zw}%
-    \def\jlreq@after@space{1\zw}%
+    \def\jlreq@onelinemax{6\jlreq@zw}%
+    \def\jlreq@twolinemax{20\jlreq@zw}%
+    \def\jlreq@indent{0pt}%
+    \def\jlreq@after@space{1\jlreq@zw}%
     \jlreq@parsekeyval[CutinHeading:#1]{
       {font}{\def\jlreq@fontcommand{##1}}
       {onelinemax}{\def\jlreq@onelinemax{##1}}
@@ -2883,7 +2885,7 @@
       {indent}{\def\jlreq@indent{##1}}
       {after_space}{\def\jlreq@after@space{##1}}
     }{#3}%
-    \ifthenelse{\lengthtest{\jlreq@after@space < 0.99\zw} \OR \lengthtest{\jlreq@after@space > 2.01\zw}}{%
+    \ifthenelse{\lengthtest{\jlreq@after@space < 0.99\jlreq@zw} \OR \lengthtest{\jlreq@after@space > 2.01\jlreq@zw}}{%
       \jlreq@note{窓見出しと本文との空き量は，基本版面の文字サイズの全角以上，2倍未満とする (4.1.10.c)．}%
     }{}%
     \edef\jlreq@do{%
@@ -3065,7 +3067,7 @@
       % この罫線は，表罫（おもてけい）とする．
       \unexpanded{\hrule width \jlreq@footnote@rulewidth height \jlreq@omotekeiwidth}%
       % 脚注の行間よりやや広くする（4.2.5.f）
-      \noexpand\kern\the\dimexpr 1.5\dimexpr\baselineskip - 1\zh\relax\relax
+      \noexpand\kern\the\dimexpr 1.5\dimexpr\baselineskip - 1\jlreq@zh\relax\relax
     }
   }
 \expandafter\endgroup
@@ -3080,7 +3082,7 @@
     \footnotesize
     \jlreq@footnoteindent=\dimexpr#1\relax
     \@tempdima=\dimexpr\textwidth - \jlreq@footnoteindent\relax
-    \@tempdimb=1\zw
+    \@tempdimb=1\jlreq@zw
     \divide\@tempdima\@tempdimb \multiply\@tempdima\@tempdimb
     \edef\jlreq@do{\noexpand\jlreq@footnoteindent=\the\dimexpr\textwidth - \@tempdima\relax}%
   \expandafter\endgroup
@@ -3091,8 +3093,8 @@
 \jlreq@jlreqsetup@add{footnote_second_indent}{%
   \if@tate\else
     \ifthenelse{
-      \( \lengthtest{0.99\zw < \dimexpr #1\relax} \AND \lengthtest{\dimexpr #1\relax < 1.01\zw} \) \OR 
-      \( \lengthtest{-1.01\zw < \dimexpr #1\relax} \AND \lengthtest{\dimexpr #1\relax < -0.99\zw} \)
+      \( \lengthtest{0.99\jlreq@zw < \dimexpr #1\relax} \AND \lengthtest{\dimexpr #1\relax < 1.01\jlreq@zw} \) \OR 
+      \( \lengthtest{-1.01\jlreq@zw < \dimexpr #1\relax} \AND \lengthtest{\dimexpr #1\relax < -0.99\jlreq@zw} \)
     }{}{\jlreq@note{脚注が2行以上となった場合，脚注の2行目以下の字下げを1行目より，脚注の文字サイズの全角アキとするか，逆に，1行目の字下げを2行目より，脚注の文字サイズの全角アキとする (4.2.5.d)．}}
   \fi
   \ifdim\dimexpr #1\relax<0pt
@@ -3103,11 +3105,11 @@
   \long\edef\jlreq@makefntext##1{\expandonce{\jlreq@makefntext}%
     \unexpanded{%
       \addtolength{\leftskip}{\jlreq@footnoteindent}%
-      \parindent=1\zw
+      \parindent=1\jlreq@zw
       \noindent
       \hskip-\glueexpr #1\relax
       \jlreq@referencemark@format{\@thefnmark}%
-      \hskip\glueexpr 1\zw\relax
+      \hskip\glueexpr 1\jlreq@zw\relax
     }##1%
   }
 }
@@ -3330,7 +3332,7 @@
         \leftmargin=\dimexpr\linewidth - \jlreq@tempdima + \jlreq@endnote@second@indent\relax
         \itemindent=-\glueexpr\jlreq@endnote@second@indent\relax
         \topsep=\jlreq@endnote@beforeafterspace\relax
-        \listparindent=1\zw
+        \listparindent=1\jlreq@zw
       }%
       \expandafter\jlreq@theendnotes\jlreq@tempa\jlreq@endmark
       \end{list}%
@@ -3343,13 +3345,13 @@
 \jlreq@jlreqsetup@add{endnote_second_indent}{
   \def\jlreq@endnote@second@indent{#1}
   \ifthenelse{
-    \( \lengthtest{0.99\zw < #1} \AND \lengthtest{#1 < 1.01\zw} \) \OR 
-    \( \lengthtest{1.99\zw < #1} \AND \lengthtest{#1 < 2.01\zw} \)
+    \( \lengthtest{0.99\jlreq@zw < #1} \AND \lengthtest{#1 < 1.01\jlreq@zw} \) \OR 
+    \( \lengthtest{1.99\jlreq@zw < #1} \AND \lengthtest{#1 < 2.01\jlreq@zw} \)
   }{}{\jlreq@note{後注が2行以上となった場合，後注の2行目以下の字下げは，1行目より，後注の文字サイズの2倍又は全角とする (4.2.4.d)．}}
 }
 \newcommand{\@makeendtext}[1]{%
   \csname\jlreq@endnotemarkname\endcsname
-  \hskip\glueexpr1\zw\relax% 見出し出力と一文字分の空き（4.2.4.c）
+  \hskip\glueexpr1\jlreq@zw\relax% 見出し出力と一文字分の空き（4.2.4.c）
   #1%
 }
 \let\@makeendmark=\@makefnmark
@@ -3463,7 +3465,7 @@
         \long\def\@makesidetext#1{\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
       \else
         % thefootnote = \inhibitglue （...だと\inhibitglueが効かないので空白を挟む
-        \long\def\@makesidetext#1{　\kern-1\zw\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
+        \long\def\@makesidetext#1{　\kern-1\jlreq@zw\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
       \fi
       \let\@makesidemark=\@makefnmark
     }{% sidenote_type = symbol
@@ -4093,7 +4095,7 @@
     \let\jlreq@oddfootformat\relax
     \let\jlreq@evenfootformat\relax
     % 柱とノンブルの間
-    \def\jlreq@gap{1.5\zw}%
+    \def\jlreq@gap{1.5\jlreq@zw}%
     \def\jlreq@nombre@gap{}%
     \def\jlreq@running@head@gap{}%
     \newif\ifjlreq@clearmarkcommand\jlreq@clearmarkcommandtrue
@@ -4269,7 +4271,7 @@
           \expandonce{\jlreq@nombre@contents}%
         }%
         \expandafter\edef\csname jlreq@\jlreq@parity head\endcsname{%
-          \unexpanded{\setbox\jlreq@tempboxa=\hbox to \dimexpr\headsep + \headheight + \textheight}\if@tate\else\unexpanded{- \topskip + 1\zh}\fi\noexpand\relax
+          \unexpanded{\setbox\jlreq@tempboxa=\hbox to \dimexpr\headsep + \headheight + \textheight}\if@tate\else\unexpanded{- \topskip + 1\jlreq@zh}\fi\noexpand\relax
           {%
             \unexpanded{\tate\adjustbaseline}%
             \expandafter\expandonce\expandafter{\expandafter\jlreq@tempa\expandafter{\jlreq@tempb}}%
@@ -4284,7 +4286,7 @@
       }%
       % \jlreq@tempboxaを正しく配置する
       \edef\jlreq@lefthead@adjustbox{%
-        \noexpand\hskip\noexpand\dimexpr\if@tate\unexpanded{- \Cdp}\fi \unexpanded{- \headsep - 1\zw\relax}%
+        \noexpand\hskip\noexpand\dimexpr\if@tate\unexpanded{- \Cdp}\fi \unexpanded{- \headsep - 1\jlreq@zw\relax}%
         \unexpanded{\box\jlreq@tempboxa\hfil}%
       }%
       \edef\jlreq@righthead@adjustbox{%
@@ -4331,7 +4333,7 @@
       }{}%
       % フォント変更命令に文字出力命令が入っているとエラーになるのを回避するために\setboxでごまかす．
       \setbox\jlreq@tempboxa=\hbox{\jlreq@running@head@font
-        \ifthenelse{\lengthtest{\jlreq@gap < 1.49\zw} \OR \( \lengthtest{\jlreq@gap > 1.51\zw} \AND \lengthtest{\jlreq@gap < 1.99\zw} \) \OR \lengthtest{\jlreq@gap > 2.01\zw}}{\jlreq@note{ノンブルと柱との空き量は柱に使用する文字サイズの2倍又は1.5倍とする (ページスタイル #1 内，2.6.1.c)．}}{}%
+        \ifthenelse{\lengthtest{\jlreq@gap < 1.49\jlreq@zw} \OR \( \lengthtest{\jlreq@gap > 1.51\jlreq@zw} \AND \lengthtest{\jlreq@gap < 1.99\jlreq@zw} \) \OR \lengthtest{\jlreq@gap > 2.01\jlreq@zw}}{\jlreq@note{ノンブルと柱との空き量は柱に使用する文字サイズの2倍又は1.5倍とする (ページスタイル #1 内，2.6.1.c)．}}{}%
       }%
       % 初期化
       \@for\jlreq@parity:=odd,even\do{%
@@ -4501,7 +4503,7 @@
     \def\jlreqyokoheadlength{\textwidth}
   \fi
 \fi
-\edef\jlreqtateheadlength{\unexpanded{\dimexpr\headsep + \headheight + \textheight}\if@tate\else\unexpanded{- \topskip + 1\zh}\fi\noexpand\relax}
+\edef\jlreqtateheadlength{\unexpanded{\dimexpr\headsep + \headheight + \textheight}\if@tate\else\unexpanded{- \topskip + 1\jlreq@zh}\fi\noexpand\relax}
 
 \newcommand*{\NewPageStyle}[2]{%
   \expandafter\@ifdefinable\csname ps@#1\endcsname{\DeclarePageStyle{#1}{#2}}%
@@ -4793,7 +4795,7 @@
   {\jlreq@keepbaselineskip{\LARGE}\@title\par}%
   \vskip\baselineskip
   {\jlreq@keepbaselineskip{\large}%
-    \lineskip .5\zh
+    \lineskip .5\jlreq@zh
     % 縦書き時には表組み内でも縦書きにするようにする
     \if@tate
       \let\jlreq@temporary@original@ialign=\ialign
@@ -4858,7 +4860,7 @@
         \fi
         \bgroup
         \small
-        \parindent=1\zw
+        \parindent=1\jlreq@zw
         \begin{center}%
           {\sffamily\gtfamily\bfseries\abstractname}%
         \end{center}%
@@ -4867,16 +4869,16 @@
           \itemindent\listparindent
           \labelwidth\z@
           \labelsep\z@
-          \leftmargin=2\zw
+          \leftmargin=2\jlreq@zw
           \rightmargin\leftmargin
-          \@tempdima=1\zw
+          \@tempdima=1\jlreq@zw
           \@tempdimb=\dimexpr\linewidth - \@totalleftmargin - \leftmargin - \rightmargin\relax
           \@tempdimc=\@tempdimb
           \divide\@tempdimb by \@tempdima\multiply\@tempdimb by \@tempdima
-          \ifdim\@tempdimb=\@tempdimc\else\@tempdimb=\dimexpr\@tempdimb - 1\zw\relax\fi
+          \ifdim\@tempdimb=\@tempdimc\else\@tempdimb=\dimexpr\@tempdimb - 1\jlreq@zw\relax\fi
           \leftmargin=\dimexpr\leftmargin + (\@tempdimc - \@tempdimb)/2\relax
           \rightmargin=\dimexpr\rightmargin + (\@tempdimc - \@tempdimb)/2\relax
-          \parsep\z@ \@plus.1\zh
+          \parsep\z@ \@plus.1\jlreq@zh
         }%
         \item\relax
       \else
@@ -4905,9 +4907,9 @@
 %. 箇条書き． cf. JISX4051 8.4
 % 用語定義型
 \newenvironment{description}{\list{}{%
-  \setlength{\leftmargin}{0\zw}% 下げない
-  \setlength{\labelwidth}{0\zw}%
-  \setlength{\labelsep}{1\zw}
+  \setlength{\leftmargin}{0pt}% 下げない
+  \setlength{\labelwidth}{0pt}%
+  \setlength{\labelsep}{1\jlreq@zw}
 %  \addtolength{\leftmargin}{\leftskip}% たぶんこの二行いらない……
 %  \addtolength{\leftmargin}{\labelsep}%
   \let\makelabel=\descriptionlabel
@@ -5020,7 +5022,7 @@
     \addtolength{\leftmargin}{2\jlreq@mol}%
     \rightmargin=\dimexpr\jlreq@quote@end@indent\relax
     \jlreq@quote@fontsize
-    \@tempdima=1\zw
+    \@tempdima=1\jlreq@zw
     \@tempdimb=\dimexpr\linewidth - \@totalleftmargin - \leftmargin - \rightmargin\relax
     \@tempdimc=\@tempdimb
     \divide\@tempdimb by \@tempdima\multiply\@tempdimb by \@tempdima
@@ -5032,7 +5034,7 @@
     \leftmargin=\dimexpr\jlreq@quote@indent\relax
     \rightmargin=\dimexpr\jlreq@quote@end@indent\relax
     \jlreq@quote@fontsize
-    \@tempdima=1\zw
+    \@tempdima=1\jlreq@zw
     \@tempdimb=\dimexpr\linewidth - \@totalleftmargin - \leftmargin - \rightmargin\relax
     \@tempdimc=\@tempdimb
     \divide\@tempdimb by \@tempdima\multiply\@tempdimb by \@tempdima
@@ -5049,7 +5051,7 @@
     \leftmargin=\dimexpr\jlreq@quote@indent\relax
     \rightmargin=\dimexpr\jlreq@quote@end@indent\relax
     \jlreq@quote@fontsize
-    \@tempdima=1\zw
+    \@tempdima=1\jlreq@zw
     \@tempdimb=\dimexpr\linewidth - \@totalleftmargin - \leftmargin - \rightmargin\relax
     \@tempdimc=\@tempdimb
     \divide\@tempdimb by \@tempdima\multiply\@tempdimb by \@tempdima
@@ -5194,7 +5196,7 @@
   \@mkboth{\refname}{\refname}%
   \list{\@biblabel{\@arabic\c@enumiv}}%
       {\settowidth\labelwidth{\@biblabel{#1}}%
-      \labelsep=1\zw
+      \labelsep=1\jlreq@zw
       \leftmargin\labelwidth
       \advance\leftmargin\labelsep
       \itemindent=0pt
@@ -5597,11 +5599,11 @@
 \jlreq@saveoriginalcs{\@begintheorem}
 \jlreq@saveoriginalcs{\@opargbegintheorem}
 \def\@begintheorem#1#2{\topsep=\dimexpr\jlreq@theorem@beforeafter@space\relax
-  \trivlist\labelsep=1\zw
+  \trivlist\labelsep=1\jlreq@zw
   \itemindent=\dimexpr\jlreq@theorem@indent\relax
    \item[\hskip \labelsep{\sffamily\gtfamily\bfseries #1\ #2}]}
 \def\@opargbegintheorem#1#2#3{\topsep=\dimexpr\jlreq@theorem@beforeafter@space\relax
-  \trivlist\labelsep=1\zw
+  \trivlist\labelsep=1\jlreq@zw
   \itemindent=\dimexpr\jlreq@theorem@indent\relax
   \item[\hskip \labelsep{\sffamily\gtfamily\bfseries #1\ #2（#3）}]}
 \AtEndOfPackageFile*{amsthm}{%
@@ -5609,7 +5611,7 @@
   \jlreq@saveoriginalcs{\endproof}%
   \edef\jlreq@do{
     \unexpanded{\def\jlreq@proof[#1]}{%
-      \unexpanded{\labelsep=1\zw}%
+      \unexpanded{\labelsep=1\jlreq@zw}%
       \expandonce{\proof[{\reset@font\sffamily\gtfamily\bfseries #1\inhibitglue}\nopunct]}%
     }
   }
@@ -5620,7 +5622,7 @@
   \theoremstyle{jlreq}
 }
 \def\jlreq@setupamsthm{
-  \newtheoremstyle{jlreq}{\dimexpr\jlreq@theorem@beforeafter@space\relax}{\dimexpr\jlreq@theorem@beforeafter@space\relax}{\normalfont}{\dimexpr\jlreq@theorem@indent\relax}{\sffamily\gtfamily\bfseries}{}{1\zw}{\thmname{##1}\thmnumber{\ ##2}\thmnote{（##3）}}
+  \newtheoremstyle{jlreq}{\dimexpr\jlreq@theorem@beforeafter@space\relax}{\dimexpr\jlreq@theorem@beforeafter@space\relax}{\normalfont}{\dimexpr\jlreq@theorem@indent\relax}{\sffamily\gtfamily\bfseries}{}{1\jlreq@zw}{\thmname{##1}\thmnumber{\ ##2}\thmnote{（##3）}}
 }
 \jlreq@jlreqsetup@add{theorem_beforeafter_space}{
   \def\jlreq@theorem@beforeafter@space{#1}
@@ -5644,23 +5646,23 @@
   \renewcommand{\thesubparagraph}{(\jlreq@rensuji{\@arabic\c@subparagraph})}
 
   \ifthenelse{\equal{\jlreq@article@type}{article}}{
-    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE}},indent=4\zw,lines=4,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\large}}}
+    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE}},indent=4\jlreq@zw,lines=4,after_label_space=1\jlreq@zw,second_heading_text_indent={-1\jlreq@zw,1\jlreq@zw},subtitle_font={\jlreq@keepbaselineskip{\large}}}
     \if@twoside\ModifyHeading{part}{allowbreak_if_evenpage=true}\fi
   }
   {% book, report
-    \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\zw}},format={\null\vfill {\Huge\hspace*{2\zw}#1#2}\vspace*{2\jlreq@gol}}}
-    \NewBlockHeading{chapter}{0}{indent=2\zw,lines=6,label_format={第\thechapter 章},font={\huge},after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\Large}}}
+    \NewTobiraHeading{part}{-1}{label_format={第\thepart 部\hspace*{1\jlreq@zw}},format={\null\vfill {\Huge\hspace*{2\jlreq@zw}#1#2}\vspace*{2\jlreq@gol}}}
+    \NewBlockHeading{chapter}{0}{indent=2\jlreq@zw,lines=6,label_format={第\thechapter 章},font={\huge},after_label_space=1\jlreq@zw,second_heading_text_indent={-1\jlreq@zw,1\jlreq@zw},subtitle_font={\jlreq@keepbaselineskip{\Large}}}
     \if@twoside\ModifyHeading{chapter}{allowbreak_if_evenpage=true}\fi
     \renewcommand{\thechapter}{\jlreq@Kanji{chapter}}
   }
-  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large}},indent=6\zw,lines=3,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
+  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large}},indent=6\jlreq@zw,lines=3,after_label_space=1\jlreq@zw,second_heading_text_indent={-1\jlreq@zw,1\jlreq@zw},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
   \if@twoside\ModifyHeading{section}{allowbreak_if_evenpage=true}\fi
-  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large}},indent=8\zw,lines=2,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\small}}}
+  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large}},indent=8\jlreq@zw,lines=2,after_label_space=1\jlreq@zw,second_heading_text_indent={-1\jlreq@zw,1\jlreq@zw},subtitle_font={\jlreq@keepbaselineskip{\small}}}
   \if@twoside\ModifyHeading{subsection}{allowbreak_if_evenpage=true}\fi
-  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize}},indent=10\zw,lines=1,before_lines=1,subtitle_break=false,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},,subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
+  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize}},indent=10\jlreq@zw,lines=1,before_lines=1,subtitle_break=false,after_label_space=1\jlreq@zw,second_heading_text_indent={-1\jlreq@zw,1\jlreq@zw},,subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
   \if@twoside\ModifyHeading{subsubsection}{allowbreak_if_evenpage=true}\fi
   \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize}}}
-  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize}},indent=1\zw}
+  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize}},indent=1\jlreq@zw}
 \else% yoko
   \renewcommand{\thepart}{\Roman{part}}
   \renewcommand{\thesubsection}{\thesection .\arabic{subsection}}
@@ -5668,7 +5670,7 @@
   \renewcommand{\theparagraph}{\thesubsubsection .\arabic{paragraph}}
   \renewcommand{\thesubparagraph}{\theparagraph .\arabic{subparagraph}}
   \ifthenelse{\equal{\jlreq@article@type}{article}}{
-    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\sffamily\gtfamily\bfseries}},label_format={第\thepart 部},lines=4,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\large}}}
+    \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\sffamily\gtfamily\bfseries}},label_format={第\thepart 部},lines=4,after_label_space=1\jlreq@zw,second_heading_text_indent={-1\jlreq@zw,1\jlreq@zw},subtitle_font={\jlreq@keepbaselineskip{\large}}}
     \renewcommand{\thesection}{\arabic{section}}
   }
   {% book, report
@@ -5676,16 +5678,16 @@
     \NewBlockHeading{chapter}{0}{%
       font={\jlreq@keepbaselineskip{\huge\sffamily\gtfamily\bfseries}},
       label_format={第\thechapter 章},
-      lines=5,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},
+      lines=5,after_label_space=1\jlreq@zw,second_heading_text_indent={-1\jlreq@zw,1\jlreq@zw},
       subtitle_font={\jlreq@keepbaselineskip{\Large}}}
     \renewcommand{\thechapter}{\arabic{chapter}}
     \renewcommand{\thesection}{\thechapter.\arabic{section}}
   }
-  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\sffamily\gtfamily\bfseries}},lines=3,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
-  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\sffamily\gtfamily\bfseries}},lines=2,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\small}}}
-  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\gtfamily\bfseries}},lines=1,before_lines=1,subtitle_break=false,after_label_space=1\zw,second_heading_text_indent={-1\zw,1\zw},subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
-  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\gtfamily\bfseries}},indent=1\zw}
-  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\gtfamily\bfseries}},indent=2\zw}
+  \NewBlockHeading{section}{1}{font={\jlreq@keepbaselineskip{\Large\sffamily\gtfamily\bfseries}},lines=3,after_label_space=1\jlreq@zw,second_heading_text_indent={-1\jlreq@zw,1\jlreq@zw},subtitle_font={\jlreq@keepbaselineskip{\normalsize}}}
+  \NewBlockHeading{subsection}{2}{font={\jlreq@keepbaselineskip{\large\sffamily\gtfamily\bfseries}},lines=2,after_label_space=1\jlreq@zw,second_heading_text_indent={-1\jlreq@zw,1\jlreq@zw},subtitle_font={\jlreq@keepbaselineskip{\small}}}
+  \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\gtfamily\bfseries}},lines=1,before_lines=1,subtitle_break=false,after_label_space=1\jlreq@zw,second_heading_text_indent={-1\jlreq@zw,1\jlreq@zw},subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
+  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\gtfamily\bfseries}},indent=1\jlreq@zw}
+  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\gtfamily\bfseries}},indent=2\jlreq@zw}
 \fi
 
 \ifthenelse{\equal{\jlreq@article@type}{article}}{}{% book, report
@@ -5742,12 +5744,12 @@
 %.. 注
 \jlreqsetup{reference_mark=inline}
 \if@tate
-  \jlreqsetup{footnote_indent=1\zw}% 根拠なし
+  \jlreqsetup{footnote_indent=1\jlreq@zw}% 根拠なし
 \else
   \jlreqsetup{footnote_indent=0pt}% （4.2.5.b）
 \fi
-\jlreqsetup{footnote_second_indent=1\zw}
-\jlreqsetup{endnote_second_indent=2\zw}
+\jlreqsetup{footnote_second_indent=1\jlreq@zw}
+\jlreqsetup{endnote_second_indent=2\jlreq@zw}
 \jlreqsetup{endnote_position=headings}
 \ifdim\marginparwidth>0pt
   \jlreqsetup{sidenote_type=number}
@@ -5758,7 +5760,7 @@
 \jlreqsetup{
   caption_font={\sffamily\gtfamily\bfseries},
   caption_label_font={\sffamily\gtfamily\bfseries},
-  caption_after_label_space=1\zw,
+  caption_after_label_space=1\jlreq@zw,
   caption_label_format={#1},
   caption_align=center
 }
@@ -5778,25 +5780,25 @@
   \renewcommand{\theenumii}{\@alph\c@enumii}
   \renewcommand{\theenumiii}{\@roman\c@enumiii}
   \renewcommand{\theenumiv}{\@Alph\c@enumiv}
-  \newcommand{\labelenumi}{\theenumi.\hspace{.5\zw}}
-  \newcommand{\labelenumii}{(\theenumii)\hspace{.5\zw}}
-  \newcommand{\labelenumiii}{\theenumiii.\hspace{.5\zw}}
-  \newcommand{\labelenumiv}{\theenumiv.\hspace{.5\zw}}
+  \newcommand{\labelenumi}{\theenumi.\hspace{.5\jlreq@zw}}
+  \newcommand{\labelenumii}{(\theenumii)\hspace{.5\jlreq@zw}}
+  \newcommand{\labelenumiii}{\theenumiii.\hspace{.5\jlreq@zw}}
+  \newcommand{\labelenumiv}{\theenumiv.\hspace{.5\jlreq@zw}}
 \fi
 \renewcommand{\p@enumii}{\theenumi}
 \renewcommand{\p@enumiii}{\theenumi(\theenumii)}
 \renewcommand{\p@enumiv}{\p@enumiii\theenumiii}
 
-\newcommand{\labelitemi}{\hbox to 1\zw{\hss\textbullet\hss}}
+\newcommand{\labelitemi}{\hbox to 1\jlreq@zw{\hss\textbullet\hss}}
 %\newcommand{\labelitemi}{•}
 \if@tate
   \newcommand{\labelitemii}{○}
   \newcommand{\labelitemiii}{＊}
 \else
-  \newcommand{\labelitemii}{\hbox to 1\zw{\hss\textendash\hss}}
-  \newcommand{\labelitemiii}{\hbox to 1\zw{\hss\textasteriskcentered\hss}}
+  \newcommand{\labelitemii}{\hbox to 1\jlreq@zw{\hss\textendash\hss}}
+  \newcommand{\labelitemiii}{\hbox to 1\jlreq@zw{\hss\textasteriskcentered\hss}}
 \fi
-\newcommand{\labelitemiv}{\hbox to 1\zw{\hss ・\hss}}
+\newcommand{\labelitemiv}{\hbox to 1\jlreq@zw{\hss ・\hss}}
 
 % 見出しが一つ上のレベルからどのくらいずれているかを入れる．
 \setlength\leftmargini{2\zw}
@@ -5817,7 +5819,7 @@
 
 %.. 引用
 \jlreqsetup{
-  quote_indent=2\zw,
+  quote_indent=2\jlreq@zw,
   quote_end_indent=0pt,
   quote_fontsize=,
   quote_beforeafter_space=0pt

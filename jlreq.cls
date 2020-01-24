@@ -1802,19 +1802,24 @@
   \fi
 }
 
-\def\jlreq@BlockHeading@start@afterheading{\futurelet\jlreq@nextchar\jlreq@BlockHeading@start@afterheading@}
-\edef\jlreq@BlockHeading@start@afterheading@{%
-  \noexpand\ifx\expandonce{\space}\unexpanded{\jlreq@nextchar\expandafter\jlreq@BlockHeading@start@afterheading@@}%
-  \unexpanded{\else\expandafter\jlreq@BlockHeading@start@afterheading@@@\fi}%
+\def\jlreq@BlockHeading@start@afterheading{\futurelet\jlreq@nextchar\jlreq@BlockHeading@start@afterheading@i}
+\edef\jlreq@BlockHeading@start@afterheading@i{%
+  \noexpand\ifx\expandonce{\space}\unexpanded{\jlreq@nextchar\expandafter\jlreq@BlockHeading@start@afterheading@skipspaces}%
+  \unexpanded{\else\expandafter\jlreq@BlockHeading@start@afterheading@ii\fi}%
 }
 % スペースを読み飛ばす
-\expandafter\def\expandafter\jlreq@BlockHeading@start@afterheading@@\space{\jlreq@BlockHeading@start@afterheading}
-\def\jlreq@BlockHeading@start@afterheading@@@{%
+\expandafter\def\expandafter\jlreq@BlockHeading@start@afterheading@skipspaces\space{\jlreq@BlockHeading@start@afterheading}
+\def\jlreq@BlockHeading@start@afterheading@ii{%
   \def\jlreq@do{\jlreq@BlockHeading@spaces@output}%
   \@for\@tempa:=\jlreq@BlockHeading@allheadings\do{%
     \expandafter\ifx\csname\@tempa\endcsname\jlreq@nextchar\def\jlreq@do{}\fi
   }%
-  % \jlreq@BlockHeading@HeadingSpaces@ignoretokens内のものは特別扱いする
+  % \jlreq@BlockHeading@HeadingSpaces@ignoretokens(@noargument)内のものは特別扱いする
+  \expandafter\@tfor\expandafter\@tempa\expandafter:\expandafter=\jlreq@BlockHeading@HeadingSpaces@ignoretokens@noargument\do{%
+    \expandafter\ifx\@tempa\jlreq@nextchar
+      \def\jlreq@do{\jlreq@BlockHeading@start@afterheading@saveafter@cs@noargument}%
+    \fi
+  }%
   \expandafter\@tfor\expandafter\@tempa\expandafter:\expandafter=\jlreq@BlockHeading@HeadingSpaces@ignoretokens\do{%
     \expandafter\ifx\@tempa\jlreq@nextchar
       \def\jlreq@do{\jlreq@BlockHeading@start@afterheading@saveafter@cs}%
@@ -1824,6 +1829,10 @@
 }
 
 % コントロールシークエンスを保存
+\long\def\jlreq@BlockHeading@start@afterheading@saveafter@cs@noargument#1{%
+  \csgappto{jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count}{#1}%
+  \jlreq@BlockHeading@start@afterheading
+}
 \long\def\jlreq@BlockHeading@start@afterheading@saveafter@cs#1{%
   \csgappto{jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count}{#1}%
   \jlreq@BlockHeading@start@afterheading@saveafter@option
@@ -1857,6 +1866,7 @@
 
 % 特別扱いしたいマクロを並べる
 \def\jlreq@BlockHeading@HeadingSpaces@ignoretokens{\label}
+\def\jlreq@BlockHeading@HeadingSpaces@ignoretokens@noargument{\par}
 
 % \jlreq@resulta -> before, \jlreq@resultb -> 本体，\jlreq@resultc -> after
 % {1 = 命令}{2 = レベル}{3 = スペース関連（横方向のみ）}{4 = フォーマット群}{5 = まとめたフォーマット群}{6 = *}{7 = running head}{8 = 見出し}{9 = 副題}
@@ -2058,7 +2068,7 @@
         \noexpand\parskip=\the\parskip
         \unexpanded{\def\jlreq@parhook@gyodori{}}%
       }%
-      \unexpanded{\parskip=0pt plus 1pt}%
+      \unexpanded{\parskip=0pt}%
     \fi
   }%
   \expandafter}\jlreq@do

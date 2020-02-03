@@ -1259,6 +1259,8 @@
 \setlength{\columnseprule}{0pt}
 
 %.. 傍注（4.2.7）
+\newdimen\jlreq@sidenote@length
+\newdimen\jlreq@sidenote@sep
 \begingroup
   \footnotesize
   \setlength{\jlreq@tempdima}{\jlreq@speciallength{\jlreq@option@sidenote@length}}
@@ -1271,15 +1273,19 @@
     \fi
   \fi
   \edef\jlreq@do{
-    \noexpand\setlength{\noexpand\marginparwidth}{\the\jlreq@tempdima}
+    \noexpand\setlength{\noexpand\jlreq@sidenote@length}{\the\jlreq@tempdima}
     \noexpand\setlength{\noexpand\marginparpush}{\the\dimexpr 0.5\zw\relax} % 同上：4.2.7.g
   }
   \expandafter\endgroup
 \jlreq@do
-\ifdim\marginparwidth>0pt
+\ifdim\jlreq@sidenote@length>0pt
+  \setlength{\marginparwidth}{\jlreq@sidenote@length}
   \setlength{\marginparsep}{2\zw} % フォントサイズ×2（4.2.7：特に問題に～e）
+  \setlength{\jlreq@sidenote@sep}{2\zw}
 \else
+  \setlength{\marginparwidth}{0pt}
   \setlength{\marginparsep}{0pt}
+  \setlength{\jlreq@sidenote@sep}{0pt}
 \fi
 
 % 縦書きの時は脚注に固定
@@ -2255,10 +2261,10 @@
     \def\jlreq@do{}% 初期化．これに最終処理を入れていく．
     % 入力チェック
     \ifthenelse{\equal{\jlreq@column@spanning}{true}}{%
-      \ifjlreq@column@spanning@possible\else
+      \jlreq@if{\ifjlreq@column@spanning@possible\else\fi}{
         \ClassWarningNoLine{jlreq}{column_spanning can be used only with `pagebreak=nariyuki' or `pagebreak=clearcolumn' (in BlockHeading #1)}%
         \def\jlreq@column@spanning{false}%
-      \fi
+      }{}%
     }{}%
     % ラベルありフォーマット：前
     \edef\jlreq@pre@format@wlabel{%
@@ -3428,8 +3434,8 @@
 
 % (1) では\sidenote[]{}を定義
 % (2) では\sidenote{見出し}{注中身}を定義
-% \marginparwidth>0ptの時のみ定義する
-\ifdim\marginparwidth>0pt \expandafter\@firstofone\else\expandafter\@gobble\fi
+% sidenote_length>0ptの時のみ定義する
+\jlreq@if{\ifdim\jlreq@sidenote@length>0pt \fi}
 {
   \def\jlreq@sidenotemarkname{@thefnmark}% 合印用番号を一時的に入れるマクロ名
   \long\def\@sidenotetext#1{%
@@ -3508,7 +3514,7 @@
   }
   \jlreq@jlreqsetup@add{sidenote_symbol}{\def\jlreq@sidenote@defaultmark{#1}}
   \jlreq@jlreqsetup@add{sidenote_keyword_font}{\def\jlreq@sidenote@keywordfont{#1}}
-}
+}{}
 
 %.. 割注（3.4）
 \def\inlinenotesize{.6\jlreq@jafontsize} % 割注の文字サイズ
@@ -3991,13 +3997,13 @@
 
 % #1の左右に傍注調整用の空白を入れて#1に代入する
 \def\jlreq@pagestyle@addsidenotemargin@left#1{%
-  \jlreq@pagestyle@addsidenotemargin@{#1}{\marginparwidth+\marginparsep}{}%
+  \jlreq@pagestyle@addsidenotemargin@{#1}{\jlreq@sidenote@length + \jlreq@sidenote@sep}{}%
 }
 \def\jlreq@pagestyle@addsidenotemargin@right#1{%
-  \jlreq@pagestyle@addsidenotemargin@{#1}{}{\marginparwidth+\marginparsep}%
+  \jlreq@pagestyle@addsidenotemargin@{#1}{}{\jlreq@sidenote@length + \jlreq@sidenote@sep}%
 }
 \def\jlreq@pagestyle@addsidenotemargin@bothside#1{%
-  \jlreq@pagestyle@addsidenotemargin@{#1}{\marginparwidth+\marginparsep}{\marginparwidth+\marginparsep}%
+  \jlreq@pagestyle@addsidenotemargin@{#1}{\jlreq@sidenote@length + \jlreq@sidenote@sep}{\jlreq@sidenote@length + \jlreq@sidenote@sep}%
 }
 % #2: 左，#3：右，#4：#2 + #3
 \def\jlreq@pagestyle@addsidenotemargin@#1#2#3{%
@@ -4508,9 +4514,9 @@
 \else
   \ifdim\marginparwidth>0pt
     \if@twocolumn
-      \def\jlreqyokoheadlength{\dimexpr\textwidth + 2\marginparwidth + 2\marginparsep\relax}
+      \def\jlreqyokoheadlength{\dimexpr\textwidth + 2\jlreq@sidenote@length + 2\jlreq@sidenote@sep\relax}
     \else
-      \def\jlreqyokoheadlength{\dimexpr\textwidth + \marginparwidth + \marginparsep\relax}
+      \def\jlreqyokoheadlength{\dimexpr\textwidth + \jlreq@sidenote@length + \jlreq@sidenote@sep\relax}
     \fi
   \else
     \def\jlreqyokoheadlength{\textwidth}

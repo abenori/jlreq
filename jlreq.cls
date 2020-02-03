@@ -997,6 +997,10 @@
 \DeclareRobustCommand\ttfamily{%
   \not@math@alphabet\ttfamily\mathtt
   \romanfamily\ttdefault\kanjifamily\gtdefault\selectfont}
+\g@addto@macro\@rmfamilyhook{\prepare@family@series@update@kanji{mc}\mcdefault}
+\g@addto@macro\@sffamilyhook{\prepare@family@series@update@kanji{gt}\gtdefault}
+\g@addto@macro\@ttfamilyhook{\prepare@family@series@update@kanji{gt}\gtdefault}
+
 
 % 数式フォント設定
 \ifjlreq@option@enablejfam

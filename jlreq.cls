@@ -988,15 +988,6 @@
 \DeclareRobustCommand*{\mit}{\@fontswitch\relax\mathnormal}
 
 % 和文ファミリと欧文ファミリの連動
-\DeclareRobustCommand\rmfamily{%
-  \not@math@alphabet\rmfamily\mathrm
-  \romanfamily\rmdefault\kanjifamily\mcdefault\selectfont}
-\DeclareRobustCommand\sffamily{%
-  \not@math@alphabet\sffamily\mathsf
-  \romanfamily\sfdefault\kanjifamily\gtdefault\selectfont}
-\DeclareRobustCommand\ttfamily{%
-  \not@math@alphabet\ttfamily\mathtt
-  \romanfamily\ttdefault\kanjifamily\gtdefault\selectfont}
 \@ifundefined{@rmfamilyhook}{}{\g@addto@macro\@rmfamilyhook{\prepare@family@series@update@kanji{mc}\mcdefault}}
 \@ifundefined{@sffamilyhook}{}{\g@addto@macro\@sffamilyhook{\prepare@family@series@update@kanji{gt}\gtdefault}}
 \@ifundefined{@ttfamilyhook}{}{\g@addto@macro\@ttfamilyhook{\prepare@family@series@update@kanji{gt}\gtdefault}}

@@ -119,6 +119,11 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Deleted the (re-)definitions of `\@cite` and `\@biblabel`.
     - Added `\allowbreak` before block headings.
     - Fixed bugs.
+* 2019-02-07
+    - Changed the default value of `itemization_label_length` to `\leftmargini` etc.
+    - Removed the redefinitions `\rmfamily` etc and added a code to `\@rmfamilyhook`.
+    - Changed `\parskip` to `0pt`.
+    - Fixed bugs.
 
 --------------
 Noriyuki Abe

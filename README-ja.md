@@ -4,7 +4,7 @@
 [日本語組版処理の要件](https://www.w3.org/TR/jlreq/ja/)の実装を試みる[LuaTeX-ja](https://osdn.jp/projects/luatex-ja/wiki/FrontPage) / pLaTeX / upLaTeX用のクラスファイルと，それに必要なJFMの組み合わせです．
 
 ## 提供されるもの
-クラスファイルjlreq.clsと，横書きLuaTeX-ja用のJFMであるjfm-jlreq.luaが用意されています．また，縦書きのJFMやpLaTeX / upLaTeX 用のJFMを生成するいくつかのスクリプトがあります．
+クラスファイルjlreq.clsと，横書きLuaTeX-ja用のJFMであるjfm-jlreq.luaが用意されています．また，縦書きのJFMやpLaTeX / upLaTeX用のJFMを生成するいくつかのスクリプトがあります．
 
 ## インストール
 `make`で必要なJFMを生成してください．その後，
@@ -15,6 +15,15 @@
 * jlreq.cls, jlreq-helpers.sty  -> $TEXMF/tex/latex/jlreq
 
 と配置します．`make install`とすると，$TEXMF=$TEXMFHOMEとしてこのコピーを行います．
+
+## 動作環境
+pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内部で読み込みます．
+
+* （常時）：xkeyval,everyhook,filehook,etoolbox,ifthen,lmodern
+* （LuaLaTeX利用時）：luatexja,luatexja-adjust
+
+リリース時点での最新版での動作を確認しています．
+
 
 ## 使い方
 通常通り
@@ -71,6 +80,7 @@
 
 ### その他
 * ルビや圏点は提供されません．[PXrubrica](https://github.com/zr-tex8r/PXrubrica)または`luatexja-ruby`（LuaLaTeX，LuaTeX-jaパッケージに付属）を使うと良いかと思います．
+* pLaTeX / upLaTeX利用時はそれぞれ`zw`および`zh`に展開されるマクロ`\zw`と`\zh`が定義されます．LuaLaTeX利用時はLuaTeX-ja内で同名のマクロが定義されます．
 * 日本語組版処理の要件2.3.2.dによれば，横組みにおける二段組の最後のページの各段の行数は揃えることが望ましいとされていますが，この処理は行われません．`nidanfloat`パッケージを使い，
 
     ```latex
@@ -92,7 +102,7 @@
     のようにします．
 
 ## 各種設計
-設計はクラスオプションまたは`\jlreqsetup`によりkeyval形式で行います．ただし，クラスオプションではLaTeXの実装により，本来可能な入力が受け付けられないがケースあります．多くの場合は空白を除くことにより解決します．
+設計はクラスオプションまたは`\jlreqsetup`によりkeyval形式で行います．ただし，クラスオプションではLaTeXの実装により，本来可能な入力が受け付けられないケースがあります．多くの場合は空白を除くことにより解決します．
 
 以下では次の用法を使います．
 
@@ -457,7 +467,11 @@ JFMの名前は次の通りです．`[]`で囲まれている文字は設定に�
     - `\@cite`と`\@biblabel`を再定義していたのをやめた．
     - 別行見出しの前に`\allowbreak`を追加．
     - バグ修正．
-
+* 2019-02-07
+    - `itemization_label_length`のデフォルト値を`\leftmargini`などにした．
+    - `\rmfamily`などの再定義をやめ，`\@rmfamilyhook`などにコードを挿入することにした．
+    - `\parskip`を`0pt`に変更．
+    - バグ修正．
 
 --------------
 Noriyuki Abe

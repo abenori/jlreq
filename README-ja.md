@@ -467,7 +467,7 @@ JFMの名前は次の通りです．`[]`で囲まれている文字は設定に�
     - `\@cite`と`\@biblabel`を再定義していたのをやめた．
     - 別行見出しの前に`\allowbreak`を追加．
     - バグ修正．
-* 2019-02-07
+* 2020-02-07
     - `itemization_label_length`のデフォルト値を`\leftmargini`などにした．
     - `\rmfamily`などの再定義をやめ，`\@rmfamilyhook`などにコードを挿入することにした．
     - `\parskip`を`0pt`に変更．

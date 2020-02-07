@@ -143,7 +143,7 @@ sty-install:
 
 install: jfm-install cls-install sty-install
 
-tds: jfm jlreq.cls README.md README-ja.md LICENSE jlreq.html jlreq-ja.html jlreq-trimmarks.html jlreq-trimmarks-ja.html
+tds: jfm jlreq.cls README.md README-ja.md LICENSE jlreq.html jlreq-ja.html jlreq-trimmarks.html jlreq-trimmarks-ja.html jlreq.pdf jlreq-ja.pdf
 	mkdir -p ./tds/fonts/tfm/public/jlreq
 	cp -f *.tfm ./tds/fonts/tfm/public/jlreq
 	mkdir -p ./tds/fonts/vf/public/jlreq
@@ -165,6 +165,14 @@ tds: jfm jlreq.cls README.md README-ja.md LICENSE jlreq.html jlreq-ja.html jlreq
 	cp jlreq-ja.html ./tds/doc/latex/jlreq
 	cp jlreq-trimmarks.html ./tds/doc/latex/jlreq
 	cp jlreq-trimmarks-ja.html ./tds/doc/latex/jlreq
+	cp jlreq.pdf ./tds/doc/latex/jlreq
+	cp jlreq-ja.pdf ./tds/doc/latex/jlreq
+	mkdir -p ./tds/source/latex/jlreq
+	cp README-template.html ./tds/source/latex/jlreq
+	cp README-template.tex ./tds/source/latex/jlreq
+	cp Makefile ./tds/source/latex/jlreq
+	cp make_variant_jfm.lua ./tds/source/latex/jlreq
+	cp luajfm2pl.lua ./tds/source/latex/jlreq
 
 uninstall:
 	rm -rf ${TEXMF}/fonts/tfm/public/jlreq

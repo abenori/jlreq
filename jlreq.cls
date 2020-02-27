@@ -5615,18 +5615,20 @@
 \def\@begintheorem#1#2{\topsep=\dimexpr\jlreq@theorem@beforeafter@space\relax
   \trivlist\labelsep=1\jlreq@zw
   \itemindent=\dimexpr\jlreq@theorem@indent\relax
-   \item[\hskip \labelsep{\sffamily\gtfamily\bfseries #1\ #2}]}
+  \jlreq@theorem@font
+   \item[\hskip \labelsep{\jlreq@theorem@label@font #1\ #2}]}
 \def\@opargbegintheorem#1#2#3{\topsep=\dimexpr\jlreq@theorem@beforeafter@space\relax
   \trivlist\labelsep=1\jlreq@zw
   \itemindent=\dimexpr\jlreq@theorem@indent\relax
-  \item[\hskip \labelsep{\sffamily\gtfamily\bfseries #1\ #2（#3）}]}
+  \jlreq@theorem@font
+  \item[\hskip \labelsep{\jlreq@theorem@label@font #1\ #2（#3）}]}
 \AtEndOfPackageFile*{amsthm}{%
   \jlreq@saveoriginalcs{\proof}%
   \jlreq@saveoriginalcs{\endproof}%
   \edef\jlreq@do{
     \unexpanded{\def\jlreq@proof[#1]}{%
       \unexpanded{\labelsep=1\jlreq@zw}%
-      \expandonce{\proof[{\reset@font\sffamily\gtfamily\bfseries #1\inhibitglue}\nopunct]}%
+      \expandonce{\proof[{\jlreq@proof@label@font #1\inhibitglue}\nopunct]}%
     }
   }
   \jlreq@do
@@ -5636,17 +5638,29 @@
   \theoremstyle{jlreq}
 }
 \def\jlreq@setupamsthm{
-  \newtheoremstyle{jlreq}{\dimexpr\jlreq@theorem@beforeafter@space\relax}{\dimexpr\jlreq@theorem@beforeafter@space\relax}{\normalfont}{\dimexpr\jlreq@theorem@indent\relax}{\sffamily\gtfamily\bfseries}{}{1\jlreq@zw}{\thmname{##1}\thmnumber{\ ##2}\thmnote{（##3）}}
+  \newtheoremstyle{jlreq}{\dimexpr\jlreq@theorem@beforeafter@space\relax}{\dimexpr\jlreq@theorem@beforeafter@space\relax}{\jlreq@theorem@font}{\dimexpr\jlreq@theorem@indent\relax}{\jlreq@theorem@label@font}{}{1\jlreq@zw}{\thmname{##1}\thmnumber{\ ##2}\thmnote{（##3）}}
 }
 \jlreq@jlreqsetup@add{theorem_beforeafter_space}{
   \def\jlreq@theorem@beforeafter@space{#1}
+  \begingroup\jlreq@tempdima=\dimexpr\jlreq@theorem@beforeafter@space\relax\endgroup
   \@ifpackageloaded{amsthm}{\jlreq@setupamsthm}{}
 }
 \jlreq@jlreqsetup@add{theorem_indent}{
   \def\jlreq@theorem@indent{#1}
+  \begingroup\jlreq@tempdima=\dimexpr\jlreq@theorem@indent\relax\endgroup
   \@ifpackageloaded{amsthm}{\jlreq@setupamsthm}{}
 }
-
+\jlreq@jlreqsetup@add{theorem_font}{
+  \def\jlreq@theorem@font{#1}
+  \@ifpackageloaded{amsthm}{\jlreq@setupamsthm}{}
+}
+\jlreq@jlreqsetup@add{theorem_label_font}{
+  \def\jlreq@theorem@label@font{#1}
+  \@ifpackageloaded{amsthm}{\jlreq@setupamsthm}{}
+}
+\jlreq@jlreqsetup@add{proof_label_font}{
+  \def\jlreq@proof@label@font{#1}
+}
 
 %. デフォルト設定
 %.. 見出し
@@ -5930,7 +5944,13 @@
 }
 \jlreqsetup{theindex_pagestyle=plain}
 \jlreqsetup{year_style=seireki}
-\jlreqsetup{theorem_beforeafter_space=1\baselineskip,theorem_indent=0pt}
+\jlreqsetup{
+  theorem_beforeafter_space=1\baselineskip,
+  theorem_indent=0pt,
+  theorem_label_font = {\bfseries\gtfamily\sffamily},
+  theorem_font = {\normalfont},
+  proof_label_font = {\bfseries\gtfamily\sffamily},
+}
 
 
 \newcommand{\contentsname}{目次}

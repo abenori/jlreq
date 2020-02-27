@@ -178,6 +178,10 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
 ### 定理環境
 `\jlreqsetup`で指定します．
 * `theorem_beforeafter_space=<寸法>`：定理環境の前後の空きを指定します．
+* `theorem_label_font=<フォント設定コード>`：定理環境のラベル部分のフォントを設定します．
+* `theorem_font=<フォント設定コード>`：定理環境本体のフォントを設定します．
+
+`amsthm`パッケージが読み込まれると，新しい定理スタイル`jlreq`が定義され，現在のスタイルが`jlreq`へと変更されます．このとき，上記設定はこの`jlreq`スタイルへの設定として機能します．
 
 ### 前付きなど
 `\fontmatter` / `\mainmatter` / `\backmatter` / `\appendix`での処理を`\jlreqsetup`で指定できます．

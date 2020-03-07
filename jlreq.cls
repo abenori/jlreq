@@ -4230,9 +4230,8 @@
     \jlreq@if{\ifjlreq@pstate\fi}{% tate
       % headの方に処理を入れる．footは空．
       \def\jlreq@oddfoot{}\def\jlreq@evenfoot{}%
-      \jlreq@for@noexpand\jlreq@position:=\jlreq@nombre@i@position,\jlreq@running@head@i@position\do{%
-        \expandafter\ifx\jlreq@position\@empty\expandafter\def\jlreq@position{0pt}\fi
-      }%
+      \ifx\jlreq@nombre@i@position\@empty\def\jlreq@nombre@i@position{5\jlreq@zw}\fi
+      \ifx\jlreq@running@head@i@position\@empty\def\jlreq@running@head@i@position{4\jlreq@zw}\fi
       \edef\jlreq@gapcs{\noexpand\hskip\noexpand\glueexpr\expandonce{\jlreq@nombre@gap}\noexpand\relax}%
       \jlreq@pagestyle@addifempty{\jlreq@nombre@iii@position}{\jlreq@nombre@ii}{\jlreq@gapcs}{\jlreq@nombre@iii}%
       \jlreq@pagestyle@addifempty{\jlreq@nombre@ii@position}{\jlreq@nombre@i}{\jlreq@gapcs}{\jlreq@nombre@ii}%
@@ -4246,15 +4245,16 @@
         \expandafter\let\expandafter\jlreq@position\csname jlreq@nombre@\jlreq@i @position\endcsname
         \expandafter\ifx\csname jlreq@nombre@\jlreq@i\endcsname\@empty\else
           \jlreq@ifgluezero{\glueexpr\jlreq@position\relax}{\def\jlreq@position{}}{}%
+          \expandafter\let\expandafter\jlreq@tempa\expandafter=\csname jlreq@nombre@\jlreq@i\endcsname
+          \jlreq@pagestyle@addfont@tocs{jlreq@tempa}{jlreq@nombre@font}%
           \eappto\jlreq@nombre@contents{%
             \noexpand\hbox to 0pt{\noexpand\hss
+              \expandonce{\jlreq@tempa}%
               \ifx\jlreq@position\@empty\else\unexpanded{\hskip \glueexpr}\expandonce{\jlreq@position}\noexpand\relax\fi
-              \csexpandonce{jlreq@nombre@\jlreq@i}%
             }%
           }%
         \fi
       }%
-      \jlreq@pagestyle@addfont@tocs{jlreq@nombre@contents}{jlreq@nombre@font}%
       % \jlreq@(odd|even)@contentsに柱を入れる（上の方に出力）
       \@for\jlreq@parity:=odd,even\do{%
         \expandafter\def\csname jlreq@\jlreq@parity @contents\endcsname{}%
@@ -4262,17 +4262,18 @@
           \expandafter\let\expandafter\jlreq@position\csname jlreq@running@head@\jlreq@i @position\endcsname
           \expandafter\ifx\csname jlreq@\jlreq@parity @running@head@\jlreq@i\endcsname\@empty\else
             \jlreq@ifgluezero{\glueexpr\jlreq@position\relax}{\def\jlreq@position{}}{}%
+            \expandafter\let\expandafter\jlreq@tempa\expandafter=\csname jlreq@\jlreq@parity @running@head@\jlreq@i\endcsname
+            \jlreq@pagestyle@addfont@tocs{jlreq@tempa}{jlreq@running@head@font}%
             \expandafter\eappto\csname jlreq@\jlreq@parity @contents\endcsname{%
               \noexpand\hbox to 0pt{\unexpanded{\hskip\glueexpr\headsep + \headheight}%
                 \if@tate\else\unexpanded{+ \topskip - \Cht}\fi
                 \ifx\jlreq@position\@empty\else + \expandonce{\jlreq@position}\fi\noexpand\relax
-                \csexpandonce{jlreq@\jlreq@parity @running@head@\jlreq@i}%
+                \expandonce{\jlreq@tempa}%
                 \noexpand\hss
               }%
             }%
           \fi
         }%
-        \jlreq@pagestyle@addfont@tocs{jlreq@\jlreq@parity @contents}{jlreq@running@head@font}%
         % \jlreq@(odd|even)headの構築
         % 空き指定には基本版面の文字サイズを使う（2.6.1.c）
         \@ifundefined{jlreq@\jlreq@parity headformat}

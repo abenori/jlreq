@@ -4456,7 +4456,7 @@
       \jlreq@pagestyle@setheadfoot{\jlreq@oddfoot}{jlreq@odd@bottom@left}{jlreq@odd@bottom@center}{jlreq@odd@bottom@right}%
       \jlreq@pagestyle@setheadfoot{\jlreq@evenhead}{jlreq@even@top@left}{jlreq@even@top@center}{jlreq@even@top@right}%
       \jlreq@pagestyle@setheadfoot{\jlreq@evenfoot}{jlreq@even@bottom@left}{jlreq@even@bottom@center}{jlreq@even@bottom@right}%
-      \ifthenelse{\lengthtest{\marginparwidth>0pt} \AND \(\NOT\boolean{@tate}\)}{%
+      \ifthenelse{\lengthtest{\jlreq@sidenote@length >0pt} \AND \(\NOT\boolean{@tate}\)}{%
         \def\jlreq@defaultformat{\hss\hbox to \jlreqyokoheadlength{####1}\hss}%
       }{%
         \def\jlreq@defaultformat{####1}%
@@ -4466,7 +4466,7 @@
       \jlreq@pagestyle@applyformat{\jlreq@oddfoot}{\jlreq@oddfootformat}{\jlreq@defaultformat}%
       \jlreq@pagestyle@applyformat{\jlreq@evenfoot}{\jlreq@evenfootformat}{\jlreq@defaultformat}%
       % 傍注用調整
-      \ifdim\marginparwidth>0pt
+      \ifdim\jlreq@sidenote@length>0pt
         \if@tate\else
           \if@twocolumn
             \jlreq@pagestyle@addsidenotemargin@bothside{\jlreq@oddhead}%
@@ -4508,14 +4508,14 @@
 \if@tate
   \def\jlreqyokoheadlength{\textheight}
 \else
-  \ifdim\marginparwidth>0pt
+  \ifdim\jlreq@sidenote@length>0pt
     \if@twocolumn
       \def\jlreqyokoheadlength{\dimexpr\textwidth + 2\jlreq@sidenote@length + 2\jlreq@sidenote@sep\relax}
     \else
       \def\jlreqyokoheadlength{\dimexpr\textwidth + \jlreq@sidenote@length + \jlreq@sidenote@sep\relax}
     \fi
   \else
-    \def\jlreqyokoheadlength{\textwidth}
+    \def\jlreqyokoheadlength{\dimexpr\textwidth\relax}
   \fi
 \fi
 \edef\jlreqtateheadlength{\unexpanded{\dimexpr\headsep + \headheight + \textheight}\if@tate\else\unexpanded{- \topskip + 1\jlreq@zh}\fi\noexpand\relax}
@@ -5780,7 +5780,7 @@
 \jlreqsetup{footnote_second_indent=1\jlreq@zw}
 \jlreqsetup{endnote_second_indent=2\jlreq@zw}
 \jlreqsetup{endnote_position=headings}
-\ifdim\marginparwidth>0pt
+\ifdim\jlreq@sidenote@length>0pt
   \jlreqsetup{sidenote_type=number}
   \jlreqsetup{sidenote_symbol=＊,sidenote_keyword_font={}}
 \fi

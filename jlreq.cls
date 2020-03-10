@@ -3769,6 +3769,14 @@
   {%
     \begingroup
       \jlreq@pagestyle@parse@position@#1-\jlreq@endmark
+      \ifthenelse{\equal{\jlreq@tempa}{fore}}{%
+        \expandafter\jlreq@pagestyle@parse@position@\jlreq@tempb-\jlreq@endmark
+        \ifthenelse{\equal{\jlreq@tempa}{edge}}{%
+          \def\jlreq@tempa{fore-edge}%
+        }{%
+          \ClassError{jlreq}{Invalid position: fore-\jlreq@tempa}{\@ehc}%
+        }%
+      }{}%
       % \jlreq@tempcに縦方向を，\jlreq@tempdに横方向を入れる
       \def\jlreq@tempc{}\def\jlreq@tempd{}%
       \jlreq@pagestyle@parse@position@@{\jlreq@tempa}%
@@ -3786,8 +3794,8 @@
   \jlreq@ifempty{#2}{%
     \ifx\jlreq@tempb\@empty\ClassError{jlreq}{Invalid position: #1}{\@ehc}\fi
   }{%
-    \def\@tempa##1-{\def\jlreq@tempb{##1}}%
-    \@tempa#2\relax
+    \def\@tempa##1-\jlreq@endmark{\def\jlreq@tempb{##1}}%
+    \@tempa#2\jlreq@endmark\relax
   }%
 }
 

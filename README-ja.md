@@ -180,7 +180,7 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
 * `theorem_beforeafter_space=<寸法>`：定理環境の前後の空きを指定します．
 
 ### 前付きなど
-`\fontmatter` / `\mainmatter` / `\backmatter` / `\appendix`での処理を`\jlreqsetup`で指定できます．
+`\frontmatter` / `\mainmatter` / `\backmatter` / `\appendix`での処理を`\jlreqsetup`で指定できます．
 * `frontmatter_pagebreak=[cleardoublepage/clearpage/]`：`\frontmatter`実行時の改ページを実行する命令名を指定します．空にすると何もしません．
 * `frontmatter_counter={<カウンタ名>={value=<値>, the=<コード>, restore=[true/false]},...}`：`\frontmatter`時でのカウンタの操作を指定します．例えば`chapter={value=0,the={[\arabic{chapter]}}`とすると，`chapter`カウンタの値が`0`になり，`\thechapter`が`[\arabic{chapter}]`となります．デフォルトでは`\mainmatter`時に値と`\the<カウンタ名>`の定義を戻しますが，`restore=false`とするとこの動きが抑制されます．
 * `frontmatter_heading={<見出し命令名>={<設定>},...}`：見出し命令の動きを変更します．`\Delare***Heading`で指定できる項目の他以下を受け付けます．

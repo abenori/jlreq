@@ -46,7 +46,7 @@ Set the size of the paper including trim marks.
 * If `<paper size>` is empty (e.g. `trimmarks_paper=+2cm`), the current paper size (which is specified usually by the option for the document class) is used.
 
 ### `landscape`
-Swap the width and the height. This swaps only the width and height which is specified with the option `trimmarks_paper`. For example, `landscape,trimmarks_paper=+{2cm,1cm}`, adds 1cm to the height and 2cm to the width. But the current paper size is not swapped.
+Swap the width and the height. This swaps only the width and height which is specified with the option `trimmarks_paper`. For example, `landscape,trimmarks_paper=+{1cm,2cm}`, adds 1cm to the height and 2cm to the width. But the current paper size is not swapped.
 
 ### `show`
 Specify the types of trim marks which the package outputs. It is specified with the comma separated list like `show={trimmarks,banner,digital}`. If no argument is given, everything will be showed.

@@ -73,11 +73,21 @@
       \expandafter\expandafter\expandafter\jlreq@ifmacro@noargument@\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark@
 }}}
 \long\def\jlreq@ifmacro@noargument@#1{\expandafter\jlreq@ifmacro@noargument@@\expandafter{\meaning #1}}
-\edef\jlreq@do{%
-  \unexpanded{\def\jlreq@ifmacro@noargument@@}##1{\noexpand\jlreq@ifmacro@noargument@@@##1\expandonce{\detokenize{macro:->}}\noexpand\jlreq@endmark}
-  \unexpanded{\def\jlreq@ifmacro@noargument@@@}##1\expandonce{\detokenize{macro:->}}##2\noexpand\jlreq@endmark{\noexpand\jlreq@ifempty{##1}}
+\def\@tempa#1{%
+  \def\jlreq@ifmacro@noargument@@##1{\jlreq@ifmacro@noargument@@@##1#1\noexpand\jlreq@endmark}
+  \def\jlreq@ifmacro@noargument@@@##1#1##2\jlreq@endmark{\jlreq@ifempty{##1}}
 }
+\edef\jlreq@do{\noexpand\@tempa{\detokenize{macro:->}}}
 \jlreq@do
+% こちらは単にマクロか
+\def\@tempa#1{%
+  \long\def\jlreq@ifmacro##1{\jlreq@ifempty{##1}{\@secondoftwo}{\expandafter\jlreq@ifmacro@i\meaning##1#1\jlreq@endmark}}
+  \long\def\jlreq@ifmacro@i##1#1##2\jlreq@endmark{\jlreq@ifempty{##1}}
+}
+\edef\jlreq@do{\noexpand\@tempa{\detokenize{macro:}}}
+\jlreq@do
+
+
 
 % #1（skipレジスタ）が0か（展開不可）．
 \newcommand*\jlreq@ifgluezero[1]{%

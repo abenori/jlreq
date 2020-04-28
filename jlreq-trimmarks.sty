@@ -33,16 +33,10 @@
 
 \@ifclassloaded{jlreq}{\let\ifjlreq@trimmarks@jlreqloaded=\@firstoftwo}{\let\ifjlreq@trimmarks@jlreqloaded=\@secondoftwo}
 
-\def\ifjlreq@trimmarks@tate@{%
-  \if@tate\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
-}
+\def\ifjlreq@trimmarks@tate@{\jlreq@if{\if@tate\fi}}%
 % \@firstoftwo when \if@tate is defined and \if@tate=\iftrue
 \def\ifjlreq@trimmarks@tate{%
-  \ifnum0\ifx\if@tate\@undefined 1\fi\ifx\if@tate\relax 1\fi>0
-    \expandafter\@secondoftwo
-  \else
-    \expandafter\ifjlreq@trimmarks@tate@
-  \fi
+  \jlreq@if{\ifnum0\ifx\if@tate\@undefined 1\fi\ifx\if@tate\relax 1\fi>0 \fi}{\@secondoftwo}{\ifjlreq@trimmarks@tate@}%
 }
 
 
@@ -256,9 +250,9 @@
         }%
       }%
     }{#3}%
-    \ifx\jlreq@do\@empty
+    \jlreq@if{\ifx\jlreq@do\@empty\fi}{%
       \appto\jlreq@do{\jlreq@trimmarks@setbanner@@{yoko@#1}{yoko@#2}{#3}}%
-    \fi
+    }{}%
   \expandafter\endgroup
   \jlreq@do
 }
@@ -277,9 +271,9 @@
         }%
       }%
     }{#3}%
-    \ifx\jlreq@do\@empty
+    \jlreq@if{\ifx\jlreq@do\@empty\fi}{
       \appto\jlreq@do{\jlreq@trimmarks@setbanner@@{before@#1}{before@#2}{#3}}%
-    \fi
+    }{}%
   \expandafter\endgroup
   \jlreq@do
 }
@@ -296,12 +290,12 @@
         }%
       }%
     }{#3}%
-    \ifx\jlreq@do\@empty
+    \jlreq@if{\ifx\jlreq@do\@empty\fi}{
       \appto\jlreq@do{%
         \expandafter\edef\csname jlreq@trimmarks@banner@odd@#1\endcsname{\unexpanded{#3}}%
         \expandafter\edef\csname jlreq@trimmarks@banner@even@#2\endcsname{\unexpanded{#3}}%
       }%
-    \fi
+    }{}%
   \expandafter\endgroup
   \jlreq@do
 }
@@ -326,11 +320,9 @@
           }%
         }%
       }%
-      \@bannertoken{}%
       \def\jlreq@do{}%
       \jlreq@parsekeyval@nokey{%
         \ifjlreq@parsekeyval@nokey@novalue{}{%
-          \jlreq@tempafalse
           \edef\jlreq@gutterodd{\ifjlreq@trimmarks@tate{right}{left}}%
           \if@twoside
             \edef\jlreq@guttereven{\ifjlreq@trimmarks@tate{left}{right}}%
@@ -338,8 +330,8 @@
             \let\jlreq@guttereven\jlreq@gutterodd
           \fi
           \jlreq@switch*{####1}{
-            {top-left}{\jlreq@tempatrue\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@left}{top@left}{####2}}}
-            {left-top}{\jlreq@tempatrue\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@left}{top@left}{####2}}}
+            {top-left}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@left}{top@left}{####2}}}
+            {left-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@left}{top@left}{####2}}}
             {top-right}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@right}{top@right}{####2}}}
             {right-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@right}{top@right}{####2}}}
             {top-gutter}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@\jlreq@gutterodd}{top@\jlreq@guttereven}{####2}}}
@@ -367,17 +359,12 @@
             {center-fore-edge}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@\jlreq@guttereven}{center@\jlreq@gutterodd}{####2}}}
             {fore-edge-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@\jlreq@guttereven}{center@\jlreq@gutterodd}{####2}}}
           }%
-          \ifjlreq@tempa
-            \appto\jlreq@do{\expandafter\@bannertoken\expandafter{\jlreq@trimmarks@banner@odd@yoko@top@left}}%
-          \fi
         }%
       }{##1}%
-      \ifx\jlreq@do\@empty
-        \jlreq@trimmarks@setbanner{top@left}{##1}%
-        \expandafter\@bannertoken\expandafter{\jlreq@trimmarks@banner@odd@yoko@top@left}%
-      \else
-        \jlreq@do
-      \fi
+      \jlreq@if{\ifx\jlreq@do\@empty\fi}{
+        \appto\jlreq@do{\jlreq@trimmarks@setbanner{top@left}{top@left}{##1}}%
+      }{}%
+      \jlreq@do
     }
     {banner_font}{\def\jlreq@trimmarks@bannerfont{##1}}
     {trimmarks_width}{\setlength{\@tombowwidth}{##1}}
@@ -418,12 +405,13 @@
   }{#1}%
 }
 \@onlypreamble\jlreqtrimmarkssetup
+\@bannertoken{%
+  \jobname\space(\number\year-\two@digits\month-\two@digits\day
+  \space\two@digits\hour:\two@digits\minute)%
+}
 \jlreqtrimmarkssetup{
-  banner={%
-    \jobname\space(\number\year-\two@digits\month-\two@digits\day
-    \space\two@digits\hour:\two@digits\minute)%
-  },
-  banner_font={},
+  banner={\the\@bannertoken},
+  banner_font={\@bannerfont},
   color={}
 }
 
@@ -461,14 +449,14 @@
   }{
     \def\@tombowreset@@paper{%
        \@@topmargin\topmargin
-       \iftombow
+       \jlreq@if{\iftombow\fi}{
          \@@paperwidth\paperwidth
          \advance\@@paperwidth 2\dimexpr\@tombowbleed\relax
          \@@paperheight\paperheight \advance\@@paperheight 10mm\relax
          \advance\@@paperheight 2\dimexpr\@tombowbleed\relax
          % 1in -> 1truein
          \advance\@@topmargin 1truein\relax \advance\@themargin 1truein\relax
-       \fi
+      }{}%
     }
   }
 \fi
@@ -484,21 +472,21 @@
 \setlength{\stockheight}{\dimexpr\jlreq@trimmarks@paperheight\relax}
 
 \def\jlreq@trimmarks@outputbanner#1#2{%
-  \iftombowdate
+  \jlreq@if{\iftombowdate\fi}{%
     \expandafter\let\expandafter\jlreq@tempa\csname jlreq@trimmarks@banner@\ifodd\c@page odd\else even\fi @#1\endcsname
-    \ifx\jlreq@tempa\@empty\else
+    \jlreq@if{\ifx\jlreq@tempa\@empty\fi}{}{%
       \def\@tempa##1{#2}%
       \expandafter\@tempa\expandafter{\jlreq@tempa}%
-    \fi
-  \fi
+    }%
+  }{}%
 }
 \def\jlreq@trimmarks@bleed{3mm}
 % left=gutter?
 \def\ifjlreq@trimmarks@leftisgutter{%
   \ifjlreq@trimmarks@tate{%
-    \ifnum 0\ifodd\c@page 1\fi\if@twoside\else 1\fi>0 \expandafter\@secondoftwo\else\expandafter\@firstoftwo\fi
+    \jlreq@if{\ifnum 0\ifodd\c@page 1\fi\if@twoside\else 1\fi>0 \fi}{\@secondoftwo}{\@firstoftwo}%
   }{%
-    \ifnum 0\ifodd\c@page 1\fi\if@twoside\else 1\fi>0 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+    \jlreq@if{\ifnum 0\ifodd\c@page 1\fi\if@twoside\else 1\fi>0 \fi}{\@firstoftwo}{\@secondoftwo}%
   }%
 }
 \def\jlreq@trimmarks@bleed@left{\ifjlreq@trimmarks@leftisgutter{\jlreq@trimmarks@bleed@gutter}{\expandafter\csname jlreq@trimmarks@bleed@fore-edge\endcsname}}
@@ -516,15 +504,13 @@
           \yoko\hss
           \vrule width\dimexpr 10mm + \jlreq@trimmarks@bleed@left\relax height\@tombowwidth depth\z@
           \vrule height10mm width\@tombowwidth depth\z@
-          \iftombowdate
-            \setbox\jlreq@tempboxa=\hbox to\z@{\hskip5mm\@bannerfont\jlreq@trimmarks@bannerfont
-              \ifodd\c@page\the\@bannertoken\else\jlreq@trimmarks@banner@even@yoko@top@left\fi
-            \hss}%
+          \jlreq@trimmarks@outputbanner{yoko@top@left}{%
+            \setbox\jlreq@tempboxa=\hbox to\z@{\hskip5mm\jlreq@trimmarks@bannerfont##1\hss}%
             \dp\jlreq@tempboxa=0pt
             \raise 4pt\box\jlreq@tempboxa
-          \fi
+          }%
           \jlreq@trimmarks@outputbanner{inyoko@top@left}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\@bannerfont\jlreq@trimmarks@bannerfont##1\hss}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\jlreq@trimmarks@bannerfont##1\hss}%
             \jlreq@tempdima=\dimexpr\ht\jlreq@tempboxa + \jlreq@trimmarks@bleed@top\relax
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \raise-\jlreq@tempdima\box\jlreq@tempboxa
@@ -537,12 +523,12 @@
           \yoko
           \vrule width10mm height\@tombowwidth depth\z@
           \jlreq@trimmarks@outputbanner{before@top@center}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\hss\@bannerfont\jlreq@trimmarks@bannerfont##1\hskip 5mm}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\hss\jlreq@trimmarks@bannerfont##1\hskip 5mm}%
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
             \raise 4pt\box\jlreq@tempboxa
           }%
           \jlreq@trimmarks@outputbanner{in@top@center}{%
-            \setbox\jlreq@tempboxa=\hbox{\@bannerfont\jlreq@trimmarks@bannerfont##1}%
+            \setbox\jlreq@tempboxa=\hbox{\jlreq@trimmarks@bannerfont##1}%
             \jlreq@tempdima=\dimexpr\ht\jlreq@tempboxa + \jlreq@trimmarks@bleed@top\relax
             \jlreq@tempdimb=0.5\wd\jlreq@tempboxa
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
@@ -550,7 +536,7 @@
           }%
           \vrule height10mm width\@tombowwidth depth\z@
           \jlreq@trimmarks@outputbanner{after@top@center}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\hskip 5mm\@bannerfont\jlreq@trimmarks@bannerfont##1\hss}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\hskip 5mm\jlreq@trimmarks@bannerfont##1\hss}%
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
             \raise 4pt\box\jlreq@tempboxa
           }%
@@ -562,19 +548,19 @@
         \setbox\jlreq@tempboxa=\hbox to\z@{% \@TR
           \yoko
           \jlreq@trimmarks@outputbanner{yoko@top@right}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\yoko\hss\@bannerfont\jlreq@trimmarks@bannerfont##1\hskip 5mm}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\yoko\hss\jlreq@trimmarks@bannerfont##1\hskip 5mm}%
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \raise 4pt\box\jlreq@tempboxa
           }%
           \jlreq@trimmarks@outputbanner{inyoko@top@right}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\yoko\hss\@bannerfont\jlreq@trimmarks@bannerfont##1}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\yoko\hss\jlreq@trimmarks@bannerfont##1}%
             \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@top + \ht\jlreq@tempboxa\relax
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \raise-\jlreq@tempdima\box\jlreq@tempboxa
           }%
           \vrule height10mm width\@tombowwidth depth\z@
           \jlreq@trimmarks@outputbanner{corner@top@right}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\hskip\dimexpr\jlreq@trimmarks@bleed@right + 4pt\relax\@bannerfont\jlreq@trimmarks@bannerfont##1\hss}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\hskip\dimexpr\jlreq@trimmarks@bleed@right + 4pt\relax\jlreq@trimmarks@bannerfont##1\hss}%
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \raise 4pt\box\jlreq@tempboxa
           }%
@@ -590,13 +576,13 @@
           \yoko\hss
           \vrule width10mm height\@tombowwidth depth\z@
           \jlreq@trimmarks@outputbanner{corner@top@left}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\hss\@bannerfont\jlreq@trimmarks@bannerfont##1\hskip 4pt}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\hss\jlreq@trimmarks@bannerfont##1\hskip 4pt}%
             \dp\jlreq@tempboxa=0pt \ht\jlreq@tempboxa=0pt
             \raise\dimexpr \jlreq@trimmarks@bleed@top + 4pt\relax\box\jlreq@tempboxa
           }%
           \vrule height\dimexpr 10mm + \jlreq@trimmarks@bleed@top\relax width\@tombowwidth depth\z@
           \jlreq@trimmarks@outputbanner{tate@top@left}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\@bannerfont\jlreq@trimmarks@bannerfont##1\hss}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\jlreq@trimmarks@bannerfont##1\hss}%
             \ifx l\jlreq@trimmarks@engine
               \jlreq@tempdima=\dimexpr 4pt + \ht\jlreq@tempboxa\relax
              \else
@@ -606,7 +592,7 @@
             \kern-\jlreq@tempdima\raise-5mm\box\jlreq@tempboxa\kern\jlreq@tempdima
           }%
           \jlreq@trimmarks@outputbanner{intate@top@left}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\@bannerfont\jlreq@trimmarks@bannerfont##1\hss}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\jlreq@trimmarks@bannerfont##1\hss}%
             \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@left \ifx l\jlreq@trimmarks@engine + \ht\jlreq@tempboxa\fi\relax
             \wd\jlreq@tempboxa=0pt \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \kern\jlreq@tempdima\box\jlreq@tempboxa\kern-\jlreq@tempdima
@@ -616,13 +602,13 @@
         \hbox to\z@{% \@Tr
           \yoko
           \jlreq@trimmarks@outputbanner{tate@top@right}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\@bannerfont\jlreq@trimmarks@bannerfont##1\hss}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\jlreq@trimmarks@bannerfont##1\hss}%
             \jlreq@tempdima=\dimexpr 4pt \ifx l\jlreq@trimmarks@engine + \dp\jlreq@tempboxa\fi\relax
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
             \kern\jlreq@tempdima\raise -5mm\box\jlreq@tempboxa\kern-\jlreq@tempdima
           }%
           \jlreq@trimmarks@outputbanner{intate@top@right}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\@bannerfont\jlreq@trimmarks@bannerfont##1\hss}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\jlreq@trimmarks@bannerfont##1\hss}%
             \ifx l\jlreq@trimmarks@engine
               \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@top + \ht\jlreq@tempboxa\relax
             \else
@@ -642,7 +628,7 @@
           \yoko\hss
           \vrule width10mm height.5\@tombowwidth depth.5\@tombowwidth
           \jlreq@trimmarks@outputbanner{before@center@left}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\hss\adjustbaseline\@bannerfont\jlreq@trimmarks@bannerfont##1\hskip 5mm}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\hss\adjustbaseline\jlreq@trimmarks@bannerfont##1\hskip 5mm}%
             \ifx l\jlreq@trimmarks@engine
               \jlreq@tempdima=\dimexpr 4pt + \ht\jlreq@tempboxa\relax
              \else
@@ -652,7 +638,7 @@
             \kern-\jlreq@tempdima\box\jlreq@tempboxa\kern\jlreq@tempdima
           }%
           \jlreq@trimmarks@outputbanner{after@center@left}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\hskip 5mm\adjustbaseline\@bannerfont\jlreq@trimmarks@bannerfont##1\hss}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\hskip 5mm\adjustbaseline\jlreq@trimmarks@bannerfont##1\hss}%
             \ifx l\jlreq@trimmarks@engine
               \jlreq@tempdima=\dimexpr 4pt + \ht\jlreq@tempboxa\relax
              \else
@@ -663,7 +649,7 @@
           }%
           \vrule height10mm depth10mm width\@tombowwidth
           \jlreq@trimmarks@outputbanner{in@center@left}{%
-            \setbox\jlreq@tempboxa=\hbox{\tate\adjustbaseline\@bannerfont\jlreq@trimmarks@bannerfont##1}%
+            \setbox\jlreq@tempboxa=\hbox{\tate\adjustbaseline\jlreq@trimmarks@bannerfont##1}%
             \ifx l\jlreq@trimmarks@engine
               \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@left + \ht\jlreq@tempboxa\relax
               \jlreq@tempdimb=.5\wd\jlreq@tempboxa
@@ -679,7 +665,7 @@
         \hbox to\z@{% \@CR
           \yoko
           \jlreq@trimmarks@outputbanner{in@center@right}{%
-            \setbox\jlreq@tempboxa=\hbox{\tate\adjustbaseline\@bannerfont\jlreq@trimmarks@bannerfont##1}%
+            \setbox\jlreq@tempboxa=\hbox{\tate\adjustbaseline\jlreq@trimmarks@bannerfont##1}%
             \ifx l\jlreq@trimmarks@engine
               \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@right  + \ht\jlreq@tempboxa\relax
               \jlreq@tempdimb=0.5\wd\jlreq@tempboxa
@@ -692,13 +678,13 @@
           }%
           \vrule height10mm depth10mm width\@tombowwidth
           \jlreq@trimmarks@outputbanner{before@center@right}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\hss\adjustbaseline\@bannerfont\jlreq@trimmarks@bannerfont##1\hskip 5mm}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\hss\adjustbaseline\jlreq@trimmarks@bannerfont##1\hskip 5mm}%
             \jlreq@tempdima=\dimexpr 4pt \ifx l\jlreq@trimmarks@engine + \dp\jlreq@tempboxa\fi\relax
             \dp\jlreq@tempboxa=0pt \ht\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
             \kern\jlreq@tempdima\box\jlreq@tempboxa\kern-\jlreq@tempdima
           }%
           \jlreq@trimmarks@outputbanner{after@center@right}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\hskip 5mm\adjustbaseline\@bannerfont\jlreq@trimmarks@bannerfont##1\hss}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\hskip 5mm\adjustbaseline\jlreq@trimmarks@bannerfont##1\hss}%
             \jlreq@tempdima=\dimexpr 4pt \ifx l\jlreq@trimmarks@engine + \dp\jlreq@tempboxa\fi\relax
             \dp\jlreq@tempboxa=0pt \ht\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
             \kern\jlreq@tempdima\box\jlreq@tempboxa\kern-\jlreq@tempdima
@@ -713,7 +699,7 @@
           \vrule width10mm depth\@tombowwidth height\z@
           \vrule depth\dimexpr 10mm + \jlreq@trimmarks@bleed@bottom\relax width\@tombowwidth height\z@
           \jlreq@trimmarks@outputbanner{tate@bottom@left}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\hss\@bannerfont\jlreq@trimmarks@bannerfont##1}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\hss\jlreq@trimmarks@bannerfont##1}%
             \ifx l\jlreq@trimmarks@engine
               \jlreq@tempdima=\dimexpr 4pt + \ht\jlreq@tempboxa\relax
              \else
@@ -723,7 +709,7 @@
             \kern-\jlreq@tempdima\raise 5mm\box\jlreq@tempboxa\kern\jlreq@tempdima
           }%
           \jlreq@trimmarks@outputbanner{intate@bottom@left}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\hss\@bannerfont\jlreq@trimmarks@bannerfont##1}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\hss\jlreq@trimmarks@bannerfont##1}%
             \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@left \ifx l\jlreq@trimmarks@engine + \ht\jlreq@tempboxa\fi\relax
             \wd\jlreq@tempboxa=0pt \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \kern\jlreq@tempdima\box\jlreq@tempboxa\kern-\jlreq@tempdima
@@ -733,13 +719,13 @@
         \hbox to\z@{% \@Br
           \yoko
           \jlreq@trimmarks@outputbanner{tate@bottom@right}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\hss\@bannerfont\jlreq@trimmarks@bannerfont##1}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\hss\jlreq@trimmarks@bannerfont##1}%
             \jlreq@tempdima=\dimexpr\ifx l\jlreq@trimmarks@engine\ht\jlreq@tempboxa + \fi 4pt\relax
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
             \kern\jlreq@tempdima\raise5mm\box\jlreq@tempboxa\kern-\jlreq@tempdima
           }%
           \jlreq@trimmarks@outputbanner{intate@bottom@right}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\hss\@bannerfont\jlreq@trimmarks@bannerfont##1}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\hss\jlreq@trimmarks@bannerfont##1}%
             \ifx l\jlreq@trimmarks@engine
               \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@right + \ht\jlreq@tempboxa\relax
             \else
@@ -750,7 +736,7 @@
           }%
           \vrule depth\dimexpr 10mm + \jlreq@trimmarks@bleed@bottom\relax width\@tombowwidth height\z@
           \jlreq@trimmarks@outputbanner{corner@bottom@right}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\hskip 4pt\relax\@bannerfont\jlreq@trimmarks@bannerfont##1\hss}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\hskip 4pt\relax\jlreq@trimmarks@bannerfont##1\hss}%
             \jlreq@tempdima=\dimexpr\ht\jlreq@tempboxa  + \jlreq@trimmarks@bleed@bottom + 4pt\relax
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \raise-\jlreq@tempdima\box\jlreq@tempboxa
@@ -765,20 +751,20 @@
           \yoko\hss
           \vrule width\dimexpr 10mm + \jlreq@trimmarks@bleed@left\relax depth\@tombowwidth height\z@
           \jlreq@trimmarks@outputbanner{corner@bottom@left}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\hss\@bannerfont\jlreq@trimmarks@bannerfont##1\hskip\dimexpr\jlreq@trimmarks@bleed@left + 4pt\relax}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\hss\jlreq@trimmarks@bannerfont##1\hskip\dimexpr\jlreq@trimmarks@bleed@left + 4pt\relax}%
             \jlreq@tempdima=\dimexpr\ht\jlreq@tempboxa + 4pt\relax
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \raise-\jlreq@tempdima\box\jlreq@tempboxa
           }%
           \vrule depth10mm width\@tombowwidth height\z@
           \jlreq@trimmarks@outputbanner{yoko@bottom@left}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\yoko\hskip 5mm\@bannerfont\jlreq@trimmarks@bannerfont##1\hss}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\yoko\hskip 5mm\jlreq@trimmarks@bannerfont##1\hss}%
             \jlreq@tempdima=\dimexpr\ht\jlreq@tempboxa + 4pt\relax
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \raise-\jlreq@tempdima\box\jlreq@tempboxa
           }%
           \jlreq@trimmarks@outputbanner{inyoko@bottom@left}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\yoko\@bannerfont\jlreq@trimmarks@bannerfont##1\hss}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\yoko\jlreq@trimmarks@bannerfont##1\hss}%
             \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@bottom + \dp\jlreq@tempboxa\relax
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \raise\jlreq@tempdima\box\jlreq@tempboxa
@@ -791,13 +777,13 @@
           \yoko
           \vrule width10mm depth\@tombowwidth height\z@
           \jlreq@trimmarks@outputbanner{before@bottom@center}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\hss\@bannerfont\jlreq@trimmarks@bannerfont##1\hskip 5mm}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\hss\jlreq@trimmarks@bannerfont##1\hskip 5mm}%
             \jlreq@tempdima=\dimexpr\ht\jlreq@tempboxa + 4pt\relax
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \raise-\jlreq@tempdima\box\jlreq@tempboxa
           }%
           \jlreq@trimmarks@outputbanner{in@bottom@center}{%
-            \setbox\jlreq@tempboxa=\hbox{\@bannerfont\jlreq@trimmarks@bannerfont##1}%
+            \setbox\jlreq@tempboxa=\hbox{\jlreq@trimmarks@bannerfont##1}%
             \jlreq@tempdima=\dimexpr\dp\jlreq@tempboxa + \jlreq@trimmarks@bleed@bottom\relax
             \jlreq@tempdimb=.5\wd\jlreq@tempboxa
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
@@ -805,7 +791,7 @@
           }%
           \vrule depth10mm width\@tombowwidth height\z@
           \jlreq@trimmarks@outputbanner{before@bottom@center}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\hskip 5mm\@bannerfont\jlreq@trimmarks@bannerfont##1\hss}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\hskip 5mm\jlreq@trimmarks@bannerfont##1\hss}%
             \jlreq@tempdima=\dimexpr\ht\jlreq@tempboxa + 4pt\relax
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \raise-\jlreq@tempdima\box\jlreq@tempboxa
@@ -818,13 +804,13 @@
         \setbox\jlreq@tempboxa=\hbox to 0pt{% \@BR
           \yoko
           \jlreq@trimmarks@outputbanner{yoko@bottom@right}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\yoko\hss\@bannerfont\jlreq@trimmarks@bannerfont##1\hskip 5mm}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\yoko\hss\jlreq@trimmarks@bannerfont##1\hskip 5mm}%
             \jlreq@tempdima=\dimexpr\ht\jlreq@tempboxa + 4pt\relax
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \raise-\jlreq@tempdima\box\jlreq@tempboxa
           }%
           \jlreq@trimmarks@outputbanner{inyoko@bottom@right}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\yoko\hss\@bannerfont\jlreq@trimmarks@bannerfont##1}%
+            \setbox\jlreq@tempboxa=\hbox to 0pt{\yoko\hss\jlreq@trimmarks@bannerfont##1}%
             \jlreq@tempdima=\dimexpr\dp\jlreq@tempboxa + \jlreq@trimmarks@bleed@bottom\relax
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \raise\jlreq@tempdima\box\jlreq@tempboxa

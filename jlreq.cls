@@ -5625,19 +5625,19 @@
   \trivlist\labelsep=1\jlreq@zw
   \itemindent=\dimexpr\jlreq@theorem@indent\relax
   \jlreq@theorem@font
-   \item[\hskip \labelsep{\jlreq@theorem@label@font #1\ #2}]}
+   \item[\hskip \labelsep{\reset@font\jlreq@theorem@label@font #1\ #2}]}
 \def\@opargbegintheorem#1#2#3{\topsep=\dimexpr\jlreq@theorem@beforeafter@space\relax
   \trivlist\labelsep=1\jlreq@zw
   \itemindent=\dimexpr\jlreq@theorem@indent\relax
   \jlreq@theorem@font
-  \item[\hskip \labelsep{\jlreq@theorem@label@font #1\ #2（#3）}]}
+  \item[\hskip \labelsep{\reset@font\jlreq@theorem@label@font #1\ #2（#3）}]}
 \AtEndOfPackageFile*{amsthm}{%
   \jlreq@saveoriginalcs{\proof}%
   \jlreq@saveoriginalcs{\endproof}%
   \edef\jlreq@do{
     \unexpanded{\def\jlreq@proof[#1]}{%
       \unexpanded{\labelsep=1\jlreq@zw}%
-      \expandonce{\proof[{\jlreq@proof@label@font #1\inhibitglue}\nopunct]}%
+      \expandonce{\proof[{\reset@font\jlreq@proof@label@font #1\inhibitglue}\nopunct]}%
     }
   }
   \jlreq@do

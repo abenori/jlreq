@@ -151,7 +151,10 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
 * 2019-04-01
     - Extended `banner` in `\jlreqtrimmarkssetup`.
     - Extended `bleed_margin`．
-
+- 2020-05-01
+    - `jlreq-trimmarks` outputs the contents in `\@bannertoken` when `banner` in `\jlreqtrimmarkssetup` is not used.
+    - `\@bannertoken` is ignored when `banner` in `\jlreqtrimmarkssetup` is used.
+    - `\@bannerfont` is ignored when `banner_font` in `\jlreqtrimmarkssetup` is used.
 
 --------------
 Noriyuki Abe

@@ -124,6 +124,9 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Removed the redefinitions `\rmfamily` etc and added a code to `\@rmfamilyhook`.
     - Changed `\parskip` to `0pt`.
     - Fixed bugs.
+* 2020-05-01
+    - Added `theorem_label_font` and `theorem_font` to `\jlreqsetup`.
+    - Fixed bugs.
 
 --------------
 Noriyuki Abe

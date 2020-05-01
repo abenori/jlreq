@@ -157,7 +157,10 @@ dviドライバの指定です．エンジンに`lualatex`を利用する場合�
 * 2019-04-01
     - `\jlreqtrimmarkssetup`内の`banner`を更に拡張．
     - `bleed_margin`を拡張．
-
+* 2020-05-01
+    - `\jlreqtrimmarkssetup`の`banner`を使わない場合，`\@bannertoken`の中身を偶奇ページ両方に出力するようにした．
+    - `\jlreqtrimmarkssetup`の`banner`を使う場合，`\@bannertoken`の中身を無視するようにした．
+    - `\jlreqtrimmarkssetup`の`banner_font`が指定された場合，`\@bannerfont`を無視するようにした．
 
 --------------
 Noriyuki Abe

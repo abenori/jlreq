@@ -476,6 +476,9 @@ JFMの名前は次の通りです．`[]`で囲まれている文字は設定に�
     - `\rmfamily`などの再定義をやめ，`\@rmfamilyhook`などにコードを挿入することにした．
     - `\parskip`を`0pt`に変更．
     - バグ修正．
+* 2020-05-01
+    - `\jlreqsetup`に`theorem_label_font`と`theorem_font`を追加．
+    - バグ修正．
 
 --------------
 Noriyuki Abe

@@ -2256,7 +2256,7 @@
     \def\jlreq@do{}% 初期化．これに最終処理を入れていく．
     % 入力チェック
     \ifthenelse{\equal{\jlreq@column@spanning}{true}}{%
-      \jlreq@if{\ifjlreq@column@spanning@possible\else\fi}{
+      \jlreq@if{\unless\ifjlreq@column@spanning@possible\fi}{
         \ClassWarningNoLine{jlreq}{column_spanning can be used only with `pagebreak=nariyuki' or `pagebreak=clearcolumn' (in BlockHeading #1)}%
         \def\jlreq@column@spanning{false}%
       }{}%
@@ -4041,7 +4041,7 @@
   }%
 }
 \def\jlreq@pagestyle@make@runninghead@#1#2#3#4#5{%
-  \jlreq@if{\ifnum\numexpr\jlreq@ifendmark{#5\fi}{1}{0}*\ifjlreq@tempa 1\else 0\fi\relax=1 \fi}{%
+  \jlreq@if{\ifnum\numexpr\jlreq@ifendmark{#5}{1}{0}*\ifjlreq@tempa 1\else 0\fi\relax=1 \fi}{%
     % 項目が一つしか無い
     \jlreq@ifempty{#2}{\csappto}{\cspreto}{#1}{#4}%
   }{%

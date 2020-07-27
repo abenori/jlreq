@@ -44,6 +44,10 @@
     {\csname jlreq@original@\expandafter\@gobble\string#1\endcsname}%
     {#1}%
 }
+\def\jlreq@restoreoriginalcs#1{%
+  \jlreq@if{\ifcsname jlreq@original@\expandafter\@gobble\string#1\endcsname\fi}%
+    {\expandafter\let\expandafter#1\csname jlreq@original@\expandafter\@gobble\string#1\endcsname}{}%
+}
 
 %. オプションの定義
 % オプション処理の際にしか使わない変数（後でそれを元に別の変数を調整する）
@@ -3139,14 +3143,42 @@
 % \footnoteと\footnotemarkの前後に\jlreq@hook@prenote/\jlreq@hook@postnoteを入れる
 \jlreq@saveoriginalcs{\footnote}
 \jlreq@saveoriginalcs{\footnotemark}
+\long\def\jlreq@footnotetext@for@footnote[#1]#2{%
+  \def\jlreq@result{\footnotetext[#1]{#2}}%
+}
 \def\footnote{%
+  \jlreq@footnote{\footnote}{\footnotemark}{\jlreq@footnotetext@for@footnote}%
+}
+\def\jlreq@footnote#1#2#3{%
   \jlreq@hook@prenote
-  \@ifnextchar[{\jlreq@footnote@impl@woption}{\jlreq@footnote@impl@wooption}%
+  \@ifnextchar[{\jlreq@footnote@impl@woption{#1}{#2}{#3}}{\jlreq@footnote@impl@wooption{#1}{#2}{#3}}%
 }
 \def\footnotemark{%
   \jlreq@hook@prenote
   \@ifnextchar[{\jlreq@footnotemark@impl@woption}{\jlreq@footnotemark@impl@wooption}%
 }
+\long\def\jlreq@footnotemark@impl@woption[#1]{%
+  \jlreq@useoriginalcs{\footnotemark}[#1]%
+  \jlreq@hook@postnote
+}
+\long\def\jlreq@footnotemark@impl@wooption{%
+  \jlreq@useoriginalcs{\footnotemark}%
+  \jlreq@hook@postnote
+}
+\def\jlreq@restore@original@footnotes{%
+  \let\jlreq@temporary@saved@footnote=\footnote
+  \let\jlreq@temporary@saved@footnotemark=\footnotemark
+  \let\jlreq@temporary@saved@footnotetext=\footnotetext
+  \jlreq@restoreoriginalcs{\footnote}%
+  \jlreq@restoreoriginalcs{\footnotemark}%
+  \jlreq@restoreoriginalcs{\footnotetext}%
+}
+\def\jlreq@restore@jlreq@footnotes{%
+  \let\footnote=\jlreq@temporary@saved@footnote
+  \let\footnotemark=\jlreq@temporary@saved@footnotemark
+  \let\footnotetext=\jlreq@temporary@saved@footnotetext
+}
+
 \ifthenelse{\boolean{@tate} \AND \(\boolean{@twoside} \OR \boolean{@twocolumn}\)}{
   % 縦組の傍注は，その見開き内に付いている合印に対応する注を，奇数ページの左端にそろえて配置する．多段組では最下段の左端にそろえて配置する．（4.2.6.a）
   % 必要ならば\footnoteを\footnotemarkと\footnotetextにわけ，\footnotetextをアウトプット時まで遅延することで実現する．
@@ -3156,7 +3188,7 @@
     \jlreq@footnote@delayfootnoteslist
   }
   \preto\@opcol{\jlreq@hook@@opcol}
-  % \jlreq@footnote@delayfootnote@delay#1#2#3：#1ページ目に\footnotetext[#2]{#3}を出す
+  % \jlreq@footnote@delayfootnote@delay#1#2：#1ページ目に#2を出す
   % \jlreq@footnote@delayfootnote@page：何ページ目に\footnotetextを入れるかを\jlreq@resultcntに入れる．その場での場合は-1．
   \if@twocolumn
     \if@twoside
@@ -3173,88 +3205,99 @@
         \ifnum\jlreq@resultcnt=\value{page}\if@firstcolumn\else\jlreq@resultcnt=-1 \fi\fi
       }
     \fi
-    \long\def\jlreq@footnote@delayfootnote@delay#1#2#3{%
+    \long\def\jlreq@footnote@delayfootnote@delay#1#2{%
       % 二段組みの場合は上段を組んだ直後に\footnotetextを挿入（そのページの下段に入る）
-      \ifnum 0\if@firstcolumn\else 1\fi\ifnum#1>\value{page}1\fi>0
-        \xappto\jlreq@footnote@delayfootnoteslist{\unexpanded{\jlreq@footnote@delayfootnote{#1}{#2}{#3}}}%
-      \else
-        \footnotetext[#2]{#3}%
-      \fi
+      \jlreq@if{\ifnum 0\if@firstcolumn\else 1\fi\ifnum#1>\value{page}1\fi>0 \fi}{%
+        \xappto\jlreq@footnote@delayfootnoteslist{\unexpanded{\jlreq@footnote@delayfootnote{#1}{#2}}}%
+      }{#2}%
     }
   \else
     \def\jlreq@footnote@delayfootnote@page{%
       \jlreq@setcurrentpage
-      \ifodd\jlreq@currentpage
+      \jlreq@if{\ifodd\jlreq@currentpage\relax\fi}{%
         \jlreq@resultcnt=-1
-      \else
+      }{%
         \jlreq@resultcnt=\numexpr\jlreq@currentpage+1\relax
-      \fi
+      }%
     }
-    \long\def\jlreq@footnote@delayfootnote@delay#1#2#3{%
+    \long\def\jlreq@footnote@delayfootnote@delay#1#2{%
       % 一段組の場合はその前のページを組んだ直後に\footnotetextを挿入．
-      \ifnum\numexpr#1 - 1\relax>\value{page}%
-        \xappto\jlreq@footnote@delayfootnoteslist{\unexpanded{\jlreq@footnote@delayfootnote{#1}{#2}{#3}}}%
-      \else
-        \footnotetext[#2]{#3}%
-      \fi
+      \jlreq@if{\ifnum\numexpr#1 - 1\relax>\value{page} \fi}{%
+        \xappto\jlreq@footnote@delayfootnoteslist{\unexpanded{\jlreq@footnote@delayfootnote{#1}{#2}}}%
+      }{#2}%
     }
   \fi
-  \def\jlreq@footnote@delayfootnote@immediate#1#2#3{%
-    \ifnum #1<\jlreq@currentpage
-      \xappto\jlreq@footnote@delayfootnoteslist{\unexpanded{\jlreq@footnote@delayfootnote{#1}{#2}{#3}}}%
-    \else
-      \footnotetext[#2]{#3}%
-    \fi
+  \def\jlreq@footnote@delayfootnote@immediate#1#2{%
+    \jlreq@if{\ifnum #1<\jlreq@currentpage\relax\fi}{%
+      \xappto\jlreq@footnote@delayfootnoteslist{\unexpanded{\jlreq@footnote@delayfootnote{#1}{#2}}}%
+    }{#2}%
   }
   \let\jlreq@footnote@delayfootnote=\jlreq@footnote@delayfootnote@delay
   \def\jlreq@footnote@flushdelayfootnoteslist{%
-    \ifx\jlreq@footnote@delayfootnoteslist\@empty\else
+    \jlreq@if{\ifx\jlreq@footnote@delayfootnoteslist\@empty\fi}{}{%
       \let\jlreq@footnote@delayfootnote=\jlreq@footnote@delayfootnote@immediate
       \jlreq@setcurrentpage
       \expandafter\gdef\expandafter\jlreq@footnote@delayfootnoteslist\expandafter{\expandafter}%
       \jlreq@footnote@delayfootnoteslist
       \let\jlreq@footnote@delayfootnote=\jlreq@footnote@delayfootnote@delay
-    \fi
+    }%
   }
   \AtEndDocument{\jlreq@footnote@flushdelayfootnoteslist}
   \preto\newpage{\jlreq@footnote@flushdelayfootnoteslist}
-  \long\def\jlreq@footnote@impl@woption[#1]#2{%
+  \long\def\jlreq@footnote@impl@woption#1#2#3[#4]#5{%
     \jlreq@footnote@delayfootnote@page
-    \ifnum\jlreq@resultcnt=-1
-      \jlreq@useoriginalcs{\footnote}[#1]{#2}%
-    \else
-      \jlreq@useoriginalcs{\footnotemark}[#1]%
-      \xappto\jlreq@footnote@delayfootnoteslist{\noexpand\jlreq@footnote@delayfootnote{\the\jlreq@resultcnt}{\unexpanded{#1}}{\unexpanded{#2}}}%
-    \fi
+    \begingroup
+      \edef\jlreq@do{\unexpanded{%
+        \jlreq@restore@original@footnotes
+        \def\jlreq@result{}#2[#4]\jlreq@result
+        \def\jlreq@result{}#3[#4]{#5}%
+        \jlreq@restore@jlreq@footnotes}%
+        \jlreq@if{\ifnum\jlreq@resultcnt=-1 \fi}{\noexpand\jlreq@result}{\unexpanded{%
+          \xappto\jlreq@footnote@delayfootnoteslist{%
+            \noexpand\jlreq@footnote@delayfootnote{\the\jlreq@resultcnt}{%
+              \noexpand\jlreq@restore@original@footnotes
+              \expandonce{\jlreq@result}%
+              \noexpand\jlreq@restore@jlreq@footnotes
+            }%
+          }%
+        }}%
+      }%
+    \expandafter\endgroup\jlreq@do
     \jlreq@hook@postnote
   }
-  \long\def\jlreq@footnote@impl@wooption#1{%
+  \long\def\jlreq@footnote@impl@wooption#1#2#3#4{%
     \jlreq@footnote@delayfootnote@page
-    \ifnum\jlreq@resultcnt=-1
-      \jlreq@useoriginalcs{\footnote}{#1}%
-    \else
-      \jlreq@useoriginalcs{\footnotemark}%
-      \xappto\jlreq@footnote@delayfootnoteslist{\noexpand\jlreq@footnote@delayfootnote{\the\jlreq@resultcnt}{\the\value{footnote}}{\unexpanded{#1}}}%
-    \fi
+    \begingroup
+      \stepcounter{footnote}%
+      \edef\jlreq@do{%
+        \unexpanded{\def\jlreq@result{}#2}[\the\value{footnote}]\noexpand\jlreq@result
+        \unexpanded{\def\jlreq@result{}#3}[\the\value{footnote}]\unexpanded{{#4}}%
+        \jlreq@if{\ifnum\jlreq@resultcnt=-1 \fi}{\noexpand\jlreq@result}{\unexpanded{%
+          \xappto\jlreq@footnote@delayfootnoteslist{%
+            \noexpand\jlreq@footnote@delayfootnote{\the\jlreq@resultcnt}{%
+              \noexpand\jlreq@restore@original@footnotes
+              \expandonce{\jlreq@result}%
+              \noexpand\jlreq@restore@jlreq@footnotes
+            }%
+          }%
+        }}%
+      }%
+    \expandafter\endgroup\jlreq@do
     \jlreq@hook@postnote
   }
 }{
-  \long\def\jlreq@footnote@impl@woption[#1]#2{%
-    \jlreq@useoriginalcs{\footnote}[#1]{#2}%
+  \long\def\jlreq@footnote@impl@woption#1#2#3[#4]#5{%
+    \jlreq@restore@original@footnotes
+    #1[#4]{#5}%
+    \jlreq@restore@jlreq@footnotes
     \jlreq@hook@postnote
   }
-  \long\def\jlreq@footnote@impl@wooption#1{%
-    \jlreq@useoriginalcs{\footnote}{#1}%
+  \long\def\jlreq@footnote@impl@wooption#1#2#3#4{%
+    \jlreq@restore@original@footnotes
+    #1{#4}%
+    \jlreq@restore@jlreq@footnotes
     \jlreq@hook@postnote
   }
-}
-\long\def\jlreq@footnotemark@impl@woption[#1]{%
-  \jlreq@useoriginalcs{\footnotemark}[#1]%
-  \jlreq@hook@postnote
-}
-\long\def\jlreq@footnotemark@impl@wooption{%
-  \jlreq@useoriginalcs{\footnotemark}%
-  \jlreq@hook@postnote
 }
 
 % 合印

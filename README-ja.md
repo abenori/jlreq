@@ -1,7 +1,7 @@
 # jlreq
 
 ## これは何？
-[日本語組版処理の要件](https://www.w3.org/TR/jlreq/ja/)の実装を試みる[LuaTeX-ja](https://osdn.jp/projects/luatex-ja/wiki/FrontPage) / pLaTeX / upLaTeX用のクラスファイルと，それに必要なJFMの組み合わせです．
+[日本語組版処理の要件](https://www.w3.org/TR/jlreq/?lang=ja)の実装を試みる[LuaTeX-ja](https://osdn.jp/projects/luatex-ja/wiki/FrontPage) / pLaTeX / upLaTeX用のクラスファイルと，それに必要なJFMの組み合わせです．
 
 ## 提供されるもの
 クラスファイルjlreq.clsと，横書きLuaTeX-ja用のJFMであるjfm-jlreq.luaが用意されています．また，縦書きのJFMやpLaTeX / upLaTeX用のJFMを生成するいくつかのスクリプトがあります．
@@ -38,7 +38,7 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
 
 その他，`oneside / twoside / onecolumn / twocolumn / titlepage / notitlepage / draft / final / openright / openany / leqno / fleqn`というよくあるオプションを受け付けます．
 
-標準的な文書クラスと同じように中身を書くことができますが，次のような命令が追加 / 拡張されています．なお，本ドキュメントでは[日本語組版処理の要件](https://www.w3.org/TR/jlreq/ja/)における用語を断りなく使います．
+標準的な文書クラスと同じように中身を書くことができますが，次のような命令が追加 / 拡張されています．なお，本ドキュメントでは[日本語組版処理の要件](https://www.w3.org/TR/jlreq/?lang=ja)における用語を断りなく使います．
 
 ### `\jlreqsetup`
 設定用命令です．プリアンブルでしか使えません．文書に対する設定は，クラスオプションとして行うか`\jlreqsetup`を通じて行うかします．どちらで設定するかは設定項目によります．

@@ -1181,18 +1181,7 @@
 \newcommand{\huge}{\@setfontsize\huge{2\jlreq@fontsize}{\dimexpr 28\jlreq@baselineskip/17\relax}}
 \newcommand{\Huge}{\@setfontsize\Huge{\dimexpr 25\jlreq@fontsize/10\relax}{\dimexpr 33\jlreq@baselineskip/17\relax}}
 
-%. plextから一部拝借
-% オプションも*もない\rensuji（コピペ）
-\DeclareRobustCommand{\jlreq@rensuji}[1]{%
-  \ifvmode\leavevmode\fi
-  \jlreq@ifydir{\hbox{#1}}{%
-    \hskip 0pt plus 0.25\jlreq@zw minus 0pt % \rensujiskipは固定値
-    \setbox\jlreq@tempboxa=\hbox{\yoko#1}%
-    \@tempdima=\dimexpr\ht\jlreq@tempboxa+\dp\jlreq@tempboxa\relax
-    \vrule\@width\z@ \@height.5\@tempdima \@depth.5\@tempdima
-    \hbox to 1\jlreq@zw{\yoko\hss#1\hss}%
-    \hskip 0pt plus 0.25\jlreq@zw minus 0pt
-}}
+%. plextから拝借
 \def\jlreq@Kanji#1{\expandafter\kansuji\csname c@#1\endcsname}
 
 % このあたりはtarticleと同じ
@@ -3306,7 +3295,7 @@
 }
 % 4.2.2注3
 \if@tate
-  \renewcommand*{\thefootnote}{\jlreq@open@bracket@before@space\inhibitglue（\jlreq@rensuji{\@arabic\c@footnote}）\inhibitglue}
+  \renewcommand*{\thefootnote}{\jlreq@open@bracket@before@space\inhibitglue（\tatechuyoko{\@arabic\c@footnote}）\inhibitglue}
 \else
   \renewcommand*{\thefootnote}{\arabic{footnote}\hbox{}）\inhibitglue}
 \fi
@@ -5166,7 +5155,7 @@
   \protected@write\@auxout{%
     \let\label\@gobble\let\index\@gobble\let\glossary\@gobble
     \if@tate
-      \@temptokena{\jlreq@rensuji{\thepage}}%
+      \@temptokena{\tatechuyoko{\thepage}}%
     \else
       \@temptokena{\thepage}%
     \fi
@@ -5590,9 +5579,12 @@
     \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{阿}%
     \jlreq@ifgluezero\jlreq@resultskip{}{\hskip\jlreq@resultskip}%
   \fi
-  \hbox{\yoko 
-    \setbox\jlreq@tempboxa=\hbox{阿}%
-    \vrule width 0pt height \ht\jlreq@tempboxa depth \dp\jlreq@tempboxa #1}%
+  \hbox{\yoko
+    \begingroup
+      \setbox\jlreq@tempboxa=\hbox{阿}%
+      \vrule width 0pt height \ht\jlreq@tempboxa depth \dp\jlreq@tempboxa
+    \endgroup
+    #1}%
   \futurelet\jlreq@nextchar\jlreq@tatechuyoko@
 }
 \def\jlreq@tatechuyoko@{%
@@ -5719,11 +5711,11 @@
 \if@tate
   \renewcommand{\thepart}{\jlreq@Kanji{part}}
   \ifthenelse{\equal{\jlreq@article@type}{article}}{}{\renewcommand{\thechapter}{\jlreq@Kanji{chapter}}}
-  \renewcommand{\thesection}{\jlreq@rensuji{\@arabic\c@section}}
-  \renewcommand{\thesubsection}{\jlreq@rensuji{\@alph\c@subsection}}
-  \renewcommand{\thesubsubsection}{\jlreq@rensuji{\@arabic\c@subsubsection}}
-  \renewcommand{\theparagraph}{(\jlreq@rensuji{\@arabic\c@paragraph})}
-  \renewcommand{\thesubparagraph}{(\jlreq@rensuji{\@arabic\c@subparagraph})}
+  \renewcommand{\thesection}{\tatechuyoko{\@arabic\c@section}}
+  \renewcommand{\thesubsection}{\tatechuyoko{\@alph\c@subsection}}
+  \renewcommand{\thesubsubsection}{\tatechuyoko{\@arabic\c@subsubsection}}
+  \renewcommand{\theparagraph}{(\tatechuyoko{\@arabic\c@paragraph})}
+  \renewcommand{\thesubparagraph}{(\tatechuyoko{\@arabic\c@subparagraph})}
 
   \ifthenelse{\equal{\jlreq@article@type}{article}}{
     \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE}},indent=4\jlreq@zw,lines=4,after_label_space=1\jlreq@zw,second_heading_text_indent={-1\jlreq@zw,1\jlreq@zw},subtitle_font={\jlreq@keepbaselineskip{\large}}}
@@ -5848,9 +5840,9 @@
 %.. 箇条書き
 \if@tate
   \renewcommand{\theenumi}{\jlreq@Kanji{enumi}}
-  \renewcommand{\theenumii}{\jlreq@rensuji{\@arabic\c@enumii}}
-  \renewcommand{\theenumiii}{\jlreq@rensuji{\@arabic\c@enumiii}}
-  \renewcommand{\theenumiv}{\jlreq@rensuji{\@arabic\c@enumiv}}
+  \renewcommand{\theenumii}{\tatechuyoko{\@arabic\c@enumii}}
+  \renewcommand{\theenumiii}{\tatechuyoko{\@arabic\c@enumiii}}
+  \renewcommand{\theenumiv}{\tatechuyoko{\@arabic\c@enumiv}}
   \newcommand{\labelenumi}{\theenumi}
   \newcommand{\labelenumii}{\theenumii}
   \newcommand{\labelenumiii}{\theenumiii}
@@ -5954,7 +5946,7 @@
   \if@tate
     \jlreqsetup{
       appendix_counter = {
-        section = {value = 0, the = {\jlreq@rensuji{\Alph{section}}}},
+        section = {value = 0, the = {\tatechuyoko{\Alph{section}}}},
         subsection = {value = 0},
       }
     }
@@ -5971,7 +5963,7 @@
   \if@tate
     \jlreqsetup{
       appendix_counter = {
-        chapter = {value = 0, the = {\jlreq@rensuji{\Alph{chapter}}}},
+        chapter = {value = 0, the = {\tatechuyoko{\Alph{chapter}}}},
       }
     }
  \else

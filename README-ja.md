@@ -70,7 +70,7 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
 です．`&`が省略されている場合は自動で調整されます．
 
 ### `\tatechuyoko`
-縦中横を出力します．`\tatechuyoko{<文字列>}`とします．縦書きでない場所で使うとエラーになります．
+縦中横を出力します．`\tatechuyoko{<中身>}`とします．`\tatechuyoko`は縦書きでない場所で使うとエラーになりますが，`\tatechuyoko*`は縦書きでない場所ではそのまま出力されます．
 
 ### `\jafontsize`
 和文フォントサイズを指定する`\fontsize`です．クラスオプションで`jafontscale=0.9`とされている場合，`\fontsize{9pt}{15pt}`とすると和文フォントのサイズは`8.1pt`となりますが，`\jafontsize{9pt}{15pt}`とすると`9pt`となります．（欧文フォントサイズは`10pt`となる．）なお，第二引数は`\fontsize`の第二引数と全く同じです．
@@ -479,6 +479,10 @@ JFMの名前は次の通りです．`[]`で囲まれている文字は設定に�
 * 2020-05-01
     - `\jlreqsetup`に`theorem_label_font`と`theorem_font`を追加．
     - バグ修正．
+* 2020-09-27
+    - `\tatechuyoko`の`*`版を追加．
+    - バグ修正
+
 
 --------------
 Noriyuki Abe

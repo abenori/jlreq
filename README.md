@@ -1,7 +1,7 @@
 # jlreq
 
 ## What is this?
-This package provides the class file and JFM (Japanese font metric) files for LuaTeX-ja / pLaTeX / upLaTeX. This aims to implement [Requirements for Japanese Text Layout](https://www.w3.org/TR/jlreq/).
+This package provides the class file and JFM (Japanese font metric) files for LuaTeX-ja / pLaTeX / upLaTeX. This aims to implement [Requirements for Japanese Text Layout](https://www.w3.org/TR/jlreq/?lang=en).
 
 ## Installation
 Run `make` to generate JFM files. Move the files as follows:
@@ -127,6 +127,10 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
 * 2020-05-01
     - Added `theorem_label_font` and `theorem_font` to `\jlreqsetup`.
     - Fixed bugs.
+* 2020-09-27
+    - Added `*`-version of `\tatechuyoko`.
+    - Fixed bugs.
+
 
 --------------
 Noriyuki Abe

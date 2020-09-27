@@ -6,7 +6,7 @@
 % (based on JLReq 20120403 https://www.w3.org/TR/2012/NOTE-jlreq-20120403/ja/)
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{jlreq}[2020/05/01 jlreq]
-\RequirePackage{xkeyval,everyhook,filehook,etoolbox,ifthen}
+\RequirePackage{xkeyval,everyhook,etoolbox,ifthen,filehook}
 \RequirePackage{jlreq-helpers}
 
 \newcommand*{\jlreq@undeferr}[1]{\ClassError{jlreq}{Trying to delete \string#1 even though it is not defined, may be a bug}{\@ehc}}
@@ -3295,7 +3295,7 @@
 }
 % 4.2.2注3
 \if@tate
-  \renewcommand*{\thefootnote}{\jlreq@open@bracket@before@space\inhibitglue（\tatechuyoko{\@arabic\c@footnote}）\inhibitglue}
+  \renewcommand*{\thefootnote}{\jlreq@open@bracket@before@space\inhibitglue（\tatechuyoko*{\@arabic\c@footnote}）\inhibitglue}
 \else
   \renewcommand*{\thefootnote}{\arabic{footnote}\hbox{}）\inhibitglue}
 \fi
@@ -5558,11 +5558,17 @@
 
 %. その他諸々
 %.. 縦中横
-\edef\@tempa{%
-  \unexpanded{%
-    \jlreq@ifydir{\ClassError{jlreq}{\string\tatechuyoko\space is not allowed in yoko mode}{\@ehc}}{}%
-    \ifvmode\leavevmode\fi
+\protected\def\tatechuyoko{\@ifstar
+  {\jlreq@tatechuyoko@i}%
+  {%
+    \jlreq@iftdir{}{\ClassError{jlreq}{\string\tatechuyoko\space is not allowed in yoko mode}{\@ehc}}%
+    \jlreq@tatechuyoko@ii
   }%
+}
+\def\jlreq@tatechuyoko@i#1{\jlreq@iftdir{\jlreq@tatechuyoko@ii{#1}}{#1}}
+
+\edef\@tempa{%
+  \unexpanded{\ifvmode\leavevmode\fi}%
   \ifx l\jlreq@engine\unexpanded{%
     \jlreq@lastnodechar=\lastnodechar\relax
     \ifnum\jlreq@lastnodechar>-1 \inhibitglue\fi
@@ -5572,7 +5578,7 @@
   }\fi
 }
 
-\expandafter\protected\expandafter\def\expandafter\tatechuyoko\expandafter#\expandafter1\expandafter{%
+\expandafter\def\expandafter\jlreq@tatechuyoko@ii\expandafter#\expandafter1\expandafter{%
   \@tempa
   % 前のJFM glue
   \ifnum\jlreq@lastnodechar>-1
@@ -5585,9 +5591,9 @@
       \vrule width 0pt height \ht\jlreq@tempboxa depth \dp\jlreq@tempboxa
     \endgroup
     #1}%
-  \futurelet\jlreq@nextchar\jlreq@tatechuyoko@
+  \futurelet\jlreq@nextchar\jlreq@tatechuyoko@iii
 }
-\def\jlreq@tatechuyoko@{%
+\def\jlreq@tatechuyoko@iii{%
   \begingroup
     \def\jlreq@do{}%
     \jlreq@getfirsttoken@expandmacros{\jlreq@nextchar}{\jlreq@tempa}%
@@ -5711,11 +5717,11 @@
 \if@tate
   \renewcommand{\thepart}{\jlreq@Kanji{part}}
   \ifthenelse{\equal{\jlreq@article@type}{article}}{}{\renewcommand{\thechapter}{\jlreq@Kanji{chapter}}}
-  \renewcommand{\thesection}{\tatechuyoko{\@arabic\c@section}}
-  \renewcommand{\thesubsection}{\tatechuyoko{\@alph\c@subsection}}
-  \renewcommand{\thesubsubsection}{\tatechuyoko{\@arabic\c@subsubsection}}
-  \renewcommand{\theparagraph}{(\tatechuyoko{\@arabic\c@paragraph})}
-  \renewcommand{\thesubparagraph}{(\tatechuyoko{\@arabic\c@subparagraph})}
+  \renewcommand{\thesection}{\tatechuyoko*{\@arabic\c@section}}
+  \renewcommand{\thesubsection}{\tatechuyoko*{\@alph\c@subsection}}
+  \renewcommand{\thesubsubsection}{\tatechuyoko*{\@arabic\c@subsubsection}}
+  \renewcommand{\theparagraph}{(\tatechuyoko*{\@arabic\c@paragraph})}
+  \renewcommand{\thesubparagraph}{(\tatechuyoko*{\@arabic\c@subparagraph})}
 
   \ifthenelse{\equal{\jlreq@article@type}{article}}{
     \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE}},indent=4\jlreq@zw,lines=4,after_label_space=1\jlreq@zw,second_heading_text_indent={-1\jlreq@zw,1\jlreq@zw},subtitle_font={\jlreq@keepbaselineskip{\large}}}
@@ -5840,9 +5846,9 @@
 %.. 箇条書き
 \if@tate
   \renewcommand{\theenumi}{\jlreq@Kanji{enumi}}
-  \renewcommand{\theenumii}{\tatechuyoko{\@arabic\c@enumii}}
-  \renewcommand{\theenumiii}{\tatechuyoko{\@arabic\c@enumiii}}
-  \renewcommand{\theenumiv}{\tatechuyoko{\@arabic\c@enumiv}}
+  \renewcommand{\theenumii}{\tatechuyoko*{\@arabic\c@enumii}}
+  \renewcommand{\theenumiii}{\tatechuyoko*{\@arabic\c@enumiii}}
+  \renewcommand{\theenumiv}{\tatechuyoko*{\@arabic\c@enumiv}}
   \newcommand{\labelenumi}{\theenumi}
   \newcommand{\labelenumii}{\theenumii}
   \newcommand{\labelenumiii}{\theenumiii}
@@ -5946,7 +5952,7 @@
   \if@tate
     \jlreqsetup{
       appendix_counter = {
-        section = {value = 0, the = {\tatechuyoko{\Alph{section}}}},
+        section = {value = 0, the = {\tatechuyoko*{\Alph{section}}}},
         subsection = {value = 0},
       }
     }
@@ -5963,7 +5969,7 @@
   \if@tate
     \jlreqsetup{
       appendix_counter = {
-        chapter = {value = 0, the = {\tatechuyoko{\Alph{chapter}}}},
+        chapter = {value = 0, the = {\tatechuyoko*{\Alph{chapter}}}},
       }
     }
  \else

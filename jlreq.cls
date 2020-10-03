@@ -6,7 +6,7 @@
 % (based on JLReq 20120403 https://www.w3.org/TR/2012/NOTE-jlreq-20120403/ja/)
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{jlreq}[2020/09/27 jlreq]
-\RequirePackage{xkeyval,everyhook,etoolbox,ifthen,filehook}
+\RequirePackage{xkeyval,everyhook,etoolbox,ifthen}
 \RequirePackage{jlreq-helpers}
 
 \newcommand*{\jlreq@undeferr}[1]{\ClassError{jlreq}{Trying to delete \string#1 even though it is not defined, may be a bug}{\@ehc}}
@@ -1553,10 +1553,9 @@
 % デフォルトでは\<命令名>markと\addcontentslineが必要ならば呼ばれる．
 
 % 見出しの直前に実行される
-\newcommand*{\jlreq@hook@beforeheadings}[1]{}
+\NewHook{./heading/before}
 % 見出し名一覧を格納する
 \def\jlreq@heading@allheadings{}
-
 % 目次を出力する命令\l@<命令名>を作る命令を作る．{1 = 命令名}{2 = レベル}{3 = ラベルのフォーマット}
 % 結果は\jlreq@resultに入る．
 \def\jlreq@heading@make@l@#1#2#3{%
@@ -1609,6 +1608,7 @@
 %.. 中/半扉見出し
 % addcontentslineに渡すやつ：番号出すのと出さないの
 \newcommand{\DeclareTobiraHeading}[3]{%
+  \IfHookExistsTF{./heading/before/#1}{}{\NewHook{./heading/before/#1}}%
   \def\jlreq@do{\@removeelement{#1}}%
   \expandafter\jlreq@do\expandafter{\jlreq@heading@allheadings}{\jlreq@heading@allheadings}%
   \appto{\jlreq@heading@allheadings}{,#1}%
@@ -1690,7 +1690,11 @@
         \unexpanded{\if@twocolumn\onecolumn\@restonecoltrue\else\@restonecolfalse\fi\cleartooddpage[empty]}%
         \ifx\jlreq@pagestyle\@empty\else\noexpand\thispagestyle{\expandonce{\jlreq@pagestyle}}\fi
         \noexpand\secdef{\expandonce{\csname jlreq@TobiraHeading@start@#1\endcsname}}{\expandonce{\csname jlreq@TobiraHeading@start@s@#1\endcsname}}}%
-      \noexpand\def\expandonce{\csname #1\endcsname}{\expandonce{\csname jlreq@headingcs@#1\endcsname}}%
+      \noexpand\def\expandonce{\csname #1\endcsname}{%
+        \noexpand\UseHook{jlreq/heading/before}%
+        \noexpand\UseHook{jlreq/heading/before/#1}%
+        \expandonce{\csname jlreq@headingcs@#1\endcsname}%
+      }%
     }%
   \expandafter\endgroup
   \jlreq@do
@@ -2118,6 +2122,7 @@
 % \DeclareBlockHeading{命令名}{レベル}{設定}
 \def\jlreq@BlockHeading@allheadings{}% 別行見出し一覧
 \newcommand{\DeclareBlockHeading}[3]{%
+  \IfHookExistsTF{./heading/before/#1}{}{\NewHook{./heading/before/#1}}%
   \def\jlreq@do{\@removeelement{#1}}%
   \expandafter\jlreq@do\expandafter{\jlreq@heading@allheadings}{\jlreq@heading@allheadings}%
   \appto\jlreq@heading@allheadings{,#1}%
@@ -2360,7 +2365,8 @@
     \edef\jlreq@do{%
       \expandonce{\jlreq@do}%
       \noexpand\edef\expandonce{\csname jlreq@headingcs@#1\endcsname}{\noexpand\unexpanded{%
-        \noexpand\jlreq@hook@beforeheadings{#1}%
+        \noexpand\UseHook{jlreq/heading/before}%
+        \noexpand\UseHook{jlreq/heading/before/#1}%
         \expandonce{\jlreq@pagebreak}%
         \unexpanded{\jlreq@BlockHeading@start{#1}{#2}}%
         {{\expandonce{\jlreq@align}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@end@indent}}\expandonce{\jlreq@spaceset}{\expandonce{\jlreq@allowbreak@evenpage}}}%
@@ -2729,6 +2735,7 @@
 
 % \DeclareRuninHeading{命令名}{レベル}{設定}
 \newcommand*{\DeclareRuninHeading}[3]{%
+  \IfHookExistsTF{./heading/before/#1}{}{\NewHook{./heading/before/#1}}%
   \def\jlreq@do{\@removeelement{#1}}%
   \expandafter\jlreq@do\expandafter{\jlreq@heading@allheadings}{\jlreq@heading@allheadings}%
   \appto\jlreq@heading@allheadings{,#1}%
@@ -2787,7 +2794,8 @@
       % パラメータトークンを含むので，\edefして\unexpandedで包む
       \noexpand\edef\expandonce{\csname #1\endcsname}{%
         \noexpand\unexpanded{%
-          \unexpanded{\jlreq@hook@beforeheadings{#1}}%
+          \noexpand\UseHook{jlreq/heading/before}%
+          \noexpand\UseHook{jlreq/heading/before/#1}%
           \unexpanded{\jlreq@RuninHeading@start{#1}{#2}}{\ifjlreq@number\else -\fi}{\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@format@wlabel}}{\expandonce{\jlreq@format@wolabel}}%
         }%
       }%
@@ -2876,6 +2884,7 @@
 }
 
 \newcommand*{\DeclareCutinHeading}[3]{%
+  \IfHookExistsTF{./heading/before/#1}{}{\NewHook{./heading/before/#1}}%
   \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}%
   \expandafter\def\csname jlreq@heading@setting@#1\endcsname{#3}%
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewCutinHeading}%
@@ -2897,6 +2906,8 @@
     }{}%
     \edef\jlreq@do{%
       \noexpand\def\expandonce{\csname #1\endcsname}{%
+        \noexpand\UseHook{jlreq/heading/before}%
+        \noexpand\UseHook{jlreq/heading/before/#1}%
         \noexpand\jlreq@CutinHeading@start{#1}{\expandonce{\jlreq@fontcommand}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@onelinemax}}{\expandonce{\jlreq@twolinemax}}%
       }%
     }%
@@ -3403,10 +3414,8 @@
 \let\@makeendmark=\@makefnmark
 
 % \theendnoteの出力を仕込む
-\apptocmd{\jlreq@hook@beforeheadings}{\jlreq@endnote@hook@beforeheadings{#1}}{}{}
-
 \jlreq@jlreqsetup@add{endnote_position}{
-  \def\jlreq@endnote@hook@beforeheadings##1{}
+  \RemoveFromHook{./heading/before}[./endnote]
   \jlreq@tempafalse % headingsが指定された
   \jlreq@tempbfalse % paragraphが指定された
   % \jlreq@tempcにセクション名たちを入れていく
@@ -3436,17 +3445,12 @@
   \fi
 
   \ifjlreq@tempa
-    \apptocmd{\jlreq@endnote@hook@beforeheadings}{\theendnotes}{}{}
+    \AddToHook{./heading/before}[./endnote]{\theendnotes}
   \else
     \@for\@tempa:=\jlreq@tempc\do{
       \ifx\@tempa\@empty\else
-        \edef\jlreq@do{%
-          \unexpanded{\def\jlreq@endnote@hook@beforeheadings##1}{\expandonce{\jlreq@endnote@hook@beforeheadings{##1}}%
-            \unexpanded{\def\@tempa}{\@tempa}\unexpanded{\def\@tempb{##1}}%
-            \unexpanded{\ifx\@tempa\@tempb\theendnotes\fi}%
-          }
-        }
-        \jlreq@do
+        \RemoveFromHook{./heading/before/\@tempa}[./endnote]
+        \AddToHook{./heading/before/\@tempa}[./endnote]{\theendnotes}
       \fi
     }
   \fi
@@ -5672,7 +5676,7 @@
   \itemindent=\dimexpr\jlreq@theorem@indent\relax
   \jlreq@theorem@font
   \item[\hskip \labelsep{\reset@font\jlreq@theorem@label@font #1\ #2（#3）}]}
-\AtEndOfPackageFile*{amsthm}{%
+\AddToHook{package/after/amsthm}{
   \jlreq@saveoriginalcs{\proof}%
   \jlreq@saveoriginalcs{\endproof}%
   \edef\jlreq@do{

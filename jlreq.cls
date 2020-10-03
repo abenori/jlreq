@@ -761,7 +761,7 @@
 \edef\jlreq@charlist@katakana{アイウエオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモヤユヨラリルレロワヰヱヲンヴ\ifx p\jlreq@engine\else ヷヸヹヺ\fi}% カ゚キ゚ク゚ケ゚コ゚セ゚ツ゚ト゚
 
 %.. 行頭括弧調整
-\ifx l\jlreq@endgine
+\ifx l\jlreq@engine
   % \item後の行頭括弧のために仕込み．
   \jlreq@saveoriginalcs{\list}
   \jlreq@saveoriginalcs{\endlist}

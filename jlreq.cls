@@ -633,11 +633,13 @@
   \providecommand*{\jlreqkanjiskip}{0pt plus 0.25\jlreq@zw minus 0pt}
 \fi
 \providecommand*{\jlreqxkanjiskip}{0.25\jlreq@zw plus 0.25\jlreq@zw minus 0.125\jlreq@zw}
-\AtBeginDocument{
-  \jlreq@if{\ifx l\jlreq@engine\fi}{
-    \ltjsetparameter{kanjiskip=\jlreqkanjiskip}
-    \ltjsetparameter{xkanjiskip=\jlreqxkanjiskip}
-  }{
+\jlreq@if{\ifx l\jlreq@engine\fi}{
+  \AtBeginDocument{%
+    \ltjsetparameter{kanjiskip=\jlreqkanjiskip}%
+    \ltjsetparameter{xkanjiskip=\jlreqxkanjiskip}%
+  }
+}{
+  \AtBeginDocument{%
     \kanjiskip=\jlreqkanjiskip
     \xkanjiskip=\jlreqxkanjiskip
   }
@@ -992,10 +994,9 @@
 \DeclareRobustCommand*{\mit}{\@fontswitch\relax\mathnormal}
 
 % 和文ファミリと欧文ファミリの連動
-\@ifundefined{@rmfamilyhook}{}{\g@addto@macro\@rmfamilyhook{\prepare@family@series@update@kanji{mc}\mcdefault}}
-\@ifundefined{@sffamilyhook}{}{\g@addto@macro\@sffamilyhook{\prepare@family@series@update@kanji{gt}\gtdefault}}
-\@ifundefined{@ttfamilyhook}{}{\g@addto@macro\@ttfamilyhook{\prepare@family@series@update@kanji{gt}\gtdefault}}
-
+\AddToHook{rmfamily}{\prepare@family@series@update@kanji{mc}}
+\AddToHook{sffamily}{\prepare@family@series@update@kanji{gt}}
+\AddToHook{ttfamily}{\prepare@family@series@update@kanji{gt}}
 
 % 数式フォント設定
 \ifjlreq@option@enablejfam

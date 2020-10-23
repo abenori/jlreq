@@ -4962,11 +4962,8 @@
 %. 箇条書き． cf. JISX4051 8.4
 % 用語定義型
 \newenvironment{description}{\list{}{%
-  \setlength{\leftmargin}{0pt}% 下げない
-  \setlength{\labelwidth}{0pt}%
-  \setlength{\labelsep}{1\jlreq@zw}
-%  \addtolength{\leftmargin}{\leftskip}% たぶんこの二行いらない……
-%  \addtolength{\leftmargin}{\labelsep}%
+  \setlength{\labelsep}{1\jlreq@zw}%
+  \setlength{\labelwidth}{\dimexpr\leftmargin - \labelsep\relax}%
   \let\makelabel=\descriptionlabel
 % 同行じゃない場合はこんな感じ？
 %  \let\jlreq@original@@item=\@item

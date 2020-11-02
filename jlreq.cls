@@ -5066,27 +5066,33 @@
 
 \newenvironment{verse}
   {\let\\\@centercr
-  \list{}{\itemsep\z@ \itemindent -2\jlreq@mol
+  \list{}{\itemsep\z@ \itemindent -2\jlreq@zw
     \listparindent\itemindent
     \labelwidth\z@
     \labelsep\z@
     \leftmargin=\dimexpr\jlreq@quote@indent\relax
-    \addtolength{\leftmargin}{2\jlreq@mol}%
+    \addtolength{\leftmargin}{2\jlreq@zw}%
     \rightmargin=\dimexpr\jlreq@quote@end@indent\relax
-    \jlreq@quote@fontsize
-    \@tempdima=1\jlreq@zw
+    \begingroup
+      \jlreq@quote@fontsize
+      \edef\jlreq@do{\noexpand\@tempdima=\the\dimexpr1\jlreq@zw\relax\relax}%
+    \expandafter\endgroup
+    \jlreq@do
     \@tempdimb=\dimexpr\linewidth - \@totalleftmargin - \leftmargin - \rightmargin\relax
     \@tempdimc=\@tempdimb
     \divide\@tempdimb by \@tempdima\multiply\@tempdimb by \@tempdima
     \topsep=\dimexpr\jlreq@quote@beforeafter@space\relax
     \leftmargin=\dimexpr\leftmargin + \@tempdimc - \@tempdimb\relax}%
-    \item\relax}{\endlist}
+    \item\relax\jlreq@quote@fontsize}{\endlist}
 \newenvironment{quotation}
   {\list{}{%
     \leftmargin=\dimexpr\jlreq@quote@indent\relax
     \rightmargin=\dimexpr\jlreq@quote@end@indent\relax
-    \jlreq@quote@fontsize
-    \@tempdima=1\jlreq@zw
+    \begingroup
+      \jlreq@quote@fontsize
+      \edef\jlreq@do{\noexpand\@tempdima=\the\dimexpr1\jlreq@zw\relax\relax}%
+    \expandafter\endgroup
+    \jlreq@do
     \@tempdimb=\dimexpr\linewidth - \@totalleftmargin - \leftmargin - \rightmargin\relax
     \@tempdimc=\@tempdimb
     \divide\@tempdimb by \@tempdima\multiply\@tempdimb by \@tempdima
@@ -5097,13 +5103,16 @@
     \labelsep\z@
     \topsep=\dimexpr\jlreq@quote@beforeafter@space\relax
     \parsep\z@ \@plus.1\jlreq@gol}%
-    \item\relax}{\endlist}
+    \item\relax\jlreq@quote@fontsize}{\endlist}
 \newenvironment{quote}
   {\list{}{%
     \leftmargin=\dimexpr\jlreq@quote@indent\relax
     \rightmargin=\dimexpr\jlreq@quote@end@indent\relax
-    \jlreq@quote@fontsize
-    \@tempdima=1\jlreq@zw
+    \begingroup
+      \jlreq@quote@fontsize
+      \edef\jlreq@do{\noexpand\@tempdima=\the\dimexpr 1\jlreq@zw\relax\relax}%
+    \expandafter\endgroup
+    \jlreq@do
     \@tempdimb=\dimexpr\linewidth - \@totalleftmargin - \leftmargin - \rightmargin\relax
     \@tempdimc=\@tempdimb
     \divide\@tempdimb by \@tempdima\multiply\@tempdimb by \@tempdima
@@ -5112,7 +5121,7 @@
     \itemindent\z@
     \topsep=\jlreq@speciallength{\jlreq@quote@beforeafter@space}%
     \listparindent\z@}%
-    \item\relax}{\endlist}
+    \item\relax\jlreq@quote@fontsize}{\endlist}
 
 %. 表関係 4.4
 % 表内の行間を0にする（4.4.3.f）

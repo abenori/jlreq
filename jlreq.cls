@@ -652,7 +652,7 @@
     \dimexpr\directlua{
       local act = string.char(92)
       local s = [[#1]]
-      s = s:gsub("Q",act .. "dimexpr 0.25mm" .. act .. "relax")
+      s = s:gsub("[QH]",act .. "dimexpr 0.25mm" .. act .. "relax")
       tex.print(s)
     }\relax
   }%
@@ -1077,7 +1077,7 @@
     \dimexpr\directlua{
       local act = string.char(92)
       local s = [[\jlreq@option@baselineskip]]
-      s = s:gsub("Q",act .. "dimexpr 0.25mm" .. act .. "relax"):gsub("zh",act .. "zh"):gsub("zw",act .. "zw")
+      s = s:gsub("[QH]",act .. "dimexpr 0.25mm" .. act .. "relax"):gsub("zh",act .. "zh"):gsub("zw",act .. "zw")
       tex.print(s)
     }\relax
   }%

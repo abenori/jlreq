@@ -9,6 +9,10 @@
 \RequirePackage{xkeyval,everyhook,etoolbox,ifthen,filehook}
 \RequirePackage{jlreq-helpers}
 
+\ExplSyntaxOn
+\tl_new:N \l_jlreq_tmpa_tl
+\ExplSyntaxOff
+
 \newcommand*{\jlreq@undeferr}[1]{\ClassError{jlreq}{Trying to delete \string#1 even though it is not defined, may be a bug}{\@ehc}}
 % クラスファイル内でしか使わないマクロをクラスファイル終了時に未定義にする
 \newcommand*{\jlreq@aftercls@addtodeletecs}[1]{%
@@ -702,6 +706,25 @@
 \edef\jlreq@jafontscale{\strip@pt\jlreq@resultdimen}
 \jlreq@aftercls@addtodeletecs{\jlreq@jafontscale}
 \ifx l\jlreq@engine
+  \let\jlreq@original@DeclareFontShape=\DeclareFontShape
+  \ExplSyntaxOn
+  \def\DeclareFontShape#1#2#3#4#5#6{%
+    \tl_if_in:nnTF{#5}{jfm=jlreq}{
+      \tl_set:Nn \l_jlreq_tmpa_tl {#5}
+      \tl_if_in:nnTF{#5}{jfm=jlreqv}{
+        \tl_replace_all:Nnn \l_jlreq_tmpa_tl {jfm=jlreqv}{jfm=jlreqv-jidori}
+      }{
+        \tl_replace_all:Nnn \l_jlreq_tmpa_tl {jfm=jlreq}{jfm=jlreq-jidori}
+      }
+      \jlreq@original@DeclareFontShape{#1}{#2}{#3}{#4-jidori}{\tl_use:N \l_jlreq_tmpa_tl}{#6}
+    }{
+      \tl_if_in:nnT{#5}{<-->ssub}{
+        \jlreq@original@DeclareFontShape{#1}{#2}{#3}{#4-jidori}{#5}{#6}
+      }
+    }
+    \jlreq@original@DeclareFontShape{#1}{#2}{#3}{#4}{#5}{#6}%
+  }
+  \ExplSyntaxOff
   \DeclareFontShape{JY3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont:jfm=jlreq;script=latn;-kern}{}
   \DeclareFontShape{JY3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont:jfm=jlreq;script=latn;-kern}{}
   \DeclareFontShape{JT3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont:jfm=jlreqv;script=latn;-kern}{}
@@ -711,6 +734,11 @@
   \DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmnameg}{}
   \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmname-v}{}
   \DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmnameg-v}{}
+  \edef\jlreq@tempa{\ifx u\jlreq@engine u\fi}
+  \DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{m}{n-jidori}{<->s*[\jlreq@jafontscale]\jlreq@tempa jlreq-jidori}{}
+  \DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{m}{n-jidori}{<->s*[\jlreq@jafontscale]\jlreq@tempa jlreqg-jidori}{}
+  \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{n-jidori}{<->s*[\jlreq@jafontscale]\jlreq@tempa jlreq-v-jidori}{}
+  \DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{n-jidori}{<->s*[\jlreq@jafontscale]\jlreq@tempa jlreqg-v-jidori}{}
 \fi
 \@for\jlreq@encoding:=\jlreq@yokokanjiencoding,\jlreq@tatekanjiencoding\do{
   \@for\jlreq@shape:=n,it,sl,sc\do{
@@ -5613,6 +5641,33 @@
   \expandafter\endgroup
   \jlreq@do
 }
+
+\ExplSyntaxOn
+\ifx l\jlreq@engine
+  \NewDocumentCommand{\jidori}{m m}{
+    \group_begin:
+      \ltj@setpar@global
+      \ltjsetkanjiskip 0pt~plus~15\zw~minus~0pt
+      \ltjsetxkanjiskip 0pt~plus~15\zw~minus~0pt
+      \renewcommand*{\jlreqkanjiskip}{0pt~plus~15\zw~minus~0pt}
+      \renewcommand*{\jlreqxkanjiskip}{0pt~plus~15\zw~minus~0pt}
+      \kanjishape{n-jidori}\selectfont
+      \hbox_to_wd:nn {#1}{#2}
+    \group_end:
+  }
+\else
+  \NewDocumentCommand{\jidori}{m m}{
+    \group_begin:
+      \setlength{\kanjiskip}{0pt~plus~15zw~minus~0pt}
+      \setlength{\xkanjiskip}{0pt~plus~15zw~minus~0pt}
+      \renewcommand*{\jlreqkanjiskip}{0pt~plus~15zw~minus~0pt}
+      \renewcommand*{\jlreqxkanjiskip}{0pt~plus~15zw~minus~0pt}
+      \kanjishape{n-jidori}\selectfont
+      \hbox_to_wd:nn {#1}{#2}
+    \group_end:
+  }
+\fi
+\ExplSyntaxOff
 
 % 日にち
 \newif\if西暦

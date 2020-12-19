@@ -6,7 +6,7 @@ MAKEJVFCNF:=$(shell ls -R $(shell kpsewhich --var-value=TEXMFDIST)/fonts/source 
 all: jfm
 
 jfm: \
-	jfm-jlreqv.lua \
+	jfm-jlreqv.lua jfm-jlreqv-jidori.lua \
 	jlreq.tfm bjlreq.tfm zjlreq.tfm bzjlreq.tfm \
 	jlreq.vf bjlreq.vf zjlreq.vf bzjlreq.vf \
 	ujlreq.tfm ubjlreq.tfm uzjlreq.tfm ubzjlreq.tfm \
@@ -27,6 +27,11 @@ jfm: \
 	jlreqg-v.vf bjlreqg-v.vf zjlreqg-v.vf bzjlreqg-v.vf \
 	ujlreqg-v.tfm ubjlreqg-v.tfm uzjlreqg-v.tfm ubzjlreqg-v.tfm \
 	ujlreqg-v.vf ubjlreqg-v.vf uzjlreqg-v.vf ubzjlreqg-v.vf \
+	jlreq-jidori.tfm jlreq-jidori.vf jlreqg-jidori.tfm jlreqg-jidori.vf \
+	jlreq-v-jidori.tfm jlreq-v-jidori.vf jlreqg-v-jidori.tfm jlreqg-v-jidori.vf \
+	ujlreq-jidori.tfm ujlreq-jidori.vf ujlreqg-jidori.tfm ujlreqg-jidori.vf \
+	ujlreq-jidori-q.tfm ujlreq-jidori-q.vf ujlreqg-jidori-q.tfm ujlreqg-jidori-q.vf \
+	ujlreq-v-jidori.tfm ujlreq-v-jidori.vf ujlreqg-v-jidori.tfm ujlreqg-v-jidori.vf
 	
 	rm -f rml.tfm rmlv.tfm gbm.tfm gbmv.tfm uprml-h.tfm uprml-hq.tfm upgbm-h.tfm upgbm-hq.tfm uprml-v.tfm uprml-vq.tfm upgbm-v.tfm upgbm-vq.tfm
 
@@ -42,6 +47,19 @@ u%.pl: jfm-%-pl.lua luajfm2pl.lua
 
 %.pl: jfm-%-pl.lua luajfm2pl.lua
 	texlua luajfm2pl.lua --noutf $*-pl $@
+
+jlreq-jidori.pl: jfm-jlreq-jidori.lua
+	texlua luajfm2pl.lua --noutf jlreq-jidori $@
+
+jlreq-v-jidori.pl: jfm-jlreqv-jidori.lua
+	texlua luajfm2pl.lua --noutf jlreqv-jidori $@
+
+ujlreq-jidori.pl: jfm-jlreq-jidori.lua
+	texlua luajfm2pl.lua jlreq-jidori $@
+
+ujlreq-v-jidori.pl: jfm-jlreqv-jidori.lua
+	texlua luajfm2pl.lua jlreqv-jidori $@
+
 
 # .vf
 u%g-q.vf: u%g-q.tfm
@@ -74,6 +92,37 @@ u%.vf: u%.tfm u%-q.tfm
 %.vf: %.tfm
 	makejvf -i $< rml.tfm
 
+jlreq-jidori.vf: jlreq-jidori.tfm
+	makejvf  -i $< rml.tfm
+
+jlreq-v-jidori.vf: jlreq-v-jidori.tfm
+	makejvf  -i $< rmlv.tfm
+
+jlreqg-jidori.vf: jlreqg-jidori.tfm
+	makejvf  -i $< gbm.tfm
+
+jlreqg-v-jidori.vf: jlreqg-v-jidori.tfm
+	makejvf  -i $< gbmv.tfm
+
+ujlreq-jidori-q.vf: ujlreq-jidori-q.tfm
+	makejvf -i -u jisq $< uprml-hq.tfm
+
+ujlreqg-jidori-q.vf: ujlreqg-jidori-q.tfm
+	makejvf -i -u jisq $< upgbm-hq.tfm
+
+ujlreq-jidori.vf: ujlreq-jidori.tfm ujlreq-jidori-q.tfm
+	makejvf -i -u custom -t ${MAKEJVFCNF} -H -U ujlreq-jidori-q $< uprml-h.tfm
+
+ujlreq-v-jidori.vf: ujlreq-v-jidori.tfm
+	makejvf -i -u custom -t ${MAKEJVFCNF} -H $< uprml-v.tfm
+
+ujlreqg-jidori.vf: ujlreqg-jidori.tfm ujlreqg-jidori-q.tfm
+	makejvf -i -u custom -t ${MAKEJVFCNF} -H -U ujlreqg-jidori-q $< upgbm-h.tfm
+
+ujlreqg-v-jidori.vf: ujlreqg-v-jidori.tfm
+	makejvf -i -u custom -t ${MAKEJVFCNF} -H $< upgbm-v.tfm
+
+
 # .tfm
 u%-q.tfm: u%.pl
 	uppltotf -kanji=uptex $< $@
@@ -93,7 +142,32 @@ u%.tfm: u%.pl
 %.tfm: %.pl
 	ppltotf -kanji=utf8 $< $@
 
-jfm-jlreqv.lua jfm-jlreq-pl.lua jfm-bjlreq-pl.lua jfm-zjlreq-pl.lua jfm-bzjlreq-pl.lua jfm-jlreqv-pl.lua jfm-bjlreqv-pl.lua jfm-zjlreqv-pl.lua jfm-bzjlreqv-pl.lua: make_variant_jfm.lua jfm-jlreq.lua
+ujlreq%-jidori.tfm: ujlreq%-jidori.pl
+	uppltotf -kanji=uptex $< $@
+
+jlreq%-jidori.tfm: jlreq%-jidori.pl
+	ppltotf -kanji=utf8 $< $@
+
+ujlreqg-jidori.tfm: ujlreq-jidori.tfm
+	cp $< $@
+
+ujlreqg-v-jidori.tfm: ujlreq-v-jidori.tfm
+	cp $< $@
+
+jlreqg-jidori.tfm: jlreq-jidori.tfm
+	cp $< $@
+
+jlreqg-v-jidori.tfm: jlreq-v-jidori.tfm
+	cp $< $@
+
+ujlreq-jidori-q.tfm: ujlreq-jidori.pl
+	uppltotf -kanji=uptex $< $@
+
+ujlreqg-jidori-q.tfm: ujlreq-jidori-q.tfm
+	cp $< $@
+
+
+jfm-jlreqv.lua jfm-jlreqv-jidori.lua jfm-jlreq-pl.lua jfm-bjlreq-pl.lua jfm-zjlreq-pl.lua jfm-bzjlreq-pl.lua jfm-jlreqv-pl.lua jfm-bjlreqv-pl.lua jfm-zjlreqv-pl.lua jfm-bzjlreqv-pl.lua: make_variant_jfm.lua jfm-jlreq.lua jfm-jlreq-jidori.lua
 	texlua make_variant_jfm.lua
 
 doc: pdfdoc htmldoc
@@ -186,6 +260,7 @@ jfmclean:
 	rm -f *jlreq*.tfm *jlreq*.pl *jlreq*.vf
 	rm -f jfm-jlreqv.lua
 	rm -f jfm-*jlreq*-pl.lua
+	rm -f jfm-jlreqv-jidori.lua
 
 docclean:
 	rm -f jlreq.tex jlreq.pdf jlreq.html jlreq-ja.tex jlreq-ja.pdf jlreq-ja.html jlreq-trimmarks.html jlreq-trimmarks-ja.html

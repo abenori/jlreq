@@ -97,6 +97,7 @@ function tolf(file)
 end
 
 local originaljfm = "jlreq"
+local originaljfm_jidori = "jlreq-jidori"
 
 local jfmfile = kpse.find_file("jfm-" .. originaljfm .. ".lua")
 if jfmfile == nil then
@@ -174,4 +175,19 @@ luatexja.jfont.define_jfm(jfm)
 fp:close()
 
 tolf(file);
+
+
+jfmfile = kpse.find_file("jfm-" .. originaljfm_jidori .. ".lua")
+if jfmfile == nil then
+	print("JFM " .. originaljfm_jidori .. " is not found")
+	os.exit(1)
+end
+
+jfm = nil
+function luatexja.jfont.define_jfm(j)
+	jfm = j
+end
+dofile(jfmfile)
+
+make_jfmfile(tate(jfm),"jfm-jlreqv-jidori.lua")
 

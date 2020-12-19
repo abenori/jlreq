@@ -227,6 +227,8 @@ tds: jfm jlreq.cls README.md README-ja.md LICENSE jlreq.html jlreq-ja.html jlreq
 	mkdir -p ./tds/tex/luatex/jlreq
 	cp jfm-jlreq.lua ./tds/tex/luatex/jlreq
 	cp jfm-jlreqv.lua ./tds/tex/luatex/jlreq
+	cp jfm-jlreq-jidori.lua ./tds/tex/luatex/jlreq
+	cp jfm-jlreqv-jidori.lua ./tds/tex/luatex/jlreq
 	mkdir -p ./tds/tex/latex/jlreq
 	cp jlreq.cls ./tds/tex/latex/jlreq
 	cp jlreq-helpers.sty ./tds/tex/latex/jlreq

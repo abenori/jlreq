@@ -706,23 +706,23 @@
 \edef\jlreq@jafontscale{\strip@pt\jlreq@resultdimen}
 \jlreq@aftercls@addtodeletecs{\jlreq@jafontscale}
 \ifx l\jlreq@engine
-  \let\jlreq@original@DeclareFontShape=\DeclareFontShape
+  \jlreq@saveoriginalcs{\DeclareFontShape}
   \ExplSyntaxOn
-  \def\DeclareFontShape#1#2#3#4#5#6{%
-    \tl_if_in:nnTF{#5}{jfm=jlreq}{
-      \tl_set:Nn \l_jlreq_tmpa_tl {#5}
-      \tl_if_in:nnTF{#5}{jfm=jlreqv}{
+  \def\DeclareFontShape#1#2#3#4#5#6{
+    \tl_set:Nx \l_jlreq_tmpa_tl {#5}
+    \tl_if_in:NnTF \l_jlreq_tmpa_tl {jfm=jlreq}{
+      \tl_if_in:NnTF \l_jlreq_tmpa_tl {jfm=jlreqv}{
         \tl_replace_all:Nnn \l_jlreq_tmpa_tl {jfm=jlreqv}{jfm=jlreqv-jidori}
       }{
         \tl_replace_all:Nnn \l_jlreq_tmpa_tl {jfm=jlreq}{jfm=jlreq-jidori}
       }
       \jlreq@original@DeclareFontShape{#1}{#2}{#3}{#4-jidori}{\tl_use:N \l_jlreq_tmpa_tl}{#6}
     }{
-      \tl_if_in:nnT{#5}{<-->ssub}{
+      \tl_if_in:NnT \l_jlreq_tmpa_tl {<->ssub}{
         \jlreq@original@DeclareFontShape{#1}{#2}{#3}{#4-jidori}{#5}{#6}
       }
     }
-    \jlreq@original@DeclareFontShape{#1}{#2}{#3}{#4}{#5}{#6}%
+    \jlreq@useoriginalcs{\DeclareFontShape}{#1}{#2}{#3}{#4}{#5}{#6}
   }
   \ExplSyntaxOff
   \DeclareFontShape{JY3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont:jfm=jlreq;script=latn;-kern}{}

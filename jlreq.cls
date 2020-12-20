@@ -5657,7 +5657,7 @@
           \def#1{　}
           \kanjishape{n-jidori}\selectfont
           ##2
-          \hskip 0pt minus 1fil
+          \hskip\glueexpr 0pt~minus~1fil\relax
         }
       \group_end:
     }
@@ -5676,7 +5676,7 @@
       \hbox_to_wd:nn {#1}{
         \kanjishape{n-jidori}\selectfont
         \inhibitglue #2
-        \hskip 0pt minus 1fil
+        \hskip\glueexpr 0pt~minus~1fil\relax
       }
     \group_end:
   }

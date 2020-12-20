@@ -49,16 +49,16 @@ u%.pl: jfm-%-pl.lua luajfm2pl.lua
 	texlua luajfm2pl.lua --noutf $*-pl $@
 
 jlreq-jidori.pl: jfm-jlreq-jidori-pl.lua
-	texlua luajfm2pl.lua --noutf jlreq-jidori $@
+	texlua luajfm2pl.lua --noutf jlreq-jidori-pl $@
 
 jlreq-v-jidori.pl: jfm-jlreqv-jidori-pl.lua
-	texlua luajfm2pl.lua --noutf jlreqv-jidori $@
+	texlua luajfm2pl.lua --noutf jlreqv-jidori-pl $@
 
 ujlreq-jidori.pl: jfm-jlreq-jidori-pl.lua
-	texlua luajfm2pl.lua jlreq-jidori $@
+	texlua luajfm2pl.lua jlreq-jidori-pl $@
 
 ujlreq-v-jidori.pl: jfm-jlreqv-jidori-pl.lua
-	texlua luajfm2pl.lua jlreqv-jidori $@
+	texlua luajfm2pl.lua jlreqv-jidori-pl $@
 
 
 # .vf

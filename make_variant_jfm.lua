@@ -189,5 +189,23 @@ function luatexja.jfont.define_jfm(j)
 end
 dofile(jfmfile)
 
-make_jfmfile(tate(jfm),"jfm-jlreqv-jidori.lua")
+function to_jidori_pl(t)
+	t = table.fastcopy(t)
+	-- kanjiskipに任せているところを15zwに変更
+	for cl1,val in pairs(t) do
+		if type(cl1) == "number" then
+			for cl2,glue in pairs(val.glue) do
+				if glue.kanjiskip_stretch == 1 then
+					t[cl1].glue[cl2][2] = 15
+					t[cl1].glue[cl2][3] = 0
+				end
+			end
+		end
+	end
+	return t
+end
 
+
+make_jfmfile(to_jidori_pl(jfm),"jfm-jlreq-jidori-pl.lua")
+make_jfmfile(to_jidori_pl(tate(jfm)),"jfm-jlreqv-jidori-pl.lua")
+make_jfmfile(tate(jfm),"jfm-jlreqv-jidori.lua")

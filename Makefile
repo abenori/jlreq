@@ -48,16 +48,16 @@ u%.pl: jfm-%-pl.lua luajfm2pl.lua
 %.pl: jfm-%-pl.lua luajfm2pl.lua
 	texlua luajfm2pl.lua --noutf $*-pl $@
 
-jlreq-jidori.pl: jfm-jlreq-jidori.lua
+jlreq-jidori.pl: jfm-jlreq-jidori-pl.lua
 	texlua luajfm2pl.lua --noutf jlreq-jidori $@
 
-jlreq-v-jidori.pl: jfm-jlreqv-jidori.lua
+jlreq-v-jidori.pl: jfm-jlreqv-jidori-pl.lua
 	texlua luajfm2pl.lua --noutf jlreqv-jidori $@
 
-ujlreq-jidori.pl: jfm-jlreq-jidori.lua
+ujlreq-jidori.pl: jfm-jlreq-jidori-pl.lua
 	texlua luajfm2pl.lua jlreq-jidori $@
 
-ujlreq-v-jidori.pl: jfm-jlreqv-jidori.lua
+ujlreq-v-jidori.pl: jfm-jlreqv-jidori-pl.lua
 	texlua luajfm2pl.lua jlreqv-jidori $@
 
 
@@ -167,7 +167,7 @@ ujlreqg-jidori-q.tfm: ujlreq-jidori-q.tfm
 	cp $< $@
 
 
-jfm-jlreqv.lua jfm-jlreqv-jidori.lua jfm-jlreq-pl.lua jfm-bjlreq-pl.lua jfm-zjlreq-pl.lua jfm-bzjlreq-pl.lua jfm-jlreqv-pl.lua jfm-bjlreqv-pl.lua jfm-zjlreqv-pl.lua jfm-bzjlreqv-pl.lua: make_variant_jfm.lua jfm-jlreq.lua jfm-jlreq-jidori.lua
+jfm-jlreqv.lua jfm-jlreq-pl.lua jfm-bjlreq-pl.lua jfm-zjlreq-pl.lua jfm-bzjlreq-pl.lua jfm-jlreqv-pl.lua jfm-bjlreqv-pl.lua jfm-zjlreqv-pl.lua jfm-bzjlreqv-pl.lua jfm-jlreqv-jidori.lua jfm-jlreq-jidori-pl.lua jfm-jlreqv-jidori-pl.lua: make_variant_jfm.lua jfm-jlreq.lua jfm-jlreq-jidori.lua
 	texlua make_variant_jfm.lua
 
 doc: pdfdoc htmldoc

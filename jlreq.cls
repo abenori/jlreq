@@ -5644,26 +5644,40 @@
 
 \ExplSyntaxOn
 \ifx l\jlreq@engine
-  \NewDocumentCommand{\jidori}{m m}{
-    \group_begin:
-      \ltj@setpar@global
-      \ltjsetkanjiskip 0pt~plus~15\zw~minus~0pt
-      \ltjsetxkanjiskip 0pt~plus~15\zw~minus~0pt
-      \renewcommand*{\jlreqkanjiskip}{0pt~plus~15\zw~minus~0pt}
-      \renewcommand*{\jlreqxkanjiskip}{0pt~plus~15\zw~minus~0pt}
-      \kanjishape{n-jidori}\selectfont
-      \hbox_to_wd:nn {#1}{#2}
-    \group_end:
+  \cs_set:Nn \l_jlreq_tmpa:n {
+    \NewDocumentCommand{\jidori}{m m}{
+      \mode_if_vertical:TF{\leavevmode}{}
+      \group_begin:
+        \ltj@setpar@global
+        \ltjsetkanjiskip 0pt~plus~1fil~minus~0pt
+        \ltjsetxkanjiskip 0pt~plus~1fil~minus~0pt
+        \renewcommand*{\jlreqkanjiskip}{0pt~plus~1fil~minus~0pt}
+        \renewcommand*{\jlreqxkanjiskip}{0pt~plus~1fil~minus~0pt}
+        \hbox_to_wd:nn {##1}{
+          \def#1{　}
+          \kanjishape{n-jidori}\selectfont
+          ##2
+          \hskip 0pt minus 1fil
+        }
+      \group_end:
+    }
   }
+  \catcode`　=\active
+  \l_jlreq_tmpa:n{　}
+  \catcode`　=12
 \else
   \NewDocumentCommand{\jidori}{m m}{
+    \mode_if_vertical:TF{\leavevmode}{}
     \group_begin:
       \setlength{\kanjiskip}{0pt~plus~15zw~minus~0pt}
       \setlength{\xkanjiskip}{0pt~plus~15zw~minus~0pt}
       \renewcommand*{\jlreqkanjiskip}{0pt~plus~15zw~minus~0pt}
       \renewcommand*{\jlreqxkanjiskip}{0pt~plus~15zw~minus~0pt}
-      \kanjishape{n-jidori}\selectfont
-      \hbox_to_wd:nn {#1}{#2}
+      \hbox_to_wd:nn {#1}{
+        \kanjishape{n-jidori}\selectfont
+        \inhibitglue #2
+        \hskip 0pt minus 1fil
+      }
     \group_end:
   }
 \fi

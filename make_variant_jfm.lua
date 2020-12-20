@@ -197,7 +197,6 @@ function to_jidori_pl(t)
 			for cl2,glue in pairs(val.glue) do
 				if glue.kanjiskip_stretch == 1 then
 					t[cl1].glue[cl2][2] = 15
-					t[cl1].glue[cl2][3] = 0
 				end
 			end
 		end

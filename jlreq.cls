@@ -11,6 +11,8 @@
 
 \ExplSyntaxOn
 \tl_new:N \l_jlreq_tmpa_tl
+\str_new:N \l_jlreq_tmpa_str
+\str_new:N \l_jlreq_tmpb_str
 \ExplSyntaxOff
 
 \newcommand*{\jlreq@undeferr}[1]{\ClassError{jlreq}{Trying to delete \string#1 even though it is not defined, may be a bug}{\@ehc}}
@@ -35,17 +37,20 @@
 \AtBeginDocument{\jlreq@preamblefalse}
 
 \def\jlreq@saveoriginalcs#1{%
-  \ifx#1\relax
-    \ClassError{jlreq}{Trying to save \string#1 but it's not defined, may be a bug}{\@ehc}%
+  \expandafter\ifx\csname #1\endcsname\relax
+    \ClassError{jlreq}{Trying to save #1 but it's not defined, may be a bug}{\@ehc}%
   \fi
-  \expandafter\ifx\csname jlreq@original@\expandafter\@gobble\string#1\endcsname\relax\else
-    \ClassError{jlreq}{Trying to save \string#1 twice, may be a bug}{\@ehc}%
+  \expandafter\ifx\csname jlreq@original@#1\endcsname\relax\else
+    \ClassError{jlreq}{Trying to save #1 twice, may be a bug}{\@ehc}%
   \fi
-  \expandafter\let\csname jlreq@original@\expandafter\@gobble\string#1\endcsname=#1
+  \begingroup
+    \edef\jlreq@do{\noexpand\let\expandonce{\csname jlreq@original@#1\endcsname}=\expandonce{\csname #1\endcsname}}
+  \expandafter\endgroup
+  \jlreq@do
 }
 \def\jlreq@useoriginalcs#1{%
-  \jlreq@if{\ifcsname jlreq@original@\expandafter\@gobble\string#1\endcsname\fi}%
-    {\csname jlreq@original@\expandafter\@gobble\string#1\endcsname}%
+  \jlreq@if{\ifcsname jlreq@original@#1\endcsname\fi}%
+    {\csname jlreq@original@#1\endcsname}%
     {#1}%
 }
 \def\jlreq@restoreoriginalcs#1{%
@@ -706,23 +711,25 @@
 \edef\jlreq@jafontscale{\strip@pt\jlreq@resultdimen}
 \jlreq@aftercls@addtodeletecs{\jlreq@jafontscale}
 \ifx l\jlreq@engine
-  \jlreq@saveoriginalcs{\DeclareFontShape}
+  \jlreq@saveoriginalcs{DeclareFontShape}
   \ExplSyntaxOn
   \def\DeclareFontShape#1#2#3#4#5#6{
-    \tl_set:Nx \l_jlreq_tmpa_tl {#5}
-    \tl_if_in:NnTF \l_jlreq_tmpa_tl {jfm=jlreq}{
-      \tl_if_in:NnTF \l_jlreq_tmpa_tl {jfm=jlreqv}{
-        \tl_replace_all:Nnn \l_jlreq_tmpa_tl {jfm=jlreqv}{jfm=jlreqv-jidori}
+    \bool_if:nT{\str_if_eq_p:nn{#1}{JY3} || \str_if_eq_p:nn{#1}{JT3}}{
+      \tl_set:Nx \l_jlreq_tmpa_tl {#5}
+      \tl_if_in:NnTF \l_jlreq_tmpa_tl {jfm=jlreq}{
+        \tl_if_in:NnTF \l_jlreq_tmpa_tl {jfm=jlreqv}{
+          \tl_replace_all:Nnn \l_jlreq_tmpa_tl {jfm=jlreqv}{jfm=jlreqv-jidori}
+        }{
+          \tl_replace_all:Nnn \l_jlreq_tmpa_tl {jfm=jlreq}{jfm=jlreq-jidori}
+        }
+        \jlreq@useoriginalcs{DeclareFontShape}{#1}{#2}{#3}{#4-jidori}{\tl_use:N \l_jlreq_tmpa_tl}{#6}
       }{
-        \tl_replace_all:Nnn \l_jlreq_tmpa_tl {jfm=jlreq}{jfm=jlreq-jidori}
-      }
-      \jlreq@original@DeclareFontShape{#1}{#2}{#3}{#4-jidori}{\tl_use:N \l_jlreq_tmpa_tl}{#6}
-    }{
-      \tl_if_in:NnT \l_jlreq_tmpa_tl {<->ssub}{
-        \jlreq@original@DeclareFontShape{#1}{#2}{#3}{#4-jidori}{#5}{#6}
+        \tl_if_in:NnT \l_jlreq_tmpa_tl {<->ssub}{
+          \jlreq@useoriginalcs{DeclareFontShape}{#1}{#2}{#3}{#4-jidori}{#5}{#6}
+        }
       }
     }
-    \jlreq@useoriginalcs{\DeclareFontShape}{#1}{#2}{#3}{#4}{#5}{#6}
+    \jlreq@useoriginalcs{DeclareFontShape}{#1}{#2}{#3}{#4}{#5}{#6}
   }
   \ExplSyntaxOff
   \DeclareFontShape{JY3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont:jfm=jlreq;script=latn;-kern}{}
@@ -791,8 +798,8 @@
 %.. 行頭括弧調整
 \ifx l\jlreq@engine
   % \item後の行頭括弧のために仕込み．
-  \jlreq@saveoriginalcs{\list}
-  \jlreq@saveoriginalcs{\endlist}
+  \jlreq@saveoriginalcs{list}
+  \jlreq@saveoriginalcs{endlist}
   \PushPostHook{par}{\jlreq@parhook@atbeginlist}
   \pretocmd{\list}{\def\jlreq@parhook@atbeginlist{\ltjfakeparbegin}}{}{}
   \apptocmd{\endlist}{\def\jlreq@parhook@atbeginlist{}}{}{}
@@ -1122,7 +1129,7 @@
 \emergencystretch 3\jlreq@gol
 \setlength{\parindent}{1\zw}
 \def\jlreq@setfontsizehook{}
-\jlreq@saveoriginalcs{\set@fontsize}
+\jlreq@saveoriginalcs{set@fontsize}
 \apptocmd{\set@fontsize}{\expandafter\def\expandafter\size@update\expandafter{\size@update\jlreq@setfontsizehook}}{}{}
 \appto\jlreq@setfontsizehook{\ifdim\parindent>0pt \setlength{\parindent}{1\jlreq@zw}\fi}
 \ifx l\jlreq@engine
@@ -3158,8 +3165,8 @@
 \fi
 
 % \footnoteと\footnotemarkの前後に\jlreq@hook@prenote/\jlreq@hook@postnoteを入れる
-\jlreq@saveoriginalcs{\footnote}
-\jlreq@saveoriginalcs{\footnotemark}
+\jlreq@saveoriginalcs{footnote}
+\jlreq@saveoriginalcs{footnotemark}
 \long\def\jlreq@footnotetext@for@footnote[#1]#2{%
   \def\jlreq@result{\footnotetext[#1]{#2}}%
 }
@@ -3175,11 +3182,11 @@
   \@ifnextchar[{\jlreq@footnotemark@impl@woption}{\jlreq@footnotemark@impl@wooption}%
 }
 \long\def\jlreq@footnotemark@impl@woption[#1]{%
-  \jlreq@useoriginalcs{\footnotemark}[#1]%
+  \jlreq@useoriginalcs{footnotemark}[#1]%
   \jlreq@hook@postnote
 }
 \long\def\jlreq@footnotemark@impl@wooption{%
-  \jlreq@useoriginalcs{\footnotemark}%
+  \jlreq@useoriginalcs{footnotemark}%
   \jlreq@hook@postnote
 }
 \def\jlreq@restore@original@footnotes{%
@@ -5153,8 +5160,8 @@
 
 %. 表関係 4.4
 % 表内の行間を0にする（4.4.3.f）
-\jlreq@saveoriginalcs{\tabular}
-\jlreq@saveoriginalcs{\endtabular}
+\jlreq@saveoriginalcs{tabular}
+\jlreq@saveoriginalcs{endtabular}
 \preto\tabular{\begingroup\appto\@arrayparboxrestore{\baselineskip=0pt\lineskip=0pt}}
 \appto\endtabular{\endgroup}
 % 4.4.3.e
@@ -5643,6 +5650,7 @@
 }
 
 \ExplSyntaxOn
+\jlreq@saveoriginalcs{kanjishape}
 \ifx l\jlreq@engine
   \cs_set:Nn \l_jlreq_tmpa:n {
     \NewDocumentCommand{\jidori}{m m}{
@@ -5656,6 +5664,7 @@
         \hbox_to_wd:nn {##1}{
           \def#1{　}
           \kanjishape{n-jidori}\selectfont
+          \def\kanjishape####1{\jlreq@useoriginalcs{kanjishape}{####1-jidori}}
           ##2
           \hskip\glueexpr 0pt~minus~1fil\relax
         }
@@ -5675,6 +5684,7 @@
       \renewcommand*{\jlreqxkanjiskip}{0pt~plus~15zw~minus~0pt}
       \hbox_to_wd:nn {#1}{
         \kanjishape{n-jidori}\selectfont
+        \def\kanjishape##1{\jlreq@useoriginalcs{kanjishape}{##1-jidori}}
         \inhibitglue #2
         \hskip\glueexpr 0pt~minus~1fil\relax
       }
@@ -5735,8 +5745,8 @@
 \minute=\numexpr\time - 60*\hour\relax
 
 %.. 定理環境
-\jlreq@saveoriginalcs{\@begintheorem}
-\jlreq@saveoriginalcs{\@opargbegintheorem}
+\jlreq@saveoriginalcs{@begintheorem}
+\jlreq@saveoriginalcs{@opargbegintheorem}
 \def\@begintheorem#1#2{\topsep=\dimexpr\jlreq@theorem@beforeafter@space\relax
   \trivlist\labelsep=1\jlreq@zw
   \itemindent=\dimexpr\jlreq@theorem@indent\relax
@@ -5748,8 +5758,8 @@
   \jlreq@theorem@font
   \item[\hskip \labelsep{\reset@font\jlreq@theorem@label@font #1\ #2（#3）}]}
 \AtEndOfPackageFile*{amsthm}{%
-  \jlreq@saveoriginalcs{\proof}%
-  \jlreq@saveoriginalcs{\endproof}%
+  \jlreq@saveoriginalcs{proof}%
+  \jlreq@saveoriginalcs{endproof}%
   \edef\jlreq@do{
     \unexpanded{\def\jlreq@proof[#1]}{%
       \unexpanded{\labelsep=1\jlreq@zw}%

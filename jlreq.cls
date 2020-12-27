@@ -5684,7 +5684,6 @@
       \renewcommand*{\jlreqxkanjiskip}{0pt~plus~15zw~minus~0pt}
       \hbox_to_wd:nn {#1}{
         \kanjishape{n-jidori}\selectfont
-        \def\kanjishape##1{\jlreq@useoriginalcs{kanjishape}{##1-jidori}}
         \inhibitglue #2
         \hskip\glueexpr 0pt~minus~1fil\relax
       }

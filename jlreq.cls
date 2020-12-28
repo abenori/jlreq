@@ -1647,7 +1647,7 @@
 %.. 中/半扉見出し
 % addcontentslineに渡すやつ：番号出すのと出さないの
 \newcommand{\DeclareTobiraHeading}[3]{%
-  \IfHookExistsTF{./heading/before/#1}{}{\NewHook{./heading/before/#1}}%
+  \IfHookExistsTF{jlreq/heading/before/#1}{}{\NewHook{./heading/before/#1}}%
   \def\jlreq@do{\@removeelement{#1}}%
   \expandafter\jlreq@do\expandafter{\jlreq@heading@allheadings}{\jlreq@heading@allheadings}%
   \appto{\jlreq@heading@allheadings}{,#1}%
@@ -2161,7 +2161,7 @@
 % \DeclareBlockHeading{命令名}{レベル}{設定}
 \def\jlreq@BlockHeading@allheadings{}% 別行見出し一覧
 \newcommand{\DeclareBlockHeading}[3]{%
-  \IfHookExistsTF{./heading/before/#1}{}{\NewHook{./heading/before/#1}}%
+  \IfHookExistsTF{jlreq/heading/before/#1}{}{\NewHook{./heading/before/#1}}%
   \def\jlreq@do{\@removeelement{#1}}%
   \expandafter\jlreq@do\expandafter{\jlreq@heading@allheadings}{\jlreq@heading@allheadings}%
   \appto\jlreq@heading@allheadings{,#1}%
@@ -2774,7 +2774,7 @@
 
 % \DeclareRuninHeading{命令名}{レベル}{設定}
 \newcommand*{\DeclareRuninHeading}[3]{%
-  \IfHookExistsTF{./heading/before/#1}{}{\NewHook{./heading/before/#1}}%
+  \IfHookExistsTF{jlreq/heading/before/#1}{}{\NewHook{./heading/before/#1}}%
   \def\jlreq@do{\@removeelement{#1}}%
   \expandafter\jlreq@do\expandafter{\jlreq@heading@allheadings}{\jlreq@heading@allheadings}%
   \appto\jlreq@heading@allheadings{,#1}%
@@ -2923,7 +2923,7 @@
 }
 
 \newcommand*{\DeclareCutinHeading}[3]{%
-  \IfHookExistsTF{./heading/before/#1}{}{\NewHook{./heading/before/#1}}%
+  \IfHookExistsTF{jlreq/heading/before/#1}{}{\NewHook{./heading/before/#1}}%
   \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}%
   \expandafter\def\csname jlreq@heading@setting@#1\endcsname{#3}%
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewCutinHeading}%

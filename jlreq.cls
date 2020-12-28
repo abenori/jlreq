@@ -11,6 +11,7 @@
 
 \ExplSyntaxOn
 \tl_new:N \l_jlreq_tmpa_tl
+\cs_new:Nn \l_jlreq_do: {}
 \str_new:N \l_jlreq_tmpa_str
 \str_new:N \l_jlreq_tmpb_str
 \ExplSyntaxOff
@@ -716,21 +717,23 @@
   \jlreq@saveoriginalcs{DeclareFontShape}
   \ExplSyntaxOn
   \def\DeclareFontShape#1#2#3#4#5#6{
-    \bool_if:nT{\str_if_eq_p:nn{#1}{JY3} || \str_if_eq_p:nn{#1}{JT3}}{
-      \tl_set:Nx \l_jlreq_tmpa_tl {#5}
-      \tl_if_in:NnTF \l_jlreq_tmpa_tl {jfm=jlreq}{
-        \tl_if_in:NnTF \l_jlreq_tmpa_tl {jfm=jlreqv}{
-          \tl_replace_all:Nnn \l_jlreq_tmpa_tl {jfm=jlreqv}{jfm=jlreqv-jidori}
+    \group_begin:
+      \bool_if:nT{\str_if_eq_p:nn{#1}{JY3} || \str_if_eq_p:nn{#1}{JT3}}{
+        \tl_set:Nx \l_jlreq_tmpa_tl {#5}
+        \tl_if_in:NnTF \l_jlreq_tmpa_tl {jfm=jlreq}{
+          \tl_if_in:NnTF \l_jlreq_tmpa_tl {jfm=jlreqv}{
+            \tl_replace_all:Nnn \l_jlreq_tmpa_tl {jfm=jlreqv}{jfm=jlreqv-jidori}
+          }{
+            \tl_replace_all:Nnn \l_jlreq_tmpa_tl {jfm=jlreq}{jfm=jlreq-jidori}
+          }
+          \cs_set:Nx \l_jlreq_do: {\exp_not:n{\jlreq@useoriginalcs{DeclareFontShape}{#1}{#2}{#3}{#4-jidori}}{\tl_use:N \l_jlreq_tmpa_tl}{#6}}
         }{
-          \tl_replace_all:Nnn \l_jlreq_tmpa_tl {jfm=jlreq}{jfm=jlreq-jidori}
-        }
-        \jlreq@useoriginalcs{DeclareFontShape}{#1}{#2}{#3}{#4-jidori}{\tl_use:N \l_jlreq_tmpa_tl}{#6}
-      }{
-        \tl_if_in:NnT \l_jlreq_tmpa_tl {<->ssub}{
-          \jlreq@useoriginalcs{DeclareFontShape}{#1}{#2}{#3}{#4-jidori}{#5}{#6}
+          \tl_if_in:NnT \l_jlreq_tmpa_tl {<->ssub}{
+            \cs_set:Nn \l_jlreq_do: {\jlreq@useoriginalcs{DeclareFontShape}{#1}{#2}{#3}{#4-jidori}{#5}{#6}}
+          }
         }
       }
-    }
+    \exp_after:wN \group_end: \l_jlreq_do:
     \jlreq@useoriginalcs{DeclareFontShape}{#1}{#2}{#3}{#4}{#5}{#6}
   }
   \ExplSyntaxOff

@@ -5834,8 +5834,8 @@
   \if@twoside\ModifyHeading{subsection}{allowbreak_if_evenpage=true}\fi
   \NewBlockHeading{subsubsection}{3}{font={\jlreq@keepbaselineskip{\normalsize}},indent=10\jlreq@zw,lines=1,before_lines=1,subtitle_break=false,after_label_space=1\jlreq@zw,second_heading_text_indent={-1\jlreq@zw,1\jlreq@zw},,subtitle_font={\jlreq@keepbaselineskip{\scriptsize}}}
   \if@twoside\ModifyHeading{subsubsection}{allowbreak_if_evenpage=true}\fi
-  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize}}}
-  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize}},indent=1\jlreq@zw}
+  \NewRuninHeading{paragraph}{4}{font={\jlreq@keepbaselineskip{\normalsize}\sffamily\gtfamily\bfseries}}
+  \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize}\sffamily\gtfamily\bfseries},indent=1\jlreq@zw}
 \else% yoko
   \renewcommand{\thepart}{\Roman{part}}
   \renewcommand{\thesubsection}{\thesection .\arabic{subsection}}

@@ -206,7 +206,7 @@ jfm-install: jfm
 	mkdir -p ${TEXMF}/fonts/vf/public/jlreq
 	install *.vf ${TEXMF}/fonts/vf/public/jlreq
 	mkdir -p ${TEXMF}/tex/luatex/jlreq
-	install jfm-jlreqv.lua jfm-jlreq.lua ${TEXMF}/tex/luatex/jlreq
+	install jfm-jlreqv.lua jfm-jlreq.lua jfm-jlreq-jidori.lua jfm-jlreqv-jidori.lua ${TEXMF}/tex/luatex/jlreq
 
 cls-install:
 	mkdir -p ${TEXMF}/tex/latex/jlreq

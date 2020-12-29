@@ -3455,6 +3455,7 @@
 
 % \theendnoteの出力を仕込む
 \jlreq@jlreqsetup@add{endnote_position}{
+  \AddToHook{jlreq/heading/before}[jlreq/endnote]{}
   \RemoveFromHook{jlreq/heading/before}[jlreq/endnote]
   \jlreq@tempafalse % headingsが指定された
   \jlreq@tempbfalse % paragraphが指定された
@@ -3489,6 +3490,7 @@
   \else
     \@for\@tempa:=\jlreq@tempc\do{
       \ifx\@tempa\@empty\else
+        \AddToHook{jlreq/heading/before/\@tempa}[jlreq/endnote]{}
         \RemoveFromHook{jlreq/heading/before/\@tempa}[jlreq/endnote]
         \AddToHook{jlreq/heading/before/\@tempa}[jlreq/endnote]{\theendnotes}
       \fi

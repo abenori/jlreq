@@ -3,9 +3,9 @@
 %% The package is distributed under the BSD 2-Clause License
 %%
 %%
-% (based on JLReq 20120403 https://www.w3.org/TR/2012/NOTE-jlreq-20120403/ja/)
+% (based on JLReq 20200811 https://www.w3.org/TR/2020/NOTE-jlreq-20200811/)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{jlreq}[2020/09/27 jlreq]
+\ProvidesClass{jlreq}[2020/12/29 jlreq]
 \RequirePackage{xkeyval,everyhook,etoolbox,ifthen}
 \RequirePackage{jlreq-helpers}
 

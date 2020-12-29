@@ -11,7 +11,7 @@
 
 * *.tfm -> $TEXMF/fonts/tfm/public/jlreq
 * *.vf -> $TEXMF/fonts/vf/public/jlreq
-* jfm-jlreq.lua, jfm-jlreqv.lua -> $TEXMF/tex/luatex/jlreq
+* jfm-jlreq.lua, jfm-jlreqv.lua, jfm-jlreq-jidori.lua jfm-jlreqv-jidori.lua -> $TEXMF/tex/luatex/jlreq
 * jlreq.cls, jlreq-helpers.sty  -> $TEXMF/tex/latex/jlreq
 
 と配置します．`make install`とすると，$TEXMF=$TEXMFHOMEとしてこのコピーを行います．
@@ -19,7 +19,7 @@
 ## 動作環境
 pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内部で読み込みます．
 
-* （常時）：xkeyval,everyhook,filehook,etoolbox,ifthen,lmodern
+* （常時）：xkeyval,everyhook,etoolbox,ifthen,lmodern
 * （LuaLaTeX利用時）：luatexja,luatexja-adjust
 
 リリース時点での最新版での動作を確認しています．
@@ -72,6 +72,9 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
 ### `\tatechuyoko`
 縦中横を出力します．`\tatechuyoko{<中身>}`とします．`\tatechuyoko`は縦書きでない場所で使うとエラーになりますが，`\tatechuyoko*`は縦書きでない場所ではそのまま出力されます．
 
+### `\jidori`
+`\jidori{<寸法>}{<中身>}`により，中身を寸法の長さに字取りしたものを出力することができます．
+
 ### `\jafontsize`
 和文フォントサイズを指定する`\fontsize`です．クラスオプションで`jafontscale=0.9`とされている場合，`\fontsize{9pt}{15pt}`とすると和文フォントのサイズは`8.1pt`となりますが，`\jafontsize{9pt}{15pt}`とすると`9pt`となります．（欧文フォントサイズは`10pt`となる．）なお，第二引数は`\fontsize`の第二引数と全く同じです．
 
@@ -107,8 +110,8 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
 以下では次の用法を使います．
 
 * `[A/B]`：AまたはBです．`[A/B/C]`等も同様．
-* `<寸法>`：TeXが認識する寸法です．簡単な式（`10pt+10pt`のような）を使うこともできます．また，クラスオプションでは，場合によっては次のような特殊な値を使うこともできます．（これらはpLaTeX / upLaTeXではもとから利用可能ですが，LuaLaTeXでも利用可能なように処理されています．）`\jlreqsetup`内のような場所では，常に`\zw`や`\zh`により全角幅が記述できます．以下，たとえば`Q`が利用可能な場合は`<寸法;Q>`のように記述します．
-    - `Q`：0.25mmと解釈されます．
+* `<寸法>`：TeXが認識する寸法です．簡単な式（`10pt+10pt`のような）を使うこともできます．また，クラスオプションでは，場合によっては次のような特殊な値を使うこともできます．（これらはpLaTeX / upLaTeXではもとから利用可能ですが，LuaLaTeXでも利用可能なように処理されています．）`\jlreqsetup`内のような場所では，常に`\zw`や`\zh`により全角幅が記述できます．以下，たとえば`Q`，`H`が利用可能な場合は`<寸法;Q,H>`のように記述します．
+    - `Q`，`H`：0.25mmと解釈されます．
     - `zw`, `zh`：全角幅として解釈されます．
 * `<コード>`：LaTeXのコードです．
 * `<フォント設定コード>`：`\Large`や`\bfseries`のようなフォント設定の命令です．`\Large\bfseries`のように複数指定することもできます．
@@ -118,8 +121,8 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
 クラスオプションです．
 
 * `paper=[<紙サイズ名>/{<寸法>,<寸法>}]`：紙サイズです．紙サイズ名はa0からa10，b0からb10，c2からc8を指定できます．B列はJIS B列です．また，`{<横>,<縦>}`と直接寸法を指定することもできます．
-* `fontsize=<寸法;Q>`：欧文フォントサイズ．デフォルトは10pt．
-* `jafontsize=<寸法;Q>`：和文フォントサイズ．
+* `fontsize=<寸法;Q,H>`：欧文フォントサイズ．デフォルトは10pt．
+* `jafontsize=<寸法;Q,H>`：和文フォントサイズ．
 * `jafontscale=<実数値>`：欧文フォントと和文フォントの比（和文 / 欧文）．`fontsize`と`jafontsize`が両方指定されている場合は無視される．デフォルトは1．
 * `line_length=<寸法;zw,zh>`：一行の長さ．デフォルトは字送り方向の紙幅の0.75倍．実際の値は一文字の長さの整数倍になるように補正されます．
 * `number_of_lines=<自然数値>`：一ページの行数．デフォルトは行送り方向の紙幅の0.75倍になるような値．
@@ -129,8 +132,8 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
     - `twoside`が指定されていない時は，常に奇数ページ扱いで余白が設定される
 * `head_space=<寸法;zw,zh>`：天の空き量．デフォルトは中央寄せになるような値．
 * `foot_space=<寸法;zw,zh>`：地の空き量．デフォルトは中央寄せになるような値．
-* `baselineskip=<寸法;Q,zw,zh>`：行送り．デフォルトは`jafontsize`の1.7倍．
-* `linegap=<寸法;Q,zw,zh>`：行間．
+* `baselineskip=<寸法;Q,H,zw,zh>`：行送り．デフォルトは`jafontsize`の1.7倍．
+* `linegap=<寸法;Q,H,zw,zh>`：行間．
 * `headfoot_sidemargin=<寸法;zw,zh>`：柱やノンブルの左右の空き．
 * `column_gap=<寸法;zw,zh>`：段間（`twocolumn`指定時のみ）．
 * `sidenote_length=<寸法;zw,zh>`：傍注の幅を指定します．
@@ -482,6 +485,10 @@ JFMの名前は次の通りです．`[]`で囲まれている文字は設定に�
 * 2020-09-27
     - `\tatechuyoko`の`*`版を追加．
     - バグ修正
+* 2020-12-29
+    - クラスオプションの`fontsize`などで，LuaLaTeXでも`H`を使えるようにした．
+    - `\jidori`を追加．
+    - バグ修正．
 
 
 --------------

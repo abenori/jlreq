@@ -8,7 +8,7 @@ Run `make` to generate JFM files. Move the files as follows:
 
 * *.tfm -> $TEXMF/fonts/tfm/public/jlreq
 * *.vf -> $TEXMF/fonts/vf/public/jlreq
-* jfm-jlreq.lua, jfm-jlreqv.lua -> $TEXMF/tex/luatex/jlreq
+* jfm-jlreq.lua, jfm-jlreqv.lua, jfm-jlreq-jidori.lua jfm-jlreqv-jidori.lua -> $TEXMF/tex/luatex/jlreq
 * jlreq.cls, jlreq-helpers.sty  -> $TEXMF/tex/latex/jlreq
 
 The other way to install is just to run `make install`. It will install all files in `$TEXMFHOME`.
@@ -129,6 +129,10 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Fixed bugs.
 * 2020-09-27
     - Added `*`-version of `\tatechuyoko`.
+    - Fixed bugs.
+* 2020-12-29
+    - `fontsize` etc. with LuaLaTeX accept `H`.
+    - Added `\jidori`.
     - Fixed bugs.
 
 

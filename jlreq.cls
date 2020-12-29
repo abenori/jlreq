@@ -9,6 +9,7 @@
 \RequirePackage{xkeyval,everyhook,etoolbox,ifthen}
 \RequirePackage{jlreq-helpers}
 
+
 \ExplSyntaxOn
 \tl_new:N \l_jlreq_tmpa_tl
 \cs_new:Nn \l_jlreq_do: {}
@@ -38,12 +39,12 @@
 \AtBeginDocument{\jlreq@preamblefalse}
 
 \def\jlreq@saveoriginalcs#1{%
-  \expandafter\ifx\csname #1\endcsname\relax
+  \@ifundefined{#1}{
     \ClassError{jlreq}{Trying to save #1 but it's not defined, may be a bug}{\@ehc}%
-  \fi
-  \expandafter\ifx\csname jlreq@original@#1\endcsname\relax\else
+  }{}
+  \@ifundefined{jlreq@original@#1}{}{
     \ClassError{jlreq}{Trying to save #1 twice, may be a bug}{\@ehc}%
-  \fi
+  }
   \begingroup
     \edef\jlreq@do{\noexpand\let\expandonce{\csname jlreq@original@#1\endcsname}=\expandonce{\csname #1\endcsname}}
   \expandafter\endgroup
@@ -1032,9 +1033,9 @@
 \DeclareRobustCommand*{\mit}{\@fontswitch\relax\mathnormal}
 
 % 和文ファミリと欧文ファミリの連動
-\AddToHook{rmfamily}{\prepare@family@series@update@kanji{mc}}
-\AddToHook{sffamily}{\prepare@family@series@update@kanji{gt}}
-\AddToHook{ttfamily}{\prepare@family@series@update@kanji{gt}}
+\AddToHook{rmfamily}{\prepare@family@series@update@kanji{mc}\mcdefault}
+\AddToHook{sffamily}{\prepare@family@series@update@kanji{gt}\gtdefault}
+\AddToHook{ttfamily}{\prepare@family@series@update@kanji{gt}\gtdefault}
 
 % 数式フォント設定
 \ifjlreq@option@enablejfam
@@ -2161,7 +2162,7 @@
 % \DeclareBlockHeading{命令名}{レベル}{設定}
 \def\jlreq@BlockHeading@allheadings{}% 別行見出し一覧
 \newcommand{\DeclareBlockHeading}[3]{%
-  \IfHookExistsTF{jlreq/heading/before/#1}{}{\NewHook{./heading/before/#1}}%
+  \IfHookExistsTF{jlreq/heading/before/#1}{}{\NewHook{jlreq/heading/before/#1}}%
   \def\jlreq@do{\@removeelement{#1}}%
   \expandafter\jlreq@do\expandafter{\jlreq@heading@allheadings}{\jlreq@heading@allheadings}%
   \appto\jlreq@heading@allheadings{,#1}%
@@ -2774,7 +2775,7 @@
 
 % \DeclareRuninHeading{命令名}{レベル}{設定}
 \newcommand*{\DeclareRuninHeading}[3]{%
-  \IfHookExistsTF{jlreq/heading/before/#1}{}{\NewHook{./heading/before/#1}}%
+  \IfHookExistsTF{jlreq/heading/before/#1}{}{\NewHook{jlreq/heading/before/#1}}%
   \def\jlreq@do{\@removeelement{#1}}%
   \expandafter\jlreq@do\expandafter{\jlreq@heading@allheadings}{\jlreq@heading@allheadings}%
   \appto\jlreq@heading@allheadings{,#1}%
@@ -2923,7 +2924,7 @@
 }
 
 \newcommand*{\DeclareCutinHeading}[3]{%
-  \IfHookExistsTF{jlreq/heading/before/#1}{}{\NewHook{./heading/before/#1}}%
+  \IfHookExistsTF{jlreq/heading/before/#1}{}{\NewHook{jlreq/heading/before/#1}}%
   \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}%
   \expandafter\def\csname jlreq@heading@setting@#1\endcsname{#3}%
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewCutinHeading}%
@@ -3454,7 +3455,7 @@
 
 % \theendnoteの出力を仕込む
 \jlreq@jlreqsetup@add{endnote_position}{
-  \RemoveFromHook{./heading/before}[./endnote]
+  \RemoveFromHook{jlreq/heading/before}[jlreq/endnote]
   \jlreq@tempafalse % headingsが指定された
   \jlreq@tempbfalse % paragraphが指定された
   % \jlreq@tempcにセクション名たちを入れていく
@@ -3484,12 +3485,12 @@
   \fi
 
   \ifjlreq@tempa
-    \AddToHook{./heading/before}[./endnote]{\theendnotes}
+    \AddToHook{jlreq/heading/before}[jlreq/endnote]{\theendnotes}
   \else
     \@for\@tempa:=\jlreq@tempc\do{
       \ifx\@tempa\@empty\else
-        \RemoveFromHook{./heading/before/\@tempa}[./endnote]
-        \AddToHook{./heading/before/\@tempa}[./endnote]{\theendnotes}
+        \RemoveFromHook{jlreq/heading/before/\@tempa}[jlreq/endnote]
+        \AddToHook{jlreq/heading/before/\@tempa}[jlreq/endnote]{\theendnotes}
       \fi
     }
   \fi

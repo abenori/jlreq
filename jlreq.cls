@@ -3267,7 +3267,7 @@
       }{#2}%
     }
   \fi
-  \def\jlreq@footnote@delayfootnote@immediate#1#2{%
+  \long\def\jlreq@footnote@delayfootnote@immediate#1#2{%
     \jlreq@if{\ifnum #1<\jlreq@currentpage\relax\fi}{%
       \xappto\jlreq@footnote@delayfootnoteslist{\unexpanded{\jlreq@footnote@delayfootnote{#1}{#2}}}%
     }{#2}%

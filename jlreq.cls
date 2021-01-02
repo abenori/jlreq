@@ -4813,6 +4813,7 @@
   \fi
 }
 
+\ExplSyntaxOn
 \if@titlepage
   \newcommand{\maketitle}{%
     % jarticleとかからあまり変更していない
@@ -4865,14 +4866,18 @@
         \@maketitle
       \fi
       % \pagestyle{empty}の時はそのまま．
-      \ifnum0\ifx\@oddhead\@empty\else1\fi\ifx\@evenhead\@empty\else1\fi>0
-        \thispagestyle{plain}%
-      \fi
+      \bool_if:nT{!(
+        \tl_if_empty_p:o \@oddhead &&
+        \tl_if_empty_p:o \@evenhead &&
+        \tl_if_empty_p:o \@oddfoot &&
+        \tl_if_empty_p:o \@evenfoot
+      )}{\thispagestyle{plain}}
       \@thanks
     \endgroup
     \jlreq@endofmaketitle
   }
 \fi
+\ExplSyntaxOff
 % いろいろクリアする．
 \def\jlreq@endofmaketitle{%
   \setcounter{footnote}{0}%

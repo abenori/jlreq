@@ -803,13 +803,6 @@
 
 %.. 行頭括弧調整
 \ifx l\jlreq@engine
-  % \item後の行頭括弧のために仕込み．
-  \jlreq@saveoriginalcs{list}
-  \jlreq@saveoriginalcs{endlist}
-  \PushPostHook{par}{\jlreq@parhook@atbeginlist}
-  \pretocmd{\list}{\def\jlreq@parhook@atbeginlist{\ltjfakeparbegin}}{}{}
-  \apptocmd{\endlist}{\def\jlreq@parhook@atbeginlist{}}{}{}
-  \def\jlreq@parhook@atbeginlist{}
 \else
   % 非LuaTeXの場合はJFMの入れ替えと\everyparでの処理で対処．
   % 行頭括弧に対して\inhibitglueを入れたりする命令を作る
@@ -827,6 +820,14 @@
   \def\jlreq@openbracket@hook{\ifx\jlreq@nextchar\special\expandafter\jlreq@openbracket@hook@@\else\expandafter\jlreq@openbracket@hook@\fi}
   \def\jlreq@openbracket@hook@@#1#2{#1{#2}\futurelet\jlreq@nextchar\jlreq@openbracket@hook}
 \fi
+% \itemの直後は折り返し行頭と同じにする．
+\AtBeginDocument{\PushPostHook{par}{\jlreq@parhook@atbeginlist}}
+\jlreq@saveoriginalcs{item}
+\def\item{%
+ \def\jlreq@parhook@atbeginlist{\def\jlreq@parhook@atbeginlist{}\inhibitglue}%
+ \jlreq@useoriginalcs{item}%
+}
+\def\jlreq@parhook@atbeginlist{}
 
 %.. 禁則処理
 \ifx l\jlreq@engine

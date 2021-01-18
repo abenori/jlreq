@@ -380,7 +380,6 @@
   \edef\jlreq@jfmnameg{\jlreq@jfmname@prefix jlreqg} % ゴシックなJFMの名前
   \jlreq@aftercls@addtodeletecs{\jlreq@jfmname}
   \jlreq@aftercls@addtodeletecs{\jlreq@jfmnameg}
-  \AtBeginDocument{\PushPostHook{par}{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}}
 \fi
 
 % (u)pLaTeXの場合ここで初めて\epTeXinputencodingが発行されるので，
@@ -802,7 +801,18 @@
 \edef\jlreq@charlist@katakana{アイウエオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモヤユヨラリルレロワヰヱヲンヴ\ifx p\jlreq@engine\else ヷヸヹヺ\fi}% カ゚キ゚ク゚ケ゚コ゚セ゚ツ゚ト゚
 
 %.. 行頭括弧調整
+\AtBeginDocument{\PushPostHook{par}{\jlreq@hook@everypar}}
+\def\jlreq@hook@everypar{}
+\jlreq@saveoriginalcs{item}
 \ifx l\jlreq@engine
+  % \itemの直後は折り返し行頭と同じにする．
+  \def\item{%
+    \def\jlreq@hook@everypar{%
+      \def\jlreq@hook@everypar{}%
+      \inhibitglue
+    }%
+    \jlreq@useoriginalcs{item}%
+  }
 \else
   % 非LuaTeXの場合はJFMの入れ替えと\everyparでの処理で対処．
   % 行頭括弧に対して\inhibitglueを入れたりする命令を作る
@@ -812,22 +822,23 @@
   \expandafter\jlreq@do\jlreq@charlist@openingbrackets\jlreq@endmark
   % JFM glueの伸び縮みで行頭括弧が揃わないのを防ぐために常に\inhibitglueを入れる．
   \ifthenelse{\equal{\jlreq@open@bracket@pos}{nibu_tentsuki}}{
-    \edef\jlreq@openbracket@hook@{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\hskip -.5\jlreq@zw\inhibitglue}\noexpand\fi}
+    \edef\jlreq@openbracket@hook@ii{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\hskip -.5\jlreq@zw\inhibitglue}\noexpand\fi}
   }{% zenkakunibu_nibu,zenkaku_tentsuki
-    \edef\jlreq@openbracket@hook@{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\inhibitglue}\noexpand\fi}
+    \edef\jlreq@openbracket@hook@ii{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\inhibitglue}\noexpand\fi}
   }
   % source special対策
-  \def\jlreq@openbracket@hook{\ifx\jlreq@nextchar\special\expandafter\jlreq@openbracket@hook@@\else\expandafter\jlreq@openbracket@hook@\fi}
-  \def\jlreq@openbracket@hook@@#1#2{#1{#2}\futurelet\jlreq@nextchar\jlreq@openbracket@hook}
+  \def\jlreq@openbracket@hook@i{\ifx\jlreq@nextchar\special\expandafter\jlreq@openbracket@hook@iii\else\expandafter\jlreq@openbracket@hook@ii\fi}
+  \def\jlreq@openbracket@hook@iii#1#2{#1{#2}\futurelet\jlreq@nextchar\jlreq@openbracket@hook@i}
+  \def\jlreq@openbracket@hook{\futurelet\jlreq@nextchar\jlreq@openbracket@hook@i}
+  \let\jlreq@hook@everypar=\jlreq@openbracket@hook
+  \def\item{%
+    \def\jlreq@hook@everypar{%
+      \let\jlreq@hook@everypar=\jlreq@openbracket@hook
+      \inhibitglue
+    }%
+    \jlreq@useoriginalcs{item}%
+  }
 \fi
-% \itemの直後は折り返し行頭と同じにする．
-\AtBeginDocument{\PushPostHook{par}{\jlreq@parhook@atbeginlist}}
-\jlreq@saveoriginalcs{item}
-\def\item{%
- \def\jlreq@parhook@atbeginlist{\def\jlreq@parhook@atbeginlist{}\inhibitglue}%
- \jlreq@useoriginalcs{item}%
-}
-\def\jlreq@parhook@atbeginlist{}
 
 %.. 禁則処理
 \ifx l\jlreq@engine
@@ -2744,35 +2755,47 @@
   \jlreq@do
 }
 % {1 = 命令名}{2 = レベル}{3 = *}{4 = running head}{5 = 見出し}{6 = ラベルフォーマット}{7 = ラベルありフォーマット}{8 = ラベルなしフォーマット}
-\long\def\jlreq@RuninHeading@start@@#1#2#3#4#5#6#7#8{%
-  \if@noskipsec\leavevmode\fi
-  \begingroup
-    \def\jlreq@do{\global\@noskipsectrue}%
-    \ifnum0\jlreq@ifempty{#3}{}{1}\ifnum #2>\c@secnumdepth 1\fi>0
-      \def\jlreq@tempa##1{#8}%
-    \else
-      \appto\jlreq@do{\refstepcounter{#1}}%
-      \def\jlreq@tempa##1{#7}%
-    \fi
-    \par
-    \eappto\jlreq@do{%
-      \noexpand\everypar{%
-        \noexpand\if@noskipsec
-          \unexpanded{\global\@noskipsecfalse}%
-          \unexpanded{{\setbox\jlreq@tempboxa\lastbox}}%
-          \noexpand\begingroup
-            \expandonce{\jlreq@tempa{#5}}%
-            \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{#3}{#6}{#4}%
-          \noexpand\endgroup
-        \noexpand\else
-          \unexpanded{\everypar{}}%
-        \noexpand\fi
+\edef\jlreq@tempa{%
+  \unexpanded{\long\def\jlreq@RuninHeading@start@@#1#2#3#4#5#6#7#8}{%
+    \unexpanded{%
+    \if@noskipsec\leavevmode\fi
+    \begingroup
+      \def\jlreq@do{\global\@noskipsectrue}%
+      \ifnum0\jlreq@ifempty{#3}{}{1}\ifnum #2>\c@secnumdepth 1\fi>0
+        \def\jlreq@tempa##1{#8}%
+      \else
+        \appto\jlreq@do{\refstepcounter{#1}}%
+        \def\jlreq@tempa##1{#7}%
+      \fi
+      \par}%
+      \unexpanded{\eappto\jlreq@do}{%
+        \unexpanded{\noexpand\everypar}{%
+          \unexpanded{%
+          \noexpand\if@noskipsec
+            \unexpanded{\global\@noskipsecfalse}%
+            \unexpanded{{\setbox\jlreq@tempboxa\lastbox}}%
+            \noexpand\begingroup
+              \expandonce{\jlreq@tempa{#5}}%
+              \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{#3}{#6}{#4}%
+            \noexpand\endgroup
+            \unexpanded{\def\jlreq@hook@everypar{\inhibitglue}}%
+          \noexpand\else
+            \unexpanded{\everypar{}}%
+          }%
+            \ifx l\jlreq@engine
+              \unexpanded{\unexpanded{\def\jlreq@hook@everypar{}}}%
+            \else
+              \unexpanded{\unexpanded{\let\jlreq@hook@everypar\jlreq@openbracket@hook}}%
+            \fi
+         \unexpanded{\noexpand\fi}
+        }%
       }%
-    }%
-  \expandafter\endgroup
-  \jlreq@do
-  \ignorespaces
+    \unexpanded{\expandafter\endgroup
+    \jlreq@do
+    \ignorespaces}%
+  }
 }
+\jlreq@tempa
 
 % \DeclareRuninHeading{命令名}{レベル}{設定}
 \newcommand*{\DeclareRuninHeading}[3]{%

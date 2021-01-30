@@ -2776,7 +2776,7 @@
             \unexpanded{{\setbox\jlreq@tempboxa\lastbox}}%
             \noexpand\begingroup
               \expandonce{\jlreq@tempa{#5}}%
-              \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}{#3}{#6}{#4}%
+              \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}\unexpanded{{#3}{#6}{#4}}%
             \noexpand\endgroup
             \unexpanded{\def\jlreq@hook@everypar{\inhibitglue}}%
           \noexpand\else

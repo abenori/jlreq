@@ -15,6 +15,8 @@
 \cs_new:Nn \l_jlreq_do: {}
 \str_new:N \l_jlreq_tmpa_str
 \str_new:N \l_jlreq_tmpb_str
+\str_new:N \l_jlreq_tmpc_str
+\bool_new:N \l_jlreq_tmpa_bool
 \ExplSyntaxOff
 
 \newcommand*{\jlreq@undeferr}[1]{\ClassError{jlreq}{Trying to delete \string#1 even though it is not defined, may be a bug}{\@ehc}}
@@ -2988,11 +2990,29 @@
   \@ifundefined{#1}{\DeclareCutinHeading{#1}{#2}{#3}}{}%
 }
 
-\newcommand{\ModifyHeading}[2]{%
+\ExplSyntaxOn
+\NewDocumentCommand{\ModifyHeading}{m m}{
   \@ifundefined{jlreq@heading@setting@#1}{\ClassError{jlreq}{Unknown heading: #1}{\@ehc}}{}%
-  \edef\jlreq@do{\csexpandonce{jlreq@heading@type@#1}{#1}{\csexpandonce{jlreq@heading@level@#1}}{\csexpandonce{jlreq@heading@setting@#1},\unexpanded{#2}}}%
-  \jlreq@do
+  \group_begin:
+    \tl_set:Nn \l_jlreq_tmpa_tl {#2}
+    \str_set:Nn \l_jlreq_tmpa_str {#2}
+    \str_case_e:nn {\jlreq@HeadingType{#1}} {
+      {BlockHeading}{
+        \bool_set_false:N \l_jlreq_tmpa_bool
+        \str_if_in:NnT \l_jlreq_tmpa_str {before_space=}{\bool_set_true:N \l_jlreq_tmpa_bool}
+        \str_if_in:NnT \l_jlreq_tmpa_str {before_space~=}{\bool_set_true:N \l_jlreq_tmpa_bool}
+        \bool_if:NT \l_jlreq_tmpa_bool {\tl_put_left:Nn \l_jlreq_tmpa_tl {before_lines={},}}
+        \bool_set_false:N \l_jlreq_tmpa_bool
+        \str_if_in:NnT \l_jlreq_tmpa_str {after_space=}{\bool_set_true:N \l_jlreq_tmpa_bool}
+        \str_if_in:NnT \l_jlreq_tmpa_str {after_space~=}{\bool_set_true:N \l_jlreq_tmpa_bool}
+        \bool_if:NT \l_jlreq_tmpa_bool {\tl_put_left:Nn \l_jlreq_tmpa_tl {after_lines={},}}
+      }
+    }
+    \cs_set:Nx \l_jlreq_do: {\exp_not:v {jlreq@heading@type@#1}{\exp_not:n {#1}}{\exp_not:v {jlreq@heading@level@#1}}{\exp_not:v {jlreq@heading@setting@#1},\exp_not:V \l_jlreq_tmpa_tl}}
+  \exp_after:wN \group_end:
+  \l_jlreq_do:
 }
+\ExplSyntaxOff
 % 見出し#1をマクロ#2に保存する
 \newcommand{\SaveHeading}[2]{%
   \@ifundefined{jlreq@heading@setting@#1}{\ClassError{jlreq}{Unknown heading: #1}{\@ehc}}{}%

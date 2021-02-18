@@ -295,7 +295,7 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
 * `indent=<寸法>` 見出し文字列全体の字下げ量を指定します．
 * `after_label_space=<寸法>`：ラベル後，見出し文字列までの空きを指定します．
 * `label_format=<コード>`：ラベルのフォーマットを指定します．`label_format={\theparagraph}`などのようにします．
-* `number=[true/false]'：採番を行うかを指定します．`\NewTobiraHeading`と同様の注意が必要です．
+* `number=[true/false]`：採番を行うかを指定します．`\NewTobiraHeading`と同様の注意が必要です．
 
 ### 窓見出し
 `\NewCutinHeading`で作成します．`\<命令名>{見出し文字列}`という書式の命令を作成します．設定は以下の通り．

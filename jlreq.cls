@@ -2789,7 +2789,7 @@
             \else
               \unexpanded{\unexpanded{\let\jlreq@hook@everypar\jlreq@openbracket@hook}}%
             \fi
-         \unexpanded{\noexpand\fi}
+         \unexpanded{\noexpand\fi}%
         }%
       }%
     \unexpanded{\expandafter\endgroup
@@ -2992,7 +2992,7 @@
 
 \ExplSyntaxOn
 \NewDocumentCommand{\ModifyHeading}{m m}{
-  \@ifundefined{jlreq@heading@setting@#1}{\ClassError{jlreq}{Unknown heading: #1}{\@ehc}}{}%
+  \@ifundefined{jlreq@heading@setting@#1}{\ClassError{jlreq}{Unknown heading: #1}{\@ehc}}{}
   \group_begin:
     \tl_set:Nn \l_jlreq_tmpa_tl {#2}
     \str_set:Nn \l_jlreq_tmpa_str {#2}
@@ -4754,6 +4754,7 @@
       \ifnum0\ifx c\jlreq@align 1\fi\ifx r\jlreq@align 1\fi>0 \hfil\fi
       \unhbox\@tempboxa
       \ifnum0\ifx c\jlreq@align 1\fi\ifx l\jlreq@align 1\fi>0 \hfil\fi
+      \par
     }%
   \fi
   \vskip\belowcaptionskip}}

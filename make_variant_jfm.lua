@@ -208,3 +208,4 @@ end
 make_jfmfile(to_jidori_pl(jfm),"jfm-jlreq-jidori-pl.lua")
 make_jfmfile(to_jidori_pl(tate(jfm)),"jfm-jlreqv-jidori-pl.lua")
 make_jfmfile(tate(jfm),"jfm-jlreqv-jidori.lua")
+tolf("jfm-jlreqv-jidori.lua")

@@ -134,6 +134,11 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - `fontsize` etc. with LuaLaTeX accept `H`.
     - Added `\jidori`.
     - Fixed bugs.
+* 2021-03-17
+    - Use the pagestyle `plain` at `\maketitle` if the current one is not `empty`
+    - Removed JFM glue after `\item`.
+    - Removed JFM glue after block headings.
+    - Fixed bugs.
 
 
 --------------

@@ -5,7 +5,7 @@
 %%
 % (based on JLReq 20200811 https://www.w3.org/TR/2020/NOTE-jlreq-20200811/)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{jlreq}[2020/12/29 jlreq]
+\ProvidesClass{jlreq}[2021/03/17 jlreq]
 \RequirePackage{xkeyval,everyhook,etoolbox,ifthen}
 \RequirePackage{jlreq-helpers}
 

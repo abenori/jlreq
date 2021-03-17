@@ -156,7 +156,7 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
 * `sidenote_symbol=<コード>`：`sidenote_symbol=symbol`の時に，注の位置に入る記号．デフォルト＊
 * `sidenote_keyword_font=<フォント設定コード>`：`sidenote_symbol=symbol`の時に，注のついている単語のフォント指定．デフォルトは無し（強調しない）
 * `endnote_second_indent=<寸法>`: 後柱の二行目以降の字下げ量を指定します．一行目からの相対字下げ量です．
-* `endnote_position=[headings/paragraph/{_<見出し名1>,_<見出し名2>,...}]`：後注の出力場所を指定します．`headings`は各見出しの直前（デフォルト），`paragraph`は改段落の際に出力します．また，`endnote_position={_chapter,_section}`とすると，`\chapter`と`\section`の直前に出力します．
+* `endnote_position=[headings/paragraph/{_<見出し名1>,_<見出し名2>,...}]`：後注の出力場所を指定します．`headings`は各見出しの直前（デフォルト），`paragraph`は改段落の際に出力します．また，`endnote_position={_chapter,_section}`とすると，`\chapter`と`\section`の直前に出力します．`<_見出し名>`を指定するためには，対象の見出しが本クラスファイルの機能を使って作られていなければいけません．
 
 ### キャプション
 図表のキャプションを`\jlreqsetup`で変更できます．全ての設定で，各環境ごとの設定をすることができます．例えば`caption_font=\normalsize,table=\Large`とすると，table環境内では`\Large`が適用され，そのほかの環境内では`\normalsize`が適用されます．他の設定も同様です．

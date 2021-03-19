@@ -4746,13 +4746,16 @@
     {%
       \ifx c\jlreq@align\centering\fi
       \ifx r\jlreq@align\raggedleft\fi
-      \unhbox\@tempboxa\par
+%      \unhbox\@tempboxa
+      \jlreq@tempa
+      \par
     }%
   \else
     \global\@minipagefalse
     \hbox to\hsize{%
       \ifnum0\ifx c\jlreq@align 1\fi\ifx r\jlreq@align 1\fi>0 \hfil\fi
-      \unhbox\@tempboxa
+%      \unhbox\@tempboxa
+      \jlreq@tempa
       \ifnum0\ifx c\jlreq@align 1\fi\ifx l\jlreq@align 1\fi>0 \hfil\fi
       \par
     }%

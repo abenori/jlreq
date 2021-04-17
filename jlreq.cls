@@ -4740,26 +4740,17 @@
     }%
   \fi
   \setbox\@tempboxa=\hbox{\jlreq@tempa}%
-  \edef\jlreq@tempc{\jlreq@jlreqsetup@withenv@nameuse{jlreq@@makecaption@align@setting}{\jlreq@tempb}}%
-  \expandafter\let\expandafter\jlreq@align\jlreq@tempc
   \ifdim\wd\@tempboxa>\hsize\relax
-    {%
-      \ifx c\jlreq@align\centering\fi
-      \ifx r\jlreq@align\raggedleft\fi
-%      \unhbox\@tempboxa
-      \jlreq@tempa
-      \par
-    }%
+    \edef\jlreq@tempc{\jlreq@jlreqsetup@withenv@nameuse{jlreq@@makecaption@align@setting@large}{\jlreq@tempb}}%
   \else
     \global\@minipagefalse
-    \hbox to\hsize{%
-      \ifnum0\ifx c\jlreq@align 1\fi\ifx r\jlreq@align 1\fi>0 \hfil\fi
-%      \unhbox\@tempboxa
-      \jlreq@tempa
-      \ifnum0\ifx c\jlreq@align 1\fi\ifx l\jlreq@align 1\fi>0 \hfil\fi
-      \par
-    }%
+    \edef\jlreq@tempc{\jlreq@jlreqsetup@withenv@nameuse{jlreq@@makecaption@align@setting@small}{\jlreq@tempb}}%
   \fi
+  \expandafter\let\expandafter\jlreq@align\jlreq@tempc
+  \ifx c\jlreq@align\centering\fi
+  \ifx r\jlreq@align\raggedleft\fi
+  \unhbox\@tempboxa
+  \par
   \vskip\belowcaptionskip}}
 
 \jlreq@jlreqsetup@add{caption_font}{\jlreq@jlreqsetup@withenv{jlreq@@makecaption@font@envlist}{jlreq@@makecaption@font@setting}{#1}}
@@ -4767,50 +4758,97 @@
 \jlreq@jlreqsetup@add{caption_label_format}{\jlreq@jlreqsetup@withenv{jlreq@@makecaption@label@format@envlist}{jlreq@@makecaption@label@format@setting}{#1}}
 \jlreq@jlreqsetup@add{caption_after_label_space}{\jlreq@jlreqsetup@withenv{jlreq@@makecaption@after@label@space@envlist}{jlreq@@makecaption@after@label@space@setting}{#1}}
 
-\def\jlreq@@makecaption@align@clearandsetalign#1{%
-  \@for\jlreq@tempa:=\jlreq@@makecaption@align@envlist\do{%
-    \ifx\jlreq@tempa\@empty\else
-      \eappto\jlreq@generalset{\noexpand\let\expandonce{\csname jlreq@@makecaption@align@setting@\jlreq@tempa\endcsname}=\noexpand\@undefined}%
-    \fi
-  }%
-  \appto\jlreq@generalset{%
-    \def\jlreq@@makecaption@align@envlist{}%
-    \let\jlreq@@makecaption@align@setting=#1%
-  }%
+\ExplSyntaxOn
+%% 
+%% \jlreq@@makecaption@align@setting@small(@env)に小さい時のalign，jlreq@@makecaption@align@setting@large(@env)に大きいときのalignを入れる．
+%% \l_jlreq_tmpb_tlに各環境の設定クリア
+%% \l_jlreq_tmpc_tlにsmall/largeどちらのも設定
+%% \l_jlreq_tmpd_tlにlarge設定
+%% #1=env，#2=値
+\clist_new:N \g_jlreq_@makecaption_align_envlist
+\cs_set:Nn \__jlreq_@makecaption_align_set:nn{
+  \str_case:nnF{#2}{
+    {center}{\__jlreq_@makecaption_align_set_i:nnn{#1}{}{c}}
+    {left}{\__jlreq_@makecaption_align_set_i:nnn{#1}{}{l}}
+    {right}{\__jlreq_@makecaption_align_set_i:nnn{#1}{}{r}}
+    {top}{\__jlreq_@makecaption_align_set_i:nnn{}{#1}{l}}
+    {bottom}{\__jlreq_@makecaption_align_set_i:nnn{#1}{}{r}}
+    {*center}{\__jlreq_@makecaption_align_set_i:nnn{#1}{*}{c}}
+    {*left}{\__jlreq_@makecaption_align_set_i:nnn{#1}{*}{l}}
+    {*right}{\__jlreq_@makecaption_align_set_i:nnn{#1}{*}{r}}
+    {*top}{\__jlreq_@makecaption_align_set_i:nnn{#1}{*}{l}}
+    {*bottom}{\__jlreq_@makecaption_align_set_i:nnn{#1}{*}{r}}
+  }{
+    \ClassWarning{jlreq}{Unknown~position~`#2`~in~caption_align,~ ignored}%
+  }
 }
+\cs_generate_variant:Nn \__jlreq_@makecaption_align_set:nn {VV}
+\cs_set:Nn \__jlreq_@makecaption_align_set_i:nnn{
+  \tl_if_empty:nTF{#1}{
+    \clist_map_inline:Nn \g_jlreq_@makecaption_align_envlist{
+      \tl_put_right:Nx \l_jlreq_tmpb_tl {
+        \exp_not:N \let \exp_not:o {\csname jlreq@@makecaption@align@setting@large##1\endcsname}=\exp_not:N \@undefined
+      }
+      \tl_if_empty:nT{#2}{
+        \tl_put_right:Nx \l_jlreq_tmpb_tl {
+          \exp_not:N \let \exp_not:o {\csname jlreq@@makecaption@align@setting@small##1\endcsname}=\exp_not:N \@undefined
+        }
+      }
+    }
+  }{
+    \tl_put_right:Nn \l_jlreq_tmpb_tl {
+      \clist_gput_right:Nn \g_jlreq_@makecaption_align_envlist {#1}
+    }
+  }
+  \tl_if_empty:nTF{#2}{
+    \tl_put_right:Nn \l_jlreq_tmpc_tl{
+      \expandafter\let\csname jlreq@@makecaption@align@setting@small#1\endcsname=#3
+      \expandafter\let\csname jlreq@@makecaption@align@setting@large#1\endcsname=#3
+    }
+  }{
+    \tl_put_right:Nn \l_jlreq_tmpd_tl{
+      \expandafter\let\csname jlreq@@makecaption@align@setting@large#1\endcsname=#3
+    }
+  }
+}
+
+\keys_define:nn {__jlreqsetup_caption_align}{
+  center .code:n = {\__jlreq_@makecaption_align_set:nn{}{center}},
+  left .code:n = {\__jlreq_@makecaption_align_set:nn{}{left}},
+  right .code:n = {\__jlreq_@makecaption_align_set:nn{}{right}},
+  top .code:n = {\__jlreq_@makecaption_align_set:nn{}{top}},
+  bottom .code:n = {\__jlreq_@makecaption_align_set:nn{}{bottom}},
+  *center .code:n = {\__jlreq_@makecaption_align_set:nn{}{*center}},
+  *left .code:n = {\__jlreq_@makecaption_align_set:nn{}{*left}},
+  *right .code:n = {\__jlreq_@makecaption_align_set:nn{}{*right}},
+  *top .code:n = {\__jlreq_@makecaption_align_set:nn{}{*top}},
+  *bottom .code:n = {\__jlreq_@makecaption_align_set:nn{}{*bottom}},
+  unknown .code:n = {
+    \clist_map_variable:nNn{#1} \l_jlreq_tmpa_tl{
+      \tl_trim_spaces:N \l_jlreq_tmpa_tl
+      \str_set_eq:NN \l_jlreq_tmpa_str \l_keys_key_str
+      \str_put_left:Nn \l_jlreq_tmpa_str {@}
+      \__jlreq_@makecaption_align_set:VV \l_jlreq_tmpa_str \l_jlreq_tmpa_tl
+    }
+  }
+}
+
 \jlreq@jlreqsetup@add{caption_align}{%
-  \@ifundefined{jlreq@@makecaption@align@envlist}{\def\jlreq@@makecaption@align@envlist{}}{}%
-  \begingroup
-    \def\jlreq@generalset{}\def\jlreq@envset{}%
-    \jlreq@parsekeyval@nokey{%
-      \jlreq@ifempty{##1}{}{%
-        \jlreq@switch{##1}{%
-          {center}{\jlreq@@makecaption@align@clearandsetalign{c}}
-          {left}{\jlreq@@makecaption@align@clearandsetalign{l}}
-          {right}{\jlreq@@makecaption@align@clearandsetalign{r}}
-          {top}{\jlreq@@makecaption@align@clearandsetalign{l}}
-          {bottom}{\jlreq@@makecaption@align@clearandsetalign{r}}
-          {%
-            \jlreq@switch{##2}{%
-              {center}{\eappto\jlreq@envset{\noexpand\let\expandonce{\csname jlreq@@makecaption@align@setting@##1\endcsname}=c}}%
-              {left}{\eappto\jlreq@envset{\noexpand\let\expandonce{\csname jlreq@@makecaption@align@setting@##1\endcsname}=l}}%
-              {right}{\eappto\jlreq@envset{\noexpand\let\expandonce{\csname jlreq@@makecaption@align@setting@##1\endcsname}=r}}%
-              {top}{\eappto\jlreq@envset{\noexpand\let\expandonce{\csname jlreq@@makecaption@align@setting@##1\endcsname}=l}}%
-              {bottom}{\eappto\jlreq@envset{\noexpand\let\expandonce{\csname jlreq@@makecaption@align@setting@##1\endcsname}=r}}%
-            }%
-            \appto\jlreq@envset{%
-              \def\jlreq@tempa{\jlreq@helper@removeelement{##1}}%
-              \expandafter\jlreq@tempa\expandafter{\jlreq@@makecaption@align@envlist}{\jlreq@@makecaption@align@envlist}%
-              \appto\jlreq@@makecaption@align@envlist{,##1}%
-            }%
-          }%
-        }%
-      }%
-    }{#1}%
-    \edef\jlreq@do{\expandonce{\jlreq@generalset}\expandonce{\jlreq@envset}}%
-  \expandafter\endgroup
-  \jlreq@do
+  \group_begin:
+    \tl_clear:N \l_jlreq_tmpb_tl
+    \tl_clear:N \l_jlreq_tmpc_tl
+    \tl_clear:N \l_jlreq_tmpd_tl
+    \keys_set:nn {__jlreqsetup_caption_align}{#1}
+    \cs_set:Nx \l_jlreq_do:{
+      \exp_not:o \l_jlreq_tmpb_tl
+      \exp_not:o \l_jlreq_tmpc_tl
+      \exp_not:o \l_jlreq_tmpd_tl
+    }
+  \exp_after:wN \group_end:
+  \l_jlreq_do:
 }
+\ExplSyntaxOff
+
 % 特に根拠のない値
 \setlength\abovecaptionskip{.5\jlreq@gol}
 \setlength\belowcaptionskip{0pt}

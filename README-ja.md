@@ -102,7 +102,7 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
     \begin{document}
     ```
 
-    のようにします．
+    のようにします．和文と欧文の間の空白（(u)pTeXでは`\xkanjiskip`に，LuateX-jaでは`xkanjiskip`パラメータに格納されているもの）も同様に`\jlreqxkanjiskip`を再定義することで変更することができます．
 
 ## 各種設計
 設計はクラスオプションまたは`\jlreqsetup`によりkeyval形式で行います．ただし，クラスオプションではLaTeXの実装により，本来可能な入力が受け付けられないケースがあります．多くの場合は空白を除くことにより解決します．
@@ -164,7 +164,7 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
 * `caption_label_font=<フォント設定コード>`：キャプションのラベルのフォントを指定します．
 * `caption_after_label_space=<寸法>`：ラベルとキャプションの間の空きを指定します．
 * `caption_label_format=<コード>`：ラベルの書式を指定します．`caption_label_format={#1：}`のようにします．`#1`が「図1」のような番号に置換されます．
-* `caption_align=[left/right/center/bottom/top]`：キャプションの場所を指定します．
+* `caption_align=[left/right/center/bottom/top]`：キャプションの場所を指定します．{center,*left}のようにすると，通常は中央配置だがキャプションが大きいときには左に配置されます．
 
 ### 引用
 `quote / quotation / verse`環境の挙動を`\jlreqsetup`で指定できます．

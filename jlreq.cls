@@ -4751,7 +4751,8 @@
   \ifx r\jlreq@align\raggedleft\fi
   \unhbox\@tempboxa
   \par
-  \vskip\belowcaptionskip}}
+  \vskip\belowcaptionskip
+}}
 
 \jlreq@jlreqsetup@add{caption_font}{\jlreq@jlreqsetup@withenv{jlreq@@makecaption@font@envlist}{jlreq@@makecaption@font@setting}{#1}}
 \jlreq@jlreqsetup@add{caption_label_font}{\jlreq@jlreqsetup@withenv{jlreq@@makecaption@label@font@envlist}{jlreq@@makecaption@label@font@setting}{#1}}
@@ -4779,7 +4780,7 @@
     {*top}{\__jlreq_@makecaption_align_set_i:nnn{#1}{*}{l}}
     {*bottom}{\__jlreq_@makecaption_align_set_i:nnn{#1}{*}{r}}
   }{
-    \ClassWarning{jlreq}{Unknown~position~`#2`~in~caption_align,~ ignored}%
+    \ClassWarning{jlreq}{Unknown~position~`#2`~in~caption_align,~ignored}%
   }
 }
 \cs_generate_variant:Nn \__jlreq_@makecaption_align_set:nn {VV}
@@ -4811,18 +4812,24 @@
     }
   }
 }
+\cs_set:Nn \__jlreq_@makecaption_align_set_with_check_value:nn {
+  \tl_if_empty:nTF{#2}
+    {\__jlreq_@makecaption_align_set:nn{}{#1}}
+    {\__jlreq_@makecaption_align_set:nn{@#1}{#2}}
+}
+\cs_generate_variant:Nn \__jlreq_@makecaption_align_set_with_check_value:nn {Vn}
 
 \keys_define:nn {__jlreqsetup_caption_align}{
-  center .code:n = {\__jlreq_@makecaption_align_set:nn{}{center}},
-  left .code:n = {\__jlreq_@makecaption_align_set:nn{}{left}},
-  right .code:n = {\__jlreq_@makecaption_align_set:nn{}{right}},
-  top .code:n = {\__jlreq_@makecaption_align_set:nn{}{top}},
-  bottom .code:n = {\__jlreq_@makecaption_align_set:nn{}{bottom}},
-  *center .code:n = {\__jlreq_@makecaption_align_set:nn{}{*center}},
-  *left .code:n = {\__jlreq_@makecaption_align_set:nn{}{*left}},
-  *right .code:n = {\__jlreq_@makecaption_align_set:nn{}{*right}},
-  *top .code:n = {\__jlreq_@makecaption_align_set:nn{}{*top}},
-  *bottom .code:n = {\__jlreq_@makecaption_align_set:nn{}{*bottom}},
+  center .code:n = {\__jlreq_@makecaption_align_set_with_check_value:Vn \l_keys_key_str {#1}},
+  left .code:n = {\__jlreq_@makecaption_align_set_with_check_value:Vn \l_keys_key_str {#1}},
+  right .code:n = {\__jlreq_@makecaption_align_set_with_check_value:Vn \l_keys_key_str {#1}},,
+  top .code:n = {\__jlreq_@makecaption_align_set_with_check_value:Vn \l_keys_key_str {#1}},,
+  bottom .code:n = {\__jlreq_@makecaption_align_set_with_check_value:Vn \l_keys_key_str {#1}},,
+  *center .code:n = {\__jlreq_@makecaption_align_set_with_check_value:Vn \l_keys_key_str {#1}},,
+  *left .code:n = {\__jlreq_@makecaption_align_set_with_check_value:Vn \l_keys_key_str {#1}},,
+  *right .code:n = {\__jlreq_@makecaption_align_set_with_check_value:Vn \l_keys_key_str {#1}},,
+  *top .code:n = {\__jlreq_@makecaption_align_set_with_check_value:Vn \l_keys_key_str {#1}},,
+  *bottom .code:n = {\__jlreq_@makecaption_align_set_with_check_value:Vn \l_keys_key_str {#1}},,
   unknown .code:n = {
     \clist_map_variable:nNn{#1} \l_jlreq_tmpa_tl{
       \tl_trim_spaces:N \l_jlreq_tmpa_tl
@@ -6026,7 +6033,7 @@
   caption_label_font={\sffamily\gtfamily\bfseries},
   caption_after_label_space=1\jlreq@zw,
   caption_label_format={#1},
-  caption_align=center
+  caption_align={center,*left}
 }
 
 %.. 箇条書き

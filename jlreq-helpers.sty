@@ -62,9 +62,9 @@
 
 % 条件．\jlreq@if{\ifnum\@count=1 \fi}{<TRUE>}{<FALSE>}みたいに使う
 \def\jlreq@if@endmark{\jlreq@if@endmark}
-\def\jlreq@if#1{\jlreq@if@#1\jlreq@if@endmark}
+\long\def\jlreq@if#1{\jlreq@if@#1\jlreq@if@endmark}
 \@gobbletwo\if\if
-\def\jlreq@if@#1\fi\jlreq@if@endmark{#1\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
+\long\def\jlreq@if@#1\fi\jlreq@if@endmark{#1\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
 
 % #1の先頭が引数なしのマクロか
 \long\def\jlreq@ifmacro@noargument#1{%
@@ -177,7 +177,7 @@
 % カンマで区切って，その前と後ろを\jlreq@resulta,\jlreq@resultbに入れる
 % もしカンマがない場合は\ifjlreq@resultがfalseになる．
 \newcommand*{\jlreq@helper@dividebycomma}[1]{\jlreq@helper@dividebycomma@#1,\jlreq@endmark}
-\def\jlreq@helper@dividebycomma@#1,#2\jlreq@endmark{%
+\long\def\jlreq@helper@dividebycomma@#1,#2\jlreq@endmark{%
   \jlreq@helper@trim{#1}{\jlreq@resulta}%
   \jlreq@helper@trim{#2}{\jlreq@resultb}%
   \jlreq@if{\ifx\jlreq@resultb\@empty\fi}{%
@@ -188,7 +188,7 @@
     \expandafter\jlreq@helper@trim\expandafter{\jlreq@resultb}{\jlreq@resultb}%
   }%
 }
-\def\jlreq@helper@removelastcomma#1,\jlreq@endmark{#1}
+\long\def\jlreq@helper@removelastcomma#1,\jlreq@endmark{#1}
 
 % vbox #1の最後を\jlreq@resultboxに入れる
 % #1の最後の行は消える
@@ -395,9 +395,9 @@
 % \jlreq@reference@ref{ラベル名}{デフォルト値}
 \def\jlreq@reference@ref#1{\jlreq@if{\expandafter\unless\expandafter\ifx\csname jlreq@reference@#1\endcsname\relax\fi}{\csname jlreq@reference@#1\endcsname}}
 % \jlreq@reference@label{ラベル名}{値}
-\def\jlreq@reference@label#1#2{\protected@write\@auxout{}{\string\@newl@bel{jlreq@reference}{#1}{#2}}}%
-\def\jlreq@reference@immediate@write#1#2{\immediate\write\@auxout{\string\@newl@bel{jlreq@reference}{#1}{#2}}}%
-\def\jlreq@reference@ifexist#1{\jlreq@if{\expandafter\unless\expandafter\ifx\csname jlreq@reference@#1\endcsname\relax\fi}}
+\long\def\jlreq@reference@label#1#2{\protected@write\@auxout{}{\string\@newl@bel{jlreq@reference}{#1}{#2}}}%
+\long\def\jlreq@reference@immediate@write#1#2{\immediate\write\@auxout{\string\@newl@bel{jlreq@reference}{#1}{#2}}}%
+\long\def\jlreq@reference@ifexist#1{\jlreq@if{\expandafter\unless\expandafter\ifx\csname jlreq@reference@#1\endcsname\relax\fi}}
 
 % 自動生成されるラベル用の番号
 \newcount\jlreq@reference@count
@@ -423,9 +423,9 @@
     }%
   }%
 }
-\def\jlreq@getfirsttoken@expandmacros@#1#2{\def#2{#1}}
+\long\def\jlreq@getfirsttoken@expandmacros@#1#2{\def#2{#1}}
 
-\def\jlreq@helper@checktokenlist#1#2{%
+\long\def\jlreq@helper@checktokenlist#1#2{%
   \jlreq@ifendmark{#2}{\@firstoftwo}%
   {%
     \jlreq@if{\ifnum0#1{#2}>0 \fi}%

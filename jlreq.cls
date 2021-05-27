@@ -2707,6 +2707,7 @@
   \jlreq@BlockHeading@spaces@clear
   \jlreq@do
 }
+\ExplSyntaxOff
 % jlreq@resultに出力すべきものを入れていく
 \def\jlreq@BlockHeading@spaces@output@@#1{%
   \jlreq@ifendmark{#1}{}{%
@@ -3005,7 +3006,6 @@
   \expandafter\endgroup
   \jlreq@do
 }
-\ExplSyntaxOff
 \newcommand*{\NewCutinHeading}[3]{%
   \expandafter\@ifdefinable\csname #1\endcsname{\DeclareCutinHeading{#1}{#2}{#3}}%
 }
@@ -3144,7 +3144,7 @@
         \jlreq@getfirsttoken@expandmacros{\jlreq@nextchar}{\jlreq@tempa}%
         \expandafter\let\expandafter\jlreq@tempb\jlreq@tempa
       }%
-      \noexpand\jlreq@if{\noexpand\ifnum 0\expandonce{\@tempa}>0 \noexpand\fi}{}{\noexpand\inhibitglue}%
+      \noexpand\jlreq@if{\noexpand\ifnum 0\expandonce{\@tempa}>0~\noexpand\fi}{}{\noexpand\inhibitglue}%
     }
   }{% reference_mark=interlinear
     \def\jlreq@notemark##1{{%
@@ -3164,12 +3164,12 @@
     \ifx l\jlreq@engine
       \def\jlreq@hook@prenote{%
         \jlreq@lastnodechar=\lastnodechar\relax
-        \ifnum\jlreq@lastnodechar>-1 \inhibitglue\fi
+        \ifnum\jlreq@lastnodechar>-1~\inhibitglue\fi
       }
     \else
       % (u)platexの時は代入すると\inhibitglueが効かなくなる
       \def\jlreq@hook@prenote{%
-        \ifnum\lastnodechar>-1 \inhibitglue\fi
+        \ifnum\lastnodechar>-1~\inhibitglue\fi
         \jlreq@lastnodechar=\lastnodechar\relax
       }
     \fi
@@ -3316,7 +3316,7 @@
         \jlreq@setcurrentpage
         \jlreq@resultcnt=\numexpr\jlreq@currentpage\ifodd\jlreq@currentpage\else + 1\fi\relax
         % このページに表示＆上の段処理済みだと\output内では間に合わない
-        \ifnum\jlreq@resultcnt=\value{page}\if@firstcolumn\else\jlreq@resultcnt=-1 \fi\fi
+        \ifnum\jlreq@resultcnt=\value{page}\if@firstcolumn\else\jlreq@resultcnt=-1~\fi\fi
       }
     \else
       \def\jlreq@footnote@delayfootnote@page{%
@@ -3327,7 +3327,7 @@
     \fi
     \long\def\jlreq@footnote@delayfootnote@delay#1#2{%
       % 二段組みの場合は上段を組んだ直後に\footnotetextを挿入（そのページの下段に入る）
-      \jlreq@if{\ifnum 0\if@firstcolumn\else 1\fi\ifnum#1>\value{page}1\fi>0 \fi}{%
+      \jlreq@if{\ifnum 0\if@firstcolumn\else 1\fi\ifnum#1>\value{page}1\fi>0~\fi}{%
         \xappto\jlreq@footnote@delayfootnoteslist{\unexpanded{\jlreq@footnote@delayfootnote{#1}{#2}}}%
       }{#2}%
     }
@@ -3342,7 +3342,7 @@
     }
     \long\def\jlreq@footnote@delayfootnote@delay#1#2{%
       % 一段組の場合はその前のページを組んだ直後に\footnotetextを挿入．
-      \jlreq@if{\ifnum\numexpr#1 - 1\relax>\value{page} \fi}{%
+      \jlreq@if{\ifnum\numexpr#1 - 1\relax>\value{page}~\fi}{%
         \xappto\jlreq@footnote@delayfootnoteslist{\unexpanded{\jlreq@footnote@delayfootnote{#1}{#2}}}%
       }{#2}%
     }
@@ -3392,7 +3392,7 @@
       \edef\jlreq@do{%
         \unexpanded{\def\jlreq@result{}#2}[\the\value{footnote}]\noexpand\jlreq@result
         \unexpanded{\def\jlreq@result{}#3}[\the\value{footnote}]\unexpanded{{#4}}%
-        \jlreq@if{\ifnum\jlreq@resultcnt=-1 \fi}{\noexpand\jlreq@result}{\unexpanded{%
+        \jlreq@if{\ifnum\jlreq@resultcnt=-1~\fi}{\noexpand\jlreq@result}{\unexpanded{%
           \xappto\jlreq@footnote@delayfootnoteslist{%
             \noexpand\jlreq@footnote@delayfootnote{\the\jlreq@resultcnt}{%
               \noexpand\jlreq@restore@original@footnotes
@@ -6234,6 +6234,7 @@
    appendix_precode = {}
  }
 }
+\ExplSyntaxOff
 \jlreqsetup{theindex_pagestyle=plain}
 \jlreqsetup{year_style=seireki}
 \jlreqsetup{

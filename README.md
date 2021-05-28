@@ -139,6 +139,9 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Removed JFM glue after `\item`.
     - Removed JFM glue after block headings.
     - Fixed bugs.
+* 2021-05-28
+    - Extended `caption_align` in `\jlreqsetup`.
+    - Removed some `\ifthenelse`.
 
 
 --------------

@@ -1356,7 +1356,9 @@
 
 % 縦書きの時は脚注に固定
 % (TODO: 頭注）
-\if@tate\@mparswitchfalse\fi
+\@mparswitchfalse
+\if@tate\else\if@twoside\@mparswitchtrue\fi\fi
+
 
 \setlength{\topskip}{1\zw} % フォントサイズと一致させる
 \ifx\jlreq@option@headfoot@verticalpos\@empty

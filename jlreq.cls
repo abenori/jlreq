@@ -18,6 +18,8 @@
 \str_new:N \l_jlreq_tmpc_str
 \bool_new:N \l_jlreq_tmpa_bool
 \clist_new:N \l_jlreq_tmpa_clist
+\dim_new:N \l_jlreq_tmpa_dim
+\skip_new:N \l_jlreq_tmpa_skip
 \ExplSyntaxOff
 
 \newcommand*{\jlreq@undeferr}[1]{\ClassError{jlreq}{Trying to delete \string#1 even though it is not defined, may be a bug}{\@ehc}}
@@ -5811,15 +5813,56 @@
 \ExplSyntaxOn
 \jlreq@saveoriginalcs{kanjishape}
 \ifx l\jlreq@engine
+  \cs_new:Nn \__jlreq_setkanjiskip:nn {
+    \group_begin:
+      \ltj@setpar@global
+      \cs_set:Nn \l_jlreq_do: {}
+      \tl_if_empty:nF {#1} {
+        \skip_set:Nn \l_jlreq_tmpa_skip { #1 }
+        \cs_set:Nx \l_jlreq_do: { \exp_not:o \l_jlreq_do:
+          \exp_not:N \cs_set:Npn \exp_not:N \jlreqkanjiskip { \skip_use:N \l_jlreq_tmpa_skip }
+          \exp_not:N \ltjsetkanjiskip \skip_use:N \l_jlreq_tmpa_skip
+        }
+      }
+      \tl_if_empty:nF {#2} {
+        \skip_set:Nn \l_jlreq_tmpa_skip { #2 }
+        \cs_set:Nx \l_jlreq_do: { \exp_not:o \l_jlreq_do:
+          \exp_not:N \cs_set:Npn \exp_not:N \jlreqxkanjiskip { \skip_use:N \l_jlreq_tmpa_skip }
+          \exp_not:N \ltjsetxkanjiskip \skip_use:N \l_jlreq_tmpa_skip
+        }
+      }
+    \exp_after:wN \group_end:
+    \l_jlreq_do:
+  }
+\else
+  \cs_new:Nn \__jlreq_setkanjiskip:nn {
+    \group_begin:
+      \cs_set:Nn \l_jlreq_do: {}
+      \tl_if_empty:nF {#1} {
+        \skip_set:Nn \l_jlreq_tmpa_skip { #1 }
+        \cs_set:Nx \l_jlreq_do: { \exp_not:o \l_jlreq_do:
+          \exp_not:N \cs_set:Npx \exp_not:N \jlreqkanjiskip { \skip_use:N \l_jlreq_tmpa_skip }
+          \exp_not:N \skip_set_eq:Nn \exp_not:N \kanjiskip { \skip_use:N \l_jlreq_tmpa_skip }
+        }
+      }
+      \tl_if_empty:nF {#2} {
+        \skip_set:Nn \l_jlreq_tmpa_skip { #2 }
+        \cs_set:Npx \jlreqxkanjiskip { \skip_use:N \l_jlreq_tmpa_skip }
+        \cs_set:Nx \l_jlreq_do: { \exp_not:o \l_jlreq_do:
+          \exp_not:N \cs_set:Npx \exp_not:N \jlreqxkanjiskip { \skip_use:N \l_jlreq_tmpa_skip }
+          \exp_not:N \skip_set:Nn \exp_not:N \xkanjiskip { \skip_use:N \l_jlreq_tmpa_skip }
+        }
+      }
+    \exp_after:wN \group_end:
+    \l_jlreq_do:
+  }
+\fi
+\ifx l\jlreq@engine
   \cs_set:Nn \l_jlreq_tmpa:n {
     \NewDocumentCommand { \jidori } { m m } {
       \mode_if_vertical:TF { \leavevmode } {}
       \group_begin:
-        \ltj@setpar@global
-        \ltjsetkanjiskip 0pt~plus~1fil~minus~0pt
-        \ltjsetxkanjiskip 0pt~plus~1fil~minus~0pt
-        \renewcommand*{ \jlreqkanjiskip  }  { 0pt~plus~1fil~minus~0pt }
-        \renewcommand*{ \jlreqxkanjiskip } { 0pt~plus~1fil~minus~0pt }
+        \__jlreq_setkanjiskip:nn { 0pt~plus~1fil~minus~0pt } { 0pt~plus~1fil~minus~0pt }
         \hbox_to_wd:nn {##1} {
           \def#1 {　}
           \kanjishape{n-jidori}\selectfont
@@ -5837,10 +5880,7 @@
   \NewDocumentCommand { \jidori } { m m } {
     \mode_if_vertical:TF { \leavevmode } {}
     \group_begin:
-      \setlength { \kanjiskip  } { 0pt~plus~15zw~minus~0pt }
-      \setlength { \xkanjiskip } { 0pt~plus~15zw~minus~0pt }
-      \renewcommand* { \jlreqkanjiskip  } { 0pt~plus~15zw~minus~0pt }
-      \renewcommand* { \jlreqxkanjiskip } { 0pt~plus~15zw~minus~0pt }
+      \__jlreq_setkanjiskip:nn { 0pt~plus~15zw~minus~0pt } { 0pt~plus~15zw~minus~0pt }
       \hbox_to_wd:nn {#1} {
         \kanjishape{n-jidori}\selectfont
         \inhibitglue #2
@@ -5849,6 +5889,13 @@
     \group_end:
   }
 \fi
+\NewDocumentCommand { \akigumi } { m m } {
+  \mode_if_vertical:TF { \leavevmode } {}
+  \group_begin:
+    \__jlreq_setkanjiskip:nn { \jlreqkanjiskip + #1 } { }
+    \hbox:n {#2}
+  \group_end:
+}
 \ExplSyntaxOff
 
 % 日にち

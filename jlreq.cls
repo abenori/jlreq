@@ -6,7 +6,7 @@
 % (based on JLReq 20200811 https://www.w3.org/TR/2020/NOTE-jlreq-20200811/)
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{jlreq}[2021/05/28 jlreq]
-\RequirePackage{xkeyval,everyhook,etoolbox,ifthen}
+\RequirePackage{xkeyval,etoolbox,ifthen}
 \RequirePackage{jlreq-helpers}
 
 
@@ -379,6 +379,7 @@
   \ltjsetparameter{stretch_priority={kanjiskip=0,xkanjiskip=10}}
   \ltjsetparameter{shrink_priority={kanjiskip=0,xkanjiskip=-30}}
 \else
+  \RequirePackage{everyhook}
   \def\jlreq@jfmname@prefix{}
   \jlreq@aftercls@addtodeletecs{\jlreq@jfmname@prefix}
   \ifjlreq@burasage\edef\jlreq@jfmname@prefix{b\jlreq@jfmname@prefix}\fi
@@ -825,20 +826,17 @@
 \edef\jlreq@charlist@katakana{アイウエオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモヤユヨラリルレロワヰヱヲンヴ\ifx p\jlreq@engine\else ヷヸヹヺ\fi}% カ゚キ゚ク゚ケ゚コ゚セ゚ツ゚ト゚
 
 %.. 行頭括弧調整
-\AtBeginDocument{\PushPostHook{par}{\jlreq@hook@everypar}}
-\def\jlreq@hook@everypar{}
 \jlreq@saveoriginalcs{item}
 \ExplSyntaxOn
 \ifx l\jlreq@engine
   % \itemの直後は折り返し行頭と同じにする．
   \def\item{%
-    \def\jlreq@hook@everypar{%
-      \def\jlreq@hook@everypar{}%
-      \inhibitglue
-    }%
     \jlreq@useoriginalcs{item}%
+    \expandafter\everypar\expandafter{\the\everypar\inhibitglue}%
   }
 \else
+  \AtBeginDocument{\PushPostHook{par}{\jlreq@hook@everypar}}
+  \def\jlreq@hook@everypar{}
   % 非LuaTeXの場合はJFMの入れ替えと\everyparでの処理で対処．
   % 行頭括弧に対して\inhibitglueを入れたりする命令を作る
   % \jlreq@charlist@openingbracketsの各括弧に対して，\ifx\jlreq@nextchar 「1\fiみたいなのが並んだのを作る
@@ -2144,17 +2142,12 @@
   \jlreq@ifgluezero\jlreq@tempskipb{}{\vskip\jlreq@tempskipb}%
   \edef\jlreq@do{%
     \ifdim\parskip=0pt \else
-      \unexpanded{\def\jlreq@parhook@gyodori}{%
-        \noexpand\parskip=\the\parskip
-        \unexpanded{\def\jlreq@parhook@gyodori{}}%
-      }%
-      \unexpanded{\parskip=0pt}%
+      \noexpand\AddToHookNext{para/before}{\noexpand\parskip=\the\parskip\noexpand\relax}%
+      \noexpand\parskip=0pt
     \fi
   }%
   \expandafter}\jlreq@do
 }
-\PushPostHook{par}{\jlreq@parhook@gyodori}
-\def\jlreq@parhook@gyodori{}
 
 % 行取り情報をゲットだぜ
 % \jlreq@resultに{1 = 前空き}{2 = 後ろ空き}{3 = トータル行数}を入れる
@@ -2810,13 +2803,11 @@
               \expandonce{\jlreq@tempa{#5}}%
               \expandonce{\csname jlreq@heading@maketoc@#1\endcsname}\unexpanded{{#3}{#6}{#4}}%
             \noexpand\endgroup
-            \unexpanded{\def\jlreq@hook@everypar{\inhibitglue}}%
+            \noexpand\inhibitglue
           \noexpand\else
             \unexpanded{\everypar{}}%
           }%
-            \ifx l\jlreq@engine
-              \unexpanded{\unexpanded{\def\jlreq@hook@everypar{}}}%
-            \else
+            \ifx l\jlreq@engine\else
               \unexpanded{\unexpanded{\let\jlreq@hook@everypar\jlreq@openbracket@hook}}%
             \fi
          \unexpanded{\noexpand\fi}%

@@ -2041,18 +2041,23 @@
   \jlreq@do
 }
 
-\def\jlreq@BlockHeading@start@removecolumn#1:{#1}
+\ExplSyntaxOn
+\cs_set:Nn \l_jlreq_do:n{
+  \def\jlreq@BlockHeading@start@removecolumn##1#1{##1}
 
-% 空き指定を解釈する．a:10pt -> \jlreq@resulta=a，\jlreq@resultb=10pt
-\def\jlreq@BlockHeading@start@analyzespace#1:#2\jlreq@endmark{%
-  \jlreq@ifempty{#1}{%
-    \def\jlreq@resulta{}%
-    \def\jlreq@resultb{}%
-  }{%
-    \let\jlreq@resulta=#1%
-    \edef\jlreq@resultb{\expandonce{\jlreq@BlockHeading@start@removecolumn#2}}%
-  }%
+  % 空き指定を解釈する．a:10pt -> \jlreq@resulta=a，\jlreq@resultb=10pt
+  \def\jlreq@BlockHeading@start@analyzespace##1#1##2\jlreq@endmark{%
+    \jlreq@ifempty{##1}{%
+      \def\jlreq@resulta{}%
+      \def\jlreq@resultb{}%
+    }{%
+      \let\jlreq@resulta=##1%
+      \edef\jlreq@resultb{\expandonce{\jlreq@BlockHeading@start@removecolumn##2}}%
+    }%
+  }
 }
+\cs_generate_variant:Nn \l_jlreq_do:n {x}
+\l_jlreq_do:x {\tl_to_str:n {:}}
 
 % 行取り処理．#3が空の時は行取りの処理はしない．（空白挿入は行う．）
 % {1 = 前空き}{2 = 後ろ空き}{3 = トータル行数}{4 = 出力}
@@ -2064,10 +2069,12 @@
   \jlreq@tempskipa=0pt
   \jlreq@tempskipb=0pt
   \jlreq@tempskipc=0pt
-  \jlreq@BlockHeading@start@analyzespace#1:\jlreq@endmark
+  \str_set:Nx \l__jlreq_tmpa_str {\tl_to_str:n {#1:}}%
+  \expandafter\jlreq@BlockHeading@start@analyzespace\l__jlreq_tmpa_str\jlreq@endmark
   \let\jlreq@maeakitype=\jlreq@resulta
   \let\jlreq@maeaki=\jlreq@resultb
-  \jlreq@BlockHeading@start@analyzespace#2:\jlreq@endmark
+  \str_set:Nx \l__jlreq_tmpa_str {\tl_to_str:n {#2:}}%
+  \expandafter\jlreq@BlockHeading@start@analyzespace\l__jlreq_tmpa_str\jlreq@endmark
   \let\jlreq@ushiroakitype=\jlreq@resulta
   \let\jlreq@ushiroaki=\jlreq@resultb
   \def\jlreq@lines{#3}%
@@ -2148,6 +2155,7 @@
   }%
   \expandafter}\jlreq@do
 }
+\ExplSyntaxOff
 
 % 行取り情報をゲットだぜ
 % \jlreq@resultに{1 = 前空き}{2 = 後ろ空き}{3 = トータル行数}を入れる
@@ -2583,10 +2591,11 @@
   \jlreq@do
 }
 
+\ExplSyntaxOn
 \def\jlreq@SetBlockHeadingSpaces@iii#1{%
-  \@for\@tempa:=#1\do{%
+  \clist_map_variable:nNn {#1} \@tempa {
     \expandafter\jlreq@helper@trim\expandafter{\@tempa}{\@tempa}%
-    \expandafter\jlreq@iffirsttoken@ignorespaces\expandafter{\@tempa}{_}{%
+    \str_if_eq:eeTF {\str_head:N \@tempa} {_} {
       \ifx\jlreq@lastdimen\@empty\else\eappto\jlreq@set{{\expandonce{\jlreq@lastdimen}}}\fi%
       \def\jlreq@lastdimen{}%
       \expandafter\jlreq@SetBlockHeadingSpaces@iv\@tempa{\jlreq@endmark}\jlreq@endmark
@@ -2606,10 +2615,12 @@
     \jlreq@tempafalse
   }%
 }
+
 \def\jlreq@SetBlockHeadingSpaces@iv#1#{%
-  \expandafter\jlreq@ifcontains\expandafter{\@gobble #1}{_}{%
+  \str_set:Nx \l__jlreq_tmpa_str {\@gobble #1}
+  \str_if_in:NnT \l__jlreq_tmpa_str {_} {
     \ClassWarning{jlreq}{Unusual heading name `\@gobble #1' is found. You forgot a comma? (in SetBlockHeadingSpaces)}%
-  }{}%
+  }%
   \jlreq@ifendswith{#1}{*}{{%
     \def\@tempa_##1*{\def\@tempa{##1}}%
     \@tempa#1%
@@ -2618,6 +2629,7 @@
   \appto\jlreq@headings{#1}%
   \jlreq@SetBlockHeadingSpaces@v
 }
+\ExplSyntaxOff
 \def\jlreq@SetBlockHeadingSpaces@v#1{%
   % 空っぽの場合は{_{r:0pt}{r:0pt}{}}
   \jlreq@ifendmark{#1}{%
@@ -2690,7 +2702,7 @@
   \jlreq@tempcnta=0
   \jlreq@BlockHeading@spaces@output@@#2\jlreq@endmark
   \jlreq@tempatrue % 周りの行取り処理が必要か
-  \jlreq@ifempty{#1}{\jlreq@tempafalse}{}%
+  \tl_if_empty:nT {#1} {\jlreq@tempafalse}%
   \tl_if_eq:nnT {#1} {{}{}{}} { \jlreq@tempafalse }
   \edef\jlreq@do{%
     \ifjlreq@tempa
@@ -2704,11 +2716,10 @@
   \jlreq@BlockHeading@spaces@clear
   \jlreq@do
 }
-\ExplSyntaxOff
 % jlreq@resultに出力すべきものを入れていく
 \def\jlreq@BlockHeading@spaces@output@@#1{%
   \jlreq@ifendmark{#1}{}{%
-    \jlreq@iffirsttoken@ignorespaces{#1}{_}{%
+    \str_if_eq:eeTF {\str_head:n {#1}} {_} {
       \advance\jlreq@tempcnta by 1
       \expandafter\jlreq@BlockHeading@spaces@output@@@\expandafter{\@gobble #1}%
     }{%
@@ -2717,6 +2728,7 @@
     \jlreq@BlockHeading@spaces@output@@
   }%
 }
+\ExplSyntaxOff
 \def\jlreq@BlockHeading@spaces@output@@@#1{%
   \edef\jlreq@do{%
     \noexpand\jlreq@BlockHeading@spaces@output@@@@
@@ -3414,19 +3426,19 @@
     \jlreq@hook@postnote
   }
 }
-\ExplSyntaxOff
 
 % 合印
 \renewcommand*{\@makefnmark}{%
   \jlreq@ifydir{\jlreq@notemark{\@thefnmark}}{\hbox{\jlreq@notemark{\@thefnmark}}}%
 }
 % 4.2.2注3
-\if@tate
+\legacy_if:nTF { @tate } {
   \renewcommand*{\thefootnote}{\jlreq@open@bracket@before@space\inhibitglue（\tatechuyoko*{\@arabic\c@footnote}）\inhibitglue}
-\else
+}{
   \renewcommand*{\thefootnote}{\arabic{footnote}\hbox{}）\inhibitglue}
-\fi
-\ifthenelse{\equal{\jlreq@article@type}{article}}{}{\@addtoreset{footnote}{chapter}}
+}
+\str_if_eq:VnF \jlreq@article@type { article } { \@addtoreset{footnote}{chapter} }
+\ExplSyntaxOff
 
 
 %.. 後注（4.2.4）
@@ -3514,13 +3526,16 @@
   \fi
 }
 % 4.2.4.b
+\ExplSyntaxOn
 \jlreq@endnote@indent=2\jlreq@mol
 \jlreq@jlreqsetup@add{endnote_second_indent}{
   \def\jlreq@endnote@second@indent{#1}
-  \ifthenelse{
-    \( \lengthtest{0.99\jlreq@zw < #1} \AND \lengthtest{#1 < 1.01\jlreq@zw} \) \OR 
-    \( \lengthtest{1.99\jlreq@zw < #1} \AND \lengthtest{#1 < 2.01\jlreq@zw} \)
-  }{}{\jlreq@note{後注が2行以上となった場合，後注の2行目以下の字下げは，1行目より，後注の文字サイズの2倍又は全角とする (4.2.4.d)．}}
+  \bool_if:nTF {
+    ( \dim_compare_p:n { 0.99\jlreq@zw < #1 } && \dim_compare_p:n { #1 < 1.01\jlreq@zw } ) ||
+    ( \dim_compare_p:n { 1.99\jlreq@zw < #1 } && \dim_compare_p:n { #1 < 2.01\jlreq@zw } )
+  } {} {
+    \jlreq@note{後注が2行以上となった場合，後注の2行目以下の字下げは，1行目より，後注の文字サイズの2倍又は全角とする (4.2.4.d)．}
+  }
 }
 \newcommand{\@makeendtext}[1]{%
   \csname\jlreq@endnotemarkname\endcsname
@@ -3537,7 +3552,7 @@
   \jlreq@tempbfalse % paragraphが指定された
   % \jlreq@tempcにセクション名たちを入れていく
   \def\jlreq@tempc{}
-  \@for\jlreq@tempa:=#1\do{
+  \clist_map_variable:nNn {#1} \jlreq@tempa {
     \expandafter\jlreq@helper@trim\expandafter{\jlreq@tempa}{\jlreq@tempa}%
     \jlreq@switch{\jlreq@tempa}{
       {headings}{\jlreq@tempatrue}
@@ -3546,7 +3561,7 @@
         \jlreq@tempbtrue
       }
       {
-        \expandafter\jlreq@iffirsttoken@ignorespaces\expandafter{\jlreq@tempa}{_}{
+        \str_if_eq:eeTF { \str_head:N \jlreq@tempa } {_} {
           \edef\jlreq@tempc{\jlreq@tempc,\expandafter\@gobble\jlreq@tempa}
         }{
           \ClassError{jlreq}{Invalid value \jlreq@tempa\space in endnote_position}{\@ehc}
@@ -3564,16 +3579,17 @@
   \ifjlreq@tempa
     \AddToHook{jlreq/heading/before}[jlreq/endnote]{\theendnotes}
   \else
-    \@for\@tempa:=\jlreq@tempc\do{
-      \ifx\@tempa\@empty\else
+    \clist_map_variable:NNn \jlreq@tempc \@tempa {
+      \tl_if_empty:VF \@tempa {
         \AddToHook{jlreq/heading/before/\@tempa}[jlreq/endnote]{}
         \RemoveFromHook{jlreq/heading/before/\@tempa}[jlreq/endnote]
         \AddToHook{jlreq/heading/before/\@tempa}[jlreq/endnote]{\theendnotes}
-      \fi
+      }
     }
   \fi
 }
 \AtEndDocument{\theendnotes}
+\ExplSyntaxOff
 
 
 % (1) \footnoteとかと同じ形式 sidenote_type=number
@@ -3911,9 +3927,14 @@
 % 2.6.1.cの後半が前半と整合的でないように見える……
 % 柱：両柱と片柱（2.6.3）
 \@tempdima=\jlreq@speciallength{\jlreq@headfoot@sidemargin}
-\ifthenelse{\lengthtest{\@tempdima=0pt} \OR \(\lengthtest{0.99\zw < \@tempdima} \AND \lengthtest{\@tempdima < 1.01\zw}\)}{}{
+\ExplSyntaxOn
+\bool_if:nTF {
+  \dim_compare_p:n { \@tempdima = 0pt } ||
+  ( \dim_compare_p:n { 0.99\jlreq@zw < \@tempdima } && \dim_compare_p:n { \@tempdima < 1.01\jlreq@zw} )
+} {} {
   \jlreq@note{ノンブルまたは柱は，基本版面の左右にそろえるか，全角アキだけ寄せた位置に配置する (2.6.1.b)．}
 }
+\ExplSyntaxOff
 
 %.. 場所指定解析
 % bottom-leftみたいなのを解釈する．入力の順番はどっちでも良いが，出力は<top/bottom><left/right>の順番

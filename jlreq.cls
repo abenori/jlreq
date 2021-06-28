@@ -4025,16 +4025,17 @@
 % mark情報の取得を行う．
 % #1の中身をみて，#2 = 何段目見出しか，#3 = odd/even，\csname #4@<見出し命令名>\endcsnameに必要情報を追加し，#5の見出し命令名リストに追加
 % #1@heading@levelにレベルを入れる
+\ExplSyntaxOn
 \def\jlreq@pagestyle@setmark#1#2#3#4#5{%
   \begingroup
-    \expandafter\jlreq@iffirsttoken\expandafter{#1}{_}{%
+    \str_if_eq:eeTF {\str_head:N #1} {_} {
       \ifthenelse{\equal{#3}{odd}}{\let\jlreq@leftright=r}{\let\jlreq@leftright=l}%
       \edef\jlreq@do{%
         \unexpanded{\def#1}{%
           \ifx l\jlreq@leftright
-            \ifnum#2=0 \noexpand\leftmark\else\unexpanded{\jlreq@extraleftmark{#2}}\fi
+            \int_compare:nTF { #2 = 0 } { \exp_not:N \leftmark } { \exp_not:n {\jlreq@extraleftmark{#2}} }
           \else
-            \ifnum#2=0 \noexpand\rightmark\else\unexpanded{\jlreq@extrarightmark{#2}}\fi
+            \int_compare:nTF { #2 = 0 } { \exp_not:N \rightmark } { \exp_not:n {\jlreq@extrarightmark{#2}} }
           \fi
         }%
       }%
@@ -4045,12 +4046,13 @@
       \eappto\jlreq@do{%
         \noexpand\let\expandonce{\csname\expandafter\@gobble\string #1@heading@level\endcsname}=\expandonce{\csname jlreq@heading@level@\jlreq@headingname\endcsname}%
         \unexpanded{\def#5}{\expandonce{#5},\expandonce{\jlreq@headingname}}%
-        \noexpand\appto\expandonce{\csname #4@\jlreq@headingname\endcsname}{{{\ifnum#2=0 #3\fi}{#2}{\ifx r\jlreq@leftright r\else l\fi}}}%
+        \noexpand\appto\expandonce{\csname #4@\jlreq@headingname\endcsname}{{{\int_compare:nT {#2=0} {#3}}{#2}{\ifx r\jlreq@leftright r\else l\fi}}}%
       }%
     }{\def\jlreq@do{}}%
   \expandafter\endgroup
   \jlreq@do
 }
+\ExplSyntaxOff
 
 % \def\<見出し>mark#1{...}というのを\jlreq@resultに入れる，
 % #1：*ならばextramarkを使う
@@ -4100,6 +4102,7 @@
   \jlreq@ifendmark{#3}{}{\jlreq@pagestyle@make@headingmark@@{#1}{#2}#3}%
 }
 
+\ExplSyntaxOn
 \def\jlreq@pagestyle@make@headingmark@@#1#2#3#4#5{%
   % \jlreq@tempbに\***markの定義を入れる
   \edef\jlreq@tempb{%
@@ -4108,8 +4111,8 @@
     \unexpanded{##1}%
   }%
   \jlreq@parsekeyval@nokey{%
-    \jlreq@ifempty{##1}{}{\ifthenelse{\equal{##1}{#3}}{\edef\jlreq@tempb{\unexpanded{##2}}}{}}%
-    \ifthenelse{\equal{##1}{_#1}}{\edef\jlreq@tempb{\unexpanded{##2}}}{}%
+    \tl_if_empty:nF {##1} {\ifthenelse{\equal{##1}{#3}}{\edef\jlreq@tempb{\unexpanded{##2}}}{}}%
+    \str_if_eq:nnT {##1} {_#1} {\edef\jlreq@tempb{\unexpanded{##2}}}%
   }{#2}%
   \ifx l#5%
     \expandafter\edef\csname jlreq@leftmark@#4\endcsname{\expandonce{\jlreq@tempb}}%
@@ -4118,6 +4121,7 @@
   \fi
   \jlreq@pagestyle@make@headingmark@{#1}{#2}%
 }
+\ExplSyntaxOff
 
 % #2 #3 #4と並んだヘッダを作り#1に入れる．#1，#2，#3はコンロトールシークエンスの名前とする．
 \def\jlreq@pagestyle@setheadfoot#1#2#3#4{%
@@ -4251,6 +4255,7 @@
 }
 
 %.. \DeclarePageStyle
+\ExplSyntaxOn
 \newbox\jlreq@PageStyle@box
 \newcommand{\DeclarePageStyle}[2]{%
   \expandafter\edef\csname jlreq@pagestyle@setting@#1\endcsname{\unexpanded{#2}}%
@@ -4276,7 +4281,7 @@
     \def\jlreq@running@head@gap{}%
     \newif\ifjlreq@clearmarkcommand\jlreq@clearmarkcommandtrue
     \newif\ifjlreq@pstate\jlreq@pstatefalse % PageStyleTATE
-    \@for\jlreq@i:=ii,iii\do{%
+    \clist_map_variable:nNn {ii,iii} \jlreq@i {
       \expandafter\def\csname jlreq@nombre@\jlreq@i @position\endcsname{}%
       \expandafter\def\csname jlreq@running@head@\jlreq@i @position\endcsname{}%
       \expandafter\def\csname jlreq@nombre@\jlreq@i\endcsname{}%
@@ -4333,8 +4338,8 @@
     % _iiが存在するか調べて\ifjlreq@headii@existに入れる
     \newif\ifjlreq@headii@exist
     \jlreq@headii@existfalse
-    \jlreq@for@noexpand\jlreq@tempa:=\jlreq@odd@running@head@ii,\jlreq@odd@running@head@ii\do{%
-      \expandafter\ifx\jlreq@tempa\@empty\else\jlreq@headii@existtrue\fi
+    \clist_map_inline:nn { \jlreq@odd@running@head@ii, \jlreq@odd@running@head@ii } {
+      \tl_if_empty:VF ##1 { \jlreq@headii@existtrue }
     }%
     % markの処理
     % (odd|even)_running_head(_ii)が_<見出し命令>で与えられている場合，次のようにする．
@@ -4349,8 +4354,8 @@
     % * \jlreq@(odd|even)@running@head(@ii)@heading@levelに<見出し命令>のレベルを入れる．レベルが不明な時は\relaxになる．
     % また，\jlreq@headingmarklistに<見出し命令>の一覧を入れる．
     \def\jlreq@headingmarklist{}%
-    \@for\jlreq@parity:=odd,even\do{%
-      \@for\jlreq@i:=0,1,2\do{%
+    \clist_map_variable:nNn { odd, even } \jlreq@parity {
+      \clist_map_variable:nNn { 0, 1, 2 } \jlreq@i {
         % \jlreq@pagestyle@setmarkが上の処理を行う．
         \edef\jlreq@next{\noexpand\jlreq@pagestyle@setmark{\expandonce{\csname jlreq@\jlreq@parity @running@head@\@roman\numexpr\jlreq@i + 1\relax\endcsname}}{\expandonce{\jlreq@i}}{\expandonce{\jlreq@parity}}{jlreq@markdata}{\noexpand\jlreq@headingmarklist}}%
         \jlreq@next
@@ -4359,7 +4364,7 @@
     % \jlreq@minimumlevelに見出しの最低（数値が小さいという意味）レベルを入れる．
     \let\jlreq@minimumlevel=\@undefined
     \def\jlreq@markdefinecommand{}%
-    \@for\jlreq@heading:=\jlreq@headingmarklist\do{%
+    \exp_args:No \clist_map_variable:nNn \jlreq@headingmarklist \jlreq@heading {
       \ifx\jlreq@heading\@empty\else
         \expandafter\let\expandafter\jlreq@level\csname jlreq@heading@level@\jlreq@heading\endcsname
         \ifx\jlreq@level\relax\else
@@ -4382,8 +4387,8 @@
       \fi
     }}%
     % 二番目以降にフォント設定を追加
-    \@for\jlreq@i:=ii,iii\do{%
-      \@for\jlreq@parity:=odd,even\do{%
+    \clist_map_variable:nNn { ii, iii } \jlreq@i {
+      \clist_map_variable:nNn { odd, even } \jlreq@parity {
         \jlreq@pagestyle@addfont@tocs{jlreq@\jlreq@parity @running@head@\jlreq@i}{jlreq@running@head@\jlreq@i @font}%
       }%
       \jlreq@pagestyle@addfont@tocs{jlreq@nombre@\jlreq@i}{jlreq@nombre@\jlreq@i @font}%
@@ -4403,7 +4408,7 @@
       \jlreq@pagestyle@addifempty{\jlreq@running@head@iii@position}{\jlreq@even@running@head@ii}{\jlreq@gapcs}{\jlreq@even@running@head@iii}%
       \jlreq@pagestyle@addifempty{\jlreq@running@head@ii@position}{\jlreq@even@running@head@i}{\jlreq@gapcs}{\jlreq@even@running@head@ii}%
       \def\jlreq@nombre@contents{}% ノンブルを入れる（下の方に出力）
-      \@for\jlreq@i:=i,ii,iii\do{%
+      \clist_map_variable:nNn { i, ii, iii } \jlreq@i {
         \expandafter\let\expandafter\jlreq@position\csname jlreq@nombre@\jlreq@i @position\endcsname
         \expandafter\ifx\csname jlreq@nombre@\jlreq@i\endcsname\@empty\else
           \jlreq@ifgluezero{\glueexpr\jlreq@position\relax}{\def\jlreq@position{}}{}%
@@ -4418,9 +4423,9 @@
         \fi
       }%
       % \jlreq@(odd|even)@contentsに柱を入れる（上の方に出力）
-      \@for\jlreq@parity:=odd,even\do{%
+      \clist_map_variable:nNn { odd, even } \jlreq@parity {
         \expandafter\def\csname jlreq@\jlreq@parity @contents\endcsname{}%
-        \@for\jlreq@i:=i,ii,iii\do{%
+        \clist_map_variable:nNn { i, ii, iii } \jlreq@i {
           \expandafter\let\expandafter\jlreq@position\csname jlreq@running@head@\jlreq@i @position\endcsname
           \expandafter\ifx\csname jlreq@\jlreq@parity @running@head@\jlreq@i\endcsname\@empty\else
             \jlreq@ifgluezero{\glueexpr\jlreq@position\relax}{\def\jlreq@position{}}{}%
@@ -4482,15 +4487,17 @@
       \def\jlreq@nombre@i@position@default{{bottom}{center}}%
       \def\jlreq@running@head@i@position@default{{top}{center}}%
       % ii以降の位置は指定されていない場合はiのそれに合わせる
-      \@for\jlreq@tempa:=jlreq@nombre,jlreq@running@head\do{%
-        \@for\jlreq@i:=ii,iii\do{%
+      \clist_map_variable:nNn { jlreq@nombre, jlreq@running@head } \jlreq@tempa {
+        \clist_map_variable:nNn { ii, iii } \jlreq@i {
           \expandafter\ifx\csname\jlreq@tempa @\jlreq@i @position\endcsname\@empty
             \expandafter\let\csname\jlreq@tempa @\jlreq@i @position\expandafter\endcsname\csname\jlreq@tempa @i@position\endcsname
           \fi
           \expandafter\edef\csname\jlreq@tempa @\jlreq@i @position@default\endcsname{\csname\jlreq@tempa @i@position@default\endcsname}%
         }%
       }%
-      \@for\jlreq@tempa:=jlreq@nombre@i@position,jlreq@nombre@ii@position,jlreq@nombre@iii@position,jlreq@running@head@i@position,jlreq@running@head@ii@position,jlreq@running@head@iii@position\do{%
+      \clist_map_variable:nNn {
+        jlreq@nombre@i@position, jlreq@nombre@ii@position, jlreq@nombre@iii@position, jlreq@running@head@i@position, jlreq@running@head@ii@position, jlreq@running@head@iii@position
+      } \jlreq@tempa {
         \edef\jlreq@next{\noexpand\jlreq@pagestyle@parse@position{\csexpandonce{\jlreq@tempa}}{\expandonce{\csname\jlreq@tempa\endcsname}}{\csexpandonce{\jlreq@tempa @default}}}%
         \jlreq@next
       }%
@@ -4513,10 +4520,10 @@
         \ifthenelse{\lengthtest{\jlreq@gap < 1.49\jlreq@zw} \OR \( \lengthtest{\jlreq@gap > 1.51\jlreq@zw} \AND \lengthtest{\jlreq@gap < 1.99\jlreq@zw} \) \OR \lengthtest{\jlreq@gap > 2.01\jlreq@zw}}{\jlreq@note{ノンブルと柱との空き量は柱に使用する文字サイズの2倍又は1.5倍とする (ページスタイル #1 内，2.6.1.c)．}}{}%
       }%
       % 初期化
-      \@for\jlreq@parity:=odd,even\do{%
-        \@for\jlreq@vert:=top,bottom\do{%
-          \@for\jlreq@hor:=left,center,right\do{%
-            \@for\jlreq@type:=nombre,running@head\do{%
+      \clist_map_variable:nNn { odd, even } \jlreq@parity {
+        \clist_map_variable:nNn { top, bottom } \jlreq@vert {
+          \clist_map_variable:nNn { left, center, right } \jlreq@hor {
+            \clist_map_variable:nNn { nombre, running@head } \jlreq@type {
               \expandafter\def\csname jlreq@\jlreq@type @\jlreq@parity @\jlreq@vert @\jlreq@hor\endcsname{}%
             }%
           }%
@@ -4525,7 +4532,7 @@
         \jlreq@ifleftpage{\jlreq@parity}{\def\jlreq@pagehor{left}}{\def\jlreq@pagehor{right}}%
         % \jlreq@(running@head|nombre)@(odd|even)@(top|bottom)@(left|center|right)に入れていく
         % 左ページではノンブルが左（2.6.1.c），i,ii,...はiが左になるようにする．
-        \@for\jlreq@i:=i,ii,iii\do{%
+        \clist_map_variable:nNn { i, ii, iii } \jlreq@i {
           % nombre
           \expandafter\ifx\csname jlreq@nombre@\jlreq@i\endcsname\@empty\else
             \edef\jlreq@position{\csname jlreq@nombre@\jlreq@i @position\endcsname}%
@@ -4550,16 +4557,16 @@
           \fi
         }%
         % {A}{B}{C}の順だった柱を結合する．本体は\jlreq@pagestyle@make@runninghead．
-        \@for\jlreq@vert:=top,bottom\do{%
-          \@for\jlreq@hor:=left,center,right\do{%
+        \clist_map_variable:nNn { top, bottom } \jlreq@vert {
+          \clist_map_variable:nNn { left, center, right } \jlreq@hor {
             \ifthenelse{\equal{\jlreq@hor}{right}}{\def\jlreq@tempa{*}}{\def\jlreq@tempa{}}%
             \edef\jlreq@do{\noexpand\jlreq@pagestyle@make@runninghead{jlreq@running@head@\jlreq@parity @\jlreq@vert @\jlreq@hor}{\expandonce{\jlreq@tempa}}{\expandonce{\jlreq@running@head@gap}}}%
             \jlreq@do
           }%
         }%
         % ノンブルと柱を結合し，必要ならばフォント設定をする．
-        \@for\jlreq@vert:=top,bottom\do{%
-          \@for\jlreq@hor:=left,center,right\do{%
+        \clist_map_variable:nNn { top, bottom } \jlreq@vert {%
+          \clist_map_variable:nNn { left, center, right } \jlreq@hor {%
             \edef\jlreq@csname{jlreq@\jlreq@parity @\jlreq@vert @\jlreq@hor}%
             \edef\jlreq@runheadcsname{jlreq@running@head@\jlreq@parity @\jlreq@vert @\jlreq@hor}%
             \edef\jlreq@nombrecsname{jlreq@nombre@\jlreq@parity @\jlreq@vert @\jlreq@hor}%
@@ -4666,6 +4673,7 @@
   \expandafter\endgroup
   \jlreq@do
 }
+\ExplSyntaxOff
 
 \if@tate
   \def\jlreqyokoheadlength{\textheight}
@@ -6064,56 +6072,57 @@
 }
 
 %.. ページスタイル
+\ExplSyntaxOn
 \RenewPageStyle{empty}{nombre={},odd_running_head={},even_running_head={}}
-\ifthenelse{\equal{\jlreq@article@type}{article}}{
-  \if@twoside
+\str_if_eq:VnTF \jlreq@article@type { article } {
+  \legacy_if:nTF { @twoside } {
     \NewPageStyle{headings}{odd_running_head={_subsection},even_running_head={_section}}
-  \else
+  }{
     \NewPageStyle{headings}{odd_running_head={_section},even_running_head={}}
-  \fi
+  }
 }{% book, article
-  \if@twoside
+  \legacy_if:nTF { @twoside } {
     \NewPageStyle{headings}{odd_running_head={_section},even_running_head={_chapter}}
-  \else
+  }{
     \NewPageStyle{headings}{odd_running_head={_chapter},even_running_head={}}
-  \fi
+  }
   \ModifyPageStyle{headings}{mark_format={_chapter={第\thechapter 章\quad #1}}}
 }
-\if@tate
+\legacy_if:nTF { @tate } {
   \RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},clear_markcommand=false}
   \NewPageStyle{myheadings}{nombre=\thepage,odd_running_head=\rightmark,even_running_head=\leftmark,clear_markcommand=false}
-  \if@twoside
+  \legacy_if:nTF { @twoside } {
     \ModifyPageStyle{plain}{nombre_position={top-left}}
     \ModifyPageStyle{headings}{nombre=\thepage,nombre_position=bottom-left,running_head_position=top-left}
     \ModifyPageStyle{myheadings}{nombre_position=bottom-left,running_head_position=top-left}
-  \else
+  }{
     \ModifyPageStyle{plain}{nombre_position={top-center}}
     \ModifyPageStyle{headings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center}
     \ModifyPageStyle{myheadings}{nombre_position=bottom-center,running_head_position=top-center}
-  \fi
-\else% yoko
+  }
+}{% yoko
   \RenewPageStyle{plain}{nombre=\thepage,odd_running_head={},even_running_head={},nombre_position={bottom-center},clear_markcommand=false}
   \ModifyPageStyle{headings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center}
   \NewPageStyle{myheadings}{nombre=\thepage,nombre_position=bottom-center,running_head_position=top-center,odd_running_head=\rightmark,even_running_head=\leftmark,clear_markcommand=false}
-\fi
+}
 \ModifyPageStyle{plain}{font=\small}
 \ModifyPageStyle{headings}{font=\small}
 \ModifyPageStyle{myheadings}{font=\small}
 
 %.. 注
 \jlreqsetup{reference_mark=inline}
-\if@tate
+\legacy_if:nTF { @tate } {
   \jlreqsetup{footnote_indent=1\jlreq@zw}% 根拠なし
-\else
+}{
   \jlreqsetup{footnote_indent=0pt}% （4.2.5.b）
-\fi
+}
 \jlreqsetup{footnote_second_indent=1\jlreq@zw}
 \jlreqsetup{endnote_second_indent=2\jlreq@zw}
 \jlreqsetup{endnote_position=headings}
-\ifdim\jlreq@sidenote@length>0pt
+\dim_compare:nT { \jlreq@sidenote@length>0pt } {
   \jlreqsetup{sidenote_type=number}
   \jlreqsetup{sidenote_symbol=＊,sidenote_keyword_font={}}
-\fi
+}
 
 %.. キャプション
 \jlreqsetup{
@@ -6123,6 +6132,7 @@
   caption_label_format={#1},
   caption_align={center,*left}
 }
+\ExplSyntaxOff
 
 %.. 箇条書き
 \if@tate

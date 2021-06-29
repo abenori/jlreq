@@ -2204,6 +2204,7 @@
 \newbox\jlreq@BlockHeading@start@label@box
 % \DeclareBlockHeading{命令名}{レベル}{設定}
 \def\jlreq@BlockHeading@allheadings{}% 別行見出し一覧
+\ExplSyntaxOn
 \newcommand{\DeclareBlockHeading}[3]{%
   \ProvideHook{jlreq/heading/before/#1}
   \def\jlreq@do{\@removeelement{#1}}%
@@ -2252,26 +2253,27 @@
       \def\jlreq@tempa####1####2{##2}%
       \jlreq@do
     }%
-    \jlreq@parsekeyval[BlockHeading:#1]{
-      {lines}{}
-      {before_space}{}
-      {after_space}{}
-      {before_lines}{}
-      {after_lines}{}
-      {font}{\def\jlreq@font{##1}}
-      {subtitle_font}{\def\jlreq@subtitle@font{##1}}
-      {indent}{\def\jlreq@indent{##1}}
-      {end_indent}{\def\jlreq@end@indent{##1}}
-      {align}[left,center,right]{%
-        \jlreq@switch{##1}{
-          {left}{\def\jlreq@align{l}}
-          {center}{\def\jlreq@align{c}}
-          {right}{\def\jlreq@align{r}}
+    \keys_define:nn { BlockHeading:#1 } {
+      lines .code:n = {},
+      before_space .code:n = {},
+      after_space .code:n = {},
+      before_lines .code:n = {},
+      after_lines .code:n = {},
+      font .code:n = {\def\jlreq@font{##1}},
+      subtitle_font .code:n = {\def\jlreq@subtitle@font{##1}},
+      indent .code:n = {\def\jlreq@indent{##1}},
+      end_indent .code:n = {\def\jlreq@end@indent{##1}},
+      align .choices:nn = { left, center, right } {
+        \str_case_e:nn { \tl_to_str:N \l_keys_choice_tl } {
+          { left   } { \def\jlreq@align{l} }
+          { center } { \def\jlreq@align{c} }
+          { right  } { \def\jlreq@align{r} }
         }%
-      }
-      {format}{\edef\jlreq@format{\unexpanded{##1}}}
-      {after_label_space}{\def\jlreq@after@label@space{##1}}
-      {second_heading_text_indent,heading_text_second_indent}{%
+      },
+      format .code:n = {\edef\jlreq@format{\unexpanded{##1}}},
+      after_label_space .code:n = {\def\jlreq@after@label@space{##1}},
+%      {second_heading_text_indent,heading_text_second_indent}{%
+      second_heading_text_indent .code:n = {
         \jlreq@parsecomma{##1}{%
           \jlreq@iffirsttoken{####1}{*}{%
             \jlreq@second@text@indent@withlabelfalse
@@ -2286,10 +2288,10 @@
             \def\jlreq@second@heading@text@indent@wolabel{####2}%
           }%
         }%
-      }
-      {label_format}{\edef\jlreq@label@format{\unexpanded{##1}}}
-      {subtitle_format}{\edef\jlreq@subtitle@format{\unexpanded{##1}}}
-      {subtitle_indent}{%
+      },
+      label_format .code:n = {\edef\jlreq@label@format{\unexpanded{##1}}},
+      subtitle_format .code:n = {\edef\jlreq@subtitle@format{\unexpanded{##1}}},
+      subtitle_indent .code:n = {%
         \jlreq@iffirsttoken{##1}{*}{%
           \jlreq@subtitleindent@withlabelfalse
           \edef\jlreq@subtitle@indent{\expandonce{\@gobble ##1}}%
@@ -2297,27 +2299,26 @@
           \jlreq@subtitleindent@withlabeltrue
           \def\jlreq@subtitle@indent{##1}%
         }%
-      }
-      {subtitle_break}[true,false]{\csname jlreq@subtitle@break##1\endcsname}
-      {afterindent}[true,false]{\edef\jlreq@afterindent{\expandonce{\csname @afterindent##1\endcsname}}}
-      {allowbreak_if_evenpage}[true,false]{%
-        \jlreq@switch{##1}{
-          {true}{\def\jlreq@allowbreak@evenpage{}}
-          {false}{\def\jlreq@allowbreak@evenpage{*}}
+      },
+      subtitle_break .choices:nn = {true,false}{\csname jlreq@subtitle@break\l_keys_choice_tl\endcsname},
+      afterindent .choices:nn = {true,false}{\edef\jlreq@afterindent{\expandonce{\csname @afterindent\l_keys_choice_tl\endcsname}}},
+      allowbreak_if_evenpage .choices:nn = {true,false}{%
+        \str_if_eq_e:VnTF \l_keys_choice_tl {true}
+          {\def\jlreq@allowbreak@evenpage{}}
+          {\def\jlreq@allowbreak@evenpage{*}}
+      },
+      pagebreak .choices:nn = {clearpage,cleardoublepage,clearcolumn,nariyuki,begin_with_odd_page,begin_with_even_page}{%
+        \str_case_e:nn { \tl_to_str:N \l_keys_choice_tl } {
+          { clearpage            } {\def\jlreq@pagebreak{\clearpage}\jlreq@column@spanning@possibletrue}
+          { cleardoublepage      } {\def\jlreq@pagebreak{\cleardoublepage}\jlreq@column@spanning@possibletrue}
+          { clearcolumn          } {\if@twocolumn\def\jlreq@pagebreak{\newpage}\else\def\jlreq@pagebreak{}\fi\jlreq@column@spanning@possiblefalse}
+          { begin_with_even_page } {\def\jlreq@pagebreak{\cleartoevenpage[empty]}\jlreq@column@spanning@possibletrue}
+          { begin_with_odd_page  } {\def\jlreq@pagebreak{\cleartooddpage[empty]}\jlreq@column@spanning@possibletrue}
+          { nariyuki             } {\def\jlreq@pagebreak{}\jlreq@column@spanning@possiblefalse}
         }%
-      }
-      {pagebreak}[clearpage,cleardoublepage,clearcolumn,nariyuki,begin_with_odd_page,begin_with_even_page]{%
-        \jlreq@switch{##1}{
-          {clearpage}{\def\jlreq@pagebreak{\clearpage}\jlreq@column@spanning@possibletrue}
-          {cleardoublepage}{\def\jlreq@pagebreak{\cleardoublepage}\jlreq@column@spanning@possibletrue}
-          {clearcolumn}{\if@twocolumn\def\jlreq@pagebreak{\newpage}\else\def\jlreq@pagebreak{}\fi\jlreq@column@spanning@possiblefalse}
-          {begin_with_even_page}{\def\jlreq@pagebreak{\cleartoevenpage[empty]}\jlreq@column@spanning@possibletrue}
-          {begin_with_odd_page}{\def\jlreq@pagebreak{\cleartooddpage[empty]}\jlreq@column@spanning@possibletrue}
-          {nariyuki}{\def\jlreq@pagebreak{}\jlreq@column@spanning@possiblefalse}
-        }%
-      }
+      },
       % 後々数字を受け付けるようになったりするかもしれないので……
-      {column_spanning}{%
+      column_spanning .code:n = {%
         \jlreq@tempatrue % validな入力に対してfalse
         \jlreq@ifempty{##1}{}{%
           \jlreq@ifnumber{##1}{% 数字の時はtrueに回す
@@ -2331,9 +2332,10 @@
           }%
         }%
         \ifjlreq@tempa\ClassWarningNoLine{jlreq}{Invalid input `##1' for column_spanning in BlockHeading #1}\fi
-      }
-      {number}[true,false]{\csname jlreq@number##1\endcsname}
-    }{#3}%
+      },
+      number .choices:nn = {true,false}{\csname jlreq@number\l_keys_choice_tl\endcsname},
+    }%
+    \keys_set:nn {BlockHeading:#1} {#3}
     \def\jlreq@do{}% 初期化．これに最終処理を入れていく．
     % 入力チェック
     \ifthenelse{\equal{\jlreq@column@spanning}{true}}{%
@@ -2366,12 +2368,12 @@
     \edef\jlreq@label@format@modified{%
       \noexpand\jlreq@BlockHeading@start@outputlabel
       \unexpanded{\inhibitglue\hbox{}}%
-      \ifdim\dimexpr\jlreq@after@label@space\relax=0pt \else
+      \ifdim\dimexpr\jlreq@after@label@space\relax=\dimexpr 0pt\relax\else
         \noexpand\hspace*{\noexpand\dimexpr\expandonce{\jlreq@after@label@space}\noexpand\relax}%
       \fi
     }%
     \edef\jlreq@heading@text@format@wlabel{%
-      \ifnum 0\ifdim\jlreq@second@heading@text@indent@wlabel=0pt \else 1\fi\ifjlreq@second@text@indent@withlabel 1\fi>0
+      \ifnum 0\ifdim\jlreq@second@heading@text@indent@wlabel=\dimexpr 0pt\relax\else 1\fi\ifjlreq@second@text@indent@withlabel 1\fi>0
         \unexpanded{\hangindent=\glueexpr}(\expandonce{\jlreq@second@heading@text@indent@wlabel})%
           \ifjlreq@second@text@indent@withlabel + (\expandonce{\jlreq@after@label@space}) + \unexpanded{\jlreq@BlockHeading@start@labellength}\fi
           \noexpand\relax
@@ -2379,7 +2381,7 @@
       \expandonce{\jlreq@heading@text@format}%
     }%
     \edef\jlreq@heading@text@format@wolabel{%
-      \ifdim\dimexpr\jlreq@second@heading@text@indent@wolabel\relax=0pt \else
+      \ifdim\dimexpr\jlreq@second@heading@text@indent@wolabel\relax=\dimexpr 0pt\relax\else
         \unexpanded{\hangindent=\dimexpr}\expandonce{\jlreq@second@heading@text@indent@wolabel}\noexpand\relax
       \fi
       \expandonce{\jlreq@heading@text@format}%
@@ -2392,7 +2394,7 @@
           ##2%
           \unexpanded{\nobreak\noindent}%
         \else
-          \ifdim\jlreq@subtitle@indent=0pt \else
+          \ifdim\jlreq@subtitle@indent=\dimexpr 0pt\relax\else
             \noexpand\hspace*{\expandonce{\jlreq@subtitle@indent}}%
           \fi
         \fi
@@ -2404,14 +2406,14 @@
         \noexpand\hangafter=0
         \unexpanded{\hangindent=\dimexpr}\noexpand\jlreq@BlockHeading@start@labellength + (\expandonce{\jlreq@after@label@space}) + (\expandonce{\jlreq@subtitle@indent})\noexpand\relax
       \else
-        \ifdim\jlreq@subtitle@indent=0pt \else
+        \ifdim\jlreq@subtitle@indent=\dimexpr 0pt\relax\else
           \noexpand\hangafter=0
           \unexpanded{\hangindent=\dimexpr}\expandonce{\jlreq@subtitle@indent}\noexpand\relax
         \fi
       \fi
     }%
     \jlreq@make@subtitle@format\jlreq@subtitle@format@wolabel{%
-      \ifdim\jlreq@subtitle@indent=0pt \else
+      \ifdim\jlreq@subtitle@indent=\dimexpr 0pt\relax\else
         \noexpand\hangafter=0
         \unexpanded{\hangindent=\dimexpr}\expandonce{\jlreq@subtitle@indent}\noexpand\relax
       \fi
@@ -2473,6 +2475,7 @@
   \expandafter\endgroup
   \jlreq@do
 }
+\ExplSyntaxOff
 
 \newcommand{\NewBlockHeading}[3]{%
   \expandafter\@ifdefinable\csname #1\endcsname{\DeclareBlockHeading{#1}{#2}{#3}}%

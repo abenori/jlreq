@@ -19,7 +19,8 @@
 ## 動作環境
 pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内部で読み込みます．
 
-* （常時）：xkeyval,everyhook,etoolbox,ifthen,lmodern
+* （常時）：xkeyval,etoolbox,ifthen,lmodern
+* （LuaLaTeX非利用時）：everyhook
 * （LuaLaTeX利用時）：luatexja,luatexja-adjust
 
 リリース時点での最新版での動作を確認しています．
@@ -36,7 +37,7 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
 ```
 とします．
 
-その他，`oneside / twoside / onecolumn / twocolumn / titlepage / notitlepage / draft / final / openright / openany / leqno / fleqn`というよくあるオプションを受け付けます．
+その他，`oneside` / `twoside` / `onecolumn` / `twocolumn` / `titlepage` / `notitlepage` / `draft` / `final` / `landscape` / `openright` / `openany` / `leqno` / `fleqn`というよくあるオプションを受け付けます．また`disablejfam`オプションを渡すと，和文フォントを数式用に登録しません．
 
 標準的な文書クラスと同じように中身を書くことができますが，次のような命令が追加 / 拡張されています．なお，本ドキュメントでは[日本語組版処理の要件](https://www.w3.org/TR/jlreq/?lang=ja)における用語を断りなく使います．
 
@@ -103,6 +104,8 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
     ```
 
     のようにします．和文と欧文の間の空白（(u)pTeXでは`\xkanjiskip`に，LuateX-jaでは`xkanjiskip`パラメータに格納されているもの）も同様に`\jlreqxkanjiskip`を再定義することで変更することができます．
+* `book`指定時に，クラスオプションとして`openany`を指定していても，`\mainmatter`の後に白ページが挿入されることがあります．これは標準のクラスファイルと挙動を合わせたものです．`\jlreqsetup{mainmatter_pagebreak=clearpage}`とすることで白ページが入らなくなりますが，デフォルトでは`\mainmatter`でページ数をリセットしますので，ページ数の偶奇の整合性がとれなくなる可能性があります．`\jlreqsetup{frontmatter_pagination={arabic,continuous}}`のようにして通しノンブルに変更することを検討してみてください．詳しくは下記の「前付きなど」を参照してください．
+
 
 ## 各種設計
 設計はクラスオプションまたは`\jlreqsetup`によりkeyval形式で行います．ただし，クラスオプションではLaTeXの実装により，本来可能な入力が受け付けられないケースがあります．多くの場合は空白を除くことにより解決します．
@@ -130,6 +133,7 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
     - `tate`無指定時は奇数ページ左，偶数ページ右の余白
     - `tate`指定時は奇数ページ右，偶数ページ左の余白
     - `twoside`が指定されていない時は，常に奇数ページ扱いで余白が設定される
+* `fore-edge=<寸法;zw,zh>`：小口（のどでない方）の余白の大きさ．「日本語組版処理の要件」にある方法で余白を指定する限り使われることはありませんが，便利なこともあるので実装されています．
 * `head_space=<寸法;zw,zh>`：天の空き量．デフォルトは中央寄せになるような値．
 * `foot_space=<寸法;zw,zh>`：地の空き量．デフォルトは中央寄せになるような値．
 * `baselineskip=<寸法;Q,H,zw,zh>`：行送り．デフォルトは`jafontsize`の1.7倍．

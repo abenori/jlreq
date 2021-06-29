@@ -2042,39 +2042,41 @@
 }
 
 \ExplSyntaxOn
-\cs_set:Nn \l_jlreq_do:n{
-  \def\jlreq@BlockHeading@start@removecolumn##1#1{##1}
+\def\jlreq@BlockHeading@start@removecolumn#1:{#1}
 
-  % 空き指定を解釈する．a:10pt -> \jlreq@resulta=a，\jlreq@resultb=10pt
-  \def\jlreq@BlockHeading@start@analyzespace##1#1##2\jlreq@endmark{%
-    \jlreq@ifempty{##1}{%
-      \def\jlreq@resulta{}%
-      \def\jlreq@resultb{}%
-    }{%
-      \let\jlreq@resulta=##1%
-      \edef\jlreq@resultb{\expandonce{\jlreq@BlockHeading@start@removecolumn##2}}%
-    }%
-  }
+% 空き指定を解釈する．a:10pt -> \jlreq@resulta=a，\jlreq@resultb=10pt
+\cs_set:Nn \__jlreq_BlockHeading_start_analyzespace:n{%
+  \__jlreq_BlockHeading_start_analyzespace_aux#1:\jlreq@endmark
 }
-\cs_generate_variant:Nn \l_jlreq_do:n {x}
-\l_jlreq_do:x {\tl_to_str:n {:}}
+\cs_generate_variant:Nn \__jlreq_BlockHeading_start_analyzespace:n {V}
+\def\__jlreq_BlockHeading_start_analyzespace_aux#1:#2\jlreq@endmark{
+  \jlreq@ifempty{#1}{%
+    \def\jlreq@resulta{}%
+    \def\jlreq@resultb{}%
+  }{%
+    \let\jlreq@resulta=#1
+    \edef\jlreq@resultb{\expandonce{\jlreq@BlockHeading@start@removecolumn#2}}%
+  }%
+}
 
 % 行取り処理．#3が空の時は行取りの処理はしない．（空白挿入は行う．）
 % {1 = 前空き}{2 = 後ろ空き}{3 = トータル行数}{4 = 出力}
 % 最後には\nobreak（と\vskip）が入っている
 \long\def\jlreq@BlockHeading@start@gyodori#1#2#3#4{\par{%
+  \tracingnone
   \setbox\jlreq@tempboxa=\vbox{#4}%
   % \jlreq@tempskip(a/b)に前/後ろに入れるべき値を入れる
   % #1がa:ならばその値は\jlreq@tempskipaには足さず\jlreq@tempskipcに入れておく
   \jlreq@tempskipa=0pt
   \jlreq@tempskipb=0pt
   \jlreq@tempskipc=0pt
-  \str_set:Nx \l__jlreq_tmpa_str {\tl_to_str:n {#1:}}%
-  \expandafter\jlreq@BlockHeading@start@analyzespace\l__jlreq_tmpa_str\jlreq@endmark
+  \tl_set_rescan:Nnn \l_jlreq_tmpa_tl {\ExplSyntaxOn}{#1}
+%  \message{[[[\expandafter\getcatcode\l_jlreq_tmpa_tl]]]}
+  \__jlreq_BlockHeading_start_analyzespace:V \l_jlreq_tmpa_tl
   \let\jlreq@maeakitype=\jlreq@resulta
   \let\jlreq@maeaki=\jlreq@resultb
-  \str_set:Nx \l__jlreq_tmpa_str {\tl_to_str:n {#2:}}%
-  \expandafter\jlreq@BlockHeading@start@analyzespace\l__jlreq_tmpa_str\jlreq@endmark
+  \tl_set_rescan:Nnn \l_jlreq_tmpa_tl {\ExplSyntaxOn}{#2}
+  \__jlreq_BlockHeading_start_analyzespace:V \l_jlreq_tmpa_tl
   \let\jlreq@ushiroakitype=\jlreq@resulta
   \let\jlreq@ushiroaki=\jlreq@resultb
   \def\jlreq@lines{#3}%

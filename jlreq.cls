@@ -2340,12 +2340,12 @@
     \keys_set:nn {BlockHeading:#1} {#3}
     \def\jlreq@do{}% 初期化．これに最終処理を入れていく．
     % 入力チェック
-    \ifthenelse{\equal{\jlreq@column@spanning}{true}}{%
+    \str_if_eq:VnT \jlreq@column@spanning { true } {
       \jlreq@if{\unless\ifjlreq@column@spanning@possible\fi}{
         \ClassWarningNoLine{jlreq}{column_spanning can be used only with `pagebreak=nariyuki' or `pagebreak=clearcolumn' (in BlockHeading #1)}%
         \def\jlreq@column@spanning{false}%
       }{}%
-    }{}%
+    }%
     % ラベルありフォーマット：前
     \edef\jlreq@pre@format@wlabel{%
       \noexpand\noindent
@@ -2427,7 +2427,7 @@
     \edef\jlreq@totalformat{\unexpanded{##1}}%
     \edef\jlreq@totalformat@after{\expandonce{\jlreq@afterindent}\noexpand\@afterheading}%
     \if@twocolumn
-      \ifthenelse{\equal{\jlreq@column@spanning}{true}}{%
+      \str_if_eq:VnT \jlreq@column@spanning { true }{%
         \def\@tempa##1##2##3{%
           % 前開きが常に入ってしまうので，a:の時は除去する
           \jlreq@iffirsttoken{##1}{a}{\def\jlreq@spaceset{{}{##2}{##3}}}{}%
@@ -2446,7 +2446,6 @@
         }%
         \expandafter\@tempa\jlreq@spaceset
         \def\jlreq@totalformat@after{}%
-      }{%
       }%
     \fi
     \edef\jlreq@do{%
@@ -6083,22 +6082,22 @@
   \NewRuninHeading{subparagraph}{5}{font={\jlreq@keepbaselineskip{\normalsize\sffamily\gtfamily\bfseries}},indent=2\jlreq@zw}
 \fi
 
-\ifthenelse{\equal{\jlreq@article@type}{article}}{}{% book, report
-  \if@openright
+\ExplSyntaxOn
+\str_if_eq:VnF \jlreq@article@type { article } {
+  \legacy_if:nTF { @openright } {
     \ModifyHeading{part}{type=naka}
-    \if@tate
+    \legacy_if:nTF { @tate } {
       \ModifyHeading{chapter}{pagebreak=begin_with_even_page}
-    \else
+    }{
       \ModifyHeading{chapter}{pagebreak=begin_with_odd_page}
-    \fi
-  \else
+    }
+  }{
     \ModifyHeading{part}{type=han}
     \ModifyHeading{chapter}{pagebreak=clearpage}
-  \fi
+  }
 }
 
 %.. ページスタイル
-\ExplSyntaxOn
 \RenewPageStyle{empty}{nombre={},odd_running_head={},even_running_head={}}
 \str_if_eq:VnTF \jlreq@article@type { article } {
   \legacy_if:nTF { @twoside } {
@@ -6158,10 +6157,9 @@
   caption_label_format={#1},
   caption_align={center,*left}
 }
-\ExplSyntaxOff
 
 %.. 箇条書き
-\if@tate
+\legacy_if:nTF { @tate } {
   \renewcommand{\theenumi}{\jlreq@Kanji{enumi}}
   \renewcommand{\theenumii}{\tatechuyoko*{\@arabic\c@enumii}}
   \renewcommand{\theenumiii}{\tatechuyoko*{\@arabic\c@enumiii}}
@@ -6170,7 +6168,7 @@
   \newcommand{\labelenumii}{\theenumii}
   \newcommand{\labelenumiii}{\theenumiii}
   \newcommand{\labelenumiv}{\theenumiv}
-\else
+}{
   \renewcommand{\theenumi}{\@arabic\c@enumi}
   \renewcommand{\theenumii}{\@alph\c@enumii}
   \renewcommand{\theenumiii}{\@roman\c@enumiii}
@@ -6179,20 +6177,20 @@
   \newcommand{\labelenumii}{(\theenumii)\hspace{.5\jlreq@zw}}
   \newcommand{\labelenumiii}{\theenumiii.\hspace{.5\jlreq@zw}}
   \newcommand{\labelenumiv}{\theenumiv.\hspace{.5\jlreq@zw}}
-\fi
+}
 \renewcommand{\p@enumii}{\theenumi}
 \renewcommand{\p@enumiii}{\theenumi(\theenumii)}
 \renewcommand{\p@enumiv}{\p@enumiii\theenumiii}
 
 \newcommand{\labelitemi}{\hbox to 1\jlreq@zw{\hss\textbullet\hss}}
 %\newcommand{\labelitemi}{•}
-\if@tate
+\legacy_if:nTF { @tate } {
   \newcommand{\labelitemii}{○}
   \newcommand{\labelitemiii}{＊}
-\else
+}{
   \newcommand{\labelitemii}{\hbox to 1\jlreq@zw{\hss\textendash\hss}}
   \newcommand{\labelitemiii}{\hbox to 1\jlreq@zw{\hss\textasteriskcentered\hss}}
-\fi
+}
 \newcommand{\labelitemiv}{\hbox to 1\jlreq@zw{\hss ・\hss}}
 
 % 見出しが一つ上のレベルからどのくらいずれているかを入れる．
@@ -6213,7 +6211,6 @@
 }
 
 %.. 引用
-\ExplSyntaxOn
 \jlreqsetup{
   quote_indent=2\jlreq@zw,
   quote_end_indent=0pt,
@@ -6244,11 +6241,11 @@
     mainmatter_precode = {},
     mainmatter_postcode = {},
   }
-  \if@openright
+  \legacy_if:nTF { @openright } {
     \jlreqsetup{backmatter_pagebreak=cleardoublepage}
-  \else
+  }{
     \jlreqsetup{backmatter_pagebreak=clearpage}
-  \fi
+  }
   \jlreqsetup{
     backmatter_pagestyle = plain,
     backmatter_counter = {
@@ -6267,48 +6264,48 @@
   }
 }
 \str_if_eq:VnTF \jlreq@article@type { article } {
-  \if@tate
+  \legacy_if:nTF { @tate } {
     \jlreqsetup{
       appendix_counter = {
         section = {value = 0, the = {\tatechuyoko*{\Alph{section}}}},
         subsection = {value = 0},
       }
     }
-  \else
+  }{
     \jlreqsetup{
       appendix_counter = {
         section = {value = 0, the = {\Alph{section}}},
         subsection = {value = 0},
       }
     }
-  \fi
+  }
  \jlreqsetup{appendix_heading = {},appendix_precode = {},appendix_postcode = {}}
 }{%book, report
-  \if@tate
+  \legacy_if:nTF { @tate } {
     \jlreqsetup{
       appendix_counter = {
         chapter = {value = 0, the = {\tatechuyoko*{\Alph{chapter}}}},
       }
     }
- \else
+  }{
     \jlreqsetup{
       appendix_counter = {
         chapter = {value = 0, the = {\Alph{chapter}}},
       }
     }
- \fi
- \jlreqsetup{
-   appendix_heading = {
-     chapter = {label_format = {付録\thechapter}}
-   },
-   appendix_postcode = {%
-     \str_if_eq:VnT \jlreq@current@pagestyle { headings } {
-       \def\chaptermark#1{\markboth{付録\thechapter\quad #1}{}}%
-       \ModifyPageStyle{headings}{mark_format={_chapter={付録\thechapter\quad #1}}}%
-     }{}%
-   },
-   appendix_precode = {}
- }
+  }
+  \jlreqsetup{
+    appendix_heading = {
+      chapter = {label_format = {付録\thechapter}}
+    },
+    appendix_postcode = {%
+      \str_if_eq:VnT \jlreq@current@pagestyle { headings } {
+        \def\chaptermark#1{\markboth{付録\thechapter\quad #1}{}}%
+        \ModifyPageStyle{headings}{mark_format={_chapter={付録\thechapter\quad #1}}}%
+      }{}%
+    },
+    appendix_precode = {}
+  }
 }
 \ExplSyntaxOff
 \jlreqsetup{theindex_pagestyle=plain}

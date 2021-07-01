@@ -20,6 +20,9 @@
 \clist_new:N \l_jlreq_tmpa_clist
 \dim_new:N \l_jlreq_tmpa_dim
 \skip_new:N \l_jlreq_tmpa_skip
+\box_new:N \l_jlreq_tmpa_box
+\box_new:N \l_jlreq_tmpb_box
+\box_new:N \l_jlreq_tmpc_box
 \ExplSyntaxOff
 
 \newcommand*{\jlreq@undeferr}[1]{\ClassError{jlreq}{Trying to delete \string#1 even though it is not defined, may be a bug}{\@ehc}}
@@ -2917,55 +2920,60 @@
 }
 
 %.. 窓見出し
-\def\jlreq@CutinHeading@start#1#2#3#4#5#6#7{%
+\ExplSyntaxOn
+\cs_set:Nn \__jlreq_CutinHeading_start:nnnnnnn {
   \if@noskipsec\leavevmode\fi
   \par
-  \jlreq@if{\ifnum\hangafter=1 \fi}{%
-    \jlreq@CutinHeading@start@{#2}{#3}{#4}{#5}{#6}{#7}%
+  \int_compare:nTF { \hangafter=1 } {
+    \__jlreq_CutinHeading_start_aux:nnnnnn{#2}{#3}{#4}{#5}{#6}{#7}%
   }{%
-    \ClassError{jlreq}{Can not use \expandafter\string\csname#1\endcsname\space here}{\@ehc}%
+    \ClassError{jlreq}{Can~not~use~\expandafter\string\csname#1\endcsname\space here}{\@ehc}%
   }%
 }
 % 1 = 書式指定，2 = インデント, 3 = 見出しと本文の間, 4 = これを越えたら二行以上，5 = これを越えたら三行以上，6 = テキスト
-\def\jlreq@CutinHeading@start@#1#2#3#4#5#6{%
+\cs_set:Nn \__jlreq_CutinHeading_start_aux:nnnnnn{%
   % 一行で処理したときの見出し長さを計測
-  \begingroup
-    \setbox\@tempboxa=\hbox{#1#6}%
-    \@tempdima=\wd\@tempboxa
+  \group_begin:
+    \hbox_set:Nn \l_jlreq_tmpa_box {#1#6}
+    \dim_set:Nn \l_jlreq_tmpa_dim { \box_wd:N \l_jlreq_tmpa_box}
     % 何行必要かを\jlreq@CutinHeading@linecountに入れる
-    \ifdim\@tempdima>#5\def\jlreq@CutinHeading@linecount{3}%
-    \else\ifdim\@tempdima>#4\def\jlreq@CutinHeading@linecount{2}%
-    \else\def\jlreq@CutinHeading@linecount{1}\fi\fi
-    % \@tempdimaが実際の一行の長さに近い
-    \divide\@tempdima by \jlreq@CutinHeading@linecount
-    % \jlreq@resultboxに見出し部分を，\jlreq@CutinHeading@linecountに見出し自身に何行使うかを入れる
-    \ifnum\jlreq@CutinHeading@linecount=1\relax
-      \setbox\jlreq@resultbox=\vbox{\parindent=0pt\rightskip=0pt\leftskip=0pt\hbox{#1#6}}%
-      \def\jlreq@CutinHeading@linecount{2}%
-    \else
-      \jlreq@inlinenote@determinelength{#6}{#1}{}{\jlreq@CutinHeading@linecount}{\jlreq@CutinHeading@linecount}{\@tempdima}{\linewidth}%
-      \def\jlreq@CutinHeading@linecount{3}%
-    \fi
+    \dim_compare:nTF { \l_jlreq_tmpa_dim > #5} {
+      \tl_set:Nn \l__jlreq_cutinheading_linecount_tl {3}
+    }{
+      \dim_compare:nTF { \l_jlreq_tmpa_dim > #4 }{
+        \tl_set:Nn \l__jlreq_cutinheading_linecount_tl {2}
+      } { \tl_set:Nn \l__jlreq_cutinheading_linecount_tl {1} } }
+    % \l_jlreq_tmpa_dimが実際の一行の長さに近い
+    \dim_set:Nn \l_jlreq_tmpa_dim { \l_jlreq_tmpa_dim / \l__jlreq_cutinheading_linecount_tl }
+    % \l_jlreq_tmpb_boxに見出し部分を，\l__jlreq_cutinheading_linecount_tlに見出し自身に何行使うかを入れる
+    \int_compare:nTF { \l__jlreq_cutinheading_linecount_tl = 1 }{
+      \vbox_set:Nn \l_jlreq_tmpb_box {\parindent=0pt\rightskip=0pt\leftskip=0pt\hbox{#1#6}}
+      \tl_set:Nn \l__jlreq_cutinheading_linecount_tl {2}
+    }{
+      \jlreq@inlinenote@determinelength{#6}{#1}{}{\l__jlreq_cutinheading_linecount_tl}{\l__jlreq_cutinheading_linecount_tl}{\l_jlreq_tmpa_dim}{\linewidth}%
+      \box_set_eq:NN \l_jlreq_tmpb_box \jlreq@resultbox
+      \tl_set:Nn \l__jlreq_cutinheading_linecount_tl {3}
+    }
     % 普通の一行の高さ/深さに合わせて見出しのボックスを作る
-    \setbox\@tempboxa=\vtop to \dimexpr\numexpr\jlreq@CutinHeading@linecount - 1\relax\baselineskip + 1\jlreq@zh\relax{\vskip 0pt plus 1fill minus 1fill \box\jlreq@resultbox\vskip 0pt plus 1fill minus 1fill}%
+    \setbox\l_jlreq_tmpa_box =\vtop to \dimexpr\numexpr\l__jlreq_cutinheading_linecount_tl - 1\relax\baselineskip + 1\jlreq@zh\relax{\vskip 0pt plus 1fill minus 1fill \box_use_drop:N \l_jlreq_tmpb_box \vskip 0pt plus 1fill minus 1fill}%
     % 高さを通常の一行のそれにする
-    \setbox\jlreq@tempboxa=\hbox{阿}%
-    \dp\@tempboxa=\dimexpr\ht\@tempboxa + \dp\@tempboxa - \ht\jlreq@tempboxa\relax
-    \ht\@tempboxa=\ht\jlreq@tempboxa
+    \hbox_set:Nn \l_jlreq_tmpc_box {阿}
+    \box_set_dp:Nn \l_jlreq_tmpa_box { \box_ht:N \l_jlreq_tmpa_box + \box_dp:N \l_jlreq_tmpa_box - \box_ht:N \l_jlreq_tmpc_box }
+    \box_set_ht:Nn \l_jlreq_tmpa_box { \box_ht:N \l_jlreq_tmpc_box }
     \noindent
     \hspace*{#2}%
-    \copy\@tempboxa
+    \box_use:N \l_jlreq_tmpa_box
     \hspace*{#3}%
     % でかい見出しボックスの分をキャンセルする空きを入れる
     % \baselineskip - \ht\jlreq@tempboxaはTeXが挿入するスキップの分
-    \edef\jlreq@do{%
-      \noexpand\par
-      \noexpand\vskip -\the\dimexpr\ht\@tempboxa + \dp\@tempboxa + \baselineskip - \ht\jlreq@tempboxa\relax\relax
-      \noexpand\hangindent=\the\dimexpr#2 + \wd\@tempboxa + #3\relax\relax
-      \noexpand\hangafter=-\jlreq@CutinHeading@linecount\relax
+    \cs_set:Nx \l__jlreq_do:{
+      \exp_not:N \par
+      \exp_not:N \skip_vertical:n {\dim_eval:n {-\box_ht:N \l_jlreq_tmpa_box - \box_dp:N \l_jlreq_tmpa_box - \baselineskip + \box_ht:N \l_jlreq_tmpc_box}}
+      \exp_not:N\hangindent= \dim_eval:n {#2 + \box_wd:N \l_jlreq_tmpa_box + #3} \exp_not:N \relax
+      \exp_not:N\hangafter=-\l__jlreq_cutinheading_linecount_tl\relax
     }%
-  \expandafter\endgroup
-  \jlreq@do
+  \exp_after:wN \group_end:
+  \l__jlreq_do:
   \prevdepth=0pt
   % 改段落が起こっても\hang****をキープするように\parを書き換えておく（終わったら元に戻す）．
   \def\par{%
@@ -2986,36 +2994,39 @@
   \ignorespaces
 }
 
-\newcommand*{\DeclareCutinHeading}[3]{%
-  \ProvideHook{jlreq/heading/before/#1}
-  \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}%
-  \expandafter\def\csname jlreq@heading@setting@#1\endcsname{#3}%
-  \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewCutinHeading}%
-  \begingroup
-    \def\jlreq@fontcommand{\sffamily\gtfamily\bfseries}%
-    \def\jlreq@onelinemax{6\jlreq@zw}%
-    \def\jlreq@twolinemax{20\jlreq@zw}%
-    \def\jlreq@indent{0pt}%
-    \def\jlreq@after@space{1\jlreq@zw}%
-    \jlreq@parsekeyval[CutinHeading:#1]{
-      {font}{\def\jlreq@fontcommand{##1}}
-      {onelinemax}{\def\jlreq@onelinemax{##1}}
-      {twolinemax}{\def\jlreq@twolinemax{##1}}
-      {indent}{\def\jlreq@indent{##1}}
-      {after_space}{\def\jlreq@after@space{##1}}
-    }{#3}%
-    \ifthenelse{\lengthtest{\jlreq@after@space < 0.99\jlreq@zw} \OR \lengthtest{\jlreq@after@space > 2.01\jlreq@zw}}{%
-      \jlreq@note{窓見出しと本文との空き量は，基本版面の文字サイズの全角以上，2倍未満とする (4.1.10.c)．}%
+\NewDocumentCommand{\DeclareCutinHeading}{ m m m }{
+  \hook_provide:n { jlreq/heading/before/#1 }
+  \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}
+  \expandafter\def\csname jlreq@heading@setting@#1\endcsname{#3}
+  \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewCutinHeading}
+  \group_begin:
+    \keys_define:nn { CutinHeading:#1 } {
+      font .tl_set:N = \l__jlreq_fontcommand_tl,
+      onelinemax .tl_set:N = \l__jlreq_onelinemax_tl,
+      twolinemax .tl_set:N = \l__jlreq_twolinemax_tl,
+      indent .tl_set:N = \l__jlreq_indent_tl,% 0pt
+      after_space .tl_set:N = \l__jlreq_after_space_tl,
+    }
+    \keys_set:nn { CutinHeading:#1 } {
+      font = { \sffamily\gtfamily\bfseries },
+      onelinemax = { 6\jlreq@zw },
+      twolinemax = { 20\jlreq@zw } ,
+      indent = { 0pt },
+      after_space = { 1\jlreq@zw }
+    }
+    \keys_set:nn { CutinHeading:#1 } {#3}
+    \bool_if:nT { \dim_compare_p:n {\l__jlreq_after_space_tl < 0.99\jlreq@zw} || \dim_compare_p:n { \l__jlreq_after_space_tl > 2.01\jlreq@zw } }{
+      \jlreq@note{窓見出しと本文との空き量は，基本版面の文字サイズの全角以上，2倍未満とする~(4.1.10.c)．}%
     }{}%
-    \edef\jlreq@do{%
-      \noexpand\def\expandonce{\csname #1\endcsname}{%
-        \noexpand\UseHook{jlreq/heading/before}%
-        \noexpand\UseHook{jlreq/heading/before/#1}%
-        \noexpand\jlreq@CutinHeading@start{#1}{\expandonce{\jlreq@fontcommand}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@onelinemax}}{\expandonce{\jlreq@twolinemax}}%
-      }%
-    }%
-  \expandafter\endgroup
-  \jlreq@do
+    \cs_set:Nx \l__jlreq_do: {
+      \exp_not:N \DeclareDocumentCommand \exp_not:c {#1} {m} {
+        \exp_not:N \UseHook{jlreq/heading/before}%
+        \exp_not:N \UseHook{jlreq/heading/before/#1}%
+        \exp_not:N \__jlreq_CutinHeading_start:nnnnnnn{#1}{\exp_not:o \l__jlreq_fontcommand_tl}{\exp_not:o \l__jlreq_indent_tl}{\exp_not:o \l__jlreq_after_space_tl}{\exp_not:o \l__jlreq_onelinemax_tl}{\exp_not:o \l__jlreq_twolinemax_tl}{####1}
+      }
+    }
+  \exp_after:wN \group_end:
+  \l__jlreq_do:
 }
 \newcommand*{\NewCutinHeading}[3]{%
   \expandafter\@ifdefinable\csname #1\endcsname{\DeclareCutinHeading{#1}{#2}{#3}}%
@@ -3027,7 +3038,6 @@
   \@ifundefined{#1}{\DeclareCutinHeading{#1}{#2}{#3}}{}%
 }
 
-\ExplSyntaxOn
 \NewDocumentCommand{\ModifyHeading}{m m}{
   \@ifundefined { jlreq@heading@setting@#1 } { \ClassError{jlreq}{Unknown heading: #1}{\@ehc} } {}
   \group_begin:

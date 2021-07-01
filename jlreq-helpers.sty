@@ -449,17 +449,20 @@
   \ifx\@tempa\@tempb\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
 }
 
+\ExplSyntaxOn
 \newcommand*{\jlreq@helper@guessengine}{%
-  \jlreq@ifprimitive\directlua{%
-    \let\jlreq@result=l%
-  }{%
-    \jlreq@ifprimitive\ucs{%
-      \let\jlreq@result=u%
-    }{%
-      \let\jlreq@result=p%
-    }%
-  }%
+  \token_if_primitive:NTF \directlua {
+    \let\jlreq@result=l
+  }{
+    \let\jlreq@result=p
+    \token_if_primitive:NT \ucs {
+      \int_compare:nT { \ucs"FA4A = "FA4A } {
+        \let\jlreq@result=u
+      }
+    }
+  }
 }
+\ExplSyntaxOff
 
 % #1を\@undefinedに，既に\@undefinedならば#2{#1}を呼ぶ
 \newcommand*{\jlreq@helper@undefcs}[2]{%

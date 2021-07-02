@@ -2852,8 +2852,12 @@
 \jlreq@tempa
 
 % \DeclareRuninHeading{命令名}{レベル}{設定}
-\newcommand*{\DeclareRuninHeading}[3]{%
-  \ProvideHook{jlreq/heading/before/#1}%
+\ExplSyntaxOn
+\NewDocumentCommand { \DeclareRuninHeading } { m m m } {
+  \__jlreq_declare_runin_heading:nnn {#1} {#2} {#3}
+}
+\cs_set:Nn \__jlreq_declare_runin_heading:nnn {
+  \hook_provide:n { jlreq/heading/before/#1 }
   \def\jlreq@do{\@removeelement{#1}}%
   \expandafter\jlreq@do\expandafter{\jlreq@heading@allheadings}{\jlreq@heading@allheadings}%
   \appto\jlreq@heading@allheadings{,#1}%
@@ -2864,63 +2868,69 @@
   \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}%
   \@ifundefined{l@#1}{\expandafter\def\csname l@#1\endcsname{\@dottedtocline{#2}{0\jlreq@zw}{2\jlreq@zw}}}{}%
   \jlreq@heading@make@maketoc{#1}{#2}%
-  \begingroup
-    \def\jlreq@font{\normalfont\normalsize}%
-    \def\jlreq@indent{0pt}%
-    \def\jlreq@after@label@space{1\jlreq@zw}%
+  \group_begin:
     \def\jlreq@label@font{}%
-    \def\jlreq@label@format{\@seccntformat{#1}}%
-    \def\jlreq@after@space{1\jlreq@zw}%
-    \newif\ifjlreq@number \jlreq@numbertrue
-    \jlreq@parsekeyval[RuninHeading:#1]{%
-      {font}{\def\jlreq@font{##1}}
-      {indent}{\def\jlreq@indent{##1}}
-      {label_format}{\def\jlreq@label@format{##1}}
-      {after_label_space}{%
-        \ifdim\dimexpr##1\relax<0pt \ClassWarning{jlreq}{after_label_space in Runin Heading #1 should be not negative}\fi
-        \def\jlreq@after@label@space{##1}%
-      }
-      {after_space}{%
-        \ifdim\dimexpr##1\relax<0pt \ClassWarning{jlreq}{after_space in Runin Heading #1 should be not negative}\fi
-        \def\jlreq@after@space{##1}%
-      }
-      {number}{\csname jlreq@number##1\endcsname}
-    }{#3}%
-    \newif\ifjlreq@indent@zero
-    \jlreq@ifgluezero{\glueexpr\jlreq@indent\relax}{\jlreq@indent@zerotrue}{\jlreq@indent@zerofalse}%
-    \newif\ifjlreq@after@space@zero
-    \jlreq@ifgluezero{\glueexpr\jlreq@after@space\relax}{\jlreq@after@space@zerotrue}{\jlreq@after@space@zerofalse}%
-    \newif\ifjlreq@after@label@space@zero
-    \jlreq@ifgluezero{\glueexpr\jlreq@after@label@space\relax}{\jlreq@after@label@spacefalse}%
-    \edef\jlreq@format@wlabel{{%
-      \ifjlreq@indent@zero\else\unexpanded{\hskip\glueexpr}\expandonce{\jlreq@indent}\noexpand\relax\fi
-      \expandonce{\jlreq@font}%
-      \expandonce{\jlreq@label@format}%
-      \ifjlreq@after@label@space@zero\else\unexpanded{\hskip\glueexpr}\expandonce{\jlreq@after@label@space}\noexpand\relax\fi
+    \keys_define:nn { RuninHeading:#1 } {
+      font .tl_set:N = \l__jlreq_font_tl,
+      indent .tl_set:N = \l__jlreq_indent_tl,
+      label_format .tl_set:N = \l__jlreq_label_format_tl,
+      after_label_space .tl_set:N = \l__jlreq_after_label_space_tl,
+      after_space .tl_set:N = \l__jlreq_after_space_tl,
+      number .bool_set:N = \l__jlreq_number_bool,
+    }
+    \keys_set:nn { RuninHeading:#1 } {
+      font = {\normalfont\normalsize},
+      indent = {0pt},
+      label_format = {\@seccntformat{#1}},
+      after_label_space = {1\jlreq@zw},
+      after_space = {1\jlreq@zw},
+      number = true
+    }
+    \keys_set:nn { RuninHeading:#1 } {#3}
+    \dim_compare:nT { \l__jlreq_after_space_tl < 0pt } {
+      \ClassWarning{jlreq}{after_space~in~Runin~Heading~#1~should~be~not~negative}
+    }
+    \dim_compare:nT { \l__jlreq_after_label_space_tl < 0pt } {
+      \ClassWarning{jlreq}{after_label_space~in~Runin~Heading~#1~should~be~not~negative}
+    }
+    \bool_set:Nn \l__jlreq_indent_zero_bool { \skip_if_eq_p:nn { \l__jlreq_indent_tl } { 0pt } }
+    \bool_set:Nn \l__jlreq_after_space_zero_bool { \skip_if_eq_p:nn { \l__jlreq_after_space_tl } { 0pt } }
+    \bool_set:Nn \l__jlreq_after_label_space_zero_bool { \skip_if_eq_p:nn { \l__jlreq_after_label_space_tl } { 0pt } }
+    \tl_set:Nx \l__jlreq_format_wlabel_tl {{
+      \bool_if:NF \l__jlreq_indent_zero_bool { \exp_not:N \skip_horizontal:n { \exp_not:o {\l__jlreq_indent_tl} } }
+      \exp_not:o { \l__jlreq_font_tl }
+      \exp_not:o { \l__jlreq_label_format_tl }
+      \bool_if:NF \l__jlreq_after_space_zero_bool { \exp_not:N \skip_horizontal:n { \exp_not:o {\l__jlreq_after_label_space_tl} } }
       ####1%
-      \ifjlreq@after@space@zero\else\unexpanded{\hskip\glueexpr}\expandonce{\jlreq@after@space}\noexpand\relax\fi
+      \bool_if:NF \l__jlreq_after_space_zero_bool { \exp_not:N \skip_horizontal:n { \exp_not:o {\l__jlreq_after_space_tl} } }
     }}%
-    \edef\jlreq@format@wolabel{{%
-      \ifjlreq@indent@zero\else\unexpanded{\hskip\glueexpr}\expandonce{\jlreq@indent}\noexpand\relax\fi
-      \expandonce{\jlreq@font}%
+    \tl_set:Nx \l__jlreq_format_wolabel_tl {{
+      \bool_if:NF \l__jlreq_indent_zero_bool { \exp_not:N \skip_horizontal:n { \exp_not:o {\l__jlreq_indent_tl} } }
+      \exp_not:o { \l__jlreq_font_tl }
       ####1%
-      \ifjlreq@after@space@zero\else\unexpanded{\hskip\glueexpr}\expandonce{\jlreq@after@space}\noexpand\relax\fi
+      \bool_if:NF \l__jlreq_after_space_zero_bool { \exp_not:N \skip_horizontal:n {\exp_not:o {\l__jlreq_after_space_tl} } }
     }}%
-    \jlreq@heading@make@l@{#1}{#2}{\jlreq@label@format}%
-    \edef\jlreq@do{%
-      \expandonce{\jlreq@result}%
+    \jlreq@heading@make@l@{#1}{#2}{\l__jlreq_label_format_tl}%
+    \cs_set:Nx \l__jlreq_do: {
+      \exp_not:o { \jlreq@result }
       % パラメータトークンを含むので，\edefして\unexpandedで包む
       \noexpand\edef\expandonce{\csname #1\endcsname}{%
         \noexpand\unexpanded{%
-          \noexpand\UseHook{jlreq/heading/before}%
-          \noexpand\UseHook{jlreq/heading/before/#1}%
-          \unexpanded{\jlreq@RuninHeading@start{#1}{#2}}{\ifjlreq@number\else -\fi}{\expandonce{\jlreq@label@format}}{\expandonce{\jlreq@format@wlabel}}{\expandonce{\jlreq@format@wolabel}}%
+          \exp_not:N \UseHook{jlreq/heading/before}%
+          \exp_not:N \UseHook{jlreq/heading/before/#1}
+          \exp_not:n {\jlreq@RuninHeading@start{#1}{#2}}
+            {\bool_if:NF \l__jlreq_number_bool {-}}
+            {\exp_not:o {\l__jlreq_label_format_tl}}
+            {\exp_not:o {\l__jlreq_format_wlabel_tl}}
+            {\exp_not:o {\l__jlreq_format_wolabel_tl}}
         }%
       }%
     }%
-  \expandafter\endgroup
-  \jlreq@do
+  \exp_after:wN \group_end:
+  \l__jlreq_do:
 }
+\ExplSyntaxOff
+
 \newcommand*{\NewRuninHeading}[3]{%
   \expandafter\@ifdefinable\csname #1\endcsname{\DeclareRuninHeading{#1}{#2}{#3}}%
 }

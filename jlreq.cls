@@ -2203,7 +2203,7 @@
     \tl_if_empty:NF \l__jlreq_before_lines_tl { \tl_set:Nx \l__jlreq_before_space_tl {\exp_not:o {\l__jlreq_before_lines_tl} \baselineskip } }
     \tl_if_empty:NT \l__jlreq_before_space_tl { \tl_set:Nn \l__jlreq_before_space_tl {#4} }
     \tl_if_empty:NF \l__jlreq_after_space_tl { \tl_put_left:Nn \l__jlreq_after_space_tl {r:} }
-    \tl_if_empty:NF \l__jlreq_after_lines_tl { \tl_set:Nx \l__jlreq_after_space_tl { a:\exp_not:p {\l__jlreq_after_lines_tl} \baselineskip } }
+    \tl_if_empty:NF \l__jlreq_after_lines_tl { \tl_set:Nx \l__jlreq_after_space_tl { a:\exp_not:o {\l__jlreq_after_lines_tl} \baselineskip } }
     \tl_if_empty:NT \l__jlreq_after_space_tl { \tl_set:Nn \l__jlreq_after_space_tl {#5} }
     \cs_set:Nx \l__jlreq_do: {
       \exp_not:n {\def\jlreq@result}{
@@ -2853,7 +2853,7 @@
 
 % \DeclareRuninHeading{命令名}{レベル}{設定}
 \newcommand*{\DeclareRuninHeading}[3]{%
-  \ProvideHook{jlreq/heading/before/#1}
+  \ProvideHook{jlreq/heading/before/#1}%
   \def\jlreq@do{\@removeelement{#1}}%
   \expandafter\jlreq@do\expandafter{\jlreq@heading@allheadings}{\jlreq@heading@allheadings}%
   \appto\jlreq@heading@allheadings{,#1}%

@@ -1690,7 +1690,11 @@
 
 %.. 中/半扉見出し
 % addcontentslineに渡すやつ：番号出すのと出さないの
-\newcommand{\DeclareTobiraHeading}[3]{%
+\ExplSyntaxOn
+\NewDocumentCommand{\DeclareTobiraHeading}{ m m m } {
+  \__jlreq_declare_tobira_heading:nnn{#1}{#2}{#3}
+}
+\cs_set:Nn \__jlreq_declare_tobira_heading:nnn {
   \ProvideHook{jlreq/heading/before/#1}
   \def\jlreq@do{\@removeelement{#1}}%
   \expandafter\jlreq@do\expandafter{\jlreq@heading@allheadings}{\jlreq@heading@allheadings}%
@@ -1705,21 +1709,21 @@
     \let\jlreq@contents@label@format=\@undefined
     \let\jlreq@format=\@undefined
     \edef\jlreq@label@format{\expandonce{\csname the#1\endcsname}}%
-    \def\jlreq@heading@clearpage{\clearpage\hbox{}\clearpage}%
-    \def\jlreq@pagestyle{empty}%
-    \newif\ifjlreq@number \jlreq@numbertrue
-    \jlreq@parsekeyval[DeclareTobiraHeading:#1]{
-      {label_format}{\def\jlreq@label@format{##1}}
-      {format}{\def\jlreq@format####1####2{##1}}
-      {pagestyle}{\def\jlreq@pagestyle{##1}}
-      {type}[han,naka]{%
-        \jlreq@switch{##1}{
-          {han}{\def\jlreq@heading@clearpage{\clearpage}}
-          {naka}{\def\jlreq@heading@clearpage{\clearpage\hbox{}\clearpage}}
-        }%
-      }
-      {number}[true,false]{\csname jlreq@number##1\endcsname}
-    }{#3}%
+    \newif\ifjlreq@number
+    \keys_define:nn { DeclareTobiraHeading:#1 } {
+      label_format .tl_set:N = \jlreq@label@format,
+      format .code:n = {\def\jlreq@format####1####2{##1}},
+      pagestyle .tl_set:N = \jlreq@pagestyle,
+      type .choices:nn = {han,naka}{
+        \str_case_e:nn { \tl_to_str:N \l_keys_choice_tl } {
+          { han  } { \def\jlreq@heading@clearpage{\clearpage} }
+          { naka } { \def\jlreq@heading@clearpage{\clearpage\hbox{}\clearpage} }
+        }
+      },
+      number .choices:nn = {true,false} { \csname jlreq@number \l_keys_choice_tl \endcsname }
+    }
+    \keys_set:nn { DeclareTobiraHeading:#1 } { type = naka, pagestyle = empty, number = true}
+    \keys_set:nn { DeclareTobiraHeading:#1 } {#3}
     \def\jlreq@do{}%
     \ifx\jlreq@format\@undefined
       \def\jlreq@format##1##2{##1##2}%
@@ -1782,6 +1786,7 @@
   \expandafter\endgroup
   \jlreq@do
 }
+\ExplSyntaxOff
 
 \newcommand{\NewTobiraHeading}[3]{%
   \expandafter\@ifdefinable\csname #1\endcsname{\DeclareTobiraHeading{#1}{#2}{#3}}%
@@ -2172,45 +2177,52 @@
 \def\jlreq@BlockHeading@gyodori@parsekeyval@#1{%
   \@ifnextchar[{\jlreq@BlockHeading@gyodori@parsekeyval@@{#1}}{\jlreq@BlockHeading@gyodori@parsekeyval@@{#1}[jlreq@key]}%
 }
+\ExplSyntaxOn
 \long\def\jlreq@BlockHeading@gyodori@parsekeyval@@#1[#2]#3#4#5#6{%
-  \begingroup
-    \def\jlreq@lines{#6}%
-    \def\jlreq@before@space{}%
-    \def\jlreq@before@lines{}%
-    \def\jlreq@after@space{}%
-    \def\jlreq@after@lines{}%
-    \jlreq@parsekeyval#1[#2]{
-      {lines}{\def\jlreq@lines{##1}}
-      {before_space}{\def\jlreq@before@space{##1}}
-      {after_space}{\def\jlreq@after@space{##1}}
-      {before_lines}{%
-        \jlreq@ifempty{##1}{\def\jlreq@before@lines{}}{%
-          \jlreq@iffirsttoken@ignorespaces{##1}{*}%
-            {\edef\jlreq@before@lines{s:\expandonce{\@gobble ##1}}}%
-            {\def\jlreq@before@lines{a:##1}}%
-        }%
-      }
-      {after_lines}{\def\jlreq@after@lines{##1}}
-    }{#3}%
+  \group_begin:
+    \keys_define:nn {#2} {
+      lines .tl_set:N = \l__jlreq_lines_tl,
+      before_space .tl_set:N = \l__jlreq_before_space_tl,
+      after_space .tl_set:N = \l__jlreq_after_space_tl,
+      before_lines .code:n = {
+        \tl_if_empty:nTF {##1}{
+          \tl_set:Nn \l__jlreq_before_lines_tl {}
+        }{
+          \str_if_eq:eeTF { \str_head:n {##1} } {*}
+            {\tl_set:Nx \l__jlreq_before_lines_tl {s:\exp_not:o {\use_none:n ##1}}}
+            {\tl_set:Nx \l__jlreq_before_lines_tl {a:##1}}
+        }
+      },
+      after_lines .tl_set:N = \l__jlreq_after_lines_tl
+    }
+    \tl_if_empty:nF {#1} { \keys_define:nn {#2} { unknown .code:n = {} } }
+    \keys_set:nn {#2} {lines = {#6}, before_space = {}, before_lines = {}, after_space = {}, after_lines = {} }
+    \keys_set:nn {#2} {#3} 
     % before/after_lines優先
-    \ifx\jlreq@before@space\@empty\else\edef\jlreq@before@space{r:\expandonce{\jlreq@before@space}}\fi
-    \ifx\jlreq@before@lines\@empty\else\edef\jlreq@before@space{\expandonce{\jlreq@before@lines}\baselineskip}\fi
-    \ifx\jlreq@before@space\@empty\def\jlreq@before@space{#4}\fi
-    \ifx\jlreq@after@space\@empty\else\edef\jlreq@after@space{r:\expandonce{\jlreq@after@space}}\fi
-    \ifx\jlreq@after@lines\@empty\else\edef\jlreq@after@space{a:\expandonce{\jlreq@after@lines}\baselineskip}\fi
-    \ifx\jlreq@after@space\@empty\def\jlreq@after@space{#5}\fi
-    \edef\jlreq@do{%
-      \unexpanded{\def\jlreq@result}{{\expandonce{\jlreq@before@space}}{\expandonce{\jlreq@after@space}}{\expandonce{\jlreq@lines}}}%
+    \tl_if_empty:NF \l__jlreq_before_space_tl { \tl_put_left:Nn \l__jlreq_before_space_tl {r:} }
+    \tl_if_empty:NF \l__jlreq_before_lines_tl { \tl_set:Nx \l__jlreq_before_space_tl {\exp_not:o {\l__jlreq_before_lines_tl} \baselineskip } }
+    \tl_if_empty:NT \l__jlreq_before_space_tl { \tl_set:Nn \l__jlreq_before_space_tl {#4} }
+    \tl_if_empty:NF \l__jlreq_after_space_tl { \tl_put_left:Nn \l__jlreq_after_space_tl {r:} }
+    \tl_if_empty:NF \l__jlreq_after_lines_tl { \tl_set:Nx \l__jlreq_after_space_tl { a:\exp_not:p {\l__jlreq_after_lines_tl} \baselineskip } }
+    \tl_if_empty:NT \l__jlreq_after_space_tl { \tl_set:Nn \l__jlreq_after_space_tl {#5} }
+    \cs_set:Nx \l__jlreq_do: {
+      \exp_not:n {\def\jlreq@result}{
+        {\exp_not:o {\l__jlreq_before_space_tl } }
+        {\exp_not:o {\l__jlreq_after_space_tl } }
+        {\exp_not:o {\l__jlreq_lines_tl } }
+      }
     }%
-  \expandafter\endgroup
-  \jlreq@do
+  \exp_after:wN \group_end:
+  \l__jlreq_do:
 }
 
 \newbox\jlreq@BlockHeading@start@label@box
 % \DeclareBlockHeading{命令名}{レベル}{設定}
 \def\jlreq@BlockHeading@allheadings{}% 別行見出し一覧
-\ExplSyntaxOn
-\newcommand{\DeclareBlockHeading}[3]{%
+\NewDocumentCommand {\DeclareBlockHeading} { m m m } {
+  \__jlreq_declare_block_heading:nnn {#1}{#2}{#3}
+}
+\cs_set:Nn \__jlreq_declare_block_heading:nnn {
   \ProvideHook{jlreq/heading/before/#1}
   \def\jlreq@do{\@removeelement{#1}}%
   \expandafter\jlreq@do\expandafter{\jlreq@heading@allheadings}{\jlreq@heading@allheadings}%
@@ -2264,10 +2276,10 @@
       after_space .code:n = {},
       before_lines .code:n = {},
       after_lines .code:n = {},
-      font .code:n = {\def\jlreq@font{##1}},
-      subtitle_font .code:n = {\def\jlreq@subtitle@font{##1}},
-      indent .code:n = {\def\jlreq@indent{##1}},
-      end_indent .code:n = {\def\jlreq@end@indent{##1}},
+      font .tl_set:N = \jlreq@font,
+      subtitle_font .tl_set:N = \jlreq@subtitle@font,
+      indent .tl_set:N = \jlreq@indent,
+      end_indent .tl_set:N = \jlreq@end@indent,
       align .choices:nn = { left, center, right } {
         \str_case_e:nn { \tl_to_str:N \l_keys_choice_tl } {
           { left   } { \def\jlreq@align{l} }
@@ -2276,7 +2288,7 @@
         }%
       },
       format .code:n = {\edef\jlreq@format{\unexpanded{##1}}},
-      after_label_space .code:n = {\def\jlreq@after@label@space{##1}},
+      after_label_space .tl_set:N = \jlreq@after@label@space,
 %      {second_heading_text_indent,heading_text_second_indent}{%
       second_heading_text_indent .code:n = {
         \jlreq@parsecomma{##1}{%
@@ -2308,7 +2320,7 @@
       subtitle_break .choices:nn = {true,false}{\csname jlreq@subtitle@break\l_keys_choice_tl\endcsname},
       afterindent .choices:nn = {true,false}{\edef\jlreq@afterindent{\expandonce{\csname @afterindent\l_keys_choice_tl\endcsname}}},
       allowbreak_if_evenpage .choices:nn = {true,false}{%
-        \str_if_eq_e:VnTF \l_keys_choice_tl {true}
+        \str_if_eq:VnTF \l_keys_choice_tl {true}
           {\def\jlreq@allowbreak@evenpage{}}
           {\def\jlreq@allowbreak@evenpage{*}}
       },
@@ -2936,7 +2948,7 @@
   \group_begin:
     \hbox_set:Nn \l_jlreq_tmpa_box {#1#6}
     \dim_set:Nn \l_jlreq_tmpa_dim { \box_wd:N \l_jlreq_tmpa_box}
-    % 何行必要かを\jlreq@CutinHeading@linecountに入れる
+    % 何行必要かを\l__jlreq_cutinheading_linecount_tlに入れる
     \dim_compare:nTF { \l_jlreq_tmpa_dim > #5} {
       \tl_set:Nn \l__jlreq_cutinheading_linecount_tl {3}
     }{
@@ -2965,7 +2977,7 @@
     \box_use:N \l_jlreq_tmpa_box
     \hspace*{#3}%
     % でかい見出しボックスの分をキャンセルする空きを入れる
-    % \baselineskip - \ht\jlreq@tempboxaはTeXが挿入するスキップの分
+    % \baselineskip - box_ht:N \l_jlreq_tmpc_boxはTeXが挿入するスキップの分
     \cs_set:Nx \l__jlreq_do:{
       \exp_not:N \par
       \exp_not:N \skip_vertical:n {\dim_eval:n {-\box_ht:N \l_jlreq_tmpa_box - \box_dp:N \l_jlreq_tmpa_box - \baselineskip + \box_ht:N \l_jlreq_tmpc_box}}
@@ -5876,7 +5888,7 @@
         \skip_set:Nn \l_jlreq_tmpa_skip { #1 }
         \cs_set:Nx \l_jlreq_do: { \exp_not:o \l_jlreq_do:
           \exp_not:N \cs_set:Npx \exp_not:N \jlreqkanjiskip { \skip_use:N \l_jlreq_tmpa_skip }
-          \exp_not:N \skip_set_eq:Nn \exp_not:N \kanjiskip { \skip_use:N \l_jlreq_tmpa_skip }
+          \exp_not:N \skip_set:Nn \exp_not:N \kanjiskip { \skip_use:N \l_jlreq_tmpa_skip }
         }
       }
       \tl_if_empty:nF {#2} {

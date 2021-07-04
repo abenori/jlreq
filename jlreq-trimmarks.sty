@@ -300,110 +300,113 @@
   \jlreq@do
 }
 
-\newcommand{\jlreqtrimmarkssetup}[1]{%
-  \jlreq@parsekeyval[jlreqtrimmarkssetup]{
-    {banner}{%
-      \@for\@tempa:=odd,even\do{%
-        \@for\jlreq@tempa:=tate,yoko,corner,inyoko,intate\do{%
-          \@for\jlreq@tempb:=top,bottom\do{%
-            \@for\jlreq@tempc:=left,right\do{%
-              \@namedef{jlreq@trimmarks@banner@\@tempa @\jlreq@tempa @\jlreq@tempb @\jlreq@tempc}{}%
-            }%
-          }%
-        }%
-        \@for\jlreq@tempa:=before,after\do{%
-          \@for\jlreq@tempb:=top,bottom,in\do{%
-            \@namedef{jlreq@trimmarks@banner@\@tempa @\jlreq@tempa @\jlreq@tempb @center}{}%
-          }%
-          \@for\jlreq@tempb:=left,right,in\do{%
-            \@namedef{jlreq@trimmarks@banner@\@tempa @\jlreq@tempa @center@\jlreq@tempb}{}%
+\ExplSyntaxOn
+\keys_define:nn { jlreqtrimmarkssetup } {
+  banner .code:n = {
+    \clist_map_variable:nNn { odd,even } \@tempa {
+      \clist_map_variable:nNn { tate,yoko,corner,inyoko,intate } \jlreq@tempa {
+        \clist_map_variable:nNn {top,bottom} \jlreq@tempb {
+          \clist_map_variable:nNn {left,right} \jlreq@tempc {
+            \@namedef{jlreq@trimmarks@banner@\@tempa @\jlreq@tempa @\jlreq@tempb @\jlreq@tempc}{}%
           }%
         }%
       }%
-      \def\jlreq@do{}%
-      \jlreq@parsekeyval@nokey{%
-        \ifjlreq@parsekeyval@nokey@novalue{}{%
-          \edef\jlreq@gutterodd{\ifjlreq@trimmarks@tate{right}{left}}%
-          \if@twoside
-            \edef\jlreq@guttereven{\ifjlreq@trimmarks@tate{left}{right}}%
-          \else
-            \let\jlreq@guttereven\jlreq@gutterodd
-          \fi
-          \jlreq@switch*{####1}{
-            {top-left}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@left}{top@left}{####2}}}
-            {left-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@left}{top@left}{####2}}}
-            {top-right}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@right}{top@right}{####2}}}
-            {right-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@right}{top@right}{####2}}}
-            {top-gutter}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@\jlreq@gutterodd}{top@\jlreq@guttereven}{####2}}}
-            {gutter-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@\jlreq@gutterodd}{top@\jlreq@guttereven}{####2}}}
-            {top-fore-edge}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@\jlreq@guttereven}{top@\jlreq@gutterodd}{####2}}}
-            {fore-edge-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@\jlreq@guttereven}{top@\jlreq@gutterodd}{####2}}}
-            {bottom-left}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@left}{bottom@left}{####2}}}
-            {left-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@left}{bottom@left}{####2}}}
-            {bottom-right}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@right}{bottom@right}{####2}}}
-            {right-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@right}{bottom@right}{####2}}}
-            {bottom-gutter}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@\jlreq@gutterodd}{bottom@\jlreq@guttereven}{####2}}}
-            {gutter-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@\jlreq@gutterodd}{bottom@\jlreq@guttereven}{####2}}}
-            {bottom-fore-edge}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@\jlreq@guttereven}{bottom@\jlreq@gutterodd}{####2}}}
-            {fore-edge-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@\jlreq@guttereven}{bottom@\jlreq@gutterodd}{####2}}}
-            {top-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{top@center}{top@center}{####2}}}
-            {center-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{top@center}{top@center}{####2}}}
-            {bottom-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{bottom@center}{bottom@center}{####2}}}
-            {center-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{bottom@center}{bottom@center}{####2}}}
-            {center-right}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@right}{center@right}{####2}}}
-            {right-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@right}{center@right}{####2}}}
-            {center-left}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@left}{center@left}{####2}}}
-            {left-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@left}{center@left}{####2}}}
-            {center-gutter}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@\jlreq@gutterodd}{center@\jlreq@guttereven}{####2}}}
-            {gutter-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@\jlreq@gutterodd}{center@\jlreq@guttereven}{####2}}}
-            {center-fore-edge}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@\jlreq@guttereven}{center@\jlreq@gutterodd}{####2}}}
-            {fore-edge-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@\jlreq@guttereven}{center@\jlreq@gutterodd}{####2}}}
-          }%
+      \clist_map_variable:nNn {before,after} \jlreq@tempa {
+        \clist_map_variable:nNn {top,bottom,in} \jlreq@tempb {
+          \@namedef{jlreq@trimmarks@banner@\@tempa @\jlreq@tempa @\jlreq@tempb @center}{}%
         }%
-      }{##1}%
-      \jlreq@if{\ifx\jlreq@do\@empty\fi}{
-        \appto\jlreq@do{\jlreq@trimmarks@setbanner{top@left}{top@left}{##1}}%
-      }{}%
-      \jlreq@do
-    }
-    {banner_font}{\def\jlreq@trimmarks@bannerfont{##1}}
-    {trimmarks_width}{\setlength{\@tombowwidth}{##1}}
-    {color}{%
-      \jlreq@ifempty{##1}{%
-        \def\jlreq@trimmarks@color{\normalcolor}%
-      }{%
-        \@ifundefined{color}{%
-          \PackageError{jlreq-trimmarks}{`\string\color' is not defined, please load the package `color' or its variant before this package}{\@ehc}%
-        }%
-        \jlreq@switch{##1}{
-          {c}{\def\jlreq@trimmarks@color{\color[cmyk]{1,0,0,0}}}
-          {m}{\def\jlreq@trimmarks@color{\color[cmyk]{0,1,0,0}}}
-          {y}{\def\jlreq@trimmarks@color{\color[cmyk]{0,0,1,0}}}
-          {k}{\def\jlreq@trimmarks@color{\color[cmyk]{0,0,0,1}}}
-          {cm}{\def\jlreq@trimmarks@color{\color[cmyk]{1,1,0,0}}}
-          {cy}{\def\jlreq@trimmarks@color{\color[cmyk]{1,0,1,0}}}
-          {ck}{\def\jlreq@trimmarks@color{\color[cmyk]{1,0,0,1}}}
-          {my}{\def\jlreq@trimmarks@color{\color[cmyk]{0,1,1,0}}}
-          {mk}{\def\jlreq@trimmarks@color{\color[cmyk]{0,1,0,1}}}
-          {yk}{\def\jlreq@trimmarks@color{\color[cmyk]{0,0,1,1}}}
-          {cmy}{\def\jlreq@trimmarks@color{\color[cmyk]{1,1,1,0}}}
-          {cmk}{\def\jlreq@trimmarks@color{\color[cmyk]{1,1,0,1}}}
-          {cyk}{\def\jlreq@trimmarks@color{\color[cmyk]{1,0,1,1}}}
-          {myk}{\def\jlreq@trimmarks@color{\color[cmyk]{0,1,1,1}}}
-          {cmyk}{\def\jlreq@trimmarks@color{\color[cmyk]{1,1,1,1}}}
-          {%
-            \jlreq@iffirsttoken{##1}{[}{%
-              \def\@tempa[####1]####2\jlreq@endmark{\def\jlreq@trimmarks@color{\color[####1]{####2}}}%
-            }{%
-              \def\@tempa####1\jlreq@endmark{\def\jlreq@trimmarks@color{\color{####1}}}%
-            }%
-            \@tempa##1\jlreq@endmark
-          }%
+        \clist_map_variable:nNn {left,right,in} \jlreq@tempb {
+          \@namedef{jlreq@trimmarks@banner@\@tempa @\jlreq@tempa @center@\jlreq@tempb}{}%
         }%
       }%
     }%
-  }{#1}%
+    \def\jlreq@do{}%
+    \jlreq@parsekeyval@nokey{%
+      \ifjlreq@parsekeyval@nokey@novalue{}{%
+        \edef\jlreq@gutterodd{\ifjlreq@trimmarks@tate{right}{left}}%
+        \if@twoside
+          \edef\jlreq@guttereven{\ifjlreq@trimmarks@tate{left}{right}}%
+        \else
+          \let\jlreq@guttereven\jlreq@gutterodd
+        \fi
+        \jlreq@switch*{##1}{
+          {top-left}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@left}{top@left}{##2}}}
+          {left-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@left}{top@left}{##2}}}
+          {top-right}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@right}{top@right}{##2}}}
+          {right-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@right}{top@right}{##2}}}
+          {top-gutter}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@\jlreq@gutterodd}{top@\jlreq@guttereven}{##2}}}
+          {gutter-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@\jlreq@gutterodd}{top@\jlreq@guttereven}{##2}}}
+          {top-fore-edge}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@\jlreq@guttereven}{top@\jlreq@gutterodd}{##2}}}
+          {fore-edge-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@\jlreq@guttereven}{top@\jlreq@gutterodd}{##2}}}
+          {bottom-left}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@left}{bottom@left}{##2}}}
+          {left-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@left}{bottom@left}{##2}}}
+          {bottom-right}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@right}{bottom@right}{##2}}}
+          {right-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@right}{bottom@right}{##2}}}
+          {bottom-gutter}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@\jlreq@gutterodd}{bottom@\jlreq@guttereven}{##2}}}
+          {gutter-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@\jlreq@gutterodd}{bottom@\jlreq@guttereven}{##2}}}
+          {bottom-fore-edge}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@\jlreq@guttereven}{bottom@\jlreq@gutterodd}{##2}}}
+          {fore-edge-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@\jlreq@guttereven}{bottom@\jlreq@gutterodd}{##2}}}
+          {top-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{top@center}{top@center}{##2}}}
+          {center-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{top@center}{top@center}{##2}}}
+          {bottom-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{bottom@center}{bottom@center}{##2}}}
+          {center-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{bottom@center}{bottom@center}{##2}}}
+          {center-right}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@right}{center@right}{##2}}}
+          {right-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@right}{center@right}{##2}}}
+          {center-left}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@left}{center@left}{##2}}}
+          {left-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@left}{center@left}{##2}}}
+          {center-gutter}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@\jlreq@gutterodd}{center@\jlreq@guttereven}{##2}}}
+          {gutter-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@\jlreq@gutterodd}{center@\jlreq@guttereven}{##2}}}
+          {center-fore-edge}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@\jlreq@guttereven}{center@\jlreq@gutterodd}{##2}}}
+          {fore-edge-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@\jlreq@guttereven}{center@\jlreq@gutterodd}{##2}}}
+        }%
+      }%
+    }{#1}%
+    \jlreq@if{\ifx\jlreq@do\@empty\fi}{
+      \appto\jlreq@do{\jlreq@trimmarks@setbanner{top@left}{top@left}{#1}}%
+    }{}%
+    \jlreq@do
+  },
+  banner_font .tl_set:N = \jlreq@trimmarks@bannerfont,
+  trimmarks_width .code:n = {\setlength{\@tombowwidth}{#1}},
+  color .code:n = {
+    \jlreq@ifempty{#1}{%
+      \def\jlreq@trimmarks@color{\normalcolor}%
+    }{%
+      \@ifundefined{color}{%
+        \PackageError{jlreq-trimmarks}{`\string\color'~is~not~defined,~please~load~the~package~`color'~or~its~variant~before~this~package}{\@ehc}%
+      }%
+      \jlreq@switch{#1}{
+        {c}{\def\jlreq@trimmarks@color{\color[cmyk]{1,0,0,0}}}
+        {m}{\def\jlreq@trimmarks@color{\color[cmyk]{0,1,0,0}}}
+        {y}{\def\jlreq@trimmarks@color{\color[cmyk]{0,0,1,0}}}
+        {k}{\def\jlreq@trimmarks@color{\color[cmyk]{0,0,0,1}}}
+        {cm}{\def\jlreq@trimmarks@color{\color[cmyk]{1,1,0,0}}}
+        {cy}{\def\jlreq@trimmarks@color{\color[cmyk]{1,0,1,0}}}
+        {ck}{\def\jlreq@trimmarks@color{\color[cmyk]{1,0,0,1}}}
+        {my}{\def\jlreq@trimmarks@color{\color[cmyk]{0,1,1,0}}}
+        {mk}{\def\jlreq@trimmarks@color{\color[cmyk]{0,1,0,1}}}
+        {yk}{\def\jlreq@trimmarks@color{\color[cmyk]{0,0,1,1}}}
+        {cmy}{\def\jlreq@trimmarks@color{\color[cmyk]{1,1,1,0}}}
+        {cmk}{\def\jlreq@trimmarks@color{\color[cmyk]{1,1,0,1}}}
+        {cyk}{\def\jlreq@trimmarks@color{\color[cmyk]{1,0,1,1}}}
+        {myk}{\def\jlreq@trimmarks@color{\color[cmyk]{0,1,1,1}}}
+        {cmyk}{\def\jlreq@trimmarks@color{\color[cmyk]{1,1,1,1}}}
+        {%
+          \jlreq@iffirsttoken{##1}{[}{%
+            \def\@tempa[####1]####2\jlreq@endmark{\def\jlreq@trimmarks@color{\color[####1]{####2}}}%
+          }{%
+            \def\@tempa####1\jlreq@endmark{\def\jlreq@trimmarks@color{\color{####1}}}%
+          }%
+          \@tempa##1\jlreq@endmark
+        }%
+      }%
+    }%
+  }%
 }
+\newcommand{\jlreqtrimmarkssetup}[1]{%
+  \keys_set:nn { jlreqtrimmarkssetup } {#1}
+}
+\ExplSyntaxOff
 \@onlypreamble\jlreqtrimmarkssetup
 \@bannertoken{%
   \jobname\space(\number\year-\two@digits\month-\two@digits\day

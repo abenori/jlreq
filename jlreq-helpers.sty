@@ -2,7 +2,7 @@
 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{jlreq-helpers}[2018/08/15 jlreq-helpers]
-\RequirePackage{xkeyval,etoolbox}
+\RequirePackage{etoolbox}
 
 %. helper1
 \newcount\jlreq@tempcnta
@@ -210,53 +210,53 @@
 %  *{key}{\def\val{#1}} % デフォルト値を空文字列にする
 %  {key}[choice1,choice2]{\def\valchoice{#1}}
 %}{parse対象}
-\newcommand*{\jlreq@parsekeyval}{%
-  \@ifstar{\jlreq@helper@parsekeyval@{*}}{\jlreq@helper@parsekeyval@{}}%
-}
-\def\jlreq@helper@parsekeyval@#1{%
-  \@ifnextchar[{\jlreq@helper@parsekeyval@@{#1}}{\jlreq@helper@parsekeyval@@{#1}[jlreq@key]}%
-}
-\long\def\jlreq@helper@parsekeyval@@#1[#2]#3#4{%
-  \begingroup
-    \def\jlreq@do{}% \setkeysの結果処理がここに入れられる（よってループ内で利用不可）
-    \jlreq@helper@parsekeyval@@@{#2}#3{\jlreq@endmark}%
-    \setkeys#1{#2}{#4}%
-  \expandafter\endgroup
-  \jlreq@do
-}
-\def\jlreq@helper@parsekeyval@@@#1#2#{%
-  \jlreq@iffirsttoken@ignorespaces{#2}{*}{%
-    \jlreq@helper@parsekeyval@@@definekeywithdefault{#1}%
-  }{%
-    \jlreq@helper@parsekeyval@@@@{#1}%
-  }%
-}
-\long\def\jlreq@helper@parsekeyval@@@@#1#2{%
-  \jlreq@ifendmark{#2}{}{%
-    \@ifnextchar[{\jlreq@helper@parsekeyval@@@choicekey{#1}{#2}}{\jlreq@helper@parsekeyval@@@definekey{#1}{#2}}%
-  }%
-}
-\long\def\jlreq@helper@parsekeyval@@@choicekey#1#2[#3]#4{%
-  \@for\@tempa:=#2\do{%
-    \edef\jlreq@next{\unexpanded{\define@choicekey{#1}}{\expandonce{\@tempa}}}%
-    \jlreq@next{#3}{\eappto\jlreq@do{\unexpanded{#4}}}%
-  }%
-  \jlreq@helper@parsekeyval@@@{#1}%
-}
-\long\def\jlreq@helper@parsekeyval@@@definekeywithdefault#1#2#3{%
-  \@for\@tempa:=#2\do{%
-    \edef\jlreq@next{\unexpanded{\define@key{#1}}{\expandonce{\@tempa}}}%
-    \jlreq@next[]{\eappto\jlreq@do{\unexpanded{#3}}}%
-  }%
-  \jlreq@helper@parsekeyval@@@{#1}%
-}
-\long\def\jlreq@helper@parsekeyval@@@definekey#1#2#3{%
-  \@for\@tempa:=#2\do{%
-    \edef\jlreq@next{\unexpanded{\define@key{#1}}{\expandonce{\@tempa}}}%
-    \jlreq@next{\eappto\jlreq@do{\unexpanded{#3}}}%
-  }%
-  \jlreq@helper@parsekeyval@@@{#1}%
-}
+%\newcommand*{\jlreq@parsekeyval}{%
+%  \@ifstar{\jlreq@helper@parsekeyval@{*}}{\jlreq@helper@parsekeyval@{}}%
+%}
+%\def\jlreq@helper@parsekeyval@#1{%
+%  \@ifnextchar[{\jlreq@helper@parsekeyval@@{#1}}{\jlreq@helper@parsekeyval@@{#1}[jlreq@key]}%
+%}
+%\long\def\jlreq@helper@parsekeyval@@#1[#2]#3#4{%
+%  \begingroup
+%    \def\jlreq@do{}% \setkeysの結果処理がここに入れられる（よってループ内で利用不可）
+%    \jlreq@helper@parsekeyval@@@{#2}#3{\jlreq@endmark}%
+%    \setkeys#1{#2}{#4}%
+%  \expandafter\endgroup
+%  \jlreq@do
+%}
+%\def\jlreq@helper@parsekeyval@@@#1#2#{%
+%  \jlreq@iffirsttoken@ignorespaces{#2}{*}{%
+%    \jlreq@helper@parsekeyval@@@definekeywithdefault{#1}%
+%  }{%
+%    \jlreq@helper@parsekeyval@@@@{#1}%
+%  }%
+%}
+%\long\def\jlreq@helper@parsekeyval@@@@#1#2{%
+%  \jlreq@ifendmark{#2}{}{%
+%    \@ifnextchar[{\jlreq@helper@parsekeyval@@@choicekey{#1}{#2}}{\jlreq@helper@parsekeyval@@@definekey{#1}{#2}}%
+%  }%
+%}
+%\long\def\jlreq@helper@parsekeyval@@@choicekey#1#2[#3]#4{%
+%  \@for\@tempa:=#2\do{%
+%    \edef\jlreq@next{\unexpanded{\define@choicekey{#1}}{\expandonce{\@tempa}}}%
+%    \jlreq@next{#3}{\eappto\jlreq@do{\unexpanded{#4}}}%
+%  }%
+%  \jlreq@helper@parsekeyval@@@{#1}%
+%}
+%\long\def\jlreq@helper@parsekeyval@@@definekeywithdefault#1#2#3{%
+%  \@for\@tempa:=#2\do{%
+%    \edef\jlreq@next{\unexpanded{\define@key{#1}}{\expandonce{\@tempa}}}%
+%    \jlreq@next[]{\eappto\jlreq@do{\unexpanded{#3}}}%
+%  }%
+%  \jlreq@helper@parsekeyval@@@{#1}%
+%}
+%\long\def\jlreq@helper@parsekeyval@@@definekey#1#2#3{%
+%  \@for\@tempa:=#2\do{%
+%    \edef\jlreq@next{\unexpanded{\define@key{#1}}{\expandonce{\@tempa}}}%
+%    \jlreq@next{\eappto\jlreq@do{\unexpanded{#3}}}%
+%  }%
+%  \jlreq@helper@parsekeyval@@@{#1}%
+%}
 
 % キー指定しないkeyval（独自実装）
 % \jlreq@parsekeyval@nokey{<action>}{<parse対象>}

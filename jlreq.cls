@@ -325,11 +325,12 @@
 
 \def\jlreq@jlreqsetup@keyvallist{}
 \def\jlreq@jlreqsetup@finally{}
-\newcommand{\jlreqsetup}[1]{%
-  \begingroup
-    \edef\jlreq@do{\unexpanded{\jlreq@parsekeyval[jlreqsetup]}{\expandonce{\jlreq@jlreqsetup@keyvallist}}}%
-  \expandafter\endgroup
-  \jlreq@do{#1}%
+\ExplSyntaxOn
+\NewDocumentCommand{\jlreqsetup}{m}{
+%  \begingroup
+%    \edef\jlreq@do{\unexpanded{\jlreq@parsekeyval[jlreqsetup]}{\expandonce{\jlreq@jlreqsetup@keyvallist}}}%
+%  \expandafter\endgroup
+  \keys_set:nn {jlreqsetup}{#1}
   \jlreq@jlreqsetup@finally
 }
 % \jlreqsetupの項目に加えるマクロ．\jlreq@jlreqsetup@add{key}{action}とするとkeyに対して定義できる．
@@ -338,11 +339,21 @@
   \@ifnextchar[{\jlreq@jlreqsetup@add@{#1}}{\jlreq@jlreqsetup@add@@{#1}}%
 }
 \long\def\jlreq@jlreqsetup@add@#1[#2]#3{%
-  \eappto\jlreq@jlreqsetup@keyvallist{\unexpanded{{#1}[#2]{#3}}}%
+  \keys_define:nn {jlreqsetup}{#1 .choice:}
+  \clist_map_variable:nNn { #2 } \l_jlreq_tmpa_tl {
+    \cs_set:Nx \jlreq_do: {
+      \exp_not:N \keys_define:nn {jlreqsetup} {\exp_not:n {#1} / \exp_not:o {\l_jlreq_tmpa_tl} .code:n = {\exp_not:n{#3}}}
+    }
+    \jlreq_do:
+  }
 }
 \long\def\jlreq@jlreqsetup@add@@#1#2{%
-  \eappto\jlreq@jlreqsetup@keyvallist{\unexpanded{{#1}{#2}}}%
+  \edef\jlreq@do{%
+    \exp_not:N\keys_define:nn {jlreqsetup} {\unexpanded{#1} .code:n = {\exp_not:n {#2}}}
+  }
+  \jlreq@do
 }
+\ExplSyntaxOff
 % \jlreqsetupの最後に必ず実行される処理を入れる．
 \newcommand\jlreq@jlreqsetup@addtofinally[1]{\eappto\jlreq@jlreqsetup@finally{\unexpanded{#1}}}
 \jlreq@aftercls@addtodeletecs{\jlreq@jlreqsetup@add}
@@ -2071,7 +2082,6 @@
 % {1 = 前空き}{2 = 後ろ空き}{3 = トータル行数}{4 = 出力}
 % 最後には\nobreak（と\vskip）が入っている
 \long\def\jlreq@BlockHeading@start@gyodori#1#2#3#4{\par{%
-  \tracingnone
   \setbox\jlreq@tempboxa=\vbox{#4}%
   % \jlreq@tempskip(a/b)に前/後ろに入れるべき値を入れる
   % #1がa:ならばその値は\jlreq@tempskipaには足さず\jlreq@tempskipcに入れておく
@@ -3165,9 +3175,10 @@
 \newif\ifjlreqadjustreferencemark
 \jlreqadjustreferencemarktrue
 \ExplSyntaxOn
-\jlreq@jlreqsetup@add{reference_mark}[inline,interlinear]{
-  \def\jlreq@referencemark{#1}
-  \str_if_eq:VnTF \jlreq@referencemark { inline } {
+\keys_define:nn { jlreqsetup } {
+  reference_mark .choice:,
+  reference_mark / inline .code:n = {
+    \def\jlreq@referencemark{#1}
     \def\jlreq@notemark##1{%
       \jlreq@ifydir{%
         \hbox{}\hbox{\@textsuperscript{\normalfont\jlreq@referencemark@format{##1}}}\hbox{}%
@@ -3189,7 +3200,9 @@
       }%
       \noexpand\jlreq@if{\noexpand\ifnum 0\expandonce{\@tempa}>0~\noexpand\fi}{}{\noexpand\inhibitglue}%
     }
-  }{% reference_mark=interlinear
+  },
+  reference_mark / interlinear .code:n = {
+    \def\jlreq@referencemark{#1}
     \def\jlreq@notemark##1{{%
       \setbox\@tempboxa=\hbox{\scriptsize\jlreq@referencemark@format{##1}}%
       \@tempdima=\wd\@tempboxa
@@ -3252,51 +3265,53 @@
 \jlreq@do
 
 % インデントの計算：脚注の長さが文字の整数倍になるように字下げする（4.2.5.b）
-\jlreq@jlreqsetup@add{footnote_indent}{%
-  \if@tate\else
-    \ifdim\dimexpr#1\relax=0pt \else\jlreq@note{脚注は，一般にその前に区切りのための罫線を挿入するので，字下げは行わなくてよい（4.2.5.b）．}\fi
-  \fi
-  \begingroup
-    \footnotesize
-    \jlreq@footnoteindent=\dimexpr#1\relax
-    \@tempdima=\dimexpr\textwidth - \jlreq@footnoteindent\relax
-    \@tempdimb=1\jlreq@zw
-    \divide\@tempdima\@tempdimb \multiply\@tempdima\@tempdimb
-    \edef\jlreq@do{\noexpand\jlreq@footnoteindent=\the\dimexpr\textwidth - \@tempdima\relax}%
-  \expandafter\endgroup
-  \jlreq@do
+\ExplSyntaxOn
+\keys_define:nn { jlreqsetup } {
+  footnote_indent .code:n = {
+    \bool_if:nT { \legacy_if_p:n { @tate } && \dim_compare_p:n { #1 = 0pt } } {
+      \jlreq@note{脚注は，一般にその前に区切りのための罫線を挿入するので，字下げは行わなくてよい（4.2.5.b）．}
+    }
+    \begingroup
+      \footnotesize
+      \jlreq@footnoteindent=\dimexpr#1\relax
+      \@tempdima=\dimexpr\textwidth - \jlreq@footnoteindent\relax
+      \@tempdimb=1\jlreq@zw
+      \divide\@tempdima\@tempdimb \multiply\@tempdima\@tempdimb
+      \edef\jlreq@do{\noexpand\jlreq@footnoteindent=\the\dimexpr\textwidth - \@tempdima\relax}%
+    \expandafter\endgroup
+    \jlreq@do
+  }
 }
 
 \newcommand{\@makefntext}[1]{\jlreq@makefntext{#1}}
-\ExplSyntaxOn
-\jlreq@jlreqsetup@add{footnote_second_indent}{%
-  \legacy_if:nF { @tate }{
-    \bool_if:nF {
-      ( \dim_compare_p:n {  0.99\jlreq@zw < \dimexpr #1\relax } && \dim_compare_p:n { \dimexpr #1\relax < 1.01\jlreq@zw  } ) ||
-      ( \dim_compare_p:n { -1.01\jlreq@zw < \dimexpr #1\relax } && \dim_compare_p:n { \dimexpr #1\relax < -0.99\jlreq@zw } )
-    }{\jlreq@note{脚注が2行以上となった場合，脚注の2行目以下の字下げを1行目より，脚注の文字サイズの全角アキとするか，逆に，1行目の字下げを2行目より，脚注の文字サイズの全角アキとする (4.2.5.d)．}}
-  }
-  \ifdim\dimexpr #1\relax<0pt
-    \def\jlreq@makefntext{}
-  \else
-    \def\jlreq@makefntext{\addtolength{\leftskip}{\glueexpr #1\relax}}
-  \fi
-  \long\edef\jlreq@makefntext##1{\expandonce{\jlreq@makefntext}%
-    \unexpanded{%
-      \addtolength{\leftskip}{\jlreq@footnoteindent}%
-      \parindent=1\jlreq@zw
-      \noindent
-      \hskip-\glueexpr #1\relax
-      \jlreq@referencemark@format{\@thefnmark}%
-      \hskip\glueexpr 1\jlreq@zw\relax
-    }##1%
+\keys_define:nn { jlreqsetup } {
+  footnote_second_indent .code:n = {
+    \legacy_if:nF { @tate }{
+      \bool_if:nF {
+        ( \dim_compare_p:n {  0.99\jlreq@zw < #1 } && \dim_compare_p:n { #1 < 1.01\jlreq@zw  } ) ||
+        ( \dim_compare_p:n { -1.01\jlreq@zw < #1 } && \dim_compare_p:n { #1 < -0.99\jlreq@zw } )
+      }{\jlreq@note{脚注が2行以上となった場合，脚注の2行目以下の字下げを1行目より，脚注の文字サイズの全角アキとするか，逆に，1行目の字下げを2行目より，脚注の文字サイズの全角アキとする~(4.2.5.d)．}}
+    }
+    \dim_compare:nTF { #1 < 0pt } {
+      \def\jlreq@makefntext{}
+    }{
+      \def\jlreq@makefntext{\addtolength{\leftskip}{\glueexpr #1\relax}}
+    }
+    \long\edef\jlreq@makefntext##1{\expandonce{\jlreq@makefntext}%
+      \unexpanded{%
+        \addtolength{\leftskip}{\jlreq@footnoteindent}%
+        \parindent=1\jlreq@zw
+        \noindent
+        \hskip-\glueexpr #1\relax
+        \jlreq@referencemark@format{\@thefnmark}%
+        \hskip\glueexpr 1\jlreq@zw\relax
+      }##1%
+    }
   }
 }
-\ExplSyntaxOff
 
-\jlreq@jlreqsetup@add{footnotetext_indent}{
-  \ClassWarningNoLine{jlreq}{footnotetext_indent was removed}
-}
+\keys_define:nn { jlreqsetup } { footnotetext_indent .code:n = {\ClassWarningNoLine{jlreq}{footnotetext_indent~was~removed} } }
+\ExplSyntaxOff
 
 \ifx l\jlreq@engine
   \fnfixbottomtrue
@@ -3636,7 +3651,8 @@
 % (1) では\sidenote[]{}を定義
 % (2) では\sidenote{見出し}{注中身}を定義
 % sidenote_length>0ptの時のみ定義する
-\jlreq@if{\ifdim\jlreq@sidenote@length>0pt \fi}
+\ExplSyntaxOn
+\jlreq@if{\ifdim\jlreq@sidenote@length>0pt\relax\fi}
 {
   \def\jlreq@sidenotemarkname{@thefnmark}% 合印用番号を一時的に入れるマクロ名
   \long\def\@sidenotetext#1{%
@@ -3648,10 +3664,12 @@
   }
   \jlreq@setdefaultnotemark\@sidenotemark\@makesidemark
   \def\jlreq@sidenotecounter{footnote}% 傍注用のカウンタ名
-  \jlreq@jlreqsetup@add{sidenote_type}[number,symbol]{\def\jlreq@sidenote@type{#1}}
+  \keys_define:nn { jlreqsetup } {
+    sidenote_type .choices:nn = { number, symbol } { \def\jlreq@sidenote@type{#1} }
+  }
   \def\jlreq@sidenote@type{number}
   \jlreq@jlreqsetup@addtofinally{
-    \ifthenelse{\equal{\jlreq@sidenote@type}{number}}{
+    \str_if_eq:VnT \jlreq@sidenote@type { number } {
       \def\sidenote{\jlreq@hook@prenote\@ifnextchar[{\jlreq@sidenote}{\jlreq@sidenote[]}}
       \def\sidenotemark{\jlreq@hook@prenote\@ifnextchar[{\jlreq@sidenotemark}{\jlreq@sidenotemark[]}}
       \def\sidenotetext{\@ifnextchar[{\jlreq@sidenotetext}{\jlreq@sidenotetext[]}}
@@ -3688,7 +3706,8 @@
         \long\def\@makesidetext#1{　\kern-1\jlreq@zw\csname\jlreq@sidenotemarkname\endcsname\hspace{0.5\jlreq@mol}#1}
       \fi
       \let\@makesidemark=\@makefnmark
-    }{% sidenote_type = symbol
+    }
+    \str_if_eq:VnT \jlreq@sidenote@type { symbol } {% sidenote_type = symbol
       \long\def\sidenote#1#2{\jlreq@sidenote{#1}{#2}}
       \def\sidenotemark#1{\jlreq@sidenotemark{#1}}
       \long\def\sidenotetext#1#2{\jlreq@sidenotetext{#1}{#2}}
@@ -3716,6 +3735,7 @@
   \jlreq@jlreqsetup@add{sidenote_symbol}{\def\jlreq@sidenote@defaultmark{#1}}
   \jlreq@jlreqsetup@add{sidenote_keyword_font}{\def\jlreq@sidenote@keywordfont{#1}}
 }{}
+\ExplSyntaxOff
 
 %.. 割注（3.4）
 \def\inlinenotesize{.6\jlreq@jafontsize} % 割注の文字サイズ
@@ -5306,10 +5326,16 @@
 \def\@listvi{\jlreq@init@list{vi}}
 
 % 引用系．3.5.2の例．
+\ExplSyntaxOn
 \jlreq@jlreqsetup@add{quote_indent}{\def\jlreq@quote@indent{#1}}
 \jlreq@jlreqsetup@add{quote_end_indent}{\def\jlreq@quote@end@indent{#1}}
-\jlreq@jlreqsetup@add{quote_fontsize}[normalsize,small,footnotesize,scriptsize,tiny,]{\jlreq@ifempty{#1}{\def\jlreq@quote@fontsize{}}{\edef\jlreq@quote@fontsize{\expandonce{\csname #1\endcsname}}}}
+\keys_define:nn { jlreqsetup }{
+  quote_fontsize .choices:nn = {normalsize,small,footnotesize,scriptsize,tiny,{}}{
+    \jlreq@ifempty{#1}{\def\jlreq@quote@fontsize{}}{\edef\jlreq@quote@fontsize{\expandonce{\csname #1\endcsname}}}
+  }
+}
 \jlreq@jlreqsetup@add{quote_beforeafter_space}{\def\jlreq@quote@beforeafter@space{#1}}
+\ExplSyntaxOff
 
 \newenvironment{verse}
   {\let\\\@centercr
@@ -5994,12 +6020,13 @@
     }%
   \fi
 }
-\jlreq@jlreqsetup@add{year_style}[seireki,wareki]{%
-  \jlreq@switch{#1}{%
-    {seireki}{\西暦true}
-    {wareki}{\西暦false}
-  }
+\ExplSyntaxOn
+\keys_define:nn { jlreqsetup } {
+  year_style .choice:,
+  year_style / seireki .code:n = {\西暦true},
+  year_style / wareki .code:n = {\西暦false}
 }
+\ExplSyntaxOff
 
 % 時刻
 \hour=\time \divide\hour by 60

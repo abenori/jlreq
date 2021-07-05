@@ -1,6 +1,6 @@
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{jlreq-trimmarks}[2020/05/01 jlreq-trimmarks]
-\RequirePackage{xkeyval,etoolbox}
+\RequirePackage{l3keys2e,etoolbox}
 \RequirePackage{jlreq-helpers}
 
 % check \tombowdatetrue
@@ -41,13 +41,14 @@
 
 
 % dvipdfmx=f，dvips=s，dviout = o, lualatex = l
-\jlreq@trimmarks@DeclareOption{dvipdfmx}{\let\jlreq@trimmarks@driver=f}
-\jlreq@trimmarks@DeclareOption{dvips}{\let\jlreq@trimmarks@driver=s}
-\jlreq@trimmarks@DeclareOption{dviout}{\let\jlreq@trimmarks@driver=o}
+\ExplSyntaxOn
+\keys_define:nn { jlreq-trimmarks } { dvipdfmx .code:n = {\let\jlreq@trimmarks@driver=f}, .value_forbidden:n = true }
+\keys_define:nn { jlreq-trimmarks } { dvips .code:n = {\let\jlreq@trimmarks@driver=s}, .value_forbidden:n = true }
+\keys_define:nn { jlreq-trimmarks } { dviout .code:n = {\let\jlreq@trimmarks@driver=o}, .value_forbidden:n = true }
 \let\jlreq@trimmarks@engine=\jlreq@engine
-\jlreq@trimmarks@DeclareOption{lualatex}{\let\jlreq@trimmarks@engine=l}
-\jlreq@trimmarks@DeclareOption{uplatex}{\let\jlreq@trimmarks@engine=u}
-\jlreq@trimmarks@DeclareOption{platex}{\let\jlreq@trimmarks@engine=p}
+\keys_define:nn { jlreq-trimmarks } { lualatex .code:n = {\let\jlreq@trimmarks@engine=l}, .value_forbidden:n = true }
+\keys_define:nn { jlreq-trimmarks } { uplatex .code:n = {\let\jlreq@trimmarks@engine=u}, .value_forbidden:n = true }
+\keys_define:nn { jlreq-trimmarks } { platex .code:n = {\let\jlreq@trimmarks@engine=p}, .value_forbidden:n = true }
 
 \def\jlreq@trimmarks@switchpapersize{}
 \def\jlreq@trimmarks@addpapersize#1{%
@@ -58,7 +59,7 @@
   \@tempa
 }
 \newcommand*{\jlreq@trimmarks@addpapersize@@}[3]{%
-  \@for\@tempa:=#1\do{%
+  \clist_map_variable:nNn {#1} \@tempa {
     \eappto\jlreq@trimmarks@switchpapersize{{\expandonce{\@tempa}}{\unexpanded{\def\jlreq@resulta{#2}\def\jlreq@resultb{#3}}}}%
   }%
 }
@@ -122,8 +123,7 @@
 }
 \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@analyzepapersize}
 
-\def\jlreq@trimmarks@option@papersize{+2in}
-\DeclareOptionX{trimmarks_paper}{\def\jlreq@trimmarks@option@papersize{#1}}
+\keys_define:nn { jlreq-trimmarks } { trimmarks_paper .tl_set:N = \jlreq@trimmarks@option@papersize }
 \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@option@papersize}
 
 \newif\ifjlreq@trimmarks@digital \jlreq@trimmarks@digitaltrue
@@ -133,60 +133,64 @@
 % flag: `show` is specified or not
 \newif\ifjlreq@trimmarks@option@show \jlreq@trimmarks@option@showfalse
 
-\DeclareOptionX{show}{%
-  \jlreq@trimmarks@option@showtrue
-  \jlreq@ifempty{#1}{
-    \jlreq@trimmarks@showtrue\tombowdatetrue\jlreq@trimmarks@digitaltrue
-  }{
-    \jlreq@trimmarks@showfalse\tombowdatefalse\jlreq@trimmarks@digitalfalse
-    \@for\jlreq@trimmarks@tempa:=#1\do{%
-      \expandafter\jlreq@helper@trim\expandafter{\jlreq@trimmarks@tempa}{\jlreq@trimmarks@tempa}
-      \jlreq@switch{\jlreq@trimmarks@tempa}{
-        {trimmarks}{\jlreq@trimmarks@showtrue}
-        {banner}{\tombowdatetrue}
-        {digital}{\jlreq@trimmarks@digitaltrue}
-        {digital*}{\jlreq@trimmarks@digitaltrue\jlreq@trimmarks@show@artboxtrue}
-        {no}{\tombowdatefalse\jlreq@trimmarks@showfalse\jlreq@trimmarks@digitalfalse}
-      }[\PackageError{jlreq-trimmarks}{Unknown value `##1' in the option `show'}{\@ehc}]
+\keys_define:nn { jlreq-trimmarks } {
+  show .code:n = {
+    \jlreq@trimmarks@option@showtrue
+    \jlreq@ifempty{#1}{
+      \jlreq@trimmarks@showtrue\tombowdatetrue\jlreq@trimmarks@digitaltrue
+    }{
+      \jlreq@trimmarks@showfalse\tombowdatefalse\jlreq@trimmarks@digitalfalse
+      \clist_map_variable:nNn {#1} \jlreq@trimmarks@tempa {
+        \expandafter\jlreq@helper@trim\expandafter{\jlreq@trimmarks@tempa}{\jlreq@trimmarks@tempa}
+        \jlreq@switch{\jlreq@trimmarks@tempa}{
+          {trimmarks}{\jlreq@trimmarks@showtrue}
+          {banner}{\tombowdatetrue}
+          {digital}{\jlreq@trimmarks@digitaltrue}
+          {digital*}{\jlreq@trimmarks@digitaltrue\jlreq@trimmarks@show@artboxtrue}
+          {no}{\tombowdatefalse\jlreq@trimmarks@showfalse\jlreq@trimmarks@digitalfalse}
+        }[\PackageError{jlreq-trimmarks}{Unknown value `##1' in the option `show'}{\@ehc}]
+      }
     }
   }
 }
-\@for\jlreq@tempa:=top,bottom,gutter,fore-edge\do{%
-  \expandafter\def\csname jlreq@trimmarks@bleed@\jlreq@tempa\endcsname{3mm}
-}
-\DeclareOptionX{bleed_margin}{%
-  \begingroup
-    \def\jlreq@do{}%
-    \jlreq@parsekeyval@nokey{
-      \ifjlreq@parsekeyval@nokey@novalue{%
-        \@for\jlreq@tempa:=top,bottom,gutter,fore-edge\do{%
-        \epreto\jlreq@do{%
-            \noexpand\def\expandonce{\csname jlreq@trimmarks@bleed@\jlreq@tempa\endcsname}{##1}%
-          }%
-        }%
-      }{%
-        \ifthenelse{\equal{##1}{top} \OR \equal{##1}{bottom} \OR \equal{##1}{gutter} \OR \equal{##1}{fore-edge}}{%
-          \eappto\jlreq@do{%
-            \noexpand\def\expandonce{\csname jlreq@trimmarks@bleed@##1\endcsname}{##2}%
+\keys_define:nn { jlreq-trimmarks } {
+  bleed_margin .code:n = {
+    \begingroup
+      \def\jlreq@do{}%
+      \jlreq@parsekeyval@nokey{
+        \ifjlreq@parsekeyval@nokey@novalue{%
+          \clist_map_variable:nNn { top,bottom,gutter,fore-edge } \jlreq@tempa {
+          \epreto\jlreq@do{%
+              \noexpand\def\expandonce{\csname jlreq@trimmarks@bleed@\jlreq@tempa\endcsname}{##1}%
+            }%
           }%
         }{%
-          \PackageError{jlreq-trimmarks}{Unknown position `##1' in bleed_margin}{\@ehc}
+          \bool_if:nTF {
+            \str_if_eq_p:nn {##1} {top} || \str_if_eq_p:nn {##1} {bottom} ||
+            \str_if_eq_p:nn {##1} {gutter} || \str_if_eq_p:nn {##1} {fore-edge}
+          }{
+            \eappto\jlreq@do{%
+              \noexpand\def\expandonce{\csname jlreq@trimmarks@bleed@##1\endcsname}{##2}%
+            }%
+          }{%
+            \PackageError{jlreq-trimmarks}{Unknown position `##1' in bleed_margin}{\@ehc}
+          }%
         }%
-      }%
-    }{#1}%
-  \expandafter\endgroup
-  \jlreq@do
+      }{#1}%
+    \expandafter\endgroup
+    \jlreq@do
+  }
 }
 
 \newif\ifjlreq@trimmarks@landscape \jlreq@trimmarks@landscapefalse
-\jlreq@trimmarks@DeclareOption{landscape}{\jlreq@trimmarks@landscapetrue}
+\keys_define:nn { jlreq-trimmarks } { landscape .code:n = {\jlreq@trimmarks@landscapetrue}, .value_forbidden:n = true }
 \jlreq@trimmarks@afterpkg@addtodeleteif{\ifjlreq@trimmarks@landscape}
 
-\let\jlreq@temporary@original@@removeelement=\@removeelement
-\let\@removeelement=\jlreq@helper@removeelement
-\ProcessOptionsX*\relax
-\let\@removeelement=\jlreq@temporary@original@@removeelement
-\let\jlreq@temporary@original@@removeelement=\@undefined
+\keys_set:nn { jlreq-trimmarks } {
+  trimmarks_paper = {+2in},
+  bleed_margin = { top = 3mm, bottom = 3mm, gutter = 3mm, fore-edge = 3mm },
+}
+\ProcessKeysOptions { jlreq-trimmarks }
 
 \ifjlreq@trimmarks@option@show\else
   \ifx o\jlreq@trimmarks@driver

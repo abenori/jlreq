@@ -456,11 +456,12 @@
 
 % 組方向を判定
 % \jlreq@if(y|t)(dir|box)を定義する．
+\ExplSyntaxOn
 \jlreq@if{\ifx l\jlreq@engine\fi}{
-  \def\jlreq@ifydir{\jlreq@if{\ifnum\ltjgetparameter{direction}=4 \fi}}
-  \def\jlreq@iftdir{\jlreq@if{\ifnum\numexpr\ltjgetparameter{direction}-(\ltjgetparameter{direction}/8)*8\relax=3 \fi}}
-  \def\jlreq@ifybox#1{\jlreq@if{\ifnum\ltjgetparameter{boxdir}{#1}=4 \fi}}
-  \def\jlreq@iftbox#1{\jlreq@if{\ifnum\numexpr\ltjgetparameter{boxdir}{#1}-(\ltjgetparameter{boxdir}{#1}/8)*8\relax=3 \fi}}
+  \def\jlreq@ifydir { \int_compare:nTF { \ltjgetparameter{direction} == 4 } }
+  \def\jlreq@iftdir { \int_compare:nTF { (\ltjgetparameter{direction}-(\ltjgetparameter{direction}/8)*8) == 3 } }
+  \def\jlreq@ifybox#1{ \int_compare:nTF { \ltjgetparameter{boxdir}{#1} == 4 } }
+  \def\jlreq@iftbox#1{ \int_compare:nTF { (\ltjgetparameter{boxdir}{#1}-(\ltjgetparameter{boxdir}{#1}/8)*8) == 3 } }
 }{
   \def\jlreq@ifydir{\jlreq@if{\ifydir\fi}}
   \def\jlreq@iftdir{\jlreq@if{\iftdir\fi}}
@@ -470,7 +471,6 @@
 
 % 左ページであるか
 % #1 : odd or even or ページ数
-\ExplSyntaxOn
 \def\jlreq@ifleftpage#1{%
   \bool_if:nTF { ( \legacy_if_p:n { @tate }  &&
     \bool_lazy_or_p:nn { \str_if_eq_p:ee {#1} { odd  } }
@@ -838,9 +838,11 @@
 \ExplSyntaxOn
 \ifx l\jlreq@engine
   % \itemの直後は折り返し行頭と同じにする．
+  \cs_set:Nn \__jlreq_hook_everypar: {}
   \def\item{%
     \jlreq@useoriginalcs{item}%
-    \expandafter\everypar\expandafter{\the\everypar\inhibitglue}%
+    \cs_set:Nn \__jlreq_hook_everypar: { \cs_set:Nn \__jlreq_hook_everypar: {} \inhibitglue }
+    \expandafter\everypar\expandafter{\the\everypar\__jlreq_hook_everypar:}
   }
 \else
   \AtBeginDocument{\PushPostHook{par}{\jlreq@hook@everypar}}
@@ -853,9 +855,9 @@
   \expandafter\jlreq@do\jlreq@charlist@openingbrackets\jlreq@endmark
   % JFM glueの伸び縮みで行頭括弧が揃わないのを防ぐために常に\inhibitglueを入れる．
   \str_if_eq:VnTF \jlreq@open@bracket@pos { nibu_tentsuki } {
-    \edef\jlreq@openbracket@hook@ii{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\hskip -.5\jlreq@zw\inhibitglue}\noexpand\fi}
+    \edef\jlreq@openbracket@hook@ii{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0~\unexpanded{\hskip -.5\jlreq@zw\inhibitglue}\noexpand\fi}
   }{% zenkakunibu_nibu,zenkaku_tentsuki
-    \edef\jlreq@openbracket@hook@ii{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 \unexpanded{\inhibitglue}\noexpand\fi}
+    \edef\jlreq@openbracket@hook@ii{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0~\unexpanded{\inhibitglue}\noexpand\fi}
   }
   % source special対策
   \def\jlreq@openbracket@hook@i{\ifx\jlreq@nextchar\special\expandafter\jlreq@openbracket@hook@iii\else\expandafter\jlreq@openbracket@hook@ii\fi}
@@ -957,85 +959,92 @@
   }
 \fi
 % #1{...}{#3}を...が#2のリストに対して適用．
-\newcommand*\jlreq@iterateapply[3]{%
-  \edef\jlreq@tempa{#2}%
-  \expandafter\@tfor\expandafter\@tempa\expandafter:\expandafter=\jlreq@tempa\do{%
-    \expandafter#1\expandafter{\@tempa}{#3}%
-  }%
+\ExplSyntaxOn
+\cs_set:Nn \__jlreq_iterateapply:nnn {
+  \tl_map_inline:nn {#2} {
+    #1{##1}{#3}
+  }
 }
-\def\jlreq@setpostbreakpenalty{\jlreq@iterateapply{\jlreq@setpostbreakpenalty@}}
-\def\jlreq@setprebreakpenalty{\jlreq@iterateapply{\jlreq@setprebreakpenalty@}}
-\def\jlreq@addjaxspmode{\jlreq@iterateapply{\jlreq@addjaxspmode@}}
-\def\jlreq@deljaxspmode{\jlreq@iterateapply{\jlreq@deljaxspmode@}}
+\cs_set:Nn \__jlreq_setpostbreakpenalty:nn { \__jlreq_iterateapply:nnn {\jlreq@setpostbreakpenalty@} {#1} {#2}}
+\cs_generate_variant:Nn \__jlreq_setpostbreakpenalty:nn { Vn }
+\cs_set:Nn \__jlreq_setprebreakpenalty:nn { \__jlreq_iterateapply:nnn {\jlreq@setprebreakpenalty@} {#1} {#2} }
+\cs_generate_variant:Nn \__jlreq_setprebreakpenalty:nn { Vn }
+\cs_set:Nn \__jlreq_addjaxspmode:nn {\__jlreq_iterateapply:nnn {\jlreq@addjaxspmode@} {#1} {#2} }
+\cs_generate_variant:Nn \__jlreq_addjaxspmode:nn { Vn }
+\cs_set:Nn \__jlreq_deljaxspmode:nn { \__jlreq_iterateapply:nnn{\jlreq@deljaxspmode@} {#1} {#2} }
+\cs_generate_variant:Nn \__jlreq_deljaxspmode:nn { Vn }
 
-\jlreq@aftercls@addtodeletecs{\jlreq@iterateapply}
-\jlreq@aftercls@addtodeletecs{\jlreq@setpostbreakpenalty}
+\jlreq@aftercls@addtodeletecs{\__jlreq_iterateapply:nnn}
+\jlreq@aftercls@addtodeletecs{\__jlreq_setpostbreakpenalty:nn}
 \jlreq@aftercls@addtodeletecs{\jlreq@setpostbreakpenalty@}
-\jlreq@aftercls@addtodeletecs{\jlreq@setprebreakpenalty}
+\jlreq@aftercls@addtodeletecs{\__jlreq_setprebreakpenalty:nn}
 \jlreq@aftercls@addtodeletecs{\jlreq@setprebreakpenalty@}
-\jlreq@aftercls@addtodeletecs{\jlreq@addjaxspmode}
+\jlreq@aftercls@addtodeletecs{\__jlreq_addjaxspmode:nn}
 \jlreq@aftercls@addtodeletecs{\jlreq@addjaxspmode@}
-\jlreq@aftercls@addtodeletecs{\jlreq@deljaxspmode}
+\jlreq@aftercls@addtodeletecs{\__jlreq_deljaxspmode:nn}
 \jlreq@aftercls@addtodeletecs{\jlreq@deljaxspmode@}
 
 % 行末禁則
-\jlreq@setpostbreakpenalty{\jlreq@charlist@openingbrackets}{10000}
-\jlreq@setpostbreakpenalty{\jlreq@charlist@prefixedabbreviations}{10000}
+\__jlreq_setpostbreakpenalty:Vn \jlreq@charlist@openingbrackets {10000}
+\__jlreq_setpostbreakpenalty:Vn \jlreq@charlist@prefixedabbreviations {10000}
 
 % 行頭禁則
-\jlreq@setprebreakpenalty{\jlreq@charlist@closingbrackets}{10000}
-\jlreq@setprebreakpenalty{\jlreq@charlist@hyphens}{10000}
-\jlreq@setprebreakpenalty{\jlreq@charlist@dividingpunctuationmarks}{10000}
-\jlreq@setprebreakpenalty{\jlreq@charlist@middlenodes}{10000}
-\jlreq@setprebreakpenalty{\jlreq@charlist@fullstops}{10000}
-\jlreq@setprebreakpenalty{\jlreq@charlist@commas}{10000}
-\jlreq@setprebreakpenalty{\jlreq@charlist@iterationmarks}{10000}
-\jlreq@setprebreakpenalty{\jlreq@charlist@prolongedsoundmark}{10000}
-\jlreq@setprebreakpenalty{\jlreq@charlist@smallkana}{10000}
+\__jlreq_setprebreakpenalty:Vn \jlreq@charlist@closingbrackets {10000}
+\__jlreq_setprebreakpenalty:Vn \jlreq@charlist@hyphens {10000}
+\__jlreq_setprebreakpenalty:Vn \jlreq@charlist@dividingpunctuationmarks {10000}
+\__jlreq_setprebreakpenalty:Vn \jlreq@charlist@middlenodes {10000}
+\__jlreq_setprebreakpenalty:Vn \jlreq@charlist@fullstops {10000}
+\__jlreq_setprebreakpenalty:Vn \jlreq@charlist@commas {10000}
+\__jlreq_setprebreakpenalty:Vn \jlreq@charlist@iterationmarks {10000}
+\__jlreq_setprebreakpenalty:Vn \jlreq@charlist@prolongedsoundmark {10000}
+\__jlreq_setprebreakpenalty:Vn \jlreq@charlist@smallkana {10000}
 
 % xkanjiskip
-\jlreq@addjaxspmode{\jlreq@charlist@iterationmarks}{pre}
-\jlreq@addjaxspmode{\jlreq@charlist@iterationmarks}{post}
-\jlreq@addjaxspmode{\jlreq@charlist@prolongedsoundmark}{pre}
-\jlreq@addjaxspmode{\jlreq@charlist@prolongedsoundmark}{post}
-\jlreq@addjaxspmode{\jlreq@charlist@smallkana}{pre}
-\jlreq@addjaxspmode{\jlreq@charlist@smallkana}{post}
-\jlreq@addjaxspmode{\jlreq@charlist@hiragana}{pre}
-\jlreq@addjaxspmode{\jlreq@charlist@hiragana}{post}
-\jlreq@addjaxspmode{\jlreq@charlist@katakana}{pre}
-\jlreq@addjaxspmode{\jlreq@charlist@katakana}{post}
-\jlreq@addjaxspmode{\jlreq@charlist@dividingpunctuationmarks}{post}
+\__jlreq_addjaxspmode:Vn \jlreq@charlist@iterationmarks {pre}
+\__jlreq_addjaxspmode:Vn \jlreq@charlist@iterationmarks {post}
+\__jlreq_addjaxspmode:Vn \jlreq@charlist@prolongedsoundmark {pre}
+\__jlreq_addjaxspmode:Vn \jlreq@charlist@prolongedsoundmark {post}
+\__jlreq_addjaxspmode:Vn \jlreq@charlist@smallkana {pre}
+\__jlreq_addjaxspmode:Vn \jlreq@charlist@smallkana {post}
+\__jlreq_addjaxspmode:Vn \jlreq@charlist@hiragana {pre}
+\__jlreq_addjaxspmode:Vn \jlreq@charlist@hiragana {post}
+\__jlreq_addjaxspmode:Vn \jlreq@charlist@katakana {pre}
+\__jlreq_addjaxspmode:Vn \jlreq@charlist@katakana {post}
+\__jlreq_addjaxspmode:Vn \jlreq@charlist@dividingpunctuationmarks {post}
 
 % 分割禁止（分離禁止文字は特定の並びで分割禁止だが，とりあえず一括で禁止しておく．）
-\jlreq@setprebreakpenalty{\jlreq@charlist@inseparablecharacters}{10000}
+\__jlreq_setprebreakpenalty:Vn \jlreq@charlist@inseparablecharacters {10000}
 % ￥100とか70％とか……
 
 %.. 文字範囲
 \ifx u\jlreq@engine
   % \kcatcodeの設定
-  \def\jlreq@setkcatcode#1#2{\@for\@tempa:=#1\do{\kcatcode"\@tempa=#2\relax}}
-  \jlreq@aftercls@addtodeletecs{\jlreq@setkcatcode}
+  \cs_set:Nn \__jlreq_setkcatcode:nn {
+    \clist_map_inline:nn {#1} { \kcatcode"##1=#2\relax }
+  }
+  \jlreq@aftercls@addtodeletecs{\__jlreq_setkcatcode:nn}
   % LuaTeX-jaのデフォルトのままに近い設定をする
   % 範囲1＆8
-  \jlreq@setkcatcode{80}{15} % Latin-1 Supplement，どうしよう……
-  \jlreq@setkcatcode{100,180,250,2B0,300,1E00}{15}
+  \__jlreq_setkcatcode:nn {80} {15} % Latin-1 Supplement，どうしよう……
+  \__jlreq_setkcatcode:nn {100,180,250,2B0,300,1E00} {15}
   % 範囲2
-  \jlreq@setkcatcode{370,400,1F00}{18}
+  \__jlreq_setkcatcode:nn {370,400,1F00} {18}
   % 範囲3
-  \jlreq@setkcatcode{2000,2070,20A0,20D0,2100,2150,2190,2200,2300,2400,2500,2580,25A0,2600,2700,2900,2980,2B00}{18}
+  \__jlreq_setkcatcode:nn {2000,2070,20A0,20D0,2100,2150,2190,2200,2300,2400,2500,2580,25A0,2600,2700,2900,2980,2B00} {18}
   % 範囲4
-  \jlreq@setkcatcode{500,530,590,600,700,750,780,7C0,800,840,8A0,900,980,A00,A80,B00,B80,C00,C80,D00,D80,E00,E80,F00,1000,10A0,1200,1380,13A0,1400,1680,16A0,1700,1720,1740,1760,1780,1800,18B0,1900,1950,1980,19E0,1A00,1A20,1AB0,1B00,1B80,1BC0,1C00,1C50,1C80,1CC0,1CD0,1D00,1D80,1DC0,2400,2440,27C0,27F0,2800,2A00,2C00,4DC0,A4D0,A500,A640,A6A0,A700,A720,A800,A840,A880,A8E0,A900,A930,A960,A980,A9E0,AA00,AA60,AA80,AAE0,AB00,AB30,AB70,ABC0,FB00,FB50,FE00,FE20,FE70,10000,10080,10100,10140,10190,101D0,10280,102A0,102E0,10300,10330,10350,10380,103A0,10400,10450,10480,104B0,10500,10530,10600,10800,10840,10860,10880,108E0,10900,10920,10980,109A0,10A00,10A60,10A80,10AC0,10B00,10B40,10B60,10B80,10C00,10C80,10E60,11000,11080,110D0,11100,11150,11180,111E0,11200,11280,112B0,11300,11400,11480,11580,11600,11660,11680,11700,118A0,11AC0,11C00,11C70,12000,12400,12480,13000,14400,16800,16A40,16AD0,16B00,16F00,16FE0,17000,18800,1B000,1BC00,1BCA0,1D000,1D100,1D200,1D300,1D360,1D400,1D800,1E000,1E800,1E900,1EE00,1F000,1F030,1F0A0,1F100,1F200,1F300,1F600,1F650,1F680,1F700,1F780,1F800,1F900,E000}{15}
+  \__jlreq_setkcatcode:nn {500,530,590,600,700,750,780,7C0,800,840,8A0,900,980,A00,A80,B00,B80,C00,C80,D00,D80,E00,E80,F00,1000,10A0,1200,1380,13A0,1400,1680,16A0,1700,1720,1740,1760,1780,1800,18B0,1900,1950,1980,19E0,1A00,1A20,1AB0,1B00,1B80,1BC0,1C00,1C50,1C80,1CC0,1CD0,1D00,1D80,1DC0,2400,2440,27C0,27F0,2800,2A00,2C00,4DC0,A4D0,A500,A640,A6A0,A700,A720,A800,A840,A880,A8E0,A900,A930,A960,A980,A9E0,AA00,AA60,AA80,AAE0,AB00,AB30,AB70,ABC0,FB00,FB50,FE00,FE20,FE70,10000,10080,10100,10140,10190,101D0,10280,102A0,102E0,10300,10330,10350,10380,103A0,10400,10450,10480,104B0,10500,10530,10600,10800,10840,10860,10880,108E0,10900,10920,10980,109A0,10A00,10A60,10A80,10AC0,10B00,10B40,10B60,10B80,10C00,10C80,10E60,11000,11080,110D0,11100,11150,11180,111E0,11200,11280,112B0,11300,11400,11480,11580,11600,11660,11680,11700,118A0,11AC0,11C00,11C70,12000,12400,12480,13000,14400,16800,16A40,16AD0,16B00,16F00,16FE0,17000,18800,1B000,1BC00,1BCA0,1D000,1D100,1D200,1D300,1D360,1D400,1D800,1E000,1E800,1E900,1EE00,1F000,1F030,1F0A0,1F100,1F200,1F300,1F600,1F650,1F680,1F700,1F780,1F800,1F900,E000} {15}
   % 範囲5（Variation Selectors SupplementはLuaTeX-jaではE01F0--E01EFまで範囲5，他は範囲6）
-  \jlreq@setkcatcode{D800,DB80,DC00,E0000,F0000,100000}{15}
+  \__jlreq_setkcatcode:nn {D800,DB80,DC00,E0000,F0000,100000} {15}
   % 範囲6
-  \jlreq@setkcatcode{3040,30A0,31F0}{17} % Hiragana,Katakana,Katakana Phonetic Extensions
-  \jlreq@setkcatcode{2460,3000,3200,3300,FE10,FE30,FE50,E0100}{18} % Enclosed Alphanumerics,CJK Symbols and Punctuation,Enclosed CJK Letters and Months,CJK Compatibility,Vertical Forms,CJK Compatibility Forms,Small Form Variants,Variation Selectors Supplement
-  \jlreq@setkcatcode{2E80,3190,3400,4E00,F900,20000}{16}
+  \__jlreq_setkcatcode:nn {3040,30A0,31F0} {17} % Hiragana,Katakana,Katakana Phonetic Extensions
+  \__jlreq_setkcatcode:nn {2460,3000,3200,3300,FE10,FE30,FE50,E0100} {18} % Enclosed Alphanumerics,CJK Symbols and Punctuation,Enclosed CJK Letters and Months,CJK Compatibility,Vertical Forms,CJK Compatibility Forms,Small Form Variants,Variation Selectors Supplement
+  \__jlreq_setkcatcode:nn {2E80,3190,3400,4E00,F900,20000} {16}
   % 範囲7
-  \jlreq@setkcatcode{A000,A490}{18} % Yi Syllables,Yi Radicals
-  \jlreq@setkcatcode{1100,3130,AC00,D7B0}{19} % Hangul Jamo,Hangul Compatibility Jamo,Hangul Syllables,Hangul Jamo Extended-B
-  \jlreq@setkcatcode{2F00,2FF0,3100,31A0,31C0,A830}{16}
+  \__jlreq_setkcatcode:nn {A000,A490} {18} % Yi Syllables,Yi Radicals
+  \__jlreq_setkcatcode:nn {1100,3130,AC00,D7B0} {19} % Hangul Jamo,Hangul Compatibility Jamo,Hangul Syllables,Hangul Jamo Extended-B
+  \__jlreq_setkcatcode:nn {2F00,2FF0,3100,31A0,31C0,A830} {16}
 \fi
+\ExplSyntaxOff
 
 %.. フォント
 \RequirePackage{lmodern}
@@ -1097,6 +1106,7 @@
 \fi
 
 % 和文間隔
+\ExplSyntaxOn
 \DeclareRobustCommand*\　{\futurelet\jlreq@nextchar\jlreq@zenkakuspace@ignorespaces}
 % 後続の空白を無視する処理
 \edef\jlreq@zenkakuspace@ignorespaces{%
@@ -1104,9 +1114,9 @@
 }
 \expandafter\def\expandafter\jlreq@zenkakuspace@ignorespaces@\space{\　}
 \def\jlreq@tempa{}
-\def\jlreq@do#1{\jlreq@ifendmark{#1}{}{\appto\jlreq@tempa{\ifnum\lastnodechar=`#1 1\fi}\jlreq@do}}
+\def\jlreq@do#1{\jlreq@ifendmark{#1}{}{\appto\jlreq@tempa{\ifnum\lastnodechar=`#1~1\fi}\jlreq@do}}
 \expandafter\jlreq@do\jlreq@charlist@dividingpunctuationmarks\jlreq@endmark
-\edef\@tempa{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0 }
+\edef\@tempa{\noexpand\ifnum0\expandonce{\jlreq@tempa}>0~}
 \expandafter\DeclareRobustCommand\expandafter*\expandafter\jlreq@zenkakuspace@main\expandafter{\@tempa
     \hskip 1\jlreq@zw\hbox{}%
     \jlreq@lastnodechar=`　
@@ -1136,7 +1146,7 @@
 \def\jlreq@do#1{\jlreq@ifendmark{#1}{}{\appto\jlreq@tempa{\ifx\jlreq@nextchar #11\fi}\jlreq@do}}
 \expandafter\jlreq@do\jlreq@charlist@closingbrackets\jlreq@endmark
 \edef\jlreq@dividingpunctuationmarkscommand{%
-  \noexpand\ifnum 0\expandonce{\jlreq@tempa}>0 \unexpanded{\expandafter\ignorespaces\else\expandafter\　\fi}%
+  \noexpand\ifnum 0\expandonce{\jlreq@tempa}>0~\unexpanded{\expandafter\ignorespaces\else\expandafter\　\fi}%
 }
 \def\jlreq@do#1{%
   \jlreq@ifendmark{#1}{}{
@@ -1149,6 +1159,7 @@
   }
 }
 \expandafter\jlreq@do\jlreq@charlist@dividingpunctuationmarks\jlreq@endmark
+\ExplSyntaxOff
 
 
 %.. 文字サイズ変更命令の定義
@@ -1900,24 +1911,26 @@
 }
 % スペースを読み飛ばす
 \expandafter\def\expandafter\jlreq@BlockHeading@start@afterheading@skipspaces\space{\jlreq@BlockHeading@start@afterheading}
+\ExplSyntaxOn
 \def\jlreq@BlockHeading@start@afterheading@ii{%
   \def\jlreq@do{\jlreq@BlockHeading@spaces@output}%
-  \@for\@tempa:=\jlreq@BlockHeading@allheadings\do{%
-    \expandafter\ifx\csname\@tempa\endcsname\jlreq@nextchar\def\jlreq@do{}\fi
+  \clist_map_inline:Nn \jlreq@BlockHeading@allheadings {
+    \expandafter\ifx\csname##1\endcsname\jlreq@nextchar\def\jlreq@do{}\fi
   }%
   % \jlreq@BlockHeading@HeadingSpaces@ignoretokens(@noargument)内のものは特別扱いする
-  \expandafter\@tfor\expandafter\@tempa\expandafter:\expandafter=\jlreq@BlockHeading@HeadingSpaces@ignoretokens@noargument\do{%
+  \tl_map_variable:NNn \jlreq@BlockHeading@HeadingSpaces@ignoretokens@noargument \@tempa {
     \expandafter\ifx\@tempa\jlreq@nextchar
       \def\jlreq@do{\jlreq@BlockHeading@start@afterheading@saveafter@cs@noargument}%
     \fi
   }%
-  \expandafter\@tfor\expandafter\@tempa\expandafter:\expandafter=\jlreq@BlockHeading@HeadingSpaces@ignoretokens\do{%
+  \tl_map_variable:NNn \jlreq@BlockHeading@HeadingSpaces@ignoretokens \@tempa {
     \expandafter\ifx\@tempa\jlreq@nextchar
       \def\jlreq@do{\jlreq@BlockHeading@start@afterheading@saveafter@cs}%
     \fi
   }%
   \jlreq@do
 }
+\ExplSyntaxOff
 
 % コントロールシークエンスを保存
 \long\def\jlreq@BlockHeading@start@afterheading@saveafter@cs@noargument#1{%
@@ -2539,6 +2552,7 @@
 \def\jlreq@BlockHeading@spaces@current@sequence{}
 \def\jlreq@BlockHeading@spaces@headingslist{}
 
+\ExplSyntaxOn
 \NewDocumentCommand{\SetBlockHeadingSpaces} { m } {
   \begingroup
     % 現段階の情報をクリアする
@@ -2547,8 +2561,8 @@
     \jlreq@SetBlockHeadingSpaces#1\jlreq@endmark
     \edef\jlreq@do{%
       \unexpanded{%
-        \@for\@tempa:=\jlreq@BlockHeading@spaces@headingslist\do{%
-          \expandafter\let\csname jlreq@BlockHeading@spaces@setlist@\@tempa\endcsname=\@undefined
+        \clist_map_inline:Nn \jlreq@BlockHeading@spaces@headingslist {
+          \expandafter\let\csname jlreq@BlockHeading@spaces@setlist@####1\endcsname=\@undefined
         }%
       }%
       \unexpanded{\def\jlreq@BlockHeading@spaces@headingslist}{\expandonce{\jlreq@tempa}}%
@@ -2557,6 +2571,7 @@
   \expandafter\endgroup
   \jlreq@do
 }
+\ExplSyntaxOff
 \def\jlreq@SetBlockHeadingSpaces{% カンマを無視する処理
   \@ifnextchar,{\expandafter\jlreq@SetBlockHeadingSpaces@i\@gobble}{\jlreq@SetBlockHeadingSpaces@i}%
 }
@@ -3135,13 +3150,15 @@
   \jlreq@do
 }
 
+\ExplSyntaxOn
 \def\jlreq@heading@execmacro@toallheadings@#1#2{
-  \@for\jlreq@tempa:=#2\do{%
-    \@ifundefined{\jlreq@tempa}{}{%
-      \eappto\jlreq@do{\noexpand#1{\expandonce{\jlreq@tempa}}}%
+  \clist_map_inline:nn {#2} {
+    \@ifundefined{##1}{}{%
+      \eappto\jlreq@do{\noexpand#1{\expandonce{##1}}}%
     }%
   }%
 }
+\ExplSyntaxOff
 \def\jlreq@clearheadingmarks#1{%
   \@ifundefined{#1mark}{}{%
     \expandafter\let\csname#1mark\endcsname=\@gobble
@@ -3374,7 +3391,7 @@
       \def\jlreq@footnote@delayfootnote@page{%
         \jlreq@setcurrentpage
         \jlreq@resultcnt=\numexpr\jlreq@currentpage\relax
-        \ifnum\jlreq@resultcnt=\value{page}\if@firstcolumn\else\jlreq@resultcnt=-1 \fi\fi
+        \ifnum\jlreq@resultcnt=\value{page}\if@firstcolumn\else\jlreq@resultcnt=-1~\fi\fi
       }
     \fi
     \long\def\jlreq@footnote@delayfootnote@delay#1#2{%
@@ -3424,7 +3441,7 @@
         \def\jlreq@result{}#2[#4]\jlreq@result
         \def\jlreq@result{}#3[#4]{#5}%
         \jlreq@restore@jlreq@footnotes}%
-        \jlreq@if{\ifnum\jlreq@resultcnt=-1 \fi}{\noexpand\jlreq@result}{\unexpanded{%
+        \int_compare:nTF { \jlreq@resultcnt=-1 }{\noexpand\jlreq@result}{\unexpanded{%
           \xappto\jlreq@footnote@delayfootnoteslist{%
             \noexpand\jlreq@footnote@delayfootnote{\the\jlreq@resultcnt}{%
               \noexpand\jlreq@restore@original@footnotes
@@ -3759,6 +3776,7 @@
 \DeclareRobustCommand*{\inlinenote}{\jlreq@inlinenote@{\inlinenote}}
 \DeclareRobustCommand*{\warichu}{\jlreq@inlinenote@{\warichu}}
 
+\ExplSyntaxOn
 \newcommand*{\jlreq@inlinenote@auto}[1]{%
   % 割注初め括弧の前の場所を保存
   \jlreq@savepos@for@rest@linewidth
@@ -3828,7 +3846,7 @@
     \addtolength{\jlreq@tempdimb}{-\wd\@tempboxa}%
     \setbox\@tempboxa=\box\jlreq@resultbox
     \@whilenum\@tempcnta<\jlreq@inlinenote@lines\do{%
-      \ifnum\@tempcnta>0 \jlreq@inlinenote@autolinebreak\fi
+      \int_compare:nT { \@tempcnta > 0 } { \jlreq@inlinenote@autolinebreak }
       % \jlreq@tempdimaに今の行の長さを入れる
       \ifnum\@tempcnta<\numexpr\jlreq@inlinenote@lines - 2\relax
         \ifnum\@tempcnta=0\jlreq@tempdima=\jlreq@tempdimb
@@ -3862,6 +3880,7 @@
   \fi
   \jlreq@inlinenote@endnote
 }
+\ExplSyntaxOff
 
 \newcommand*{\jlreq@inlinenote@noauto}[1]{%
   \setbox\jlreq@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\inhibitglue\jlreq@open@bracket@before@space（}%
@@ -4041,15 +4060,19 @@
 }
 
 % レベル#1より低いレベルの見出しの**markを\markboth{}{}にする
+\ExplSyntaxOn
 \def\jlreq@pagestyle@setclearmark#1{%
-  \@for\@tempa:=\jlreq@heading@allheadings\do{%
-    \@ifundefined{\@tempa}{}{%
-      \@ifundefined{jlreq@heading@level@\@tempa}{}{%
-        \ifnum\csname jlreq@heading@level@\@tempa\endcsname<#1\relax\expandafter\def\csname\@tempa mark\endcsname##1{\markboth{}{}}\fi
+  \clist_map_inline:Nn \jlreq@heading@allheadings {
+    \tracingmacros=1
+    \@ifundefined{##1}{}{%
+      \@ifundefined{jlreq@heading@level@##1}{}{%
+        \ifnum\csname jlreq@heading@level@##1\endcsname<#1\relax\expandafter\def\csname##1 mark\endcsname####1{\markboth{}{}}\fi
       }%
     }%
+    \tracingmacros=0
   }%
 }
+\ExplSyntaxOff
 
 % #1のleftとrightを入れ替えて#1に代入
 \def\jlreq@reverse@leftright#1{%
@@ -4131,9 +4154,10 @@
 % #1：*ならばextramarkを使う
 % #2: 見出し命令名，#3: mark_format
 % #4: {{mark_formatからさらに調べるやつ (odd|even)}{マークの何番目か．extraでない場合は0}{l or r(leftかrightか)}}の並び
+\ExplSyntaxOn
 \def\jlreq@pagestyle@make@headingmark#1#2#3#4{%
   \begingroup
-    \@for\jlreq@i:=0,1,2\do{%
+    \clist_map_variable:nNn {0,1,2} \jlreq@i {
       \expandafter\def\csname jlreq@leftmark@\jlreq@i\endcsname{}%
       \expandafter\def\csname jlreq@rightmark@\jlreq@i\endcsname{}%
     }%
@@ -4147,7 +4171,7 @@
     \else
       \eappto\jlreq@do{\jlreq@ifempty{#1}{\noexpand\markboth}{\noexpand\jlreq@markboth}{\csexpandonce{jlreq@leftmark@0}}{\csexpandonce{jlreq@rightmark@0}}}%
     \fi
-    \@for\jlreq@i:=1,2\do{%
+    \clist_map_variable:nNn {1,2} \jlreq@i {
       \expandafter\ifx\csname jlreq@leftmark@\jlreq@i\endcsname\@empty
         \expandafter\ifx\csname jlreq@rightmark@\jlreq@i\endcsname\@empty\else
           \eappto\jlreq@do{\noexpand\jlreq@setextrarightmark{\jlreq@i}{\csexpandonce{jlreq@rightmark@\jlreq@i}}}%
@@ -4175,7 +4199,6 @@
   \jlreq@ifendmark{#3}{}{\jlreq@pagestyle@make@headingmark@@{#1}{#2}#3}%
 }
 
-\ExplSyntaxOn
 \def\jlreq@pagestyle@make@headingmark@@#1#2#3#4#5{%
   % \jlreq@tempbに\***markの定義を入れる
   \edef\jlreq@tempb{%
@@ -4271,8 +4294,9 @@
     \ifjlreq@tempa\else\cspreto{#1}{\jlreq@PageStyle@firsttrue}\fi
   }%
 }
+\ExplSyntaxOn
 \def\jlreq@pagestyle@make@runninghead@#1#2#3#4#5{%
-  \jlreq@if{\ifnum\numexpr\jlreq@ifendmark{#5}{1}{0}*\ifjlreq@tempa 1\else 0\fi\relax=1 \fi}{%
+  \jlreq@if{\ifnum\numexpr\jlreq@ifendmark{#5}{1}{0}*\ifjlreq@tempa 1\else 0\fi\relax=1~\fi}{%
     % 項目が一つしか無い
     \jlreq@ifempty{#2}{\csappto}{\cspreto}{#1}{#4}%
   }{%
@@ -4291,6 +4315,7 @@
     \jlreq@ifendmark{#5}{}{\jlreq@pagestyle@make@runninghead@{#1}{#2}{#3}{#5}}%
   }%
 }
+\ExplSyntaxOn
 
 % #1= cs，#2 = フォーマットの入ったcs，#3 = デフォルトフォーマットの入ったcs
 \def\jlreq@pagestyle@applyformat#1#2#3{%
@@ -4803,6 +4828,7 @@
 % #2に<設定1>が，#2@<環境名>に<設定2>が入る．#1には#2@<環境名>が定義されている<環境名>をカンマ区切りで入れる．
 % \jlreqsetup{X,env=B}の後に\jlreqsetup{Y}を指定すると，env環境に対する設定はYになるようにする．
 % ただし\jlreqsetup{env=C,Y}とした場合はenv環境に対してはC．
+\ExplSyntaxOn
 \long\def\jlreq@jlreqsetup@withenv#1#2#3{%
   \@ifundefined{#1}{\expandafter\def\csname #1\endcsname{}}{}%
   \begingroup
@@ -4813,7 +4839,7 @@
           \noexpand\edef\expandonce{\csname #2\endcsname}{\unexpanded{\unexpanded{##1}}}
           \noexpand\def\expandonce{\csname #1\endcsname}{}%
         }%
-        \expandafter\@for\expandafter\jlreq@tempa\expandafter:\expandafter=\csname #1\endcsname\do{%
+        \clist_map_variable:cNn {#1} \jlreq@tempa {
           \epreto\jlreq@do{\noexpand\let\expandonce{\csname #2@\jlreq@tempa\endcsname}\noexpand\@undefined}%
         }%
       }{%
@@ -4828,6 +4854,7 @@
   \expandafter\endgroup
   \jlreq@do
 }
+\ExplSyntaxOff
 
 % #1@#2が定義されていれば\#1@#2の中身に，そうでなければ\#1の中身に展開される．
 % 展開は\unexpandedで抑制される．
@@ -5858,16 +5885,18 @@
 }
 \def\jlreq@tatechuyoko@i#1{\jlreq@iftdir{\jlreq@tatechuyoko@ii{#1}}{#1}}
 
+\ExplSyntaxOn
 \edef\@tempa{%
   \unexpanded{\ifvmode\leavevmode\fi}%
   \ifx l\jlreq@engine\unexpanded{%
     \jlreq@lastnodechar=\lastnodechar\relax
-    \ifnum\jlreq@lastnodechar>-1 \inhibitglue\fi
+    \int_compare:nT { \jlreq@lastnodechar>-1 } { \inhibitglue }
   }\else\unexpanded{%
-    \ifnum\lastnodechar>-1 \inhibitglue\fi
+    \int_compare:nT { \jlreq@lastnodechar>-1 } { \inhibitglue }
     \jlreq@lastnodechar=\lastnodechar\relax
   }\fi
 }
+\ExplSyntaxOff
 
 \expandafter\def\expandafter\jlreq@tatechuyoko@ii\expandafter#\expandafter1\expandafter{%
   \@tempa
@@ -5988,26 +6017,32 @@
 \ExplSyntaxOff
 
 % 日にち
+\ExplSyntaxOn
 \newif\if西暦
 \def\西暦{\西暦true}
 \def\和暦{\西暦false}
 % #1年#2月#3日 #4は\numberとか\kansujiとか
 \def\jlreq@wareki#1#2#3#4{%
-  \jlreq@warekiyear{#1}{#2}{#3}{#4}%
+  \__jlreq_warekiyear:nnnn{#1}{#2}{#3}{#4}%
   #4#2月#4#3日%
 }
-\def\jlreq@warekiyear#1#2#3#4{%
+\cs_set:Nn \__jlreq_warekiyear:nnnn {
   % 昭和：1989年1月7日まで
-  \ifnum0\ifnum#1<1989 1\fi\ifnum#1=1989 \ifnum#2=1 \ifnum#3<8 1\fi\fi\fi>0
-    昭和\jlreq@warekiyear@{#1}{1926}{#4}%
-  % 平成：2019年4月末日まで
-  \else\ifnum0\ifnum#1<2019 1\fi\ifnum#1=2019 \ifnum#2<5 1\fi\fi>0
-    平成\jlreq@warekiyear@{#1}{1989}{#4}%
-  \else
-    令和\jlreq@warekiyear@{#1}{2019}{#4}%
-  \fi\fi
+  \bool_if:nTF { \int_compare_p:n { #1 < 1989 } || 
+    ( \int_compare_p:n { #1 == 1989 } && \int_compare_p:n { #2 == 1 } && \int_compare_p:n { #3 < 8 } ) }{
+    昭和\__jlreq_warekiyear_aux:nnn{#1}{1926}{#4}%
+  }{
+    % 平成：2019年4月末日まで
+    \bool_if:nTF { \int_compare_p:n { #1 < 2019 } || ( \int_compare_p:n { #1 == 2019 } && \int_compare_p:n { #2 < 5 } ) } {
+      平成\__jlreq_warekiyear_aux:nnn{#1}{1989}{#4}%
+    }{
+      令和\__jlreq_warekiyear_aux:nnn{#1}{2019}{#4}%
+    }
+  }
 }
-\def\jlreq@warekiyear@#1#2#3{\ifnum#1=#2 元年\else #3\numexpr#1-#2+1\relax 年\fi}
+\cs_set:Nn \__jlreq_warekiyear_aux:nnn {
+  \int_compare:nTF { #1 = #2 } {元年} { \int_eval:n { #1 - #2 + 1 } 年 }
+}
 \def\today{%
   \if西暦
     \jlreq@iftdir{%
@@ -6027,7 +6062,7 @@
     }%
   \fi
 }
-\ExplSyntaxOn
+
 \keys_define:nn { jlreqsetup } {
   year_style .choice:,
   year_style / seireki .code:n = {\西暦true},

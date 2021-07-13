@@ -9,7 +9,6 @@
 \RequirePackage{l3keys2e,etoolbox}
 \RequirePackage{jlreq-helpers}
 
-
 \ExplSyntaxOn
 \tl_new:N \l_jlreq_tmpa_tl
 \cs_new:Nn \l_jlreq_do: {}
@@ -23,9 +22,8 @@
 \box_new:N \l_jlreq_tmpa_box
 \box_new:N \l_jlreq_tmpb_box
 \box_new:N \l_jlreq_tmpc_box
-\ExplSyntaxOff
 
-\newcommand*{\jlreq@undeferr}[1]{\ClassError{jlreq}{Trying to delete \string#1 even though it is not defined, may be a bug}{\@ehc}}
+\newcommand*{\jlreq@undeferr}[1]{\ClassError{jlreq}{Trying~to~delete~\string#1~even~though~it~is~not~defined,~may~be~a~bug}{\@ehc}}
 % クラスファイル内でしか使わないマクロをクラスファイル終了時に未定義にする
 \newcommand*{\jlreq@aftercls@addtodeletecs}[1]{%
   \appto\jlreq@aftercls@deletecslist{\jlreq@helper@undefcs{#1}{\jlreq@undeferr}}%
@@ -48,10 +46,10 @@
 
 \def\jlreq@saveoriginalcs#1{%
   \@ifundefined{#1}{
-    \ClassError{jlreq}{Trying to save #1 but it's not defined, may be a bug}{\@ehc}%
+    \ClassError{jlreq}{Trying~to~save~#1~but~it's~not~defined,~may~be~a~bug}{\@ehc}%
   }{}
   \@ifundefined{jlreq@original@#1}{}{
-    \ClassError{jlreq}{Trying to save #1 twice, may be a bug}{\@ehc}%
+    \ClassError{jlreq}{Trying~to~save~#1~twice,~may~be~a~bug}{\@ehc}%
   }
   \begingroup
     \edef\jlreq@do{\noexpand\let\expandonce{\csname jlreq@original@#1\endcsname}=\expandonce{\csname #1\endcsname}}
@@ -73,7 +71,6 @@
 % ものは\jlreq@option@<key>に格納する．
 % _とかは@に変換する．
 % エンジン類
-\ExplSyntaxOn
 \keys_define:nn { jlreq } { uplatex .code:n = { \let\jlreq@engine=u }, uplatex .value_forbidden:n = true }
 \keys_define:nn { jlreq } { platex .code:n = { \let\jlreq@engine=p }, platex .value_forbidden:n = true }
 \keys_define:nn { jlreq } { lualatex .code:n = { \let\jlreq@engine=l }, lualatex .value_forbidden:n = true }
@@ -123,7 +120,7 @@
           \setlength{\paperwidth}{\dimexpr\jlreq@resulta\relax}%
           \setlength{\paperheight}{\dimexpr\jlreq@resultb\relax}%
         \else
-          \ClassError{jlreq}{The paper #1 is unknown}{\@ehc}%
+          \ClassError{jlreq}{The~paper~#1~is~unknown}{\@ehc}%
         \fi
       }]%
     }%
@@ -296,13 +293,7 @@
   headfoot_verticalposition = {},headfoot_sidemargin={0pt},
   open_bracket_pos=zenkaku_tentsuki,
   onecolumn,final}
-% \@removeelementを一旦置き換えてから\ProcessOptionsXを実行する
-%\let\jlreq@temporary@original@@removeelement=\@removeelement
-%\let\@removeelement=\jlreq@helper@removeelement
-%\ProcessOptionsX\relax
 \ProcessKeysOptions { jlreq }
-%\let\@removeelement=\jlreq@temporary@original@@removeelement
-%\let\jlreq@temporary@original@@removeelement=\@undefined
 
 \legacy_if:nF { jlreq@option@titlepage } {
   \str_if_eq:VnTF \jlreq@article@type { article } { \@titlepagefalse } { \@titlepagetrue }
@@ -347,7 +338,6 @@
   }
   \jlreq@do
 }
-\ExplSyntaxOff
 % \jlreqsetupの最後に必ず実行される処理を入れる．
 \newcommand\jlreq@jlreqsetup@addtofinally[1]{\eappto\jlreq@jlreqsetup@finally{\unexpanded{#1}}}
 \jlreq@aftercls@addtodeletecs{\jlreq@jlreqsetup@add}
@@ -360,7 +350,7 @@
 \ifx\jlreq@engine\@undefined
   \jlreq@helper@guessengine
   \let\jlreq@engine=\jlreq@result
-  \message{jlreq guessed engine: 
+  \message{jlreq~guessed~engine:~
     \ifx l\jlreq@engine lualatex\fi
     \ifx p\jlreq@engine platex\fi
     \ifx u\jlreq@engine uplatex\fi
@@ -368,7 +358,6 @@
 \fi
 
 %.. JFMとluatexjaのロード
-\ExplSyntaxOn
 \ifx l\jlreq@engine
   \def\ltj@stdyokojfm{jlreq}
   \def\ltj@stdtatejfm{jlreqv}
@@ -400,7 +389,6 @@
   \jlreq@aftercls@addtodeletecs{\jlreq@jfmname}
   \jlreq@aftercls@addtodeletecs{\jlreq@jfmnameg}
 \fi
-\ExplSyntaxOff
 
 % (u)pLaTeXの場合ここで初めて\epTeXinputencodingが発行されるので，
 % これ以前には和文は使えない．
@@ -449,14 +437,13 @@
       \ifcat （\noexpand #11\fi
       \ifcat A\noexpand #11\fi
       \ifcat 1\noexpand #11\fi
-    >0
+    >0~
   \fi}%
 }
 
 
 % 組方向を判定
 % \jlreq@if(y|t)(dir|box)を定義する．
-\ExplSyntaxOn
 \jlreq@if{\ifx l\jlreq@engine\fi}{
   \def\jlreq@ifydir { \int_compare:nTF { \ltjgetparameter{direction} == 4 } }
   \def\jlreq@iftdir { \int_compare:nTF { (\ltjgetparameter{direction}-(\ltjgetparameter{direction}/8)*8) == 3 } }
@@ -480,7 +467,6 @@
       { \bool_lazy_and_p:nn { ! \str_if_eq_p:ee {#1} { odd  } } { ! \int_if_odd_p:n {#1} } }
   ) }
 }
-\ExplSyntaxOff
 
 \ifx l\jlreq@engine
   \newcommand*{\jlreq@getpostbreakpenalty}[1]{\ltjgetparameter{postbreakpenalty}{#1}}
@@ -587,19 +573,19 @@
       \edef\jlreq@do{\noexpand\jlreq@resultskip=\the\dimexpr\wd\jlreq@tempboxb - \wd\jlreq@tempboxa\relax\noexpand\relax}%
       \jlreq@do
       \directlua{
-        local width = 0
-        local stretch = 0
-        local shrink = 0
-        local n = tex.box["jlreq@tempboxb"].head
-        while n do
+        local~width = 0~
+        local~stretch = 0~
+        local~shrink = 0~
+        local~n = tex.box["jlreq@tempboxb"].head~
+        while~n~do~
           % すべてのglueの和を計算する．
-          if n.id == node.id("glue") then
-            width = width + n.width
-            stretch = stretch + n.stretch
-            shrink = shrink + n.shrink
-          end
-          n = n.next
-        end
+          if~n.id == node.id("glue")~then~
+            width = width + n.width~
+            stretch = stretch + n.stretch~
+            shrink = shrink + n.shrink~
+          end~
+          n = n.next~
+        end~
         tex.setglue("jlreq@tempskipa",width,stretch,shrink)
       }%
       % TeXで計測した物と一致していなければTeXでの方を信じる
@@ -651,7 +637,7 @@
 
 \ifx l\jlreq@engine
   \newcommand*{\jlreq@divide}[2]{%
-    \jlreq@resultdimen=\directlua{tex.print(tostring(\strip@pt\dimexpr #1\relax/\strip@pt\dimexpr #2\relax) .. "pt ")}%
+    \jlreq@resultdimen=\directlua{tex.print(tostring(\strip@pt\dimexpr #1\relax/\strip@pt\dimexpr #2\relax) .. "pt~")}%
   }
 \else
   \let\jlreq@divide=\jlreq@helper@divide
@@ -662,9 +648,9 @@
 \def\@ptsize{0}
 %.. (x)kanjiskip
 \ifjlreq@narrow@kanjiskip
-  \providecommand*{\jlreqkanjiskip}{0pt plus .1\jlreq@zw minus .01\jlreq@zw}
+  \providecommand*{\jlreqkanjiskip}{0pt~plus~.1\jlreq@zw~minus~.01\jlreq@zw}
 \else
-  \providecommand*{\jlreqkanjiskip}{0pt plus 0.25\jlreq@zw minus 0pt}
+  \providecommand*{\jlreqkanjiskip}{0pt~plus~0.25\jlreq@zw~minus~0pt}
 \fi
 \providecommand*{\jlreqxkanjiskip}{0.25\jlreq@zw plus 0.25\jlreq@zw minus 0.125\jlreq@zw}
 \jlreq@if{\ifx l\jlreq@engine\fi}{
@@ -686,10 +672,10 @@
   % Q,zw,zhが正しく扱われるようになる．\dimexprつきに展開される．
   \def\jlreq@expand@optionfontsize#1{%
     \dimexpr\directlua{
-      local act = string.char(92)
-      local s = [[#1]]
-      s = s:gsub("[QH]",act .. "dimexpr 0.25mm" .. act .. "relax")
-      tex.print(s)
+      local~act = string.char(92)~
+      local~s = [[#1]]~
+      s = s:gsub("[QH]",act .. "dimexpr 0.25mm" .. act .. "relax")~
+      tex.print(s)~
     }\relax
   }%
 \else
@@ -716,13 +702,11 @@
 
 
 % 行頭の括弧は \jlreq@open@bracket@before@space \inhibitglue 「みたいにする．
-\ExplSyntaxOn
 \str_if_eq:VnTF \jlreq@open@bracket@pos { zenkakunibu_nibu } {
   \def\jlreq@open@bracket@before@space{\hskip\glueexpr-.5\jlreq@zw\relax}
 }{
   \def\jlreq@open@bracket@before@space{}
 }
-\ExplSyntaxOff
 
 \ifx p\jlreq@engine
   \def\jlreq@yokokanjiencoding{JY1}
@@ -741,8 +725,7 @@
 \jlreq@aftercls@addtodeletecs{\jlreq@jafontscale}
 \ifx l\jlreq@engine
   \jlreq@saveoriginalcs{DeclareFontShape}
-  \ExplSyntaxOn
-  \def\DeclareFontShape#1#2#3#4#5#6{
+    \def\DeclareFontShape#1#2#3#4#5#6{
     \group_begin:
       \bool_if:nT { \str_if_eq_p:nn {#1} {JY3} || \str_if_eq_p:nn {#1} {JT3} } {
         \tl_set:Nx \l_jlreq_tmpa_tl {#5}
@@ -765,11 +748,10 @@
     \exp_after:wN \group_end: \l_jlreq_do:
     \jlreq@useoriginalcs{DeclareFontShape} {#1} {#2} {#3} {#4} {#5} {#6}
   }
-  \ExplSyntaxOff
-  \DeclareFontShape{JY3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont:jfm=jlreq;script=latn;-kern}{}
-  \DeclareFontShape{JY3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont:jfm=jlreq;script=latn;-kern}{}
-  \DeclareFontShape{JT3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont:jfm=jlreqv;script=latn;-kern}{}
-  \DeclareFontShape{JT3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont:jfm=jlreqv;script=latn;-kern}{}
+    \DeclareFontShape{JY3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont :jfm=jlreq;script=latn;-kern}{}
+  \DeclareFontShape{JY3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont :jfm=jlreq;script=latn;-kern}{}
+  \DeclareFontShape{JT3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont :jfm=jlreqv;script=latn;-kern}{}
+  \DeclareFontShape{JT3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont :jfm=jlreqv;script=latn;-kern}{}
 \else
   \DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmname}{}
   \DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmnameg}{}
@@ -781,7 +763,6 @@
   \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{n-jidori}{<->s*[\jlreq@jafontscale]\jlreq@tempa jlreq-v-jidori}{}
   \DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{n-jidori}{<->s*[\jlreq@jafontscale]\jlreq@tempa jlreqg-v-jidori}{}
 \fi
-\ExplSyntaxOn
 \clist_set:NV  \l_jlreq_tmpa_clist \jlreq@yokokanjiencoding
 \clist_push:NV \l_jlreq_tmpa_clist \jlreq@tatekanjiencoding
 \clist_map_inline:Nn \l_jlreq_tmpa_clist {% #1 = encoding
@@ -801,7 +782,6 @@
     }
   }
 }
-\ExplSyntaxOff
 
 %.. 文字クラスのリスト
 % 開き括弧（文字クラス1）
@@ -835,7 +815,6 @@
 
 %.. 行頭括弧調整
 \jlreq@saveoriginalcs{item}
-\ExplSyntaxOn
 \ifx l\jlreq@engine
   % \itemの直後は折り返し行頭と同じにする．
   \cs_set:Nn \__jlreq_hook_everypar: {}
@@ -872,7 +851,6 @@
     \jlreq@useoriginalcs{item}%
   }
 \fi
-\ExplSyntaxOff
 
 %.. 禁則処理
 \ifx l\jlreq@engine
@@ -959,7 +937,6 @@
   }
 \fi
 % #1{...}{#3}を...が#2のリストに対して適用．
-\ExplSyntaxOn
 \cs_set:Nn \__jlreq_iterateapply:nnn {
   \tl_map_inline:nn {#2} {
     #1{##1}{#3}
@@ -1044,7 +1021,6 @@
   \__jlreq_setkcatcode:nn {1100,3130,AC00,D7B0} {19} % Hangul Jamo,Hangul Compatibility Jamo,Hangul Syllables,Hangul Jamo Extended-B
   \__jlreq_setkcatcode:nn {2F00,2FF0,3100,31A0,31C0,A830} {16}
 \fi
-\ExplSyntaxOff
 
 %.. フォント
 \RequirePackage{lmodern}
@@ -1106,7 +1082,6 @@
 \fi
 
 % 和文間隔
-\ExplSyntaxOn
 \DeclareRobustCommand*\　{\futurelet\jlreq@nextchar\jlreq@zenkakuspace@ignorespaces}
 % 後続の空白を無視する処理
 \edef\jlreq@zenkakuspace@ignorespaces{%
@@ -1134,7 +1109,7 @@
 % \jaspace
 \DeclareRobustCommand*{\jaspace}[1]{%
   \ifcsname jlreq@jaspace@#1\endcsname\csname jlreq@jaspace@#1\endcsname
-  \else\ClassError{jlreq}{unknown jaspace: #1}{\@ehc}\fi
+  \else\ClassError{jlreq}{unknown~jaspace:~#1}{\@ehc}\fi
 }
 \def\jlreq@jaspace@zenkaku{\hskip\glueexpr 1\jlreq@zw\relax}
 \def\jlreq@jaspace@nibu{\hskip\glueexpr .5\jlreq@zw\relax}
@@ -1159,7 +1134,6 @@
   }
 }
 \expandafter\jlreq@do\jlreq@charlist@dividingpunctuationmarks\jlreq@endmark
-\ExplSyntaxOff
 
 
 %.. 文字サイズ変更命令の定義
@@ -1170,30 +1144,28 @@
 \ifx l\jlreq@engine
   \setlength{\jlreq@baselineskip}{%
     \dimexpr\directlua{
-      local act = string.char(92)
-      local s = [[\jlreq@option@baselineskip]]
-      s = s:gsub("[QH]",act .. "dimexpr 0.25mm" .. act .. "relax"):gsub("zh",act .. "zh"):gsub("zw",act .. "zw")
-      tex.print(s)
+      local~act = string.char(92)~
+      local~s = [[\jlreq@option@baselineskip]]~
+      s = s:gsub("[QH]",act .. "dimexpr 0.25mm" .. act .. "relax"):gsub("zh",act .. "zh"):gsub("zw",act .. "zw")~
+      tex.print(s)~
     }\relax
   }%
 \else
   \setlength{\jlreq@baselineskip}{\dimexpr\jlreq@option@baselineskip\relax}
 \fi
 \ifdim\jlreq@fontsize>\jlreq@baselineskip
-  \ClassError{jlreq}{The baselineskip is less than fontsize}{\@ehc}%
+  \ClassError{jlreq}{The~baselineskip~is~less~than~fontsize}{\@ehc}%
 \fi
-\ExplSyntaxOn
 \bool_if:nT { \dim_compare_p:n { \jlreq@baselineskip < 1.5\zw } || \dim_compare_p:n { \jlreq@baselineskip > 2\zw } } {
   \jlreq@note { 行間は二分以上全角以下が望ましい (2.4.2.d~注3)．}
 }
-\ExplSyntaxOff
 
 \emergencystretch 3\jlreq@gol
 \setlength{\parindent}{1\zw}
 \def\jlreq@setfontsizehook{}
 \jlreq@saveoriginalcs{set@fontsize}
 \apptocmd{\set@fontsize}{\expandafter\def\expandafter\size@update\expandafter{\size@update\jlreq@setfontsizehook}}{}{}
-\appto\jlreq@setfontsizehook{\ifdim\parindent>0pt \setlength{\parindent}{1\jlreq@zw}\fi}
+\appto\jlreq@setfontsizehook{ \dim_compare:nT { \parindent>0pt } { \setlength{\parindent}{1\jlreq@zw} } }
 \ifx l\jlreq@engine
   \@tempskipa=\ltjgetparameter{kanjiskip}
   \ifdim\@tempskipa=\maxdimen\else
@@ -1289,7 +1261,7 @@
 \setlength{\parskip}{0pt}
 % https://github.com/texjporg/jsclasses/issues/14
 \renewcommand*{\flushbottom}{%
-  \def\@textbottom{\vskip 0pt plus 0.1pt}%
+  \def\@textbottom{\vskip 0pt~plus~0.1pt}%
   \let\@texttop\relax
 }
 \@lowpenalty   51
@@ -1328,10 +1300,10 @@
   \def\jlreq@expand@speciallength#1{%
     % zhやzwを\zhや\zwにする．
     \directlua{
-      local act = string.char(92)
-      local s = [[#1]]
-      s = s:gsub("zw",act .. "zw"):gsub("zh",act .. "zh")
-      tex.print(s)
+      local~act = string.char(92)~
+      local~s = [[#1]]~
+      s = s:gsub("zw",act .. "zw"):gsub("zh",act .. "zh")~
+      tex.print(s)~
     }%
   }
 \else
@@ -1535,7 +1507,7 @@
   \jlreq@setsidemargin@by@gutter{\jlreq@speciallength{\jlreq@option@gutter}}
   \ifx\jlreq@option@fore@edge\@empty\else
     \ifjlreq@determine@kihonhanmen@warning@first
-      \ClassWarningNoLine{jlreq}{fore-edge is ignored}
+      \ClassWarningNoLine{jlreq}{fore-edge~is~ignored}
     \fi
   \fi
 \fi
@@ -1594,12 +1566,12 @@
     \if@tate
       \jlreq@settopmarginbyfoot{\jlreq@speciallength{\jlreq@option@foot@space}}
       \ifx\jlreq@option@line@length\@empty\else
-        \ClassWarningNoLine{jlreq}{head_space is ignored}
+        \ClassWarningNoLine{jlreq}{head_space~is~ignored}
       \fi
     \else
       \jlreq@settopmarginbyhead{\jlreq@speciallength{\jlreq@option@head@space}}
       \ifx\jlreq@option@number@of@lines\@empty\else
-        \ClassWarningNoLine{jlreq}{foot_space is ignored}
+        \ClassWarningNoLine{jlreq}{foot_space~is~ignored}
       \fi
     \fi
   \fi
@@ -1706,7 +1678,6 @@
 
 %.. 中/半扉見出し
 % addcontentslineに渡すやつ：番号出すのと出さないの
-\ExplSyntaxOn
 \NewDocumentCommand{\DeclareTobiraHeading}{ m m +m } {
   \__jlreq_declare_tobira_heading:nnn{#1}{#2}{#3}
 }
@@ -1802,7 +1773,6 @@
   \expandafter\endgroup
   \jlreq@do
 }
-\ExplSyntaxOff
 
 \NewDocumentCommand{\NewTobiraHeading}{ m m +m }{%
   \expandafter\@ifdefinable\csname #1\endcsname{\DeclareTobiraHeading{#1}{#2}{#3}}%
@@ -1911,7 +1881,6 @@
 }
 % スペースを読み飛ばす
 \expandafter\def\expandafter\jlreq@BlockHeading@start@afterheading@skipspaces\space{\jlreq@BlockHeading@start@afterheading}
-\ExplSyntaxOn
 \def\jlreq@BlockHeading@start@afterheading@ii{%
   \def\jlreq@do{\jlreq@BlockHeading@spaces@output}%
   \clist_map_inline:Nn \jlreq@BlockHeading@allheadings {
@@ -1930,7 +1899,6 @@
   }%
   \jlreq@do
 }
-\ExplSyntaxOff
 
 % コントロールシークエンスを保存
 \long\def\jlreq@BlockHeading@start@afterheading@saveafter@cs@noargument#1{%
@@ -2067,7 +2035,6 @@
   \jlreq@do
 }
 
-\ExplSyntaxOn
 \def\jlreq@BlockHeading@start@removecolumn#1:{#1}
 
 % 空き指定を解釈する．a:10pt -> \jlreq@resulta=a，\jlreq@resultb=10pt
@@ -2164,25 +2131,24 @@
     \dp\jlreq@tempboxa=\dimexpr\dp\jlreq@tempboxa + \ht\jlreq@tempboxa - \jlreq@tempdimb\relax
     \ht\jlreq@tempboxa=\jlreq@tempdimb
     \box\jlreq@tempboxa
-    \ifx r\jlreq@ushiroakitype\prevdepth=-1000pt \else\prevdepth=\jlreq@tempdimc\fi
+    \ifx r\jlreq@ushiroakitype\prevdepth=-1000pt\relax\else\prevdepth=\jlreq@tempdimc\fi
     % \jlreq@tempdimb, \jlreq@tempdimcの利用ここまで
   \else
     \dp\jlreq@tempboxa=\dimexpr\dp\jlreq@tempboxa + \ht\jlreq@tempboxa\relax
     \ht\jlreq@tempboxa=0pt
     \box\jlreq@tempboxa
-    \ifx r\jlreq@ushiroakitype\prevdepth=-1000pt \else\prevdepth=0pt \fi
+    \ifx r\jlreq@ushiroakitype\prevdepth=-1000pt\relax\else\prevdepth=0pt\relax\fi
   \fi
   \nobreak
   \jlreq@ifgluezero\jlreq@tempskipb{}{\vskip\jlreq@tempskipb}%
   \edef\jlreq@do{%
-    \ifdim\parskip=0pt \else
+    \dim_compare:nF { \parskip=0pt } {
       \noexpand\AddToHookNext{para/before}{\noexpand\parskip=\the\parskip\noexpand\relax}%
       \noexpand\parskip=0pt
-    \fi
+    }
   }%
   \expandafter}\jlreq@do
 }
-\ExplSyntaxOff
 
 % 行取り情報をゲットだぜ
 % \jlreq@resultに{1 = 前空き}{2 = 後ろ空き}{3 = トータル行数}を入れる
@@ -2194,7 +2160,6 @@
 \def\jlreq@BlockHeading@gyodori@parsekeyval@#1{%
   \@ifnextchar[{\jlreq@BlockHeading@gyodori@parsekeyval@@{#1}}{\jlreq@BlockHeading@gyodori@parsekeyval@@{#1}[jlreq@key]}%
 }
-\ExplSyntaxOn
 \long\def\jlreq@BlockHeading@gyodori@parsekeyval@@#1[#2]#3#4#5#6{%
   \group_begin:
     \keys_define:nn {#2} {
@@ -2365,7 +2330,7 @@
             }%
           }%
         }%
-        \ifjlreq@tempa\ClassWarningNoLine{jlreq}{Invalid input `##1' for column_spanning in BlockHeading #1}\fi
+        \ifjlreq@tempa\ClassWarningNoLine{jlreq}{Invalid~input~`##1'~for~column_spanning~in~BlockHeading~#1}\fi
       },
       number .choices:nn = {true,false}{\csname jlreq@number\l_keys_choice_tl\endcsname},
     }%
@@ -2374,7 +2339,7 @@
     % 入力チェック
     \str_if_eq:VnT \jlreq@column@spanning { true } {
       \jlreq@if{\unless\ifjlreq@column@spanning@possible\fi}{
-        \ClassWarningNoLine{jlreq}{column_spanning can be used only with `pagebreak=nariyuki' or `pagebreak=clearcolumn' (in BlockHeading #1)}%
+        \ClassWarningNoLine{jlreq}{column_spanning~can~be~used~only~with~`pagebreak=nariyuki'~or~`pagebreak=clearcolumn'~(in~BlockHeading~#1)}%
         \def\jlreq@column@spanning{false}%
       }{}%
     }%
@@ -2518,7 +2483,6 @@
 \NewDocumentCommand{\ProvideBlockHeading}{ m m +m }{%
   \@ifundefined{#1}{\DeclareBlockHeading{#1}{#2}{#3}}{}%
 }
-\ExplSyntaxOff
 
 %.. 別行見出しが連続した場合の処理
 % 設定値保存に次のマクロを使う
@@ -2552,7 +2516,6 @@
 \def\jlreq@BlockHeading@spaces@current@sequence{}
 \def\jlreq@BlockHeading@spaces@headingslist{}
 
-\ExplSyntaxOn
 \NewDocumentCommand{\SetBlockHeadingSpaces} { m } {
   \begingroup
     % 現段階の情報をクリアする
@@ -2571,7 +2534,6 @@
   \expandafter\endgroup
   \jlreq@do
 }
-\ExplSyntaxOff
 \def\jlreq@SetBlockHeadingSpaces{% カンマを無視する処理
   \@ifnextchar,{\expandafter\jlreq@SetBlockHeadingSpaces@i\@gobble}{\jlreq@SetBlockHeadingSpaces@i}%
 }
@@ -2604,7 +2566,7 @@
     \fi
     \eappto\jlreq@tempb{%
       \noexpand\@ifundefined{jlreq@BlockHeading@spaces@setlist@\jlreq@headings}{}{%
-        \noexpand\ClassError{jlreq}{The spaces for \jlreq@headings\space is defined more than once (in SetBlockHeadingSpaces)}{\noexpand\@ehc}%
+        \noexpand\ClassError{jlreq}{The~spaces~for~\jlreq@headings\space is~defined~more~than~once~(in~SetBlockHeadingSpaces)}{\noexpand\@ehc}%
       }%
       \noexpand\def\expandonce{\csname jlreq@BlockHeading@spaces@setlist@\jlreq@headings\endcsname}{{\expandonce{\jlreq@totalset}}\expandonce{\jlreq@set}}%
     }%
@@ -2623,13 +2585,12 @@
     \def\jlreq@tempb{\jlreq@uniqtoken}%
     \ifx\jlreq@tempa\jlreq@tempb\def\jlreq@do{}%
     \else\def\jlreq@do{%
-      \ClassError{jlreq}{Invalid setting ``\unexpanded{#1{#2}}'' is found, You forgot `_'? (in SetBlockHeadingSpaces)}{\@ehc}%
+      \ClassError{jlreq}{Invalid~setting~``\unexpanded{#1{#2}}''~is~found,~you~forgot~`_'?~(in~SetBlockHeadingSpaces)}{\@ehc}%
     }\fi
   \expandafter\endgroup
   \jlreq@do
 }
 
-\ExplSyntaxOn
 \def\jlreq@SetBlockHeadingSpaces@iii#1{%
   \clist_map_variable:nNn {#1} \@tempa {
     \expandafter\jlreq@helper@trim\expandafter{\@tempa}{\@tempa}%
@@ -2657,17 +2618,16 @@
 \def\jlreq@SetBlockHeadingSpaces@iv#1#{%
   \str_set:Nx \l__jlreq_tmpa_str {\@gobble #1}
   \str_if_in:NnT \l__jlreq_tmpa_str {_} {
-    \ClassWarning{jlreq}{Unusual heading name `\@gobble #1' is found. You forgot a comma? (in SetBlockHeadingSpaces)}%
+    \ClassWarning{jlreq}{Unusual~heading~name~`\@gobble #1'~is~found.~You~forgot~a~comma?~(in~SetBlockHeadingSpaces)}%
   }%
   \jlreq@ifendswith{#1}{*}{{%
     \def\@tempa_##1*{\def\@tempa{##1}}%
     \@tempa#1%
-    \ClassWarning{jlreq}{The heading name `\@gobble #1' ends with `*'. Do you mean `_\@tempa{*}'? (in SetBlockHeadingSpaces)}%
+    \ClassWarning{jlreq}{The~heading~name~`\@gobble #1'~ends~with~`*'.~Do~you^mean~`_\@tempa{*}'?~(in~SetBlockHeadingSpaces)}%
   }}{}%
   \appto\jlreq@headings{#1}%
   \jlreq@SetBlockHeadingSpaces@v
 }
-\ExplSyntaxOff
 \def\jlreq@SetBlockHeadingSpaces@v#1{%
   % 空っぽの場合は{_{r:0pt}{r:0pt}{}}
   \jlreq@ifendmark{#1}{%
@@ -2691,7 +2651,7 @@
     \def\@tempb##1##{\@temptokena\expandafter{\the\@temptokena##1}\@tempc}%
     \def\@tempc##1{\jlreq@ifendmark{##1}{}{\@temptokena\expandafter{\the\@temptokena{##1}}\@tempb}}%
     \@tempb#1%
-    \ClassWarningNoLine{jlreq}{Extra setting `\the\@temptokena' is found in SetBlockHeadingSpaces, omitted}
+    \ClassWarningNoLine{jlreq}{Extra~setting~`\the\@temptokena'~is~found~in~SetBlockHeadingSpaces,~omitted}
   }}%
 }
 
@@ -2734,7 +2694,6 @@
   \fi
 }
 
-\ExplSyntaxOn
 \def\jlreq@BlockHeading@spaces@output@#1#2\jlreq@endmark{%
   \def\jlreq@result{}%
   \jlreq@tempcnta=0
@@ -2766,7 +2725,6 @@
     \jlreq@BlockHeading@spaces@output@@
   }%
 }
-\ExplSyntaxOff
 \def\jlreq@BlockHeading@spaces@output@@@#1{%
   \edef\jlreq@do{%
     \noexpand\jlreq@BlockHeading@spaces@output@@@@
@@ -2871,7 +2829,6 @@
 \jlreq@tempa
 
 % \DeclareRuninHeading{命令名}{レベル}{設定}
-\ExplSyntaxOn
 \NewDocumentCommand { \DeclareRuninHeading } { m m +m } {
   \__jlreq_declare_runin_heading:nnn {#1} {#2} {#3}
 }
@@ -2948,7 +2905,6 @@
   \exp_after:wN \group_end:
   \l__jlreq_do:
 }
-\ExplSyntaxOff
 
 \NewDocumentCommand{\NewRuninHeading}{ m m +m }{
   \expandafter\@ifdefinable\csname #1\endcsname{\DeclareRuninHeading{#1}{#2}{#3}}%
@@ -2961,7 +2917,6 @@
 }
 
 %.. 窓見出し
-\ExplSyntaxOn
 \cs_set:Nn \__jlreq_CutinHeading_start:nnnnnnn {
   \if@noskipsec\leavevmode\fi
   \par
@@ -3080,7 +3035,7 @@
 }
 
 \NewDocumentCommand{\ModifyHeading}{m +m}{
-  \@ifundefined { jlreq@heading@setting@#1 } { \ClassError{jlreq}{Unknown heading: #1}{\@ehc} } {}
+  \@ifundefined { jlreq@heading@setting@#1 } { \ClassError{jlreq}{Unknown~heading:~#1}{\@ehc} } {}
   \group_begin:
     \tl_set:Nn \l_jlreq_tmpa_tl {#2}
     \str_set:Nn \l_jlreq_tmpa_str {#2}
@@ -3105,10 +3060,9 @@
   \exp_after:wN \group_end:
   \l_jlreq_do:
 }
-\ExplSyntaxOff
 % 見出し#1をマクロ#2に保存する
 \NewDocumentCommand{\SaveHeading}{ m m }{%
-  \@ifundefined{jlreq@heading@setting@#1}{\ClassError{jlreq}{Unknown heading: #1}{\@ehc}}{}%
+  \@ifundefined{jlreq@heading@setting@#1}{\ClassError{jlreq}{Unknown~heading:~#1}{\@ehc}}{}%
   \edef#2{%
     \csexpandonce{jlreq@heading@type@#1}{\unexpanded{#1}}{\csexpandonce{jlreq@heading@level@#1}}{\csexpandonce{jlreq@heading@setting@#1}}%
   }%
@@ -3150,7 +3104,6 @@
   \jlreq@do
 }
 
-\ExplSyntaxOn
 \def\jlreq@heading@execmacro@toallheadings@#1#2{
   \clist_map_inline:nn {#2} {
     \@ifundefined{##1}{}{%
@@ -3158,7 +3111,6 @@
     }%
   }%
 }
-\ExplSyntaxOff
 \def\jlreq@clearheadingmarks#1{%
   \@ifundefined{#1mark}{}{%
     \expandafter\let\csname#1mark\endcsname=\@gobble
@@ -3185,7 +3137,6 @@
 \newcommand*\jlreq@referencemark@format[1]{#1}
 \newif\ifjlreqadjustreferencemark
 \jlreqadjustreferencemarktrue
-\ExplSyntaxOn
 \keys_define:nn { jlreqsetup } {
   reference_mark .choice:,
   reference_mark / inline .code:n = {
@@ -3243,7 +3194,6 @@
     \def\jlreq@hook@postnote{\jlreq@fixjfm}
   }
 }
-\ExplSyntaxOff
 % \@footnotemarkをシンプルなものにする
 \def\jlreq@setdefaultnotemark#1#2{%
   \def#1{%
@@ -3276,7 +3226,6 @@
 \jlreq@do
 
 % インデントの計算：脚注の長さが文字の整数倍になるように字下げする（4.2.5.b）
-\ExplSyntaxOn
 \keys_define:nn { jlreqsetup } {
   footnote_indent .code:n = {
     \bool_if:nT { \legacy_if_p:n { @tate } && \dim_compare_p:n { #1 = 0pt } } {
@@ -3322,7 +3271,6 @@
 }
 
 \keys_define:nn { jlreqsetup } { footnotetext_indent .code:n = {\ClassWarningNoLine{jlreq}{footnotetext_indent~was~removed} } }
-\ExplSyntaxOff
 
 \ifx l\jlreq@engine
   \fnfixbottomtrue
@@ -3367,7 +3315,6 @@
   \let\footnotetext=\jlreq@temporary@saved@footnotetext
 }
 
-\ExplSyntaxOn
 \bool_if:nTF { \legacy_if_p:n { @tate } && (\legacy_if_p:n { @twoside } || \legacy_if_p:n { @twocolumn }) }{
   % 縦組の傍注は，その見開き内に付いている合印に対応する注を，奇数ページの左端にそろえて配置する．多段組では最下段の左端にそろえて配置する．（4.2.6.a）
   % 必要ならば\footnoteを\footnotemarkと\footnotetextにわけ，\footnotetextをアウトプット時まで遅延することで実現する．
@@ -3500,7 +3447,6 @@
   \renewcommand*{\thefootnote}{\arabic{footnote}\hbox{}）\inhibitglue}
 }
 \str_if_eq:VnF \jlreq@article@type { article } { \@addtoreset{footnote}{chapter} }
-\ExplSyntaxOff
 
 
 %.. 後注（4.2.4）
@@ -3588,15 +3534,16 @@
   \fi
 }
 % 4.2.4.b
-\ExplSyntaxOn
 \jlreq@endnote@indent=2\jlreq@mol
-\jlreq@jlreqsetup@add{endnote_second_indent}{
-  \def\jlreq@endnote@second@indent{#1}
-  \bool_if:nTF {
-    ( \dim_compare_p:n { 0.99\jlreq@zw < #1 } && \dim_compare_p:n { #1 < 1.01\jlreq@zw } ) ||
-    ( \dim_compare_p:n { 1.99\jlreq@zw < #1 } && \dim_compare_p:n { #1 < 2.01\jlreq@zw } )
-  } {} {
-    \jlreq@note{後注が2行以上となった場合，後注の2行目以下の字下げは，1行目より，後注の文字サイズの2倍又は全角とする (4.2.4.d)．}
+\keys_define:nn { jlreqsetup } { 
+  endnote_second_indent .code:n = {
+    \def\jlreq@endnote@second@indent{#1}
+    \bool_if:nTF {
+      ( \dim_compare_p:n { 0.99\jlreq@zw < #1 } && \dim_compare_p:n { #1 < 1.01\jlreq@zw } ) ||
+      ( \dim_compare_p:n { 1.99\jlreq@zw < #1 } && \dim_compare_p:n { #1 < 2.01\jlreq@zw } )
+    } {} {
+      \jlreq@note{後注が2行以上となった場合，後注の2行目以下の字下げは，1行目より，後注の文字サイズの2倍又は全角とする (4.2.4.d)．}
+    }
   }
 }
 \newcommand{\@makeendtext}[1]{%
@@ -3626,7 +3573,7 @@
         \str_if_eq:eeTF { \str_head:N \jlreq@tempa } {_} {
           \edef\jlreq@tempc{\jlreq@tempc,\expandafter\@gobble\jlreq@tempa}
         }{
-          \ClassError{jlreq}{Invalid value \jlreq@tempa\space in endnote_position}{\@ehc}
+          \ClassError{jlreq}{Invalid~value~\jlreq@tempa\space in~endnote_position}{\@ehc}
         }
       }
     }
@@ -3651,7 +3598,6 @@
   \fi
 }
 \AtEndDocument{\theendnotes}
-\ExplSyntaxOff
 
 
 % (1) \footnoteとかと同じ形式 sidenote_type=number
@@ -3662,7 +3608,6 @@
 % (1) では\sidenote[]{}を定義
 % (2) では\sidenote{見出し}{注中身}を定義
 % sidenote_length>0ptの時のみ定義する
-\ExplSyntaxOn
 \jlreq@if{\ifdim\jlreq@sidenote@length>0pt\relax\fi}
 {
   \def\jlreq@sidenotemarkname{@thefnmark}% 合印用番号を一時的に入れるマクロ名
@@ -3743,10 +3688,9 @@
       \apptocmd{\sidenotemark}{\jlreq@hook@postnote}{}{}
     }
   }
-  \jlreq@jlreqsetup@add{sidenote_symbol}{\def\jlreq@sidenote@defaultmark{#1}}
-  \jlreq@jlreqsetup@add{sidenote_keyword_font}{\def\jlreq@sidenote@keywordfont{#1}}
+  \keys_define:nn { jlreqsetup } { sidenote_symbol .tl_set:N = \jlreq@sidenote@defaultmark }
+  \keys_define:nn { jlreqsetup } { sidenote_keyword_font .tl_set:N = \jlreq@sidenote@keywordfont }
 }{}
-\ExplSyntaxOff
 
 %.. 割注（3.4）
 \def\inlinenotesize{.6\jlreq@jafontsize} % 割注の文字サイズ
@@ -3768,7 +3712,7 @@
 \newif\ifjlreq@in@inlinenote
 \jlreq@in@inlinenotefalse
 \newcommand*{\jlreq@inlinenote@}[1]{%
-  \ifjlreq@in@inlinenote\ClassError{jlreq}{\string#1\space can't be nested}{\@ehc}\fi
+  \ifjlreq@in@inlinenote\ClassError{jlreq}{\string#1\space can't~be~nested}{\@ehc}\fi
   \jlreq@in@inlinenotetrue
   \ifvmode\leavevmode\fi
   \@ifstar\jlreq@inlinenote@noauto\jlreq@inlinenote@auto
@@ -3776,7 +3720,6 @@
 \DeclareRobustCommand*{\inlinenote}{\jlreq@inlinenote@{\inlinenote}}
 \DeclareRobustCommand*{\warichu}{\jlreq@inlinenote@{\warichu}}
 
-\ExplSyntaxOn
 \newcommand*{\jlreq@inlinenote@auto}[1]{%
   % 割注初め括弧の前の場所を保存
   \jlreq@savepos@for@rest@linewidth
@@ -3807,10 +3750,10 @@
   \fi
   % \jlreq@parshapeargに\parshapeに指定する書式の最後以外を入れる．
   \ifnum\@tempcntb>2\relax
-    \edef\jlreq@parshapearg{0pt \the\jlreq@tempdimb\space 0pt \the\jlreq@tempdimb}%
+    \edef\jlreq@parshapearg{0pt~\the\jlreq@tempdimb\space 0pt~\the\jlreq@tempdimb}%
     \@tempcnta=4\relax
     \@whilenum\@tempcnta<\@tempcntb\do{%
-      \edef\jlreq@parshapearg{\jlreq@parshapearg\space 0pt \the\linewidth\space 0pt \the\linewidth}%
+      \edef\jlreq@parshapearg{\jlreq@parshapearg\space 0pt~\the\linewidth\space 0pt~\the\linewidth}%
       \advance\@tempcnta by 2\relax
     }%
     \setlength{\jlreq@tempdimc}{\dimexpr\jlreq@tempdimc - \jlreq@tempdimb - \linewidth * \numexpr(\@tempcntb - 4)/2\relax\relax}%
@@ -3832,10 +3775,10 @@
       \@tempcntb=1001\relax
     \fi
     \advance\@tempcntb by 2\relax
-    \edef\jlreq@parshapearg{\jlreq@parshapearg 0pt \the\jlreq@tempdimb 0pt \the\jlreq@tempdimb}%
+    \edef\jlreq@parshapearg{\jlreq@parshapearg~0pt~\the\jlreq@tempdimb~0pt~\the\jlreq@tempdimb}%
   }%
   \ifvoid\jlreq@resultbox
-    \ClassWarning{jlreq}{\string\warichu\space failed, may be a bug}%
+    \ClassWarning{jlreq}{\string\warichu\space failed,~may~be~a~bug}%
   \else
     \@tempcnta=0
     \splittopskip=0pt\relax
@@ -3880,7 +3823,6 @@
   \fi
   \jlreq@inlinenote@endnote
 }
-\ExplSyntaxOff
 
 \newcommand*{\jlreq@inlinenote@noauto}[1]{%
   \setbox\jlreq@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\inhibitglue\jlreq@open@bracket@before@space（}%
@@ -3941,7 +3883,7 @@
     \def\@tempa{}%
     % 調整に使う行の\parshape指定を\@tempaに入れる．長さは\jlreq@tempdima．
     \@whilenum\@tempcnta<#4\do{%
-      \expandafter\def\expandafter\@tempa\expandafter{\@tempa 0pt \the\jlreq@tempdima}%
+      \expandafter\def\expandafter\@tempa\expandafter{\@tempa 0pt~\the\jlreq@tempdima}%
       \advance\@tempcnta by 1\relax
     }%
     \@tempcnta=0
@@ -3955,7 +3897,7 @@
         \setbox\@tempboxa=\vbox{#2%
           \vbadness=10000\hbadness=10000\vfuzz=\maxdimen\hfuzz=\maxdimen
           \parindent=0pt\leftskip=0pt\rightskip=0pt
-          \parshape #5 #3 \@tempa 0pt \the\maxdimen
+          \parshape #5~#3~\@tempa 0pt~\the\maxdimen
           #1\par\global\@tempcntb=\prevgraf}%
   %      \message{\string\jlreq@tempdima = \the\jlreq@tempdima で試行，行数は\the\@tempcntb , 書式 #5 #3 \@tempa 0pt \the\maxdimen}%
       \fi
@@ -3996,19 +3938,16 @@
 % 2.6.1.cの後半が前半と整合的でないように見える……
 % 柱：両柱と片柱（2.6.3）
 \@tempdima=\jlreq@speciallength{\jlreq@headfoot@sidemargin}
-\ExplSyntaxOn
 \bool_if:nTF {
   \dim_compare_p:n { \@tempdima = 0pt } ||
   ( \dim_compare_p:n { 0.99\jlreq@zw < \@tempdima } && \dim_compare_p:n { \@tempdima < 1.01\jlreq@zw} )
 } {} {
   \jlreq@note{ノンブルまたは柱は，基本版面の左右にそろえるか，全角アキだけ寄せた位置に配置する (2.6.1.b)．}
 }
-\ExplSyntaxOff
 
 %.. 場所指定解析
 % bottom-leftみたいなのを解釈する．入力の順番はどっちでも良いが，出力は<top/bottom><left/right>の順番
 % #1 = bottom-leftみたいなのを{bottom}{left}に変換し，#2に代入，#3はデフォルト値，出力形式で入れる
-\ExplSyntaxOn
 \newcommand*{\jlreq@pagestyle@parse@position}[3]{%
   \jlreq@ifempty{#1}{\def#2{#3}}%
   {%
@@ -4019,7 +3958,7 @@
         \str_if_eq:VnTF \jlreq@tempa { edge } {
           \def\jlreq@tempa{fore-edge}%
         }{%
-          \ClassError{jlreq}{Invalid position: fore-\jlreq@tempa}{\@ehc}%
+          \ClassError{jlreq}{Invalid~position:~fore-\jlreq@tempa}{\@ehc}%
         }%
       }{}%
       % \jlreq@tempcに縦方向を，\jlreq@tempdに横方向を入れる
@@ -4033,12 +3972,11 @@
     \jlreq@do
   }%
 }
-\ExplSyntaxOff
 
 \def\jlreq@pagestyle@parse@position@#1-#2\jlreq@endmark{%
   \def\jlreq@tempa{#1}\def\jlreq@tempb{#2}%
   \jlreq@ifempty{#2}{%
-    \ifx\jlreq@tempb\@empty\ClassError{jlreq}{Invalid position: #1}{\@ehc}\fi
+    \ifx\jlreq@tempb\@empty\ClassError{jlreq}{Invalid~position:~#1}{\@ehc}\fi
   }{%
     \def\@tempa##1-\jlreq@endmark{\def\jlreq@tempb{##1}}%
     \@tempa#2\jlreq@endmark\relax
@@ -4055,12 +3993,11 @@
     {gutter}{\if@tate\def\jlreq@tempd{right}\else\def\jlreq@tempd{left}\fi}
     {fore_edge}{\if@tate\def\jlreq@tempd{left}\else\def\jlreq@tempd{right}\fi}
     {fore-edge}{\if@tate\def\jlreq@tempd{left}\else\def\jlreq@tempd{right}\fi}
-    {\ClassError{jlreq}{Invalid position: #1}{\@ehc}}
+    {\ClassError{jlreq}{Invalid~position:~#1}{\@ehc}}
   }%
 }
 
 % レベル#1より低いレベルの見出しの**markを\markboth{}{}にする
-\ExplSyntaxOn
 \def\jlreq@pagestyle@setclearmark#1{%
   \clist_map_inline:Nn \jlreq@heading@allheadings {
     \tracingmacros=1
@@ -4072,7 +4009,6 @@
     \tracingmacros=0
   }%
 }
-\ExplSyntaxOff
 
 % #1のleftとrightを入れ替えて#1に代入
 \def\jlreq@reverse@leftright#1{%
@@ -4121,7 +4057,6 @@
 % mark情報の取得を行う．
 % #1の中身をみて，#2 = 何段目見出しか，#3 = odd/even，\csname #4@<見出し命令名>\endcsnameに必要情報を追加し，#5の見出し命令名リストに追加
 % #1@heading@levelにレベルを入れる
-\ExplSyntaxOn
 \def\jlreq@pagestyle@setmark#1#2#3#4#5{%
   \begingroup
     \str_if_eq:eeTF {\str_head:N #1} {_} {
@@ -4148,13 +4083,11 @@
   \expandafter\endgroup
   \jlreq@do
 }
-\ExplSyntaxOff
 
 % \def\<見出し>mark#1{...}というのを\jlreq@resultに入れる，
 % #1：*ならばextramarkを使う
 % #2: 見出し命令名，#3: mark_format
 % #4: {{mark_formatからさらに調べるやつ (odd|even)}{マークの何番目か．extraでない場合は0}{l or r(leftかrightか)}}の並び
-\ExplSyntaxOn
 \def\jlreq@pagestyle@make@headingmark#1#2#3#4{%
   \begingroup
     \clist_map_variable:nNn {0,1,2} \jlreq@i {
@@ -4217,7 +4150,6 @@
   \fi
   \jlreq@pagestyle@make@headingmark@{#1}{#2}%
 }
-\ExplSyntaxOff
 
 % #2 #3 #4と並んだヘッダを作り#1に入れる．#1，#2，#3はコンロトールシークエンスの名前とする．
 \def\jlreq@pagestyle@setheadfoot#1#2#3#4{%
@@ -4229,8 +4161,7 @@
 
 % \edef内だと，#1 != 0ptならば\hskip \dimexpr#1\relaxになる
 \def\jlreq@pagestyle@hskip#1{%
-  \ifdim\dimexpr#1\relax=0pt \expandafter\@gobble\else\expandafter\@firstofone\fi
-    {\noexpand\hskip\noexpand\dimexpr#1\noexpand\relax}%
+  \dim_compare:nF { #1 = 0pt }{\noexpand\hskip\noexpand\dimexpr#1\noexpand\relax}%
 }
 \def\jlreq@pagestyle@setheadfoot@#1#2#3#4{%
   \begingroup
@@ -4294,7 +4225,6 @@
     \ifjlreq@tempa\else\cspreto{#1}{\jlreq@PageStyle@firsttrue}\fi
   }%
 }
-\ExplSyntaxOn
 \def\jlreq@pagestyle@make@runninghead@#1#2#3#4#5{%
   \jlreq@if{\ifnum\numexpr\jlreq@ifendmark{#5}{1}{0}*\ifjlreq@tempa 1\else 0\fi\relax=1~\fi}{%
     % 項目が一つしか無い
@@ -4315,7 +4245,6 @@
     \jlreq@ifendmark{#5}{}{\jlreq@pagestyle@make@runninghead@{#1}{#2}{#3}{#5}}%
   }%
 }
-\ExplSyntaxOn
 
 % #1= cs，#2 = フォーマットの入ったcs，#3 = デフォルトフォーマットの入ったcs
 \def\jlreq@pagestyle@applyformat#1#2#3{%
@@ -4353,7 +4282,6 @@
 }
 
 %.. \DeclarePageStyle
-\ExplSyntaxOn
 \newbox\jlreq@PageStyle@box
 \NewDocumentCommand{\DeclarePageStyle} { m +m } {%
   \expandafter\edef\csname jlreq@pagestyle@setting@#1\endcsname{\unexpanded{#2}}%
@@ -4696,7 +4624,7 @@
                   \str_if_eq:VnTF \jlreq@hor { right } {
                     % <ノンブル><空き><柱>，右寄せ
                     % 柱が空出ないときに限り<空き>を入れる．
-                    \jlreq@pagestyle@addfont@totokens{\unexpanded{\ifdim\wd\jlreq@PageStyle@box=0pt \else\hskip}\expandonce{\jlreq@gap}\unexpanded{\relax\fi}}{jlreq@running@head@font}{jlreq@tempa}%
+                    \jlreq@pagestyle@addfont@totokens{\exp_not:N \dim_compare:nF { \exp_not:n { \wd\jlreq@PageStyle@box=0pt } } { \exp_not:N \hskip\expandonce{\jlreq@gap}\exp_no:N \relax } }{jlreq@running@head@font}{jlreq@tempa}%
                     \expandafter\edef\csname\jlreq@csname\endcsname{%
                       \unexpanded{\setbox\jlreq@PageStyle@box=\hbox}{\expandonce{\jlreq@running@head@font}\csexpandonce{\jlreq@runheadcsname}}%
                       \csexpandonce{\jlreq@nombrecsname}\expandonce{\jlreq@tempa}\unexpanded{\box\jlreq@PageStyle@box}%
@@ -4712,7 +4640,10 @@
                     % <柱><空き><ノンブル>，左寄せ
                     \jlreq@pagestyle@addfont@totokens{%
                       \unexpanded{\setbox\jlreq@PageStyle@box=\hbox}{\csexpandonce{\jlreq@runheadcsname}}%
-                      \unexpanded{\copy\jlreq@PageStyle@box\ifdim\wd\jlreq@PageStyle@box=0pt \else\hskip\glueexpr}\expandonce{\jlreq@gap}\unexpanded{\relax\fi}%
+                      \unexpanded{\copy\jlreq@PageStyle@box}
+                      \exp_not:N \dim_compare:nF { \exp_not:n { \wd\jlreq@PageStyle@box=0pt } } {
+                        \exp_not:n { \hskip\glueexpr } \exp_not:o {\jlreq@gap} \exp_not:N \relax
+                      }
                     }{jlreq@running@head@font}{jlreq@tempa}%
                     \expandafter\edef\csname\jlreq@csname\endcsname{\expandonce{\jlreq@tempa}\csexpandonce{\jlreq@nombrecsname}}%
                   }{%
@@ -4779,7 +4710,6 @@
   \expandafter\endgroup
   \jlreq@do
 }
-\ExplSyntaxOff
 
 \if@tate
   \def\jlreqyokoheadlength{\textheight}
@@ -4807,7 +4737,7 @@
 }
 \NewDocumentCommand{\ModifyPageStyle} { m +m } {%
   \begingroup
-    \@ifundefined{jlreq@pagestyle@setting@#1}{\ClassError{jlreq}{Unknown pagestyle: #1}{\@ehc}}{}%
+    \@ifundefined{jlreq@pagestyle@setting@#1}{\ClassError{jlreq}{Unknown~pagestyle:~#1}{\@ehc}}{}%
     \expandafter\let\expandafter\setting\expandafter=\csname jlreq@pagestyle@setting@#1\endcsname
     \edef\jlreq@do{\noexpand\RenewPageStyle{#1}{\expandonce{\setting},\unexpanded{#2}}}%
   \expandafter\endgroup
@@ -4828,7 +4758,6 @@
 % #2に<設定1>が，#2@<環境名>に<設定2>が入る．#1には#2@<環境名>が定義されている<環境名>をカンマ区切りで入れる．
 % \jlreqsetup{X,env=B}の後に\jlreqsetup{Y}を指定すると，env環境に対する設定はYになるようにする．
 % ただし\jlreqsetup{env=C,Y}とした場合はenv環境に対してはC．
-\ExplSyntaxOn
 \long\def\jlreq@jlreqsetup@withenv#1#2#3{%
   \@ifundefined{#1}{\expandafter\def\csname #1\endcsname{}}{}%
   \begingroup
@@ -4854,7 +4783,6 @@
   \expandafter\endgroup
   \jlreq@do
 }
-\ExplSyntaxOff
 
 % #1@#2が定義されていれば\#1@#2の中身に，そうでなければ\#1の中身に展開される．
 % 展開は\unexpandedで抑制される．
@@ -4907,7 +4835,6 @@
 \jlreq@jlreqsetup@add{caption_label_format}{\jlreq@jlreqsetup@withenv{jlreq@@makecaption@label@format@envlist}{jlreq@@makecaption@label@format@setting}{#1}}
 \jlreq@jlreqsetup@add{caption_after_label_space}{\jlreq@jlreqsetup@withenv{jlreq@@makecaption@after@label@space@envlist}{jlreq@@makecaption@after@label@space@setting}{#1}}
 
-\ExplSyntaxOn
 %% 
 %% \jlreq@@makecaption@align@setting@small(@env)に小さい時のalign，jlreq@@makecaption@align@setting@large(@env)に大きいときのalignを入れる．
 %% \l_jlreq_tmpb_tlに各環境の設定クリア
@@ -4988,21 +4915,22 @@
   }
 }
 
-\jlreq@jlreqsetup@add{caption_align}{%
-  \group_begin:
-    \tl_clear:N \l_jlreq_tmpb_tl
-    \tl_clear:N \l_jlreq_tmpc_tl
-    \tl_clear:N \l_jlreq_tmpd_tl
-    \keys_set:nn { __jlreqsetup_caption_align } {#1}
-    \cs_set:Nx \l_jlreq_do:{
-      \exp_not:o \l_jlreq_tmpb_tl
-      \exp_not:o \l_jlreq_tmpc_tl
-      \exp_not:o \l_jlreq_tmpd_tl
-    }
-  \exp_after:wN \group_end:
-  \l_jlreq_do:
+\keys_define:nn { jlreqsetup } {
+  caption_align .code:n = {
+    \group_begin:
+      \tl_clear:N \l_jlreq_tmpb_tl
+      \tl_clear:N \l_jlreq_tmpc_tl
+      \tl_clear:N \l_jlreq_tmpd_tl
+      \keys_set:nn { __jlreqsetup_caption_align } {#1}
+      \cs_set:Nx \l_jlreq_do:{
+        \exp_not:o \l_jlreq_tmpb_tl
+        \exp_not:o \l_jlreq_tmpc_tl
+        \exp_not:o \l_jlreq_tmpd_tl
+      }
+    \exp_after:wN \group_end:
+    \l_jlreq_do:
+  }
 }
-\ExplSyntaxOff
 
 % 特に根拠のない値
 \setlength\abovecaptionskip{.5\jlreq@gol}
@@ -5010,7 +4938,6 @@
 
 %.. figure環境
 \newcounter{figure}
-\ExplSyntaxOn
 \str_if_eq:VnTF \jlreq@article@type { article } {
   \renewcommand{\thefigure}{\@arabic\c@figure}
 }{%
@@ -5038,7 +4965,6 @@
 \newcommand*{\fnum@table}{\tablename\thetable}
 \newenvironment{table}{\@float{table}}{\end@float}
 \newenvironment{table*}{\@dblfloat{table}}{\end@dblfloat}
-\ExplSyntaxOff
 
 %. タイトル周り
 \newenvironment{titlepage}{%
@@ -5056,7 +4982,6 @@
   \fi
 }
 
-\ExplSyntaxOn
 \if@titlepage
   \newcommand{\maketitle}{%
     % jarticleとかからあまり変更していない
@@ -5120,7 +5045,6 @@
     \jlreq@endofmaketitle
   }
 \fi
-\ExplSyntaxOff
 % いろいろクリアする．
 \def\jlreq@endofmaketitle{%
   \setcounter{footnote}{0}%
@@ -5167,7 +5091,6 @@
 
 %.. abstract
 \def\jlreq@parhook@abstract{}
-\ExplSyntaxOn
 \str_if_eq:VnF \jlreq@article@type { book } {
   \newbox\jlreq@abstractbox
   \newcommand*{\abstractname}{概要}
@@ -5326,7 +5249,6 @@
   \expandafter\endgroup
   \jlreq@do
 }
-\ExplSyntaxOff
 
 
 \def\jlreq@itemization@beforeafter@space@envlist{}
@@ -5356,7 +5278,6 @@
 \def\@listvi{\jlreq@init@list{vi}}
 
 % 引用系．3.5.2の例．
-\ExplSyntaxOn
 \jlreq@jlreqsetup@add{quote_indent}{\def\jlreq@quote@indent{#1}}
 \jlreq@jlreqsetup@add{quote_end_indent}{\def\jlreq@quote@end@indent{#1}}
 \keys_define:nn { jlreqsetup }{
@@ -5365,7 +5286,6 @@
   }
 }
 \jlreq@jlreqsetup@add{quote_beforeafter_space}{\def\jlreq@quote@beforeafter@space{#1}}
-\ExplSyntaxOff
 
 \newenvironment{verse}
   {\let\\\@centercr
@@ -5443,14 +5363,12 @@
 \setlength\fboxsep{.3\zw}
 \setlength\fboxrule{\jlreq@omotekeiwidth} % 根拠はない
 % 後で
-\ExplSyntaxOn
 \str_if_eq:VnTF \jlreq@article@type { article } {
   \renewcommand{\theequation}{\@arabic\c@equation}
 }{%
   \@addtoreset{equation}{chapter}
   \renewcommand{\theequation}{\ifnum\c@chapter>\z@\thechapter.\fi \@arabic\c@equation}
 }
-\ExplSyntaxOff
 
 %. 目次
 \setcounter{tocdepth}{3}
@@ -5480,7 +5398,6 @@
     \jlreq@top@contents=#1\relax
   \fi
 }
-\ExplSyntaxOn
 \str_if_eq:VnTF \jlreq@article@type { article } {
   \newcommand{\tableofcontents}{%
     \jlreq@top@contents=-100\relax
@@ -5508,7 +5425,6 @@
     \if@restonecol\twocolumn\fi
   }
 }
-\ExplSyntaxOff
 
 % JIS X 4051自身の目次に近づけようかと……なりきれてないけど．
 % 文字の大きさは全て同じ（\normalsize）にする．
@@ -5629,7 +5545,6 @@
 
 %. 前付，後付，付録
 % \jlreq@matter@heading[restoreする見出し一覧を入れる制御綴]{#2@<見出し命令名>に今の見出しの中身を入れる}{生成する制御綴の名前}{設定}
-\ExplSyntaxOn
 \def\jlreq@matter@heading{\@ifnextchar[{\jlreq@matter@heading@}{\jlreq@matter@heading@[]{}}}
 \def\jlreq@matter@heading@[#1]#2#3#4{%
   \begingroup
@@ -5655,7 +5570,7 @@
                 {runin}{\def\jlreq@declaretype{RenewRunin}}
                 {cutin}{\def\jlreq@declaretype{RenewCutin}}
                 {modify}{\def\jlreq@declaretype{Modify}}
-                {\ClassError{jlreq}{Unknown heading type `####2'}{\@ehc}}
+                {\ClassError{jlreq}{Unknown~heading~type~`####2'}{\@ehc}}
               }%
             }
             {heading_level}{\def\jlreq@level{####2}}
@@ -5860,7 +5775,6 @@
     \jlreq@backmatter@postcode
   }
 }
-\ExplSyntaxOff
 
 \jlreq@jlreqsetup@add{appendix_counter}{\jlreq@matter@counter@norestore{\jlreq@appendix@counter}{#1}}
 \jlreq@jlreqsetup@add{appendix_heading}{\jlreq@matter@heading{\jlreq@appendix@heading}{#1}}
@@ -5879,13 +5793,12 @@
 \protected\def\tatechuyoko{\@ifstar
   {\jlreq@tatechuyoko@i}%
   {%
-    \jlreq@iftdir{}{\ClassError{jlreq}{\string\tatechuyoko\space is not allowed in yoko mode}{\@ehc}}%
+    \jlreq@iftdir{}{\ClassError{jlreq}{\string\tatechuyoko\space is~not~allowed~in~yoko~mode}{\@ehc}}%
     \jlreq@tatechuyoko@ii
   }%
 }
 \def\jlreq@tatechuyoko@i#1{\jlreq@iftdir{\jlreq@tatechuyoko@ii{#1}}{#1}}
 
-\ExplSyntaxOn
 \edef\@tempa{%
   \unexpanded{\ifvmode\leavevmode\fi}%
   \ifx l\jlreq@engine\unexpanded{%
@@ -5896,7 +5809,6 @@
     \jlreq@lastnodechar=\lastnodechar\relax
   }\fi
 }
-\ExplSyntaxOff
 
 \expandafter\def\expandafter\jlreq@tatechuyoko@ii\expandafter#\expandafter1\expandafter{%
   \@tempa
@@ -5908,7 +5820,7 @@
   \hbox{\yoko
     \begingroup
       \setbox\jlreq@tempboxa=\hbox{阿}%
-      \vrule width 0pt height \ht\jlreq@tempboxa depth \dp\jlreq@tempboxa
+      \vrule width~0pt~height~\ht\jlreq@tempboxa depth~\dp\jlreq@tempboxa
     \endgroup
     #1}%
   \futurelet\jlreq@nextchar\jlreq@tatechuyoko@iii
@@ -5928,7 +5840,6 @@
   \jlreq@do
 }
 
-\ExplSyntaxOn
 \jlreq@saveoriginalcs{kanjishape}
 \ifx l\jlreq@engine
   \cs_new:Nn \__jlreq_setkanjiskip:nn {
@@ -6014,10 +5925,8 @@
     \hbox:n {#2}
   \group_end:
 }
-\ExplSyntaxOff
 
 % 日にち
-\ExplSyntaxOn
 \newif\if西暦
 \def\西暦{\西暦true}
 \def\和暦{\西暦false}
@@ -6068,7 +5977,6 @@
   year_style / seireki .code:n = {\西暦true},
   year_style / wareki .code:n = {\西暦false}
 }
-\ExplSyntaxOff
 
 % 時刻
 \hour=\time \divide\hour by 60
@@ -6129,7 +6037,6 @@
 
 %. デフォルト設定
 %.. 見出し
-\ExplSyntaxOn
 \if@tate
   \renewcommand{\thepart}{\jlreq@Kanji{part}}
   \str_if_eq:VnF \jlreq@article@type { article }{\renewcommand{\thechapter}{\jlreq@Kanji{chapter}}}
@@ -6407,7 +6314,6 @@
     appendix_precode = {}
   }
 }
-\ExplSyntaxOff
 \jlreqsetup{theindex_pagestyle=plain}
 \jlreqsetup{year_style=seireki}
 \jlreqsetup{
@@ -6438,6 +6344,8 @@
   \onecolumn
   \raggedbottom
 \fi
+
+\ExplSyntaxOff
 \endinput
 
 

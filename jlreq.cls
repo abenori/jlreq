@@ -1701,7 +1701,7 @@
       type .choices:nn = {han,naka}{
         \str_case_e:nn { \tl_to_str:N \l_keys_choice_tl } {
           { han  } { \def\jlreq@heading@clearpage{\clearpage} }
-          { naka } { \def\jlreq@heading@clearpage{\clearpage\hbox{}\clearpage} }
+          { naka } { \def\jlreq@heading@clearpage{\clearpage\hbox{}\thispagestyle{empty}\clearpage} }
         }
       },
       number .choices:nn = {true,false} { \csname jlreq@number \l_keys_choice_tl \endcsname }

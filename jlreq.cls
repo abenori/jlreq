@@ -97,14 +97,11 @@
   \clist_map_variable:nNn {#1} \@tempa {
     \eappto\jlreq@switchpapersize{{\expandonce{\@tempa}}{\unexpanded{\setlength{\paperwidth}{#3}\setlength{\paperheight}{#4}}}}%
   }%
-  \clist_map_variable:nNn {#2} \@tempa {
-    \cs_set:Nx \l_jlreq_do: {
-      \exp_not:N \keys_define:nn { jlreq } {
-        \exp_not:o {\@tempa} .code:n = {\exp_not:n {\setlength{\paperwidth}{#3}\setlength{\paperheight}{#4}}}, 
-        \exp_not:o {\@tempa} .value_forbidden:n = true
-      }
+  \clist_map_inline:nn {#2}  {
+    \keys_define:nn { jlreq } {
+      ##1 .code:n = { \setlength{\paperwidth}{#3}\setlength{\paperheight}{#4} },
+      ##1 .value_forbidden:n = true
     }
-    \l_jlreq_do:
   }
 }
 \jlreq@aftercls@addtodeletecs{\jlreq@addpapersize}
@@ -2334,7 +2331,7 @@
       },
       number .choices:nn = {true,false}{\csname jlreq@number\l_keys_choice_tl\endcsname},
     }%
-    \keys_set:nn {BlockHeading:#1} {#3}
+    \keys_set:nn { BlockHeading:#1 } {#3}
     \def\jlreq@do{}% 初期化．これに最終処理を入れていく．
     % 入力チェック
     \str_if_eq:VnT \jlreq@column@spanning { true } {

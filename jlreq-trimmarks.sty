@@ -3,12 +3,14 @@
 \RequirePackage{l3keys2e,etoolbox}
 \RequirePackage{jlreq-helpers}
 
+\ExplSyntaxOn
+
 % check \tombowdatetrue
 \ifx\tombowdatetrue\@undefined
-  \PackageError{jlreq-trimmarks}{This package only works with pLaTeX, upLaTeX or LuaTeX-ja}{\@ehc}
+  \PackageError{jlreq-trimmarks}{This~package~only~works~with~pLaTeX,~upLaTeX~or~LuaTeX-ja}{\@ehc}
 \fi
 
-\newcommand*{\jlreq@trimmarks@undeferr}[1]{\PackageError{jlreq-trimmarks}{Trying to delete \string#1 even though it is not defined, may be a bug}{\@ehc}}
+\newcommand*{\jlreq@trimmarks@undeferr}[1]{\PackageError{jlreq-trimmarks}{Trying~to~delete~\string#1~even~though~it~is~not~defined,~may~be~a~bug}{\@ehc}}
 \newcommand*{\jlreq@trimmarks@afterpkg@addtodeletecs}[1]{%
   \appto\jlreq@trimmarks@afterpkg@deletecslist{\jlreq@helper@undefcs{#1}{\jlreq@trimmarks@undeferr}}%
 }
@@ -23,25 +25,15 @@
   \undef{\jlreq@trimmarks@undeferr}%
 }
 
-\newcommand*{\jlreq@trimmarks@DeclareOption}[2]{%
-  \DeclareOptionX{#1}{%
-    \jlreq@ifempty{##1}{}{\PackageError{jlreq-trimmarks}{The option #1 should have no value}{\@ehc}}%
-    #2%
-  }%
-}
-\jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@DeclareOption}
-
 \@ifclassloaded{jlreq}{\let\ifjlreq@trimmarks@jlreqloaded=\@firstoftwo}{\let\ifjlreq@trimmarks@jlreqloaded=\@secondoftwo}
 
 \def\ifjlreq@trimmarks@tate@{\jlreq@if{\if@tate\fi}}%
 % \@firstoftwo when \if@tate is defined and \if@tate=\iftrue
 \def\ifjlreq@trimmarks@tate{%
-  \jlreq@if{\ifnum0\ifx\if@tate\@undefined 1\fi\ifx\if@tate\relax 1\fi>0 \fi}{\@secondoftwo}{\ifjlreq@trimmarks@tate@}%
+  \jlreq@if{\ifnum0\ifx\if@tate\@undefined 1\fi\ifx\if@tate\relax 1\fi>0~\fi}{\@secondoftwo}{\ifjlreq@trimmarks@tate@}%
 }
 
-
 % dvipdfmx=f，dvips=s，dviout = o, lualatex = l
-\ExplSyntaxOn
 \keys_define:nn { jlreq-trimmarks } { dvipdfmx .code:n = {\let\jlreq@trimmarks@driver=f}, .value_forbidden:n = true }
 \keys_define:nn { jlreq-trimmarks } { dvips .code:n = {\let\jlreq@trimmarks@driver=s}, .value_forbidden:n = true }
 \keys_define:nn { jlreq-trimmarks } { dviout .code:n = {\let\jlreq@trimmarks@driver=o}, .value_forbidden:n = true }
@@ -148,7 +140,7 @@
           {digital}{\jlreq@trimmarks@digitaltrue}
           {digital*}{\jlreq@trimmarks@digitaltrue\jlreq@trimmarks@show@artboxtrue}
           {no}{\tombowdatefalse\jlreq@trimmarks@showfalse\jlreq@trimmarks@digitalfalse}
-        }[\PackageError{jlreq-trimmarks}{Unknown value `##1' in the option `show'}{\@ehc}]
+        }[\PackageError{jlreq-trimmarks}{Unknown~value~`##1'~in~the~option~`show'}{\@ehc}]
       }
     }
   }
@@ -173,7 +165,7 @@
               \noexpand\def\expandonce{\csname jlreq@trimmarks@bleed@##1\endcsname}{##2}%
             }%
           }{%
-            \PackageError{jlreq-trimmarks}{Unknown position `##1' in bleed_margin}{\@ehc}
+            \PackageError{jlreq-trimmarks}{Unknown~position~`##1'~in~bleed_margin}{\@ehc}
           }%
         }%
       }{#1}%
@@ -232,7 +224,7 @@
 
 \ifx o\jlreq@trimmarks@driver
   \ifjlreq@trimmarks@digital
-    \PackageError{jlreq-trimmarks}{`show=digital' can't be used with the driver `dviout'}{\@ehc}
+    \PackageError{jlreq-trimmarks}{`show=digital'~can't~be~used~with~the~driver~`dviout'}{\@ehc}
   \fi
 \fi
 
@@ -304,7 +296,6 @@
   \jlreq@do
 }
 
-\ExplSyntaxOn
 \keys_define:nn { jlreqtrimmarkssetup } {
   banner .code:n = {
     \clist_map_variable:nNn { odd,even } \@tempa {
@@ -410,11 +401,10 @@
 \newcommand{\jlreqtrimmarkssetup}[1]{%
   \keys_set:nn { jlreqtrimmarkssetup } {#1}
 }
-\ExplSyntaxOff
 \@onlypreamble\jlreqtrimmarkssetup
 \@bannertoken{%
   \jobname\space(\number\year-\two@digits\month-\two@digits\day
-  \space\two@digits\hour:\two@digits\minute)%
+  \space\two@digits\hour :\two@digits\minute)%
 }
 \jlreqtrimmarkssetup{
   banner={\the\@bannertoken},
@@ -490,11 +480,10 @@
 \def\jlreq@trimmarks@bleed{3mm}
 % left=gutter?
 \def\ifjlreq@trimmarks@leftisgutter{%
-  \ifjlreq@trimmarks@tate{%
-    \jlreq@if{\ifnum 0\ifodd\c@page 1\fi\if@twoside\else 1\fi>0 \fi}{\@secondoftwo}{\@firstoftwo}%
-  }{%
-    \jlreq@if{\ifnum 0\ifodd\c@page 1\fi\if@twoside\else 1\fi>0 \fi}{\@firstoftwo}{\@secondoftwo}%
-  }%
+  \bool_if:nTF {
+    ( \legacy_if_p:n { jlreq@trimmarks@tate } && ( ! ( \int_if_odd_p:n { \c@page } || ! \legacy_if_p:n { @twoside } ) ) ) ||
+    ( ! \legacy_if_p:n { jlreq@trimmarks@tate } && ( \int_if_odd_p:n { \c@page } || ! \legacy_if_p:n { @twoside } ) )
+  }
 }
 \def\jlreq@trimmarks@bleed@left{\ifjlreq@trimmarks@leftisgutter{\jlreq@trimmarks@bleed@gutter}{\expandafter\csname jlreq@trimmarks@bleed@fore-edge\endcsname}}
 \def\jlreq@trimmarks@bleed@right{\ifjlreq@trimmarks@leftisgutter{\expandafter\csname jlreq@trimmarks@bleed@fore-edge\endcsname}{\jlreq@trimmarks@bleed@gutter}}
@@ -849,18 +838,18 @@
   \edef\jlreq@trimmarks@pttobp#1{\noexpand\strip@pt\noexpand\dimexpr\strip@pt\jlreq@resultdimen\noexpand\dimexpr0.9963\noexpand\dimexpr#1\unexpanded{\relax\relax\relax}}
   \edef\jlreq@trimmarks@trimboxsize{%
     [%
-      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperwidth - \paperwidth)/2}
-      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperheight - \paperheight)/2}
-      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperwidth + \paperwidth)/2}
+      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperwidth - \paperwidth)/2}~
+      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperheight - \paperheight)/2}~
+      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperwidth + \paperwidth)/2}~
       \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperheight + \paperheight)/2}%
     ]
   }
   \jlreq@tempcnta=\c@page
   \def\@tempa{%
     [%
-      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperwidth - \paperwidth)/2 - \jlreq@trimmarks@bleed@left}
-      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperheight - \paperheight)/2 - \jlreq@trimmarks@bleed@bottom}
-      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperwidth + \paperwidth)/2 + \jlreq@trimmarks@bleed@right}
+      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperwidth - \paperwidth)/2 - \jlreq@trimmarks@bleed@left}~
+      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperheight - \paperheight)/2 - \jlreq@trimmarks@bleed@bottom}~
+      \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperwidth + \paperwidth)/2 + \jlreq@trimmarks@bleed@right}~
       \jlreq@trimmarks@pttobp{(\jlreq@trimmarks@paperheight + \paperheight)/2 + \jlreq@trimmarks@bleed@top}%
     ]
   }
@@ -870,14 +859,14 @@
   \edef\jlreq@trimmarks@bleedboxsize@even{\@tempa}%
   \c@page=\jlreq@tempcnta
   \edef\jlreq@trimmarks@pdfattribute@odd{%
-    /TrimBox \jlreq@trimmarks@trimboxsize
-    \ifjlreq@trimmarks@show@artbox /ArtBox \jlreq@trimmarks@trimboxsize\fi
-    /BleedBox \jlreq@trimmarks@bleedboxsize@odd
+    /TrimBox~\jlreq@trimmarks@trimboxsize
+    \ifjlreq@trimmarks@show@artbox /ArtBox~\jlreq@trimmarks@trimboxsize\fi
+    /BleedBox~\jlreq@trimmarks@bleedboxsize@odd
   }
   \edef\jlreq@trimmarks@pdfattribute@even{%
-    /TrimBox \jlreq@trimmarks@trimboxsize
-    \ifjlreq@trimmarks@show@artbox /ArtBox \jlreq@trimmarks@trimboxsize\fi
-    /BleedBox \jlreq@trimmarks@bleedboxsize@even
+    /TrimBox~\jlreq@trimmarks@trimboxsize
+    \ifjlreq@trimmarks@show@artbox /ArtBox~\jlreq@trimmarks@trimboxsize\fi
+    /BleedBox~\jlreq@trimmarks@bleedboxsize@even
   }
   \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@pttobp}
   \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@trimboxsize}
@@ -887,9 +876,9 @@
   \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@pdfattribute@even}
 
   \begingroup
-    \c@page=1
+    \c@page=1\relax
     \jlreq@tempdima=\jlreq@trimmarks@bleed@left
-    \c@page=2
+    \c@page=2\relax
     \ifdim\jlreq@trimmarks@bleed@left=\jlreq@tempdima
       \global\let\jlreq@tempa\@firstoftwo
     \else
@@ -903,13 +892,13 @@
       \@tempa
     \fi
     \ifx f\jlreq@trimmarks@driver
-      \epreto\@outputtombow{\noexpand\special{pdf: put @thispage <<\jlreq@trimmarks@pdfattribute@odd>>}}
+      \epreto\@outputtombow{\noexpand\special{pdf:~put~@thispage~<<\jlreq@trimmarks@pdfattribute@odd>>}}
     \fi
     \ifx s\jlreq@trimmarks@driver
-      \edef\@tempa{\noexpand\special{ps:SDict begin
-        [ /TrimBox \jlreq@trimmarks@trimboxsize /PAGE pdfmark
-        \ifjlreq@trimmarks@show@artbox [ /ArtBox   \jlreq@trimmarks@trimboxsize /PAGE pdfmark \fi
-        [ /BleedBox \jlreq@trimmarks@bleedboxsize@odd /PAGE pdfmark
+      \edef\@tempa{\noexpand\special{ps:SDict~begin~
+        [~/TrimBox~\jlreq@trimmarks@trimboxsize /PAGE~pdfmark~
+        \ifjlreq@trimmarks@show@artbox [~/ArtBox~\jlreq@trimmarks@trimboxsize /PAGE~pdfmark~\fi
+        [~/BleedBox~\jlreq@trimmarks@bleedboxsize@odd /PAGE~pdfmark~
       end}}%
       \@tempa
     \fi
@@ -923,20 +912,20 @@
     \fi
     \ifx f\jlreq@trimmarks@driver
       \epreto\@outputtombow{%
-        \unexpanded{\ifodd\c@page\special}{pdf: put @thispage <<\jlreq@trimmarks@pdfattribute@odd>>}%
-        \unexpanded{\else\special}{pdf: put @thispage <<\jlreq@trimmarks@pdfattribute@even>>}\noexpand\fi
+        \unexpanded{\ifodd\c@page\special}{pdf:~put~@thispage~<<\jlreq@trimmarks@pdfattribute@odd>>}%
+        \unexpanded{\else\special}{pdf:~put~@thispage~<<\jlreq@trimmarks@pdfattribute@even>>}\noexpand\fi
       }
     \fi
     \ifx s\jlreq@trimmarks@driver
       \epreto\@outputtombow{%
-        \unexpanded{\ifodd\c@page\special}{ps:SDict begin
-          [ /TrimBox \jlreq@trimmarks@trimboxsize /PAGE pdfmark
-          \ifjlreq@trimmarks@show@artbox [ /ArtBox   \jlreq@trimmarks@trimboxsize /PAGE pdfmark \fi
-          [ /BleedBox \jlreq@trimmarks@bleedboxsize@odd /PAGE pdfmark
-        end}\unexpanded{\else\special}{ps:SDict begin
-          [ /TrimBox \jlreq@trimmarks@trimboxsize /PAGE pdfmark
-          \ifjlreq@trimmarks@show@artbox [ /ArtBox   \jlreq@trimmarks@trimboxsize /PAGE pdfmark \fi
-          [ /BleedBox \jlreq@trimmarks@bleedboxsize@even /PAGE pdfmark
+        \unexpanded{\ifodd\c@page\special}{ps:SDict~begin~
+          [~/TrimBox~\jlreq@trimmarks@trimboxsize /PAGE~pdfmark~
+          \ifjlreq@trimmarks@show@artbox [~/ArtBox~\jlreq@trimmarks@trimboxsize /PAGE~pdfmark~\fi
+          [~/BleedBox~\jlreq@trimmarks@bleedboxsize@odd /PAGE~pdfmark~
+        end}\unexpanded{\else\special}{ps:SDict~begin~
+          [~/TrimBox~\jlreq@trimmarks@trimboxsize /PAGE~pdfmark~
+          \ifjlreq@trimmarks@show@artbox [~/ArtBox~\jlreq@trimmarks@trimboxsize /PAGE~pdfmark~\fi
+          [~/BleedBox~\jlreq@trimmarks@bleedboxsize@even /PAGE~pdfmark~
         end}\noexpand\fi
       }
     \fi
@@ -946,5 +935,5 @@
 % always true
 \tombowtrue
 
-
+\ExplSyntaxOff
 \endinput

@@ -1623,7 +1623,7 @@
 % 見出しの直前に実行される
 \NewHook{./heading/before}
 % 見出し名一覧を格納する
-\def\jlreq@heading@allheadings{}
+\seq_new:N \l__jlreq_heading_allheadings_seq
 % 目次を出力する命令\l@<命令名>を作る命令を作る．{1 = 命令名}{2 = レベル}{3 = ラベルのフォーマット}
 % 結果は\jlreq@resultに入る．
 \def\jlreq@heading@make@l@#1#2#3{%
@@ -1680,9 +1680,8 @@
 }
 \cs_set:Nn \__jlreq_declare_tobira_heading:nnn {
   \ProvideHook{jlreq/heading/before/#1}
-  \def\jlreq@do{\@removeelement{#1}}%
-  \expandafter\jlreq@do\expandafter{\jlreq@heading@allheadings}{\jlreq@heading@allheadings}%
-  \appto{\jlreq@heading@allheadings}{,#1}%
+  \seq_put_right:Nn \l__jlreq_heading_allheadings_seq {#1}
+  \seq_remove_duplicates:N \l__jlreq_heading_allheadings_seq
   \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}%
   \expandafter\edef\csname jlreq@heading@setting@#1\endcsname{\unexpanded{#3}}%
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewTobiraHeading}%
@@ -1880,17 +1879,17 @@
 \expandafter\def\expandafter\jlreq@BlockHeading@start@afterheading@skipspaces\space{\jlreq@BlockHeading@start@afterheading}
 \def\jlreq@BlockHeading@start@afterheading@ii{%
   \def\jlreq@do{\jlreq@BlockHeading@spaces@output}%
-  \clist_map_inline:Nn \jlreq@BlockHeading@allheadings {
+  \seq_map_inline:Nn \l__jlreq_BlockHeading_allheadings_seq {
     \expandafter\ifx\csname##1\endcsname\jlreq@nextchar\def\jlreq@do{}\fi
   }%
   % \jlreq@BlockHeading@HeadingSpaces@ignoretokens(@noargument)内のものは特別扱いする
-  \tl_map_variable:NNn \jlreq@BlockHeading@HeadingSpaces@ignoretokens@noargument \@tempa {
-    \expandafter\ifx\@tempa\jlreq@nextchar
+  \tl_map_inline:Nn \jlreq@BlockHeading@HeadingSpaces@ignoretokens@noargument {
+    \ifx##1\jlreq@nextchar
       \def\jlreq@do{\jlreq@BlockHeading@start@afterheading@saveafter@cs@noargument}%
     \fi
   }%
-  \tl_map_variable:NNn \jlreq@BlockHeading@HeadingSpaces@ignoretokens \@tempa {
-    \expandafter\ifx\@tempa\jlreq@nextchar
+  \tl_map_inline:Nn \jlreq@BlockHeading@HeadingSpaces@ignoretokens {
+    \ifx##1\jlreq@nextchar
       \def\jlreq@do{\jlreq@BlockHeading@start@afterheading@saveafter@cs}%
     \fi
   }%
@@ -2197,17 +2196,17 @@
 
 \newbox\jlreq@BlockHeading@start@label@box
 % \DeclareBlockHeading{命令名}{レベル}{設定}
-\def\jlreq@BlockHeading@allheadings{}% 別行見出し一覧
+\seq_new:N \l__jlreq_BlockHeading_allheadings_seq
 \NewDocumentCommand {\DeclareBlockHeading} { m m +m } {
   \__jlreq_declare_block_heading:nnn {#1}{#2}{#3}
 }
 \cs_set:Nn \__jlreq_declare_block_heading:nnn {
   \ProvideHook{jlreq/heading/before/#1}
   \def\jlreq@do{\@removeelement{#1}}%
-  \expandafter\jlreq@do\expandafter{\jlreq@heading@allheadings}{\jlreq@heading@allheadings}%
-  \appto\jlreq@heading@allheadings{,#1}%
-  \expandafter\jlreq@do\expandafter{\jlreq@BlockHeading@allheadings}{\jlreq@BlockHeading@allheadings}%
-  \appto\jlreq@BlockHeading@allheadings{,#1}%
+  \seq_put_right:Nn \l__jlreq_heading_allheadings_seq {#1}
+  \seq_remove_duplicates:N \l__jlreq_heading_allheadings_seq
+  \seq_put_right:Nn \l__jlreq_BlockHeading_allheadings_seq {#1}
+  \seq_remove_duplicates:N \l__jlreq_BlockHeading_allheadings_seq
   \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}%
   \expandafter\edef\csname jlreq@heading@setting@#1\endcsname{\unexpanded{#3}}%
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewBlockHeading}%
@@ -2268,6 +2267,9 @@
       },
       format .code:n = {\edef\jlreq@format{\unexpanded{##1}}},
       after_label_space .tl_set:N = \jlreq@after@label@space,
+      heading_text_second_indent .code:n = {
+        \ClassError { jlreq } { `heading_text_second_indent`~was~removed,~use~`second_heading_text_indent`~instead~(in~BlockHeading:~#1) }{\@ehc}
+      },
 %      {second_heading_text_indent,heading_text_second_indent}{%
       second_heading_text_indent .code:n = {
         \jlreq@parsecomma{##1}{%
@@ -2313,6 +2315,7 @@
           { nariyuki             } {\def\jlreq@pagebreak{}\jlreq@column@spanning@possiblefalse}
         }%
       },
+      pagestyle .tl_set:N = \l__jlreq_pagestyle_tl,
       % 後々数字を受け付けるようになったりするかもしれないので……
       column_spanning .code:n = {%
         \jlreq@tempatrue % validな入力に対してfalse
@@ -2331,6 +2334,7 @@
       },
       number .choices:nn = {true,false}{\csname jlreq@number\l_keys_choice_tl\endcsname},
     }%
+    \keys_set:nn { BlockHeading:#1 } { pagestyle = {} }
     \keys_set:nn { BlockHeading:#1 } {#3}
     \def\jlreq@do{}% 初期化．これに最終処理を入れていく．
     % 入力チェック
@@ -2448,6 +2452,7 @@
         \noexpand\UseHook{jlreq/heading/before}%
         \noexpand\UseHook{jlreq/heading/before/#1}%
         \expandonce{\jlreq@pagebreak}%
+        \tl_if_empty:NF \l__jlreq_pagestyle_tl { \exp_not:N \thispagestyle {\exp_not:o { \l__jlreq_pagestyle_tl } } }
         \unexpanded{\jlreq@BlockHeading@start{#1}{#2}}%
         {{\expandonce{\jlreq@align}}{\expandonce{\jlreq@indent}}{\expandonce{\jlreq@end@indent}}\expandonce{\jlreq@spaceset}{\expandonce{\jlreq@allowbreak@evenpage}}}%
         {\ifjlreq@number\else -\fi}%
@@ -2832,8 +2837,8 @@
 \cs_set:Nn \__jlreq_declare_runin_heading:nnn {
   \hook_provide:n { jlreq/heading/before/#1 }
   \def\jlreq@do{\@removeelement{#1}}%
-  \expandafter\jlreq@do\expandafter{\jlreq@heading@allheadings}{\jlreq@heading@allheadings}%
-  \appto\jlreq@heading@allheadings{,#1}%
+  \seq_put_right:Nn \l__jlreq_heading_allheadings_seq {#1}
+  \seq_remove_duplicates:N \l__jlreq_heading_allheadings_seq
   \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}%
   \expandafter\edef\csname jlreq@heading@setting@#1\endcsname{\unexpanded{#3}}%
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewRuninHeading}%
@@ -3089,25 +3094,9 @@
 
 % 全ての見出しにマクロ#1を適用する．
 \def\jlreq@heading@execmacro@toallheadings#1{%
-  \begingroup
-    \def\jlreq@do{}%
-    \ifx\jlreq@heading@allheadings\@undefined
-      \jlreq@heading@execmacro@toallheadings@{#1}{chapter,part,section,subsection,subsubsection,paragraph,subparagraph}%
-    \else
-      \def\@tempa{\jlreq@heading@execmacro@toallheadings@{#1}}%
-      \expandafter\@tempa\expandafter{\jlreq@heading@allheadings}%
-    \fi
-  \expandafter\endgroup
-  \jlreq@do
+  \seq_map_inline:Nn \l__jlreq_heading_allheadings_seq { #1{##1} }
 }
 
-\def\jlreq@heading@execmacro@toallheadings@#1#2{
-  \clist_map_inline:nn {#2} {
-    \@ifundefined{##1}{}{%
-      \eappto\jlreq@do{\noexpand#1{\expandonce{##1}}}%
-    }%
-  }%
-}
 \def\jlreq@clearheadingmarks#1{%
   \@ifundefined{#1mark}{}{%
     \expandafter\let\csname#1mark\endcsname=\@gobble
@@ -3996,14 +3985,12 @@
 
 % レベル#1より低いレベルの見出しの**markを\markboth{}{}にする
 \def\jlreq@pagestyle@setclearmark#1{%
-  \clist_map_inline:Nn \jlreq@heading@allheadings {
-    \tracingmacros=1
+  \seq_map_inline:Nn \l__jlreq_heading_allheadings_seq {
     \@ifundefined{##1}{}{%
       \@ifundefined{jlreq@heading@level@##1}{}{%
         \ifnum\csname jlreq@heading@level@##1\endcsname<#1\relax\expandafter\def\csname##1 mark\endcsname####1{\markboth{}{}}\fi
       }%
     }%
-    \tracingmacros=0
   }%
 }
 

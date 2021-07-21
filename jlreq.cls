@@ -621,11 +621,11 @@
 \def\@ptsize{0}
 %.. (x)kanjiskip
 \ifjlreq@narrow@kanjiskip
-  \providecommand*{\jlreqkanjiskip}{0pt~plus~.1\jlreq@zw~minus~.01\jlreq@zw}
+  \providecommand*{\jlreqkanjiskip}{0pt~plus~.1\jlreq@zw ~minus~.01\jlreq@zw}
 \else
-  \providecommand*{\jlreqkanjiskip}{0pt~plus~0.25\jlreq@zw~minus~0pt}
+  \providecommand*{\jlreqkanjiskip}{0pt~plus~0.25\jlreq@zw ~minus~0pt}
 \fi
-\providecommand*{\jlreqxkanjiskip}{0.25\jlreq@zw plus 0.25\jlreq@zw minus 0.125\jlreq@zw}
+\providecommand*{\jlreqxkanjiskip}{0.25\jlreq@zw ~plus~0.25\jlreq@zw ~minus~0.125\jlreq@zw}
 \jlreq@if{\ifx l\jlreq@engine\fi}{
   \AtBeginDocument{%
     \ltjsetparameter{kanjiskip=\jlreqkanjiskip}%
@@ -721,7 +721,7 @@
     \exp_after:wN \group_end: \l_jlreq_do:
     \jlreq@useoriginalcs{DeclareFontShape} {#1} {#2} {#3} {#4} {#5} {#6}
   }
-    \DeclareFontShape{JY3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont :jfm=jlreq;script=latn;-kern}{}
+  \DeclareFontShape{JY3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont :jfm=jlreq;script=latn;-kern}{}
   \DeclareFontShape{JY3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont :jfm=jlreq;script=latn;-kern}{}
   \DeclareFontShape{JT3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont :jfm=jlreqv;script=latn;-kern}{}
   \DeclareFontShape{JT3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont :jfm=jlreqv;script=latn;-kern}{}
@@ -2185,29 +2185,12 @@
   \@ifundefined{#1mark}{\expandafter\let\csname #1mark\endcsname\@gobble}{}%
   \jlreq@heading@make@maketoc{#1}{#2}%
   \begingroup
-    \def\jlreq@font{}%
-    \def\jlreq@subtitle@font{}%
-    \def\jlreq@indent{0\jlreq@zw}%
-    \def\jlreq@end@indent{0\jlreq@zw}%
-    \def\jlreq@align{l}%
-    \edef\jlreq@format{\unexpanded{##1##2##3}}%
     \edef\jlreq@heading@text@format{\unexpanded{##1}}%
-    \def\jlreq@pagebreak{}%
-    \def\jlreq@label@format{\@seccntformat{#1}}%
-    \newif\ifjlreq@second@text@indent@withlabel\jlreq@second@text@indent@withlabeltrue
-    \def\jlreq@after@label@space{1\jlreq@zw}%
-    \def\jlreq@second@heading@text@indent@wlabel{0pt}%
-    \def\jlreq@second@heading@text@indent@wolabel{0pt}%
-    \edef\jlreq@subtitle@format{\unexpanded{---##1---}}%
-    \newif\ifjlreq@subtitleindent@withlabel\jlreq@subtitleindent@withlabeltrue
-    \def\jlreq@subtitle@indent{1\jlreq@zw}%
-    \def\jlreq@afterindent{\@afterindenttrue}%
-    \def\jlreq@allowbreak@evenpage{*}% 偶数ページでも改ページを許可するならば空，そうでないなら*
-    \newif\ifjlreq@subtitle@break\jlreq@subtitle@breaktrue
-    \def\jlreq@subtitle@indent{1\jlreq@zw}%
-    \def\jlreq@column@spanning{false}%
-    \newif\ifjlreq@column@spanning@possible\jlreq@column@spanning@possiblefalse
-    \newif\ifjlreq@number \jlreq@numbertrue
+    \newif\ifjlreq@second@text@indent@withlabel
+    \newif\ifjlreq@subtitleindent@withlabel
+    \newif\ifjlreq@subtitle@break
+    \newif\ifjlreq@column@spanning@possible
+    \newif\ifjlreq@number
     % a,bみたいなのをaとbにわける．カンマがなければbは空．引数を{a}{b}として##2を呼び出す．
     \def\jlreq@parsecomma##1##2{%
       \jlreq@helper@dividebycomma{##1}%
@@ -2266,10 +2249,10 @@
           \def\jlreq@subtitle@indent{##1}%
         }%
       },
-      subtitle_break .choices:nn = {true,false}{\csname jlreq@subtitle@break\l_keys_choice_tl\endcsname},
-      afterindent .choices:nn = {true,false}{\edef\jlreq@afterindent{\expandonce{\csname @afterindent\l_keys_choice_tl\endcsname}}},
+      subtitle_break .choices:nn = {true,false}{\csname jlreq@subtitle@break##1\endcsname},
+      afterindent .choices:nn = {true,false}{\edef\jlreq@afterindent{\expandonce{\csname @afterindent##1\endcsname}}},
       allowbreak_if_evenpage .choices:nn = {true,false}{%
-        \str_if_eq:VnTF \l_keys_choice_tl {true}
+        \str_if_eq:nnTF {##1} {true}
           {\def\jlreq@allowbreak@evenpage{}}
           {\def\jlreq@allowbreak@evenpage{*}}
       },
@@ -2299,7 +2282,14 @@
       },
       number .choices:nn = {true,false}{\csname jlreq@number\l_keys_choice_tl\endcsname},
     }%
-    \keys_set:nn { BlockHeading:#1 } { pagestyle = {} }
+    \keys_set:nn { BlockHeading:#1 } {
+      font = {}, subtitle_font = {},
+      indent = {0pt}, end_indent = {0pt}, align = {left}, subtitle_indent = {1\jlreq@zw}, afterindent = {true},
+      second_heading_text_indent = {0pt}, after_label_space = {1\jlreq@zw}, 
+      pagebreak = {nariyuki}, allowbreak_if_evenpage = {false}, subtitle_break = {true}, column_spanning = {false}, 
+      format = {##1##2##3}, label_format = {\@seccntformat{#1}}, subtitle_format = {---##1---}, number = {true},
+      pagestyle = {}
+    }
     \keys_set:nn { BlockHeading:#1 } {#3}
     \def\jlreq@do{}% 初期化．これに最終処理を入れていく．
     % 入力チェック
@@ -4240,36 +4230,14 @@
 \NewDocumentCommand{\DeclarePageStyle} { m +m } {%
   \expandafter\edef\csname jlreq@pagestyle@setting@#1\endcsname{\unexpanded{#2}}%
   \begingroup
-    \def\jlreq@nombre@i@position{}%
-    \def\jlreq@nombre@i{\thepage}%
-    \def\jlreq@running@head@i@position{}%
-    \def\jlreq@odd@running@head@i{}%
-    \def\jlreq@even@running@head@i{}%
-    \def\jlreq@command{}%
-    \def\jlreq@mark@format{}%
-    \def\jlreq@font{}%
-    \def\jlreq@nombre@font{}%
-    \def\jlreq@running@head@font{}%
     % フォーマットを空という可能性もあるかもしれないので，デフォルト値は\relaxで表す．
     \let\jlreq@oddheadformat\relax
     \let\jlreq@evenheadformat\relax
     \let\jlreq@oddfootformat\relax
     \let\jlreq@evenfootformat\relax
     % 柱とノンブルの間
-    \def\jlreq@gap{1.5\jlreq@zw}%
-    \def\jlreq@nombre@gap{}%
-    \def\jlreq@running@head@gap{}%
-    \newif\ifjlreq@clearmarkcommand\jlreq@clearmarkcommandtrue
-    \newif\ifjlreq@pstate\jlreq@pstatefalse % PageStyleTATE
-    \clist_map_variable:nNn {ii,iii} \jlreq@i {
-      \expandafter\def\csname jlreq@nombre@\jlreq@i @position\endcsname{}%
-      \expandafter\def\csname jlreq@running@head@\jlreq@i @position\endcsname{}%
-      \expandafter\def\csname jlreq@nombre@\jlreq@i\endcsname{}%
-      \expandafter\def\csname jlreq@odd@running@head@\jlreq@i\endcsname{}%
-      \expandafter\def\csname jlreq@even@running@head@\jlreq@i\endcsname{}%
-      \expandafter\def\csname jlreq@nombre@\jlreq@i @font\endcsname{}%
-      \expandafter\def\csname jlreq@running@head@\jlreq@i @font\endcsname{}%
-    }%
+    \newif\ifjlreq@clearmarkcommand
+    \newif\ifjlreq@pstate % PageStyleTATE
     \keys_define:nn { PageStyle:#1 } {
       tate .code:n = {\jlreq@pstatetrue},
       yoko .code:n = {\jlreq@pstatefalse},
@@ -4311,6 +4279,17 @@
       even_running_head_iii .tl_set:N = \jlreq@even@running@head@iii,
       nombre_iii_font .tl_set:N = \jlreq@nombre@iii@font,
       running_head_iii_font .tl_set:N = \jlreq@running@head@iii@font
+    }
+    \keys_set:nn { PageStyle:#1 } {
+      yoko,
+      nombre_font = {}, nombre_position = {}, nombre = {\thepage},
+      nombre_ii_font = {}, nombre_ii_position = {}, nombre_ii = {},
+      nombre_iii_font = {}, nombre_iii_position = {}, nombre_iii = {},
+      running_head_font = {}, running_head_position = {}, odd_running_head = {}, even_running_head = {}, 
+      running_head_ii_font = {}, running_head_ii_position = {}, odd_running_head_ii = {}, even_running_head_ii = {}, 
+      running_head_iii_font = {}, running_head_iii_position = {}, odd_running_head_iii = {}, even_running_head_iii = {}, 
+      command = {}, mark_format = {}, gap = {1.5\jlreq@zw}, nombre_gap = {}, running_head_gap = {},
+      clear_markcommand = {true}, 
     }
     \keys_set:nn { PageStyle:#1 } {#2}
     % ノンブル同士の間や柱同士の間のデフォルトはノンブルと柱の間の空き量

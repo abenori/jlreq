@@ -142,6 +142,13 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
 * 2021-05-28
     - Extended `caption_align` in `\jlreqsetup`.
     - Removed some `\ifthenelse`.
+* 2021-07-22
+    - Stopped to use `\IfHookExistsTF`.
+    - Added `\akigumi`.
+    - Stopped to load packages `xkeyval` and `ifthen`.
+    - It has more compatibility with expl3.
+    - Added `pagestyle` to `\DeclareBlockHeading`.
+    - Fixed bugs.
 
 
 --------------

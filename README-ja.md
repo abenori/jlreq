@@ -19,7 +19,7 @@
 ## 動作環境
 pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内部で読み込みます．
 
-* （常時）：xkeyval,etoolbox,ifthen,lmodern
+* （常時）：l3keys2e,etoolbox,lmodern
 * （LuaLaTeX非利用時）：everyhook
 * （LuaLaTeX利用時）：luatexja,luatexja-adjust
 
@@ -75,6 +75,9 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
 
 ### `\jidori`
 `\jidori{<寸法>}{<中身>}`により，中身を寸法の長さに字取りしたものを出力することができます．
+
+### `\akigumi`
+`\akigumi{<寸法>}{<中身>}`により，中身の文字間を寸法の長さとして空き組した結果を出力することができます．ただしLuaLaTeX利用時以外は正しい出力結果とはなりません．
 
 ### `\jafontsize`
 和文フォントサイズを指定する`\fontsize`です．クラスオプションで`jafontscale=0.9`とされている場合，`\fontsize{9pt}{15pt}`とすると和文フォントのサイズは`8.1pt`となりますが，`\jafontsize{9pt}{15pt}`とすると`9pt`となります．（欧文フォントサイズは`10pt`となる．）なお，第二引数は`\fontsize`の第二引数と全く同じです．
@@ -255,6 +258,7 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
 * `subtitle_break=[true/false]`：見出し文字列と副題の間を改行するか指定します．
 * `allowbreak_if_evenpage=[true/false]`：見出しが偶数ページにあった場合，その直後の改ページを許可します．
 * `pagebreak=[clearpage/cleardoublepage/clearcolumn/nariyuki/begin_with_odd_page/begin_with_even_page]`：見出し直前の改ページを指定します．それぞれ，改ページ，`\cleardoublepage`実行，改段，なりゆき，奇数ページ開始，偶数ページ開始，です．
+* `pagestyle=<ページスタイル名>`：見出し箇所のページスタイルを指定します．
 * `afterindent=[true/false]`：見出し直後の段落の字下げを行うかを指定します．
 * `column_spanning=[true/false]`： 段抜きの見出しにします．`pagebreak=nariyuki`または`pagebreak=clearcolumn`の時には無視されます．
 * `number=[true/false]`：採番を行うかを指定します．`\NewTobiraHeading`と同様の注意が必要です．
@@ -502,6 +506,14 @@ JFMの名前は次の通りです．`[]`で囲まれている文字は設定に�
 * 2021-05-28
     - `\jlreqsetup`の`caption_align`を拡張．
     - `\ifthenelse`を少し削除．
+* 2021-07-22
+    - `\IfHookExistsTF`の利用を中止．
+    - `\akigumi`を追加．
+    - `xkeyval`パッケージと`ifthen`パッケージの利用をやめた．
+    - expl3コードとの親和性を高めた．
+    - `\DeclareBlockHeading`に`pagestyle`を追加．
+    - 
+
 
 --------------
 Noriyuki Abe

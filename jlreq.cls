@@ -5,7 +5,7 @@
 %%
 % (based on JLReq 20200811 https://www.w3.org/TR/2020/NOTE-jlreq-20200811/)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{jlreq}[2021/05/28 jlreq]
+\ProvidesClass{jlreq}[2021/07/22 jlreq]
 \RequirePackage{l3keys2e,etoolbox}
 \RequirePackage{jlreq-helpers}
 
@@ -5812,7 +5812,6 @@
       }
       \tl_if_empty:nF {#2} {
         \skip_set:Nn \l_jlreq_tmpa_skip { #2 }
-        \cs_set:Npx \jlreqxkanjiskip { \skip_use:N \l_jlreq_tmpa_skip }
         \cs_set:Nx \l_jlreq_do: { \exp_not:o \l_jlreq_do:
           \exp_not:N \cs_set:Npx \exp_not:N \jlreqxkanjiskip { \skip_use:N \l_jlreq_tmpa_skip }
           \exp_not:N \skip_set:Nn \exp_not:N \xkanjiskip { \skip_use:N \l_jlreq_tmpa_skip }

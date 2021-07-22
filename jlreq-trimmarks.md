@@ -155,6 +155,9 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - `jlreq-trimmarks` outputs the contents in `\@bannertoken` when `banner` in `\jlreqtrimmarkssetup` is not used.
     - `\@bannertoken` is ignored when `banner` in `\jlreqtrimmarkssetup` is used.
     - `\@bannerfont` is ignored when `banner_font` in `\jlreqtrimmarkssetup` is used.
+* 2021-07-22
+    - It has more compatibility with expl3.
+
 
 --------------
 Noriyuki Abe

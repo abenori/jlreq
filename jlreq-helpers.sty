@@ -2,8 +2,8 @@
 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{jlreq-helpers}[2021/07/22 jlreq-helpers]
-\RequirePackage{etoolbox}
 
+\ExplSyntaxOn
 %. helper1
 \newcount\jlreq@tempcnta
 \newcount\jlreq@tempcntb
@@ -32,9 +32,9 @@
 \long\def\jlreq@deleteuntileendmark#1\jlreq@endmark{}
 
 \def\jlreq@expandafter@ii{\expandafter\expandafter\expandafter}
-\edef\jlreq@expandafter@iii{\expandonce{\jlreq@expandafter@ii}\noexpand\expandafter\expandonce{\jlreq@expandafter@ii}}
-\edef\jlreq@expandtwice#1{\expandonce{\jlreq@expandafter@ii}\noexpand\unexpanded\expandonce{\jlreq@expandafter@ii}{#1}}
-\edef\jlreq@expand@three#1{\expandonce{\jlreq@expandafter@iii}\noexpand\unexpanded\expandonce{\jlreq@expandafter@iii}{#1}}
+\edef\jlreq@expandafter@iii{\exp_not:o {\jlreq@expandafter@ii}\noexpand\expandafter\exp_not:o {\jlreq@expandafter@ii}}
+\edef\jlreq@expandtwice#1{\exp_not:o {\jlreq@expandafter@ii}\noexpand\unexpanded\exp_not:o {\jlreq@expandafter@ii}{#1}}
+\edef\jlreq@expand@three#1{\exp_not:o {\jlreq@expandafter@iii}\noexpand\unexpanded\exp_not:o {\jlreq@expandafter@iii}{#1}}
 
 % \jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark@の形で使う
 % 二回展開すると，#1の先頭（ただし空白は無視される）を取り出す．#1が空の場合は\jlreq@uniqtoken，先頭が{の場合は\bgroupとなる
@@ -46,8 +46,8 @@
 % #1の先頭トークンが#2か（ただし#1が空ならば#2=\jlreq@uniqtoken，#1={ならば#2=\bgroupでTRUEとなる）
 \long\edef\jlreq@iffirsttoken#1#2{%
   % スペースチェック
-  \unexpanded{\expandafter\expandafter\expandafter\jlreq@deleteuntileendmark\expandafter\ifx\expandafter}\expandonce{\space}\noexpand\detokenize{#1}\unexpanded{\@undefined\jlreq@endmark\expandafter\@firstoftwo\else\jlreq@endmark\expandafter\@secondoftwo\fi}{%
-    \noexpand\ifx\expandonce{\space}#2\unexpanded{\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}%
+  \unexpanded{\expandafter\expandafter\expandafter\jlreq@deleteuntileendmark\expandafter\ifx\expandafter}\exp_not:o {\space}\noexpand\detokenize{#1}\unexpanded{\@undefined\jlreq@endmark\expandafter\@firstoftwo\else\jlreq@endmark\expandafter\@secondoftwo\fi}{%
+    \noexpand\ifx\exp_not:o {\space}#2\unexpanded{\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}%
   }{%
     \noexpand\jlreq@iffirsttoken@ignorespaces{#1}{#2}%
   }%
@@ -69,7 +69,7 @@
 % #1の先頭が引数なしのマクロか
 \long\def\jlreq@ifmacro@noargument#1{%
   \jlreq@ifempty{#1}{\@secondoftwo}{%
-    \jlreq@iffirsttoken{#1}{ }{\@secondoftwo}{%
+    \jlreq@iffirsttoken{#1}{~}{\@secondoftwo}{%
       \expandafter\expandafter\expandafter\jlreq@ifmacro@noargument@\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark@
 }}}
 \long\def\jlreq@ifmacro@noargument@#1{\expandafter\jlreq@ifmacro@noargument@@\expandafter{\meaning #1}}
@@ -146,7 +146,7 @@
     \def\jlreq@tempb{}% 消していない分を放り込んでいく
     \jlreq@tempatrue% 最初の\jlreq@tempbへの追加か．
     \jlreq@helper@removeelement@#2,\jlreq@endmark,%
-    \edef\jlreq@do{\unexpanded{\def#3}{\expandonce{\jlreq@tempb}}}%
+    \edef\jlreq@do{\unexpanded{\def#3}{\exp_not:o {\jlreq@tempb}}}%
   \expandafter\endgroup
   \jlreq@do
 }
@@ -154,7 +154,7 @@
   \jlreq@ifendmark{#1}{}{%
     \edef\@tempa{\unexpanded{#1}}%
     \ifx\jlreq@tempa\@tempa\expandafter\@gobble\else\expandafter\@firstofone\fi{%
-      \eappto\jlreq@tempb{\ifjlreq@tempa\else,\fi\unexpanded{#1}}%
+      \tl_put_right:Nx \jlreq@tempb{\ifjlreq@tempa\else,\fi\unexpanded{#1}}%
       \jlreq@tempafalse
     }%
     \jlreq@helper@removeelement@
@@ -174,6 +174,7 @@
 }
 % 空白を無視しない\@ifsart
 \newcommand*{\jlreq@ifstar}[2]{\jlreq@ifnextchar *{\edef\reserved@a*{\unexpanded{#1}}\reserved@a}{#2}}
+
 % カンマで区切って，その前と後ろを\jlreq@resulta,\jlreq@resultbに入れる
 % もしカンマがない場合は\ifjlreq@resultがfalseになる．
 \newcommand*{\jlreq@helper@dividebycomma}[1]{\jlreq@helper@dividebycomma@#1,\jlreq@endmark}
@@ -202,61 +203,6 @@
     \global\setbox\jlreq@resultbox=\copy\voidb@x
   \fi
 }
-
-% 簡易なkeyvalのパース．
-% \jlreq@parsekeyval*[family=jlreq@key]{ % *ありは\setkeys*を使う
-%  {key}{\def\val{#1}}
-%  {key1,key2}{\def\val{#1}} % key1=valとkey2=valを受け付けるようになる
-%  *{key}{\def\val{#1}} % デフォルト値を空文字列にする
-%  {key}[choice1,choice2]{\def\valchoice{#1}}
-%}{parse対象}
-%\newcommand*{\jlreq@parsekeyval}{%
-%  \@ifstar{\jlreq@helper@parsekeyval@{*}}{\jlreq@helper@parsekeyval@{}}%
-%}
-%\def\jlreq@helper@parsekeyval@#1{%
-%  \@ifnextchar[{\jlreq@helper@parsekeyval@@{#1}}{\jlreq@helper@parsekeyval@@{#1}[jlreq@key]}%
-%}
-%\long\def\jlreq@helper@parsekeyval@@#1[#2]#3#4{%
-%  \begingroup
-%    \def\jlreq@do{}% \setkeysの結果処理がここに入れられる（よってループ内で利用不可）
-%    \jlreq@helper@parsekeyval@@@{#2}#3{\jlreq@endmark}%
-%    \setkeys#1{#2}{#4}%
-%  \expandafter\endgroup
-%  \jlreq@do
-%}
-%\def\jlreq@helper@parsekeyval@@@#1#2#{%
-%  \jlreq@iffirsttoken@ignorespaces{#2}{*}{%
-%    \jlreq@helper@parsekeyval@@@definekeywithdefault{#1}%
-%  }{%
-%    \jlreq@helper@parsekeyval@@@@{#1}%
-%  }%
-%}
-%\long\def\jlreq@helper@parsekeyval@@@@#1#2{%
-%  \jlreq@ifendmark{#2}{}{%
-%    \@ifnextchar[{\jlreq@helper@parsekeyval@@@choicekey{#1}{#2}}{\jlreq@helper@parsekeyval@@@definekey{#1}{#2}}%
-%  }%
-%}
-%\long\def\jlreq@helper@parsekeyval@@@choicekey#1#2[#3]#4{%
-%  \@for\@tempa:=#2\do{%
-%    \edef\jlreq@next{\unexpanded{\define@choicekey{#1}}{\expandonce{\@tempa}}}%
-%    \jlreq@next{#3}{\eappto\jlreq@do{\unexpanded{#4}}}%
-%  }%
-%  \jlreq@helper@parsekeyval@@@{#1}%
-%}
-%\long\def\jlreq@helper@parsekeyval@@@definekeywithdefault#1#2#3{%
-%  \@for\@tempa:=#2\do{%
-%    \edef\jlreq@next{\unexpanded{\define@key{#1}}{\expandonce{\@tempa}}}%
-%    \jlreq@next[]{\eappto\jlreq@do{\unexpanded{#3}}}%
-%  }%
-%  \jlreq@helper@parsekeyval@@@{#1}%
-%}
-%\long\def\jlreq@helper@parsekeyval@@@definekey#1#2#3{%
-%  \@for\@tempa:=#2\do{%
-%    \edef\jlreq@next{\unexpanded{\define@key{#1}}{\expandonce{\@tempa}}}%
-%    \jlreq@next{\eappto\jlreq@do{\unexpanded{#3}}}%
-%  }%
-%  \jlreq@helper@parsekeyval@@@{#1}%
-%}
 
 % キー指定しないkeyval（独自実装）
 % \jlreq@parsekeyval@nokey{<action>}{<parse対象>}
@@ -292,48 +238,27 @@
   \jlreq@remove@spaceandbracket{#2}{\jlreq@tempa}%
   \jlreq@remove@spaceandbracket{#3}{\jlreq@tempb}%
   \ifx\jlreq@tempb\@empty\else
-    \edef\@tempa{\noexpand\jlreq@parsekeyval@nokey@iv{#1}{\expandonce{\jlreq@tempb}}{\expandonce{\jlreq@tempa}}}%
+    \edef\@tempa{\noexpand\jlreq@parsekeyval@nokey@iv{#1}{\exp_not:o {\jlreq@tempb}}{\exp_not:o {\jlreq@tempa}}}%
     \@tempa
   \fi
   \jlreq@parsekeyval@nokey@i@wuniq\jlreq@uniqtoken
 }
 \long\def\jlreq@parsekeyval@nokey@iv#1#2#3{%
-  \eappto\jlreq@do{%
+  \tl_put_right:Nx \jlreq@do{%
     \unexpanded{\let\ifjlreq@parsekeyval@nokey@novalue}\jlreq@ifempty{#1}{\noexpand\@secondoftwo}{\noexpand\@firstoftwo}%
-    \expandonce{\jlreq@parsekeyval@nokey@execute{#2}{#3}}%
+    \exp_not:o {\jlreq@parsekeyval@nokey@execute{#2}{#3}}%
   }%
 }
 \long\def\jlreq@parsekeyval@nokey@removeequal#1{\jlreq@parsekeyval@nokey@removeequal@\jlreq@uniqtoken#1\jlreq@endmark}
 \long\def\jlreq@parsekeyval@nokey@removeequal@#1=\jlreq@endmark{\expandafter\unexpanded\expandafter{\@gobble#1}}
 
 % #1の先頭のスペースを削除し，#2に入れる．
-\long\def\jlreq@helper@trim#1#2{\edef#2{\jlreq@helper@trim@i{#1}}}
-\def\jlreq@do#1{% #1 = " "として後で実行
-  \long\def\jlreq@helper@trim@i##1{%
-    \jlreq@iffirsttoken{##1}{#1}%
-      % 先頭スペースの除去．{}を外さないために\jlreq@uniqtokenを前後にいったん挟む．
-      {\jlreq@helper@trim@ii##1\jlreq@uniqtoken\jlreq@endmark}%
-      % 後方スペースの除去．先頭に\jlreq@uniqtokenを加えて{}が外れるのを防ぐ．
-      {\jlreq@helper@trim@iii\jlreq@uniqtoken##1\jlreq@uniqtoken#1\jlreq@uniqtoken\jlreq@endmark}%
-  }
-  \long\def\jlreq@helper@trim@ii#1##1\jlreq@endmark{%
-    \expandafter\expandafter\expandafter\jlreq@helper@trim@i\jlreq@helper@trim@vi\jlreq@uniqtoken##1\jlreq@endmark
-  }
-  \long\def\jlreq@helper@trim@iii##1#1\jlreq@uniqtoken##2\jlreq@endmark{%
-    \jlreq@ifempty{##2}%
-      {\expandafter\jlreq@helper@trim@iv\jlreq@helper@trim@v##1\jlreq@endmark}%
-      {\jlreq@helper@trim@iii##1\jlreq@uniqtoken#1\jlreq@uniqtoken\jlreq@endmark}%
-  }%
-  \long\def\jlreq@helper@trim@iv##1{\expandafter\unexpanded\expandafter{\@gobble ##1}}
-  \long\def\jlreq@helper@trim@v##1\jlreq@uniqtoken\jlreq@endmark{{##1}}
-  \long\def\jlreq@helper@trim@vi##1\jlreq@uniqtoken\jlreq@endmark{\expandafter{\@gobble ##1}}
-}
-\jlreq@do{ }
+\long\def\jlreq@helper@trim#1#2{\edef#2{\tl_trim_spaces:n{#1}}}
 
 \long\def\jlreq@remove@spaceandbracket#1#2{%
   \begingroup
     \jlreq@helper@trim{#1}{\jlreq@tempa}%
-    \edef\jlreq@do{\unexpanded{\jlreq@remove@spaceandbracket@{#2}}\expandonce{\jlreq@tempa}\noexpand\jlreq@endmark}%
+    \edef\jlreq@do{\unexpanded{\jlreq@remove@spaceandbracket@{#2}}\exp_not:o {\jlreq@tempa}\noexpand\jlreq@endmark}%
   \expandafter\endgroup
   \jlreq@do
 }
@@ -368,7 +293,7 @@
     \ifx\jlreq@do\@undefined
       \edef\jlreq@do{\unexpanded{\jlreq@ifnextchar[{\jlreq@helper@switch@executeoption{#2}}{}}}%
     \else
-      \appto\jlreq@do{\@ifnextchar[{\jlreq@helper@removeoption}{}}%
+      \tl_put_right:Nn \jlreq@do{\@ifnextchar[{\jlreq@helper@removeoption}{}}%
     \fi
   \expandafter\endgroup
   \jlreq@do
@@ -413,7 +338,7 @@
 
 % 先頭にあるマクロを展開しまくった結果の先頭を#2に入れる．
 \newcommand{\jlreq@getfirsttoken@expandmacros}[2]{%
-  \jlreq@iffirsttoken{#1}{ }{\def#2{ }}{%
+  \jlreq@iffirsttoken{#1}{~}{\def#2{~}}{%
     \jlreq@ifempty{#1}{\def#2{}}{%
       \jlreq@ifmacro@noargument{#1}{%
         \expandafter\jlreq@getfirsttoken@expandmacros\expandafter{#1}{#2}%
@@ -428,7 +353,7 @@
 \long\def\jlreq@helper@checktokenlist#1#2{%
   \jlreq@ifendmark{#2}{\@firstoftwo}%
   {%
-    \jlreq@if{\ifnum0#1{#2}>0 \fi}%
+    \jlreq@if{\ifnum0#1{#2}>0~\fi}%
       {\jlreq@helper@checktokenlist{#1}}%
       {\expandafter\@secondoftwo\jlreq@deleteuntileendmark}%
   }%
@@ -449,7 +374,6 @@
   \ifx\@tempa\@tempb\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
 }
 
-\ExplSyntaxOn
 \newcommand*{\jlreq@helper@guessengine}{%
   \token_if_primitive:NTF \directlua {
     \let\jlreq@result=l
@@ -462,7 +386,6 @@
     }
   }
 }
-\ExplSyntaxOff
 
 % #1を\@undefinedに，既に\@undefinedならば#2{#1}を呼ぶ
 \newcommand*{\jlreq@helper@undefcs}[2]{%
@@ -538,18 +461,17 @@
     \jlreq@tempdimb=\dimexpr\jlreq@tempdima + 1pt\relax
     % \jlreq@tempdimaと\jlreq@tempdimbで挟んでいく二分法
     \jlreq@tempcnta=0 % 無限ループを避けるためのカウンタ
-    \loop\ifnum\numexpr\ifdim\dimexpr\jlreq@tempdimb - \jlreq@tempdima\relax>1sp 1\else0\fi*\ifnum\jlreq@tempcnta<100 1\else 0\fi\relax=1
+    \loop\ifnum\numexpr\ifdim\dimexpr\jlreq@tempdimb - \jlreq@tempdima\relax>1sp 1\else0\fi*\ifnum\jlreq@tempcnta<100~1\else 0\fi\relax=1
       \jlreq@tempdimc=\dimexpr(\jlreq@tempdima+\jlreq@tempdimb)/2\relax
       \ifdim\strip@pt\jlreq@tempdimc\@tempdimb>\@tempdima\jlreq@tempdimb=\jlreq@tempdimc
       \else\jlreq@tempdima=\jlreq@tempdimc\fi
-      \advance\jlreq@tempcnta by 1
+      \advance\jlreq@tempcnta by 1\relax
     \repeat
     \edef\jlreq@do{\noexpand\jlreq@resultdimen=\the\jlreq@tempdima\noexpand\relax}%
   \expandafter\endgroup
   \jlreq@do
 }
 
-\def\jlreq@for@noexpand#1:={\@for#1:=\@empty}
 
 \def\jlreq@helper@swap#1#2{%
   \let\jlreq@helper@swaptoken=#1%
@@ -563,6 +485,7 @@
   #2=\jlreq@helper@swaptoken\relax
   \let\jlreq@helper@swaptoken=\@undefined
 }
+\ExplSyntaxOff
 
 \endinput
 

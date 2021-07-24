@@ -7,6 +7,7 @@
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{jlreq}[2021/07/22 jlreq]
 \RequirePackage{l3keys2e,etoolbox}
+\RequirePackage{ifthen}
 \RequirePackage{jlreq-helpers}
 
 \ExplSyntaxOn

@@ -3936,7 +3936,7 @@
 }
 
 \def\jlreq@pagestyle@parse@position@@#1{%
-  \jlreq@switch{#1}{
+  \str_case_e:nnF { #1 } {
     {top}{\def\jlreq@tempc{#1}}
     {bottom}{\def\jlreq@tempc{#1}}
     {left}{\def\jlreq@tempd{#1}}
@@ -3945,8 +3945,7 @@
     {gutter}{\if@tate\def\jlreq@tempd{right}\else\def\jlreq@tempd{left}\fi}
     {fore_edge}{\if@tate\def\jlreq@tempd{left}\else\def\jlreq@tempd{right}\fi}
     {fore-edge}{\if@tate\def\jlreq@tempd{left}\else\def\jlreq@tempd{right}\fi}
-    {\ClassError{jlreq}{Invalid~position:~#1}{\@ehc}}
-  }%
+  }{\ClassError{jlreq}{Invalid~position:~#1}{\@ehc}}
 }
 
 % レベル#1より低いレベルの見出しの**markを\markboth{}{}にする
@@ -5512,7 +5511,7 @@
         \ifjlreq@parsekeyval@nokey@novalue{%
           \tl_put_right:Nx \jlreq@headingsettings {\exp_not:n {####1}}%
         }{%
-          \jlreq@switch{####1}{%
+          \str_case_e:nnF {####1} {%
             {heading_type}{%
               \lowercase{\def\jlreq@tempa{####2}}%
               \jlreq@switch{\jlreq@tempa}{
@@ -5525,14 +5524,13 @@
               }%
             }
             {heading_level}{\def\jlreq@level{####2}}
-            {%
-              \tl_if_empty:nTF {#1} { \@firstofone }{%
-                \str_if_eq:nnTF {####1} { restore } {
-                  \csname jlreq@tempa####2\endcsname\@gobble
-                }{\@firstofone}%
-              }%
-              {\tl_put_right:Nx \jlreq@headingsettings{\ifx\jlreq@headingsettings\@empty\else ,\fi\exp_not:n {####1={####2}}}}%
+          }{%
+            \tl_if_empty:nTF {#1} { \@firstofone }{%
+              \str_if_eq:nnTF {####1} { restore } {
+                \csname jlreq@tempa####2\endcsname\@gobble
+              }{\@firstofone}%
             }%
+            {\tl_put_right:Nx \jlreq@headingsettings{\ifx\jlreq@headingsettings\@empty\else ,\fi\unexpanded{####1={####2}}}}%
           }%
         }%
       }{##2}%

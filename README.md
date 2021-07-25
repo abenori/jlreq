@@ -149,6 +149,9 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - It has more compatibility with expl3.
     - Added `pagestyle` to `\DeclareBlockHeading`.
     - Fixed bugs.
+* 2021-07-25
+    - Load `ifthen` again. (Only for Re:VIEW, will be removed in future.)
+    - Fixed bugs.
 
 
 --------------

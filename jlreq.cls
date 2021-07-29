@@ -5,7 +5,7 @@
 %%
 % (based on JLReq 20200811 https://www.w3.org/TR/2020/NOTE-jlreq-20200811/)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{jlreq}[2021/07/25 jlreq]
+\ProvidesClass{jlreq}[2021/07/30 jlreq]
 \RequirePackage{l3keys2e}
 \RequirePackage{ifthen}
 \RequirePackage{jlreq-helpers}
@@ -779,9 +779,9 @@
   % \itemの直後は折り返し行頭と同じにする．
   \cs_set:Nn \__jlreq_hook_everypar: {}
   \def\item{%
-    \jlreq@useoriginalcs{item}%
     \cs_set:Nn \__jlreq_hook_everypar: { \cs_set:Nn \__jlreq_hook_everypar: {} \inhibitglue }
     \expandafter\everypar\expandafter{\the\everypar\__jlreq_hook_everypar:}
+    \jlreq@useoriginalcs{item}%
   }
 \else
   \AtBeginDocument{\PushPostHook{par}{\jlreq@hook@everypar}}

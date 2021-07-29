@@ -18,6 +18,7 @@
 \str_new:N \l_jlreq_tmpc_str
 \bool_new:N \l_jlreq_tmpa_bool
 \clist_new:N \l_jlreq_tmpa_clist
+\seq_new:N \l_jlreq_tmpa_seq
 \dim_new:N \l_jlreq_tmpa_dim
 \skip_new:N \l_jlreq_tmpa_skip
 \box_new:N \l_jlreq_tmpa_box
@@ -161,26 +162,26 @@
   11pt .code:n = {\def\jlreq@option@fontsize{11pt}}, 11pt .value_forbidden:n = true,
   12pt .code:n = {\def\jlreq@option@fontsize{12pt}}, 12pt .value_forbidden:n = true,
 }
-\keys_define:nn { jlreq } { jafontsize .tl_set:N = \jlreq@option@jafontsize}
-\keys_define:nn { jlreq } { jafontscale .tl_set:N = \jlreq@option@jafontscale}
+\keys_define:nn { jlreq } { jafontsize .tl_set:N = \jlreq@option@jafontsize }
+\keys_define:nn { jlreq } { jafontscale .tl_set:N = \jlreq@option@jafontscale }
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@jafontsize
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@jafontscale
 %.. 行の長さ
-\keys_define:nn { jlreq } { line_length .tl_set:N = \jlreq@option@line@length}
+\keys_define:nn { jlreq } { line_length .tl_set:N = \jlreq@option@line@length }
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@line@length
 %.. 1ページあたりの行数
-\keys_define:nn { jlreq } { number_of_lines .tl_set:N = \jlreq@option@number@of@lines}
+\keys_define:nn { jlreq } { number_of_lines .tl_set:N = \jlreq@option@number@of@lines }
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@number@of@lines
 
 % 地の空き量，のどの空き量で配置位置を決める（2.4.1.b）省略されたら中央配置．
 %.. 天
-\keys_define:nn { jlreq } { head_space .tl_set:N = \jlreq@option@head@space}
+\keys_define:nn { jlreq } { head_space .tl_set:N = \jlreq@option@head@space }
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@head@space
 %.. 地
-\keys_define:nn { jlreq } { foot_space .tl_set:N = \jlreq@option@foot@space}
+\keys_define:nn { jlreq } { foot_space .tl_set:N = \jlreq@option@foot@space }
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@foot@space
 %.. のど
-\keys_define:nn { jlreq } { gutter .tl_set:N = \jlreq@option@gutter}
+\keys_define:nn { jlreq } { gutter .tl_set:N = \jlreq@option@gutter }
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@gutter
 %.. 小口
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@fore@edge
@@ -267,7 +268,6 @@
 \def\jlreq@note#1{}
 \keys_define:nn { jlreq } { jlreq_notes .code:n = { \def\jlreq@note##1{\message{^^JJLReq note: ##1^^J}}}, jlreq_notes .value_forbidden:n = true}
 
-%\ExecuteOptionsX{article_type=article,paper=a4,open_bracket_pos=zenkaku_tentsuki,onecolumn,final}
 \keys_set:nn { jlreq } {
   article_type=article,paper=a4,
   number_of_lines={},line_length = {},
@@ -585,7 +585,7 @@
     \jlreq@getfirsttoken@expandmacros{\jlreq@nextchar}{\jlreq@tempa}%
     \expandafter\jlreq@ifletter\expandafter{\jlreq@tempa}{%
       \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{\jlreq@tempa}%
-%      \message{fixjfm Insert: \the\jlreq@resultskip}%
+%      \message{fixjfm,~before~lastnodechar~=~\the\jlreq@lastnodechar,~after~=~\meaning\jlreq@nextchar,~Insert:~\the\jlreq@resultskip}
       \edef\jlreq@do{%
         \noexpand\hskip\the\jlreq@resultskip\space
         \noexpand\inhibitglue
@@ -816,7 +816,7 @@
 \ifx l\jlreq@engine
   \cs_set:Nn \__jlreq_setpostbreakpenalty_aux:nn {\ltjsetparameter{postbreakpenalty={`#1,#2}}}
   \cs_set:Nn \__jlreq_setprebreakpenalty_aux:nn {\ltjsetparameter{prebreakpenalty={`#1,#2}}}
-  \cs_set:Nn \__jlreq_addjaxspmode_aux:nn# {%
+  \cs_set:Nn \__jlreq_addjaxspmode_aux:nn {%
     \jlreq@tempcnta=\ltjgetparameter{jaxspmode}{`#1}%
     \str_case:nn {#2} {
       { pre } {%
@@ -3389,11 +3389,26 @@
 \def\jlreq@endnote@texts{}
 \long\def\jlreq@endnote@addtext#1#2{\tl_gput_right:Nx \jlreq@endnote@texts { \exp_not:n {{{#1}{#2}}} } }
 % \endnote自身は後で定義する
-\def\jlreq@endnote@impl{\jlreq@hook@prenote\@ifnextchar[{\jlreq@endnote}{\jlreq@endnote[]}}  
-\def\endnotemark{\jlreq@hook@prenote\@ifnextchar[{\jlreq@endnotemark}{\jlreq@endnotemark[]}}
-\def\endnotetext{\@ifnextchar[{\jlreq@endnotetext}{\jlreq@endnotetext[]}}
-\long\def\jlreq@endnote[#1]#2{\jlreq@endnotemark[#1]\@endnotetext{#2}\jlreq@hook@postnote}
-\def\jlreq@endnotemark[#1]{%
+\NewHook{cmd/endnote/before}
+\NewHook{cmd/endnote/after}
+\NewHook{cmd/endnotemark/before}
+\NewHook{cmd/endnotemark/after}
+\NewDocumentCommand { \endnotemark }{ O{} } {
+  \jlreq@hook@prenote
+  \UseHook{cmd/endnote/before}
+  \jlreq@endnotemark{#1}
+  \UseHook{cmd/endnote/after}
+  \jlreq@hook@postnote
+}
+\NewDocumentCommand { \endnotetext } { O{} +m } { \jlreq@endnotetext{#1}{#2} }
+\long\def\jlreq@endnote#1#2{
+  \jlreq@hook@prenote
+  \UseHook{ cmd/endnote/before }
+  \jlreq@endnotemark{#1}\@endnotetext{#2}
+  \UseHook{ cmd/endnote/after }
+  \jlreq@hook@postnote
+}
+\def\jlreq@endnotemark#1{%
   \jlreq@ifempty{#1}{%
     \stepcounter{\jlreq@endnotecounter}%
     \expandafter\protected@xdef\csname\jlreq@endnotemarkname\endcsname{\csname the\jlreq@endnotecounter\endcsname}%
@@ -3404,10 +3419,9 @@
     \endgroup
   }%
   \@endnotemark
-  \jlreq@hook@postnote
 }
 \jlreq@setdefaultnotemark\@endnotemark\@makeendmark
-\long\def\jlreq@endnotetext[#1]#2{%
+\long\def\jlreq@endnotetext#1#2{%
   \jlreq@ifempty{#1}{%
     \expandafter\protected@xdef\csname\jlreq@endnotemarkname\endcsname{\csname the\jlreq@endnotecounter\endcsname}%
   }{%
@@ -3488,9 +3502,9 @@
     \jlreq@tempafalse % headingsが指定された
     \jlreq@tempbfalse % paragraphが指定された
     % \jlreq@tempcにセクション名たちを入れていく
-    \def\jlreq@tempc{}
+    \seq_clear:N \l_jlreq_tmpa_seq
     \clist_map_variable:nNn {#1} \jlreq@tempa {
-      \expandafter\jlreq@helper@trim\expandafter{\jlreq@tempa}{\jlreq@tempa}%
+      \tl_set:Nx \@tempa { \tl_trim_spaces:o \@tempa }
       \str_case_e:nnF {\jlreq@tempa} {
         {headings}{\jlreq@tempatrue}
         {paragraph}{
@@ -3499,7 +3513,7 @@
         }
       }{
         \str_if_eq:eeTF { \str_head:N \jlreq@tempa } {_} {
-          \edef\jlreq@tempc{\jlreq@tempc,\expandafter\@gobble\jlreq@tempa}
+          \seq_put_left:Nx \l_jlreq_tmpa_seq { \tl_tail:N \jlreq@tempa }
         }{
          \ClassError{jlreq}{Invalid~value~\jlreq@tempa\space in~endnote_position}{\@ehc}
         }
@@ -3507,15 +3521,20 @@
     }
     
     \ifjlreq@tempb
-      \edef\endnote{\unexpanded{\def\par{\@restorepar\theendnotes\par}}\exp_not:o {\jlreq@endnote@impl}}
+      \DeclareDocumentCommand { \endnote } { O{} +m } {
+        \AddToHookNext { para/after } { \theendnotes }
+        \jlreq@endnote{##1}{##2}
+      }
     \else
-      \let\endnote=\jlreq@endnote@impl
+      \DeclareDocumentCommand { \endnote } { O{} +m } {
+        \jlreq@endnote{##1}{##2}
+      }
     \fi
 
     \ifjlreq@tempa
       \AddToHook{jlreq/heading/before}[jlreq/endnote]{\theendnotes}
     \else
-      \clist_map_variable:NNn \jlreq@tempc \@tempa {
+      \seq_map_variable:NNn \l_jlreq_tmpa_seq \@tempa {
         \tl_if_empty:VF \@tempa {
           \AddToHook{jlreq/heading/before/\@tempa}[jlreq/endnote]{}
           \RemoveFromHook{jlreq/heading/before/\@tempa}[jlreq/endnote]
@@ -3536,8 +3555,11 @@
 % (1) では\sidenote[]{}を定義
 % (2) では\sidenote{見出し}{注中身}を定義
 % sidenote_length>0ptの時のみ定義する
-\jlreq@if{\ifdim\jlreq@sidenote@length>0pt\relax\fi}
-{
+\dim_compare:nT { \jlreq@sidenote@length > 0pt } {
+  \ProvideHook{ cmd/sidenote/before }
+  \ProvideHook{ cmd/sidenote/after }
+  \ProvideHook{ cmd/sidenotemark/before }
+  \ProvideHook{ cmd/sidenotemark/after }
   \def\jlreq@sidenotemarkname{@thefnmark}% 合印用番号を一時的に入れるマクロ名
   \long\def\@sidenotetext#1{%
     \marginpar{\reset@font\footnotesize
@@ -3554,12 +3576,20 @@
   \def\jlreq@sidenote@type{number}
   \__jlreq_jlreqsetup_addtofinally:n {
     \str_if_eq:VnT \jlreq@sidenote@type { number } {
-      \def\sidenote{\jlreq@hook@prenote\@ifnextchar[{\jlreq@sidenote}{\jlreq@sidenote[]}\jlreq@hook@postnote}
-      \def\sidenotemark{\jlreq@hook@prenote\@ifnextchar[{\jlreq@sidenotemark}{\jlreq@sidenotemark[]}\jlreq@hook@postnote}
-      \def\sidenotetext{\@ifnextchar[{\jlreq@sidenotetext}{\jlreq@sidenotetext[]}}
-      \long\def\jlreq@sidenote[#1]#2{\jlreq@sidenotemark[#1]\@sidenotetext{#2}\jlreq@hook@postnote}
-      \def\jlreq@sidenotemark[#1]{%
-        \jlreq@ifempty{#1}{%
+      \DeclareDocumentCommand { \sidenote } { O{} m } {
+        \jlreq@hook@prenote\UseHook{cmd/sidenote/before}
+        \jlreq@sidenote{#1}{#2}
+        \UseHook{cmd/sidenote/after}\jlreq@hook@postnote
+      }
+      \DeclareDocumentCommand { \sidenotemark } { O{}   } {
+        \jlreq@hook@prenote\UseHook{cmd/sidenotemark/before}
+        \jlreq@sidenotemark{#1}
+        \UseHook{cmd/sidenotemark/after}\jlreq@hook@postnote
+      }
+      \DeclareDocumentCommand { \sidenotetext } { O{} m } { \jlreq@sidenotetext{#1}{#2} }
+      \long\def\jlreq@sidenote#1#2{\jlreq@sidenotemark{#1}\@sidenotetext{#2}}
+      \def\jlreq@sidenotemark#1{%
+        \tl_if_empty:nTF{#1}{%
           \stepcounter{\jlreq@sidenotecounter}%
           \expandafter\protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
         }{%
@@ -3569,10 +3599,9 @@
           \endgroup
         }%
         \@sidenotemark
-        \jlreq@hook@postnote
       }
-      \long\def\jlreq@sidenotetext[#1]#2{%
-        \jlreq@ifempty{#1}{%
+      \long\def\jlreq@sidenotetext#1#2{%
+        \tl_if_empty:nTF{#1}{%
           \expandafter\protected@xdef\csname\jlreq@sidenotemarkname\endcsname{\csname the\jlreq@sidenotecounter\endcsname}%
         }{%
          \begingroup
@@ -3592,9 +3621,9 @@
       \let\@makesidemark=\@makefnmark
     }
     \str_if_eq:VnT \jlreq@sidenote@type { symbol } {% sidenote_type = symbol
-      \long\def\sidenote#1#2{\jlreq@sidenote{#1}{#2}}
-      \def\sidenotemark#1{\jlreq@sidenotemark{#1}}
-      \long\def\sidenotetext#1#2{\jlreq@sidenotetext{#1}{#2}}
+      \DeclareDocumentCommand { \sidenote     } { m m } { \UseHook{cmd/sidenote/before}\jlreq@sidenote{#1}{#2}\UseHook{cmd/sidenote/after} }
+      \DeclareDocumentCommand { \sidenotemark } { m   } { \UseHook{cmd/sidenotemark/before}\jlreq@sidenotemark{#1}\UseHook{cmd/sidenote/after} }
+      \DeclareDocumentCommand { \sidenotetext } { m m } { \jlreq@sidenotetext{#1}{#2} }
       \long\def\jlreq@sidenote#1#2{\jlreq@sidenotemark{#1}\jlreq@sidenotetext{#1}{#2}}
       \edef\jlreq@sidenotemark#1{%
         {\unexpanded{\reset@font\jlreq@sidenote@keywordfont}#1}%
@@ -3615,7 +3644,7 @@
   }
   \keys_define:nn { jlreqsetup } { sidenote_symbol .tl_set:N = \jlreq@sidenote@defaultmark }
   \keys_define:nn { jlreqsetup } { sidenote_keyword_font .tl_set:N = \jlreq@sidenote@keywordfont }
-}{}
+}
 
 %.. 割注（3.4）
 \def\inlinenotesize{.6\jlreq@jafontsize} % 割注の文字サイズ
@@ -5544,11 +5573,11 @@
 \def\jlreq@matter@counter@norestore#1#2{%
   \def#1{}%
   \jlreq@parsekeyval@nokey{%
-    \keys_define:nn { __jlreq_keyval } {
+    \keys_define:nn { __jlreq_keyval_matter_counter_norestore } {
       value .code:n = { \tl_put_right:Nn #1 { \setcounter{##1}{####1} } },
       the .code:n = { \tl_put_right:Nx #1 { \exp_not:N \def\exp_not:c {the##1}{\exp_not:n {####1}} } }
     }
-    \keys_set:nn { __jlreq_keyval } {##2}
+    \keys_set:nn { __jlreq_keyval_matter_counter_norestore } {##2}
   }{#2}%
 }
 
@@ -5605,7 +5634,7 @@
       \def\jlreq@pagination@frontmatterstyle{arabic}%
       \let\jlreq@pagination@mainmatterpagecommand=\pagenumbering
       \clist_map_variable:nNn {#1} \jlreq@tempa {
-        \expandafter\jlreq@helper@trim\expandafter{\jlreq@tempa}{\jlreq@tempa}%
+        \tl_set:Nx \jlreq@tempa { \tl_trim_spaces:o \jlreq@tempa }
         \str_case_e:nnF {\jlreq@tempa}{
           {continuous}{%
             \def\jlreq@pagination@mainmatterpagecommand##1{\gdef\thepage{\csname @##1\endcsname\c@page}}%
@@ -5676,7 +5705,7 @@
       \let\jlreq@pagination@backmatterpagecommand=\pagenumbering
       \def\jlreq@pagination@backmatterstyle{arabic}%
       \clist_map_variable:nNn {#1} \jlreq@tempa {
-        \expandafter\jlreq@helper@trim\expandafter{\jlreq@tempa}{\jlreq@tempa}%
+        \tl_set:Nx \jlreq@tempa { \tl_trim_spaces:o \jlreq@tempa }
         \str_case_e:nnF {\jlreq@tempa} {
           {continuous}{%
             \def\jlreq@pagination@backmatterpagecommand##1{\gdef\thepage{\csname @##1\endcsname\c@page}}%
@@ -5712,14 +5741,14 @@
 
 %. その他諸々
 %.. 縦中横
-\protected\def\tatechuyoko{\@ifstar
-  {\jlreq@tatechuyoko@i}%
-  {%
+\NewDocumentCommand { \tatechuyoko } { s m } {
+  \IfBooleanTF{#1}{
+    \jlreq@iftdir{\jlreq@tatechuyoko@i{#2}}{#2}
+  }{
     \jlreq@iftdir{}{\ClassError{jlreq}{\string\tatechuyoko\space is~not~allowed~in~yoko~mode}{\@ehc}}%
-    \jlreq@tatechuyoko@ii
-  }%
+    \jlreq@tatechuyoko@i{#2}
+  }
 }
-\def\jlreq@tatechuyoko@i#1{\jlreq@iftdir{\jlreq@tatechuyoko@ii{#1}}{#1}}
 
 \edef\@tempa{%
   \unexpanded{\ifvmode\leavevmode\fi}%
@@ -5732,7 +5761,7 @@
   }\fi
 }
 
-\expandafter\def\expandafter\jlreq@tatechuyoko@ii\expandafter#\expandafter1\expandafter{%
+\expandafter\def\expandafter\jlreq@tatechuyoko@i\expandafter#\expandafter1\expandafter{%
   \@tempa
   % 前のJFM glue
   \ifnum\jlreq@lastnodechar>-1
@@ -5745,9 +5774,9 @@
       \vrule width~0pt~height~\ht\jlreq@tempboxa depth~\dp\jlreq@tempboxa
     \endgroup
     #1}%
-  \futurelet\jlreq@nextchar\jlreq@tatechuyoko@iii
+  \futurelet\jlreq@nextchar\jlreq@tatechuyoko@ii
 }
-\def\jlreq@tatechuyoko@iii{%
+\def\jlreq@tatechuyoko@ii{%
   \begingroup
     \def\jlreq@do{}%
     \jlreq@getfirsttoken@expandmacros{\jlreq@nextchar}{\jlreq@tempa}%

@@ -1,28 +1,36 @@
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{jlreq-trimmarks}[2021/07/22 jlreq-trimmarks]
-\RequirePackage{l3keys2e,etoolbox}
+\RequirePackage{l3keys2e}
 \RequirePackage{jlreq-helpers}
 
 \ExplSyntaxOn
-
 % check \tombowdatetrue
 \ifx\tombowdatetrue\@undefined
   \PackageError{jlreq-trimmarks}{This~package~only~works~with~pLaTeX,~upLaTeX~or~LuaTeX-ja}{\@ehc}
 \fi
 
-\newcommand*{\jlreq@trimmarks@undeferr}[1]{\PackageError{jlreq-trimmarks}{Trying~to~delete~\string#1~even~though~it~is~not~defined,~may~be~a~bug}{\@ehc}}
-\newcommand*{\jlreq@trimmarks@afterpkg@addtodeletecs}[1]{%
-  \appto\jlreq@trimmarks@afterpkg@deletecslist{\jlreq@helper@undefcs{#1}{\jlreq@trimmarks@undeferr}}%
+\cs_set:Nn \__jlreq_trimmarks_undeferr:n {\ClassError{jlreq-trimmarks}{Trying~to~delete~\string#1~even~though~it~is~not~defined,~may~be~a~bug}{\@ehc}}
+% クラスファイル内でしか使わないマクロをクラスファイル終了時に未定義にする
+\seq_new:N \g__jlreq_trimmarks_afterpkg_deletecs_seq
+\seq_new:N \g__jlreq_trimmarks_afterpkg_deleteif_seq
+\cs_set:Nn \__jlreq_trimmarks_afterpkg_addtodeletecs:N {
+  \seq_gput_right:Nn \g__jlreq_trimmarks_afterpkg_deletecs_seq {#1}
 }
-\newcommand*{\jlreq@trimmarks@afterpkg@addtodeleteif}[1]{%
-  \appto\jlreq@trimmarks@afterpkg@deletecslist{\jlreq@helper@undefif{#1}{\jlreq@trimmarks@undeferr}}%
+\__jlreq_trimmarks_afterpkg_addtodeletecs:N \__jlreq_trimmarks_afterpkg_addtodeletecs:N
+\cs_set:Nn \__jlreq_trimmarks_afterpkg_addtodeleteif:N {
+  \seq_gput_right:Nn \g__jlreq_trimmarks_afterpkg_deleteif_seq {#1}
 }
-\jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@afterpkg@addtodeletecs}
-\jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@afterpkg@addtodeleteif}
+\__jlreq_trimmarks_afterpkg_addtodeletecs:N \__jlreq_trimmarks_afterpkg_addtodeleteif:N
 \AtEndOfPackage{%
-  \jlreq@trimmarks@afterpkg@deletecslist
-  \jlreq@helper@undefcs{\jlreq@trimmarks@afterpkg@deletecslist}{\jlreq@trimmarks@undeferr}%
-  \undef{\jlreq@trimmarks@undeferr}%
+  \seq_map_inline:Nn \g__jlreq_trimmarks_afterpkg_deletecs_seq {
+    \jlreq@helper@undefcs{#1}{\__jlreq_trimmarks_undeferr:n}
+  }
+  \seq_map_inline:Nn \g__jlreq_trimmarks_afterpkg_deleteif_seq {
+    \jlreq@helper@undefif{#1}{\__jlreq_trimmarks_undeferr:n}
+  }
+  \cs_undefine:N \g__jlreq_trimmarks_afterpkg_deletecs_seq
+  \cs_undefine:N \g__jlreq_trimmarks_afterpkg_deleteif_seq
+  \cs_undefine:N \__jlreq_trimmarks_undeferr:n
 }
 
 \@ifclassloaded{jlreq}{\let\ifjlreq@trimmarks@jlreqloaded=\@firstoftwo}{\let\ifjlreq@trimmarks@jlreqloaded=\@secondoftwo}
@@ -47,18 +55,18 @@
   \@ifnextchar[{\jlreq@trimmarks@addpapersize@{#1}}{\jlreq@trimmarks@addpapersize@@{#1}}
 }
 \def\jlreq@trimmarks@addpapersize@#1[#2]{%
-  \edef\@tempa{\unexpanded{\jlreq@trimmarks@addpapersize@@{#1}}\csexpandonce{jlreq@helper@papersizelist@#2}}%
+  \edef\@tempa{\unexpanded{\jlreq@trimmarks@addpapersize@@{#1}}\exp_not:v {jlreq@helper@papersizelist@#2}}%
   \@tempa
 }
 \newcommand*{\jlreq@trimmarks@addpapersize@@}[3]{%
   \clist_map_variable:nNn {#1} \@tempa {
-    \eappto\jlreq@trimmarks@switchpapersize{{\expandonce{\@tempa}}{\unexpanded{\def\jlreq@resulta{#2}\def\jlreq@resultb{#3}}}}%
+    \tl_put_right:Nx \jlreq@trimmarks@switchpapersize {{\exp_not:o {\@tempa}}{\unexpanded{\def\jlreq@resulta{#2}\def\jlreq@resultb{#3}}}}%
   }%
 }
-\jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@switchpapersize}
-\jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@addpapersize}
-\jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@addpapersize@}
-\jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@addpapersize@@}
+\__jlreq_trimmarks_afterpkg_addtodeletecs:N \jlreq@trimmarks@switchpapersize
+\__jlreq_trimmarks_afterpkg_addtodeletecs:N \jlreq@trimmarks@addpapersize
+\__jlreq_trimmarks_afterpkg_addtodeletecs:N \jlreq@trimmarks@addpapersize@
+\__jlreq_trimmarks_afterpkg_addtodeletecs:N \jlreq@trimmarks@addpapersize@@
 
 \jlreq@trimmarks@addpapersize{a0,A0}[a0]
 \jlreq@trimmarks@addpapersize{a1,A1}[a1]
@@ -103,7 +111,7 @@
 % width -> \jlreq@resulta, height -> \jlreq@resultb
 \edef\jlreq@trimmarks@analyzepapersize#1{
   \noexpand\jlreq@switch{#1}{
-    \expandonce{\jlreq@trimmarks@switchpapersize}%
+    \exp_not:o {\jlreq@trimmarks@switchpapersize}%
     {%
       \noexpand\jlreq@helper@dividebycomma{#1}%
       \unexpanded{\ifjlreq@result\else}%
@@ -113,10 +121,10 @@
     }%
   }\noexpand\relax
 }
-\jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@analyzepapersize}
+\__jlreq_trimmarks_afterpkg_addtodeletecs:N \jlreq@trimmarks@analyzepapersize
 
 \keys_define:nn { jlreq-trimmarks } { trimmarks_paper .tl_set:N = \jlreq@trimmarks@option@papersize }
-\jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@option@papersize}
+\__jlreq_trimmarks_afterpkg_addtodeletecs:N \jlreq@trimmarks@option@papersize
 
 \newif\ifjlreq@trimmarks@digital \jlreq@trimmarks@digitaltrue
 \newif\ifjlreq@trimmarks@show \jlreq@trimmarks@showtrue
@@ -153,7 +161,7 @@
         \ifjlreq@parsekeyval@nokey@novalue{%
           \clist_map_variable:nNn { top,bottom,gutter,fore-edge } \jlreq@tempa {
           \epreto\jlreq@do{%
-              \noexpand\def\expandonce{\csname jlreq@trimmarks@bleed@\jlreq@tempa\endcsname}{##1}%
+              \noexpand\def\exp_not:o {\csname jlreq@trimmarks@bleed@\jlreq@tempa\endcsname}{##1}%
             }%
           }%
         }{%
@@ -161,8 +169,8 @@
             \str_if_eq_p:nn {##1} {top} || \str_if_eq_p:nn {##1} {bottom} ||
             \str_if_eq_p:nn {##1} {gutter} || \str_if_eq_p:nn {##1} {fore-edge}
           }{
-            \eappto\jlreq@do{%
-              \noexpand\def\expandonce{\csname jlreq@trimmarks@bleed@##1\endcsname}{##2}%
+            \tl_put_right:Nx \jlreq@do{%
+              \noexpand\def\exp_not:o {\csname jlreq@trimmarks@bleed@##1\endcsname}{##2}%
             }%
           }{%
             \PackageError{jlreq-trimmarks}{Unknown~position~`##1'~in~bleed_margin}{\@ehc}
@@ -176,7 +184,7 @@
 
 \newif\ifjlreq@trimmarks@landscape \jlreq@trimmarks@landscapefalse
 \keys_define:nn { jlreq-trimmarks } { landscape .code:n = {\jlreq@trimmarks@landscapetrue}, .value_forbidden:n = true }
-\jlreq@trimmarks@afterpkg@addtodeleteif{\ifjlreq@trimmarks@landscape}
+\__jlreq_trimmarks_afterpkg_addtodeleteif:N \ifjlreq@trimmarks@landscape
 
 \keys_set:nn { jlreq-trimmarks } {
   trimmarks_paper = {+2in},
@@ -219,7 +227,7 @@
     \edef\jlreq@trimmarks@paperheight{\jlreq@resultb}
   }
 }
-\jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@setpapersize}
+\__jlreq_trimmarks_afterpkg_addtodeletecs:N \jlreq@trimmarks@setpapersize
 \expandafter\jlreq@trimmarks@setpapersize\expandafter{\jlreq@trimmarks@option@papersize}
 
 \ifx o\jlreq@trimmarks@driver
@@ -234,20 +242,20 @@
     \jlreq@parsekeyval@nokey{%
       \ifjlreq@parsekeyval@nokey@novalue{}{%
         \jlreq@switch{##1}{
-          {yoko}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{yoko@#1}{yoko@#2}{##2}}}
-          {horizontal}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{yoko@#1}{yoko@#2}{##2}}}
-          {tate}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{tate@#1}{tate@#2}{##2}}}
-          {vertial}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{tate@#1}{tate@#2}{##2}}}
-          {corner}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{corner@#1}{corner@#2}{##2}}}
-          {in-yoko}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{inyoko@#1}{inyoko@#2}{##2}}}
-          {in-horizontal}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{inyoko@#1}{inyoko@#2}{##2}}}
-          {in-tate}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{intate@#1}{intate@#2}{##2}}}
-          {in-vertial}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{intate@#1}{intate@#2}{##2}}}
+          {yoko}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@@{yoko@#1}{yoko@#2}{##2}}}
+          {horizontal}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@@{yoko@#1}{yoko@#2}{##2}}}
+          {tate}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@@{tate@#1}{tate@#2}{##2}}}
+          {vertial}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@@{tate@#1}{tate@#2}{##2}}}
+          {corner}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@@{corner@#1}{corner@#2}{##2}}}
+          {in-yoko}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@@{inyoko@#1}{inyoko@#2}{##2}}}
+          {in-horizontal}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@@{inyoko@#1}{inyoko@#2}{##2}}}
+          {in-tate}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@@{intate@#1}{intate@#2}{##2}}}
+          {in-vertial}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@@{intate@#1}{intate@#2}{##2}}}
         }%
       }%
     }{#3}%
     \jlreq@if{\ifx\jlreq@do\@empty\fi}{%
-      \appto\jlreq@do{\jlreq@trimmarks@setbanner@@{yoko@#1}{yoko@#2}{#3}}%
+      \tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@@{yoko@#1}{yoko@#2}{#3}}%
     }{}%
   \expandafter\endgroup
   \jlreq@do
@@ -259,16 +267,16 @@
     \jlreq@parsekeyval@nokey{%
       \ifjlreq@parsekeyval@nokey@novalue{}{%
         \jlreq@switch*{##1}{
-          {left}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{before@#1}{before@#2}{##2}}}
-          {right}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{after@#1}{after@#2}{##2}}}
-          {above}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{before@#1}{before@#2}{##2}}}
-          {below}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{after@#1}{after@#2}{##2}}}
-          {in}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@@{in@#1}{in@#2}{##2}}}
+          {left}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@@{before@#1}{before@#2}{##2}}}
+          {right}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@@{after@#1}{after@#2}{##2}}}
+          {above}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@@{before@#1}{before@#2}{##2}}}
+          {below}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@@{after@#1}{after@#2}{##2}}}
+          {in}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@@{in@#1}{in@#2}{##2}}}
         }%
       }%
     }{#3}%
     \jlreq@if{\ifx\jlreq@do\@empty\fi}{
-      \appto\jlreq@do{\jlreq@trimmarks@setbanner@@{before@#1}{before@#2}{#3}}%
+      \tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@@{before@#1}{before@#2}{#3}}%
     }{}%
   \expandafter\endgroup
   \jlreq@do
@@ -281,13 +289,13 @@
     \jlreq@parsekeyval@nokey{%
       \ifjlreq@parsekeyval@nokey@novalue{}{%
         \jlreq@switch*{##1}{
-          {odd}{\appto\jlreq@do{\expandafter\edef\csname jlreq@trimmarks@banner@odd@#1\endcsname{\unexpanded{##2}}}}
-          {even}{\appto\jlreq@do{\expandafter\edef\csname jlreq@trimmarks@banner@even@#2\endcsname{\unexpanded{##2}}}}
+          {odd}{\tl_put_right:Nn \jlreq@do{\expandafter\edef\csname jlreq@trimmarks@banner@odd@#1\endcsname{\unexpanded{##2}}}}
+          {even}{\tl_put_right:Nn \jlreq@do{\expandafter\edef\csname jlreq@trimmarks@banner@even@#2\endcsname{\unexpanded{##2}}}}
         }%
       }%
     }{#3}%
     \jlreq@if{\ifx\jlreq@do\@empty\fi}{
-      \appto\jlreq@do{%
+      \tl_put_right:Nn \jlreq@do{%
         \expandafter\edef\csname jlreq@trimmarks@banner@odd@#1\endcsname{\unexpanded{#3}}%
         \expandafter\edef\csname jlreq@trimmarks@banner@even@#2\endcsname{\unexpanded{#3}}%
       }%
@@ -325,39 +333,39 @@
           \let\jlreq@guttereven\jlreq@gutterodd
         \fi
         \jlreq@switch*{##1}{
-          {top-left}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@left}{top@left}{##2}}}
-          {left-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@left}{top@left}{##2}}}
-          {top-right}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@right}{top@right}{##2}}}
-          {right-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@right}{top@right}{##2}}}
-          {top-gutter}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@\jlreq@gutterodd}{top@\jlreq@guttereven}{##2}}}
-          {gutter-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@\jlreq@gutterodd}{top@\jlreq@guttereven}{##2}}}
-          {top-fore-edge}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@\jlreq@guttereven}{top@\jlreq@gutterodd}{##2}}}
-          {fore-edge-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{top@\jlreq@guttereven}{top@\jlreq@gutterodd}{##2}}}
-          {bottom-left}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@left}{bottom@left}{##2}}}
-          {left-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@left}{bottom@left}{##2}}}
-          {bottom-right}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@right}{bottom@right}{##2}}}
-          {right-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@right}{bottom@right}{##2}}}
-          {bottom-gutter}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@\jlreq@gutterodd}{bottom@\jlreq@guttereven}{##2}}}
-          {gutter-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@\jlreq@gutterodd}{bottom@\jlreq@guttereven}{##2}}}
-          {bottom-fore-edge}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@\jlreq@guttereven}{bottom@\jlreq@gutterodd}{##2}}}
-          {fore-edge-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner{bottom@\jlreq@guttereven}{bottom@\jlreq@gutterodd}{##2}}}
-          {top-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{top@center}{top@center}{##2}}}
-          {center-top}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{top@center}{top@center}{##2}}}
-          {bottom-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{bottom@center}{bottom@center}{##2}}}
-          {center-bottom}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{bottom@center}{bottom@center}{##2}}}
-          {center-right}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@right}{center@right}{##2}}}
-          {right-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@right}{center@right}{##2}}}
-          {center-left}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@left}{center@left}{##2}}}
-          {left-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@left}{center@left}{##2}}}
-          {center-gutter}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@\jlreq@gutterodd}{center@\jlreq@guttereven}{##2}}}
-          {gutter-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@\jlreq@gutterodd}{center@\jlreq@guttereven}{##2}}}
-          {center-fore-edge}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@\jlreq@guttereven}{center@\jlreq@gutterodd}{##2}}}
-          {fore-edge-center}{\appto\jlreq@do{\jlreq@trimmarks@setbanner@{center@\jlreq@guttereven}{center@\jlreq@gutterodd}{##2}}}
+          {top-left}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner{top@left}{top@left}{##2}}}
+          {left-top}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner{top@left}{top@left}{##2}}}
+          {top-right}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner{top@right}{top@right}{##2}}}
+          {right-top}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner{top@right}{top@right}{##2}}}
+          {top-gutter}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner{top@\jlreq@gutterodd}{top@\jlreq@guttereven}{##2}}}
+          {gutter-top}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner{top@\jlreq@gutterodd}{top@\jlreq@guttereven}{##2}}}
+          {top-fore-edge}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner{top@\jlreq@guttereven}{top@\jlreq@gutterodd}{##2}}}
+          {fore-edge-top}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner{top@\jlreq@guttereven}{top@\jlreq@gutterodd}{##2}}}
+          {bottom-left}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner{bottom@left}{bottom@left}{##2}}}
+          {left-bottom}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner{bottom@left}{bottom@left}{##2}}}
+          {bottom-right}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner{bottom@right}{bottom@right}{##2}}}
+          {right-bottom}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner{bottom@right}{bottom@right}{##2}}}
+          {bottom-gutter}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner{bottom@\jlreq@gutterodd}{bottom@\jlreq@guttereven}{##2}}}
+          {gutter-bottom}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner{bottom@\jlreq@gutterodd}{bottom@\jlreq@guttereven}{##2}}}
+          {bottom-fore-edge}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner{bottom@\jlreq@guttereven}{bottom@\jlreq@gutterodd}{##2}}}
+          {fore-edge-bottom}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner{bottom@\jlreq@guttereven}{bottom@\jlreq@gutterodd}{##2}}}
+          {top-center}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@{top@center}{top@center}{##2}}}
+          {center-top}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@{top@center}{top@center}{##2}}}
+          {bottom-center}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@{bottom@center}{bottom@center}{##2}}}
+          {center-bottom}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@{bottom@center}{bottom@center}{##2}}}
+          {center-right}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@{center@right}{center@right}{##2}}}
+          {right-center}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@{center@right}{center@right}{##2}}}
+          {center-left}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@{center@left}{center@left}{##2}}}
+          {left-center}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@{center@left}{center@left}{##2}}}
+          {center-gutter}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@{center@\jlreq@gutterodd}{center@\jlreq@guttereven}{##2}}}
+          {gutter-center}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@{center@\jlreq@gutterodd}{center@\jlreq@guttereven}{##2}}}
+          {center-fore-edge}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@{center@\jlreq@guttereven}{center@\jlreq@gutterodd}{##2}}}
+          {fore-edge-center}{\tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner@{center@\jlreq@guttereven}{center@\jlreq@gutterodd}{##2}}}
         }%
       }%
     }{#1}%
     \jlreq@if{\ifx\jlreq@do\@empty\fi}{
-      \appto\jlreq@do{\jlreq@trimmarks@setbanner{top@left}{top@left}{#1}}%
+      \tl_put_right:Nn \jlreq@do{\jlreq@trimmarks@setbanner{top@left}{top@left}{#1}}%
     }{}%
     \jlreq@do
   },
@@ -398,7 +406,7 @@
     }%
   }%
 }
-\newcommand{\jlreqtrimmarkssetup}[1]{%
+\NewDocumentCommand { \jlreqtrimmarkssetup } { +m } {
   \keys_set:nn { jlreqtrimmarkssetup } {#1}
 }
 \@onlypreamble\jlreqtrimmarkssetup
@@ -868,12 +876,12 @@
     \ifjlreq@trimmarks@show@artbox /ArtBox~\jlreq@trimmarks@trimboxsize\fi
     /BleedBox~\jlreq@trimmarks@bleedboxsize@even
   }
-  \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@pttobp}
-  \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@trimboxsize}
-  \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@bleedboxsize@odd}
-  \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@bleedboxsize@even}
-  \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@pdfattribute@odd}
-  \jlreq@trimmarks@afterpkg@addtodeletecs{\jlreq@trimmarks@pdfattribute@even}
+  \__jlreq_trimmarks_afterpkg_addtodeletecs:N \jlreq@trimmarks@pttobp
+  \__jlreq_trimmarks_afterpkg_addtodeletecs:N \jlreq@trimmarks@trimboxsize
+  \__jlreq_trimmarks_afterpkg_addtodeletecs:N \jlreq@trimmarks@bleedboxsize@odd
+  \__jlreq_trimmarks_afterpkg_addtodeletecs:N \jlreq@trimmarks@bleedboxsize@even
+  \__jlreq_trimmarks_afterpkg_addtodeletecs:N \jlreq@trimmarks@pdfattribute@odd
+  \__jlreq_trimmarks_afterpkg_addtodeletecs:N \jlreq@trimmarks@pdfattribute@even
 
   \begingroup
     \c@page=1\relax
@@ -892,7 +900,7 @@
       \@tempa
     \fi
     \ifx f\jlreq@trimmarks@driver
-      \epreto\@outputtombow{\noexpand\special{pdf:~put~@thispage~<<\jlreq@trimmarks@pdfattribute@odd>>}}
+      \tl_put_left:Nx \@outputtombow {\noexpand\special{pdf:~put~@thispage~<<\jlreq@trimmarks@pdfattribute@odd>>}}
     \fi
     \ifx s\jlreq@trimmarks@driver
       \edef\@tempa{\noexpand\special{ps:SDict~begin~
@@ -905,19 +913,19 @@
   }{
     \ifx l\jlreq@trimmarks@driver
       % in \@outputtombow, it's too late
-      \epreto\@outputpage{%
+      \tl_put_left:Nx \@outputpage {%
         \unexpanded{\ifodd\c@page\pdfvariable} pageattr{\jlreq@trimmarks@pdfattribute@odd}%
         \unexpanded{\else\pdfvariable} pageattr{\jlreq@trimmarks@pdfattribute@even}\noexpand\fi
       }
     \fi
     \ifx f\jlreq@trimmarks@driver
-      \epreto\@outputtombow{%
+      \tl_put_left:Nx \@outputtombow {%
         \unexpanded{\ifodd\c@page\special}{pdf:~put~@thispage~<<\jlreq@trimmarks@pdfattribute@odd>>}%
         \unexpanded{\else\special}{pdf:~put~@thispage~<<\jlreq@trimmarks@pdfattribute@even>>}\noexpand\fi
       }
     \fi
     \ifx s\jlreq@trimmarks@driver
-      \epreto\@outputtombow{%
+      \tl_put_left:Nx \@outputtombow {%
         \unexpanded{\ifodd\c@page\special}{ps:SDict~begin~
           [~/TrimBox~\jlreq@trimmarks@trimboxsize /PAGE~pdfmark~
           \ifjlreq@trimmarks@show@artbox [~/ArtBox~\jlreq@trimmarks@trimboxsize /PAGE~pdfmark~\fi

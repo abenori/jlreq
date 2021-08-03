@@ -389,16 +389,16 @@
 
 % #1を\@undefinedに，既に\@undefinedならば#2{#1}を呼ぶ
 \newcommand*{\jlreq@helper@undefcs}[2]{%
-  \ifundef{#1}{#2{#1}}{\undef{#1}}%
+  \@ifundefined{\expandafter\@gobble\string #1}{#2{#1}}{\cs_undefine:N #1}%
 }
 % \if版
 \newcommand*{\jlreq@helper@undefif}[2]{%
-  \ifundef{#1}{#2{#1}}{%
+  \@ifundefined{\expandafter\@gobble\string #1}{%
     \edef\@tempa{\expandafter\@gobble\string#1}%
     \edef\@tempa{\expandafter\@gobbletwo\@tempa}%
-    \undef{#1}%
-    \expandafter\undef\expandafter{\csname\@tempa true\endcsname}%
-    \expandafter\undef\expandafter{\csname\@tempa false\endcsname}%
+    \cs_undefine:N #1%
+    \cs_undefine:c {\@tempa true}
+    \cs_undefine:c {\@tempa false}
   }%
 }
 

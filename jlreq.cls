@@ -46,7 +46,7 @@
   }
   \cs_undefine:N \g__jlreq_aftercls_deletecs_seq
   \cs_undefine:N \g__jlreq_aftercls_deleteif_seq
-  \cs_undefine:N \__jlreq_undeferr
+  \cs_undefine:N \__jlreq_undeferr:n
 }
 
 % preambleにいるかのスイッチ
@@ -778,7 +778,7 @@
 \ifx l\jlreq@engine
   % \itemの直後は折り返し行頭と同じにする．
   \cs_set:Nn \__jlreq_hook_everypar: {}
-  \def\item{%
+  \renewcommand*{\item}{%
     \cs_set:Nn \__jlreq_hook_everypar: { \cs_set:Nn \__jlreq_hook_everypar: {} \inhibitglue }
     \expandafter\everypar\expandafter{\the\everypar\__jlreq_hook_everypar:}
     \jlreq@useoriginalcs{item}%
@@ -803,7 +803,7 @@
   \def\jlreq@openbracket@hook@iii#1#2{#1{#2}\futurelet\jlreq@nextchar\jlreq@openbracket@hook@i}
   \def\jlreq@openbracket@hook{\futurelet\jlreq@nextchar\jlreq@openbracket@hook@i}
   \let\jlreq@hook@everypar=\jlreq@openbracket@hook
-  \def\item{%
+  \renewcommand*{\item}{%
     \def\jlreq@hook@everypar{%
       \let\jlreq@hook@everypar=\jlreq@openbracket@hook
       \inhibitglue

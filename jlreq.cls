@@ -6142,12 +6142,13 @@
 \renewcommand{\p@enumiii}{\theenumi(\theenumii)}
 \renewcommand{\p@enumiv}{\p@enumiii\theenumiii}
 
-\newcommand{\labelitemi}{\hbox to 1\jlreq@zw{\hss\textbullet\hss}}
 %\newcommand{\labelitemi}{•}
 \legacy_if:nTF { @tate } {
+  \newcommand{\labelitemi}{\hbox to 1\jlreq@zw{\hss\tatechuyoko{\textbullet}\hss}}
   \newcommand{\labelitemii}{○}
   \newcommand{\labelitemiii}{＊}
 }{
+  \newcommand{\labelitemi}{\hbox to 1\jlreq@zw{\hss\textbullet\hss}}
   \newcommand{\labelitemii}{\hbox to 1\jlreq@zw{\hss\textendash\hss}}
   \newcommand{\labelitemiii}{\hbox to 1\jlreq@zw{\hss\textasteriskcentered\hss}}
 }

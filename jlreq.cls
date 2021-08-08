@@ -723,9 +723,8 @@
   \DeclareFontShape{\jlreq@tatekanjiencoding}{mc}{m}{n-jidori}{<->s*[\jlreq@jafontscale]\jlreq@tempa jlreq-v-jidori}{}
   \DeclareFontShape{\jlreq@tatekanjiencoding}{gt}{m}{n-jidori}{<->s*[\jlreq@jafontscale]\jlreq@tempa jlreqg-v-jidori}{}
 \fi
-\clist_set:NV  \l_jlreq_tmpa_clist \jlreq@yokokanjiencoding
-\clist_push:NV \l_jlreq_tmpa_clist \jlreq@tatekanjiencoding
-\clist_map_inline:Nn \l_jlreq_tmpa_clist {% #1 = encoding
+
+\exp_args:Nx \clist_map_inline:nn {\jlreq@yokokanjiencoding,\jlreq@tatekanjiencoding} {% #1 = encoding
   \clist_map_inline:nn { n,it,sl,sc } {% ##1 = shape
     \clist_map_inline:nn { m,b,bx,sb,c } {% ####1 = series
       \bool_if:nF { \str_if_eq_p:nn {##1} {n} && \str_if_eq_p:nn {####1} {m} } {

@@ -4572,7 +4572,7 @@
                   \str_if_eq:VnTF \jlreq@hor { right } {
                     % <ノンブル><空き><柱>，右寄せ
                     % 柱が空出ないときに限り<空き>を入れる．
-                    \jlreq@pagestyle@addfont@totokens{\exp_not:N \dim_compare:nF { \exp_not:n { \wd\jlreq@PageStyle@box=0pt } } { \exp_not:N \hskip\exp_not:o {\jlreq@gap}\exp_no:N \relax } }{jlreq@running@head@font}{jlreq@tempa}%
+                    \jlreq@pagestyle@addfont@totokens{\exp_not:N \dim_compare:nF { \exp_not:n { \wd\jlreq@PageStyle@box=0pt } } { \exp_not:N \hskip\exp_not:o {\jlreq@gap}\exp_not:N \relax } }{jlreq@running@head@font}{jlreq@tempa}%
                     \expandafter\edef\csname\jlreq@csname\endcsname{%
                       \unexpanded{\setbox\jlreq@PageStyle@box=\hbox}{\exp_not:o {\jlreq@running@head@font}\exp_not:v {\jlreq@runheadcsname}}%
                       \exp_not:v {\jlreq@nombrecsname}\exp_not:o {\jlreq@tempa}\unexpanded{\box\jlreq@PageStyle@box}%
@@ -5332,15 +5332,12 @@
 % tarticleから
 \newdimen\@lnumwidth
 \def\numberline#1{\hbox to\@lnumwidth{#1\hfil}}
-\def\addcontentsline#1#2#3{%
-  \protected@write\@auxout{%
-    \let\label\@gobble\let\index\@gobble\let\glossary\@gobble
-    \if@tate
-      \@temptokena{\tatechuyoko{\thepage}}%
-    \else
-      \@temptokena{\thepage}%
-    \fi
-  }{\string\@writefile{#1}{\protect\contentsline{#2}{#3}{\the\@temptokena}}}%
+
+% from latex.ltx
+\legacy_if:nT { @tate } {
+  \def\addcontentsline#1#2#3{%
+    \addtocontents{#1}{\protect\contentsline{#2}{#3}{\tatechuyoko*{\thepage}}{}%
+                       \protected@file@percent}}
 }
 
 \newcount\jlreq@top@contents % トップ見出しを入れる．レベルと同じ値．
@@ -5899,7 +5896,7 @@
   }
 }
 \cs_set:Nn \__jlreq_warekiyear_aux:nnn {
-  \int_compare:nTF { #1 = #2 } {元年} { \int_eval:n { #1 - #2 + 1 } 年 }
+  \int_compare:nTF { #1 = #2 } {元年} { #3\int_eval:n { #1 - #2 + 1 } 年 }
 }
 \def\today{%
   \if西暦

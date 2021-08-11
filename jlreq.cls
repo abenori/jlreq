@@ -92,7 +92,7 @@
 \keys_define:nn { jlreq } { book .code:n = { \def\jlreq@article@type{book} }, book .value_forbidden:n = true }
 
 %.. 基本版面．まずは紙サイズ．
-\keys_define:nn { jlreq } { paper .choice: }
+\tl_new:N \g__jlreq_papersizelist_tl
 \cs_set:Nn \__jlreq_addpapersize:nnn {
   \exp_args:Nnnv \__jlreq_addpapersize_aux:nnn {#1}{#2}{jlreq@helper@papersizelist@#3}
 }
@@ -101,16 +101,31 @@
 }
 \cs_set:Nn \__jlreq_addpapersize_auxi:nnnn {
   \clist_map_inline:nn {#1} {
-    \keys_define:nn { jlreq } { paper / ##1 .code:n = { \setlength{\paperwidth}{#3}\setlength{\paperheight}{#4} } }
+    \tl_gput_right:Nn \g__jlreq_papersizelist_tl { { ##1 } { \setlength{\paperwidth}{#3} \setlength{\paperheight}{#4} } }
   }
   \clist_map_inline:nn {#2} {
-    \keys_define:nn { jlreq } { ##1 .code:n = { \setlength{\paperwidth}{#3}\setlength{\paperheight}{#4} } }
+    \keys_define:nn { jlreq } { ##1 .code:n = { \setlength{\paperwidth}{#3} \setlength{\paperheight}{#4} } }
+  }
+}
+\keys_define:nn { jlreq } {
+  paper .code:n = {
+    \str_case:nVF {#1} \g__jlreq_papersizelist_tl
+    {
+      \jlreq@helper@dividebycomma{#1}%
+      \legacy_if:nTF { jlreq@result } {
+        \setlength{\paperwidth}{\dimexpr\jlreq@resulta\relax}
+        \setlength{\paperheight}{\dimexpr\jlreq@resultb\relax}
+      } {
+        \ClassError { jlreq } { The~paper~#1~is~unknown } {\@ehc}
+      }
+    }
   }
 }
 
 \__jlreq_aftercls_addtodeletecs:N \__jlreq_addpapersize:nnn
 \__jlreq_aftercls_addtodeletecs:N \__jlreq_addpapersize_aux:nnn
 \__jlreq_aftercls_addtodeletecs:N \__jlreq_addpapersize_auxi:nnnn
+\__jlreq_aftercls_addtodeletecs:N \g__jlreq_papersizelist_tl
 
 % 紙サイズ一覧．b*はJIS B．
 \__jlreq_addpapersize:nnn{a0,A0}{}{a0}

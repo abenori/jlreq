@@ -153,6 +153,7 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Load `ifthen` again. (Only for Re:VIEW, will be removed in future.)
     - Fixed bugs.
 * 2021-07-30
+    - Removed the direct dependence on `etoolbox` package.
     - Fixed a bug.
 
 

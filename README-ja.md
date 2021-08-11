@@ -19,7 +19,7 @@
 ## 動作環境
 pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内部で読み込みます．
 
-* （常時）：l3keys2e,etoolbox,lmodern
+* （常時）：l3keys2e,lmodern
 * （LuaLaTeX非利用時）：everyhook
 * （LuaLaTeX利用時）：luatexja,luatexja-adjust
 
@@ -517,6 +517,9 @@ JFMの名前は次の通りです．`[]`で囲まれている文字は設定に�
     - ifthenの読み込みを復活．（Re:VIEWのための一時的なもの．）
     - バグ修正
 * 2021-07-30
+    - バグ修正
+* 2021-08-12
+    - `etoolbox`への直接の依存をなくした．
     - バグ修正
 
 

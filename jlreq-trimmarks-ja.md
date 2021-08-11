@@ -163,6 +163,8 @@ dviドライバの指定です．エンジンに`lualatex`を利用する場合�
     - `\jlreqtrimmarkssetup`の`banner_font`が指定された場合，`\@bannerfont`を無視するようにした．
 * 2021-07-22
     - expl3コードとの親和性を高めた．
+* 2021-08-12
+    - `etoolbox`に依存しないようにした．
 
 
 --------------

@@ -157,6 +157,8 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - `\@bannerfont` is ignored when `banner_font` in `\jlreqtrimmarkssetup` is used.
 * 2021-07-22
     - It has more compatibility with expl3.
+* 2021-08-12
+    - Removed dependence on `etoolbox` package.
 
 
 --------------

@@ -2636,19 +2636,19 @@
 \def\jlreq@BlockHeading@spaces@outputwospace@{%
   \ifnum\jlreq@tempcnta<\jlreq@BlockHeading@spaces@current@count
     \advance\jlreq@tempcnta by 1
-    \tl_put_right:Nx \jlreq@do {\exp_not:v {jlreq@BlockHeading@spaces@current@before@\the\jlreq@tempcnta}}%
+    \tl_put_right:Nx \jlreq@do {\exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@before@\the\jlreq@tempcnta}}%
     \edef\jlreq@tempa{%
-      \unexpanded{\long\def\jlreq@tempa##1}{\exp_not:v {jlreq@BlockHeading@spaces@current@format@\the\jlreq@tempcnta}}%
+      \unexpanded{\long\def\jlreq@tempa##1}{\exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@format@\the\jlreq@tempcnta}}%
     }%
     \jlreq@tempa
     \edef\jlreq@tempb{%
       \noexpand\exp_not:o {\noexpand\jlreq@tempa{%
         \noexpand\jlreq@BlockHeading@start@gyodori
-          \exp_not:v {jlreq@BlockHeading@spaces@current@space@\the\jlreq@tempcnta}%
-          {\exp_not:v {jlreq@BlockHeading@spaces@current@output@\the\jlreq@tempcnta}}%
+          \exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@space@\the\jlreq@tempcnta}%
+          {\exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@output@\the\jlreq@tempcnta}}%
       }}%
     }%
-    \tl_put_right:Nx \jlreq@do {\jlreq@tempb\exp_not:v {jlreq@BlockHeading@spaces@current@after@\the\jlreq@tempcnta}}%
+    \tl_put_right:Nx \jlreq@do {\jlreq@tempb\exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@after@\the\jlreq@tempcnta}}%
     \expandafter\jlreq@BlockHeading@spaces@outputwospace@
   \fi
 }
@@ -2688,15 +2688,15 @@
   \edef\jlreq@do{%
     \noexpand\jlreq@BlockHeading@spaces@output@@@@
     \jlreq@iffirsttoken@ignorespaces{#1}{*}{{*}\exp_not:o {\@gobble #1}}{\unexpanded{{}#1}}%
-      \exp_not:v {jlreq@BlockHeading@spaces@current@space@\the\jlreq@tempcnta}%
-      {\exp_not:v {jlreq@BlockHeading@spaces@current@output@\the\jlreq@tempcnta}}%
+      \exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@space@\the\jlreq@tempcnta}%
+      {\exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@output@\the\jlreq@tempcnta}}%
   }%
   \jlreq@do
 }
 % #1: デフォルト値を使うならば*，#2#3#4が設定された値，#5#6#7がデフォルト値，#8は偶数ページの，#9が出力
 \def\jlreq@BlockHeading@spaces@output@@@@#1#2#3#4#5#6#7#8{%
   \edef\jlreq@tempa{%
-    \unexpanded{\long\def\jlreq@tempa##1}{\exp_not:v {jlreq@BlockHeading@spaces@current@format@\the\jlreq@tempcnta}}%
+    \unexpanded{\long\def\jlreq@tempa##1}{\exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@format@\the\jlreq@tempcnta}}%
   }%
   \jlreq@tempa
   \edef\jlreq@tempb{%
@@ -2710,9 +2710,9 @@
     }}%
   }%
   \tl_put_right:Nx \jlreq@result {%
-    \exp_not:v {jlreq@BlockHeading@spaces@current@before@\the\jlreq@tempcnta}%
+    \exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@before@\the\jlreq@tempcnta}%
     \jlreq@tempb
-    \exp_not:v {jlreq@BlockHeading@spaces@current@after@\the\jlreq@tempcnta}%
+    \exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@after@\the\jlreq@tempcnta}%
   }%
 }
 
@@ -3011,10 +3011,10 @@
       }
     }
     \cs_set:Nx \l_jlreq_do: {
-      \exp_not:v { jlreq@heading@type@#1 }
+      \exp_args:Nc \exp_not:o { jlreq@heading@type@#1 }
       { \exp_not:n { #1 } }
-      { \exp_not:v { jlreq@heading@level@#1 } }
-      { \exp_not:v { jlreq@heading@setting@#1 },\exp_not:V \l_jlreq_tmpa_tl }
+      { \exp_args:Nc \exp_not:o { jlreq@heading@level@#1 } }
+      { \exp_args:Nc \exp_not:o { jlreq@heading@setting@#1 },\exp_not:V \l_jlreq_tmpa_tl }
     }
   \exp_after:wN \group_end:
   \l_jlreq_do:
@@ -3023,7 +3023,7 @@
 \NewDocumentCommand{\SaveHeading}{ m m }{%
   \@ifundefined{jlreq@heading@setting@#1}{\ClassError{jlreq}{Unknown~heading:~#1}{\@ehc}}{}%
   \edef#2{%
-    \exp_not:v {jlreq@heading@type@#1}{\unexpanded{#1}}{\exp_not:v {jlreq@heading@level@#1}}{\exp_not:v {jlreq@heading@setting@#1}}%
+    \exp_args:Nc \exp_not:o {jlreq@heading@type@#1}{\unexpanded{#1}}{\exp_args:Nc \exp_not:o {jlreq@heading@level@#1}}{\exp_args:Nc \exp_not:o {jlreq@heading@setting@#1}}%
   }%
 }
 
@@ -3590,7 +3590,7 @@
   \def\jlreq@sidenote@type{number}
   \__jlreq_jlreqsetup_addtofinally:n {
     \str_if_eq:VnT \jlreq@sidenote@type { number } {
-      \DeclareDocumentCommand { \sidenote } { O{} m } {
+      \DeclareDocumentCommand { \sidenote } { O{} +m } {
         \jlreq@hook@prenote\UseHook{cmd/sidenote/before}
         \jlreq@sidenote{#1}{#2}
         \UseHook{cmd/sidenote/after}\jlreq@hook@postnote
@@ -3600,7 +3600,7 @@
         \jlreq@sidenotemark{#1}
         \UseHook{cmd/sidenotemark/after}\jlreq@hook@postnote
       }
-      \DeclareDocumentCommand { \sidenotetext } { O{} m } { \jlreq@sidenotetext{#1}{#2} }
+      \DeclareDocumentCommand { \sidenotetext } { O{} +m } { \jlreq@sidenotetext{#1}{#2} }
       \long\def\jlreq@sidenote#1#2{\jlreq@sidenotemark{#1}\@sidenotetext{#2}}
       \def\jlreq@sidenotemark#1{%
         \tl_if_empty:nTF{#1}{%
@@ -3635,9 +3635,9 @@
       \let\@makesidemark=\@makefnmark
     }
     \str_if_eq:VnT \jlreq@sidenote@type { symbol } {% sidenote_type = symbol
-      \DeclareDocumentCommand { \sidenote     } { m m } { \UseHook{cmd/sidenote/before}\jlreq@sidenote{#1}{#2}\UseHook{cmd/sidenote/after} }
+      \DeclareDocumentCommand { \sidenote     } { m +m } { \UseHook{cmd/sidenote/before}\jlreq@sidenote{#1}{#2}\UseHook{cmd/sidenote/after} }
       \DeclareDocumentCommand { \sidenotemark } { m   } { \UseHook{cmd/sidenotemark/before}\jlreq@sidenotemark{#1}\UseHook{cmd/sidenote/after} }
-      \DeclareDocumentCommand { \sidenotetext } { m m } { \jlreq@sidenotetext{#1}{#2} }
+      \DeclareDocumentCommand { \sidenotetext } { m +m } { \jlreq@sidenotetext{#1}{#2} }
       \long\def\jlreq@sidenote#1#2{\jlreq@sidenotemark{#1}\jlreq@sidenotetext{#1}{#2}}
       \edef\jlreq@sidenotemark#1{%
         {\unexpanded{\reset@font\jlreq@sidenote@keywordfont}#1}%
@@ -4070,23 +4070,23 @@
     \expandafter\ifx\csname jlreq@leftmark@0\endcsname\@empty
       \expandafter\ifx\csname jlreq@rightmark@0\endcsname\@empty\else
         \tl_put_right:Nx \jlreq@do {
-          \jlreq@ifempty{#1}{\noexpand\markright}{\noexpand\jlreq@markright}{\exp_not:v {jlreq@rightmark@0}}
+          \jlreq@ifempty{#1}{\noexpand\markright}{\noexpand\jlreq@markright}{\exp_args:Nc \exp_not:o {jlreq@rightmark@0}}
         }%
       \fi
     \else
       \tl_put_right:Nx \jlreq@do {
-        \jlreq@ifempty{#1}{\noexpand\markboth}{\noexpand\jlreq@markboth}{\exp_not:v {jlreq@leftmark@0}}{\exp_not:v {jlreq@rightmark@0}}
+        \jlreq@ifempty{#1}{\noexpand\markboth}{\noexpand\jlreq@markboth}{\exp_args:Nc \exp_not:o {jlreq@leftmark@0}}{\exp_args:Nc \exp_not:o {jlreq@rightmark@0}}
       }%
     \fi
     \clist_map_variable:nNn {1,2} \jlreq@i {
       \expandafter\ifx\csname jlreq@leftmark@\jlreq@i\endcsname\@empty
         \expandafter\ifx\csname jlreq@rightmark@\jlreq@i\endcsname\@empty\else
-          \tl_put_right:Nx \jlreq@do {\noexpand\jlreq@setextrarightmark{\jlreq@i}{\exp_not:v {jlreq@rightmark@\jlreq@i}}}%
+          \tl_put_right:Nx \jlreq@do {\noexpand\jlreq@setextrarightmark{\jlreq@i}{\exp_args:Nc \exp_not:o {jlreq@rightmark@\jlreq@i}}}%
         \fi
       \else
         \tl_put_right:Nx \jlreq@do{%
-          \noexpand\jlreq@setextraleftmark{\jlreq@i}{\exp_not:v {jlreq@leftmark@\jlreq@i}}%
-          \noexpand\jlreq@setextrarightmark{\jlreq@i}{\exp_not:v {jlreq@rightmark@\jlreq@i}}%
+          \noexpand\jlreq@setextraleftmark{\jlreq@i}{\exp_args:Nc \exp_not:o {jlreq@leftmark@\jlreq@i}}%
+          \noexpand\jlreq@setextrarightmark{\jlreq@i}{\exp_args:Nc \exp_not:o {jlreq@rightmark@\jlreq@i}}%
         }%
       \fi
     }%
@@ -4128,7 +4128,7 @@
 % #2 #3 #4と並んだヘッダを作り#1に入れる．#1，#2，#3はコンロトールシークエンスの名前とする．
 \def\jlreq@pagestyle@setheadfoot#1#2#3#4{%
   \begingroup
-    \edef\jlreq@do{\noexpand\jlreq@pagestyle@setheadfoot@{\unexpanded{#1}}{\exp_not:v {#2}}{\exp_not:v {#3}}{\exp_not:v {#4}}}%
+    \edef\jlreq@do{\noexpand\jlreq@pagestyle@setheadfoot@{\unexpanded{#1}}{\exp_args:Nc \exp_not:o {#2}}{\exp_args:Nc \exp_not:o {#3}}{\exp_args:Nc \exp_not:o {#4}}}%
   \expandafter\endgroup
   \jlreq@do
 }
@@ -4191,7 +4191,7 @@
   \jlreq@if{\expandafter\ifx\csname #1\endcsname\@empty\fi}{}{%
     \edef\jlreq@do{%
       \noexpand\jlreq@tempatrue % 最初の処理かフラグ
-      \unexpanded{\jlreq@pagestyle@make@runninghead@{#1}{#2}{#3}}\exp_not:v {#1}\noexpand\jlreq@endmark
+      \unexpanded{\jlreq@pagestyle@make@runninghead@{#1}{#2}{#3}}\exp_args:Nc \exp_not:o {#1}\noexpand\jlreq@endmark
     }%
     \expandafter\def\csname #1\endcsname{}%
     \jlreq@do
@@ -4233,7 +4233,7 @@
 \def\jlreq@pagestyle@addfont@tocs#1#2{%
   \expandafter\ifx\csname #1\endcsname\@empty\else
     \expandafter\ifx\csname #2\endcsname\@empty\else
-      \expandafter\edef\csname #1\endcsname{{\exp_not:v {#2}\exp_not:v {#1}}}%
+      \expandafter\edef\csname #1\endcsname{{\exp_args:Nc \exp_not:o {#2}\exp_args:Nc \exp_not:o {#1}}}%
     \fi
   \fi
 }
@@ -4246,7 +4246,7 @@
       \ifx\jlreq@tempa\@empty\else
         \edef\jlreq@do{%
           \noexpand\edef\exp_not:c {#3}{\noexpand\unexpanded{%
-            {\exp_not:v {#2}\exp_not:o {\jlreq@tempa}}%
+            {\exp_args:Nc \exp_not:o {#2}\exp_not:o {\jlreq@tempa}}%
           }}%
         }%
       \fi
@@ -4362,7 +4362,7 @@
           \else\ifnum\jlreq@minimumlevel>\jlreq@level\space\let\jlreq@minimumlevel=\jlreq@level\fi\fi
         \fi
         % \jlreq@markdata@<見出し命令>にある情報とmark_formatをもとに，\<見出し命令>markを定義するマクロを作成，\jlreq@markdefinecommandに入れる．
-        \edef\jlreq@do{\noexpand\jlreq@pagestyle@make@headingmark{\ifjlreq@headii@exist *\fi}{\exp_not:o {\jlreq@heading}}{\exp_not:o {\jlreq@mark@format}}{\exp_not:v {jlreq@markdata@\jlreq@heading}}}%
+        \edef\jlreq@do{\noexpand\jlreq@pagestyle@make@headingmark{\ifjlreq@headii@exist *\fi}{\exp_not:o {\jlreq@heading}}{\exp_not:o {\jlreq@mark@format}}{\exp_args:Nc \exp_not:o {jlreq@markdata@\jlreq@heading}}}%
         \jlreq@do
         \tl_put_right:Nx \jlreq@markdefinecommand { \exp_not:o {\jlreq@result} }%
       \fi
@@ -4438,7 +4438,7 @@
           {\expandafter\let\expandafter\jlreq@format\csname jlreq@\jlreq@parity headformat\endcsname}%
         \edef\jlreq@do{\unexpanded{\def\jlreq@tempa##1}{\exp_not:o {\jlreq@format}}}\jlreq@do
         \edef\jlreq@tempb{%
-          \exp_not:v {jlreq@\jlreq@parity @contents}%
+          \exp_args:Nc \exp_not:o {jlreq@\jlreq@parity @contents}%
           \noexpand\hfil
           \exp_not:o {\jlreq@nombre@contents}%
         }%
@@ -4488,7 +4488,7 @@
       \clist_map_variable:nNn {
         jlreq@nombre@i@position, jlreq@nombre@ii@position, jlreq@nombre@iii@position, jlreq@running@head@i@position, jlreq@running@head@ii@position, jlreq@running@head@iii@position
       } \jlreq@tempa {
-        \edef\jlreq@next{\noexpand\jlreq@pagestyle@parse@position{\exp_not:v {\jlreq@tempa}}{\exp_not:c {\jlreq@tempa}}{\exp_not:v {\jlreq@tempa @default}}}%
+        \edef\jlreq@next{\noexpand\jlreq@pagestyle@parse@position{\exp_args:Nc \exp_not:o {\jlreq@tempa}}{\exp_not:c {\jlreq@tempa}}{\exp_args:Nc \exp_not:o {\jlreq@tempa @default}}}%
         \jlreq@next
       }%
       \bool_if:nT { (
@@ -4539,7 +4539,7 @@
             \jlreq@ifleftpage{\jlreq@parity}{\let\jlreq@addtocs=\tl_put_right:cx}{\let\jlreq@addtocs\tl_put_left:cx}%
             \edef\jlreq@csname{jlreq@nombre@\jlreq@parity @\jlreq@vert @\jlreq@hor}%
             \expandafter\ifx\csname\jlreq@csname\endcsname\@empty\else\jlreq@addtocs{\jlreq@csname}{\unexpanded{\hskip\glueexpr}\exp_not:o {\jlreq@nombre@gap}\noexpand\relax}\fi
-            \jlreq@addtocs{\jlreq@csname}{\exp_not:v {jlreq@nombre@\jlreq@i}}%
+            \jlreq@addtocs{\jlreq@csname}{\exp_args:Nc \exp_not:o {jlreq@nombre@\jlreq@i}}%
           \fi
           % running@head
           % 一度「紙面の外から」の順番で{A}{B}{C}と入れる
@@ -4550,7 +4550,7 @@
             \str_if_eq:VnT \jlreq@parity { even } {\jlreq@reverse@leftright{\jlreq@hor}}
             \str_if_eq:VVTF \jlreq@hor \jlreq@pagehor {\let\jlreq@addtocs=\tl_put_right:cx}{\let\jlreq@addtocs=\tl_put_left:cx}%
             \edef\jlreq@csname{jlreq@running@head@\jlreq@parity @\jlreq@vert @\jlreq@hor}%
-            \jlreq@addtocs{\jlreq@csname}{{\exp_not:v {jlreq@\jlreq@parity @running@head@\jlreq@i}}}%
+            \jlreq@addtocs{\jlreq@csname}{{\exp_args:Nc \exp_not:o {jlreq@\jlreq@parity @running@head@\jlreq@i}}}%
           \fi
         }%
         % {A}{B}{C}の順だった柱を結合する．本体は\jlreq@pagestyle@make@runninghead．
@@ -4570,7 +4570,7 @@
             % nombreにフォント設定を追加．
             \expandafter\ifx\csname\jlreq@nombrecsname\endcsname\@empty\else
               \ifx\jlreq@nombre@font\@empty\else
-                \expandafter\edef\csname\jlreq@nombrecsname\endcsname{{\exp_not:o {\jlreq@nombre@font}\exp_not:v {\jlreq@nombrecsname}}}%
+                \expandafter\edef\csname\jlreq@nombrecsname\endcsname{{\exp_not:o {\jlreq@nombre@font}\exp_args:Nc \exp_not:o {\jlreq@nombrecsname}}}%
               \fi
             \fi
             \jlreq@if{\expandafter\ifx\csname\jlreq@runheadcsname\endcsname\@empty\fi}{%
@@ -4589,30 +4589,30 @@
                     % 柱が空出ないときに限り<空き>を入れる．
                     \jlreq@pagestyle@addfont@totokens{\exp_not:N \dim_compare:nF { \exp_not:n { \wd\jlreq@PageStyle@box=0pt } } { \exp_not:N \hskip\exp_not:o {\jlreq@gap}\exp_not:N \relax } }{jlreq@running@head@font}{jlreq@tempa}%
                     \expandafter\edef\csname\jlreq@csname\endcsname{%
-                      \unexpanded{\setbox\jlreq@PageStyle@box=\hbox}{\exp_not:o {\jlreq@running@head@font}\exp_not:v {\jlreq@runheadcsname}}%
-                      \exp_not:v {\jlreq@nombrecsname}\exp_not:o {\jlreq@tempa}\unexpanded{\box\jlreq@PageStyle@box}%
+                      \unexpanded{\setbox\jlreq@PageStyle@box=\hbox}{\exp_not:o {\jlreq@running@head@font}\exp_args:Nc \exp_not:o {\jlreq@runheadcsname}}%
+                      \exp_args:Nc \exp_not:o {\jlreq@nombrecsname}\exp_not:o {\jlreq@tempa}\unexpanded{\box\jlreq@PageStyle@box}%
                     }%
                   }{%
                     % <ノンブル><空き><柱>，左寄せ
                     % ノンブルは常に空ではないと仮定する．
-                    \jlreq@pagestyle@addfont@totokens{\unexpanded{\hskip\glueexpr}\exp_not:o {\jlreq@gap}\noexpand\relax\exp_not:v {\jlreq@runheadcsname}}{jlreq@running@head@font}{jlreq@tempa}%
-                    \expandafter\edef\csname\jlreq@csname\endcsname{\exp_not:v {\jlreq@nombrecsname}\exp_not:o {\jlreq@tempa}}%
+                    \jlreq@pagestyle@addfont@totokens{\unexpanded{\hskip\glueexpr}\exp_not:o {\jlreq@gap}\noexpand\relax\exp_args:Nc \exp_not:o {\jlreq@runheadcsname}}{jlreq@running@head@font}{jlreq@tempa}%
+                    \expandafter\edef\csname\jlreq@csname\endcsname{\exp_args:Nc \exp_not:o {\jlreq@nombrecsname}\exp_not:o {\jlreq@tempa}}%
                   }%
                 }{%
                   \str_if_eq:VnTF \jlreq@hor { left } {
                     % <柱><空き><ノンブル>，左寄せ
                     \jlreq@pagestyle@addfont@totokens{%
-                      \unexpanded{\setbox\jlreq@PageStyle@box=\hbox}{\exp_not:v {\jlreq@runheadcsname}}%
+                      \unexpanded{\setbox\jlreq@PageStyle@box=\hbox}{\exp_args:Nc \exp_not:o {\jlreq@runheadcsname}}%
                       \unexpanded{\copy\jlreq@PageStyle@box}
                       \exp_not:N \dim_compare:nF { \exp_not:n { \wd\jlreq@PageStyle@box=0pt } } {
                         \exp_not:n { \hskip\glueexpr } \exp_not:o {\jlreq@gap} \exp_not:N \relax
                       }
                     }{jlreq@running@head@font}{jlreq@tempa}%
-                    \expandafter\edef\csname\jlreq@csname\endcsname{\exp_not:o {\jlreq@tempa}\exp_not:v {\jlreq@nombrecsname}}%
+                    \expandafter\edef\csname\jlreq@csname\endcsname{\exp_not:o {\jlreq@tempa}\exp_args:Nc \exp_not:o {\jlreq@nombrecsname}}%
                   }{%
                     % <柱><空き><ノンブル>，右寄せ
-                    \jlreq@pagestyle@addfont@totokens{\exp_not:v {\jlreq@runheadcsname}\unexpanded{\hskip\glueexpr}\exp_not:o {\jlreq@gap}\noexpand\relax}{jlreq@running@head@font}{jlreq@tempa}%
-                    \expandafter\edef\csname\jlreq@csname\endcsname{\exp_not:o {\jlreq@tempa}\exp_not:v {\jlreq@nombrecsname}}%
+                    \jlreq@pagestyle@addfont@totokens{\exp_args:Nc \exp_not:o {\jlreq@runheadcsname}\unexpanded{\hskip\glueexpr}\exp_not:o {\jlreq@gap}\noexpand\relax}{jlreq@running@head@font}{jlreq@tempa}%
+                    \expandafter\edef\csname\jlreq@csname\endcsname{\exp_not:o {\jlreq@tempa}\exp_args:Nc \exp_not:o {\jlreq@nombrecsname}}%
                   }%
                 }%
               }%
@@ -4750,7 +4750,7 @@
 % #1@#2が定義されていれば\#1@#2の中身に，そうでなければ\#1の中身に展開される．
 % 展開は\unexpandedで抑制される．
 \def\jlreq@jlreqsetup@withenv@nameuse#1#2{%
-  \jlreq@if{\expandafter\ifx\csname #1@#2\endcsname\relax\fi}{\exp_not:v {#1}}{\exp_not:v {#1@#2}}%
+  \jlreq@if{\expandafter\ifx\csname #1@#2\endcsname\relax\fi}{\exp_args:Nc \exp_not:o {#1}}{\exp_args:Nc \exp_not:o {#1@#2}}%
 }
 % 4.3.1 注4
 \newlength\abovecaptionskip

@@ -1060,17 +1060,17 @@
 \fi
 
 % 和文間隔
-\DeclareRobustCommand*\　{\futurelet\jlreq@nextchar\jlreq@zenkakuspace@ignorespaces}
+\NewDocumentCommand{\　} {} {\futurelet\jlreq@nextchar\jlreq@zenkakuspace@ignorespaces}
 % 後続の空白を無視する処理
 \edef\jlreq@zenkakuspace@ignorespaces{%
   \noexpand\ifx\exp_not:o {\space}\unexpanded{\jlreq@nextchar\expandafter\jlreq@zenkakuspace@ignorespaces@\else\expandafter\jlreq@zenkakuspace@main\fi}%
 }
-\expandafter\def\expandafter\jlreq@zenkakuspace@ignorespaces@\space{\　}
+\expandafter\def\expandafter\jlreq@zenkakuspace@ignorespaces@\space{\futurelet\jlreq@nextchar\jlreq@zenkakuspace@ignorespaces}
 \def\jlreq@tempa{}
 \def\jlreq@do#1{\jlreq@ifendmark{#1}{}{\tl_put_right:Nn \jlreq@tempa{\ifnum\lastnodechar=`#1~1\fi}\jlreq@do}}
 \expandafter\jlreq@do\jlreq@charlist@dividingpunctuationmarks\jlreq@endmark
 \edef\@tempa{\noexpand\ifnum0\exp_not:o {\jlreq@tempa}>0~}
-\expandafter\DeclareRobustCommand\expandafter*\expandafter\jlreq@zenkakuspace@main\expandafter{\@tempa
+\expandafter\long\expandafter\def\expandafter\jlreq@zenkakuspace@main\expandafter{\@tempa
     \hskip 1\jlreq@zw\hbox{}%
     \jlreq@lastnodechar=`　
     \expandafter\jlreq@fixjfm
@@ -1103,8 +1103,8 @@
 }
 \def\jlreq@do#1{%
   \jlreq@ifendmark{#1}{}{
-    \expandafter\DeclareRobustCommand\expandafter*\csname #1\endcsname{%
-      \jlreq@ifstar
+    \expandafter\NewDocumentCommand\expandafter{\csname #1\endcsname} { s } {
+      \IfBooleanTF{##1}
         {\hskip .25\jlreq@zw #1\hskip .25\jlreq@zw\ignorespaces}%
         {#1\futurelet\jlreq@nextchar\jlreq@dividingpunctuationmarkscommand}%
     }
@@ -1141,14 +1141,14 @@
 \emergencystretch 3\jlreq@gol
 \setlength{\parindent}{1\zw}
 \hook_gput_code:nnn { cmd/set@fontsize/after } {.} {
-  \expandafter\def\expandafter\size@update\expandafter{\size@update\g__jlreq_setfontsizehook}
+  \expandafter\def\expandafter\size@update\expandafter{\size@update\g__jlreq_setfontsizehook_tl}
 }
-\tl_new:N \g__jlreq_setfontsizehook
-\tl_set:Nn \g__jlreq_setfontsizehook { \dim_compare:nT { \parindent>0pt } { \setlength{\parindent}{1\jlreq@zw} } }
+\tl_new:N \g__jlreq_setfontsizehook_tl
+\tl_set:Nn \g__jlreq_setfontsizehook_tl { \dim_compare:nT { \parindent>0pt } { \setlength{\parindent}{1\jlreq@zw} } }
 \ifx l\jlreq@engine
   \@tempskipa=\ltjgetparameter{kanjiskip}
   \ifdim\@tempskipa=\maxdimen\else
-    \tl_put_right:Nn \g__jlreq_setfontsizehook {%
+    \tl_put_right:Nn \g__jlreq_setfontsizehook_tl {%
       \ltj@setpar@global
       \ltjsetkanjiskip\jlreqkanjiskip
       \@tempskipa=\ltjgetparameter{xkanjiskip}%
@@ -1158,7 +1158,7 @@
     }
   \fi
 \else
-  \tl_put_right:Nn \g__jlreq_setfontsizehook {%
+  \tl_put_right:Nn \g__jlreq_setfontsizehook_tl {%
     \kanjiskip=\jlreqkanjiskip
     \ifdim\xkanjiskip>0pt
       \xkanjiskip=\jlreqxkanjiskip

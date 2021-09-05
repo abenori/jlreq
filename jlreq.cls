@@ -600,7 +600,7 @@
     \jlreq@getfirsttoken@expandmacros{\jlreq@nextchar}{\jlreq@tempa}%
     \expandafter\jlreq@ifletter\expandafter{\jlreq@tempa}{%
       \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{\jlreq@tempa}%
-%      \message{fixjfm,~before~lastnodechar~=~\the\jlreq@lastnodechar,~after~=~\meaning\jlreq@nextchar,~Insert:~\the\jlreq@resultskip}
+      \message{fixjfm,~before~lastnodechar~=~\the\jlreq@lastnodechar,~after~=~\meaning\jlreq@nextchar,~Insert:~\the\jlreq@resultskip}
       \edef\jlreq@do{%
         \noexpand\hskip\the\jlreq@resultskip\space
         \noexpand\inhibitglue
@@ -3393,7 +3393,8 @@
 
 %.. 後注（4.2.4）
 \def\jlreq@endnotemarkname{@thefnmark}% 合印用番号を一時的に入れるマクロ名
-\def\jlreq@endnotecounter{footnote}% 後注用のカウンタ名
+\keys_define:nn { jlreqsetup } { endnote_counter .tl_set:N = \jlreq@endnotecounter }
+\keys_set:nn { jlreqsetup } { endnote_counter = footnote }
 % 文字サイズは\footnotesizeを使う
 \newdimen\jlreq@endnote@prepostspace
 % 前の分との間は行間分空ける（4.2.4.f）
@@ -3583,11 +3584,11 @@
     }%
   }
   \jlreq@setdefaultnotemark\@sidenotemark\@makesidemark
-  \def\jlreq@sidenotecounter{footnote}% 傍注用のカウンタ名
   \keys_define:nn { jlreqsetup } {
-    sidenote_type .choices:nn = { number, symbol } { \def\jlreq@sidenote@type{#1} }
+    sidenote_type .choices:nn = { number, symbol } { \def\jlreq@sidenote@type{#1} },
+    sidenote_counter .tl_set:N = \jlreq@sidenotecounter
   }
-  \def\jlreq@sidenote@type{number}
+  \keys_set:nn { jlreqsetup } { sidenote_type = number, sidenote_counter = footnote}
   \__jlreq_jlreqsetup_addtofinally:n {
     \str_if_eq:VnT \jlreq@sidenote@type { number } {
       \DeclareDocumentCommand { \sidenote } { O{} +m } {

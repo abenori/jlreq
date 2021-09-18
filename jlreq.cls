@@ -291,7 +291,7 @@
   sidenote_length=0pt,column_gap={2zw},
   headfoot_verticalposition = {},headfoot_sidemargin={0pt},
   open_bracket_pos=zenkaku_tentsuki,
-  onecolumn,final}
+  onecolumn,final }
 \ProcessKeysOptions { jlreq }
 
 \legacy_if:nF { jlreq@option@titlepage } {
@@ -4496,8 +4496,8 @@
         \legacy_if_p:n { @tate } && (
           \str_if_eq_p:ee { \expandafter\@secondoftwo\jlreq@nombre@i@position } { right } ||
           \str_if_eq_p:ee { \expandafter\@secondoftwo\jlreq@running@head@i@position }{ right }
-          ))}{
-      )) || (
+        )
+      ) || (
         (! \legacy_if_p:n { @tate } ) && (
           \str_if_eq_p:ee { \expandafter\@secondoftwo\jlreq@nombre@i@position }{ left } ||
           \str_if_eq_p:ee { \expandafter\@secondoftwo\jlreq@running@head@i@position }{ left }

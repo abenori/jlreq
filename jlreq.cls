@@ -600,7 +600,7 @@
     \jlreq@getfirsttoken@expandmacros{\jlreq@nextchar}{\jlreq@tempa}%
     \expandafter\jlreq@ifletter\expandafter{\jlreq@tempa}{%
       \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{\jlreq@tempa}%
-      \message{fixjfm,~before~lastnodechar~=~\the\jlreq@lastnodechar,~after~=~\meaning\jlreq@nextchar,~Insert:~\the\jlreq@resultskip}
+%      \message{fixjfm,~before~lastnodechar~=~\the\jlreq@lastnodechar,~after~=~\meaning\jlreq@nextchar,~Insert:~\the\jlreq@resultskip}
       \edef\jlreq@do{%
         \noexpand\hskip\the\jlreq@resultskip\space
         \noexpand\inhibitglue
@@ -1042,7 +1042,11 @@
 % 和文ファミリと欧文ファミリの連動
 \AddToHook{rmfamily}{\prepare@family@series@update@kanji{mc}\mcdefault}
 \AddToHook{sffamily}{\prepare@family@series@update@kanji{gt}\gtdefault}
-\AddToHook{ttfamily}{\prepare@family@series@update@kanji{gt}\gtdefault}
+\ifx l\jlreq@engine
+  \AddToHook{ttfamily}{\prepare@family@series@update@kanji{jtt}\jttdefault}
+\else
+  \AddToHook{ttfamily}{\prepare@family@series@update@kanji{gt}\gtdefault}
+\fi
 
 % 数式フォント設定
 \ifjlreq@option@enablejfam
@@ -4502,7 +4506,7 @@
           \str_if_eq_p:ee { \expandafter\@secondoftwo\jlreq@nombre@i@position }{ left } ||
           \str_if_eq_p:ee { \expandafter\@secondoftwo\jlreq@running@head@i@position }{ left }
         )
-      )}{
+      ) } {
         \if@twoside
           \jlreq@note{柱やノンブルは，左ページでは，基本版面の左端の延長線にノンブル又は柱の先頭をそろえて配置するか，基本版面の左端の延長線から基本版面の文字サイズの全角アキだけ右に寄せた位置に配置する (ページスタイル #1 内，2.6.1.b)．}%
         \fi

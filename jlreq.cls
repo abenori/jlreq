@@ -3180,10 +3180,15 @@
     \begingroup
       \footnotesize
       \jlreq@footnoteindent=\dimexpr#1\relax
-      \@tempdima=\dimexpr\textwidth - \jlreq@footnoteindent\relax
-      \@tempdimb=1\jlreq@zw
-      \divide\@tempdima\@tempdimb \multiply\@tempdima\@tempdimb
-      \edef\jlreq@do{\noexpand\jlreq@footnoteindent=\the\dimexpr\textwidth - \@tempdima\relax}%
+      \if@twocolumn 
+        \@tempdimb=\dimexpr(\textwidth - \columnsep)/2\relax
+      \else
+        \@tempdimb=\textwidth
+      \fi
+      \@tempdima=\dimexpr\@tempdimb - \jlreq@footnoteindent\relax
+      \@tempdimc=1\jlreq@zw
+      \divide\@tempdima\@tempdimc \multiply\@tempdima\@tempdimc
+      \edef\jlreq@do{\noexpand\jlreq@footnoteindent=\the\dimexpr\@tempdimb - \@tempdima - 0.0001pt\relax}%
     \expandafter\endgroup
     \jlreq@do
   }

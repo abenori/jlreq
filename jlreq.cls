@@ -3156,7 +3156,11 @@
 % 罫線の前は行間分，最大＋文字サイズ分伸びる（4.2.5.g）
 \setlength{\skip\footins}{\dimexpr\baselineskip - 1\jlreq@gol \relax plus 1\jlreq@gol}
 % 罫線の長さは，基本版面で設定した行長にもよるが，行長の1/3くらいにする．
-\def\jlreq@footnote@rulewidth{.333\textwidth}
+\if@twocolumn
+  \def\jlreq@footnote@rulewidth{.333\dimexpr(\textwidth - \columnsep)/2\relax}
+\else
+  \def\jlreq@footnote@rulewidth{.333\textwidth}
+\fi
 \begingroup
   \footnotesize
   \edef\jlreq@do{

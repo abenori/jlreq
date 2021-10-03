@@ -1260,7 +1260,6 @@
 \newdimen\jlreq@urakeiwidth
 \jlreq@urakeiwidth=0.4mm
 % 脚注のインデント
-\newdimen\jlreq@footnoteindent
 
 %\RequirePackage{jlreq-debug}
 
@@ -3156,11 +3155,7 @@
 % 罫線の前は行間分，最大＋文字サイズ分伸びる（4.2.5.g）
 \setlength{\skip\footins}{\dimexpr\baselineskip - 1\jlreq@gol \relax plus 1\jlreq@gol}
 % 罫線の長さは，基本版面で設定した行長にもよるが，行長の1/3くらいにする．
-\if@twocolumn
-  \def\jlreq@footnote@rulewidth{.333\dimexpr(\textwidth - \columnsep)/2\relax}
-\else
-  \def\jlreq@footnote@rulewidth{.333\textwidth}
-\fi
+\def\jlreq@footnote@rulewidth{0.333\columnwidth}
 \begingroup
   \footnotesize
   \edef\jlreq@do{
@@ -3175,26 +3170,12 @@
 \expandafter\endgroup
 \jlreq@do
 
-% インデントの計算：脚注の長さが文字の整数倍になるように字下げする（4.2.5.b）
 \keys_define:nn { jlreqsetup } {
   footnote_indent .code:n = {
     \bool_if:nT { \legacy_if_p:n { @tate } && \dim_compare_p:n { #1 = 0pt } } {
       \jlreq@note{脚注は，一般にその前に区切りのための罫線を挿入するので，字下げは行わなくてよい（4.2.5.b）．}
     }
-    \begingroup
-      \footnotesize
-      \jlreq@footnoteindent=\dimexpr#1\relax
-      \if@twocolumn 
-        \@tempdimb=\dimexpr(\textwidth - \columnsep)/2\relax
-      \else
-        \@tempdimb=\textwidth
-      \fi
-      \@tempdima=\dimexpr\@tempdimb - \jlreq@footnoteindent\relax
-      \@tempdimc=1\jlreq@zw
-      \divide\@tempdima\@tempdimc \multiply\@tempdima\@tempdimc
-      \edef\jlreq@do{\noexpand\jlreq@footnoteindent=\the\dimexpr\@tempdimb - \@tempdima - 0.0001pt\relax}%
-    \expandafter\endgroup
-    \jlreq@do
+    \def\jlreq@footnoteindent{#1}
   }
 }
 
@@ -3207,20 +3188,26 @@
         ( \dim_compare_p:n { -1.01\jlreq@zw < #1 } && \dim_compare_p:n { #1 < -0.99\jlreq@zw } )
       }{\jlreq@note{脚注が2行以上となった場合，脚注の2行目以下の字下げを1行目より，脚注の文字サイズの全角アキとするか，逆に，1行目の字下げを2行目より，脚注の文字サイズの全角アキとする~(4.2.5.d)．}}
     }
-    \dim_compare:nTF { #1 < 0pt } {
-      \def\jlreq@makefntext{}
-    }{
-      \def\jlreq@makefntext{\addtolength{\leftskip}{\glueexpr #1\relax}}
-    }
-    \long\edef\jlreq@makefntext##1{\exp_not:o {\jlreq@makefntext}%
-      \unexpanded{%
-        \addtolength{\leftskip}{\jlreq@footnoteindent}%
-        \parindent=1\jlreq@zw
-        \noindent
-        \hskip-\glueexpr #1\relax
-        \jlreq@referencemark@format{\@thefnmark}%
-        \hskip\glueexpr 1\jlreq@zw\relax
-      }##1%
+    \cs_set:Npn \jlreq@makefntext ##1 {
+      \skip_if_eq:nnF { #1 } { 0pt } { \addtolength{\leftskip}{\glueexpr #1\relax} }
+      % インデントの計算：脚注の長さが文字の整数倍になるように字下げする（4.2.5.b）
+      \group_begin:
+        \@tempdima=\dimexpr\columnwidth - \jlreq@footnoteindent\relax
+        \@tempdimb=1\jlreq@zw
+        \divide\@tempdima\@tempdimb \multiply\@tempdima\@tempdimb
+        \cs_set:Nx \l__jlreq_do: {
+          \exp_not:N \addtolength { \exp_not:N \leftskip } {\dim_eval:n { \columnwidth - \@tempdima - 0.0001pt } }
+          \exp_not:n {
+            \parindent=1\jlreq@zw
+            \noindent
+            \hskip-\glueexpr #1\relax
+            \jlreq@referencemark@format{\@thefnmark}%
+            \hskip\glueexpr 1\jlreq@zw\relax
+          }
+        }
+      \exp_after:wN \group_end:
+      \l__jlreq_do:
+      ##1
     }
   }
 }

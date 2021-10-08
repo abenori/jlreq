@@ -5,7 +5,7 @@
 %%
 % (based on JLReq 20200811 https://www.w3.org/TR/2020/NOTE-jlreq-20200811/)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{jlreq}[2021/08/12 jlreq]
+\ProvidesClass{jlreq}[2021/10/09 jlreq]
 \RequirePackage{l3keys2e}
 \RequirePackage{ifthen}
 \RequirePackage{jlreq-helpers}

@@ -155,7 +155,8 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
 * 2021-08-12
     - Removed the direct dependence on `etoolbox` package.
     - Fixed a bug.
-
+* 2021-10-09
+    - Fixed bugs.
 
 --------------
 Noriyuki Abe

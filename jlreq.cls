@@ -81,15 +81,16 @@
 % ものは\jlreq@option@<key>に格納する．
 % _とかは@に変換する．
 % エンジン類
-\keys_define:nn { jlreq } { uplatex .code:n = { \let\jlreq@engine=u }, uplatex .value_forbidden:n = true }
-\keys_define:nn { jlreq } { platex .code:n = { \let\jlreq@engine=p }, platex .value_forbidden:n = true }
-\keys_define:nn { jlreq } { lualatex .code:n = { \let\jlreq@engine=l }, lualatex .value_forbidden:n = true }
-
-% 文書のタイプ
-\keys_define:nn { jlreq } { article_type .choices:nn = {article,report,book}{\def\jlreq@article@type{#1}} }
-\keys_define:nn { jlreq } { article .code:n = { \def\jlreq@article@type{article} }, article .value_forbidden:n = true }
-\keys_define:nn { jlreq } { report .code:n = { \def\jlreq@article@type{report} }, report .value_forbidden:n = true }
-\keys_define:nn { jlreq } { book .code:n = { \def\jlreq@article@type{book} }, book .value_forbidden:n = true }
+\keys_define:nn { jlreq } {
+  uplatex .code:n = { \let\jlreq@engine=u }, uplatex .value_forbidden:n = true,
+  platex .code:n = { \let\jlreq@engine=p }, platex .value_forbidden:n = true,
+  lualatex .code:n = { \let\jlreq@engine=l }, lualatex .value_forbidden:n = true,
+  % 文書のタイプ
+  article_type .choices:nn = {article,report,book}{\def\jlreq@article@type{#1}},
+  article .code:n = { \def\jlreq@article@type{article} }, article .value_forbidden:n = true,
+  report .code:n = { \def\jlreq@article@type{report} }, report .value_forbidden:n = true,
+  book .code:n = { \def\jlreq@article@type{book} }, book .value_forbidden:n = true
+}
 
 %.. 基本版面．まずは紙サイズ．
 \tl_new:N \g__jlreq_papersizelist_tl
@@ -171,14 +172,14 @@
 
 %.. フォントサイズ，行長，1ページあたりの行数で基本版面のサイズを決める（2.4.1.a）
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@fontsize
-\keys_define:nn { jlreq } { fontsize .tl_set:N = \jlreq@option@fontsize }
 \keys_define:nn { jlreq } {
+  fontsize .tl_set:N = \jlreq@option@fontsize,
   10pt .code:n = {\def\jlreq@option@fontsize{10pt}}, 10pt .value_forbidden:n = true,
   11pt .code:n = {\def\jlreq@option@fontsize{11pt}}, 11pt .value_forbidden:n = true,
   12pt .code:n = {\def\jlreq@option@fontsize{12pt}}, 12pt .value_forbidden:n = true,
+  jafontsize .tl_set:N = \jlreq@option@jafontsize,
+  jafontscale .tl_set:N = \jlreq@option@jafontscale
 }
-\keys_define:nn { jlreq } { jafontsize .tl_set:N = \jlreq@option@jafontsize }
-\keys_define:nn { jlreq } { jafontscale .tl_set:N = \jlreq@option@jafontscale }
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@jafontsize
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@jafontscale
 %.. 行の長さ
@@ -253,29 +254,35 @@
 \newif\if@tate \@tatefalse
 \newif\ifjlreq@option@titlepage \jlreq@option@titlepagefalse % titlepageかnotitlepageかが指定された
 \__jlreq_aftercls_addtodeleteif:N \ifjlreq@option@titlepage
-\keys_define:nn { jlreq } { landscape .code:n = {\@landscapetrue}, landscape .value_forbidden:n = true }
-\keys_define:nn { jlreq } { tombo .code:n = {\ClassWarningNoLine{jlreq}{The~option~`tombo'~is~not~supported~by~jlreq~class.~Please~use~the~jlreq-trimmarks~package}} }
-\keys_define:nn { jlreq } { tombow .code:n = {\ClassWarningNoLine{jlreq}{The~option~`tombow'~is~not~supported~by~jlreq~class.~Please~use~the~jlreq-trimmarks~package}} }
-\keys_define:nn { jlreq } { mentuke .code:n = {\ClassWarningNoLine{jlreq}{The~option~`mentuke'~is~not~supported~by~jlreq~class.~Please~use~the~jlreq-trimmarks~package}} }
-\keys_define:nn { jlreq } { tate .code:n = { \@tatetrue }, tate .value_forbidden:n = true}
+\keys_define:nn { jlreq } {
+  landscape .code:n = {\@landscapetrue}, landscape .value_forbidden:n = true,
+  tombo .code:n = {\ClassWarningNoLine{jlreq}{The~option~`tombo'~is~not~supported~by~jlreq~class.~Please~use~the~jlreq-trimmarks~package}},
+  tombow .code:n = {\ClassWarningNoLine{jlreq}{The~option~`tombow'~is~not~supported~by~jlreq~class.~Please~use~the~jlreq-trimmarks~package}}, 
+  mentuke .code:n = {\ClassWarningNoLine{jlreq}{The~option~`mentuke'~is~not~supported~by~jlreq~class.~Please~use~the~jlreq-trimmarks~package}},
+  tate .code:n = { \@tatetrue }, tate .value_forbidden:n = true
+}
 
 \newif\ifjlreq@option@twoside\jlreq@option@twosidefalse % onesideかtwosideが指定された
 \__jlreq_aftercls_addtodeleteif:N \ifjlreq@option@twoside
-\keys_define:nn { jlreq } { oneside .code:n = { \@twosidefalse\@mparswitchfalse\jlreq@option@twosidetrue }, oneside .value_forbidden:n = true }
-\keys_define:nn { jlreq } { twoside .code:n = { \@twosidetrue\@mparswitchtrue\jlreq@option@twosidetrue }, twoside .value_forbidden:n = true }
-\keys_define:nn { jlreq } { onecolumn .code:n = { \@twocolumnfalse }, onecolumn .value_forbidden:n = true }
-\keys_define:nn { jlreq } { twocolumn .code:n = { \@twocolumntrue }, twocolumn .value_forbidden:n = true }
-\keys_define:nn { jlreq } { titlepage .code:n = { \jlreq@option@titlepagetrue\@titlepagetrue }, titlepage .value_forbidden:n = true }
-\keys_define:nn { jlreq } { notitlepage .code:n = { \jlreq@option@titlepagetrue\@titlepagefalse }, notitlepage .value_forbidden:n = true }
-\keys_define:nn { jlreq } { draft .code:n = { \setlength\overfullrule{5pt} }, draft .value_forbidden:n = true }
-\keys_define:nn { jlreq } { final .code:n = { \setlength\overfullrule{0pt} }, final .value_forbidden:n = true }
+\keys_define:nn { jlreq } {
+  oneside .code:n = { \@twosidefalse\@mparswitchfalse\jlreq@option@twosidetrue }, oneside .value_forbidden:n = true,
+  twoside .code:n = { \@twosidetrue\@mparswitchtrue\jlreq@option@twosidetrue }, twoside .value_forbidden:n = true,
+  onecolumn .code:n = { \@twocolumnfalse }, onecolumn .value_forbidden:n = true,
+  twocolumn .code:n = { \@twocolumntrue }, twocolumn .value_forbidden:n = true,
+  titlepage .code:n = { \jlreq@option@titlepagetrue\@titlepagetrue }, titlepage .value_forbidden:n = true,
+  notitlepage .code:n = { \jlreq@option@titlepagetrue\@titlepagefalse }, notitlepage .value_forbidden:n = true,
+  draft .code:n = { \setlength\overfullrule{5pt} }, draft .value_forbidden:n = true,
+  final .code:n = { \setlength\overfullrule{0pt} }, final .value_forbidden:n = true
+}
 \newif\if@openright
 \newif\ifjlreq@option@open \jlreq@option@openfalse % openrightかopenanyが指定された
 \__jlreq_aftercls_addtodeleteif:N \ifjlreq@option@open
-\keys_define:nn { jlreq } { openright .code:n = { \@openrighttrue\jlreq@option@opentrue }, openright .value_forbidden:n = true}
-\keys_define:nn { jlreq } { openany .code:n = { \@openrightfalse\jlreq@option@opentrue }, openany .value_forbidden:n = true}
-\keys_define:nn { jlreq } { leqno .code:n = { \input{leqno.clo } }, leqno .value_forbidden:n = true}
-\keys_define:nn { jlreq } { fleqn .code:n = { \input{fleqn.clo } }, fleqn .value_forbidden:n = true}
+\keys_define:nn { jlreq } {
+  openright .code:n = { \@openrighttrue\jlreq@option@opentrue }, openright .value_forbidden:n = true,
+  openany .code:n = { \@openrightfalse\jlreq@option@opentrue }, openany .value_forbidden:n = true,
+  leqno .code:n = { \input{leqno.clo } }, leqno .value_forbidden:n = true,
+  fleqn .code:n = { \input{fleqn.clo } }, fleqn .value_forbidden:n = true
+}
 \newif\ifjlreq@option@enablejfam \jlreq@option@enablejfamtrue
 \__jlreq_aftercls_addtodeleteif:N \ifjlreq@option@enablejfam
 \keys_define:nn { jlreq } { disablejfam .code:n = { \jlreq@option@enablejfamfalse }, disablejfam .value_forbidden:n = true}
@@ -3511,7 +3518,8 @@
 \let\@makeendmark=\@makefnmark
 
 % \theendnoteの出力を仕込む
-\keys_define:nn { jlreqsetup } {endnote_position .code:n = {
+\keys_define:nn { jlreqsetup } {
+  endnote_position .code:n = {
     \AddToHook{jlreq/heading/before}[jlreq/endnote]{}
     \RemoveFromHook{jlreq/heading/before}[jlreq/endnote]
     \jlreq@tempafalse % headingsが指定された
@@ -3657,8 +3665,10 @@
       \let\@makesidemark=\@makefnmark
     }
   }
-  \keys_define:nn { jlreqsetup } { sidenote_symbol .tl_set:N = \jlreq@sidenote@defaultmark }
-  \keys_define:nn { jlreqsetup } { sidenote_keyword_font .tl_set:N = \jlreq@sidenote@keywordfont }
+  \keys_define:nn { jlreqsetup } {
+    sidenote_symbol .tl_set:N = \jlreq@sidenote@defaultmark,
+    sidenote_keyword_font .tl_set:N = \jlreq@sidenote@keywordfont
+  }
 }
 
 %.. 割注（3.4）
@@ -4794,10 +4804,12 @@
   \vskip\belowcaptionskip
 }}
 
-\keys_define:nn { jlreqsetup } {caption_font .code:n = {\jlreq@jlreqsetup@withenv{jlreq@@makecaption@font@envlist}{jlreq@@makecaption@font@setting}{#1}}}
-\keys_define:nn { jlreqsetup } {caption_label_font .code:n = {\jlreq@jlreqsetup@withenv{jlreq@@makecaption@label@font@envlist}{jlreq@@makecaption@label@font@setting}{#1}}}
-\keys_define:nn { jlreqsetup } {caption_label_format .code:n = {\jlreq@jlreqsetup@withenv{jlreq@@makecaption@label@format@envlist}{jlreq@@makecaption@label@format@setting}{#1}}}
-\keys_define:nn { jlreqsetup } {caption_after_label_space .code:n = {\jlreq@jlreqsetup@withenv{jlreq@@makecaption@after@label@space@envlist}{jlreq@@makecaption@after@label@space@setting}{#1}}}
+\keys_define:nn { jlreqsetup } {
+  caption_font .code:n = {\jlreq@jlreqsetup@withenv{jlreq@@makecaption@font@envlist}{jlreq@@makecaption@font@setting}{#1}},
+  caption_label_font .code:n = {\jlreq@jlreqsetup@withenv{jlreq@@makecaption@label@font@envlist}{jlreq@@makecaption@label@font@setting}{#1}},
+  caption_label_format .code:n = {\jlreq@jlreqsetup@withenv{jlreq@@makecaption@label@format@envlist}{jlreq@@makecaption@label@format@setting}{#1}},
+  caption_after_label_space .code:n = {\jlreq@jlreqsetup@withenv{jlreq@@makecaption@after@label@space@envlist}{jlreq@@makecaption@after@label@space@setting}{#1}}
+}
 
 %% 
 %% \jlreq@@makecaption@align@setting@small(@env)に小さい時のalign，jlreq@@makecaption@align@setting@large(@env)に大きいときのalignを入れる．
@@ -5220,10 +5232,12 @@
 
 
 \def\jlreq@itemization@beforeafter@space@envlist{}
-\keys_define:nn { jlreqsetup } {itemization_beforeafter_space .code:n = {\jlreq@jlreqsetup@itemization{jlreq@itemization@beforeafter@space@envlist}{jlreq@itemization@beforeafter@space@setting}{#1}}}
-\keys_define:nn { jlreqsetup } {itemization_itemsep .code:n = {\jlreq@jlreqsetup@withenv{jlreq@itemization@itemsep@envlist}{jlreq@itemization@itemsep@setting}{#1}}}
-\keys_define:nn { jlreqsetup } {itemization_labelsep .code:n = {\jlreq@jlreqsetup@withenv{jlreq@itemization@labelsep@envlist}{jlreq@itemization@labelsep@setting}{#1}}}
-\keys_define:nn { jlreqsetup } {itemization_label_length .code:n = {\jlreq@jlreqsetup@itemization{jlreq@itemization@label@length@envlist}{jlreq@itemization@label@length@setting}{#1}}}
+\keys_define:nn { jlreqsetup } {
+  itemization_beforeafter_space .code:n = {\jlreq@jlreqsetup@itemization{jlreq@itemization@beforeafter@space@envlist}{jlreq@itemization@beforeafter@space@setting}{#1}},
+  itemization_itemsep .code:n = {\jlreq@jlreqsetup@withenv{jlreq@itemization@itemsep@envlist}{jlreq@itemization@itemsep@setting}{#1}},
+  itemization_labelsep .code:n = {\jlreq@jlreqsetup@withenv{jlreq@itemization@labelsep@envlist}{jlreq@itemization@labelsep@setting}{#1}},
+  itemization_label_length .code:n = {\jlreq@jlreqsetup@itemization{jlreq@itemization@label@length@envlist}{jlreq@itemization@label@length@setting}{#1}}
+}
 % enumerate, itemize用初期化，#1 = i,ii,...
 \def\jlreq@init@list#1{%
   \setlength{\partopsep}{0pt}%
@@ -5246,14 +5260,14 @@
 \def\@listvi{\jlreq@init@list{vi}}
 
 % 引用系．3.5.2の例．
-\keys_define:nn { jlreqsetup } { quote_indent .tl_set:N = \jlreq@quote@indent }
-\keys_define:nn { jlreqsetup } { quote_end_indent .tl_set:N = \jlreq@quote@end@indent }
-\keys_define:nn { jlreqsetup }{
+\keys_define:nn { jlreqsetup } {
+  quote_indent .tl_set:N = \jlreq@quote@indent,
+  quote_end_indent .tl_set:N = \jlreq@quote@end@indent,
   quote_fontsize .choices:nn = {normalsize,small,footnotesize,scriptsize,tiny,{}}{
     \jlreq@ifempty{#1}{\def\jlreq@quote@fontsize{}}{\edef\jlreq@quote@fontsize{\exp_not:c {#1}}}
-  }
+  },
+  quote_beforeafter_space .tl_set:N = \jlreq@quote@beforeafter@space
 }
-\keys_define:nn { jlreqsetup } { quote_beforeafter_space .tl_set:N = \jlreq@quote@beforeafter@space }
 
 \newenvironment{verse}
   {\let\\\@centercr
@@ -5491,7 +5505,8 @@
 \newcommand{\subsubitem}{\@idxitem \hspace*{3\jlreq@mol}}
 \newcommand{\indexspace}{\par \vskip 1\jlreq@gol \@plus .5\jlreq@gol \@minus .3\jlreq@gol\relax}
 \def\jlreq@theindex@pagestyle{}
-\keys_define:nn { jlreqsetup } {theindex_pagestyle .code:n = {
+\keys_define:nn { jlreqsetup } {
+  theindex_pagestyle .code:n = {
     \def\jlreq@tempa{}% ページスタイル名
     \def\jlreq@theindex@pagestyle{}%
     \jlreq@tempafalse % restore
@@ -5596,10 +5611,11 @@
 \str_if_eq:VnT \jlreq@article@type { book } {
   \newif\if@mainmatter
   \@mainmattertrue
-  \keys_define:nn { jlreqsetup } {frontmatter_pagebreak .code:n = {%
-    \edef\jlreq@frontmatter@pagebreak{\jlreq@ifempty{#1}{}{\exp_not:c {#1}}}%
-  }}
-  \keys_define:nn { jlreqsetup } {frontmatter_counter .code:n = {%
+  \keys_define:nn { jlreqsetup } {
+    frontmatter_pagebreak .code:n = {
+      \edef\jlreq@frontmatter@pagebreak{\jlreq@ifempty{#1}{}{\exp_not:c {#1}}}
+    },
+    frontmatter_counter .code:n = {%
       \def\jlreq@frontmatter@counter{}%
       \tl_set:Nn \jlreq@frontmatter@counter { \seq_gclear:N \g__jlreq_frontmatter_resetcounter_seq }
       \jlreq@parsekeyval@nokey{%
@@ -5620,10 +5636,9 @@
         \fi
         \tl_put_right:NV \jlreq@frontmatter@counter \jlreq@tempb
       }{#1}%
-    }
-  }
-  \keys_define:nn { jlreqsetup } {frontmatter_heading .code:n = {\jlreq@matter@heading[\jlreq@frontmatter@restoreheadings]{jlreq@frontmatter@savedheading}{\jlreq@frontmatter@heading}{#1}}}
-  \keys_define:nn { jlreqsetup } {frontmatter_pagestyle .code:n = {%
+    },
+    frontmatter_heading .code:n = {\jlreq@matter@heading[\jlreq@frontmatter@restoreheadings]{jlreq@frontmatter@savedheading}{\jlreq@frontmatter@heading}{#1}},
+    frontmatter_pagestyle .code:n = {%
       \def\jlreq@tempa{}% ページスタイル名
       \def\jlreq@frontmatter@pagestyle{}%
       \jlreq@tempatrue % restore
@@ -5638,11 +5653,10 @@
       \ifx\jlreq@tempa\@empty\else
         \tl_put_right:Nx \jlreq@frontmatter@pagestyle { \exp_not:N \pagestyle{\exp_not:o {\jlreq@tempa}} }%
       \fi
-    }
-  }
-  \keys_define:nn { jlreqsetup } {frontmatter_precode .code:n = {\edef\jlreq@frontmatter@precode{\unexpanded{#1}}}}
-  \keys_define:nn { jlreqsetup } {frontmatter_postcode .code:n = {\edef\jlreq@frontmatter@postcode{\unexpanded{#1}}}}
-  \keys_define:nn { jlreqsetup } {frontmatter_pagination .code:n = {%
+    },
+    frontmatter_precode .code:n = {\edef\jlreq@frontmatter@precode{\unexpanded{#1}}},
+    frontmatter_postcode .code:n = {\edef\jlreq@frontmatter@postcode{\unexpanded{#1}}},
+    frontmatter_pagination .code:n = {%
       \def\jlreq@pagination@frontmatterstyle{arabic}%
       \let\jlreq@pagination@mainmatterpagecommand=\pagenumbering
       \clist_map_variable:nNn {#1} \jlreq@tempa {
@@ -5670,17 +5684,19 @@
   \seq_new:N \g__jlreq_frontmatter_resetcounter_seq
   \def\jlreq@frontmatter@restoreheadings{}
   \def\jlreq@frontmatter@restorecommands{}
-  \keys_define:nn { jlreqsetup } {mainmatter_pagebreak .code:n = {%
-    \edef\jlreq@mainmatter@pagebreak{\jlreq@ifempty{#1}{}{\exp_not:c {#1}}}%
-  }}
-  \keys_define:nn { jlreqsetup } {mainmatter_pagestyle .code:n = {%
-    \edef\jlreq@mainmatter@pagestyle{\jlreq@ifempty{#1}{}{\unexpanded{\pagestyle{#1}}}}%
-  }}
-  \keys_define:nn { jlreqsetup } {mainmatter_counter .code:n = {\jlreq@matter@counter@norestore{\jlreq@mainmatter@counter}{#1}}}
-  \keys_define:nn { jlreqsetup } {mainmatter_heading .code:n = {\jlreq@matter@heading{\jlreq@mainmatter@heading}{#1}}}
-  \keys_define:nn { jlreqsetup } {mainmatter_precode .code:n = {\edef\jlreq@mainmatter@precode{\unexpanded{#1}}}}
-  \keys_define:nn { jlreqsetup } {mainmatter_postcode .code:n = {\edef\jlreq@mainmatter@postcode{\unexpanded{#1}}}}
-  \keys_define:nn { jlreqsetup } {mainmatter_pagination .tl_set:N = \jlreq@pagination@mainmatterstyle}
+  \keys_define:nn { jlreqsetup } {
+    mainmatter_pagebreak .code:n = {%
+      \edef\jlreq@mainmatter@pagebreak{\jlreq@ifempty{#1}{}{\exp_not:c {#1}}}%
+    },
+    mainmatter_pagestyle .code:n = {%
+      \edef\jlreq@mainmatter@pagestyle{\jlreq@ifempty{#1}{}{\unexpanded{\pagestyle{#1}}}}%
+    },
+    mainmatter_counter .code:n = {\jlreq@matter@counter@norestore{\jlreq@mainmatter@counter}{#1}},
+    mainmatter_heading .code:n = {\jlreq@matter@heading{\jlreq@mainmatter@heading}{#1}},
+    mainmatter_precode .code:n = {\edef\jlreq@mainmatter@precode{\unexpanded{#1}}},
+    mainmatter_postcode .code:n = {\edef\jlreq@mainmatter@postcode{\unexpanded{#1}}},
+    mainmatter_pagination .tl_set:N = \jlreq@pagination@mainmatterstyle
+  }
   \NewDocumentCommand{\mainmatter}{}{%
     \jlreq@mainmatter@precode
     \jlreq@mainmatter@pagebreak
@@ -5703,17 +5719,18 @@
     \expandafter\jlreq@pagination@mainmatterpagecommand\expandafter{\jlreq@pagination@mainmatterstyle}%
     \jlreq@mainmatter@postcode
   }
-  \keys_define:nn { jlreqsetup } {backmatter_pagebreak .code:n = {%
-    \edef\jlreq@backmatter@pagebreak{\jlreq@ifempty{#1}{}{\exp_not:c {#1}}}%
-  }}
-  \keys_define:nn { jlreqsetup } {backmatter_pagestyle .code:n = {%
-    \edef\jlreq@backmatter@pagestyle{\jlreq@ifempty{#1}{}{\unexpanded{\pagestyle{#1}}}}%
-  }}
-  \keys_define:nn { jlreqsetup } {backmatter_counter .code:n = {\jlreq@matter@counter@norestore{\jlreq@backmatter@counter}{#1}}}
-  \keys_define:nn { jlreqsetup } {backmatter_heading .code:n = {\jlreq@matter@heading{\jlreq@backmatter@heading}{#1}}}
-  \keys_define:nn { jlreqsetup } {backmatter_precode .code:n = {\edef\jlreq@backmatter@precode{\unexpanded{#1}}}}
-  \keys_define:nn { jlreqsetup } {backmatter_postcode .code:n = {\edef\jlreq@backmatter@postcode{\unexpanded{#1}}}}
-  \keys_define:nn { jlreqsetup } {backmatter_pagination .code:n = {
+  \keys_define:nn { jlreqsetup } {
+    backmatter_pagebreak .code:n = {%
+      \edef\jlreq@backmatter@pagebreak{\jlreq@ifempty{#1}{}{\exp_not:c {#1}}}%
+    },
+    backmatter_pagestyle .code:n = {%
+      \edef\jlreq@backmatter@pagestyle{\jlreq@ifempty{#1}{}{\unexpanded{\pagestyle{#1}}}}%
+    },
+    backmatter_counter .code:n = {\jlreq@matter@counter@norestore{\jlreq@backmatter@counter}{#1}},
+    backmatter_heading .code:n = {\jlreq@matter@heading{\jlreq@backmatter@heading}{#1}},
+    backmatter_precode .code:n = {\edef\jlreq@backmatter@precode{\unexpanded{#1}}},
+    backmatter_postcode .code:n = {\edef\jlreq@backmatter@postcode{\unexpanded{#1}}},
+    backmatter_pagination .code:n = {
       \let\jlreq@pagination@backmatterpagecommand=\pagenumbering
       \def\jlreq@pagination@backmatterstyle{arabic}%
       \clist_map_variable:nNn {#1} \jlreq@tempa {
@@ -5739,10 +5756,12 @@
   }
 }
 
-\keys_define:nn { jlreqsetup } {appendix_counter .code:n = {\jlreq@matter@counter@norestore{\jlreq@appendix@counter}{#1}}}
-\keys_define:nn { jlreqsetup } {appendix_heading .code:n = {\jlreq@matter@heading{\jlreq@appendix@heading}{#1}}}
-\keys_define:nn { jlreqsetup } {appendix_precode .code:n = {\edef\jlreq@appendix@precode{\unexpanded{#1}}}}
-\keys_define:nn { jlreqsetup } {appendix_postcode .code:n = {\edef\jlreq@appendix@postcode{\unexpanded{#1}}}}
+\keys_define:nn { jlreqsetup } {
+  appendix_counter .code:n = {\jlreq@matter@counter@norestore{\jlreq@appendix@counter}{#1}},
+  appendix_heading .code:n = {\jlreq@matter@heading{\jlreq@appendix@heading}{#1}},
+  appendix_precode .code:n = {\edef\jlreq@appendix@precode{\unexpanded{#1}}},
+  appendix_postcode .code:n = {\edef\jlreq@appendix@postcode{\unexpanded{#1}}}
+}
 \NewDocumentCommand{\appendix}{}{%
   \par
   \jlreq@appendix@precode
@@ -5975,29 +5994,27 @@
 \def\jlreq@setupamsthm{
   \newtheoremstyle{jlreq}{\dimexpr\jlreq@theorem@beforeafter@space\relax}{\dimexpr\jlreq@theorem@beforeafter@space\relax}{\jlreq@theorem@font}{\dimexpr\jlreq@theorem@indent\relax}{\jlreq@theorem@label@font}{}{1\jlreq@zw}{\thmname{##1}\thmnumber{\ ##2}\thmnote{（##3）}}
 }
-\keys_define:nn { jlreqsetup } {theorem_beforeafter_space .code:n = {
+\keys_define:nn { jlreqsetup } {
+  theorem_beforeafter_space .code:n = {
     \def\jlreq@theorem@beforeafter@space{#1}
     \begingroup\jlreq@tempdima=\dimexpr\jlreq@theorem@beforeafter@space\relax\endgroup
     \@ifpackageloaded{amsthm}{\jlreq@setupamsthm}{}
-  }
-}
-\keys_define:nn { jlreqsetup } {theorem_indent .code:n = {
+  },
+  theorem_indent .code:n = {
     \def\jlreq@theorem@indent{#1}
     \begingroup\jlreq@tempdima=\dimexpr\jlreq@theorem@indent\relax\endgroup
     \@ifpackageloaded{amsthm}{\jlreq@setupamsthm}{}
-  }
-}
-\keys_define:nn { jlreqsetup } {theorem_font .code:n = {
+  },
+  theorem_font .code:n = {
     \def\jlreq@theorem@font{#1}
     \@ifpackageloaded{amsthm}{\jlreq@setupamsthm}{}
-  }
-}
-\keys_define:nn { jlreqsetup } {theorem_label_font .code:n = {
+  },
+  theorem_label_font .code:n = {
     \def\jlreq@theorem@label@font{#1}
     \@ifpackageloaded{amsthm}{\jlreq@setupamsthm}{}
-  }
+  },
+  proof_label_font .tl_set:N = \jlreq@proof@label@font
 }
-\keys_define:nn { jlreqsetup } {proof_label_font .tl_set:N = \jlreq@proof@label@font}
 
 %. デフォルト設定
 %.. 見出し

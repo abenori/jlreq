@@ -6087,7 +6087,7 @@
 }
 
 %.. ページスタイル
-\RenewPageStyle{empty}{nombre={},odd_running_head={},even_running_head={}}
+\RenewPageStyle{empty}{nombre={},odd_running_head={},even_running_head={},clear_markcommand=false}
 \str_if_eq:VnTF \jlreq@article@type { article } {
   \legacy_if:nTF { @twoside } {
     \NewPageStyle{headings}{odd_running_head={_subsection},even_running_head={_section}}

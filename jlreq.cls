@@ -2210,12 +2210,18 @@
   \jlreq@ifgluezero\jlreq@tempskipb{}{\vskip\jlreq@tempskipb}%
   \edef\jlreq@do{%
     \dim_compare:nF { \parskip=0pt } {
-      \noexpand\AddToHookNext{para/before}{\noexpand\parskip=\the\parskip\noexpand\relax}%
+      \exp_not:N \cs_set:Nn \exp_not:N \g__jlreq_gyodori_hook_par: {
+        \noexpand\parskip=\the\parskip\noexpand\relax
+        \exp_not:n { \cs_set:Nn \g__jlreq_gyodori_hook_par: {} }
+      }
       \noexpand\parskip=0pt
     }
   }%
   \expandafter}\jlreq@do
 }
+\cs_set:Nn \g__jlreq_gyodori_hook_par: {}
+\PushPostHook{par}{\g__jlreq_gyodori_hook_par:}
+
 
 % 行取り情報をゲットだぜ
 % \jlreq@resultに{1 = 前空き}{2 = 後ろ空き}{3 = トータル行数}を入れる
@@ -3490,23 +3496,15 @@
 \def\jlreq@endnote@texts{}
 \long\def\jlreq@endnote@addtext#1#2{\tl_gput_right:Nx \jlreq@endnote@texts { \exp_not:n {{{#1}{#2}}} } }
 % \endnote自身は後で定義する
-\NewHook{cmd/endnote/before}
-\NewHook{cmd/endnote/after}
-\NewHook{cmd/endnotemark/before}
-\NewHook{cmd/endnotemark/after}
 \NewDocumentCommand { \endnotemark }{ O{} } {
   \jlreq@hook@prenote
-  \UseHook{cmd/endnote/before}
   \jlreq@endnotemark{#1}
-  \UseHook{cmd/endnote/after}
   \jlreq@hook@postnote
 }
 \NewDocumentCommand { \endnotetext } { O{} +m } { \jlreq@endnotetext{#1}{#2} }
 \long\def\jlreq@endnote#1#2{
   \jlreq@hook@prenote
-  \UseHook{ cmd/endnote/before }
   \jlreq@endnotemark{#1}\@endnotetext{#2}
-  \UseHook{ cmd/endnote/after }
   \jlreq@hook@postnote
 }
 \def\jlreq@endnotemark#1{%
@@ -3624,7 +3622,7 @@
     
     \ifjlreq@tempb
       \DeclareDocumentCommand { \endnote } { O{} +m } {
-        \AddToHookNext { para/after } { \theendnotes }
+        \def\par{\@restorepar\theendnotes\par}
         \jlreq@endnote{##1}{##2}
       }
     \else
@@ -3660,10 +3658,6 @@
 % (2) では\sidenote{見出し}{注中身}を定義
 % sidenote_length>0ptの時のみ定義する
 \dim_compare:nT { \jlreq@sidenote@length > 0pt } {
-  \ProvideHook{ cmd/sidenote/before }
-  \ProvideHook{ cmd/sidenote/after }
-  \ProvideHook{ cmd/sidenotemark/before }
-  \ProvideHook{ cmd/sidenotemark/after }
   \def\jlreq@sidenotemarkname{@thefnmark}% 合印用番号を一時的に入れるマクロ名
   \long\def\@sidenotetext#1{%
     \marginpar{\reset@font\footnotesize
@@ -3681,14 +3675,14 @@
   \__jlreq_jlreqsetup_addtofinally:n {
     \str_if_eq:VnT \jlreq@sidenote@type { number } {
       \DeclareDocumentCommand { \sidenote } { O{} +m } {
-        \jlreq@hook@prenote\UseHook{cmd/sidenote/before}
+        \jlreq@hook@prenote
         \jlreq@sidenote{#1}{#2}
-        \UseHook{cmd/sidenote/after}\jlreq@hook@postnote
+        \jlreq@hook@postnote
       }
       \DeclareDocumentCommand { \sidenotemark } { O{}   } {
-        \jlreq@hook@prenote\UseHook{cmd/sidenotemark/before}
+        \jlreq@hook@prenote
         \jlreq@sidenotemark{#1}
-        \UseHook{cmd/sidenotemark/after}\jlreq@hook@postnote
+        \jlreq@hook@postnote
       }
       \DeclareDocumentCommand { \sidenotetext } { O{} +m } { \jlreq@sidenotetext{#1}{#2} }
       \long\def\jlreq@sidenote#1#2{\jlreq@sidenotemark{#1}\@sidenotetext{#2}}
@@ -3725,8 +3719,8 @@
       \let\@makesidemark=\@makefnmark
     }
     \str_if_eq:VnT \jlreq@sidenote@type { symbol } {% sidenote_type = symbol
-      \DeclareDocumentCommand { \sidenote     } { m +m } { \UseHook{cmd/sidenote/before}\jlreq@sidenote{#1}{#2}\UseHook{cmd/sidenote/after} }
-      \DeclareDocumentCommand { \sidenotemark } { m   } { \UseHook{cmd/sidenotemark/before}\jlreq@sidenotemark{#1}\UseHook{cmd/sidenote/after} }
+      \DeclareDocumentCommand { \sidenote     } { m +m } { \jlreq@sidenote{#1}{#2} }
+      \DeclareDocumentCommand { \sidenotemark } { m    } { \jlreq@sidenotemark{#1} }
       \DeclareDocumentCommand { \sidenotetext } { m +m } { \jlreq@sidenotetext{#1}{#2} }
       \long\def\jlreq@sidenote#1#2{\jlreq@sidenotemark{#1}\jlreq@sidenotetext{#1}{#2}}
       \edef\jlreq@sidenotemark#1{%

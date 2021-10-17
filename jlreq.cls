@@ -123,50 +123,136 @@
   }
 }
 
+\cs_set:Nn \__jlreq_addpapersize_withdeprecatedwarning:nnn {
+  \__jlreq_addpapersize_withdeprecatedwarning:nnnn {#1} {#2} {#3} {The~option~`##1`~is~deprecated,~use~`#3`~instead}
+}
+\cs_set:Nn \__jlreq_addpapersize_withdeprecatedwarning:nnnn {
+  \exp_args:Nnnv \__jlreq_addpapersize_withdeprecatedwarning_aux:nnnn {#1}{#2}{jlreq@helper@papersizelist@#3}{#4}
+}
+\cs_set:Nn \__jlreq_addpapersize_withdeprecatedwarning_aux:nnnn {
+  \__jlreq_addpapersize_withdeprecatedwarning_auxi:nnnnn {#1}{#2}#3{#4}
+}
+\cs_set:Nn \__jlreq_addpapersize_withdeprecatedwarning_auxi:nnnnn {
+  \cs_set:Nn \l__jlreq_tmpa:n {
+    \ClassWarningNoLine{jlreq}{#5}
+  }
+  \clist_map_inline:nn {#1} {
+    \tl_gput_right:Nx \g__jlreq_papersizelist_tl { { ##1 } {
+      \exp_not:o { \l__jlreq_tmpa:n {##1} }
+      \exp_not:n { \setlength{\paperwidth}{#3} \setlength{\paperheight}{#4} } }
+    }
+  }
+  \clist_map_inline:nn {#2} {
+    \keys_define:nn { jlreq } { ##1 .code:n = { \setlength{\paperwidth}{#3} \setlength{\paperheight}{#4} } }
+  }
+}
+
+
 \__jlreq_aftercls_addtodeletecs:N \__jlreq_addpapersize:nnn
 \__jlreq_aftercls_addtodeletecs:N \__jlreq_addpapersize_aux:nnn
 \__jlreq_aftercls_addtodeletecs:N \__jlreq_addpapersize_auxi:nnnn
 \__jlreq_aftercls_addtodeletecs:N \g__jlreq_papersizelist_tl
 
 % 紙サイズ一覧．b*はJIS B．
-\__jlreq_addpapersize:nnn{a0,A0}{}{a0}
-\__jlreq_addpapersize:nnn{a1,A1}{}{a1}
-\__jlreq_addpapersize:nnn{a2,A2}{}{a2}
-\__jlreq_addpapersize:nnn{a3,A3}{a3paper}{a3}
-\__jlreq_addpapersize:nnn{a4,A4}{a4paper}{a4}
-\__jlreq_addpapersize:nnn{a5,A5}{a5paper}{a5}
-\__jlreq_addpapersize:nnn{a6,A6}{a6paper}{a6}
-\__jlreq_addpapersize:nnn{a7,A7}{}{a7}
-\__jlreq_addpapersize:nnn{a8,A8}{}{a8}
-\__jlreq_addpapersize:nnn{a9,A9}{}{a9}
-\__jlreq_addpapersize:nnn{a10,A10}{}{a10}
+\__jlreq_addpapersize:nnn{a0paper}{}{a0paper}
+\__jlreq_addpapersize:nnn{a1paper}{}{a1paper}
+\__jlreq_addpapersize:nnn{a2paper}{}{a2paper}
+\__jlreq_addpapersize:nnn{a3paper}{a3paper}{a3paper}
+\__jlreq_addpapersize:nnn{a4paper}{a4paper}{a4paper}
+\__jlreq_addpapersize:nnn{a5paper}{a5paper}{a5paper}
+\__jlreq_addpapersize:nnn{a6paper}{a6paper}{a6paper}
+\__jlreq_addpapersize:nnn{a7paper}{}{a7paper}
+\__jlreq_addpapersize:nnn{a8paper}{}{a8paper}
+\__jlreq_addpapersize:nnn{a9paper}{}{a9paper}
+\__jlreq_addpapersize:nnn{a10paper}{}{a10paper}
 
-\__jlreq_addpapersize:nnn{b0,B0}{}{b0}
-\__jlreq_addpapersize:nnn{b1,B1}{}{b1}
-\__jlreq_addpapersize:nnn{b2,B2}{}{b2}
-\__jlreq_addpapersize:nnn{b3,B3}{}{b3}
-\__jlreq_addpapersize:nnn{b4,B4}{b4paper}{b4}
-\__jlreq_addpapersize:nnn{b5,B5}{b5paper}{b5}
-\__jlreq_addpapersize:nnn{b6,B6}{b6paper}{b6}
-\__jlreq_addpapersize:nnn{b7,B7}{}{b7}
-\__jlreq_addpapersize:nnn{b8,B8}{}{b8}
-\__jlreq_addpapersize:nnn{b9,B9}{}{b9}
-\__jlreq_addpapersize:nnn{b10,B10}{}{b10}
+\__jlreq_addpapersize:nnn{a0,A0}{}{a0paper}
+\__jlreq_addpapersize:nnn{a1,A1}{}{a1paper}
+\__jlreq_addpapersize:nnn{a2,A2}{}{a2paper}
+\__jlreq_addpapersize:nnn{a3,A3,a3paper}{a3paper}{a3paper}
+\__jlreq_addpapersize:nnn{a4,A4,a4paper}{a4paper}{a4paper}
+\__jlreq_addpapersize:nnn{a5,A5,a5paper}{a5paper}{a5paper}
+\__jlreq_addpapersize:nnn{a6,A6,a6paper}{a6paper}{a6paper}
+\__jlreq_addpapersize:nnn{a7,A7}{}{a7paper}
+\__jlreq_addpapersize:nnn{a8,A8}{}{a8paper}
+\__jlreq_addpapersize:nnn{a9,A9}{}{a9paper}
+\__jlreq_addpapersize:nnn{a10,A10}{}{a10paper}
 
-\__jlreq_addpapersize:nnn{c2,C2}{}{c2}
-\__jlreq_addpapersize:nnn{c3,C3}{}{c3}
-\__jlreq_addpapersize:nnn{c4,C4}{}{c4}
-\__jlreq_addpapersize:nnn{c5,C5}{}{c5}
-\__jlreq_addpapersize:nnn{c6,C6}{}{c6}
-\__jlreq_addpapersize:nnn{c7,C7}{}{c7}
-\__jlreq_addpapersize:nnn{c8,C8}{}{c8}
+\__jlreq_addpapersize:nnn{b0paper}{}{b0paper}
+\__jlreq_addpapersize:nnn{b1paper}{}{b1paper}
+\__jlreq_addpapersize:nnn{b2paper}{}{b2paper}
+\__jlreq_addpapersize:nnn{b3paper}{}{b3paper}
+\__jlreq_addpapersize:nnn{b4paper}{}{b4paper}
+\__jlreq_addpapersize:nnn{b5paper}{}{b5paper}
+\__jlreq_addpapersize:nnn{b6paper}{}{b6paper}
+\__jlreq_addpapersize:nnn{b7paper}{}{b7paper}
+\__jlreq_addpapersize:nnn{b8paper}{}{b8paper}
+\__jlreq_addpapersize:nnn{b9paper}{}{b9paper}
+\__jlreq_addpapersize:nnn{b10paper}{}{b10paper}
+
+\__jlreq_addpapersize:nnn{c2paper}{}{c2paper}
+\__jlreq_addpapersize:nnn{c3paper}{}{c3paper}
+\__jlreq_addpapersize:nnn{c4paper}{}{c4paper}
+\__jlreq_addpapersize:nnn{c5paper}{}{c5paper}
+\__jlreq_addpapersize:nnn{c6paper}{}{c6paper}
+\__jlreq_addpapersize:nnn{c7paper}{}{c7paper}
+\__jlreq_addpapersize:nnn{c8paper}{}{c8paper}
+
+\__jlreq_addpapersize:nnn{c2,C2}{}{c2paper}
+\__jlreq_addpapersize:nnn{c3,C3}{}{c3paper}
+\__jlreq_addpapersize:nnn{c4,C4}{}{c4paper}
+\__jlreq_addpapersize:nnn{c5,C5}{}{c5paper}
+\__jlreq_addpapersize:nnn{c6,C6}{}{c6paper}
+\__jlreq_addpapersize:nnn{c7,C7}{}{c7paper}
+\__jlreq_addpapersize:nnn{c8,C8}{}{c8paper}
+
+\__jlreq_addpapersize_withdeprecatedwarning:nnn{b0,B0}{}{b0j}
+\__jlreq_addpapersize_withdeprecatedwarning:nnn{b1,B1}{}{b1j}
+\__jlreq_addpapersize_withdeprecatedwarning:nnn{b2,B2}{}{b2j}
+\__jlreq_addpapersize_withdeprecatedwarning:nnn{b3,B3}{}{b3j}
+\__jlreq_addpapersize_withdeprecatedwarning:nnn{b4,B4}{b4paper}{b4j}
+\__jlreq_addpapersize_withdeprecatedwarning:nnn{b5,B5}{b5paper}{b5j}
+\__jlreq_addpapersize_withdeprecatedwarning:nnn{b6,B6}{b6paper}{b6j}
+\__jlreq_addpapersize_withdeprecatedwarning:nnn{b7,B7}{}{b7j}
+\__jlreq_addpapersize_withdeprecatedwarning:nnn{b8,B8}{}{b8j}
+\__jlreq_addpapersize_withdeprecatedwarning:nnn{b9,B9}{}{b9j}
+\__jlreq_addpapersize_withdeprecatedwarning:nnn{b10,B10}{}{b10j}
+
+\tl_set:Nn \g__jlreq_papersizechangeddate{}
+\__jlreq_addpapersize_withdeprecatedwarning:nnnn{}{b4paper}{b4paper}{
+  The~option~`b4paper`~now~means~the~papersize~in~ISO~B-series~,~not~in~JIS~B-series.~This~behavior~was~changed~from~\g__jlreq_papersizechangeddate,~use~b4j~for~JIS-B-series
+}
+\__jlreq_addpapersize_withdeprecatedwarning:nnnn{}{b5paper}{b5paper}{
+  The~option~`b5paper`~now~means~the~papersize~in~ISO~B-series~,~not~in~JIS~B-series.~This~behavior~was~changed~from~\g__jlreq_papersizechangeddate,~use~b5j~for~JIS-B-series
+}
+\__jlreq_addpapersize_withdeprecatedwarning:nnnn{}{b6paper}{b6paper}{
+  The~option~`b6paper`~now~means~the~papersize~in~ISO~B-series~,~not~in~JIS~B-series.~This~behavior~was~changed~from~\g__jlreq_papersizechangeddate,~use~b6j~for~JIS-B-series
+}
+
+\__jlreq_addpapersize:nnn{b0j}{}{b0j}
+\__jlreq_addpapersize:nnn{b1j}{}{b1j}
+\__jlreq_addpapersize:nnn{b2j}{}{b2j}
+\__jlreq_addpapersize:nnn{b3j}{}{b3j}
+\__jlreq_addpapersize:nnn{b4j}{b4paper}{b4j}
+\__jlreq_addpapersize:nnn{b5j}{b5paper}{b5j}
+\__jlreq_addpapersize:nnn{b6j}{b6paper}{b6j}
+\__jlreq_addpapersize:nnn{b7j}{}{b7j}
+\__jlreq_addpapersize:nnn{b8j}{}{b8j}
+\__jlreq_addpapersize:nnn{b9j}{}{b9j}
+\__jlreq_addpapersize:nnn{b10j}{}{b10j}
+
 
 \__jlreq_addpapersize:nnn{a4var}{}{a4var}
 \__jlreq_addpapersize:nnn{b5var}{}{b5var}
 
-\__jlreq_addpapersize:nnn{letter}{letterpaper}{letter}
-\__jlreq_addpapersize:nnn{legal}{legalpaper}{legal}
-\__jlreq_addpapersize:nnn{executive}{executivepaper}{executive}
+\__jlreq_addpapersize:nnn{letter,letterpaper}{letterpaper}{letterpaper}
+\__jlreq_addpapersize:nnn{legal,legalpaper}{legalpaper}{legalpaper}
+\__jlreq_addpapersize:nnn{executive,executivepaper}{executivepaper}{executivepaper}
+\__jlreq_addpapersize:nnn{ansiapaper}{}{ansiapaper}
+\__jlreq_addpapersize:nnn{ansibpaper}{}{ansibpaper}
+\__jlreq_addpapersize:nnn{ansicpaper}{}{ansicpaper}
+\__jlreq_addpapersize:nnn{ansidpaper}{}{ansidpaper}
+\__jlreq_addpapersize:nnn{ansiepaper}{}{ansiepaper}
 \__jlreq_addpapersize:nnn{hagaki}{}{hagaki}
 
 

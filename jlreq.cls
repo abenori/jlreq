@@ -6056,7 +6056,7 @@
   \jlreq@theorem@font
   \item[\hskip \labelsep{\reset@font\jlreq@theorem@label@font #1\ #2（#3）}]}
 \RequirePackage{filehook}
-\AtEndOfPackageFile{amsmath}{
+\AtEndOfPackageFile{amsthm}{
   \jlreq@saveoriginalcs{proof}%
   \jlreq@saveoriginalcs{endproof}%
   \edef\jlreq@do{

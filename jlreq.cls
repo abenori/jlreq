@@ -182,10 +182,10 @@
 \__jlreq_addpapersize:nnn{a0,A0}{}{a0paper}
 \__jlreq_addpapersize:nnn{a1,A1}{}{a1paper}
 \__jlreq_addpapersize:nnn{a2,A2}{}{a2paper}
-\__jlreq_addpapersize:nnn{a3,A3,a3paper}{a3paper}{a3paper}
-\__jlreq_addpapersize:nnn{a4,A4,a4paper}{a4paper}{a4paper}
-\__jlreq_addpapersize:nnn{a5,A5,a5paper}{a5paper}{a5paper}
-\__jlreq_addpapersize:nnn{a6,A6,a6paper}{a6paper}{a6paper}
+\__jlreq_addpapersize:nnn{a3,A3}{}{a3paper}
+\__jlreq_addpapersize:nnn{a4,A4}{}{a4paper}
+\__jlreq_addpapersize:nnn{a5,A5}{}{a5paper}
+\__jlreq_addpapersize:nnn{a6,A6}{}{a6paper}
 \__jlreq_addpapersize:nnn{a7,A7}{}{a7paper}
 \__jlreq_addpapersize:nnn{a8,A8}{}{a8paper}
 \__jlreq_addpapersize:nnn{a9,A9}{}{a9paper}
@@ -1075,35 +1075,6 @@
 % 分割禁止（分離禁止文字は特定の並びで分割禁止だが，とりあえず一括で禁止しておく．）
 \__jlreq_setprebreakpenalty:Vn \jlreq@charlist@inseparablecharacters {10000}
 % ￥100とか70％とか……
-
-%.. 文字範囲
-\ifx u\jlreq@engine
-  % \kcatcodeの設定
-  \cs_set:Nn \__jlreq_setkcatcode:nn {
-    \clist_map_inline:nn {#1} { \kcatcode"##1=#2\relax }
-  }
-  \__jlreq_aftercls_addtodeletecs:N \__jlreq_setkcatcode:nn
-  % LuaTeX-jaのデフォルトのままに近い設定をする
-  % 範囲1＆8
-  \__jlreq_setkcatcode:nn {80} {15} % Latin-1 Supplement，どうしよう……
-  \__jlreq_setkcatcode:nn {100,180,250,2B0,300,1E00} {15}
-  % 範囲2
-  \__jlreq_setkcatcode:nn {370,400,1F00} {18}
-  % 範囲3
-  \__jlreq_setkcatcode:nn {2000,2070,20A0,20D0,2100,2150,2190,2200,2300,2400,2500,2580,25A0,2600,2700,2900,2980,2B00} {18}
-  % 範囲4
-  \__jlreq_setkcatcode:nn {500,530,590,600,700,750,780,7C0,800,840,8A0,900,980,A00,A80,B00,B80,C00,C80,D00,D80,E00,E80,F00,1000,10A0,1200,1380,13A0,1400,1680,16A0,1700,1720,1740,1760,1780,1800,18B0,1900,1950,1980,19E0,1A00,1A20,1AB0,1B00,1B80,1BC0,1C00,1C50,1C80,1CC0,1CD0,1D00,1D80,1DC0,2400,2440,27C0,27F0,2800,2A00,2C00,4DC0,A4D0,A500,A640,A6A0,A700,A720,A800,A840,A880,A8E0,A900,A930,A960,A980,A9E0,AA00,AA60,AA80,AAE0,AB00,AB30,AB70,ABC0,FB00,FB50,FE00,FE20,FE70,10000,10080,10100,10140,10190,101D0,10280,102A0,102E0,10300,10330,10350,10380,103A0,10400,10450,10480,104B0,10500,10530,10600,10800,10840,10860,10880,108E0,10900,10920,10980,109A0,10A00,10A60,10A80,10AC0,10B00,10B40,10B60,10B80,10C00,10C80,10E60,11000,11080,110D0,11100,11150,11180,111E0,11200,11280,112B0,11300,11400,11480,11580,11600,11660,11680,11700,118A0,11AC0,11C00,11C70,12000,12400,12480,13000,14400,16800,16A40,16AD0,16B00,16F00,16FE0,17000,18800,1B000,1BC00,1BCA0,1D000,1D100,1D200,1D300,1D360,1D400,1D800,1E000,1E800,1E900,1EE00,1F000,1F030,1F0A0,1F100,1F200,1F300,1F600,1F650,1F680,1F700,1F780,1F800,1F900,E000} {15}
-  % 範囲5（Variation Selectors SupplementはLuaTeX-jaではE01F0--E01EFまで範囲5，他は範囲6）
-  \__jlreq_setkcatcode:nn {D800,DB80,DC00,E0000,F0000,100000} {15}
-  % 範囲6
-  \__jlreq_setkcatcode:nn {3040,30A0,31F0} {17} % Hiragana,Katakana,Katakana Phonetic Extensions
-  \__jlreq_setkcatcode:nn {2460,3000,3200,3300,FE10,FE30,FE50,E0100} {18} % Enclosed Alphanumerics,CJK Symbols and Punctuation,Enclosed CJK Letters and Months,CJK Compatibility,Vertical Forms,CJK Compatibility Forms,Small Form Variants,Variation Selectors Supplement
-  \__jlreq_setkcatcode:nn {2E80,3190,3400,4E00,F900,20000} {16}
-  % 範囲7
-  \__jlreq_setkcatcode:nn {A000,A490} {18} % Yi Syllables,Yi Radicals
-  \__jlreq_setkcatcode:nn {1100,3130,AC00,D7B0} {19} % Hangul Jamo,Hangul Compatibility Jamo,Hangul Syllables,Hangul Jamo Extended-B
-  \__jlreq_setkcatcode:nn {2F00,2FF0,3100,31A0,31C0,A830} {16}
-\fi
 
 %.. フォント
 \RequirePackage{lmodern}

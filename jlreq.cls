@@ -127,16 +127,13 @@
   }
 }
 
-\cs_set:Nn \__jlreq_addpapersize_withdeprecatedwarning:nnn {
-  \__jlreq_addpapersize_withdeprecatedwarning:nnnn {#1} {#2} {#3} {The~option~`##1`~is~deprecated,~use~`#3`~instead}
+\cs_set:Nn \__jlreq_addpapersize_withwarning:nnnn {
+  \exp_args:Nnnv \__jlreq_addpapersize_withwarning_aux:nnnn {#1}{#2}{jlreq@helper@papersizelist@#3}{#4}
 }
-\cs_set:Nn \__jlreq_addpapersize_withdeprecatedwarning:nnnn {
-  \exp_args:Nnnv \__jlreq_addpapersize_withdeprecatedwarning_aux:nnnn {#1}{#2}{jlreq@helper@papersizelist@#3}{#4}
+\cs_set:Nn \__jlreq_addpapersize_withwarning_aux:nnnn {
+  \__jlreq_addpapersize_withwarning_auxi:nnnnn {#1}{#2}#3{#4}
 }
-\cs_set:Nn \__jlreq_addpapersize_withdeprecatedwarning_aux:nnnn {
-  \__jlreq_addpapersize_withdeprecatedwarning_auxi:nnnnn {#1}{#2}#3{#4}
-}
-\cs_set:Nn \__jlreq_addpapersize_withdeprecatedwarning_auxi:nnnnn {
+\cs_set:Nn \__jlreq_addpapersize_withwarning_auxi:nnnnn {
   \cs_set:Nn \l__jlreq_tmpa:n {
     \ClassWarningNoLine{jlreq}{#5}
   }
@@ -160,10 +157,18 @@
   }
 }
 
+\tl_set:Nn \g__jlreq_papersizechangeddate{}
+\cs_set:Nn \__jlreq_addpapersize_withjisBwarning:nnnn {
+  \__jlreq_addpapersize_withwarning:nnnn {#1} {#2} {#3} {The~option~`##1`~now~means~the~papersize~in~ISO~B-series,~not~in~JIS~B-series.~This~behavior~was~changed~from~jlreq~version~\g__jlreq_papersizechangeddate.~Use~`paper=#4`~for~JIS-B-series}
+}
 
 \__jlreq_aftercls_addtodeletecs:N \__jlreq_addpapersize:nnn
 \__jlreq_aftercls_addtodeletecs:N \__jlreq_addpapersize_aux:nnn
 \__jlreq_aftercls_addtodeletecs:N \__jlreq_addpapersize_auxi:nnnn
+\__jlreq_aftercls_addtodeletecs:N \__jlreq_addpapersize_withwarning:nnnn
+\__jlreq_aftercls_addtodeletecs:N \__jlreq_addpapersize_withwarning_aux:nnnn
+\__jlreq_aftercls_addtodeletecs:N \__jlreq_addpapersize_withwarning_auxi:nnnnn
+\__jlreq_aftercls_addtodeletecs:N \__jlreq_addpapersize_withjisBwarning:nnnn
 \__jlreq_aftercls_addtodeletecs:N \g__jlreq_papersizelist_tl
 
 % 紙サイズ一覧．b*はJIS B．
@@ -219,28 +224,21 @@
 \__jlreq_addpapersize:nnn{c7,C7}{}{c7paper}
 \__jlreq_addpapersize:nnn{c8,C8}{}{c8paper}
 
-\__jlreq_addpapersize_withdeprecatedwarning:nnn{b0,B0}{}{b0j}
-\__jlreq_addpapersize_withdeprecatedwarning:nnn{b1,B1}{}{b1j}
-\__jlreq_addpapersize_withdeprecatedwarning:nnn{b2,B2}{}{b2j}
-\__jlreq_addpapersize_withdeprecatedwarning:nnn{b3,B3}{}{b3j}
-\__jlreq_addpapersize_withdeprecatedwarning:nnn{b4,B4}{}{b4j}
-\__jlreq_addpapersize_withdeprecatedwarning:nnn{b5,B5}{}{b5j}
-\__jlreq_addpapersize_withdeprecatedwarning:nnn{b6,B6}{}{b6j}
-\__jlreq_addpapersize_withdeprecatedwarning:nnn{b7,B7}{}{b7j}
-\__jlreq_addpapersize_withdeprecatedwarning:nnn{b8,B8}{}{b8j}
-\__jlreq_addpapersize_withdeprecatedwarning:nnn{b9,B9}{}{b9j}
-\__jlreq_addpapersize_withdeprecatedwarning:nnn{b10,B10}{}{b10j}
+\__jlreq_addpapersize_withjisBwarning:nnnn{b0,B0}{}{b0paper}{b0j}
+\__jlreq_addpapersize_withjisBwarning:nnnn{b1,B1}{}{b1paper}{b1j}
+\__jlreq_addpapersize_withjisBwarning:nnnn{b2,B2}{}{b2paper}{b2j}
+\__jlreq_addpapersize_withjisBwarning:nnnn{b3,B3}{}{b3paper}{b3j}
+\__jlreq_addpapersize_withjisBwarning:nnnn{b4,B4}{}{b4paper}{b4j}
+\__jlreq_addpapersize_withjisBwarning:nnnn{b5,B5}{}{b5paper}{b5j}
+\__jlreq_addpapersize_withjisBwarning:nnnn{b6,B6}{}{b6paper}{b6j}
+\__jlreq_addpapersize_withjisBwarning:nnnn{b7,B7}{}{b7paper}{b7j}
+\__jlreq_addpapersize_withjisBwarning:nnnn{b8,B8}{}{b8paper}{b8j}
+\__jlreq_addpapersize_withjisBwarning:nnnn{b9,B9}{}{b9paper}{b9j}
+\__jlreq_addpapersize_withjisBwarning:nnnn{b10,B10}{}{b10paper}{b10j}
 
-\tl_set:Nn \g__jlreq_papersizechangeddate{}
-\__jlreq_addpapersize_withdeprecatedwarning:nnnn{}{b4paper}{b4paper}{
-  The~option~`b4paper`~now~means~the~papersize~in~ISO~B-series,~not~in~JIS~B-series.~This~behavior~was~changed~from~\g__jlreq_papersizechangeddate.~Use~`paper=b4j`~for~JIS-B-series
-}
-\__jlreq_addpapersize_withdeprecatedwarning:nnnn{}{b5paper}{b5paper}{
-  The~option~`b5paper`~now~means~the~papersize~in~ISO~B-series,~not~in~JIS~B-series.~This~behavior~was~changed~from~\g__jlreq_papersizechangeddate.~Use~`paper=b5j`~for~JIS-B-series
-}
-\__jlreq_addpapersize_withdeprecatedwarning:nnnn{}{b6paper}{b6paper}{
-  The~option~`b6paper`~now~means~the~papersize~in~ISO~B-series,~not~in~JIS~B-series.~This~behavior~was~changed~from~\g__jlreq_papersizechangeddate.~Use~`paper=b6j`~for~JIS-B-series
-}
+\__jlreq_addpapersize_withjisBwarning:nnnn{}{b4paper}{b4paper}{b4j}
+\__jlreq_addpapersize_withjisBwarning:nnnn{}{b5paper}{b5paper}{b5j}
+\__jlreq_addpapersize_withjisBwarning:nnnn{}{b6paper}{b6paper}{b6j}
 
 \__jlreq_addpapersize:nnn{b0j}{}{b0j}
 \__jlreq_addpapersize:nnn{b1j}{}{b1j}

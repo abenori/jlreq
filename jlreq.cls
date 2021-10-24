@@ -140,8 +140,8 @@
   \clist_map_inline:nn {#1} {
     \tl_gput_right:Nx \g__jlreq_papersizelist_tl { { ##1 } {
       \exp_not:o { \l__jlreq_tmpa:n {##1} }
-      \exp_not:n { \setlength{\paperwidth}{#3} \setlength{\paperheight}{#4} } }
-    }
+      \exp_not:n { \setlength{\paperwidth}{#3} \setlength{\paperheight}{#4} }
+    } }
   }
   \clist_map_inline:nn {#2} {
     \cs_set:Nx \l__jlreq_do: {
@@ -157,9 +157,9 @@
   }
 }
 
-\tl_set:Nn \g__jlreq_papersizechangeddate{}
+\tl_set:Nn \g__jlreq_papersizechangeddate_tl{}
 \cs_set:Nn \__jlreq_addpapersize_withjisBwarning:nnnn {
-  \__jlreq_addpapersize_withwarning:nnnn {#1} {#2} {#3} {The~option~`##1`~now~means~the~papersize~in~ISO~B-series,~not~in~JIS~B-series.~This~behavior~was~changed~from~jlreq~version~\g__jlreq_papersizechangeddate.~Use~`paper=#4`~for~JIS-B-series}
+  \__jlreq_addpapersize_withwarning:nnnn {#1} {#2} {#3} {The~option~`##1'~means~the~papersize~in~ISO~B-series,~not~in~JIS~B-series.~This~behavior~was~changed~from~jlreq~version~\g__jlreq_papersizechangeddate_tl.~Use~`paper=#4'~for~JIS-B-series.~If~you~want~to~specify~ISO~B-series~and~if~you~think~this~warning~is~annoying,~use~`paper=#3'}
 }
 
 \__jlreq_aftercls_addtodeletecs:N \__jlreq_addpapersize:nnn

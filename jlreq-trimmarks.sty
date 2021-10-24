@@ -42,84 +42,117 @@
 }
 
 % dvipdfmx=f，dvips=s，dviout = o, lualatex = l
-\keys_define:nn { jlreq-trimmarks } { dvipdfmx .code:n = {\let\jlreq@trimmarks@driver=f}, .value_forbidden:n = true }
-\keys_define:nn { jlreq-trimmarks } { dvips .code:n = {\let\jlreq@trimmarks@driver=s}, .value_forbidden:n = true }
-\keys_define:nn { jlreq-trimmarks } { dviout .code:n = {\let\jlreq@trimmarks@driver=o}, .value_forbidden:n = true }
+\keys_define:nn { jlreq-trimmarks } {
+  dvipdfmx .code:n = {\let\jlreq@trimmarks@driver=f}, .value_forbidden:n = true,
+  dvips .code:n = {\let\jlreq@trimmarks@driver=s}, .value_forbidden:n = true,
+  dviout .code:n = {\let\jlreq@trimmarks@driver=o}, .value_forbidden:n = true
+}
 \let\jlreq@trimmarks@engine=\jlreq@engine
-\keys_define:nn { jlreq-trimmarks } { lualatex .code:n = {\let\jlreq@trimmarks@engine=l}, .value_forbidden:n = true }
-\keys_define:nn { jlreq-trimmarks } { uplatex .code:n = {\let\jlreq@trimmarks@engine=u}, .value_forbidden:n = true }
-\keys_define:nn { jlreq-trimmarks } { platex .code:n = {\let\jlreq@trimmarks@engine=p}, .value_forbidden:n = true }
-
-\def\jlreq@trimmarks@switchpapersize{}
-\def\jlreq@trimmarks@addpapersize#1{%
-  \@ifnextchar[{\jlreq@trimmarks@addpapersize@{#1}}{\jlreq@trimmarks@addpapersize@@{#1}}
+\keys_define:nn { jlreq-trimmarks } {
+  lualatex .code:n = {\let\jlreq@trimmarks@engine=l}, .value_forbidden:n = true,
+  uplatex .code:n = {\let\jlreq@trimmarks@engine=u}, .value_forbidden:n = true,
+  platex .code:n = {\let\jlreq@trimmarks@engine=p}, .value_forbidden:n = true
 }
-\def\jlreq@trimmarks@addpapersize@#1[#2]{%
-  \edef\@tempa{\unexpanded{\jlreq@trimmarks@addpapersize@@{#1}}\exp_not:v {jlreq@helper@papersizelist@#2}}%
-  \@tempa
+
+\tl_new:N \g__jlreq_trimmarks_papersizelist_tl
+\cs_set:Nn \__jlreq_trimmarks_addpapersize:nn {
+  \exp_args:Nnv \__jlreq_trimmarks_addpapersize_aux:nn {#1}{jlreq@helper@papersizelist@#2}
 }
-\newcommand*{\jlreq@trimmarks@addpapersize@@}[3]{%
-  \clist_map_variable:nNn {#1} \@tempa {
-    \tl_put_right:Nx \jlreq@trimmarks@switchpapersize {{\exp_not:o {\@tempa}}{\unexpanded{\def\jlreq@resulta{#2}\def\jlreq@resultb{#3}}}}%
-  }%
+\cs_set:Nn \__jlreq_trimmarks_addpapersize_aux:nn {
+  \__jlreq_trimmarks_addpapersize_auxi:nnn {#1}#2
 }
-\__jlreq_trimmarks_afterpkg_addtodeletecs:N \jlreq@trimmarks@switchpapersize
-\__jlreq_trimmarks_afterpkg_addtodeletecs:N \jlreq@trimmarks@addpapersize
-\__jlreq_trimmarks_afterpkg_addtodeletecs:N \jlreq@trimmarks@addpapersize@
-\__jlreq_trimmarks_afterpkg_addtodeletecs:N \jlreq@trimmarks@addpapersize@@
+\cs_set:Nn \__jlreq_trimmarks_addpapersize_auxi:nnn {
+  \clist_map_inline:nn {#1} {
+    \tl_gput_right:Nn \g__jlreq_trimmarks_papersizelist_tl { { ##1 } { \def\jlreq@resulta{#2} \def\jlreq@resultb{#3} } }
+  }
+}
+\tl_set:Nn \g__jlreq_trimmarks_papersizechangeddate_tl {}
+\cs_set:Nn \__jlreq_trimmarks_addpapersize_withjisBwarning:nnn {
+  \__jlreq_trimmarks_addpapersize_withwarning:nnn {#1}{#2}{
+    The~option~`##1'~means~the~papersize~in~ISO~B-series,~not~in~JIS~B-series.~This~behavior~was~changed~from~jlreq-trimmarks~version~\g__jlreq_trimmarks_papersizechangeddate_tl.~Use~`trimmarks_paper=#3'~for~JIS-B-series.~If~you~want~to~specify~ISO~B-series~and~if~you~think~this~warning~is~annoying,~use~`trimmarks_paper=#2'
+  }
+}
+\cs_set:Nn \__jlreq_trimmarks_addpapersize_withwarning:nnn {
+  \exp_args:Nnv \__jlreq_trimmarks_addpapersize_withwarning_aux:nnn {#1}{jlreq@helper@papersizelist@#2}{#3}
+}
+\cs_set:Nn \__jlreq_trimmarks_addpapersize_withwarning_aux:nnn {
+  \__jlreq_trimmarks_addpapersize_withwarning_auxi:nnnn {#1}#2{#3}
+}
+\cs_set:Nn \__jlreq_trimmarks_addpapersize_withwarning_auxi:nnnn {
+  \cs_set:Nn \l__jlreq_tmpa:n {
+    \PackageWarningNoLine{jlreq-trimmarks}{#4}
+  }
+  \clist_map_inline:nn {#1} {
+    \tl_gput_right:Nx \g__jlreq_trimmarks_papersizelist_tl { { ##1 } {
+      \exp_not:o { \l__jlreq_tmpa:n {##1} }
+      \exp_not:n { \def\jlreq@resulta{#2} \def\jlreq@resultb{#3} }
+    } }
+  }
+}
+\__jlreq_trimmarks_afterpkg_addtodeletecs:N \g__jlreq_trimmarks_papersizelist_tl
+\__jlreq_trimmarks_afterpkg_addtodeletecs:N \__jlreq_trimmarks_addpapersize:nn
+\__jlreq_trimmarks_afterpkg_addtodeletecs:N \__jlreq_trimmarks_addpapersize_aux:nn
+\__jlreq_trimmarks_afterpkg_addtodeletecs:N \__jlreq_trimmarks_addpapersize_auxi:nnn
+\__jlreq_trimmarks_afterpkg_addtodeletecs:N \__jlreq_trimmarks_addpapersize_withjisBwarning:nnn
+\__jlreq_trimmarks_afterpkg_addtodeletecs:N \__jlreq_trimmarks_addpapersize_withwarning:nnn
+\__jlreq_trimmarks_afterpkg_addtodeletecs:N \__jlreq_trimmarks_addpapersize_withwarning_aux:nnn
+\__jlreq_trimmarks_afterpkg_addtodeletecs:N \__jlreq_trimmarks_addpapersize_withwarning_auxi:nnnn
 
-\jlreq@trimmarks@addpapersize{a0,A0}[a0paper]
-\jlreq@trimmarks@addpapersize{a1,A1}[a1paper]
-\jlreq@trimmarks@addpapersize{a2,A2}[a2paper]
-\jlreq@trimmarks@addpapersize{a3,A3}[a3paper]
-\jlreq@trimmarks@addpapersize{a4,A4}[a4paper]
-\jlreq@trimmarks@addpapersize{a5,A5}[a5paper]
-\jlreq@trimmarks@addpapersize{a6,A6}[a6paper]
-\jlreq@trimmarks@addpapersize{a7,A7}[a7paper]
-\jlreq@trimmarks@addpapersize{a8,A8}[a8paper]
-\jlreq@trimmarks@addpapersize{a9,A9}[a9paper]
-\jlreq@trimmarks@addpapersize{a10,A10}[a10paper]
+\__jlreq_trimmarks_addpapersize:nn{a0,A0,a0paper}{a0paper}
+\__jlreq_trimmarks_addpapersize:nn{a1,A1,a1paper}{a1paper}
+\__jlreq_trimmarks_addpapersize:nn{a2,A2,a2paper}{a2paper}
+\__jlreq_trimmarks_addpapersize:nn{a3,A3,a3paper}{a3paper}
+\__jlreq_trimmarks_addpapersize:nn{a4,A4,a4paper}{a4paper}
+\__jlreq_trimmarks_addpapersize:nn{a5,A5,a5paper}{a5paper}
+\__jlreq_trimmarks_addpapersize:nn{a6,A6,a6paper}{a6paper}
+\__jlreq_trimmarks_addpapersize:nn{a7,A7,a7paper}{a7paper}
+\__jlreq_trimmarks_addpapersize:nn{a8,A8,a8paper}{a8paper}
+\__jlreq_trimmarks_addpapersize:nn{a9,A9,a9paper}{a9paper}
+\__jlreq_trimmarks_addpapersize:nn{a10,A10,a10paper}{a10paper}
 
-\jlreq@trimmarks@addpapersize{b0,B0}[b0j]
-\jlreq@trimmarks@addpapersize{b1,B1}[b1j]
-\jlreq@trimmarks@addpapersize{b2,B2}[b2j]
-\jlreq@trimmarks@addpapersize{b3,B3}[b3j]
-\jlreq@trimmarks@addpapersize{b4,B4}[b4j]
-\jlreq@trimmarks@addpapersize{b5,B5}[b5j]
-\jlreq@trimmarks@addpapersize{b6,B6}[b6j]
-\jlreq@trimmarks@addpapersize{b7,B7}[b7j]
-\jlreq@trimmarks@addpapersize{b8,B8}[b8j]
-\jlreq@trimmarks@addpapersize{b9,B9}[b9j]
-\jlreq@trimmarks@addpapersize{b10,B10}[b10j]
+\__jlreq_trimmarks_addpapersize_withjisBwarning:nnn{b0,B0}{b0paper}{b0j}
+\__jlreq_trimmarks_addpapersize_withjisBwarning:nnn{b1,B1}{b1paper}{b1j}
+\__jlreq_trimmarks_addpapersize_withjisBwarning:nnn{b2,B2}{b2paper}{b2j}
+\__jlreq_trimmarks_addpapersize_withjisBwarning:nnn{b3,B3}{b3paper}{b3j}
+\__jlreq_trimmarks_addpapersize_withjisBwarning:nnn{b4,B4}{b4paper}{b4j}
+\__jlreq_trimmarks_addpapersize_withjisBwarning:nnn{b5,B5}{b5paper}{b5j}
+\__jlreq_trimmarks_addpapersize_withjisBwarning:nnn{b6,B6}{b6paper}{b6j}
+\__jlreq_trimmarks_addpapersize_withjisBwarning:nnn{b7,B7}{b7paper}{b7j}
+\__jlreq_trimmarks_addpapersize_withjisBwarning:nnn{b8,B8}{b8paper}{b8j}
+\__jlreq_trimmarks_addpapersize_withjisBwarning:nnn{b9,B9}{b9paper}{b9j}
+\__jlreq_trimmarks_addpapersize_withjisBwarning:nnn{b10,B10}{b10paper}{b10j}
 
-\jlreq@trimmarks@addpapersize{c2,C2}[c2paper]
-\jlreq@trimmarks@addpapersize{c3,C3}[c3paper]
-\jlreq@trimmarks@addpapersize{c4,C4}[c4paper]
-\jlreq@trimmarks@addpapersize{c5,C5}[c5paper]
-\jlreq@trimmarks@addpapersize{c6,C6}[c6paper]
-\jlreq@trimmarks@addpapersize{c7,C7}[c7paper]
-\jlreq@trimmarks@addpapersize{c8,C8}[c8paper]
+\__jlreq_trimmarks_addpapersize:nn{c2,C2,c2paper}{c2paper}
+\__jlreq_trimmarks_addpapersize:nn{c3,C3,c3paper}{c3paper}
+\__jlreq_trimmarks_addpapersize:nn{c4,C4,c4paper}{c4paper}
+\__jlreq_trimmarks_addpapersize:nn{c5,C5,c5paper}{c5paper}
+\__jlreq_trimmarks_addpapersize:nn{c6,C6,c6paper}{c6paper}
+\__jlreq_trimmarks_addpapersize:nn{c7,C7,c7paper}{c7paper}
+\__jlreq_trimmarks_addpapersize:nn{c8,C8,c8paper}{c8paper}
 
-\jlreq@trimmarks@addpapersize{a4var}[a4var]
-\jlreq@trimmarks@addpapersize{b5var}[b5var]
+\__jlreq_trimmarks_addpapersize:nn{a4var}{a4var}
+\__jlreq_trimmarks_addpapersize:nn{b5var}{b5var}
 
-\jlreq@trimmarks@addpapersize{letter}[letterpaper]
-\jlreq@trimmarks@addpapersize{legal}[legalpaper]
-\jlreq@trimmarks@addpapersize{executive}[executivepaper]
-\jlreq@trimmarks@addpapersize{hagaki}[hagaki]
+\__jlreq_trimmarks_addpapersize:nn{letter,letterpaper}{letterpaper}
+\__jlreq_trimmarks_addpapersize:nn{legal,legalpaper}{legalpaper}
+\__jlreq_trimmarks_addpapersize:nn{executive,executivepaper}{executivepaper}
+\__jlreq_trimmarks_addpapersize:nn{ansiapaper}{ansiapaper}
+\__jlreq_trimmarks_addpapersize:nn{ansibpaper}{ansibpaper}
+\__jlreq_trimmarks_addpapersize:nn{ansicpaper}{ansicpaper}
+\__jlreq_trimmarks_addpapersize:nn{ansidpaper}{ansidpaper}
+\__jlreq_trimmarks_addpapersize:nn{ansiepaper}{ansiepaper}
+\__jlreq_trimmarks_addpapersize:nn{hagaki}{hagaki}
 
 % width -> \jlreq@resulta, height -> \jlreq@resultb
-\edef\jlreq@trimmarks@analyzepapersize#1{
-  \noexpand\jlreq@switch{#1}{
-    \exp_not:o {\jlreq@trimmarks@switchpapersize}%
-    {%
-      \noexpand\jlreq@helper@dividebycomma{#1}%
-      \unexpanded{\ifjlreq@result\else}%
-        \unexpanded{\def\jlreq@resulta}{#1}%
-        \unexpanded{\def\jlreq@resultb}{#1}%
-      \noexpand\fi
-    }%
-  }\noexpand\relax
+\def\jlreq@trimmarks@analyzepapersize#1{
+  \str_case:nVF {#1} \g__jlreq_trimmarks_papersizelist_tl
+  {
+    \jlreq@helper@dividebycomma{#1}%
+    \ifjlreq@result\else
+      \def\jlreq@resulta{#1}%
+      \def\jlreq@resultb{#1}%
+    \fi
+  }
 }
 \__jlreq_trimmarks_afterpkg_addtodeletecs:N \jlreq@trimmarks@analyzepapersize
 

@@ -159,7 +159,7 @@
 
 \tl_set:Nn \g__jlreq_papersizechangeddate_tl{}
 \cs_set:Nn \__jlreq_addpapersize_withjisBwarning:nnnn {
-  \__jlreq_addpapersize_withwarning:nnnn {#1} {#2} {#3} {The~option~`##1'~means~the~papersize~in~ISO~B-series,~not~in~JIS~B-series.~This~behavior~was~changed~from~jlreq~version~\g__jlreq_papersizechangeddate_tl.~Use~`paper=#4'~for~JIS-B-series.~If~you~want~to~specify~ISO~B-series~and~if~you~think~this~warning~is~annoying,~use~`paper=#3'}
+  \__jlreq_addpapersize_withwarning:nnnn {#1} {#2} {#3} {The~option~`##1'~means~the~papersize~in~the~ISO~B-series,~not~in~the~JIS~B-series.~This~behavior~was~changed~from~jlreq~version~\g__jlreq_papersizechangeddate_tl.~Use~`paper=#4'~for~the~JIS-B-series.~If~you~want~to~specify~the~ISO~B-series~and~if~you~think~this~warning~is~annoying,~use~`paper=#3'}
 }
 
 \__jlreq_aftercls_addtodeletecs:N \__jlreq_addpapersize:nnn
@@ -1218,13 +1218,18 @@
 
 \emergencystretch 3\jlreq@gol
 \setlength{\parindent}{1\zw}
+\newcommand{\jlreqparindent}{1\zw}
 \apptocmd\set@fontsize {
   \expandafter\def\expandafter\size@update\expandafter{\size@update\g__jlreq_setfontsizehook_tl}
 }{}{
   \ClassWarningNoLine { jlreq } { `\string\apptocmd`~to~`\string\size@update`~failed,~maybe~a~bug}
 }
 \tl_new:N \g__jlreq_setfontsizehook_tl
-\tl_set:Nn \g__jlreq_setfontsizehook_tl { \dim_compare:nT { \parindent>0pt } { \setlength{\parindent}{1\jlreq@zw} } }
+\tl_set:Nn \g__jlreq_setfontsizehook_tl { 
+  \tl_if_empty:VF \jlreqparindent {
+    \dim_compare:nT { \parindent>0pt } { \setlength{\parindent}{\jlreqparindent} }
+  }
+}
 \ifx l\jlreq@engine
   \@tempskipa=\ltjgetparameter{kanjiskip}
   \ifdim\@tempskipa=\maxdimen\else
@@ -1276,7 +1281,6 @@
   \let\@listi\@listI}
 
 \if@tate\tate\fi % ここで発行しておく
-\mcfamily\selectfont\normalsize
 \setbox\jlreq@tempboxa\hbox{阿}
 \setlength\Cht{\ht\jlreq@tempboxa}
 \setlength\Cdp{\dp\jlreq@tempboxa}

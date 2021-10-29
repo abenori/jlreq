@@ -8,7 +8,6 @@
 \ProvidesClass{jlreq}[2021/10/09 jlreq]
 \RequirePackage{l3keys2e}
 \RequirePackage{etoolbox}
-\RequirePackage{ifthen}
 \RequirePackage{jlreq-helpers}
 
 \ExplSyntaxOn

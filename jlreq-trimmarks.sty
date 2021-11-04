@@ -1,5 +1,5 @@
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{jlreq-trimmarks}[2021/08/12 jlreq-trimmarks]
+\ProvidesPackage{jlreq-trimmarks}[2021/11/05 jlreq-trimmarks]
 \RequirePackage{l3keys2e}
 \RequirePackage{jlreq-helpers}
 
@@ -66,7 +66,7 @@
     \tl_gput_right:Nn \g__jlreq_trimmarks_papersizelist_tl { { ##1 } { \def\jlreq@resulta{#2} \def\jlreq@resultb{#3} } }
   }
 }
-\tl_set:Nn \g__jlreq_trimmarks_papersizechangeddate_tl {}
+\tl_set:Nn \g__jlreq_trimmarks_papersizechangeddate_tl {2021-11-05}
 \cs_set:Nn \__jlreq_trimmarks_addpapersize_withjisBwarning:nnn {
   \__jlreq_trimmarks_addpapersize_withwarning:nnn {#1}{#2}{
     The~option~`##1'~means~the~papersize~in~the~ISO~B-series,~not~in~the~JIS~B-series.~This~behavior~was~changed~from~jlreq-trimmarks~version~\g__jlreq_trimmarks_papersizechangeddate_tl.~Use~`trimmarks_paper=#3'~for~the~JIS-B-series.~If~you~want~to~specify~the~ISO~B-series~and~if~you~think~this~warning~is~annoying,~use~`trimmarks_paper=#2'

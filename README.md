@@ -157,6 +157,12 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Fixed a bug.
 * 2021-10-09
     - Fixed bugs.
+* 2021-11-05
+    - `paper=b*` is regarded as a ISO series.
+    - Removed many codes relating with LaTeX hooks mechanism (because it seems not stable.)
+    - Removed `\RequirePackage{ifthen}`.
+    - Removed `\kcatcode`settings with upLaTeX.
+
 
 --------------
 Noriyuki Abe

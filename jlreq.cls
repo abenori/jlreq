@@ -5,7 +5,7 @@
 %%
 % (based on JLReq 20200811 https://www.w3.org/TR/2020/NOTE-jlreq-20200811/)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{jlreq}[2021/10/09 jlreq]
+\ProvidesClass{jlreq}[2021/11/05 jlreq]
 \RequirePackage{l3keys2e}
 \RequirePackage{etoolbox}
 \RequirePackage{jlreq-helpers}
@@ -156,9 +156,9 @@
   }
 }
 
-\tl_set:Nn \g__jlreq_papersizechangeddate_tl{}
+\tl_set:Nn \g__jlreq_papersizechangeddate_tl{2021-11-05}
 \cs_set:Nn \__jlreq_addpapersize_withjisBwarning:nnnn {
-  \__jlreq_addpapersize_withwarning:nnnn {#1} {#2} {#3} {The~option~`##1'~means~the~papersize~in~the~ISO~B-series,~not~in~the~JIS~B-series.~This~behavior~was~changed~from~jlreq~version~\g__jlreq_papersizechangeddate_tl.~Use~`paper=#4'~for~the~JIS-B-series.~If~you~want~to~specify~the~ISO~B-series~and~if~you~think~this~warning~is~annoying,~use~`paper=#3'}
+  \__jlreq_addpapersize_withwarning:nnnn {#1} {#2} {#3} {The~option~`##1'~means~the~papersize~in~the~ISO~B-series,~not~in~the~JIS~B-series.~This~behavior~was~changed~from~jlreq~version~\g__jlreq_papersizechangeddate_tl.~Use~`paper=#4'~for~the~JIS-B-series.}
 }
 
 \__jlreq_aftercls_addtodeletecs:N \__jlreq_addpapersize:nnn
@@ -1280,6 +1280,7 @@
   \let\@listi\@listI}
 
 \if@tate\tate\fi % ここで発行しておく
+\mcfamily\selectfont\normalsize
 \setbox\jlreq@tempboxa\hbox{阿}
 \setlength\Cht{\ht\jlreq@tempboxa}
 \setlength\Cdp{\dp\jlreq@tempboxa}

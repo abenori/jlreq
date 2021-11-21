@@ -3765,6 +3765,20 @@
   \ifvmode\leavevmode\fi
   \IfBooleanTF {#1} { \jlreq@inlinenote@noauto {#2} } { \jlreq@inlinenote@auto {#2} }
 }
+\keys_define:nn { jlreqsetup } {
+  warichu-pre .code:n = {
+    \tl_set:Nn \l__jlreq_tmpa_tl {}
+    \str_set:Nx \l__jlreq_tmpa_str { \str_head:n { \tl_to_str:n {#1} } }
+    \tl_map_inline:Nn \jlreq@charlist@openingbrackets {
+      \str_if_eq:eeT { \l__jlreq_tmpa_str } { \tl_to_str:n {##1} } {
+        \tl_set:Nn \l__jlreq_tmpa_tl { \jlreq@open@bracket@before@space }
+      }
+    }
+    \edef\jlreq@warichu@pre{\expandonce{\l__jlreq_tmpa_tl}\unexpanded{#1}}
+  },
+  warichu-post .tl_set:N = \jlreq@warichu@post
+}
+\keys_set:nn { jlreqsetup } { warichu-pre = {（}, warichu-post = {）} }
 
 \def\jlreq@inlinenote@auto#1{%
   % 割注初め括弧の前の場所を保存
@@ -3772,11 +3786,11 @@
   % \jlreq@tempdimbに，現在行の残り長さを入れる
   \jlreq@tempdimb=\jlreq@rest@linewidth
   % 括弧の分を引いたものが，割注の使える長さ
-  \setbox\@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\inhibitglue\jlreq@open@bracket@before@space（\inhibitglue}%
+  \setbox\@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\inhibitglue\jlreq@warichu@pre\inhibitglue}%
   \addtolength{\jlreq@tempdimb}{-\wd\@tempboxa}%
   \ifdim\jlreq@tempdimb<0pt\jlreq@tempdimb=\linewidth\fi
   {%
-    \setbox\jlreq@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\inhibitglue \jlreq@open@bracket@before@space（}%
+    \setbox\jlreq@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\inhibitglue\jlreq@warichu@pre}%
     \jlreq@box@putcenter\jlreq@tempboxa
   }%
   % 「初回」時はここに強制改行を入れる．これにより現在位置の取得がより正しくなる……といいなぁ
@@ -3831,7 +3845,7 @@
     \splitmaxdepth=\maxdimen
     % 現在行の残り長さを思い出す
     \jlreq@tempdimb=\jlreq@rest@linewidth
-    \setbox\@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\inhibitglue\jlreq@open@bracket@before@space（\inhibitglue}%
+    \setbox\@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\inhibitglue\jlreq@warichu@pre\inhibitglue}%
     \addtolength{\jlreq@tempdimb}{-\wd\@tempboxa}%
     \setbox\@tempboxa=\box\jlreq@resultbox
     \@whilenum\@tempcnta<\jlreq@inlinenote@lines\do{%
@@ -3871,7 +3885,7 @@
 }
 
 \def\jlreq@inlinenote@noauto#1{%
-  \setbox\jlreq@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\inhibitglue\jlreq@open@bracket@before@space（}%
+  \setbox\jlreq@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\inhibitglue\jlreq@warichu@pre}%
   \inhibitglue\jlreq@box@putcenter\jlreq@tempboxa
   \jlreq@inlinenote@noauto@#1\\\jlreq@endmark\jlreq@endmark
   \jlreq@inlinenote@endnote
@@ -3909,7 +3923,7 @@
 \def\jlreq@inlinenote@endnote{%
   \jlreq@in@inlinenotefalse
   {%
-    \setbox\jlreq@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize）}%
+    \setbox\jlreq@tempboxa=\hbox{\jlreq@inlinenote@kakkofontsize\inhibitglue\jlreq@warichu@post}%
     \jlreq@box@putcenter\jlreq@tempboxa
     \inhibitglue
   }%

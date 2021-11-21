@@ -3768,7 +3768,8 @@
 \keys_define:nn { jlreqsetup } {
   warichu-pre .code:n = {
     \tl_set:Nn \l__jlreq_tmpa_tl {}
-    \str_set:Nx \l__jlreq_tmpa_str { \str_head:n { \tl_to_str:n {#1} } }
+    \str_set:Nx \l__jlreq_tmpa_str { \tl_to_str:n {#1} }
+    \str_set:Nx \l__jlreq_tmpa_str { \str_head:N \l__jlreq_tmpa_str }
     \tl_map_inline:Nn \jlreq@charlist@openingbrackets {
       \str_if_eq:eeT { \l__jlreq_tmpa_str } { \tl_to_str:n {##1} } {
         \tl_set:Nn \l__jlreq_tmpa_tl { \jlreq@open@bracket@before@space }

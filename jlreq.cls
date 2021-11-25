@@ -3766,7 +3766,7 @@
   \IfBooleanTF {#1} { \jlreq@inlinenote@noauto {#2} } { \jlreq@inlinenote@auto {#2} }
 }
 \keys_define:nn { jlreqsetup } {
-  warichu-pre .code:n = {
+  warichu_pre .code:n = {
     \tl_set:Nn \l__jlreq_tmpa_tl {}
     \str_set:Nx \l__jlreq_tmpa_str { \tl_to_str:n {#1} }
     \str_set:Nx \l__jlreq_tmpa_str { \str_head:N \l__jlreq_tmpa_str }
@@ -3777,7 +3777,7 @@
     }
     \edef\jlreq@warichu@pre{\expandonce{\l__jlreq_tmpa_tl}\unexpanded{#1}}
   },
-  warichu-post .tl_set:N = \jlreq@warichu@post
+  warichu_post .tl_set:N = \jlreq@warichu@post
 }
 \keys_set:nn { jlreqsetup } { warichu-pre = {（}, warichu-post = {）} }
 

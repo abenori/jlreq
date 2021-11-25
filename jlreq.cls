@@ -3779,7 +3779,7 @@
   },
   warichu_post .tl_set:N = \jlreq@warichu@post
 }
-\keys_set:nn { jlreqsetup } { warichu-pre = {（}, warichu-post = {）} }
+\keys_set:nn { jlreqsetup } { warichu_pre = {（}, warichu_post = {）} }
 
 \def\jlreq@inlinenote@auto#1{%
   % 割注初め括弧の前の場所を保存

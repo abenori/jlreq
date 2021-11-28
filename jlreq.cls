@@ -801,8 +801,8 @@
 \edef\jlreq@jafontscale{\strip@pt\jlreq@resultdimen}
 \__jlreq_aftercls_addtodeletecs:N \jlreq@jafontscale
 \ifx l\jlreq@engine
-  \jlreq@saveoriginalcs{DeclareFontShape}
-    \def\DeclareFontShape#1#2#3#4#5#6{
+  \jlreq@saveoriginalcs{DeclareFontShape@}
+    \def\DeclareFontShape@#1#2#3#4#5#6{
     \group_begin:
       \bool_if:nT { \str_if_eq_p:nn {#1} {JY3} || \str_if_eq_p:nn {#1} {JT3} } {
         \tl_set:Nx \l_jlreq_tmpa_tl {#5}
@@ -813,17 +813,17 @@
             \tl_replace_all:Nnn \l_jlreq_tmpa_tl { jfm=jlreq  } { jfm=jlreq-jidori  }
           }
           \cs_set:Nx \l_jlreq_do: {
-            \exp_not:n{ \jlreq@useoriginalcs{DeclareFontShape} {#1} {#2} {#3} { #4-jidori } }
+            \exp_not:n{ \jlreq@useoriginalcs{DeclareFontShape@} {#1} {#2} {#3} { #4-jidori } }
             { \tl_use:N \l_jlreq_tmpa_tl } {#6}
           }
         }{
           \tl_if_in:NnT \l_jlreq_tmpa_tl {<->ssub} {
-            \cs_set:Nn \l_jlreq_do: {\jlreq@useoriginalcs{DeclareFontShape} {#1} {#2} {#3} { #4-jidori } {#5} {#6} }
+            \cs_set:Nn \l_jlreq_do: {\jlreq@useoriginalcs{DeclareFontShape@} {#1} {#2} {#3} { #4-jidori } {#5} {#6} }
           }
         }
       }
     \exp_after:wN \group_end: \l_jlreq_do:
-    \jlreq@useoriginalcs{DeclareFontShape} {#1} {#2} {#3} {#4} {#5} {#6}
+    \jlreq@useoriginalcs{DeclareFontShape@} {#1} {#2} {#3} {#4} {#5} {#6}
   }
   \DeclareFontShape{JY3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont :jfm=jlreq;script=latn;-kern}{}
   \DeclareFontShape{JY3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont :jfm=jlreq;script=latn;-kern}{}

@@ -1152,6 +1152,7 @@
     \jlreq@lastnodechar=`　
     \expandafter\jlreq@fixjfm
   \else\expandafter　\fi
+  \ignorespaces
 }
 \ifx l\jlreq@engine
   {

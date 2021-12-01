@@ -890,16 +890,17 @@
 \edef\jlreq@charlist@katakana{アイウエオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモヤユヨラリルレロワヰヱヲンヴ\ifx p\jlreq@engine\else ヷヸヹヺ\fi}% カ゚キ゚ク゚ケ゚コ゚セ゚ツ゚ト゚
 
 %.. 行頭括弧調整
-\jlreq@saveoriginalcs{item}
 \ifx l\jlreq@engine
   % \itemの直後は折り返し行頭と同じにする．
+  \jlreq@saveoriginalcs{@item}
   \cs_set:Nn \__jlreq_hook_everypar: {}
-  \renewcommand*{\item}{%
+  \def\@item[#1]{%
     \cs_set:Nn \__jlreq_hook_everypar: { \cs_set:Nn \__jlreq_hook_everypar: {} \inhibitglue }
+    \jlreq@useoriginalcs{@item}[#1]%
     \expandafter\everypar\expandafter{\the\everypar\__jlreq_hook_everypar:}
-    \jlreq@useoriginalcs{item}%
   }
 \else
+  \jlreq@saveoriginalcs{item}
   \AtBeginDocument{\PushPostHook{par}{\jlreq@hook@everypar}}
   \def\jlreq@hook@everypar{}
   % 非LuaTeXの場合はJFMの入れ替えと\everyparでの処理で対処．

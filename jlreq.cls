@@ -500,7 +500,7 @@
 
 % #1の先頭が文字か
 \long\def\jlreq@ifletter#1{%
-  \jlreq@iffirsttoken{#1}{ }{\@secondoftwo}{%
+  \jlreq@iffirsttoken{#1}{~}{\@secondoftwo}{%
     \expandafter\expandafter\expandafter\jlreq@helper@ifletter\jlreq@getfirsttoken#1\jlreq@uniqtoken{}\jlreq@endmark@
   }%
 }

@@ -1899,7 +1899,7 @@
   }%
   \def\@tempa##1##2##3{##1}%
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@before@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
-    \noexpand\allowbreak
+    \noexpand\vskip 0pt\noexpand\relax % 改ページ関係（#54,#100），よくわかっていない
     \exp_not:o {\@tempa#4}%
     \exp_not:o {\jlreq@resulta}%
     \ifjlreq@tempa\unexpanded{%

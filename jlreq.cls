@@ -1653,7 +1653,7 @@
 %. システム設定
 %.. 逆ノンブル
 \ifjlreq@option@use@reverse@pagination
-  \AtEndDocument{\clearpage\jlreq@reference@immediate@write{lastpage}{\noexpand\arabic{page}}}%
+  \AtEndDocument{\clearpage\jlreq@reference@immediate@write{lastpage}{\arabic{page}}}%
   \def\c@jlreqreversepage{\numexpr\jlreq@reference@ref{lastpage}{0} - \c@page + 1\relax}
   \def\thejlreqreversepage{\arabic{jlreqreversepage}}
 \fi

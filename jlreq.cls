@@ -1897,9 +1897,8 @@
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@space@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
     \exp_not:o {\jlreq@tempb}%
   }%
-  \def\@tempa##1##2##3{##1}%
+  \long\def\@tempa##1##2##3{##1}%
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@before@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
-    \noexpand\vskip 0pt\noexpand\relax % 改ページ関係（#54,#100），よくわかっていない
     \exp_not:o {\@tempa#4}%
     \exp_not:o {\jlreq@resulta}%
     \ifjlreq@tempa\unexpanded{%
@@ -1907,11 +1906,11 @@
       \edef\jlreq@BlockHeading@currentpage{\the\jlreq@currentpage}%
     }\fi
   }%
-  \def\@tempa##1##2##3{##2}%
+  \long\def\@tempa##1##2##3{##2}%
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@format@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
     \exp_not:o {\@tempa#4}%
   }%
-  \def\@tempa##1##2##3{##3}%
+  \long\def\@tempa##1##2##3{##3}%
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
     \exp_not:o {\jlreq@resultc}%
     \ifjlreq@tempa\unexpanded{%
@@ -2214,7 +2213,6 @@
 % 行取り情報をゲットだぜ
 % \jlreq@resultに{1 = 前空き}{2 = 後ろ空き}{3 = トータル行数}を入れる
 % #2#3#4はそれぞれ前空き，後ろ開き，トータル行数のデフォルト値
-% *つきは\setkeys*を使う．[]はkeyvalのファミリー．
 \def\jlreq@BlockHeading@gyodori@parsekeyval{%
   \@ifstar{\jlreq@BlockHeading@gyodori@parsekeyval@{*}}{\jlreq@BlockHeading@gyodori@parsekeyval@{}}%
 }
@@ -2243,11 +2241,16 @@
     \keys_set:nn {#2} {#3} 
     % before/after_lines優先
     \tl_if_empty:NF \l__jlreq_before_space_tl { \tl_put_left:Nn \l__jlreq_before_space_tl {r:} }
-    \tl_if_empty:NF \l__jlreq_before_lines_tl { \tl_set:Nx \l__jlreq_before_space_tl {\exp_not:o {\l__jlreq_before_lines_tl} \baselineskip } }
+    \tl_if_empty:NF \l__jlreq_before_lines_tl { \tl_set:Nx \l__jlreq_before_space_tl {\exp_not:o {\l__jlreq_before_lines_tl} \exp_not:N \baselineskip } }
     \tl_if_empty:NT \l__jlreq_before_space_tl { \tl_set:Nn \l__jlreq_before_space_tl {#4} }
     \tl_if_empty:NF \l__jlreq_after_space_tl { \tl_put_left:Nn \l__jlreq_after_space_tl {r:} }
-    \tl_if_empty:NF \l__jlreq_after_lines_tl { \tl_set:Nx \l__jlreq_after_space_tl { a:\exp_not:o {\l__jlreq_after_lines_tl} \baselineskip } }
+    \tl_if_empty:NF \l__jlreq_after_lines_tl { \tl_set:Nx \l__jlreq_after_space_tl { a:\exp_not:o {\l__jlreq_after_lines_tl} \exp_not:N \baselineskip } }
     \tl_if_empty:NT \l__jlreq_after_space_tl { \tl_set:Nn \l__jlreq_after_space_tl {#5} }
+    % 内部での空き指定は[asr]:(寸法)の形
+    % prefixのasrは次の意味：
+    % r -> before/after_spaceの指定
+    % a -> before/after_linesの指定
+    % s -> beforelinesの指定だが*つき．
     \cs_set:Nx \l__jlreq_do: {
       \exp_not:n {\def\jlreq@result}{
         {\exp_not:o {\l__jlreq_before_space_tl } }
@@ -2512,7 +2515,11 @@
             {}{}%
           }%
         }%
-        {{}{\exp_not:o {\jlreq@totalformat}}{\exp_not:o {\jlreq@totalformat@after}}}%
+        {{\exp_not:n {
+%          \par
+%          \addpenalty\@secpenalty
+%          \addvspace{0pt}\relax % 改ページ関係（#54,#100），よくわかっていない
+        }}{\exp_not:o {\jlreq@totalformat}}{\exp_not:o {\jlreq@totalformat@after}}}%
       }}%
       \noexpand\def\exp_not:c {#1}{\exp_not:c {jlreq@headingcs@#1}}%
     }%
@@ -4426,7 +4433,7 @@
     % (odd|even)_running_head(_ii)が_<見出し命令>で与えられている場合，次のようにする．
     % * \jlreq@(odd|even)@running@head(@ii)をマーク出力命令（\(left|right)mark or \jlreq@extra(left|right)mark{<num>}）に書き換える
     %   - evenの場合はleft，oddの場合はright．
-    %   - @iiがなければ\(left|right)mark，@iiがあれば\jlreq@extra(left|right)mark{1}
+    %   - 1つ目は\(left|right)mark，@ii以降は\jlreq@extra(left|right)mark{1}
     % * 例えば_<見出し命令>が_sectionならば，\jlreq@markdata@sectionに{{<I1>}{<I2>}{<I3>}}を追加する．ここで<I1>，<I2>，<I3>は
     %   - I1: @iiが無いときにodd or even
     %   - I2: @iiが無ければ0，あれば1．
@@ -5982,7 +5989,7 @@
 \NewDocumentCommand { \akigumi } { m m } {
   \mode_if_vertical:TF { \leavevmode } {}
   \group_begin:
-    \__jlreq_setkanjiskip:nn { \jlreqkanjiskip + #1 } { }
+    \__jlreq_setkanjiskip:nn { \jlreqkanjiskip + #1 } { \jlreqxkanjiskip + #1 }
     \hbox:n {#2}
   \group_end:
 }

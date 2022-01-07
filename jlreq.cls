@@ -2516,9 +2516,9 @@
           }%
         }%
         {{\exp_not:n {
-%          \par
-%          \addpenalty\@secpenalty
-%          \addvspace{0pt}\relax % 改ページ関係（#54,#100），よくわかっていない
+          \par
+          \addpenalty\@secpenalty
+          \addvspace{0pt}\relax % 改ページ関係（#54,#100），よくわかっていない
         }}{\exp_not:o {\jlreq@totalformat}}{\exp_not:o {\jlreq@totalformat@after}}}%
       }}%
       \noexpand\def\exp_not:c {#1}{\exp_not:c {jlreq@headingcs@#1}}%
@@ -2563,7 +2563,7 @@
 % \jlreq@BlockHeading@spaces@current@after@<n>
 %   : n番目の見出しの後ろに出すもの
 % \jlreq@BlockHeading@spaces@current@count
-%   : 現在いくつ目の連続する見出しを処理しているかのカウンター
+%   : 現在いくつの連続する見出しを処理しているかのカウンター
 \newcount\jlreq@BlockHeading@spaces@current@count
 \jlreq@BlockHeading@spaces@current@count=0
 \def\jlreq@BlockHeading@spaces@current@sequence{}

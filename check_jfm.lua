@@ -227,6 +227,9 @@ end
 
 local function jfm_check(jfmtable,version,position)
 	local exist_key = {}
+	if jfmtable[0] == nil then
+		print_error("JFM must have character 0 class")
+	end
 	for k,v in pairs(jfmtable) do
 		if type(k) == "number" then
 			if k < 0 then print_error("Negative class (" .. tostring(k) .. ") is found" .. position_msg(position)) end

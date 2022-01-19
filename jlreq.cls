@@ -4358,24 +4358,6 @@
   \jlreq@do
 }
 
-% フォント情報を追加する
-% #1: 柱
-% #2: フォント設定
-\cs_set:Nn \__jlreq_pagestyle_addfont:NN {
-  \group_begin:
-    \tl_set:Nn \l__jlreq_do_tl {}
-    \prop_map_inline:Nn #1 {
-      \tl_set:Nx \l__jlreq_tmpa_tl { \prop_item:Nn #2 {##1} }
-      \tl_if_empty:NF \l__jlreq_tmpa_tl {
-        \tl_put_right:Nx \l__jlreq_do_tl {
-          \exp_not:n { \prop_put:Nnn #1 {##1} } {{\exp_not:o \l__jlreq_tmpa_tl ##2}}
-        }
-      }
-    }
-  \exp_after:wN \group_end:
-  \l__jlreq_do_tl
-}
-
 % mark処理サブ
 % #1: 柱（prop）
 % #2: odd or even
@@ -4427,7 +4409,7 @@
 % #3: mark format（prop）
 % 柱は必要ならば\leftskipなどに書き換えられる．
 % #4に{<見出し名>}{\<見出し名>markの定義}を入れる
-\cs_set:Nn \__jlreq_pagestyle_makemarkcommand:NNN {
+\cs_set:Nn \__jlreq_pagestyle_makemarkcommand:NNNN {
   \group_begin:
     \tl_set:Nn \l__jlreq_do_tl { \prop_clear:N \l__jlreq_result_prop }
     \prop_clear:N \l__jlreq_tmpa_prop % markの定義を入れる．
@@ -4469,13 +4451,145 @@
   \l__jlreq_do_tl
 }
 
+% \prop_item:Nn #1 {#2}が_***だったら***に，そうでなければ空に展開される．
+\cs_set:Nn \__jlreq_pagestyle_get_runninghead_section:Nn {
+  \exp_args:Ne \__jlreq_pagestyle_get_runninghead_section_aux:n { \prop_item:Nn #1 {#2} }
+}
+
 \__jlreq_pagestyle_get_runninghead_section_aux:n {
   \str_if_eq:eeTF { \str_head:n {#1} } {_} { \exp_not:o {\use_none:n #1} } {}
 }
 
-\cs_set:Nn \__jlreq_pagestyle_get_runninghead_section:Nn {
-  \exp_args:Ne \__jlreq_pagestyle_get_runninghead_section_aux:n { \prop_item:Nn #1 {#2} }
+
+%#1: デフォルト
+%#2: 位置情報がleft-topのように入っているもの，prop
+%#2の中身を書き換えて返す．
+\cs_set:Nn \__jlreq_pagestyle_normalizeposition:N {
+  \group_begin:
+    \tl_clear:N \l__jlreq_tmpa_tl % デフォルト位置
+    \prop_get:NnNF #2 {0} \l__jlreq_tmpa_tl {
+      \tl_set:Nn \l__jlreq_tmpa_tl {#1}
+    }
+    \prop_map_inline:Nn #1 {
+      \exp_args:NnNo  \jlreq@pagestyle@parse@position {##2} \l__jlreq_tmpb_tl {\l__jlreq_tmpa_tl}
+      \tl_put_right:Nx \l__jlreq_do_tl {
+        \exp_not:n { \prop_set:Nnn #2 {##1} } {\exp_not:o {\l__jlreq_tmpb_tl} }
+      }
+    }
+  \exp_after:wN \group_end:
+  \l__jlreq_do_tl
 }
+
+%#1: 横方向場所（left/right/center）
+%#2: 縦方向場所（top/bottom）
+%#3: 中身（柱 or ノンブル，prop）
+%#4: フォント（prop）
+%#5: 場所（prop）
+%#6: 間の空き（prop->skip）
+%#7に返す
+\cs_set:Nn \__jlreq_pagestyle_makeyoko_runornombre:nnNNNN {
+  
+  
+}
+
+%#1: 縦方向場所（top/bottom）
+%#2: 横方向場所（left/right/center）
+%#3: 中身（柱 or ノンブル，prop）
+%#4: フォント（prop）
+%#5: 場所（prop）
+%#6に左から{フォント}{中身}を並べた配列を返す．
+\cs_set:Nn \__jlreq_pagestyle_makeyoko_sequence:nnNNN {
+  \group_begin:
+    \tl_set:Nn \l__jlreq_do_tl { \seq_clear:N #5 }
+    \clist_map_inline:nn {0,1,2} {
+      \prop_get:NnNT #3 {##1} \l__jlreq_tmpa_tl {
+        \tl_if_eq:xxT {{#1}{#2}} { \prop_item:Nn #5 {##1} } {
+          \tl_put_right:Nx \l__jlreq_do_tl {
+            \exp_not:n { \seq_put_right:Nn #6 } { {\prop_item:Nn #4 {##1}}{\exp_not:o \l__jlreq_tmpa_tl} }
+          }
+        }
+      }
+    }
+  \exp_after:wN \group_end:
+  \l__jlreq_do_tl
+}
+
+%#1: 横方向場所
+%#2: {フォント}{中身}の配列
+%#3: スペース
+%#4に結果のトークン列を入れる
+\cs_set:Nn \__jlreq_pagestyle_concat_withspaces:nNNN {
+  \seq_if_empty:NTF #2 {
+    \tl_set:Nn #4 {}
+  }{
+    \str_if_eq:nnTF {#1}{right}{
+      \__jlreq_pagestyle_concat_withspaces_right:NoN #2 #3 #4
+    }{
+      \__jlreq_pagestyle_concat_withspaces_left:NoN #2 #3 #4
+    }
+  }
+}
+
+%#1: {フォント}{中身}の配列
+%#2: スペース
+%#3に結果のトークン列を入れる
+\cs_set:Nn \__jlreq_pagestyle_concat_withspaces_left:NnN {
+  \group_begin:
+    \tl_set:Nn #3 {}
+    \seq_pop_right:NN #1 \l__jlreq_tmpc_tl % 最後の項目
+    \seq_map_inline:Nn #1 {
+      \tl_set:Nx \l__jlreq_tmpa_tl { \exp_args:No \exp_not:n {\use_i:nn ##1} }
+      \tl_set:Nx \l__jlreq_tmpb_tl { \exp_args:No \exp_not:n {\use_ii:nn ##1} }
+      \tl_put_right:Nx #3 {
+        \exp_not:n {\protected@edef\jlreq@tempa}{\exp_not:o \l__jlreq_tmpb_tl}
+        \tl_if_empty:NTF \l__jlreq_tmpa_tl {\exp_not:N \jlreq@tempa}{{\exp_not:o \l__jlreq_tmpa_tl \exp_not:N \jlreq@tempa}}
+        \exp_not:n { \ifx\jlreq@tempa\@empty\else\hskip\glueexpr #2\relax\fi }
+      }
+    }
+    \cs_set:Nn \l__jlreq_tmpa:nn {
+      \tl_if_empty:nTF{##1} { \exp_not:n {##2} }{ \exp_not:n {{##1##2}} }
+    }
+    \tl_put_right:Nx #3 {\exp_after:wN \l__jlreq_tmpa:nn \l__jlreq_tmpc_tl}
+    \tl_set:Nx \l__jlreq_do_tl {
+      \exp_not:n { \tl_set:Nn #3} {\exp_not:o #3}
+    }
+  \exp_after:wN \group_end:
+  \l__jlreq_do_tl
+}
+\cs_generate_variant:Nn \__jlreq_pagestyle_concat_withspaces_left:NnN {NoN}
+
+%#1: {フォント}{中身}の配列
+%#2: スペース
+%#3に結果のトークン列を入れる
+\cs_set:Nn \__jlreq_pagestyle_concat_withspaces_right:NnN {
+  \group_begin:
+    \tl_set:Nn #3 {}
+    \bool_set_true:N \l__jlreq_tmpa_bool % 最初か
+    \seq_map_inline:Nn #1 {
+      \tl_set:Nx \l__jlreq_tmpa_tl { \exp_args:No \exp_not:n {\use_i:nn ##1} }
+      \tl_set:Nx \l__jlreq_tmpb_tl { \exp_args:No \exp_not:n {\use_ii:nn ##1} }
+      \bool_if:NTF \l__jlreq_tmpa_bool {
+        \tl_put_right:Nx #3 {
+          \tl_if_empty:NTF \l__jlreq_tmpa_tl {\exp_not:o \l__jlreq_tmpb_tl}{{\exp_not:o \l__jlreq_tmpa_tl \exp_not:o \l__jlreq_tmpb_tl}}
+        }
+      }{
+        \tl_put_right:Nx #3 {
+          \exp_not:n {\protected@edef\jlreq@tempa}{\exp_not:o \l__jlreq_tmpb_tl}
+          \exp_not:n {\ifx\jlreq@tempa\@empty\else\hskip\glueexpr #2\relax\fi}
+          \tl_if_empty:NTF \l__jlreq_tmpa_tl {\exp_not:N \jlreq@tempa}{{\exp_not:o \l__jlreq_tmpa_tl \exp_not:N \jlreq@tempa}}
+        }
+      }
+      \bool_set_false:N \l__jlreq_tmpa_bool
+    }
+    \tl_set:Nx \l__jlreq_do_tl {
+      \exp_not:n { \tl_set:Nn #3} {\exp_not:o #3}
+    }
+  \exp_after:wN \group_end:
+  \l__jlreq_do_tl
+}
+\cs_generate_variant:Nn \__jlreq_pagestyle_concat_withspaces_right:NnN {NoN}
+
+
 
 %.. \DeclarePageStyle
 % markの処理
@@ -4490,6 +4604,7 @@
 %    空きが無駄に入らないように気をつける．（右寄せの場合は柱が空なら空きを入れない．）
 %    \setbox..=して，幅が0か否かで判定する．
 %    右ページでは逆になる．<柱><空き><ノンブル>
+%    空きは柱文字で文字サイズ基準で計算する．
 %    <ノンブル>も<柱>もi,ii,...はiが左になるようにする．
 %    <柱>も<ノンブル>も<i中身><空き><ii中身><空き><iii中身>となる
 %    ただし空きは無駄に入れない．左寄せの場合は<i中身>が空ならばその右の<空き>は入れない．
@@ -4572,6 +4687,18 @@
       clear_markcommand = {true}, 
     }
     \keys_set:nn { PageStyle:#1 } {#2}
+    % 見出しを出す場合：evenに章などの高いレベルの見出しを出す（2.6.3.a）
+    \@ifundefined{jlreq@heading@level@\__jlreq_pagestyle_get_runninghead_section:Nn \l__jlreq_odd_runninghead_prop {0}}{}{
+      \@ifundefined{jlreq@heading@level@\__jlreq_pagestyle_get_runninghead_section:Nn \l__jlreq_even_runninghead_prop {0}}{}{
+        \int_compare:nNnT 
+          {\csname jlreq@heading@level@\__jlreq_pagestyle_get_runninghead_section:Nn \l__jlreq_odd_runninghead_prop {0}\endcsname}
+          <
+          {\csname jlreq@heading@level@\__jlreq_pagestyle_get_runninghead_section:Nn \l__jlreq_even_runninghead_prop {0}\endcsname}
+          {
+            \jlreq@note{偶数ページには奇数ページよりアウトラインレベルの高い見出しを入れる (ページスタイル #1 内，2.6.3.a)．}%
+          }
+      }
+    }
     % ノンブル同士の間や柱同士の間のデフォルトはノンブルと柱の間の空き量
     \tl_if_empty:NT \l__jlreq_nombre_gap_tl { \tl_set:NN \l__jlreq_nombre_gap_tl \l__jlreq_gap_tl }
     \tl_if_empty:NT \l__jlreq_runninghead_gap_tl { \tl_set:NN \l__jlreq_runninghead_gap_tl \l__jlreq_gap_tl }
@@ -4592,25 +4719,7 @@
       }
       \tl_put_right:Nn \l__jlreq_markcommands_tl {##2}
     }
-    % 見出しを出す場合：evenに章などの高いレベルの見出しを出す（2.6.3.a）
-    \@ifundefined{jlreq@heading@level@\__jlreq_pagestyle_get_runninghead_section:Nn \l__jlreq_odd_runninghead_prop {0}}{}{
-      \@ifundefined{jlreq@heading@level@\__jlreq_pagestyle_get_runninghead_section:Nn \l__jlreq_even_runninghead_prop {0}}{}{
-        \int_compare:nNnT 
-          {\csname jlreq@heading@level@\__jlreq_pagestyle_get_runninghead_section:Nn \l__jlreq_odd_runninghead_prop {0}\endcsname}
-          <
-          {\csname jlreq@heading@level@\__jlreq_pagestyle_get_runninghead_section:Nn \l__jlreq_even_runninghead_prop {0}\endcsname}
-          {
-            \jlreq@note{偶数ページには奇数ページよりアウトラインレベルの高い見出しを入れる (ページスタイル #1 内，2.6.3.a)．}%
-          }
-      }
-    }
-    % 二番目以降にフォント設定を追加
-    \clist_map_variable:nNn { ii, iii } \jlreq@i {
-      \clist_map_variable:nNn { odd, even } \jlreq@parity {
-        \jlreq@pagestyle@addfont@tocs{jlreq@\jlreq@parity @running@head@\jlreq@i}{jlreq@running@head@\jlreq@i @font}%
-      }%
-      \jlreq@pagestyle@addfont@tocs{jlreq@nombre@\jlreq@i}{jlreq@nombre@\jlreq@i @font}%
-    }%
+    
     % \jlreq@oddhead,\jlreq@oddfoot,\jlreq@evenhead,\jlreq@evenfootに必要なものを入れる．
     \jlreq@if{\ifjlreq@pstate\fi}{% tate
       % headの方に処理を入れる．footは空．

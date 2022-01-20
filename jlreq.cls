@@ -13,6 +13,8 @@
 \ExplSyntaxOn
 \int_new:N \l__jlreq_tmp_int
 \tl_new:N \l__jlreq_tmpa_tl
+\tl_new:N \l__jlreq_tmpb_tl
+\tl_new:N \l__jlreq_tmpc_tl
 \cs_new:Nn \l_jlreq_do: {}
 \str_new:N \l__jlreq_tmpa_str
 \str_new:N \l__jlreq_tmpb_str
@@ -20,7 +22,7 @@
 \bool_new:N \l_jlreq_tmpa_bool
 \clist_new:N \l_jlreq_tmpa_clist
 \seq_new:N \l_jlreq_tmpa_seq
-\dim_new:N \l_jlreq_tmpa_dim
+\dim_new:N \l__jlreq_tmpa_dim
 \skip_new:N \l_jlreq_tmpa_skip
 \box_new:N \l_jlreq_tmpa_box
 \box_new:N \l_jlreq_tmpb_box
@@ -2987,22 +2989,22 @@
   % 一行で処理したときの見出し長さを計測
   \group_begin:
     \hbox_set:Nn \l_jlreq_tmpa_box {#1#6}
-    \dim_set:Nn \l_jlreq_tmpa_dim { \box_wd:N \l_jlreq_tmpa_box}
+    \dim_set:Nn \l__jlreq_tmpa_dim { \box_wd:N \l_jlreq_tmpa_box}
     % 何行必要かを\l__jlreq_cutinheading_linecount_tlに入れる
-    \dim_compare:nTF { \l_jlreq_tmpa_dim > #5} {
+    \dim_compare:nTF { \l__jlreq_tmpa_dim > #5} {
       \tl_set:Nn \l__jlreq_cutinheading_linecount_tl {3}
     }{
-      \dim_compare:nTF { \l_jlreq_tmpa_dim > #4 }{
+      \dim_compare:nTF { \l__jlreq_tmpa_dim > #4 }{
         \tl_set:Nn \l__jlreq_cutinheading_linecount_tl {2}
       } { \tl_set:Nn \l__jlreq_cutinheading_linecount_tl {1} } }
-    % \l_jlreq_tmpa_dimが実際の一行の長さに近い
-    \dim_set:Nn \l_jlreq_tmpa_dim { \l_jlreq_tmpa_dim / \l__jlreq_cutinheading_linecount_tl }
+    % \l__jlreq_tmpa_dimが実際の一行の長さに近い
+    \dim_set:Nn \l__jlreq_tmpa_dim { \l__jlreq_tmpa_dim / \l__jlreq_cutinheading_linecount_tl }
     % \l_jlreq_tmpb_boxに見出し部分を，\l__jlreq_cutinheading_linecount_tlに見出し自身に何行使うかを入れる
     \int_compare:nTF { \l__jlreq_cutinheading_linecount_tl = 1 }{
       \vbox_set:Nn \l_jlreq_tmpb_box {\parindent=0pt\rightskip=0pt\leftskip=0pt\hbox_unpack_drop:N \l_jlreq_tmpa_box}
       \tl_set:Nn \l__jlreq_cutinheading_linecount_tl {2}
     }{
-      \jlreq@inlinenote@determinelength{#6}{#1}{}{\l__jlreq_cutinheading_linecount_tl}{\l__jlreq_cutinheading_linecount_tl}{\l_jlreq_tmpa_dim}{\linewidth}%
+      \jlreq@inlinenote@determinelength{#6}{#1}{}{\l__jlreq_cutinheading_linecount_tl}{\l__jlreq_cutinheading_linecount_tl}{\l__jlreq_tmpa_dim}{\linewidth}%
       \box_set_eq:NN \l_jlreq_tmpb_box \jlreq@resultbox
       \tl_set:Nn \l__jlreq_cutinheading_linecount_tl {3}
     }
@@ -4480,25 +4482,13 @@
   \l__jlreq_do_tl
 }
 
-%#1: 横方向場所（left/right/center）
-%#2: 縦方向場所（top/bottom）
-%#3: 中身（柱 or ノンブル，prop）
-%#4: フォント（prop）
-%#5: 場所（prop）
-%#6: 間の空き（prop->skip）
-%#7に返す
-\cs_set:Nn \__jlreq_pagestyle_makeyoko_runornombre:nnNNNN {
-  
-  
-}
-
 %#1: 縦方向場所（top/bottom）
 %#2: 横方向場所（left/right/center）
 %#3: 中身（柱 or ノンブル，prop）
 %#4: フォント（prop）
 %#5: 場所（prop）
 %#6に左から{フォント}{中身}を並べた配列を返す．
-\cs_set:Nn \__jlreq_pagestyle_makeyoko_sequence:nnNNN {
+\cs_set:Nn \__jlreq_pagestyle_makeyoko_sequence:nnNNNN {
   \group_begin:
     \tl_set:Nn \l__jlreq_do_tl { \seq_clear:N #5 }
     \clist_map_inline:nn {0,1,2} {
@@ -4514,6 +4504,7 @@
   \l__jlreq_do_tl
 }
 
+% 各場所（左，真ん中，右）のヘッダのトークン列を作る
 %#1: 横方向場所
 %#2: {フォント}{中身}の配列
 %#3: スペース
@@ -4541,9 +4532,10 @@
       \tl_set:Nx \l__jlreq_tmpa_tl { \exp_args:No \exp_not:n {\use_i:nn ##1} }
       \tl_set:Nx \l__jlreq_tmpb_tl { \exp_args:No \exp_not:n {\use_ii:nn ##1} }
       \tl_put_right:Nx #3 {
-        \exp_not:n {\protected@edef\jlreq@tempa}{\exp_not:o \l__jlreq_tmpb_tl}
-        \tl_if_empty:NTF \l__jlreq_tmpa_tl {\exp_not:N \jlreq@tempa}{{\exp_not:o \l__jlreq_tmpa_tl \exp_not:N \jlreq@tempa}}
-        \exp_not:n { \ifx\jlreq@tempa\@empty\else\hskip\glueexpr #2\relax\fi }
+        \exp_not:n {\setbox\jlreq@tempboxa=\hbox}
+          { \tl_if_empty:NTF \l__jlreq_tmpa_tl {\exp_not:N \jlreq@tempa}{\exp_not:o \l__jlreq_tmpa_tl \exp_not:N \jlreq@tempa} }
+        \exp_not:n { \copy\jlreq@tempboxa }
+        \exp_not:n { \ifdim\wd\jlreq@tempboxa=0pt\relax\else\hskip\glueexpr #2\relax\fi }
       }
     }
     \cs_set:Nn \l__jlreq_tmpa:nn {
@@ -4574,9 +4566,10 @@
         }
       }{
         \tl_put_right:Nx #3 {
-          \exp_not:n {\protected@edef\jlreq@tempa}{\exp_not:o \l__jlreq_tmpb_tl}
-          \exp_not:n {\ifx\jlreq@tempa\@empty\else\hskip\glueexpr #2\relax\fi}
-          \tl_if_empty:NTF \l__jlreq_tmpa_tl {\exp_not:N \jlreq@tempa}{{\exp_not:o \l__jlreq_tmpa_tl \exp_not:N \jlreq@tempa}}
+          \exp_not:n { \setbox\jlreq@tempboxa=\hbox}
+            { \tl_if_empty:NTF \l__jlreq_tmpa_tl {\exp_not:N \jlreq@tempa}{\exp_not:o \l__jlreq_tmpa_tl \exp_not:N \jlreq@tempa} }
+          \exp_not:n { \ifdim\wd\jlreq@tempa=0pt\relax\else\hskip\glueexpr #2\relax\fi }
+          \exp_not:n { \box\jlreq@tempboxa }
         }
       }
       \bool_set_false:N \l__jlreq_tmpa_bool
@@ -4589,7 +4582,41 @@
 }
 \cs_generate_variant:Nn \__jlreq_pagestyle_concat_withspaces_right:NnN {NoN}
 
-
+\cs_set:Nn \__jlreq_pagestyle_concat_left_center_right:Nnnn {
+  \group_begin:
+    \tl_set:Nn \l__jlreq_tmpa_tl {} % 左
+    \tl_set:Nn \l__jlreq_tmpb_tl {} % 右
+    \tl_set:Nn #1 {}
+    \tl_if_empty:nF {#2} {
+      \dim_set:Nn \l__jlreq_tmpa_dim { \jlreq@expand@speciallength{\jlreq@headfoot@sidemargin} }
+      \legacy_if:nT { @tate } { \dim_add:Nn \l__jlreq_tmpa_dim { -\Cdp } }
+      \dim_compare:nF { \l__jlreq_tmpa_dim = 0pt } { \tl_set:Nx \l__jlreq_tmpa_tl { \exp_not:n {\hskip\dimexpr} \dim_use:N \l__jlreq_tmpa_dim \exp_not:N \relax } }
+      \tl_put_right:Nn \l__jlreq_tmpa_tl {#2}
+    }
+    \tl_if_empty:nF {#4} {
+      \tl_set:Nn \l__jlreq_tmpb_tl {#4}
+      \dim_set:Nn \l__jlreq_tmpa_dim { \jlreq@expand@speciallength{\jlreq@headfoot@sidemargin} }
+      % \jlreq@headfoot@sidemargin = 0ptの時に本文の右に一致させるための補正．
+      \legacy_if:nT { @tate } { \dim_add:Nn \l__jlreq_tmpa_dim { \topskip - \Cht } }
+      \dim_compare:nF { \l__jlreq_tmpa_dim = 0pt } { \tl_put_right:Nx \l__jlreq_tmpb_tl { \exp_not:n {\hskip\dimexpr} \dim_use:N \l__jlreq_tmpa_dim \exp_not:N \relax } }
+    }
+    \tl_if_empty:nTF {#3}{
+      \tl_if_empty:nTF {#4}
+        { \tl_set:Nx #1 { \exp_not:o \l__jlreq_tmpa_tl } }
+        { \tl_set:Nx #1 { \exp_not:o \l__jlreq_tmpa_tl \exp_not:N \hfil \exp_not:o \l__jlreq_tmpb_tl } }
+    }{
+      % 真ん中のを完全に真ん中に配置するために左右の幅を0にしておく
+      \tl_if_empty:nF { #2 } { \tl_set:Nx \l__jlreq_tmpa_tl { \exp_not:N \hbox to~0pt { \exp_not:o { \l__jlreq_tmpa_tl } \exp_not:N \hss } } }
+      \tl_if_empty:nF { #4 } { \tl_set:Nx \l__jlreq_tmpb_tl { \exp_not:N \hbox to~0pt { \exp_not:o { \l__jlreq_tmpb_tl } \exp_not:N \hss } } }
+      \tl_set:Nx #1 {
+        \exp_not:o \l__jlreq_tmpa_tl\exp_not:N \hfil \exp_not:n {#3} \exp_not:N \hfil \exp_not:o \l__jlreq_tmpb_tl
+      }
+    }
+    \tl_set:Nx \l__jlreq_do_tl { \exp_not:n {\tl_set:Nn #1 } { \exp_not:o #1 } }
+  \exp_after:wN \group_end:
+  \l__jlreq_do_tl
+}
+\cs_generate_variant:Nn \__jlreq_pagestyle_concat_left_center_right:Nnnn { Nooo }
 
 %.. \DeclarePageStyle
 % markの処理
@@ -4610,7 +4637,7 @@
 %    ただし空きは無駄に入れない．左寄せの場合は<i中身>が空ならばその右の<空き>は入れない．
 %    空かの判定は\protected@edefして\ifx\@emptyで判定する．
 %   
-\box_new:N \g__lreq_pagestyle_box
+
 \NewDocumentCommand{\DeclarePageStyle} { m +m } {%
   \expandafter\edef\csname jlreq@pagestyle@setting@#1\endcsname{\unexpanded{#2}}%
   \begingroup

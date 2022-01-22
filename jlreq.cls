@@ -4263,24 +4263,24 @@
 }%
 
 % #1の左右に傍注調整用の空白を入れて#1に代入する
-\def\jlreq@pagestyle@addsidenotemargin@left#1{%
-  \jlreq@pagestyle@addsidenotemargin@{#1}{\jlreq@sidenote@length + \jlreq@sidenote@sep}{}%
+\cs_set:Nn \__jlreq_pagestyle_addsidenotemargin_left:N {
+  \__jlreq_pagestyle_addsidenotemargin_aux:Nnn #1 {\jlreq@sidenote@length + \jlreq@sidenote@sep} {}
 }
-\def\jlreq@pagestyle@addsidenotemargin@right#1{%
-  \jlreq@pagestyle@addsidenotemargin@{#1}{}{\jlreq@sidenote@length + \jlreq@sidenote@sep}%
+\cs_set:Nn \__jlreq_pagestyle_addsidenotemargin_right:N {
+  \__jlreq_pagestyle_addsidenotemargin_aux:Nnn #1 {} {\jlreq@sidenote@length + \jlreq@sidenote@sep}
 }
-\def\jlreq@pagestyle@addsidenotemargin@bothside#1{%
-  \jlreq@pagestyle@addsidenotemargin@{#1}{\jlreq@sidenote@length + \jlreq@sidenote@sep}{\jlreq@sidenote@length + \jlreq@sidenote@sep}%
+\cs_set:Nn \__jlreq_pagestyle_addsidenotemargin_bothside:N {
+  \__jlreq_pagestyle_addsidenotemargin_aux:Nnn #1 {\jlreq@sidenote@length + \jlreq@sidenote@sep} {\jlreq@sidenote@length + \jlreq@sidenote@sep}
 }
 % #2: 左，#3：右，#4：#2 + #3
-\def\jlreq@pagestyle@addsidenotemargin@#1#2#3{%
-  \ifx#1\@empty\else
-    \edef#1{%
-      \jlreq@ifempty{#2}{}{\unexpanded{\hskip-\dimexpr #2\relax}}%
-      \exp_not:o {#1}%
-      \jlreq@ifempty{#3}{}{\unexpanded{\hskip-\dimexpr #3\relax}}%
-    }%
-  \fi
+\cs_set:Nn \__jlreq_pagestyle_addsidenotemargin_aux:Nnn {
+  \tl_if_empty:NF #1 {
+    \tl_set:Nx #1 {
+      \tl_if_empty:nF {#2}{\exp_not:n {\hskip-\dimexpr #2\relax}}%
+      \exp_not:o #1
+      \tl_if_empty:nF {#3}{\exp_not:n {\hskip-\dimexpr #3\relax}}%
+    }
+  }
 }
 
 % #1が空かつ#4が空でないならば#2に#3と#4の中身を追加し，#4を空にする．引数は全てコントロールシークエンス
@@ -4325,14 +4325,24 @@
   }%
 }
 
-% #1= cs，#2 = フォーマットの入ったcs，#3 = デフォルトフォーマットの入ったcs
-\def\jlreq@pagestyle@applyformat#1#2#3{%
-  % デフォルト時に限り，\hbox to ***{空トークン}を避ける
-  \ifnum 0\ifx#1\@empty\else 1\fi\ifx#2\relax\else 1\fi>0
-    \edef\jlreq@do{\unexpanded{\def\jlreq@tempa##1}{\ifx#2\relax\exp_not:o {#3}\else\exp_not:o {#2}\fi}}\jlreq@do
-    \edef#1{\expandafter\exp_not:o \expandafter{\expandafter\jlreq@tempa\expandafter{#1}}}%
-  \fi
+%#2: もと
+%#3: フォーマット
+%#4: デフォルトフォーマット
+%#1に返す
+\cs_set:Nn \__jlreq_pagestyle_applyformat:NnNN {
+  \bool_if:nT {
+    (! \tl_if_empty_p:n {#3}) && (! \tl_if_eq_p:NN #3 \c_novalue_tl)
+  }{
+    \group_begin:
+      \tl_set:Nx \l__jlreq_do_tl { \exp_not:n {\def\jlreq@tempa##1}{\tl_if_eq:NNTF #3 \c_novalue_tl {\exp_not:o #4}{\exp_not:o #3}} }
+      \l__jlreq_do_tl
+      \tl_set:Nx \l__jlreq_do_tl { \exp_not:n {\edef#1} {\exp_not:o {\jlreq@tempa{#2}} } }
+    \exp_after:wN \group_end:
+    \l__jlreq_do_tl
+  }
 }
+
+\cs_generate_variant:Nn \__jlreq_pagestyle_applyformat:NnNN { NocN }
 
 % フォント情報を追加する．#1：制御綴り名，#2：フォント命令の入っている制御綴名，#1に返す
 \def\jlreq@pagestyle@addfont@tocs#1#2{%
@@ -4470,7 +4480,8 @@
   \group_begin:
     \tl_set:Nn \l__jlreq_do_tl {}
     \tl_clear:N \l__jlreq_tmpa_tl % デフォルト位置
-    \prop_get:NnNF #1 {0} \l__jlreq_tmpa_tl {
+    \tl_set:Nx \l__jlreq_tmpa_tl { \prop_item:Nn #1 {0} }
+    \tl_if_empty:NT \l__jlreq_tmpa_tl {
       \tl_set:Nn \l__jlreq_tmpa_tl {#2}
     }
     \prop_map_inline:Nn #1 {
@@ -4498,7 +4509,6 @@
   \exp_after:wN \group_end:
   \l__jlreq_do_tl
 }
-
 \cs_generate_variant:Nn \__jlreq_pagestyle_makeyoko_each:NnnNNNn { NnncNNo }
 
 %#2: 縦方向場所（top/bottom）
@@ -4511,7 +4521,8 @@
   \group_begin:
     \tl_set:Nn \l__jlreq_do_tl { \seq_clear:N #1 }
     \clist_map_inline:nn {0,1,2} {
-      \prop_get:NnNT #4 {##1} \l__jlreq_tmpa_tl {
+      \tl_set:Nx \l__jlreq_tmpa_tl { \prop_item:Nn #4 {##1} }
+      \tl_if_empty:NF \l__jlreq_tmpa_tl {
         \exp_args:Nxx \tl_if_eq:nnT {{#2}{#3}} { \prop_item:Nn #6 {##1} } {
           \tl_put_right:Nx \l__jlreq_do_tl {
             \exp_not:n { \seq_put_right:Nn #1 } { {\prop_item:Nn #5 {##1}}{\exp_not:o \l__jlreq_tmpa_tl} }
@@ -4552,7 +4563,7 @@
       \tl_set:Nx \l__jlreq_tmpb_tl { \exp_args:No \exp_not:n {\use_ii:nn ##1} }
       \tl_put_right:Nx \l__jlreq_result_tl {
         \exp_not:n {\setbox\jlreq@tempboxa=\hbox}
-          { \tl_if_empty:NTF \l__jlreq_tmpa_tl {\exp_not:N \jlreq@tempa}{\exp_not:o \l__jlreq_tmpa_tl \exp_not:N \jlreq@tempa} }
+          { \tl_if_empty:NTF \l__jlreq_tmpa_tl {\exp_not:o \l__jlreq_tmpb_tl}{\exp_not:o \l__jlreq_tmpa_tl \exp_not:N \l__jlreq_tmpb_tl} }
         \exp_not:n { \copy\jlreq@tempboxa }
         \exp_not:n { \ifdim\wd\jlreq@tempboxa=0pt\relax\else\hskip\glueexpr #3\relax\fi }
       }
@@ -4586,7 +4597,7 @@
         \tl_put_right:Nx \l__jlreq_result_tl {
           \exp_not:n { \setbox\jlreq@tempboxa=\hbox}
             { \tl_if_empty:NTF \l__jlreq_tmpa_tl {\exp_not:o \l__jlreq_tmpb_tl }{\exp_not:o \l__jlreq_tmpa_tl \exp_not:o \l__jlreq_tmpb_tl} }
-          \exp_not:n { \ifdim\wd\jlreq@tempa=0pt\relax\else\hskip\glueexpr #3\relax\fi }
+          \exp_not:n { \ifdim\wd\jlreq@tempboxa=0pt\relax\else\hskip\glueexpr #3\relax\fi }
           \exp_not:n { \box\jlreq@tempboxa }
         }
       }
@@ -4718,10 +4729,10 @@
 %    空かの判定は\protected@edefして\ifx\@emptyで判定する．
 %   
 
-\tl_new:N \l__jlreq_oddheadformat_tl
-\tl_new:N \l__jlreq_evenheadformat_tl
-\tl_new:N \l__jlreq_oddfootformat_tl
-\tl_new:N \l__jlreq_evenfootformat_tl
+\tl_new:N \l__jlreq_odd_top_format_tl
+\tl_new:N \l__jlreq_even_top_format_tl
+\tl_new:N \l__jlreq_odd_bottom_format_tl
+\tl_new:N \l__jlreq_even_bottom_format_tl
 \prop_new:N \l__jlreq_nombre_prop
 \prop_new:N \l__jlreq_nombre_position_prop
 \prop_new:N \l__jlreq_odd_runninghead_prop
@@ -4741,21 +4752,14 @@
 \bool_new:N \l__jlreq_headii_exists_bool
 \prop_new:N \l__jlreq_markcommands_prop
 \int_new:N \l__jlreq_pagestyle_minheadlevel
-\tl_new:N \l__jlreq_pagestyle_left_tl
-\tl_new:N \l__jlreq_pagestyle_center_tl
-\tl_new:N \l__jlreq_pagestyle_right_tl
-\tl_new:N \l__jlreq_pagestyle_odd_top_tl
-\tl_new:N \l__jlreq_pagestyle_odd_bottom_tl
-\tl_new:N \l__jlreq_pagestyle_even_top_tl
-\tl_new:N \l__jlreq_pagestyle_even_bottom_tl
 \NewDocumentCommand{\DeclarePageStyle} { m +m } {%
   \expandafter\edef\csname jlreq@pagestyle@setting@#1\endcsname{\unexpanded{#2}}%
   \begingroup
     % フォーマットを空という可能性もあるかもしれないので，デフォルト値は\c_novalue_tlで表す．
-    \tl_set_eq:NN \l__jlreq_oddheadformat_tl \c_novalue_tl
-    \tl_set_eq:NN \l__jlreq_evenheadformat_tl \c_novalue_tl
-    \tl_set_eq:NN \l__jlreq_oddfootformat_tl \c_novalue_tl
-    \tl_set_eq:NN \l__jlreq_evenfootformat_tl \c_novalue_tl
+    \tl_set_eq:NN \l__jlreq_odd_top_format_tl \c_novalue_tl
+    \tl_set_eq:NN \l__jlreq_even_top_format_tl \c_novalue_tl
+    \tl_set_eq:NN \l__jlreq_odd_bottom_format_tl \c_novalue_tl
+    \tl_set_eq:NN \l__jlreq_even_foot_format_tl \c_novalue_tl
     \keys_define:nn { PageStyle:#1 } {
       tate .code:n = {\bool_set_true:N \l__jlreq_pagestate_tate_bool},
       yoko .code:n = {\bool_set_false:N \l__jlreq_pagestate_tate_bool},
@@ -4848,16 +4852,48 @@
           \prop_clear:N \l__jlreq_tmpb_prop % 左，真ん中，右のトークン列をいったん入れる
           \clist_map_inline:nn {left,center,right} { % ########1
             \__jlreq_pagestyle_makeyoko_each:NnncNNo \l__jlreq_tmpa_tl {####1} {########1} { l__jlreq_##1_runninghead_prop } \l__jlreq_runninghead_font_prop \l__jlreq_runninghead_position_prop \l__jlreq_runninghead_gap_tl
-            \tracingnone
             \__jlreq_pagestyle_makeyoko_each:NnncNNo \l__jlreq_tmpb_tl {####1} {########1} { l__jlreq_##1_nombre_prop } \l__jlreq_nombre_font_prop \l__jlreq_nombre_position_prop \l__jlreq_nombre_gap_tl
-            \__jlreq_pagestyle_concat_runhead_nombre:Nnnooo \l__jlreq_tmpa_tl {########1} {##1} \l__jlreq_tmpa_tl \l__jlreq_tmpa_tl \l__jlreq_gap_tl
+            \__jlreq_pagestyle_concat_runhead_nombre:Nnnooo \l__jlreq_tmpa_tl {########1} {##1} \l__jlreq_tmpa_tl \l__jlreq_tmpb_tl \l__jlreq_gap_tl
             \prop_put:Nno \l__jlreq_tmpb_prop {########1} \l__jlreq_tmpa_tl
           }
           \__jlreq_pagestyle_concat_left_center_right:Neee \l__jlreq_tmpa_tl {\prop_item:Nn \l__jlreq_tmpb_prop {left} } {\prop_item:Nn \l__jlreq_tmpb_prop {center} } {\prop_item:Nn \l__jlreq_tmpb_prop {right} }
+          % デフォルトのフォーマットの設定
+          \bool_if:nTF { \dim_compare_p:n { \jlreq@sidenote@length > 0pt } && (! \legacy_if_p:n { @tate } ) }{
+            \tl_set:Nn \l__jlreq_tmpb_tl {\hss\hbox to \jlreqyokoheadlength{####1}\hss}
+          }{
+            \tl_set:Nn \l__jlreq_tmpb_tl {####1}
+          }
+          \__jlreq_pagestyle_applyformat:NocN \l__jlreq_tmpa_tl \l__jlreq_tmpa_tl { l__jlreq_##1_####1_format_tl } \l__jlreq_tmpb_tl
+          % 傍注用調整
+          \dim_compare:nNnTF {\jlreq@sidenote@length}>{0pt} {
+            \legacy_if:nF { @tate } {
+              \legacy_if:nTF { @twocolumn } {
+                \__jlreq_pagestyle_addsidenotemargin_bothside:N \l__jlreq_tmpa_tl
+              }{
+                \str_if_eq:nnTF { ##1} { odd } {
+                  \__jlreq_pagestyle_addsidenotemargin_right:N \l__jlreq_tmpa_tl
+                }{
+                  \__jlreq_pagestyle_addsidenotemargin_left:N \l__jlreq_tmpa_tl
+                }
+              }
+            }
+          }
           \prop_put:Nno \l__jlreq_tmpa_prop {##1-####1} \l__jlreq_tmpa_tl
         }
       }
+      \tl_set:Nx \l__jlreq_do_tl {
+        \exp_not:n {\def} \exp_not:c {ps@#1} {
+          \exp_not:n { \def\@oddhead } { \prop_item:Nn \l__jlreq_tmpa_prop { odd-top } }
+          \exp_not:n { \def\@oddfoot } { \prop_item:Nn \l__jlreq_tmpa_prop { odd-bottom } }
+          \exp_not:n { \def\@evenhead } { \prop_item:Nn \l__jlreq_tmpa_prop { even-top } }
+          \exp_not:n { \def\@evenfoot } { \prop_item:Nn \l__jlreq_tmpa_prop { even-bottom } }
+        }
+      }
     }
+  \endgroup
+  \expandafter\def\csname ps@#1\endcsname{}
+}
+
 %    % \jlreq@oddhead,\jlreq@oddfoot,\jlreq@evenhead,\jlreq@evenfootに必要なものを入れる．
 %    \jlreq@if{\ifjlreq@pstate\fi}{% tate
 %      % headの方に処理を入れる．footは空．
@@ -5147,9 +5183,6 @@
 %    }%
 %  \expandafter\endgroup
 %  \jlreq@do
-  \endgroup
-  \expandafter\def\csname ps@#1\endcsname{}
-}
 
 
 \if@tate

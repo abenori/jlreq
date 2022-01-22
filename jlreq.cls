@@ -4371,22 +4371,22 @@
 }
 
 % mark系の処理をする．
-% #1: 奇数ページ柱（prop，{0,1,2}->柱の中身）
-% #2: 偶数ページ柱（prop，{0,1,2}->柱の中身）
-% #3: mark format（prop）
+% #2: 奇数ページ柱（prop，{0,1,2}->柱の中身）
+% #3: 偶数ページ柱（prop，{0,1,2}->柱の中身）
+% #4: mark format（prop）
 % 柱は必要ならば\leftskipなどに書き換えられる．
-% #4に{<見出し名>}{\<見出し名>markの定義}を入れる
+% #1に{<見出し名>}{\<見出し名>markの定義}を入れる
 \cs_set:Nn \__jlreq_pagestyle_makemarkcommand:NNNN {
   \group_begin:
-    \tl_set:Nn \l__jlreq_do_tl { \prop_clear:N \l__jlreq_result_prop }
+    \tl_set:Nn \l__jlreq_do_tl { \prop_clear:N #1 }
     \prop_clear:N \l__jlreq_tmpa_prop % markの定義を入れる．
     \clist_map_inline:nn { 0,1,2 } {
       \prop_clear:N \l__jlreq_tmpb_prop % \rightmarkになる\<見出し>markの定義を入れる
       \prop_clear:N \l__jlreq_tmpc_prop % \leftmarkになる\<見出し>markの定義を入れる
-      \l__jlreq_pagestyle_makemarkcommand_aux:NnnNN #1 { odd  } { ##1 } \l__jlreq_tmpb_prop #3
-      \tl_put_right:No \l__jlreq_do_tl { \l__jlreq_result_tl }
-      \l__jlreq_pagestyle_makemarkcommand_aux:NnnNN #2 { even } { ##1 } \l__jlreq_tmpc_prop #3
-      \tl_put_right:No \l__jlreq_do_tl { \l__jlreq_result_tl }
+      \l__jlreq_pagestyle_makemarkcommand_aux:NNNnnN \l__jlreq_tmpb_prop \l__jlreq_tmpa_tl #2 { odd  } { ##1 } #4
+      \tl_put_right:No \l__jlreq_do_tl \l__jlreq_tmpa_tl
+      \l__jlreq_pagestyle_makemarkcommand_aux:NNNnnN \l__jlreq_tmpc_prop \l__jlreq_tmpa_tl #3 { even } { ##1 } #4
+      \tl_put_right:No \l__jlreq_do_tl \l__jlreq_tmpa_tl
       \prop_map_inline:Nn \l__jlreq_tmpc_prop {
         \prop_put:Nnx \l__jlreq_tmpa_prop {####1} {
           \prop_item:Nn \l__jlreq_tmpa_prop {####1}
@@ -4407,10 +4407,8 @@
     }
     \prop_map_inline:Nn \l__jlreq_tmpa_prop {
       \tl_put_right:Nx \l__jlreq_do_tl {
-        \exp_not:n { \prop_put:Nnn #4 {##1} } {
-          \exp_not:N \def \exp_not:o { \csname ##1mark\endcsname ####1} {
-            \prop_item:Nn \l__jlreq_tmpa_prop {##1}
-          }
+        \exp_not:n { \prop_put:Nnn #1 {##1} } {
+          \exp_not:N \def \exp_not:o { \csname ##1mark\endcsname ####1 } { \exp_not:n {##2} }
         }
       }
     }
@@ -4419,45 +4417,51 @@
 }
 
 % mark処理サブ
-% #1: 柱（prop）
-% #2: odd or even
-% #3: 何番目か=0,1,2
-% #4: mark_format（prop）
-% #5（prop）にmark用のフォーマットを入れる．
+% #3: 柱（prop）
+% #4: odd or even
+% #5: 何番目か=0,1,2
+% #6: mark_format（prop）
+% #1（prop）にmark用のフォーマットを入れる．
 % キーは<見出し名>
-% \l__jlreq_result_tl に#1の中身を書き換えるコードを入れる
-\cs_set:Nn \l__jlreq_pagestyle_makemarkcommand_aux:NnnNN {
+% #2に#3の中身を書き換えるコードを入れる
+\cs_set:Nn \l__jlreq_pagestyle_makemarkcommand_aux:NNNnnN {
   \group_begin:
-    \tl_set:Nn \l__jlreq_do_tl {}
-    \tl_set:Nn \l__jlreq_result_tl {}
-    \prop_get:NnN #1 {#3} \l__jlreq_tmpa_tl
+    \tl_set:Nn \l__jlreq_do_tl { \tl_set:Nn #2 {} }
+    \prop_get:NnN #3 {#5} \l__jlreq_tmpa_tl
     \str_if_eq:eeT { \str_head:N \l__jlreq_tmpa_tl } {_} {
       % 柱の書き換え
-      \str_if_eq:nnTF { #2 } { odd } {
-        \int_compare:nNnTF {#3}={0} {
-          \tl_put_right:Nx \l__jlreq_result_tl { \exp_not:n { \prop_put:Nnn #1 } {#3} { \exp_not:N \rightmark } }
+      \str_if_eq:nnTF { #4 } { odd } {
+        \int_compare:nNnTF {#5}={0} {
+          \tl_put_right:Nx \l__jlreq_do_tl {
+            \exp_not:n { \tl_put_right:Nn #2 } { \exp_not:n { \prop_put:Nnn #3 } {#5} { \exp_not:N \rightmark } }
+          }
         }{
-          \tl_put_right:Nx \l__jlreq_result_tl { \exp_not:n { \prop_put:Nnn #1 } {#3} { \exp_not:n { \jlreq@extrarightmark{#3} } } }
+          \tl_put_right:Nx \l__jlreq_do_tl {
+            \exp_not:n { \tl_put_right:Nn #2 } { \exp_not:n { \prop_put:Nnn #3 } {#5} { \exp_not:n { \jlreq@extrarightmark{#5} } } }
+          }
         }
       }{
-        \int_compare:nNnTF {#3}={0} {
-          \tl_put_right:Nx \l__jlreq_result_tl { \exp_not:n { \prop_put:Nnn #1 } {#3} { \exp_not:N \leftmark } }
+        \int_compare:nNnTF {#5}={0} {
+          \tl_put_right:Nx \l__jlreq_do_tl {
+            \exp_not:n { \tl_put_right:Nn #2 } { \exp_not:n { \prop_put:Nnn #3 } {#5} { \exp_not:N \leftmark } }
+          }
         }{
-          \tl_put_right:Nx \l__jlreq_result_tl { \exp_not:n { \prop_put:Nnn #1 } {#3} { \exp_not:n { \jlreq@extraleftmark{#3} } } }
+          \tl_put_right:Nx \l__jlreq_do_tl {
+            \exp_not:n { \tl_put_right:Nn #2 } { \exp_not:n { \prop_put:Nnn #3 } {#5} { \exp_not:n { \jlreq@extraleftmark{#5} } } }
+          }
         }
       }
       % 見出し名
       \str_set:Nx \l__jlreq_tmpa_str {\exp_after:wN \use_none:n \l__jlreq_tmpa_tl }
-      % _<見出し名>優先で取得して\l__jlreq_tmpb_tlに入れる．
-      \prop_get:NoNF #5 {\l__jlreq_tmpa_str} \l__jlreq_tmpb_tl {
-        \tl_set:Nx \l__jlreq_tmpb_tl { \prop_item:Nn #5 { #2 } }
+      % _<見出し名>優先でmark formatを取得して\l__jlreq_tmpb_tlに入れる．
+      \prop_get:NoNF #6 \l__jlreq_tmpa_tl \l__jlreq_tmpb_tl {
+        \prop_get:NnNF #6 {#4} \l__jlreq_tmpb_tl {
+          \tl_set:Nn \l__jlreq_tmpb_tl {####1}
+        }
       }
       \tl_put_right:Nx \l__jlreq_do_tl {
-        \exp_not:n { \prop_put:Nnn #4 } { \l__jlreq_tmpa_str } { \exp_not:o { \l__jlreq_tmpb_tl } }
+        \exp_not:n { \prop_put:Nnn #1 } { \l__jlreq_tmpa_str } { \exp_not:o { \l__jlreq_tmpb_tl } }
       }
-    }
-    \tl_put_right:Nx \l__jlreq_do_tl {
-      \exp_not:n { \tl_set:Nn \l__jlreq_result_tl } { \exp_not:o { \l__jlreq_result_tl } }
     }
   \exp_after:wN \group_end:
   \l__jlreq_do_tl
@@ -4749,12 +4753,11 @@
 \bool_new:N \l__jlreq_clearmarkcommand_bool
 \bool_new:N \l__jlreq_pagestate_tate_bool
 % 作業用
-\bool_new:N \l__jlreq_headii_exists_bool
-\prop_new:N \l__jlreq_markcommands_prop
 \int_new:N \l__jlreq_pagestyle_minheadlevel
+\tl_new:N \l__jlreq_markcommands_tl
 \NewDocumentCommand{\DeclarePageStyle} { m +m } {%
   \expandafter\edef\csname jlreq@pagestyle@setting@#1\endcsname{\unexpanded{#2}}%
-  \begingroup
+  \group_begin:
     % フォーマットを空という可能性もあるかもしれないので，デフォルト値は\c_novalue_tlで表す．
     \tl_set_eq:NN \l__jlreq_odd_top_format_tl \c_novalue_tl
     \tl_set_eq:NN \l__jlreq_even_top_format_tl \c_novalue_tl
@@ -4774,7 +4777,10 @@
       },
       nombre_font .code:n = { \prop_put:Nnn \l__jlreq_nombre_font_prop {0} {##1} },
       running_head_font .code:n = { \prop_put:Nnn \l__jlreq_runninghead_font_prop {0} {##1} },
-      mark_format .code:n = { \prop_put_from_keyval:Nn \l__jlreq_mark_format_prop {##1} },
+      mark_format .code:n = {
+        \prop_clear:N \l__jlreq_mark_format_prop
+        \prop_put_from_keyval:Nn \l__jlreq_mark_format_prop {##1}
+      },
       command .tl_set:N = \l__jlreq_command_tl,
       gap .tl_set:N = \l__jlreq_gap_tl,
       nombre_gap .tl_set:N = \l__jlreq_nombre_gap_tl,
@@ -4828,21 +4834,18 @@
     % ノンブル同士の間や柱同士の間のデフォルトはノンブルと柱の間の空き量
     \tl_if_empty:NT \l__jlreq_nombre_gap_tl { \tl_set_eq:NN \l__jlreq_nombre_gap_tl \l__jlreq_gap_tl }
     \tl_if_empty:NT \l__jlreq_runninghead_gap_tl { \tl_set_eq:NN \l__jlreq_runninghead_gap_tl \l__jlreq_gap_tl }
-    % _iiが存在するか調べて\l__jlreq_headii_exists_boolに入れる
-    \bool_set:Nn \l__jlreq_headii_exists_bool {
-      \prop_if_in_p:Nn \l__jlreq_odd_runninghead_prop {1} || \prop_if_in_p:Nn \l__jlreq_odd_runninghead_prop {2}
-    }
-    \__jlreq_pagestyle_makemarkcommand:NNNN \l__jlreq_odd_runninghead_prop \l__jlreq_even_runninghead_prop \l__jlreq_mark_format_prop \l__jlreq_markcommands_prop
+    \__jlreq_pagestyle_makemarkcommand:NNNN \l__jlreq_tmpa_prop \l__jlreq_odd_runninghead_prop \l__jlreq_even_runninghead_prop \l__jlreq_mark_format_prop
     \int_set:Nn \l__jlreq_pagestyle_minheadlevel {9999}
     % \<見出し>markを定義するコマンドを入れる
     \tl_set:Nn \l__jlreq_markcommands_tl {}
-    \prop_map_inline:Nn \l__jlreq_result_prop {
+    \prop_map_inline:Nn \l__jlreq_tmpa_prop {
       \int_compare:nNnT { \l__jlreq_pagestyle_minheadlevel } > { \csname jlreq@heading@level@##1 \endcsname } {
         \int_set:Nn \l__jlreq_pagestyle_minheadlevel { \csname jlreq@heading@level@##1 \endcsname }
       }
-      \tl_put_right:Nn \l__jlreq_markcommands_tl {##2}
+      \tl_put_right:Nx \l__jlreq_markcommands_tl { \exp_not:n {##2} }
     }
     \bool_if:NTF \l__jlreq_pagestate_tate_bool {
+      \tl_set:Nx \l__jlreq_do_tl {}
     }{% yoko
       \__jlreq_pagestyle_normalizeposition:Nn \l__jlreq_runninghead_position_prop {{top}{center}}
       \__jlreq_pagestyle_normalizeposition:Nn \l__jlreq_nombre_position_prop {{bottom}{center}}
@@ -4881,17 +4884,27 @@
           \prop_put:Nno \l__jlreq_tmpa_prop {##1-####1} \l__jlreq_tmpa_tl
         }
       }
-      \tl_set:Nx \l__jlreq_do_tl {
-        \exp_not:n {\def} \exp_not:c {ps@#1} {
-          \exp_not:n { \def\@oddhead } { \prop_item:Nn \l__jlreq_tmpa_prop { odd-top } }
-          \exp_not:n { \def\@oddfoot } { \prop_item:Nn \l__jlreq_tmpa_prop { odd-bottom } }
-          \exp_not:n { \def\@evenhead } { \prop_item:Nn \l__jlreq_tmpa_prop { even-top } }
-          \exp_not:n { \def\@evenfoot } { \prop_item:Nn \l__jlreq_tmpa_prop { even-bottom } }
-        }
+      % \l__jlreq_tmpa_tlに定義を入れる
+      \tl_set:Nx \l__jlreq_tmpa_tl {
+        \exp_not:n { \def\@oddhead  } { \prop_item:Nn \l__jlreq_tmpa_prop { odd-top     } }
+        \exp_not:n { \def\@oddfoot  } { \prop_item:Nn \l__jlreq_tmpa_prop { odd-bottom  } }
+        \exp_not:n { \def\@evenhead } { \prop_item:Nn \l__jlreq_tmpa_prop { even-top    } }
+        \exp_not:n { \def\@evenfoot } { \prop_item:Nn \l__jlreq_tmpa_prop { even-bottom } }
       }
     }
-  \endgroup
-  \expandafter\def\csname ps@#1\endcsname{}
+    % _iiが存在するか調べて\l__jlreq_tmpa_boolに入れる
+    \bool_set:Nn \l__jlreq_tmpa_bool {
+      \prop_if_in_p:Nn \l__jlreq_odd_runninghead_prop {1} || \prop_if_in_p:Nn \l__jlreq_odd_runninghead_prop {2}
+    }
+    \tl_set:Nx \l__jlreq_do_tl {
+      \exp_not:n {\edef} \exp_not:c {ps@#1} { \exp_not:N \exp_not:n {
+        \exp_not:o \l__jlreq_markcommands_tl
+        \exp_not:n {\let\@mkboth=}\bool_if:NTF \l__jlreq_tmpa_bool { \exp_not:N \markboth } { \exp_not:N \jlreq@markboth }
+        \exp_not:o \l__jlreq_tmpa_tl
+      }}
+    }
+  \exp_after:wN \group_end:
+  \l__jlreq_do_tl
 }
 
 %    % \jlreq@oddhead,\jlreq@oddfoot,\jlreq@evenhead,\jlreq@evenfootに必要なものを入れる．

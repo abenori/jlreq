@@ -4344,32 +4344,6 @@
 
 \cs_generate_variant:Nn \__jlreq_pagestyle_applyformat:NnNN { NocN }
 
-% フォント情報を追加する．#1：制御綴り名，#2：フォント命令の入っている制御綴名，#1に返す
-\def\jlreq@pagestyle@addfont@tocs#1#2{%
-  \expandafter\ifx\csname #1\endcsname\@empty\else
-    \expandafter\ifx\csname #2\endcsname\@empty\else
-      \expandafter\edef\csname #1\endcsname{{\exp_args:Nc \exp_not:o {#2}\exp_args:Nc \exp_not:o {#1}}}%
-    \fi
-  \fi
-}
-% こちらは#1にトークン列を与える．\edefで展開される．制御綴名#3に代入．
-\def\jlreq@pagestyle@addfont@totokens#1#2#3{%
-  \begingroup
-    \edef\jlreq@do{\noexpand\edef\exp_not:c {#3}{\unexpanded{#1}}}%
-    \expandafter\ifx\csname #2\endcsname\@empty\else
-      \edef\jlreq@tempa{#1}%
-      \ifx\jlreq@tempa\@empty\else
-        \edef\jlreq@do{%
-          \noexpand\edef\exp_not:c {#3}{\noexpand\unexpanded{%
-            {\exp_args:Nc \exp_not:o {#2}\exp_not:o {\jlreq@tempa}}%
-          }}%
-        }%
-      \fi
-    \fi
-  \expandafter\endgroup
-  \jlreq@do
-}
-
 % mark系の処理をする．
 % #2: 奇数ページ柱（prop，{0,1,2}->柱の中身）
 % #3: 偶数ページ柱（prop，{0,1,2}->柱の中身）
@@ -4383,9 +4357,9 @@
     \clist_map_inline:nn { 0,1,2 } {
       \prop_clear:N \l__jlreq_tmpb_prop % \rightmarkになる\<見出し>markの定義を入れる
       \prop_clear:N \l__jlreq_tmpc_prop % \leftmarkになる\<見出し>markの定義を入れる
-      \l__jlreq_pagestyle_makemarkcommand_aux:NNNnnN \l__jlreq_tmpb_prop \l__jlreq_tmpa_tl #2 { odd  } { ##1 } #4
+      \__jlreq_pagestyle_makemarkcommand_aux:NNNnnN \l__jlreq_tmpb_prop \l__jlreq_tmpa_tl #2 { odd  } { ##1 } #4
       \tl_put_right:No \l__jlreq_do_tl \l__jlreq_tmpa_tl
-      \l__jlreq_pagestyle_makemarkcommand_aux:NNNnnN \l__jlreq_tmpc_prop \l__jlreq_tmpa_tl #3 { even } { ##1 } #4
+      \__jlreq_pagestyle_makemarkcommand_aux:NNNnnN \l__jlreq_tmpc_prop \l__jlreq_tmpa_tl #3 { even } { ##1 } #4
       \tl_put_right:No \l__jlreq_do_tl \l__jlreq_tmpa_tl
       \prop_map_inline:Nn \l__jlreq_tmpc_prop {
         \prop_put:Nnx \l__jlreq_tmpa_prop {####1} {
@@ -4424,7 +4398,7 @@
 % #1（prop）にmark用のフォーマットを入れる．
 % キーは<見出し名>
 % #2に#3の中身を書き換えるコードを入れる
-\cs_set:Nn \l__jlreq_pagestyle_makemarkcommand_aux:NNNnnN {
+\cs_set:Nn \__jlreq_pagestyle_makemarkcommand_aux:NNNnnN {
   \group_begin:
     \tl_set:Nn \l__jlreq_do_tl { \tl_set:Nn #2 {} }
     \prop_get:NnN #3 {#5} \l__jlreq_tmpa_tl
@@ -4476,7 +4450,6 @@
   \str_if_eq:eeTF { \str_head:n {#1} } {_} { \exp_not:o {\use_none:n #1} } {}
 }
 
-
 %#1: 位置情報がleft-topのように入っているもの，prop
 %#2: デフォルト
 %#1の中身を書き換えて返す．
@@ -4497,6 +4470,113 @@
   \exp_after:wN \group_end:
   \l__jlreq_do_tl
 }
+
+%#2: 柱
+%#3: フォント
+%#4: 位置
+%#5: 空き
+%#1に返す
+\cs_set:Nn \__jlreq_pagestyle_maketate_runhead:NNNNn {
+  \group_begin:
+    \tl_set:Nn \l__jlreq_result_tl {}
+    \__jlreq_pagestyle_maketate_rearrange:NNNNn \l__jlreq_tmpa_seq #2 #3 #4 {#5}
+    \seq_map_inline:Nn \l__jlreq_tmpa_seq {
+      \tl_set:Nx \l__jlreq_tmpa_tl { \exp_args:No \exp_not:n {\use_i:nn ##1} } % 場所
+      \tl_set:Nx \l__jlreq_tmpb_tl { \exp_args:No \exp_not:n {\use_ii:nn ##1} } % 中身
+      \tl_put_right:Nx \l__jlreq_result_tl {
+        \exp_not:N \hbox to~0pt {
+          \exp_not:n {\hskip\glueexpr\headsep + \headheight}
+          \legacy_if:nF { @tate } { \exp_not:n {+ \topskip - \Cht} }
+          \tl_if_empty:oF \l__jlreq_tmpa_tl { + \exp_not:o \l__jlreq_tmpa_tl } \exp_not:N \relax
+          \exp_not:o \l__jlreq_tmpb_tl
+          \exp_not:N \hss
+        }
+      }
+    }
+    \tl_set:Nx \l__jlreq_do_tl { \exp_not:n { \tl_set:Nn #1 } { \exp_not:o \l__jlreq_result_tl } }
+  \exp_after:wN \group_end:
+  \l__jlreq_do_tl
+}
+\cs_generate_variant:Nn \__jlreq_pagestyle_maketate_runhead:NNNNn { NcNNo }
+
+%#2: ノンブル
+%#3: フォント
+%#4: 位置
+%#5: 空き
+%#1に返す
+\cs_set:Nn \__jlreq_pagestyle_maketate_nombre:NNNNn {
+  \group_begin:
+    \tl_set:Nn \l__jlreq_result_tl {}
+    \__jlreq_pagestyle_maketate_rearrange:NNNNn \l__jlreq_tmpa_seq #2 #3 #4 {#5}
+    \seq_map_inline:Nn \l__jlreq_tmpa_seq {
+      \tl_set:Nx \l__jlreq_tmpa_tl { \exp_args:No \exp_not:n {\use_i:nn ##1} } % 場所
+      \tl_set:Nx \l__jlreq_tmpb_tl { \exp_args:No \exp_not:n {\use_ii:nn ##1} } % 中身
+      \tl_put_right:Nx \l__jlreq_result_tl {
+        \exp_not:N \hbox to~0pt {
+          \exp_not:N \hss
+          \exp_not:o \l__jlreq_tmpb_tl
+          \tl_if_empty:oF \l__jlreq_tmpa_tl {
+            \exp_not:n { \hskip\glueexpr } \exp_not:o \l__jlreq_tmpa_tl \exp_not:N \relax
+          }
+        }
+      }
+    }
+    \tl_set:Nx \l__jlreq_do_tl { \exp_not:n { \tl_set:Nn #1 } { \exp_not:o \l__jlreq_result_tl } }
+  \exp_after:wN \group_end:
+  \l__jlreq_do_tl
+}
+\cs_generate_variant:Nn \__jlreq_pagestyle_maketate_nombre:NNNNn { NNNNo }
+
+%#2: 中身
+%#3: フォント
+%#4: 位置
+%#5: 空き
+% tate指定のページスタイルの時は，空き指定は
+% (1)なければ前のやつに続いて
+% (2)あれば絶対的な位置指定
+% となる．この関数で，(1)によってまとまるものを一つにまとめて，seqにして返す．
+% #1に{空き}{トークン列}のseqを返す．
+\cs_set:Nn \__jlreq_pagestyle_maketate_rearrange:NNNNn {
+  \group_begin:
+    \tl_set:Nn \l__jlreq_do_tl { \seq_clear:N #1 }
+    \tl_set:Nn \l__jlreq_tmpa_tl {} % 現在処理中
+    \tl_set:Nn \l__jlreq_tmpc_tl {} % 現在の位置
+    \clist_map_inline:nn {0,1,2} {
+      \tl_set:Nx \l__jlreq_tmpb_tl { \prop_item:Nn #2 {##1} }
+      \tl_if_empty:oF \l__jlreq_tmpb_tl {
+        \tl_set:Nx \l__jlreq_tmpb_tl { \prop_item:Nn #4 {##1} } % pos
+        \tl_if_empty:NTF \l__jlreq_tmpb_tl { % pos = empty
+          \tl_put_right:Nx \l__jlreq_tmpa_tl {
+            \tl_if_empty:NF \l__jlreq_tmpa_tl { \exp_not:n { \hskip\glueexpr #5\relax } }
+          }
+        }{
+          \tl_if_empty:oF \l__jlreq_tmpa_tl {
+            \tl_put_right:Nx \l__jlreq_do_tl {
+              \exp_not:n { \seq_put_right:Nn #1 } {
+                { \exp_not:o \l__jlreq_tmpc_tl } { \exp_not:o \l__jlreq_tmpa_tl }
+              }
+            }
+            \tl_set:Nn \l__jlreq_tmpa_tl {}
+          }
+        }
+        \tl_if_empty:oT \l__jlreq_tmpa_tl { \tl_set:Nx \l__jlreq_tmpc_tl { \prop_item:Nn #4 { ##1 } } }
+        \tl_set:Nx \l__jlreq_tmpb_tl { \prop_item:Nn #3 {##1} }
+        \tl_put_right:Nx \l__jlreq_tmpa_tl {
+          \tl_if_empty:NTF \l__jlreq_tmpb_tl 
+            { \prop_item:Nn #2 {##1} }
+            { { \exp_not:o \l__jlreq_tmpb_tl \prop_item:Nn #2 {##1} } }
+        }
+      }
+    }
+    \tl_if_empty:oF \l__jlreq_tmpa_tl {
+      \tl_put_right:Nx \l__jlreq_do_tl {
+        \exp_not:n { \seq_put_right:Nn #1 } { { \exp_not:o \l__jlreq_tmpc_tl } { \exp_not:o \l__jlreq_tmpa_tl } }
+      }
+    }
+  \exp_after:wN \group_end:
+  \l__jlreq_do_tl
+}
+
 
 % 各場所（六カ所），柱 or ノンブルのトークン列を作る．#1に返す
 %#2: 縦方向場所（top/bottom）
@@ -4846,6 +4926,11 @@
     }
     \bool_if:NTF \l__jlreq_pagestate_tate_bool {
       \tl_set:Nx \l__jlreq_do_tl {}
+      \prop_clear:N \l__jlreq_tmpa_prop
+      \clist_map_inline:nn { odd,even } {
+        \__jlreq_pagestyle_maketate_runhead:NcNNo \l__jlreq_tmpa_tl { l__jlreq_##1_runninghead_prop } \l__jlreq_runninghead_font_prop \l__jlreq_runninghead_position_prop \l__jlreq_runninghead_gap_tl
+        \__jlreq_pagestyle_maketate_nombre:NNNNo \l__jlreq_tmpb_tl \l__jlreq_nombre_prop \l__jlreq_nombre_font_prop \l__jlreq_nombre_position_prop \l__jlreq_nombre_gap_tl
+      }
     }{% yoko
       \__jlreq_pagestyle_normalizeposition:Nn \l__jlreq_runninghead_position_prop {{top}{center}}
       \__jlreq_pagestyle_normalizeposition:Nn \l__jlreq_nombre_position_prop {{bottom}{center}}

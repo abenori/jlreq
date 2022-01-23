@@ -4128,209 +4128,14 @@
 \let\jlreq@markright=\markright
 
 %.. \DeclarePageStyle内で使うもの
-% mark情報の取得を行う．
-% #1の中身をみて，#2 = 何段目見出しか，#3 = odd/even，\csname #4@<見出し命令名>\endcsnameに必要情報を追加し，#5の見出し命令名リストに追加
-% #1@heading@levelにレベルを入れる
-\def\jlreq@pagestyle@setmark#1#2#3#4#5{%
-  \begingroup
-    \str_if_eq:eeTF {\str_head:N #1} {_} {
-      \str_if_eq:nnTF {#3} { odd } { \let\jlreq@leftright=r } { \let\jlreq@leftright=l }
-      \edef\jlreq@do{%
-        \unexpanded{\def#1}{%
-          \ifx l\jlreq@leftright
-            \int_compare:nTF { #2 = 0 } { \exp_not:N \leftmark } { \exp_not:n {\jlreq@extraleftmark{#2}} }
-          \else
-            \int_compare:nTF { #2 = 0 } { \exp_not:N \rightmark } { \exp_not:n {\jlreq@extrarightmark{#2}} }
-          \fi
-        }%
-      }%
-      \edef\jlreq@headingname{\expandafter\@gobble#1}% 見出し命令名
-      \edef\jlreq@tempa{\noexpand\@removeelement{\exp_not:o {\jlreq@headingname}}}%
-      \expandafter\jlreq@tempa\expandafter{#5}{#5}%
-      \@ifundefined{#4@\jlreq@headingname}{\expandafter\def\csname #4@\jlreq@headingname\endcsname{}}{}%
-      \tl_put_right:Nx \jlreq@do {%
-        \exp_not:N \@ifundefined {#4@\jlreq@headingname} { \exp_not:N \@namedef {#4@\jlreq@headingname} {} } {}
-        \noexpand\let\exp_not:c {\expandafter\@gobble\string #1@heading@level}=\exp_not:c {jlreq@heading@level@\jlreq@headingname}%
-        \exp_not:n {\def#5}{\exp_not:o {#5},\exp_not:o {\jlreq@headingname}}%
-        \exp_not:N \tl_put_right:Nn \exp_not:c {#4@\jlreq@headingname} {{{\int_compare:nT {#2=0} {#3}}{#2}{\ifx r\jlreq@leftright r\else l\fi}}}%
-      }%
-    }{\def\jlreq@do{}}%
-  \expandafter\endgroup
-  \jlreq@do
-}
-
-% \def\<見出し>mark#1{...}というのを\jlreq@resultに入れる，
-% #1：*ならばextramarkを使う
-% #2: 見出し命令名，#3: mark_format
-% #4: {{mark_formatからさらに調べるやつ (odd|even)}{マークの何番目か．extraでない場合は0}{l or r(leftかrightか)}}の並び
-\def\jlreq@pagestyle@make@headingmark#1#2#3#4{%
-  \begingroup
-    \clist_map_variable:nNn {0,1,2} \jlreq@i {
-      \expandafter\def\csname jlreq@leftmark@\jlreq@i\endcsname{}%
-      \expandafter\def\csname jlreq@rightmark@\jlreq@i\endcsname{}%
-    }%
-    \jlreq@pagestyle@make@headingmark@{#2}{#3}#4\jlreq@endmark
-    \def\jlreq@do{}% とりあえず#1markの中身を入れていく
-    % leftを設定する時は対応するrightを空にする．
-    \expandafter\ifx\csname jlreq@leftmark@0\endcsname\@empty
-      \expandafter\ifx\csname jlreq@rightmark@0\endcsname\@empty\else
-        \tl_put_right:Nx \jlreq@do {
-          \jlreq@ifempty{#1}{\noexpand\markright}{\noexpand\jlreq@markright}{\exp_args:Nc \exp_not:o {jlreq@rightmark@0}}
-        }%
-      \fi
-    \else
-      \tl_put_right:Nx \jlreq@do {
-        \jlreq@ifempty{#1}{\noexpand\markboth}{\noexpand\jlreq@markboth}{\exp_args:Nc \exp_not:o {jlreq@leftmark@0}}{\exp_args:Nc \exp_not:o {jlreq@rightmark@0}}
-      }%
-    \fi
-    \clist_map_variable:nNn {1,2} \jlreq@i {
-      \expandafter\ifx\csname jlreq@leftmark@\jlreq@i\endcsname\@empty
-        \expandafter\ifx\csname jlreq@rightmark@\jlreq@i\endcsname\@empty\else
-          \tl_put_right:Nx \jlreq@do {\noexpand\jlreq@setextrarightmark{\jlreq@i}{\exp_args:Nc \exp_not:o {jlreq@rightmark@\jlreq@i}}}%
-        \fi
-      \else
-        \tl_put_right:Nx \jlreq@do{%
-          \noexpand\jlreq@setextraleftmark{\jlreq@i}{\exp_args:Nc \exp_not:o {jlreq@leftmark@\jlreq@i}}%
-          \noexpand\jlreq@setextrarightmark{\jlreq@i}{\exp_args:Nc \exp_not:o {jlreq@rightmark@\jlreq@i}}%
-        }%
-      \fi
-    }%
-    \ifx\jlreq@do\@empty\else
-      \edef\jlreq@do{%
-        \unexpanded{\edef\jlreq@result}{\noexpand\unexpanded{%
-          \noexpand\def\exp_not:c {#2mark}\unexpanded{##1}{%
-            \exp_not:o {\jlreq@do}%
-          }}%
-        }%
-      }%
-    \fi
-  \expandafter\endgroup
-  \jlreq@do
-}%
-\def\jlreq@pagestyle@make@headingmark@#1#2#3{%
-  \jlreq@ifendmark{#3}{}{\jlreq@pagestyle@make@headingmark@@{#1}{#2}#3}%
-}
-
-\def\jlreq@pagestyle@make@headingmark@@#1#2#3#4#5{%
-  % \jlreq@tempbに\***markの定義を入れる
-  \edef\jlreq@tempb{%
-    \exp_not:c {the#1}%
-    \noexpand\ifx\exp_not:c {the#1}\unexpanded{\@empty\else\protect\quad\fi}%
-    \unexpanded{##1}%
-  }%
-  \jlreq@parsekeyval@nokey{%
-    \tl_if_empty:nF {##1} {\str_if_eq:nnT {##1} {#3} {\edef\jlreq@tempb{\unexpanded{##2}}}}
-    \str_if_eq:nnT {##1} {_#1} {\edef\jlreq@tempb{\unexpanded{##2}}}%
-  }{#2}%
-  \ifx l#5%
-    \expandafter\edef\csname jlreq@leftmark@#4\endcsname{\exp_not:o {\jlreq@tempb}}%
-  \else
-    \expandafter\edef\csname jlreq@rightmark@#4\endcsname{\exp_not:o {\jlreq@tempb}}%
-  \fi
-  \jlreq@pagestyle@make@headingmark@{#1}{#2}%
-}
-
-% #2 #3 #4と並んだヘッダを作り#1に入れる．#1，#2，#3はコンロトールシークエンスの名前とする．
-\def\jlreq@pagestyle@setheadfoot#1#2#3#4{%
-  \begingroup
-    \edef\jlreq@do{\noexpand\jlreq@pagestyle@setheadfoot@{\unexpanded{#1}}{\exp_args:Nc \exp_not:o {#2}}{\exp_args:Nc \exp_not:o {#3}}{\exp_args:Nc \exp_not:o {#4}}}%
-  \expandafter\endgroup
-  \jlreq@do
-}
-
-% \edef内だと，#1 != 0ptならば\hskip \dimexpr#1\relaxになる
-\def\jlreq@pagestyle@hskip#1{%
-  \dim_compare:nF { #1 = 0pt }{\noexpand\hskip\noexpand\dimexpr#1\noexpand\relax}%
-}
-\def\jlreq@pagestyle@setheadfoot@#1#2#3#4{%
-  \begingroup
-    % - \Cdpは端にそろえるための補正
-    \jlreq@ifempty{#2}{\def\jlreq@left{}}{\edef\jlreq@left{\jlreq@pagestyle@hskip{\jlreq@expand@speciallength{\jlreq@headfoot@sidemargin}\if@tate - \Cdp\fi}\unexpanded{#2}}}%
-    % +\topskip - \Chtは\jlreq@headfoot@sidemargin = 0ptの時に本文の右に一致させるための補正．
-    \jlreq@ifempty{#4}{\def\jlreq@right{}}{\edef\jlreq@right{\unexpanded{#4}\jlreq@pagestyle@hskip{\jlreq@expand@speciallength{\jlreq@headfoot@sidemargin}\if@tate + \topskip - \Cht\fi}}}%
-    \jlreq@ifempty{#3}{%
-      \edef\jlreq@do{\unexpanded{\def#1}{\exp_not:o {\jlreq@left}\hfil\exp_not:o {\jlreq@right}}}%
-      \jlreq@ifempty{#2}{\jlreq@ifempty{#4}{\def\jlreq@do{\def#1{}}}{}}{}%
-    }{% #3を完全に真ん中に配置するために左右の幅を0にしておく
-      \ifx\jlreq@left\@empty\else\edef\jlreq@left{\noexpand\hbox to 0pt{\exp_not:o {\jlreq@left}\noexpand\hss}}\fi
-      \ifx\jlreq@right\@empty\else\edef\jlreq@right{\noexpand\hbox to 0pt{\noexpand\hss\exp_not:o {\jlreq@right}}}\fi
-      \edef\jlreq@do{%
-        \unexpanded{\def#1}{\exp_not:o {\jlreq@left}\hfil\unexpanded{#3}\hfil\exp_not:o {\jlreq@right}}%
-      }%
-    }%
-  \expandafter\endgroup
-  \jlreq@do
-}%
-
-% #1の左右に傍注調整用の空白を入れて#1に代入する
-\cs_set:Nn \__jlreq_pagestyle_addsidenotemargin_left:N {
-  \__jlreq_pagestyle_addsidenotemargin_aux:Nnn #1 {\jlreq@sidenote@length + \jlreq@sidenote@sep} {}
-}
-\cs_set:Nn \__jlreq_pagestyle_addsidenotemargin_right:N {
-  \__jlreq_pagestyle_addsidenotemargin_aux:Nnn #1 {} {\jlreq@sidenote@length + \jlreq@sidenote@sep}
-}
-\cs_set:Nn \__jlreq_pagestyle_addsidenotemargin_bothside:N {
-  \__jlreq_pagestyle_addsidenotemargin_aux:Nnn #1 {\jlreq@sidenote@length + \jlreq@sidenote@sep} {\jlreq@sidenote@length + \jlreq@sidenote@sep}
-}
-% #2: 左，#3：右，#4：#2 + #3
-\cs_set:Nn \__jlreq_pagestyle_addsidenotemargin_aux:Nnn {
-  \tl_if_empty:NF #1 {
-    \tl_set:Nx #1 {
-      \tl_if_empty:nF {#2}{\exp_not:n {\hskip-\dimexpr #2\relax}}%
-      \exp_not:o #1
-      \tl_if_empty:nF {#3}{\exp_not:n {\hskip-\dimexpr #3\relax}}%
-    }
-  }
-}
-
-% #1が空かつ#4が空でないならば#2に#3と#4の中身を追加し，#4を空にする．引数は全てコントロールシークエンス
-\def\jlreq@pagestyle@addifempty#1#2#3#4{%
-  \ifx#1\@empty\ifx#4\@empty\else\tl_put_right:Nx #2{ \exp_not:o {#3}\exp_not:o {#4} }\def#4{}\fi\fi
-}
 
 \newif\ifjlreq@PageStyle@first
-% #1に入っている{柱1}{柱2}...{柱n}という並びから，実際に出力する柱を構築する．n>=1を仮定する．
-% 間に空白を入れる．
-% #1: ターゲットなコントロールシークエンスの名前，#2：*ならばreverseする，#3：空き
-\def\jlreq@pagestyle@make@runninghead#1#2#3{%
-  \jlreq@if{\expandafter\ifx\csname #1\endcsname\@empty\fi}{}{%
-    \edef\jlreq@do{%
-      \noexpand\jlreq@tempatrue % 最初の処理かフラグ
-      \unexpanded{\jlreq@pagestyle@make@runninghead@{#1}{#2}{#3}}\exp_args:Nc \exp_not:o {#1}\noexpand\jlreq@endmark
-    }%
-    \expandafter\def\csname #1\endcsname{}%
-    \jlreq@do
-    % 項目が二つ以上あった．
-    \ifjlreq@tempa\else\tl_put_left:cn {#1} {\jlreq@PageStyle@firsttrue} \fi
-  }%
-}
-\def\jlreq@pagestyle@make@runninghead@#1#2#3#4#5{%
-  \jlreq@if{\ifnum\numexpr\jlreq@ifendmark{#5}{1}{0}*\ifjlreq@tempa 1\else 0\fi\relax=1~\fi}{%
-    % 項目が一つしか無い
-    \jlreq@ifempty{#2}{\tl_put_right:cn}{\tl_put_left:cn}{#1}{#4}%
-  }{%
-    % 最初の空でない柱に出会うまでは柱の間の空白を入れない．
-    % 空でない柱に出会ってないならば\ifjlreq@PageStyle@firstはtrue．
-    % 一番最初の\jlreq@PageStyle@firsttrueは後で入れる．
-    \jlreq@ifempty{#2}{\tl_put_right:cn}{\tl_put_left:cn}{#1}{%
-      \protected@edef\jlreq@tempa{#4}%
-      \ifx\jlreq@tempa\@empty\else
-        \ifjlreq@PageStyle@first\else\hskip\glueexpr#3\relax\fi
-        \jlreq@tempa
-        \jlreq@PageStyle@firstfalse
-      \fi
-    }%
-    \jlreq@tempafalse
-    \jlreq@ifendmark{#5}{}{\jlreq@pagestyle@make@runninghead@{#1}{#2}{#3}{#5}}%
-  }%
-}
-
 %#2: もと
 %#3: フォーマット
 %#4: デフォルトフォーマット
 %#1に返す
 \cs_set:Nn \__jlreq_pagestyle_applyformat:NnNN {
-  \bool_if:nT {
+  \bool_if:nTF {
     (! \tl_if_empty_p:n {#3}) && (! \tl_if_eq_p:NN #3 \c_novalue_tl)
   }{
     \group_begin:
@@ -4339,6 +4144,8 @@
       \tl_set:Nx \l__jlreq_do_tl { \exp_not:n {\edef#1} {\exp_not:o {\jlreq@tempa{#2}} } }
     \exp_after:wN \group_end:
     \l__jlreq_do_tl
+  }{
+    \tl_set:Nn #1 {#2}
   }
 }
 
@@ -4793,6 +4600,28 @@
   }
 }
 
+% #1の左右に傍注調整用の空白を入れて#1に代入する
+\cs_set:Nn \__jlreq_pagestyle_addsidenotemargin_left:N {
+  \__jlreq_pagestyle_addsidenotemargin_aux:Nnn #1 {\jlreq@sidenote@length + \jlreq@sidenote@sep} {}
+}
+\cs_set:Nn \__jlreq_pagestyle_addsidenotemargin_right:N {
+  \__jlreq_pagestyle_addsidenotemargin_aux:Nnn #1 {} {\jlreq@sidenote@length + \jlreq@sidenote@sep}
+}
+\cs_set:Nn \__jlreq_pagestyle_addsidenotemargin_bothside:N {
+  \__jlreq_pagestyle_addsidenotemargin_aux:Nnn #1 {\jlreq@sidenote@length + \jlreq@sidenote@sep} {\jlreq@sidenote@length + \jlreq@sidenote@sep}
+}
+% #2: 左，#3：右，#4：#2 + #3
+\cs_set:Nn \__jlreq_pagestyle_addsidenotemargin_aux:Nnn {
+  \tl_if_empty:NF #1 {
+    \tl_set:Nx #1 {
+      \tl_if_empty:nF {#2}{\exp_not:n {\hskip-\dimexpr #2\relax}}%
+      \exp_not:o #1
+      \tl_if_empty:nF {#3}{\exp_not:n {\hskip-\dimexpr #3\relax}}%
+    }
+  }
+}
+
+
 %.. \DeclarePageStyle
 % markの処理
 % 出力する柱は偶数ページでは\leftmark，奇数ページでは\rightmark．
@@ -4867,10 +4696,10 @@
       running_head_gap .tl_set:N = \l__jlreq_runninghead_gap_tl,
       % trueにすると，\ps@***実行時にまず\***markを全て\@gobbleにする．
       clear_markcommand .bool_set:N = \l__jlreq_clearmarkcommand_bool,
-      odd_head_format .code:n = { \tl_set:Nx \l__jlreq_oddheadformat_tl { \exp_not:n {##1} } },
-      even_head_format .code:n = { \tl_set:Nx \l__jlreq_evenheadformat_tl { \exp_not:n {##1} } },
-      odd_foot_format .code:n = { \tl_set:Nx \l__jlreq_oddfootformat_tl { \exp_not:n {##1} } },
-      even_foot_format .code:n = { \tl_set:Nx \l__jlreq_evenfootformat_tl { \exp_not:n {##1} } },
+      odd_head_format .code:n = { \tl_set:Nx \l__jlreq_odd_top_format_tl { \exp_not:n {##1} } },
+      even_head_format .code:n = { \tl_set:Nx \l__jlreq_even_top_format_tl { \exp_not:n {##1} } },
+      odd_foot_format .code:n = { \tl_set:Nx \l__jlreq_odd_bottom_format_tl { \exp_not:n {##1} } },
+      even_foot_format .code:n = { \tl_set:Nx \l__jlreq_even_bottom_format_tl { \exp_not:n {##1} } },
     }
     \cs_set:Nn \l__jlreq_tmpa:nn {
       \keys_define:nn { PageStyle:#1 } {
@@ -4930,6 +4759,47 @@
       \clist_map_inline:nn { odd,even } {
         \__jlreq_pagestyle_maketate_runhead:NcNNo \l__jlreq_tmpa_tl { l__jlreq_##1_runninghead_prop } \l__jlreq_runninghead_font_prop \l__jlreq_runninghead_position_prop \l__jlreq_runninghead_gap_tl
         \__jlreq_pagestyle_maketate_nombre:NNNNo \l__jlreq_tmpb_tl \l__jlreq_nombre_prop \l__jlreq_nombre_font_prop \l__jlreq_nombre_position_prop \l__jlreq_nombre_gap_tl
+        % 柱とノンブルを結合
+        \tl_set:Nx \l__jlreq_tmpa_tl { \exp_not:o \l__jlreq_tmpa_tl \exp_not:N \hfil \exp_not:o \l__jlreq_tmpb_tl }
+        \tl_set:Nn \l__jlreq_tmpb_tl {####1} % デフォルトフォーマット
+        \__jlreq_pagestyle_applyformat:NocN \l__jlreq_tmpa_tl \l__jlreq_tmpa_tl { l__jlreq_##1_top_format_tl } \l__jlreq_tmpb_tl
+        % 周りのボックスをつける
+        \prop_put:Nnx \l__jlreq_tmpa_prop { ##1-top } {
+          \exp_not:n {\setbox\jlreq@tempboxa=\hbox to \dimexpr\headsep + \headheight + \textheight}
+          \legacy_if:nF { @tate } { - \topskip + 1\jlreq@zh }
+          \exp_not:N \relax
+          { \exp_not:n { \tate\adjustbaseline } \exp_not:o \l__jlreq_tmpa_tl }
+          % Underful対策
+          \ifx l\jlreq@engine
+            \unexpanded{\wd\jlreq@tempboxa=\headheight}%
+          \else
+            \unexpanded{\ht\jlreq@tempboxa=\headheight\dp\jlreq@tempboxa=0pt}%
+          \fi
+        }
+      }
+      % 左
+      \tl_set:Nx \l__jlreq_tmpa_tl {
+         \exp_not:n {\hskip\dimexpr} \legacy_if:nT { @tate } { - \Cdp } \exp_not:n { - \headsep - 1\jlreq@zw\relax }
+         \exp_not:n { \box\jlreq@tempboxa\hfil }
+      }
+      % 右
+      \tl_set:Nx \l__jlreq_tmpb_tl {
+         \exp_not:n { \hskip\dimexpr\textwidth } \legacy_if:nT { @tate } { - \topskip + \Cht } \exp_not:n { + \headsep\relax }
+         \exp_not:n { \box\jlreq@tempboxa\hss }
+      }
+      \legacy_if:nTF { @tate } {
+        \prop_put:Nnx \l__jlreq_tmpa_prop { odd-top  } { \prop_item:Nn \l__jlreq_tmpa_prop { odd-top  } \exp_not:o \l__jlreq_tmpa_tl }
+        \prop_put:Nnx \l__jlreq_tmpa_prop { even-top } { \prop_item:Nn \l__jlreq_tmpa_prop { even-top } \exp_not:o \l__jlreq_tmpb_tl }
+      }{
+        \prop_put:Nnx \l__jlreq_tmpa_prop { odd-top  } { \prop_item:Nn \l__jlreq_tmpa_prop { odd-top  } \exp_not:o \l__jlreq_tmpb_tl }
+        \prop_put:Nnx \l__jlreq_tmpa_prop { even-top } { \prop_item:Nn \l__jlreq_tmpa_prop { even-top } \exp_not:o \l__jlreq_tmpa_tl }
+      }
+      % \l__jlreq_tmpa_tlに定義を入れる
+      \tl_set:Nx \l__jlreq_tmpa_tl {
+        \exp_not:n { \def\@oddhead  } { \prop_item:Nn \l__jlreq_tmpa_prop { odd-top  } }
+        \exp_not:n { \def\@oddfoot  } { }
+        \exp_not:n { \def\@evenhead } { \prop_item:Nn \l__jlreq_tmpa_prop { even-top } }
+        \exp_not:n { \def\@evenfoot } { }
       }
     }{% yoko
       \__jlreq_pagestyle_normalizeposition:Nn \l__jlreq_runninghead_position_prop {{top}{center}}

@@ -11,7 +11,7 @@
 \RequirePackage{jlreq-helpers}
 
 \ExplSyntaxOn
-\int_new:N \l__jlreq_tmp_int
+\int_new:N \l__jlreq_tmpa_int
 \tl_new:N \l__jlreq_tmpa_tl
 \tl_new:N \l__jlreq_tmpb_tl
 \tl_new:N \l__jlreq_tmpc_tl
@@ -4209,6 +4209,8 @@
   \group_begin:
     \tl_set:Nn \l__jlreq_do_tl { \tl_set:Nn #2 {} }
     \prop_get:NnN #3 {#5} \l__jlreq_tmpa_tl
+%    \message{TL=\exp_not:o \l__jlreq_tmpa_tl}
+%    \str_set:NV \l__jlreq_tmpa_str \l__jlreq_tmpa_tl
     \str_if_eq:eeT { \str_head:N \l__jlreq_tmpa_tl } {_} {
       % 柱の書き換え
       \str_if_eq:nnTF { #4 } { odd } {
@@ -4237,7 +4239,11 @@
       % _<見出し名>優先でmark formatを取得して\l__jlreq_tmpb_tlに入れる．
       \prop_get:NoNF #6 \l__jlreq_tmpa_tl \l__jlreq_tmpb_tl {
         \prop_get:NnNF #6 {#4} \l__jlreq_tmpb_tl {
-          \tl_set:Nn \l__jlreq_tmpb_tl {####1}
+          \tl_set:Nx \l__jlreq_tmpb_tl {
+            \exp_not:c {the\l__jlreq_tmpa_str}
+            \exp_not:N \ifx \exp_not:c {the\l__jlreq_tmpa_str} \exp_not:n {\@empty\else\protect\quad\fi}
+            \exp_not:n {##1}
+          }
         }
       }
       \tl_put_right:Nx \l__jlreq_do_tl {
@@ -4671,7 +4677,7 @@
     \tl_set_eq:NN \l__jlreq_odd_top_format_tl \c_novalue_tl
     \tl_set_eq:NN \l__jlreq_even_top_format_tl \c_novalue_tl
     \tl_set_eq:NN \l__jlreq_odd_bottom_format_tl \c_novalue_tl
-    \tl_set_eq:NN \l__jlreq_even_foot_format_tl \c_novalue_tl
+    \tl_set_eq:NN \l__jlreq_even_bottom_format_tl \c_novalue_tl
     \keys_define:nn { PageStyle:#1 } {
       tate .code:n = {\bool_set_true:N \l__jlreq_pagestate_tate_bool},
       yoko .code:n = {\bool_set_false:N \l__jlreq_pagestate_tate_bool},
@@ -4743,15 +4749,22 @@
     % ノンブル同士の間や柱同士の間のデフォルトはノンブルと柱の間の空き量
     \tl_if_empty:NT \l__jlreq_nombre_gap_tl { \tl_set_eq:NN \l__jlreq_nombre_gap_tl \l__jlreq_gap_tl }
     \tl_if_empty:NT \l__jlreq_runninghead_gap_tl { \tl_set_eq:NN \l__jlreq_runninghead_gap_tl \l__jlreq_gap_tl }
+%    \show\l__jlreq_mark_format_prop
     \__jlreq_pagestyle_makemarkcommand:NNNN \l__jlreq_tmpa_prop \l__jlreq_odd_runninghead_prop \l__jlreq_even_runninghead_prop \l__jlreq_mark_format_prop
-    \int_set:Nn \l__jlreq_pagestyle_minheadlevel {9999}
+    % 最小レベルを決定する．
+    \int_set:Nn \l__jlreq_tmpa_int {9999}
     % \<見出し>markを定義するコマンドを入れる
     \tl_set:Nn \l__jlreq_markcommands_tl {}
     \prop_map_inline:Nn \l__jlreq_tmpa_prop {
-      \int_compare:nNnT { \l__jlreq_pagestyle_minheadlevel } > { \csname jlreq@heading@level@##1 \endcsname } {
-        \int_set:Nn \l__jlreq_pagestyle_minheadlevel { \csname jlreq@heading@level@##1 \endcsname }
+      \int_compare:nNnT { \l__jlreq_tmpa_int } > { \csname jlreq@heading@level@##1 \endcsname } {
+        \int_set:Nn \l__jlreq_tmpa_int { \csname jlreq@heading@level@##1 \endcsname }
       }
       \tl_put_right:Nx \l__jlreq_markcommands_tl { \exp_not:n {##2} }
+    }
+    \int_compare:nNnF { \l__jlreq_tmpa_int}={9999} {
+      \tl_put_right:Nx \l__jlreq_markcommands_tl {
+        \exp_not:N \jlreq@pagestyle@setclearmark {\int_use:N \l__jlreq_tmpa_int }
+      }
     }
     \bool_if:NTF \l__jlreq_pagestate_tate_bool {
       \tl_set:Nx \l__jlreq_do_tl {}
@@ -4810,7 +4823,7 @@
           \prop_clear:N \l__jlreq_tmpb_prop % 左，真ん中，右のトークン列をいったん入れる
           \clist_map_inline:nn {left,center,right} { % ########1
             \__jlreq_pagestyle_makeyoko_each:NnncNNo \l__jlreq_tmpa_tl {####1} {########1} { l__jlreq_##1_runninghead_prop } \l__jlreq_runninghead_font_prop \l__jlreq_runninghead_position_prop \l__jlreq_runninghead_gap_tl
-            \__jlreq_pagestyle_makeyoko_each:NnncNNo \l__jlreq_tmpb_tl {####1} {########1} { l__jlreq_##1_nombre_prop } \l__jlreq_nombre_font_prop \l__jlreq_nombre_position_prop \l__jlreq_nombre_gap_tl
+            \__jlreq_pagestyle_makeyoko_each:NnncNNo \l__jlreq_tmpb_tl {####1} {########1} { l__jlreq_nombre_prop } \l__jlreq_nombre_font_prop \l__jlreq_nombre_position_prop \l__jlreq_nombre_gap_tl
             \__jlreq_pagestyle_concat_runhead_nombre:Nnnooo \l__jlreq_tmpa_tl {########1} {##1} \l__jlreq_tmpa_tl \l__jlreq_tmpb_tl \l__jlreq_gap_tl
             \prop_put:Nno \l__jlreq_tmpb_prop {########1} \l__jlreq_tmpa_tl
           }
@@ -4853,9 +4866,11 @@
     }
     \tl_set:Nx \l__jlreq_do_tl {
       \exp_not:n {\edef} \exp_not:c {ps@#1} { \exp_not:N \exp_not:n {
-        \exp_not:o \l__jlreq_markcommands_tl
+        \exp_not:n { \def\jlreq@current@pagestyle{#1} }
+        \bool_if:nT { \l__jlreq_clearmarkcommand_bool } { \exp_not:n { \jlreq@heading@execmacro@toallheadings\jlreq@clearheadingmarks } }
         \exp_not:n {\let\@mkboth=}\bool_if:NTF \l__jlreq_tmpa_bool { \exp_not:N \markboth } { \exp_not:N \jlreq@markboth }
         \exp_not:o \l__jlreq_tmpa_tl
+        \exp_not:o \l__jlreq_markcommands_tl
       }}
     }
   \exp_after:wN \group_end:

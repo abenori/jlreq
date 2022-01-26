@@ -4271,9 +4271,7 @@
     \tl_set:Nn \l__jlreq_do_tl {}
     \tl_clear:N \l__jlreq_tmpa_tl % デフォルト位置
     \tl_set:Nx \l__jlreq_tmpa_tl { \prop_item:Nn #1 {0} }
-    \tl_if_empty:NT \l__jlreq_tmpa_tl {
-      \tl_set:Nn \l__jlreq_tmpa_tl {#2}
-    }
+    \exp_args:No \jlreq@pagestyle@parse@position \l__jlreq_tmpa_tl \l__jlreq_tmpa_tl {#2}
     \prop_map_inline:Nn #1 {
       \exp_args:Nnno \jlreq@pagestyle@parse@position {##2} \l__jlreq_tmpb_tl \l__jlreq_tmpa_tl
       \tl_put_right:Nx \l__jlreq_do_tl {
@@ -4391,22 +4389,35 @@
 }
 
 
+%#2: odd/even
+%#3: 位置
+%#2 = evenならば位置を反転させて#1 = strに返す．
+\cs_set:Nn \__jlreq_pagestyle_reversepos_ifeven:Nnn {
+  \str_set:Nn #1 {#3}
+  \str_if_eq:nnT {#2} {even} {
+    \str_if_eq:nnT {#3} {right} { \str_set:Nn #1 {left}  }
+    \str_if_eq:nnT {#3} {left}  { \str_set:Nn #1 {right} }
+  }
+}
+
 % 各場所（六カ所），柱 or ノンブルのトークン列を作る．#1に返す
-%#2: 縦方向場所（top/bottom）
-%#3: 横方向場所（left/right/center）
-%#4: 中身（柱 or ノンブル，prop）
-%#5: フォント（prop）
-%#6: 場所（prop）
-%#7: 空き
-\cs_set:Nn \__jlreq_pagestyle_makeyoko_each:NnnNNNn {
+%#2: odd/even
+%#3: 縦方向場所（top/bottom）
+%#4: 横方向場所（left/right/center）
+%#5: 中身（柱 or ノンブル，prop）
+%#6: フォント（prop）
+%#7: 場所（prop）
+%#8: 空き
+\cs_set:Nn \__jlreq_pagestyle_makeyoko_each:NnnnNNNn {
   \group_begin:
-    \__jlreq_pagestyle_makeyoko_sequence:NnnNNN \l__jlreq_tmpa_seq {#2} {#3} #4 #5 #6
-    \__jlreq_pagestyle_makeyoko_concat_withspaces:NnNn \l__jlreq_tmpa_tl {#3} \l__jlreq_tmpa_seq {#7}
+    \__jlreq_pagestyle_makeyoko_sequence:NnnNNN \l__jlreq_tmpa_seq {#3} {#4} #5 #6 #7
+    \__jlreq_pagestyle_reversepos_ifeven:Nnn \l__jlreq_tmpa_str {#2} {#4}
+    \__jlreq_pagestyle_makeyoko_concat_withspaces:NVNn \l__jlreq_tmpa_tl \l__jlreq_tmpa_str \l__jlreq_tmpa_seq {#8}
     \tl_set:Nx \l__jlreq_do_tl { \exp_not:n { \tl_set:Nn #1 } { \exp_not:o \l__jlreq_tmpa_tl } }
   \exp_after:wN \group_end:
   \l__jlreq_do_tl
 }
-\cs_generate_variant:Nn \__jlreq_pagestyle_makeyoko_each:NnnNNNn { NnncNNo }
+\cs_generate_variant:Nn \__jlreq_pagestyle_makeyoko_each:NnnnNNNn { NnnncNNo }
 
 %#2: 縦方向場所（top/bottom）
 %#3: 横方向場所（left/right/center）
@@ -4447,6 +4458,7 @@
     }
   }
 }
+\cs_generate_variant:Nn \__jlreq_pagestyle_makeyoko_concat_withspaces:NnNn { NVNn }
 
 %#2: {フォント}{中身}の配列
 %#3: スペース
@@ -4459,10 +4471,16 @@
       \tl_set:Nx \l__jlreq_tmpa_tl { \exp_args:No \exp_not:n {\use_i:nn ##1} }
       \tl_set:Nx \l__jlreq_tmpb_tl { \exp_args:No \exp_not:n {\use_ii:nn ##1} }
       \tl_put_right:Nx \l__jlreq_result_tl {
-        \exp_not:n {\setbox\jlreq@tempboxa=\hbox}
+        \exp_not:n {\setbox\@tempboxa=\hbox}
           { \tl_if_empty:NTF \l__jlreq_tmpa_tl {\exp_not:o \l__jlreq_tmpb_tl}{\exp_not:o \l__jlreq_tmpa_tl \exp_not:N \l__jlreq_tmpb_tl} }
-        \exp_not:n { \copy\jlreq@tempboxa }
-        \exp_not:n { \ifdim\wd\jlreq@tempboxa=0pt\relax\else\hskip\glueexpr #3\relax\fi }
+        \exp_not:n { \copy\@tempboxa }
+        \exp_not:n { 
+          \ifnum0
+            \ifdim\wd\@tempboxa=0pt~\else 1\fi
+            \ifdim\ht\@tempboxa=0pt~\else 1\fi
+            \ifdim\dp\@tempboxa=0pt~\else 1\fi
+          >0~\hskip\glueexpr #3\relax\fi
+        }
       }
     }
     \cs_set:Nn \l__jlreq_tmpa:nn {
@@ -4492,10 +4510,16 @@
         }
       }{
         \tl_put_right:Nx \l__jlreq_result_tl {
-          \exp_not:n { \setbox\jlreq@tempboxa=\hbox}
+          \exp_not:n { \setbox\@tempboxa=\hbox}
             { \tl_if_empty:NTF \l__jlreq_tmpa_tl {\exp_not:o \l__jlreq_tmpb_tl }{\exp_not:o \l__jlreq_tmpa_tl \exp_not:o \l__jlreq_tmpb_tl} }
-          \exp_not:n { \ifdim\wd\jlreq@tempboxa=0pt\relax\else\hskip\glueexpr #3\relax\fi }
-          \exp_not:n { \box\jlreq@tempboxa }
+          \exp_not:n { 
+            \ifnum0
+              \ifdim\wd\@tempboxa=0pt~\else 1\fi
+              \ifdim\ht\@tempboxa=0pt~\else 1\fi
+              \ifdim\dp\@tempboxa=0pt~\else 1\fi
+            >0~\hskip\glueexpr #3\relax\fi
+          }
+          \exp_not:n { \box\@tempboxa }
         }
       }
       \bool_set_false:N \l__jlreq_tmpa_bool
@@ -4506,9 +4530,26 @@
 }
 \cs_generate_variant:Nn \__jlreq_pagestyle_concat_withspaces_right:NnN {NoN}
 
+
+%#2: odd or even（even時は左右をひっくり返して処理される）
+%#3: 左
+%#4: 真ん中
+%#5: 右
+% #1に返す．
+\cs_set:Nn \__jlreq_pagestyle_concat_left_center_right:Nnnnn {
+  \str_if_eq:nnTF {#2} {odd} {
+    \__jlreq_pagestyle_concat_left_center_right_aux:Nnnn #1 {#3} {#4} {#5}
+  }{
+    % evenでは左右入れ替え
+    \__jlreq_pagestyle_concat_left_center_right_aux:Nnnn #1 {#5} {#4} {#3}
+  }
+}
+
+\cs_generate_variant:Nn \__jlreq_pagestyle_concat_left_center_right:Nnnnn { Nneee }
+
 % 左，真ん中，右をくっつける
 % #1に返す
-\cs_set:Nn \__jlreq_pagestyle_concat_left_center_right:Nnnn {
+\cs_set:Nn \__jlreq_pagestyle_concat_left_center_right_aux:Nnnn {
   \group_begin:
     \tl_set:Nn \l__jlreq_tmpa_tl {} % 左
     \tl_set:Nn \l__jlreq_tmpb_tl {} % 右
@@ -4542,7 +4583,6 @@
   \exp_after:wN \group_end:
   \l__jlreq_do_tl
 }
-\cs_generate_variant:Nn \__jlreq_pagestyle_concat_left_center_right:Nnnn { Neee }
 
 %#2: 横方向位置
 %#3: odd/even
@@ -4557,36 +4597,52 @@
     \tl_if_empty:nTF {#5} {
       \tl_set:Nn #1 {#4}
     }{
-      \jlreq@ifleftpage{#3}{
-        \str_if_eq:nnTF {#2} {right} {
-          \__jlreq_pagestyle_concat_runhead_nombre_aux_leftpage_right:Nnnn #1 {#4} {#5} {#6}
+      \group_begin:
+        \__jlreq_pagestyle_reversepos_ifeven:Nnn \l__jlreq_tmpa_str {#3} {#2}
+        \jlreq@ifleftpage{#3}{
+          \str_if_eq:VnTF \l__jlreq_tmpa_str {right} {
+            \tl_set:Nn \l__jlreq_do_tl {
+              \__jlreq_pagestyle_concat_runhead_nombre_aux_leftpage_right:Nnnn #1 {#4} {#5} {#6}
+            }
+          }{
+            \tl_set:Nn \l__jlreq_do_tl {
+              \__jlreq_pagestyle_concat_runhead_nombre_aux_leftpage_left:Nnnn #1 {#4} {#5} {#6}
+            }
+          }
         }{
-         \__jlreq_pagestyle_concat_runhead_nombre_aux_leftpage_left:Nnnn #1 {#4} {#5} {#6}
+          \str_if_eq:VnTF \l__jlreq_tmpa_str {left} {
+            \tl_set:Nn \l__jlreq_do_tl {
+              \__jlreq_pagestyle_concat_runhead_nombre_aux_rightpage_left:Nnnn #1 {#4} {#5} {#6}
+            }
+          }{
+            \tl_set:Nn \l__jlreq_do_tl {
+              \__jlreq_pagestyle_concat_runhead_nombre_aux_rightpage_right:Nnnn #1 {#4} {#5} {#6}
+            }
+          }
         }
-      }{
-        \str_if_eq:nnTF {#2} {left} {
-          \__jlreq_pagestyle_concat_runhead_nombre_aux_rightpage_left:Nnnn #1 {#4} {#5} {#6}
-        }{
-          \__jlreq_pagestyle_concat_runhead_nombre_aux_rightpage_right:Nnnn #1 {#4} {#5} {#6}
-        }
-      }
+      \exp_after:wN \group_end:
+      \l__jlreq_do_tl
     }
   }
 }
 \cs_generate_variant:Nn \__jlreq_pagestyle_concat_runhead_nombre:Nnnnnn { Nnnooo }
 
 % <ノンブル><空き><柱>，左寄せ，ノンブルは常に空でないと仮定する．
-\cs_set:Nn \__jlreq_pagestyle_concat_runhead_nombre_aux_leftpage_right:Nnnn {
+\cs_set:Nn \__jlreq_pagestyle_concat_runhead_nombre_aux_leftpage_left:Nnnn {
   \tl_set:Nn #1 {
-    #3\hskip\glueexpr #4\relax#2
+    #3\hskip\glueexpr #4\relax#2\hfil
   }
 }
 % <ノンブル><空き><柱>，右寄せ
-\cs_set:Nn \__jlreq_pagestyle_concat_runhead_nombre_aux_leftpage_left:Nnnn {
+\cs_set:Nn \__jlreq_pagestyle_concat_runhead_nombre_aux_leftpage_right:Nnnn {
   \tl_set:Nn #1 {
     \setbox\jlreq@PageStyle@box=\hbox{#2}
     #3
-    \ifdim\wd\jlreq@PageStyle@box=0pt\relax\else\hskip\glueexpr #4\relax\fi
+    \ifnum 0
+      \ifdim\wd\jlreq@PageStyle@box=0pt~\else 1\fi
+      \ifdim\ht\jlreq@PageStyle@box=0pt~\else 1\fi
+      \ifdim\dp\jlreq@PageStyle@box=0pt~\else 1\fi
+    >0~\hskip\glueexpr #4\relax\fi
     \box\jlreq@PageStyle@box
   }
 }
@@ -4595,8 +4651,12 @@
   \tl_set:Nn #1 {
     \setbox\jlreq@PageStyle@box=\hbox{#2}
     \copy\jlreq@PageStyle@box
-    \ifdim\wd\jlreq@PageStyle@box=0pt\relax\else\hskip\glueexpr #4\relax\fi
-    #3
+    \ifnum 0
+      \ifdim\wd\jlreq@PageStyle@box=0pt~\else 1\fi
+      \ifdim\ht\jlreq@PageStyle@box=0pt~\else 1\fi
+      \ifdim\dp\jlreq@PageStyle@box=0pt~\else 1\fi
+    >0~\hskip\glueexpr #4\relax\fi
+    #3\hfil
   }
 }
 % <柱><空き><ノンブル>，右寄せ
@@ -4637,7 +4697,7 @@
 % 現れる全ての見出しのレベルよりも小さいレベルの見出しについては\<HEAD>markを空にする処理を入れる．
 % 実際の出力：
 %  yoko: 
-%    左ページではノンブルが左（2.6.1.c），なので<ノンブル><空き><柱>
+%    左ページ（縦奇数ページ横偶数ページ）ではノンブルが左（2.6.1.c），なので<ノンブル><空き><柱>
 %    空きが無駄に入らないように気をつける．（右寄せの場合は柱が空なら空きを入れない．）
 %    \setbox..=して，幅が0か否かで判定する．
 %    右ページでは逆になる．<柱><空き><ノンブル>
@@ -4648,6 +4708,7 @@
 %    空かの判定は\protected@edefして\ifx\@emptyで判定する．
 %   
 
+\newbox \jlreq@PageStyle@box
 \tl_new:N \l__jlreq_odd_top_format_tl
 \tl_new:N \l__jlreq_even_top_format_tl
 \tl_new:N \l__jlreq_odd_bottom_format_tl
@@ -4778,27 +4839,27 @@
         \__jlreq_pagestyle_applyformat:NocN \l__jlreq_tmpa_tl \l__jlreq_tmpa_tl { l__jlreq_##1_top_format_tl } \l__jlreq_tmpb_tl
         % 周りのボックスをつける
         \prop_put:Nnx \l__jlreq_tmpa_prop { ##1-top } {
-          \exp_not:n {\setbox\jlreq@tempboxa=\hbox to \dimexpr\headsep + \headheight + \textheight}
+          \exp_not:n {\setbox\@tempboxa=\hbox to \dimexpr\headsep + \headheight + \textheight}
           \legacy_if:nF { @tate } { - \topskip + 1\jlreq@zh }
           \exp_not:N \relax
           { \exp_not:n { \tate\adjustbaseline } \exp_not:o \l__jlreq_tmpa_tl }
           % Underful対策
           \ifx l\jlreq@engine
-            \unexpanded{\wd\jlreq@tempboxa=\headheight}%
+            \unexpanded{\wd\@tempboxa=\headheight}%
           \else
-            \unexpanded{\ht\jlreq@tempboxa=\headheight\dp\jlreq@tempboxa=0pt}%
+            \unexpanded{\ht\@tempboxa=\headheight\dp\@tempboxa=0pt}%
           \fi
         }
       }
       % 左
       \tl_set:Nx \l__jlreq_tmpa_tl {
          \exp_not:n {\hskip\dimexpr} \legacy_if:nT { @tate } { - \Cdp } \exp_not:n { - \headsep - 1\jlreq@zw\relax }
-         \exp_not:n { \box\jlreq@tempboxa\hfil }
+         \exp_not:n { \box\@tempboxa\hfil }
       }
       % 右
       \tl_set:Nx \l__jlreq_tmpb_tl {
          \exp_not:n { \hskip\dimexpr\textwidth } \legacy_if:nT { @tate } { - \topskip + \Cht } \exp_not:n { + \headsep\relax }
-         \exp_not:n { \box\jlreq@tempboxa\hss }
+         \exp_not:n { \box\@tempboxa\hss }
       }
       \legacy_if:nTF { @tate } {
         \prop_put:Nnx \l__jlreq_tmpa_prop { odd-top  } { \prop_item:Nn \l__jlreq_tmpa_prop { odd-top  } \exp_not:o \l__jlreq_tmpa_tl }
@@ -4822,12 +4883,13 @@
         \clist_map_inline:nn { top,bottom } { % ####1
           \prop_clear:N \l__jlreq_tmpb_prop % 左，真ん中，右のトークン列をいったん入れる
           \clist_map_inline:nn {left,center,right} { % ########1
-            \__jlreq_pagestyle_makeyoko_each:NnncNNo \l__jlreq_tmpa_tl {####1} {########1} { l__jlreq_##1_runninghead_prop } \l__jlreq_runninghead_font_prop \l__jlreq_runninghead_position_prop \l__jlreq_runninghead_gap_tl
-            \__jlreq_pagestyle_makeyoko_each:NnncNNo \l__jlreq_tmpb_tl {####1} {########1} { l__jlreq_nombre_prop } \l__jlreq_nombre_font_prop \l__jlreq_nombre_position_prop \l__jlreq_nombre_gap_tl
+            % even時は左右がひっくり返るが，それは下位マクロに任せる
+            \__jlreq_pagestyle_makeyoko_each:NnnncNNo \l__jlreq_tmpa_tl {##1} {####1} {########1} { l__jlreq_##1_runninghead_prop } \l__jlreq_runninghead_font_prop \l__jlreq_runninghead_position_prop \l__jlreq_runninghead_gap_tl
+            \__jlreq_pagestyle_makeyoko_each:NnnncNNo \l__jlreq_tmpb_tl {##1} {####1} {########1} { l__jlreq_nombre_prop } \l__jlreq_nombre_font_prop \l__jlreq_nombre_position_prop \l__jlreq_nombre_gap_tl
             \__jlreq_pagestyle_concat_runhead_nombre:Nnnooo \l__jlreq_tmpa_tl {########1} {##1} \l__jlreq_tmpa_tl \l__jlreq_tmpb_tl \l__jlreq_gap_tl
             \prop_put:Nno \l__jlreq_tmpb_prop {########1} \l__jlreq_tmpa_tl
           }
-          \__jlreq_pagestyle_concat_left_center_right:Neee \l__jlreq_tmpa_tl {\prop_item:Nn \l__jlreq_tmpb_prop {left} } {\prop_item:Nn \l__jlreq_tmpb_prop {center} } {\prop_item:Nn \l__jlreq_tmpb_prop {right} }
+          \__jlreq_pagestyle_concat_left_center_right:Nneee \l__jlreq_tmpa_tl {##1} {\prop_item:Nn \l__jlreq_tmpb_prop {left} } {\prop_item:Nn \l__jlreq_tmpb_prop {center} } {\prop_item:Nn \l__jlreq_tmpb_prop {right} }
           % デフォルトのフォーマットの設定
           \bool_if:nTF { \dim_compare_p:n { \jlreq@sidenote@length > 0pt } && (! \legacy_if_p:n { @tate } ) }{
             \tl_set:Nn \l__jlreq_tmpb_tl {\hss\hbox to \jlreqyokoheadlength{####1}\hss}

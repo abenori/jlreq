@@ -4094,11 +4094,18 @@
 }
 \def\jlreq@extramark@@#1#2{#2#1\@empty\@empty}
 
-\def\jlreq@setextraleftmark@#1#2{{#2}{\expandafter\@secondoftwo#1}}
-\def\jlreq@setextrarightmark@#1#2{{\expandafter\@firstoftwo#1}{#2}}
-\def\jlreq@setextraleftmark#1#2{\jlreq@setextramark{#1}{#2}{\jlreq@setextraleftmark@}}
-\def\jlreq@setextrarightmark#1#2{\jlreq@setextramark{#1}{#2}{\jlreq@setextrarightmark@}}
-\def\jlreq@setextramark#1#2#3{%
+
+\def\jlreq@extramarkright#1#2{%
+  \jlreq@if{\ifcsname\jlreq@markregistername{#1}\endcsname\fi}{%
+    \expandafter\expandafter\expandafter\jlreq@extramarkright@\csname\jlreq@markregistername{#1}@themark\endcsname{#2}{#1}%
+  }{%
+    \jlreq@extramarkboth{#1}{}{#2}%
+  }%
+}
+\def\jlreq@extramarkright@#1#2#3#4{%
+  \jlreq@extramarkboth{#4}{#1}{#3}%
+}
+\def\jlreq@extramarkboth#1#2#3{
   \jlreq@if{\ifcsname\jlreq@markregistername{#1}\endcsname\fi}{}{%
     \expandafter\newmarks\csname\jlreq@markregistername{#1}\endcsname
     \expandafter\def\csname\jlreq@markregistername{#1}@themark\endcsname{{}{}}%
@@ -4107,15 +4114,13 @@
     \let\label\relax
     \let\index\relax
     \let\glossary\relax
-    \def\jlreq@@themark@csname{\jlreq@markregistername{#1}@themark}%
-    \expandafter\unrestored@protected@xdef\csname\jlreq@@themark@csname\endcsname{%
-      \expandafter#3\expandafter{\csname\jlreq@@themark@csname\endcsname}{#2}%
-    }%
-    \expandafter\expandafter\expandafter\@temptokena\expandafter\expandafter\expandafter{\csname\jlreq@@themark@csname\endcsname}%
+    \expandafter\unrestored@protected@xdef\csname\jlreq@markregistername{#1}@themark\endcsname{ {#2}{#3} }
+    \expandafter\expandafter\expandafter\@temptokena\expandafter\expandafter\expandafter{\csname\jlreq@markregistername{#1}@themark\endcsname}%
     \expandafter\marks\csname\jlreq@markregistername{#1}\endcsname{\the\@temptokena}%
   \endgroup
-  \if@nobreak\ifvmode\nobreak\fi\fi
+  \if@nobreak\ifvmode\nobreak\fi\fi  
 }
+
 \let\jlreq@markboth=\markboth
 \let\jlreq@markright=\markright
 
@@ -4161,7 +4166,7 @@
       \prop_map_inline:Nn \l__jlreq_tmpc_prop {
         \prop_put:Nnx \l__jlreq_tmpa_prop {####1} {
           \prop_item:Nn \l__jlreq_tmpa_prop {####1}
-          \int_compare:nNnTF { ##1 } = { 0 } { \exp_not:N \markboth } { \exp_not:N \jlreq@setextramark {##1} }
+          \int_compare:nNnTF { ##1 } = { 0 } { \exp_not:N \markboth } { \exp_not:N \jlreq@extramarkboth {##1} }
             { \exp_not:n {####2} }
             { \prop_item:Nn \l__jlreq_tmpb_prop {####1} }
         }
@@ -4170,7 +4175,7 @@
         \prop_if_in:NnF \l__jlreq_tmpc_prop {####1} {
           \prop_put:Nnx \l__jlreq_tmpa_prop {####1} {
             \prop_item:Nn \l__jlreq_tmpa_prop {####1}
-            \int_compare:nNnTF { ##1 } = { 0 } { \exp_not:N \markright } { \exp_not:N \jlreq@setextramarkright {##1} }
+            \int_compare:nNnTF { ##1 } = { 0 } { \exp_not:N \markright } { \exp_not:N \jlreq@extramarkright {##1} }
               { \exp_not:n {####2} }
           }
         }

@@ -89,7 +89,6 @@
         \exp_not:n {#2}%
       \exp_not:N \catcode`@=\the\catcode`@\exp_not:N \relax
     }}
-    \show\l__jlreq_do_tl
   \exp_after:wN \group_end:
   \l__jlreq_do_tl
 }
@@ -6173,7 +6172,7 @@
         \hbox_to_wd:nn {##1} {
           \def#1 {　}
           \kanjishape{n-jidori}\selectfont
-          \def\kanjishape####1{\jlreq@useoriginalcs{kanjishape}{####1-jidori}}
+          \def\kanjishape####1{\jlreq@useoriginalcs@witharguments{kanjishape}{{####1-jidori}}}
           ##2
           \hskip\glueexpr 0pt~minus~1fil\relax
         }

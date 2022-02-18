@@ -134,8 +134,7 @@
 }
 \keys_define:nn { jlreq } {
   paper .code:n = {
-    \str_case:nVF {#1} \g__jlreq_papersizelist_tl
-    {
+    \str_case:nVF {#1} \g__jlreq_papersizelist_tl {
       \jlreq@helper@dividebycomma{#1}%
       \legacy_if:nTF { jlreq@result } {
         \setlength{\paperwidth}{\dimexpr\jlreq@resulta\relax}
@@ -324,13 +323,13 @@
 
 %.. 柱とノンブル
 % 本文とヘッダ/フッタの間の空き
-\keys_define:nn { jlreq } { headfoot_verticalposition .tl_set:N = \jlreq@option@headfoot@verticalpos}
+\keys_define:nn { jlreq } { headfoot_verticalposition .tl_set:N = \jlreq@option@headfoot@verticalpos }
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@headfoot@verticalpos
 % 柱やノンブルの左右の空き
-\keys_define:nn { jlreq } { headfoot_sidemargin .tl_set:N = \jlreq@headfoot@sidemargin}
+\keys_define:nn { jlreq } { headfoot_sidemargin .tl_set:N = \jlreq@headfoot@sidemargin }
 
 %.. 段間
-\keys_define:nn { jlreq } { column_gap .tl_set:N = \jlreq@option@column@gap}
+\keys_define:nn { jlreq } { column_gap .tl_set:N = \jlreq@option@column@gap }
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@column@gap
 
 %.. 行送り，指定無しの場合は文字サイズの1.7倍とする．（1.5から2倍が好ましい：2.4.2.d 注3）
@@ -4167,9 +4166,9 @@
 % mark系の処理をする．
 % #2: 奇数ページ柱（prop，{0,1,2}->柱の中身）
 % #3: 偶数ページ柱（prop，{0,1,2}->柱の中身）
-% #4: mark format（prop）
-% 柱は必要ならば\leftskipなどに書き換えられる．
-% #1に{<見出し名>}{\<見出し名>markの定義}を入れる
+% #4: mark format（prop，{(見出し名)}->フォーマット）
+% #2,#3の中身が見出し名ならば\leftmark/\rightmarkなどに書き換えられる．
+% #1（prop）に{<見出し名>}{\<見出し名>markの定義}を入れる
 \cs_set:Nn \__jlreq_pagestyle_makemarkcommand:NNNN {
   \group_begin:
     \tl_set:Nn \l__jlreq_do_tl { \prop_clear:N #1 }
@@ -4217,7 +4216,7 @@
 % #6: mark_format（prop）
 % #1（prop）にmark用のフォーマットを入れる．
 % キーは<見出し名>
-% #2に#3の中身を書き換えるコードを入れる
+% #2に#3の中身を書き換えるコード（\prop_put:Nnn #3 {section}{\rightmark}のような）を入れる
 \cs_set:Nn \__jlreq_pagestyle_makemarkcommand_aux:NNNnnN {
   \group_begin:
     \tl_set:Nn \l__jlreq_do_tl { \tl_set:Nn #2 {} }

@@ -528,7 +528,14 @@ JFMの名前は次の通りです．`[]`で囲まれている文字は設定に�
     - LaTeXのフック関連コードの多くを削除．（まだ安定していなそうなので．）
     - `\RequirePackage{ifthen}`をやめた．
     - upLaTeXにおける`\kcatcode`の再設定をやめた．
-
+* 2022-04-05
+    - `\jlreqsetup`に`warichu_opening`と`warichu_closing`を追加．
+    - 別行見出し周りのペナルティを少し調整．
+    - `\DeclareFontShape`後の`\selectfont`でエラーが出るバグ修正．
+    - `use_reverse_pagination`がうまく動いていなかったのを修正．
+    - 二番目の柱を使うと不自然に消えることがあるバグの修正．ついでに`\DeclarePageStyle`を書き直した．
+    - `\@makefntext`を調整．
+    - その他バグ修正．
 
 --------------
 Noriyuki Abe

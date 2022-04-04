@@ -162,7 +162,15 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Removed many codes relating with LaTeX hooks mechanism (because it seems not stable.)
     - Removed `\RequirePackage{ifthen}`.
     - Removed `\kcatcode`settings with upLaTeX.
-
+* 2022-04-05
+    - Added `warichu_opening` and `warichu_closing` to `\jlreqsetup`.
+    - Change a little bit penalties around block heading.
+    - Fixed a bug: `\selectfont` after `\DeclareFontShape` raised an error.
+    - Fixed a bug: `use_reverse_pagination` did not work.
+    - Fixed a bug: A second running head disappeared sometimes.
+    - Rewrote `\DeclarePageStyle`.
+    - Deleted `\@makefntext`, define `\@makefntext` directly.
+    - Fixed other bugs.
 
 --------------
 Noriyuki Abe

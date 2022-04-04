@@ -81,14 +81,18 @@
 }
 \def\jlreq@useoriginalcs@witharguments#1#2{%
   \group_begin:
-    \tl_set:Nx \l__jlreq_do_tl {\exp_not:N \scantokens{%
+    \tl_set:Nx \l__jlreq_do_tl {
+      \exp_not:n{\escapechar=`\\\relax}%
       \exp_not:n{\catcode`@=11\relax}%
-      \jlreq@if{\ifcsname jlreq@original@#1\endcsname\fi}%
-        {\exp_not:o {\csname jlreq@original@#1\endcsname}}%
-        {\exp_not:o {\csname #1\endcsname}}%
-        \exp_not:n {#2}%
+      \exp_not:N \scantokens{%
+        \jlreq@if{\ifcsname jlreq@original@#1\endcsname\fi}%
+          {\exp_not:o {\csname jlreq@original@#1\endcsname}}%
+          {\exp_not:o {\csname #1\endcsname}}%
+          \exp_not:n {#2}%
+      }
       \exp_not:N \catcode`@=\the\catcode`@\exp_not:N \relax
-    }}
+      \exp_not:N \escapechar=\the\escapechar\exp_not:N \relax
+    }
   \exp_after:wN \group_end:
   \l__jlreq_do_tl
 }
@@ -3290,7 +3294,6 @@
   }
 }
 
-\newcommand{\@makefntext}[1]{\jlreq@makefntext{#1}}
 \keys_define:nn { jlreqsetup } {
   footnote_second_indent .code:n = {
     \legacy_if:nF { @tate }{
@@ -3299,27 +3302,29 @@
         ( \dim_compare_p:n { -1.01\jlreq@zw < #1 } && \dim_compare_p:n { #1 < -0.99\jlreq@zw } )
       }{\jlreq@note{脚注が2行以上となった場合，脚注の2行目以下の字下げを1行目より，脚注の文字サイズの全角アキとするか，逆に，1行目の字下げを2行目より，脚注の文字サイズの全角アキとする~(4.2.5.d)．}}
     }
-    \cs_set:Npn \jlreq@makefntext ##1 {
-      \skip_if_eq:nnF { #1 } { 0pt } { \addtolength{\leftskip}{\glueexpr #1\relax} }
-      % インデントの計算：脚注の長さが文字の整数倍になるように字下げする（4.2.5.b）
-      \group_begin:
-        \@tempdima=\dimexpr\columnwidth - \jlreq@footnoteindent\relax
-        \@tempdimb=1\jlreq@zw
-        \divide\@tempdima\@tempdimb \multiply\@tempdima\@tempdimb
-        \cs_set:Nx \l__jlreq_do: {
-          \exp_not:N \addtolength { \exp_not:N \leftskip } {\dim_eval:n { \columnwidth - \@tempdima - 0.0001pt } }
-          \exp_not:n {
-            \parindent=1\jlreq@zw
-            \noindent
-            \hskip-\glueexpr #1\relax
-            \jlreq@referencemark@format{\@thefnmark}%
-            \hskip\glueexpr 1\jlreq@zw\relax
+    % ほかからの更新があったならばこれ以上触らない．
+    \jlreq@if{\ifx\jlreq@saved@@makefntext\@makefntext\fi}{
+      \cs_set:Npn \@makefntext ##1 {
+        \skip_if_eq:nnF { #1 } { 0pt } { \addtolength{\leftskip}{\glueexpr #1\relax} }
+        % インデントの計算：脚注の長さが文字の整数倍になるように字下げする（4.2.5.b）
+        \group_begin:
+          \@tempdima=\dimexpr\columnwidth - \jlreq@footnoteindent\relax
+          \@tempdimb=1\jlreq@zw
+          \divide\@tempdima\@tempdimb \multiply\@tempdima\@tempdimb
+          \cs_set:Nx \l__jlreq_do: {
+            \exp_not:N \addtolength { \exp_not:N \leftskip } {\dim_eval:n { \columnwidth - \@tempdima - 0.0001pt } }
           }
-        }
-      \exp_after:wN \group_end:
-      \l__jlreq_do:
-      ##1
-    }
+        \exp_after:wN \group_end:
+        \l__jlreq_do:
+        \parindent=1\jlreq@zw
+        \noindent
+        \hskip-\glueexpr #1\relax
+        \hbox{\jlreq@referencemark@format{\@thefnmark}}%
+        \hskip\glueexpr 1\jlreq@zw\relax
+        ##1%
+      }
+      \let\jlreq@saved@@makefntext=\@makefntext
+    }{}
   }
 }
 
@@ -4820,11 +4825,12 @@
     % ノンブル同士の間や柱同士の間のデフォルトはノンブルと柱の間の空き量
     \tl_if_empty:NT \l__jlreq_pagestyle_nombre_gap_tl { \tl_set_eq:NN \l__jlreq_pagestyle_nombre_gap_tl \l__jlreq_pagestyle_gap_tl }
     \tl_if_empty:NT \l__jlreq_pagestyle_runninghead_gap_tl { \tl_set_eq:NN \l__jlreq_pagestyle_runninghead_gap_tl \l__jlreq_pagestyle_gap_tl }
+    % \<見出し>markを作り，\l__jlreq_tmpa_propに格納
     \__jlreq_pagestyle_makemarkcommand:NNNN \l__jlreq_tmpa_prop \l__jlreq_pagestyle_odd_runninghead_prop \l__jlreq_pagestyle_even_runninghead_prop \l__jlreq_pagestyle_mark_format_prop
-    % 最小レベルを決定する．
-    \int_set:Nn \l__jlreq_tmpa_int {9999}
     % \<見出し>markを定義するコマンドを入れる
     \tl_set:Nn \l__jlreq_pagestyle_markcommands_tl {}
+    % 最小レベルの決定を行い，\<見出し命令>markの定義を入れていく．
+    \int_set:Nn \l__jlreq_tmpa_int {9999}
     \prop_map_inline:Nn \l__jlreq_tmpa_prop {
       \int_compare:nNnT { \l__jlreq_tmpa_int } > { \csname jlreq@heading@level@##1 \endcsname } {
         \int_set:Nn \l__jlreq_tmpa_int { \csname jlreq@heading@level@##1 \endcsname }
@@ -4840,13 +4846,16 @@
       \tl_set:Nx \l__jlreq_do_tl {}
       \prop_clear:N \l__jlreq_tmpa_prop
       \clist_map_inline:nn { odd,even } {
+        % .柱→\l__jlreq_tmpa_tl
         \__jlreq_pagestyle_maketate_runhead:NcNNo \l__jlreq_tmpa_tl { l__jlreq_pagestyle_##1_runninghead_prop } \l__jlreq_pagestyle_runninghead_font_prop \l__jlreq_pagestyle_runninghead_position_prop \l__jlreq_pagestyle_runninghead_gap_tl
+        % ノンブル→\l__jlreq_tmpb_tl
         \__jlreq_pagestyle_maketate_nombre:NNNNo \l__jlreq_tmpb_tl \l__jlreq_pagestyle_nombre_prop \l__jlreq_pagestyle_nombre_font_prop \l__jlreq_pagestyle_nombre_position_prop \l__jlreq_pagestyle_nombre_gap_tl
-        % 柱とノンブルを結合
+        % 柱とノンブルを結合→\l__jlreq_tmpa_tl
         \tl_set:Nx \l__jlreq_tmpa_tl { \exp_not:o \l__jlreq_tmpa_tl \exp_not:N \hfil \exp_not:o \l__jlreq_tmpb_tl }
+        % formatを適用．
         \tl_set:Nn \l__jlreq_tmpb_tl {####1} % デフォルトフォーマット
         \__jlreq_pagestyle_applyformat:NocN \l__jlreq_tmpa_tl \l__jlreq_tmpa_tl { l__jlreq_pagestyle_##1_top_format_tl } \l__jlreq_tmpb_tl
-        % 周りのボックスをつける
+        % 周りのボックスをつける．結果は\l__jlreq_tmpa_propにいれる．
         \prop_put:Nnx \l__jlreq_tmpa_prop { ##1-top } {
           \exp_not:n {\setbox\@tempboxa=\hbox to \dimexpr\headsep + \headheight + \textheight}
             \legacy_if:nF { @tate } { \exp_not:n { - \topskip + 1\jlreq@zh } }
@@ -4860,16 +4869,17 @@
           \fi
         }
       }
-      % 左
+      % 位置調整，左側に柱+ノンブルがある場合
       \tl_set:Nx \l__jlreq_tmpa_tl {
-         \exp_not:n {\hskip\dimexpr} \legacy_if:nT { @tate } { \exp_not:n { - \Cdp } } \exp_not:n { - \headsep - 1\jlreq@zw\relax }
+         \exp_not:n { \hskip\dimexpr } \legacy_if:nT { @tate } { \exp_not:n { - \Cdp } } \exp_not:n { - \headsep - 1\jlreq@zw\relax }
          \exp_not:n { \box\@tempboxa\hfil }
       }
-      % 右
+      % 位置調整，右側に柱+ノンブルがある場合
       \tl_set:Nx \l__jlreq_tmpb_tl {
          \exp_not:n { \hskip\dimexpr\textwidth } \legacy_if:nT { @tate } { \exp_not:n { - \topskip + \Cht } } \exp_not:n { + \headsep\relax }
          \exp_not:n { \box\@tempboxa\hss }
       }
+      % 位置調整とすでに構築したブロックをくっつける．
       \legacy_if:nTF { @tate } {
         \prop_put:Nnx \l__jlreq_tmpa_prop { odd-top  } { \prop_item:Nn \l__jlreq_tmpa_prop { odd-top  } \exp_not:o \l__jlreq_tmpa_tl }
         \prop_put:Nnx \l__jlreq_tmpa_prop { even-top } { \prop_item:Nn \l__jlreq_tmpa_prop { even-top } \exp_not:o \l__jlreq_tmpb_tl }
@@ -4925,11 +4935,15 @@
           \prop_clear:N \l__jlreq_tmpb_prop % 左，真ん中，右のトークン列をいったん入れる
           \clist_map_inline:nn {left,center,right} { % ########1
             % even時は左右がひっくり返るが，それは下位マクロに任せる
+            % 柱→\l__jlreq_tmpa_tl
             \__jlreq_pagestyle_makeyoko_each:NnnncNNo \l__jlreq_tmpa_tl {##1} {####1} {########1} { l__jlreq_pagestyle_##1_runninghead_prop } \l__jlreq_pagestyle_runninghead_font_prop \l__jlreq_pagestyle_runninghead_position_prop \l__jlreq_pagestyle_runninghead_gap_tl
+            % ノンブル→\l__jlreq_tmpa_tl
             \__jlreq_pagestyle_makeyoko_each:NnnncNNo \l__jlreq_tmpb_tl {##1} {####1} {########1} { l__jlreq_pagestyle_nombre_prop } \l__jlreq_pagestyle_nombre_font_prop \l__jlreq_pagestyle_nombre_position_prop \l__jlreq_pagestyle_nombre_gap_tl
+            % 柱とノンブルを結合し\l__jlreq_tmpb_propへ代入
             \__jlreq_pagestyle_concat_runhead_nombre:Nnnooo \l__jlreq_tmpa_tl {########1} {##1} \l__jlreq_tmpa_tl \l__jlreq_tmpb_tl \l__jlreq_pagestyle_gap_tl
             \prop_put:Nno \l__jlreq_tmpb_prop {########1} \l__jlreq_tmpa_tl
           }
+          % 左，中央，右を結合し\l__jlreq_tmpa_tlへ
           \__jlreq_pagestyle_concat_left_center_right:Nneee \l__jlreq_tmpa_tl {##1} {\prop_item:Nn \l__jlreq_tmpb_prop {left} } {\prop_item:Nn \l__jlreq_tmpb_prop {center} } {\prop_item:Nn \l__jlreq_tmpb_prop {right} }
           % デフォルトのフォーマットの設定
           \bool_if:nTF { \dim_compare_p:n { \jlreq@sidenote@length > 0pt } && (! \legacy_if_p:n { @tate } ) }{

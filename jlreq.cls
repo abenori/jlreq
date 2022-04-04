@@ -1181,12 +1181,11 @@
     \jlreq@lastnodechar=`　
     \expandafter\jlreq@fixjfm
   \else\expandafter　\fi
-  \ignorespaces
 }
 \ifx l\jlreq@engine
   {
     \catcode`　=\active
-    \global\let　=\jlreq@zenkakuspace@main
+    \protected\gdef　{\futurelet\jlreq@nextchar\jlreq@zenkakuspace@ignorespaces}
   }
   \AtBeginDocument{\catcode`　=\active}
 \fi

@@ -171,6 +171,8 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Rewrote `\DeclarePageStyle`.
     - Deleted `\@makefntext`, define `\@makefntext` directly.
     - Fixed other bugs.
+* 2022-04-11
+    - Fixed a bug.
 
 --------------
 Noriyuki Abe

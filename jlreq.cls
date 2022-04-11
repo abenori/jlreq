@@ -5,7 +5,7 @@
 %%
 % (based on JLReq 20200811 https://www.w3.org/TR/2020/NOTE-jlreq-20200811/)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{jlreq}[2022/04/05 jlreq]
+\ProvidesClass{jlreq}[2022/04/11 jlreq]
 \RequirePackage{l3keys2e}
 \RequirePackage{etoolbox}
 \RequirePackage{jlreq-helpers}[2021/08/12]
@@ -813,7 +813,7 @@
     \group_begin:
       \bool_if:nT { \str_if_eq_p:nn {#1} {JY3} || \str_if_eq_p:nn {#1} {JT3} } {
         \tl_set:Nx \l__jlreq_tmpa_tl {#5}
-        \tl_if_in:NnTF \l__jlreq_tmpa_tl { jfm=jlreq} {
+        \tl_if_in:NnTF \l__jlreq_tmpa_tl { jfm=jlreq } {
           \tl_if_in:NnTF \l__jlreq_tmpa_tl { jfm=jlreqv }{
             \tl_replace_all:Nnn \l__jlreq_tmpa_tl { jfm=jlreqv } { jfm=jlreqv-jidori }
           }{

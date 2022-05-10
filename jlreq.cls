@@ -5764,7 +5764,7 @@
   \widowpenalty4000%
   \sfcode`\.\@m
 }{%
-  \def\@noitemerr{\@latex@warning{Empty `thebibliography' environment}}%
+  \def\@noitemerr{\@latex@warning{Empty~`thebibliography'~environment}}%
   \endlist
   \jlreq@oldfontcommand@disable
 }

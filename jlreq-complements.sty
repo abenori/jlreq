@@ -1,0 +1,259 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{jlreq-complements}[2022/04/11 jlreq-complements]
+\RequirePackage{jlreq-helpers}[2021/08/12]
+\RequirePackage{l3keys2e}
+
+\ExplSyntaxOn
+
+\str_new:N \g__jlreq_complements_setupname_str
+\str_new:N \g__jlreq_complements_engine_str
+\tl_new:N \g__jlreq_complements_finally
+
+\keys_define:nn { jlreq-complements } {
+  setupname .code:n = {
+    \str_set:Nn \g__jlreq_complements_setupname_str {#1}
+  },
+  uplatex .code:n = { \str_set:Nn \g__jlreq_complements_engine_str { uplatex } },
+  uplatex .value_forbidden:n = true,
+  platex .code:n = { \str_set:Nn \g__jlreq_complements_engine_str { platex } },
+  platex .value_forbidden:n = true,
+  lualatex .code:n = { \str_set:Nn \g__jlreq_complements_engine_str { lualatex } },
+  lualatex .value_forbidden:n = true,
+}
+\keys_set:nn { jlreq-complements } { setupname = jlreqcomplementssetup }
+\ProcessKeysOptions { jlreq-complements }
+
+\str_if_empty:NT \g__jlreq_complements_engine_str {
+  \jlreq@helper@guessengine
+  \str_gset:Nx \g__jlreq_complements_engine_str {
+    \ifx l\jlreq@result lualatex \fi
+    \ifx u\jlreq@result uplatex \fi
+    \ifx p\jlreq@result platex \fi
+  }
+}
+\str_if_empty:NT \g__jlreq_complements_engine_str {
+  \PackageError { jlreq-complements } { Cannot~determine~the~engine }{\@ehc}
+}
+
+\str_if_eq:VnTF \g__jlreq_complements_engine_str { lualatex } {
+  \prg_new_conditional:Nnn \__jlreq_complements_iftdir: { T, F, TF} {
+    \int_compare_p:n { (\ltjgetparameter{direction}-(\ltjgetparameter{direction}/8)*8) == 3 } 
+  }
+}{
+  \prg_new_conditional:Nnn \__jlreq_complements_iftdir: { T, F, TF} { \legacy_if_p:n { tdir } }
+}
+
+\@ifundefined{jlreq@zw}{
+  \str_if_eq:VnTF \g__jlreq_complements_engine_str { lualatex }
+    { \def\jlreq@zw{\zw} }
+    { \def\jlreq@zw{zw}  }
+}
+
+\exp_args:Nx \@ifundefined { \g__jlreq_complements_setupname_str } {
+  \exp_args:Ncnx \NewDocumentCommand {\g__jlreq_complements_setupname_str} { +m } {
+    \exp_not:N \keys_set:nn { \g__jlreq_complements_setupname_str } {\exp_not:n {#1}}
+  }
+}{}
+
+\cs_if_exist:NF \keys_define:Vn {
+  \cs_generate_variant:Nn \keys_define:nn {Vn}
+  \tl_gput_right:Nn \g__jlreq_complements_finally {
+    \cs_undefine:N \keys_define:Vn
+  }
+}
+\cs_if_exist:NF \keys_set:Vn {
+  \cs_generate_variant:Nn \keys_set:nn {Vn}
+  \tl_gput_right:Nn \g__jlreq_complements_finally {
+    \cs_undefine:N \keys_set:Vn
+  }
+}
+
+%. thebibliography
+\prop_new:N \g__jlreq_complements_thebibliography_prop
+
+\clist_map_inline:nn { heading,mark,precode,postcode,indent,after_label_space } {
+  \keys_define:Vn \g__jlreq_complements_setupname_str {
+    thebibliography_#1 .code:n = {
+      \prop_gput:Nnn \g__jlreq_complements_thebibliography_prop { #1 } { ##1 }
+    }
+  }
+}
+
+\keys_set:Vn \g__jlreq_complements_setupname_str {
+  thebibliography_mark = { \@mkboth{\refname}{\refname} },
+  thebibliography_heading = { \section*{\refname} },
+  thebibliography_after_label_space = { 1\jlreq@zw },
+  thebibliography_indent = { 0pt },
+  thebibliography_precode = {},
+  thebibliography_postcode = {},
+}
+
+\renewenvironment{thebibliography}[1]{%
+  \prop_item:Nn \g__jlreq_complements_thebibliography_prop { precode }
+  \prop_item:Nn \g__jlreq_complements_thebibliography_prop { heading }
+  \prop_item:Nn \g__jlreq_complements_thebibliography_prop { mark }
+  \list{\@biblabel{\@arabic\c@enumiv}}%
+      {\settowidth\labelwidth{\@biblabel{#1}}%
+      \labelsep=\prop_item:Nn \g__jlreq_complements_thebibliography_prop { after_label_space }
+      \leftmargin\labelwidth
+      \advance\leftmargin\labelsep
+      \itemindent=\prop_item:Nn \g__jlreq_complements_thebibliography_prop { indent }
+      \@openbib@code % only for compatibility
+      \usecounter{enumiv}
+      \let\p@enumiv\@empty
+      \renewcommand\theenumiv{\@arabic\c@enumiv}}
+  \sloppy
+  \clubpenalty4000
+  \@clubpenalty\clubpenalty
+  \widowpenalty4000%
+  \sfcode`\.\@m
+}{%
+  \def\@noitemerr{\@latex@warning{Empty~`thebibliography'~environment}}%
+  \endlist
+  \prop_item:Nn \g__jlreq_complements_thebibliography_prop { postcode }
+}
+\let\@openbib@code\@empty
+
+%. theindex
+\prop_new:N \g__jlreq_complements_theindex_prop
+\clist_map_inline:nn { precode,postcode,heading,mark,column_gap,column_rule_width,pagestyle } {
+  \keys_define:Vn \g__jlreq_complements_setupname_str {
+    theindex_#1 .code:n = {
+      \prop_gput:Nnn \g__jlreq_complements_theindex_prop { #1 } { ##1 }
+    }
+  }
+}
+
+\bool_new:N \g__jlreq_complements_theindex_yoko_bool
+\bool_new:N \g__jlreq_complements_theindex_twocolumn_bool
+\bool_new:N \g__jlreq_complements_theindex_restorepagestyle_bool
+\keys_define:Vn \g__jlreq_complements_setupname_str {
+  theindex_yoko .bool_gset:N = \g__jlreq_complements_theindex_yoko_bool,
+  theindex_twocolumn .bool_gset:N = \g__jlreq_complements_theindex_twcolumn_bool,
+}
+
+\keys_set:Vn \g__jlreq_complements_setupname_str {
+  theindex_precode = {},
+  theindex_postcode = {},
+  theindex_heading = { \section*{\indexname} },
+  theindex_mark = { \@mkboth{\indexname}{\indexname} },
+  theindex_column_gap = { 2\jlreq@zw },
+  theindex_column_rule_width = { 0pt },
+  theindex_pagestyle = { plain },
+  theindex_twocolumn = true
+}
+\legacy_if:nTF { @tate }
+  { \keys_set:Vn \g__jlreq_complements_setupname_str { theindex_yoko = false } }
+  { \keys_set:Vn \g__jlreq_complements_setupname_str { theindex_yoko = true } }
+
+
+\bool_new:N \l__jlreq_complements_resttate_bool
+\renewenvironment{theindex}{%
+  \prop_item:Nn \g__jlreq_complements_theindex_prop { precode }
+  \bool_set_false:N \l__jlreq_complements_resttate_bool
+  \bool_if:NT \g__jlreq_complements_theindex_yoko_bool {
+    \__jlreq_complements_iftdir:T { \clearpage \yoko \bool_set_true:N \l__jlreq_complements_resttate_bool }
+  }
+  \bool_if:NTF \g__jlreq_complements_theindex_twocolumn_bool {
+    \setlength{\columnseprule}{ \prop_item:Nn \g__jlreq_complements_theindex_prop { column_rule_width } }
+    \setlength{\columnsep} { \prop_item:Nn \g__jlreq_complements_theindex_prop { column_gap } }
+    \tl_set:Nx \l__jlreq_tmpa_tl { \exp_not:N \twocolumn [ \prop_item:Nn \g__jlreq_complements_theindex_prop { heading } ] }
+    \l__jlreq_tmpa_tl
+  }{
+    \tl_set:Nx \l__jlreq_tmpa_tl {
+      \legacy_if:nT { @twocolumn } { \exp_not:N \onecolumn }
+      \prop_item:Nn \g__jlreq_complements_theindex_prop { heading }
+    }
+    \l__jlreq_tmpa_tl
+  }
+  \prop_item:Nn \g__jlreq_complements_theindex_prop { mark }
+  \tl_set:Nx \l__jlreq_tmpa_tl { \exp_not:N \pagestyle { \prop_item:Nn \g__jlreq_complements_theindex_prop { pagestyle } } }
+  \parindent\z@
+  \parskip\z@ \@plus .03\jlreq@zh\relax
+  \let\item\@idxitem
+}{%
+  \bool_if:NTF \g__jlreq_complements_theindex_twocolumn_bool {
+    \legacy_if:nF { @twocolumn } { \onecolumn }
+  }{
+    \legacy_if:nT { @twocolumn } { \twocolumn }
+  }
+  \clearpage
+  \bool_if:NT \l__jlreq_complements_resttate_bool { \tate }
+  \prop_item:Nn \g__jlreq_complements_theindex_prop { postcode }
+}
+
+%. 定理環境
+\prop_new:N \g__jlreq_complements_theorem_prop
+\clist_map_inline:nn { beforeafter_space,indent,font,label_font } {
+  \keys_define:Vn \g__jlreq_complements_setupname_str {
+    theorem_#1 .code:n = {
+      \prop_gput:Nnn \g__jlreq_complements_theorem_prop { #1 } { ##1 }
+      \@ifpackageloaded{amsthm}{\__jlreq_complements_setup_amsthm_theoremstyle:}{}
+    }
+  }
+}
+\keys_define:Vn \g__jlreq_complements_setupname_str {
+  proof_label_font .code:n = {
+    \prop_gput:Nnn \g__jlreq_complements_theorem_prop { proof_label_font } {#1}
+  }
+}
+
+\keys_set:Vn \g__jlreq_complements_setupname_str {
+  theorem_beforeafter_space=1\baselineskip,
+  theorem_indent=0pt,
+  theorem_label_font = {\bfseries\gtfamily\sffamily},
+  theorem_font = {\normalfont},
+  proof_label_font = {\bfseries\gtfamily\sffamily},
+}
+
+\let\jlreq@complements@original@@begintheorem=\@begintheorem
+\let\jlreq@complements@original@@opargbegintheorem=\@opargbegintheorem
+\def\@begintheorem#1#2{\topsep=\dimexpr\prop_item:Nn \g__jlreq_complements_theorem_prop { beforeafter_space }\relax
+  \trivlist\labelsep=1\jlreq@zw\relax
+  \itemindent=\dimexpr\prop_item:Nn \g__jlreq_complements_theorem_prop { indent }\relax
+  \prop_item:Nn \g__jlreq_complements_theorem_prop { font }
+   \item[\hskip \labelsep{\reset@font\prop_item:Nn \g__jlreq_complements_theorem_prop { label_font } #1\ #2}]}
+\def\@opargbegintheorem#1#2#3{\topsep=\dimexpr\prop_item:Nn \g__jlreq_complements_theorem_prop { beforeafter_space }\relax
+  \trivlist\labelsep=1\jlreq@zw\relax
+  \itemindent=\dimexpr\prop_item:Nn \g__jlreq_complements_theorem_prop { indent }\relax
+  \prop_item:Nn \g__jlreq_complements_theorem_prop { font }
+  \item[\hskip \labelsep{\reset@font\prop_item:Nn \g__jlreq_complements_theorem_prop { label_font } #1\ #2（#3）}]}
+\cs_set:Nn \__jlreq_complements_setup_amsthm: {
+  \let\jlreq@complements@original@proof=\proof
+  \let\jlreq@complements@original@endproof=\endproof
+  \tl_set:Nx \l__jlreq_tmpa_tl {
+    \exp_not:n { \cs_set:Npn \__jlreq_complements_proof [##1] } {
+      \exp_not:n { \labelsep=1\jlreq@zw\relax }
+      \exp_not:o {\proof[{\reset@font\prop_item:Nn \g__jlreq_complements_theorem_prop { proof_label_font } ##1\inhibitglue}\nopunct]}
+    }
+  }
+  \l__jlreq_tmpa_tl
+  \def\proof{\@ifnextchar[{\__jlreq_complements_proof}{\__jlreq_complements_proof[\proofname]}}
+  \renewcommand{\proofname}{証明}
+  \__jlreq_complements_setup_amsthm_theoremstyle:
+  \theoremstyle{jlreq}
+  % 一度しか実行されないはず
+  \cs_undefine:N \__jlreq_complements_setup_amsthm:
+}
+\cs_set:Nn \__jlreq_complements_setup_amsthm_theoremstyle: {
+  \newtheoremstyle{jlreq}
+    {\dimexpr\prop_item:Nn \g__jlreq_complements_theorem_prop { beforeafter_space } \relax}
+    {\dimexpr\prop_item:Nn \g__jlreq_complements_theorem_prop { beforeafter_space } \relax}
+    {\prop_item:Nn \g__jlreq_complements_theorem_prop { font } }
+    {\dimexpr\prop_item:Nn \g__jlreq_complements_theorem_prop { indent } }
+    {\prop_item:Nn \g__jlreq_complements_theorem_prop { label_font } }
+    {}{1\jlreq@zw}{\thmname{##1}\thmnumber{\ ##2}\thmnote{（##3）}}
+}
+
+\@ifpackageloaded{amsthm}{
+  \__jlreq_complements_setup_amsthm:
+}{
+  \RequirePackage{filehook}
+  \AtEndOfPackageFile{amsthm}{\__jlreq_complements_setup_amsthm:}
+}
+
+%. 終わり
+\g__jlreq_complements_finally
+\cs_undefine:N \g__jlreq_complements_finally
+
+\ExplSyntaxOff

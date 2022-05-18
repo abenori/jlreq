@@ -5647,6 +5647,7 @@
 \newcommand{\@pnumwidth}{2\jlreq@mol}
 \newcommand{\@tocrmarg}{2.55em}
 \newcommand{\@dotsep}{2} % 狭くしてみた
+\prop_new:N \g__jlreq_tableofcontents_prop
 \newskip\toclineskip
 \setlength\toclineskip{0\jlreq@gol plus .02\jlreq@gol}
 % tarticleから
@@ -5667,33 +5668,28 @@
     \jlreq@top@contents=#1\relax
   \fi
 }
-\str_if_eq:VnTF \jlreq@article@type { article } {
-  \newcommand{\tableofcontents}{%
-    \jlreq@top@contents=-100\relax
-    \if@twocolumn
-      \@restonecoltrue\onecolumn
-    \else
-      \@restonecolfalse
-    \fi
-    \section*{\contentsname}%
-    \@mkboth{\contentsname}{\contentsname}%
-    \@starttoc{toc}%
-    \if@restonecol\twocolumn\fi
-  }
-}{% book, report
-  \newcommand{\tableofcontents}{%
-    \jlreq@top@contents=-100\relax
-    \if@twocolumn
-      \@restonecoltrue\onecolumn
-    \else
-      \@restonecolfalse
-    \fi
-    \chapter*{\contentsname}%
-    \@mkboth{\contentsname}{\contentsname}%
-    \@starttoc{toc}%
-    \if@restonecol\twocolumn\fi
-  }
+\newcommand{\tableofcontents}{%
+  \jlreq@top@contents=-100\relax
+  \if@twocolumn
+    \@restonecoltrue\onecolumn
+  \else
+    \@restonecolfalse
+  \fi
+  \prop_item:Nn \g__jlreq_tableofcontents_prop { heading }
+  \@mkboth{\contentsname}{\contentsname}%
+  \@starttoc{toc}%
+  \if@restonecol\twocolumn\fi
 }
+\keys_define:nn { jlreqsetup } {
+  tableofcontents_heading .code:n = { \prop_gput:Nnn \g__jlreq_tableofcontents_prop { heading } {#1} }
+}
+\str_if_eq:VnTF \jlreq@article@type { article } {
+  \keys_set:nn { jlreqsetup } { tableofcontents_heading = { \section*{\contentsname} } }
+}{
+  \keys_set:nn { jlreqsetup } { tableofcontents_heading = { \chapter*{\contentsname} } }
+}
+  
+
 
 % JIS X 4051自身の目次に近づけようかと……なりきれてないけど．
 % 文字の大きさは全て同じ（\normalsize）にする．
@@ -5741,8 +5737,6 @@
 \let\l@table\l@figure
 
 %. 文献，そのまま
-\newdimen\bibindent
-\setlength\bibindent{2\jlreq@mol}
 \newcommand{\newblock}{\hskip .11em\@plus.33em\@minus.07em}
 \newenvironment{thebibliography}[1]{%
   \jlreq@oldfontcommand@enable
@@ -5794,27 +5788,7 @@
 \newcommand{\subitem}{\@idxitem \hspace*{2\jlreq@mol}}
 \newcommand{\subsubitem}{\@idxitem \hspace*{3\jlreq@mol}}
 \newcommand{\indexspace}{\par \vskip 1\jlreq@gol \@plus .5\jlreq@gol \@minus .3\jlreq@gol\relax}
-\def\jlreq@theindex@pagestyle{}
-\keys_define:nn { jlreqsetup } {
-  theindex_pagestyle .code:n = {
-    \def\jlreq@tempa{}% ページスタイル名
-    \def\jlreq@theindex@pagestyle{}%
-    \jlreq@tempafalse % restore
-    \jlreq@parsekeyval@nokey{%
-      \ifjlreq@parsekeyval@nokey@novalue{\def\jlreq@tempa{##1}}{%
-        \str_if_eq:nnT {##1} { restore } {
-          {restore}{\csname jlreq@tempa##2\endcsname}%
-        }%
-      }%
-    }{#1}%
-    \tl_put_right:Nx \jlreq@theindex@pagestyle {
-      \exp_not:n {\let\jlreq@theindex@savedpagestyle}\ifjlreq@tempa\exp_not:N \jlreq@current@pagestyle\else\exp_not:N \@undefined\fi
-    }%
-    \ifx\jlreq@tempa\@empty\else
-      \tl_put_right:Nx \jlreq@theindex@pagestyle{\exp_not:N \pagestyle{\exp_not:o \jlreq@tempa}}%
-    \fi
-  }
-}
+\def\jlreq@theindex@pagestyle{\pagestyle{plain}}
 
 %. 前付，後付，付録
 % \jlreq@matter@heading[restoreする見出し一覧を入れる制御綴]{#2@<見出し命令名>に今の見出しの中身を入れる}{生成する制御綴の名前}{設定}
@@ -6253,60 +6227,6 @@
 \hour=\time \divide\hour by 60
 \minute=\numexpr\time - 60*\hour\relax
 
-%.. 定理環境
-\jlreq@saveoriginalcs{@begintheorem}
-\jlreq@saveoriginalcs{@opargbegintheorem}
-\def\@begintheorem#1#2{\topsep=\dimexpr\jlreq@theorem@beforeafter@space\relax
-  \trivlist\labelsep=1\jlreq@zw
-  \itemindent=\dimexpr\jlreq@theorem@indent\relax
-  \jlreq@theorem@font
-   \item[\hskip \labelsep{\reset@font\jlreq@theorem@label@font #1\ #2}]}
-\def\@opargbegintheorem#1#2#3{\topsep=\dimexpr\jlreq@theorem@beforeafter@space\relax
-  \trivlist\labelsep=1\jlreq@zw
-  \itemindent=\dimexpr\jlreq@theorem@indent\relax
-  \jlreq@theorem@font
-  \item[\hskip \labelsep{\reset@font\jlreq@theorem@label@font #1\ #2（#3）}]}
-\RequirePackage{filehook}
-\AtEndOfPackageFile{amsthm}{
-  \jlreq@saveoriginalcs{proof}%
-  \jlreq@saveoriginalcs{endproof}%
-  \edef\jlreq@do{
-    \unexpanded{\def\jlreq@proof[#1]}{%
-      \unexpanded{\labelsep=1\jlreq@zw}%
-      \exp_not:o {\proof[{\reset@font\jlreq@proof@label@font #1\inhibitglue}\nopunct]}%
-    }
-  }
-  \jlreq@do
-  \def\proof{\@ifnextchar[{\jlreq@proof}{\jlreq@proof[\proofname]}}
-  \renewcommand{\proofname}{証明}
-  \jlreq@setupamsthm
-  \theoremstyle{jlreq}
-}
-\def\jlreq@setupamsthm{
-  \newtheoremstyle{jlreq}{\dimexpr\jlreq@theorem@beforeafter@space\relax}{\dimexpr\jlreq@theorem@beforeafter@space\relax}{\jlreq@theorem@font}{\dimexpr\jlreq@theorem@indent\relax}{\jlreq@theorem@label@font}{}{1\jlreq@zw}{\thmname{##1}\thmnumber{\ ##2}\thmnote{（##3）}}
-}
-\keys_define:nn { jlreqsetup } {
-  theorem_beforeafter_space .code:n = {
-    \def\jlreq@theorem@beforeafter@space{#1}
-    \begingroup\jlreq@tempdima=\dimexpr\jlreq@theorem@beforeafter@space\relax\endgroup
-    \@ifpackageloaded{amsthm}{\jlreq@setupamsthm}{}
-  },
-  theorem_indent .code:n = {
-    \def\jlreq@theorem@indent{#1}
-    \begingroup\jlreq@tempdima=\dimexpr\jlreq@theorem@indent\relax\endgroup
-    \@ifpackageloaded{amsthm}{\jlreq@setupamsthm}{}
-  },
-  theorem_font .code:n = {
-    \def\jlreq@theorem@font{#1}
-    \@ifpackageloaded{amsthm}{\jlreq@setupamsthm}{}
-  },
-  theorem_label_font .code:n = {
-    \def\jlreq@theorem@label@font{#1}
-    \@ifpackageloaded{amsthm}{\jlreq@setupamsthm}{}
-  },
-  proof_label_font .tl_set:N = \jlreq@proof@label@font
-}
-
 %. デフォルト設定
 %.. 見出し
 \if@tate
@@ -6588,16 +6508,7 @@
     appendix_precode = {}
   }
 }
-\jlreqsetup{theindex_pagestyle=plain}
 \jlreqsetup{year_style=seireki}
-\jlreqsetup{
-  theorem_beforeafter_space=1\baselineskip,
-  theorem_indent=0pt,
-  theorem_label_font = {\bfseries\gtfamily\sffamily},
-  theorem_font = {\normalfont},
-  proof_label_font = {\bfseries\gtfamily\sffamily},
-}
-
 
 \newcommand{\contentsname}{目次}
 \newcommand{\refname}{参考文献}
@@ -6618,6 +6529,23 @@
   \onecolumn
   \raggedbottom
 \fi
+
+%. complements...
+\tl_set:Nx \l__jlreq_tmpa_tl {
+  \exp_not:N \RequirePackage[
+    \ifx l\jlreq@engine lualatex\fi
+    \ifx p\jlreq@engine platex\fi
+    \ifx u\jlreq@engine uplatex\fi
+    ,setupname=jlreqsetup
+  ]{jlreq-complements}
+}
+\l__jlreq_tmpa_tl
+\jlreqsetup{
+  thebibliography_precode = { \jlreq@oldfontcommand@enable },
+  thebibliography_postcode = { \jlreq@oldfontcommand@disable },
+  theindex_precode = { \jlreq@oldfontcommand@enable },
+  theindex_postcode = { \jlreq@oldfontcommand@disable }
+}
 
 \ExplSyntaxOff
 \endinput

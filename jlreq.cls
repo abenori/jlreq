@@ -4572,7 +4572,7 @@
     }{
       % 真ん中のを完全に真ん中に配置するために左右の幅を0にしておく
       \tl_if_empty:nF { #2 } { \tl_set:Nx \l__jlreq_tmpa_tl { \exp_not:N \hbox to~0pt { \exp_not:o { \l__jlreq_tmpa_tl } \exp_not:N \hss } } }
-      \tl_if_empty:nF { #4 } { \tl_set:Nx \l__jlreq_tmpb_tl { \exp_not:N \hbox to~0pt { \exp_not:o { \l__jlreq_tmpb_tl } \exp_not:N \hss } } }
+      \tl_if_empty:nF { #4 } { \tl_set:Nx \l__jlreq_tmpb_tl { \exp_not:N \hbox to~0pt { \exp_not:N \hss \exp_not:o { \l__jlreq_tmpb_tl } } } }
       \tl_set:Nx \l__jlreq_tmpc_tl {
         \exp_not:o \l__jlreq_tmpa_tl\exp_not:N \hfil \exp_not:n {#3} \exp_not:N \hfil \exp_not:o \l__jlreq_tmpb_tl
       }

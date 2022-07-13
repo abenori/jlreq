@@ -159,7 +159,8 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - It has more compatibility with expl3.
 * 2021-08-12
     - Removed dependence on `etoolbox` package.
-
+* 2022-07-13
+    - Fixed a bug: an error occurred when loading.
 
 --------------
 Noriyuki Abe

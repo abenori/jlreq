@@ -173,6 +173,8 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Fixed other bugs.
 * 2022-04-11
     - Fixed a bug.
+* 2022-07-13
+    - Fixed a bug: The position of running heads were not correct.
 
 --------------
 Noriyuki Abe

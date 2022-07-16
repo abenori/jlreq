@@ -1669,19 +1669,19 @@
 
 %. 見出し関係 (4.1)
 % \clear***page
-\NewDocumentCommand{\cleartooddpage}{ O{} }{
+\newcommand{\jlreq@cleartooddpage}[1][]{
   \clearpage
   \ifodd\c@page\else
-    \jlreq@ifempty{#1}{}{\thispagestyle{#1}}%
+    \tl_if_empty:nF {#1} { \thispagestyle{#1} }%
     \hbox{}%
     \newpage
     \if@twocolumn\hbox{}\newpage\fi
   \fi
 }
-\NewDocumentCommand{\cleartoevenpage}{ O{} }{
+\newcommand{\jlreq@cleartoevenpage}[1][]{
   \clearpage
   \ifodd\c@page
-    \jlreq@ifempty{#1}{}{\thispagestyle{#1}}%
+    \tl_if_empty:nF {#1} { \thispagestyle{#1} }%
     \hbox{}%
     \newpage
     \if@twocolumn\hbox{}\newpage\fi
@@ -1826,7 +1826,7 @@
       }%
       \noexpand\def\exp_not:c {jlreq@headingcs@#1}{%
         % 改丁．これでよいのかな．
-        \unexpanded{\if@twocolumn\onecolumn\@restonecoltrue\else\@restonecolfalse\fi\cleartooddpage[empty]}%
+        \unexpanded{\if@twocolumn\onecolumn\@restonecoltrue\else\@restonecolfalse\fi\jlreq@cleartooddpage[empty]}%
         \ifx\jlreq@pagestyle\@empty\else\noexpand\thispagestyle{\exp_not:o {\jlreq@pagestyle}}\fi
         \noexpand\secdef{\exp_not:c {jlreq@TobiraHeading@start@#1}}{\exp_not:c {jlreq@TobiraHeading@start@s@#1}}}%
       \noexpand\def\exp_not:c {#1}{%
@@ -2362,8 +2362,8 @@
       pagebreak / clearpage            .code:n = {\def\jlreq@pagebreak{\clearpage}\jlreq@column@spanning@possibletrue},
       pagebreak / cleardoublepage      .code:n = {\def\jlreq@pagebreak{\cleardoublepage}\jlreq@column@spanning@possibletrue},
       pagebreak / clearcolumn          .code:n = {\if@twocolumn\def\jlreq@pagebreak{\newpage}\else\def\jlreq@pagebreak{}\fi\jlreq@column@spanning@possiblefalse},
-      pagebreak / begin_with_even_page .code:n = {\def\jlreq@pagebreak{\cleartoevenpage[empty]}\jlreq@column@spanning@possibletrue},
-      pagebreak / begin_with_odd_page  .code:n = {\def\jlreq@pagebreak{\cleartooddpage[empty]}\jlreq@column@spanning@possibletrue},
+      pagebreak / begin_with_even_page .code:n = {\def\jlreq@pagebreak{\jlreq@cleartoevenpage[empty]}\jlreq@column@spanning@possibletrue},
+      pagebreak / begin_with_odd_page  .code:n = {\def\jlreq@pagebreak{\jlreq@cleartooddpage[empty]}\jlreq@column@spanning@possibletrue},
       pagebreak / nariyuki             .code:n = {\def\jlreq@pagebreak{}\jlreq@column@spanning@possiblefalse},
       pagestyle .tl_set:N = \l__jlreq_pagestyle_tl,
       % 後々数字を受け付けるようになったりするかもしれないので……

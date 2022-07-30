@@ -5069,7 +5069,8 @@
   \vskip\abovecaptionskip
   \edef\jlreq@do{\unexpanded{\def\jlreq@tempa##1}{\jlreq@jlreqsetup@withenv@nameuse{jlreq@@makecaption@label@format@setting}{\jlreq@tempb}}}%
   \jlreq@do
-  \setbox\jlreq@tempboxa=\hbox{\jlreq@jlreqsetup@withenv@nameuse{jlreq@@makecaption@label@font@setting}{\jlreq@tempb}#1}%
+  % 最後の\relaxはhttps://github.com/abenori/jlreq/issues/112のため．
+  \setbox\jlreq@tempboxa=\hbox{\jlreq@jlreqsetup@withenv@nameuse{jlreq@@makecaption@label@font@setting}{\jlreq@tempb}#1\relax}%
   \ifdim\wd\jlreq@tempboxa=0pt
     \edef\jlreq@tempa{{\jlreq@jlreqsetup@withenv@nameuse{jlreq@@makecaption@font@setting}{\jlreq@tempb}\unexpanded{#2}}}%
   \else

@@ -695,6 +695,15 @@ local jfm = {
 		]]
 		},
 	},
+
+	[161] = { -- 半角カナ
+      chars = { '｡', '｢', '｣', '､', '･', 'ｦ', 'ｧ', 'ｨ', 'ｩ', 'ｪ', 'ｫ', 'ｬ', 'ｭ', 'ｮ', 'ｯ', 'ｰ', 'ｱ', 'ｲ', 'ｳ', 'ｴ', 'ｵ', 'ｶ', 'ｷ', 'ｸ', 'ｹ', 'ｺ', 'ｻ', 'ｼ', 'ｽ', 'ｾ', 'ｿ', 'ﾀ', 'ﾁ', 'ﾂ', 'ﾃ', 'ﾄ', 'ﾅ', 'ﾆ', 'ﾇ', 'ﾈ', 'ﾉ', 'ﾊ', 'ﾋ', 'ﾌ', 'ﾍ', 'ﾎ', 'ﾏ', 'ﾐ', 'ﾑ', 'ﾒ', 'ﾓ', 'ﾔ', 'ﾕ', 'ﾖ', 'ﾗ', 'ﾘ', 'ﾙ', 'ﾚ', 'ﾛ', 'ﾜ', 'ﾝ', 'ﾞ', 'ﾟ',},
+      
+		height = 0.88,depth = 0.12,width = 0.5,
+		align = 'left',
+		glue = {}
+	},
+
 	
 	--[[
 	[17] = { -- 等号類
@@ -748,6 +757,30 @@ local jfm = {
 			[29] = {0, 0, 0},
 			[30] = {0, 0.25, 0, priority = {0,0}},
 		]]
+		},
+	},
+	[191] = { -- 1/2数字，よくわからないので漢字等と同じ扱いにする
+		left = 0,
+		chars = {"AJ1-247","AJ1-248","AJ1-249","AJ1-250","AJ1-251","AJ1-252","AJ1-253","AJ1-254","AJ1-255","AJ1-256"},
+		align = 'left',
+		width = 0.5,height = 0.88,depth = 0.12,
+		glue = { -- あとで処理
+		},
+	},
+	[192] = { -- 1/3数字，同様
+		left = 0,
+		chars = {"AJ1-9758","AJ1-9759","AJ1-9760","AJ1-9761","AJ1-9762","AJ1-9763","AJ1-9764","AJ1-9765","AJ1-9766","AJ1-9767"},
+		align = 'left',
+		width = 1/3,height = 0.88,depth = 0.12,
+		glue = { -- あとで処理
+		},
+	},
+	[193] = { -- 1/4数字，同様
+		left = 0,
+		chars = {"AJ1-9738","AJ1-9739","AJ1-9740","AJ1-9741","AJ1-9742","AJ1-9743","AJ1-9744","AJ1-9745","AJ1-9746","AJ1-9747"},
+		align = 'left',
+		width = 1/4,height = 0.88,depth = 0.12,
+		glue = { -- あとで処理
 		},
 	},
 
@@ -1148,6 +1181,26 @@ local jfm = {
 		},
 	},
 }
+
+local function copy_jfm(from,to)
+	for tc,_ in pairs(jfm) do
+		if type(tc) == "number" then
+			if to ~= tc then
+				jfm[tc].glue[to] = jfm[tc].glue[from]
+			end
+		end
+	end
+end
+
+-- 191 = 1/3，192 = 1/4をコピー
+jfm[191].glue = jfm[0].glue
+jfm[192].glue = jfm[0].glue
+jfm[193].glue = jfm[0].glue
+jfm[161].glue = jfm[16].glue
+copy_jfm(0,191)
+copy_jfm(0,192)
+copy_jfm(0,193)
+copy_jfm(16,161)
 
 local function add_space(before,after,glueorkern,space,ratio)
 	if jfm[before][glueorkern] == nil then jfm[before][glueorkern] = {} end

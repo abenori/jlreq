@@ -697,11 +697,10 @@ local jfm = {
 	},
 
 	[161] = { -- 半角カナ
-      chars = { '｡', '｢', '｣', '､', '･', 'ｦ', 'ｧ', 'ｨ', 'ｩ', 'ｪ', 'ｫ', 'ｬ', 'ｭ', 'ｮ', 'ｯ', 'ｰ', 'ｱ', 'ｲ', 'ｳ', 'ｴ', 'ｵ', 'ｶ', 'ｷ', 'ｸ', 'ｹ', 'ｺ', 'ｻ', 'ｼ', 'ｽ', 'ｾ', 'ｿ', 'ﾀ', 'ﾁ', 'ﾂ', 'ﾃ', 'ﾄ', 'ﾅ', 'ﾆ', 'ﾇ', 'ﾈ', 'ﾉ', 'ﾊ', 'ﾋ', 'ﾌ', 'ﾍ', 'ﾎ', 'ﾏ', 'ﾐ', 'ﾑ', 'ﾒ', 'ﾓ', 'ﾔ', 'ﾕ', 'ﾖ', 'ﾗ', 'ﾘ', 'ﾙ', 'ﾚ', 'ﾛ', 'ﾜ', 'ﾝ', 'ﾞ', 'ﾟ',},
-      
-		height = 0.88,depth = 0.12,width = 0.5,
+      chars = {'ｦ', 'ｧ', 'ｨ', 'ｩ', 'ｪ', 'ｫ', 'ｬ', 'ｭ', 'ｮ', 'ｯ', 'ｰ', 'ｱ', 'ｲ', 'ｳ', 'ｴ', 'ｵ', 'ｶ', 'ｷ', 'ｸ', 'ｹ', 'ｺ', 'ｻ', 'ｼ', 'ｽ', 'ｾ', 'ｿ', 'ﾀ', 'ﾁ', 'ﾂ', 'ﾃ', 'ﾄ', 'ﾅ', 'ﾆ', 'ﾇ', 'ﾈ', 'ﾉ', 'ﾊ', 'ﾋ', 'ﾌ', 'ﾍ', 'ﾎ', 'ﾏ', 'ﾐ', 'ﾑ', 'ﾒ', 'ﾓ', 'ﾔ', 'ﾕ', 'ﾖ', 'ﾗ', 'ﾘ', 'ﾙ', 'ﾚ', 'ﾛ', 'ﾜ', 'ﾝ'},
+		width = 0.5, height = 0.88, depth = 0.12,
 		align = 'left',
-		glue = {}
+		glue = {} -- あとで
 	},
 
 	
@@ -1182,26 +1181,6 @@ local jfm = {
 	},
 }
 
-local function copy_jfm(from,to)
-	for tc,_ in pairs(jfm) do
-		if type(tc) == "number" then
-			if to ~= tc then
-				jfm[tc].glue[to] = jfm[tc].glue[from]
-			end
-		end
-	end
-end
-
--- 191 = 1/3，192 = 1/4をコピー
-jfm[191].glue = jfm[0].glue
-jfm[192].glue = jfm[0].glue
-jfm[193].glue = jfm[0].glue
-jfm[161].glue = jfm[16].glue
-copy_jfm(0,191)
-copy_jfm(0,192)
-copy_jfm(0,193)
-copy_jfm(16,161)
-
 local function add_space(before,after,glueorkern,space,ratio)
 	if jfm[before][glueorkern] == nil then jfm[before][glueorkern] = {} end
 	if jfm[before][glueorkern][after] == nil then jfm[before][glueorkern][after] = {0} end
@@ -1243,6 +1222,22 @@ if jlreq ~= nil then
 		end
 	end
 end
+
+local function copy_jfm(from,to)
+	if jfm[from].glue ~= nil then jfm[to].glue = table.fastcopy(jfm[from].glue) end
+	for tc,_ in pairs(jfm) do
+		if type(tc) == "number" then
+			if jfm[tc].glue[from] ~= nil then
+				jfm[tc].glue[to] = table.fastcopy(jfm[tc].glue[from])
+			end
+		end
+	end
+end
+
+copy_jfm(0,191)
+copy_jfm(0,192)
+copy_jfm(0,193)
+copy_jfm(16,161)
 
 
 luatexja.jfont.define_jfm(jfm)

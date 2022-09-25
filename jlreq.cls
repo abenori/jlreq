@@ -1898,11 +1898,15 @@
     \exp_not:o { \jlreq@resultc }
   }%
   % 連続する見出しの間の処理をするために，即時では出力せず，いったんマクロに格納する．
+  % \jlreq@BlockHeading@spaces@current@beforeoutsideiffirst@<n>
   % \jlreq@BlockHeading@spaces@current@before@<n>
   % \jlreq@BlockHeading@start@gyodori\jlreq@BlockHeading@spaces@current@space@<n>{jlreq@BlockHeading@spaces@current@output@<n>}
   % ↑\jlreq@BlockHeading@spaces@current@format@<n>で整形される．
   % \jlreq@BlockHeading@spaces@current@after@<n>
+  % \jlreq@BlockHeading@spaces@current@afteroutsidebox@<n>
+  % \jlreq@BlockHeading@spaces@current@afteroutsideiflast@<n>
   % として後に呼び出される．（spaceは書き換えられる可能性がある．）
+  % outsideとついているものは全体が行取りされた場合はその外に出される．
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@output@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
     \exp_not:o {\jlreq@resultb}%
   }%
@@ -1910,27 +1914,31 @@
     \exp_not:o {\jlreq@tempb}%
   }%
   \long\def\@tempa##1##2##3{##1}%
-  \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@before@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
+  \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@beforeoutsideiffirst@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
     \exp_not:o {\@tempa#4}%
-    \exp_not:o {\jlreq@resulta}%
     \ifjlreq@tempa\unexpanded{%
       \jlreq@setcurrentpage
       \edef\jlreq@BlockHeading@currentpage{\the\jlreq@currentpage}%
     }\fi
+  }%
+  \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@before@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
+    \exp_not:o {\jlreq@resulta}%
   }%
   \long\def\@tempa##1##2##3{##2}%
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@format@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
     \exp_not:o {\@tempa#4}%
   }%
   \long\def\@tempa##1##2##3{##3}%
-  \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
+  \expandafter\gdef\csname jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
+  }%
+  \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@afteroutsideiflast@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
     \ifjlreq@tempa\unexpanded{%
       \ifx\jlreq@BlockHeading@currentpage\@empty\nobreak\else
         \ifodd\jlreq@BlockHeading@currentpage\nobreak\else\allowbreak\fi
       \fi
     }\else\noexpand\nobreak\fi
     \exp_not:o {\@tempa#4}%
-  }%
+  }
   \ifx\jlreq@BlockHeading@spaces@headingslist\@empty
     \expandafter\jlreq@BlockHeading@spaces@outputwospace
     \expandafter\ignorespaces
@@ -2560,7 +2568,7 @@
 %     それ以外：空き量
 %       最初や最後に空き量指定がある場合は，全体への指定に組み込むことにする．
 %
-% 現在状況保存に以下のマクロを使う
+% 現在状況保存に以下のマクロを使う，nは1から始まる．
 % \jlreq@BlockHeading@spaces@current@sequence
 %   : 現在どのような見出しが続いているかリスト．
 % \jlreq@BlockHeading@spaces@current@space@<n>
@@ -2571,8 +2579,12 @@
 %   : 現在処理中のn番目の見出しのフォーマット．行取りマクロを包み込むようにする．
 % \jlreq@BlockHeading@spaces@current@before@<n>
 %   : n番目の見出しの前に出すもの
+% \jlreq@BlockHeading@spaces@current@beforeoutsideiffirst@<n>
+%   : n番目の見出しの前に出すもの．現在処理中の最初の見出しの時はボックスの前に出す．
 % \jlreq@BlockHeading@spaces@current@after@<n>
 %   : n番目の見出しの後ろに出すもの
+% \jlreq@BlockHeading@spaces@current@afteroutsideiflast@<n>
+%   : n番目の見出しの前に出すもの．現在処理中の最後の見出しの時はボックスのあとに出す．
 % \jlreq@BlockHeading@spaces@current@afteroutsidebox@<n>
 %   : n番目の見出しの後ろに出すが，ボックスの外に出すもの（\markなどが想定）
 % \jlreq@BlockHeading@spaces@current@count
@@ -2743,7 +2755,10 @@
 \def\jlreq@BlockHeading@spaces@outputwospace@{%
   \ifnum\jlreq@tempcnta<\jlreq@BlockHeading@spaces@current@count
     \advance\jlreq@tempcnta by 1
-    \tl_put_right:Nx \jlreq@do {\exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@before@\the\jlreq@tempcnta}}%
+    \tl_put_right:Nx \jlreq@do {
+      \exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@beforeoutsideiffirst@\the\jlreq@tempcnta}
+      \exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@before@\the\jlreq@tempcnta}
+    }%
     \edef\jlreq@tempa{%
       \unexpanded{\long\def\jlreq@tempa##1}{\exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@format@\the\jlreq@tempcnta}}%
     }%
@@ -2759,6 +2774,7 @@
       \jlreq@tempb
       \exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@afteroutsidebox@\the\jlreq@tempcnta}%
       \exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@after@\the\jlreq@tempcnta}%
+      \exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@afteroutsideiflast@\the\jlreq@tempcnta}%
     }%
     \expandafter\jlreq@BlockHeading@spaces@outputwospace@
   \fi
@@ -2773,6 +2789,7 @@
   \legacy_if:nTF { jlreq@tempa } {
     \jlreq@BlockHeading@spaces@output@@{*}#2\jlreq@endmark
     \tl_set:Nx \l__jlreq_do_tl {
+      \exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@beforeoutsideiffirst@1}
       \exp_not:n { \jlreq@BlockHeading@start@gyodori#1 } {
         \exp_not:o { \jlreq@result }
       }
@@ -2782,13 +2799,16 @@
         \exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@afteroutsidebox@##1}
       }
     }
+    \tl_put_right:Nx \l__jlreq_do_tl {
+      \exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@afteroutsideiflast@\the\jlreq@BlockHeading@spaces@current@count}
+    }
   }{
     \jlreq@BlockHeading@spaces@output@@{}#2\jlreq@endmark
     \tl_set:Nx \l__jlreq_do_tl { \exp_not:o { \jlreq@result } }
   }
   \jlreq@BlockHeading@spaces@clear
-  \message{[[output headings]]}
-  \message{\exp_not:o \l__jlreq_do_tl}
+%  \message{[[output~headings]]}
+%  \message{\exp_not:o \l__jlreq_do_tl}
   \l__jlreq_do_tl
 }
 % jlreq@resultに出力すべきものを入れていく
@@ -2833,12 +2853,18 @@
     }}%
   }%
   \tl_put_right:Nx \jlreq@result {%
+    \bool_if:nT { \tl_if_empty_p:n {#1} || \int_compare_p:n { \jlreq@tempcnta > 0 } } {
+      \exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@beforeoutsideiffirst@\the\jlreq@tempcnta}%
+    }
     \exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@before@\the\jlreq@tempcnta}%
     \jlreq@tempb
     \tl_if_empty:nT { #1 } {
       \exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@afteroutsidebox@\the\jlreq@tempcnta}%
     }
     \exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@after@\the\jlreq@tempcnta}%
+    \bool_if:nT { \tl_if_empty_p:n {#1} || \int_compare_p:n { \jlreq@tempcnta < \jlreq@BlockHeading@spaces@current@count } } {
+      \exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@afteroutsideiflast@\the\jlreq@tempcnta}%
+    }
   }%
 }
 
@@ -2851,7 +2877,9 @@
       \expandafter\global\expandafter\let\csname jlreq@BlockHeading@spaces@current@space@\the\jlreq@tempcnta\endcsname=\@undefined
       \expandafter\global\expandafter\let\csname jlreq@BlockHeading@spaces@current@output@\the\jlreq@tempcnta\endcsname=\@undefined
       \expandafter\global\expandafter\let\csname jlreq@BlockHeading@spaces@current@before@\the\jlreq@tempcnta\endcsname=\@undefined
+      \expandafter\global\expandafter\let\csname jlreq@BlockHeading@spaces@current@beforeoutsideiffirst@\the\jlreq@tempcnta\endcsname=\@undefined
       \expandafter\global\expandafter\let\csname jlreq@BlockHeading@spaces@current@after@\the\jlreq@tempcnta\endcsname=\@undefined
+      \expandafter\global\expandafter\let\csname jlreq@BlockHeading@spaces@current@afteroutsideiflast@\the\jlreq@tempcnta\endcsname=\@undefined
       \expandafter\global\expandafter\let\csname jlreq@BlockHeading@spaces@current@afteroutsidebox@\the\jlreq@tempcnta\endcsname=\@undefined
     }%
     \gdef\jlreq@BlockHeading@spaces@current@sequence{}%

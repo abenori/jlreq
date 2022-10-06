@@ -40,7 +40,7 @@
     \int_compare_p:n { (\ltjgetparameter{direction}-(\ltjgetparameter{direction}/8)*8) == 3 } 
   }
 }{
-  \prg_new_conditional:Nnn \__jlreq_complements_iftdir: { T, F, TF} { \legacy_if_p:n { tdir } }
+  \prg_new_conditional:Nnn \__jlreq_complements_iftdir: { T, F, TF} { \iftdir \prg_return_true: \else \prg_return_false: \fi }
 }
 
 \@ifundefined{jlreq@zw}{

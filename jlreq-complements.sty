@@ -146,14 +146,15 @@
   { \keys_set:Vn \g__jlreq_complements_setupname_str { theindex_yoko = false } }
   { \keys_set:Vn \g__jlreq_complements_setupname_str { theindex_yoko = true } }
 
-
 \bool_new:N \l__jlreq_complements_resttate_bool
+\bool_new:N \l__jlreq_complements_theindex_maincolumn_bool
 \renewenvironment{theindex}{%
   \prop_item:Nn \g__jlreq_complements_theindex_prop { precode }
   \bool_set_false:N \l__jlreq_complements_resttate_bool
   \bool_if:NT \g__jlreq_complements_theindex_yoko_bool {
     \__jlreq_complements_iftdir:T { \clearpage \yoko \bool_set_true:N \l__jlreq_complements_resttate_bool }
   }
+  \bool_set:Nn \l__jlreq_complements_theindex_maincolumn_bool { \legacy_if_p:n { @twocolumn } }
   \bool_if:NTF \g__jlreq_complements_theindex_twocolumn_bool {
     \setlength{\columnseprule}{ \prop_item:Nn \g__jlreq_complements_theindex_prop { column_rule_width } }
     \setlength{\columnsep} { \prop_item:Nn \g__jlreq_complements_theindex_prop { column_gap } }
@@ -173,9 +174,9 @@
   \let\item\@idxitem
 }{%
   \bool_if:NTF \g__jlreq_complements_theindex_twocolumn_bool {
-    \legacy_if:nF { @twocolumn } { \onecolumn }
+    \bool_if:NF \l__jlreq_complements_theindex_maincolumn_bool { \onecolumn }
   }{
-    \legacy_if:nT { @twocolumn } { \twocolumn }
+    \bool_if:NT \l__jlreq_complements_theindex_maincolumn_bool { \twocolumn }
   }
   \clearpage
   \bool_if:NT \l__jlreq_complements_resttate_bool { \tate }

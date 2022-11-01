@@ -165,8 +165,6 @@
 \tombowdatetrue
 % flag: `show` is specified or not
 \newif\ifjlreq@trimmarks@option@show \jlreq@trimmarks@option@showfalse
-\tl_new:N \g__jlreq_trimmarks_pattern_topcenter_tl
-\tl_new:N \g__jlreq_trimmarks_pattern_bottomcenter_tl
 
 \keys_define:nn { jlreq-trimmarks } {
   show .code:n = {
@@ -337,10 +335,33 @@
   \jlreq@do
 }
 
-\keys_define:nn { jlreq-trimmarks-pattern } {
-  top-center .tl_gset:N = \g__jlreq_trimmarks_pattern_topcenter_tl,
-  bottom-center .tl_gset:N = \g__jlreq_trimmarks_pattern_bottomcenter_tl
+\tl_new:N \g__jlreq_trimmarks_pattern_center_top_tl
+\tl_new:N \g__jlreq_trimmarks_pattern_center_bottom_tl
+\tl_new:N \g__jlreq_trimmarks_pattern_center_left_tl
+\tl_new:N \g__jlreq_trimmarks_pattern_center_right_tl
+\cs_set:Nn \__jlreq_check_rotatebox:n {
+  \@ifundefined{rotatebox}{
+    \PackageError{jlreq-trimmarks}{`\string\rotatebox'~is~needed~to~use~#1,~please~load~the~package~`graphicx'~or~its~variant}{\@ehc}
+  }{}
 }
+\keys_define:nn { jlreq-trimmarks-pattern } {
+  top-center .tl_gset:N = \g__jlreq_trimmarks_pattern_center_top_tl,
+  center-top .tl_gset:N = \g__jlreq_trimmarks_pattern_center_top_tl,
+  bottom-center .tl_gset:N = \g__jlreq_trimmarks_pattern_center_bottom_tl,
+  center-bottom .tl_gset:N = \g__jlreq_trimmarks_pattern_center_bottom_tl,
+  center-left .tl_gset:N = \g__jlreq_trimmarks_pattern_center_left_tl,
+  left-center .tl_gset:N = \g__jlreq_trimmarks_pattern_center_left_tl,
+  center-right .tl_gset:N = \g__jlreq_trimmarks_pattern_center_right_tl,
+  right-center .tl_gset:N = \g__jlreq_trimmarks_pattern_center_right_tl,
+  centers .code:n = {
+    \__jlreq_check_rotatebox:n { trimmarks_pattern/centers }
+    \tl_gset:Nn \g__jlreq_trimmarks_pattern_center_top_tl {#1}
+    \tl_gset:Nn \g__jlreq_trimmarks_pattern_center_left_tl { \rotatebox[origin=cb]{90}{#1} }
+    \tl_gset:Nn \g__jlreq_trimmarks_pattern_center_bottom_tl { \rotatebox[origin=cb]{180}{#1} }
+    \tl_gset:Nn \g__jlreq_trimmarks_pattern_center_right_tl { \rotatebox[origin=cb]{270}{#1} }
+  },
+}
+
 \keys_define:nn { jlreqtrimmarkssetup } {
   banner .code:n = {
     \clist_map_variable:nNn { odd,even } \@tempa {
@@ -460,15 +481,23 @@
   banner_font={\@bannerfont},
   color={},
   trimmarks_pattern = {
+    top-center = {
+      \vrule width10mm~height\@tombowwidth depth\z@
+      \vrule height10mm~width\@tombowwidth depth\z@
+      \vrule width10mm~height\@tombowwidth depth\z@
+    },
     bottom-center = {
       \vrule width10mm~depth\@tombowwidth height\z@
       \vrule depth10mm~width\@tombowwidth height\z@
       \vrule width10mm~depth\@tombowwidth height\z@
     },
-    top-center = {
-      \vrule width10mm~height\@tombowwidth depth\z@
-      \vrule height10mm~width\@tombowwidth depth\z@
-      \vrule width10mm~height\@tombowwidth depth\z@
+    center-right = {
+      \vrule height 10mm depth10mm width\@tombowwidth
+      \vrule height.5\@tombowwidth depth.5\@tombowwidth width10mm
+    },
+    center-left = {
+      \vrule width10mm height.5\@tombowwidth depth.5\@tombowwidth
+      \vrule height10mm depth10mm width\@tombowwidth
     }
   }
 }
@@ -580,7 +609,7 @@
         \setbox\jlreq@tempboxa=\hbox{% \@TC
           \yoko
           \setbox\jlreq@tempboxb=\hbox{
-            \g__jlreq_trimmarks_pattern_topcenter_tl
+            \g__jlreq_trimmarks_pattern_center_top_tl
           }%
           \jlreq@tempdima=\wd\jlreq@tempboxb\relax
           \ht\jlreq@tempboxb=0pt \dp\jlreq@tempboxb=0pt \wd\jlreq@tempboxb=0pt
@@ -689,7 +718,7 @@
       \hbox to\@@paperwidth{%
         \hbox to\z@{% \@CL
           \yoko\hss
-          \vrule width10mm height.5\@tombowwidth depth.5\@tombowwidth
+          \g__jlreq_trimmarks_pattern_center_left_tl
           \jlreq@trimmarks@outputbanner{before@center@left}{%
             \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\hss\adjustbaseline\jlreq@trimmarks@bannerfont##1\hskip 5mm}%
             \ifx l\jlreq@trimmarks@engine
@@ -710,7 +739,6 @@
             \dp\jlreq@tempboxa=0pt \ht\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
             \kern-\jlreq@tempdima\box\jlreq@tempboxa\kern\jlreq@tempdima
           }%
-          \vrule height10mm depth10mm width\@tombowwidth
           \jlreq@trimmarks@outputbanner{in@center@left}{%
             \setbox\jlreq@tempboxa=\hbox{\tate\adjustbaseline\jlreq@trimmarks@bannerfont##1}%
             \ifx l\jlreq@trimmarks@engine
@@ -739,7 +767,6 @@
             \dp\jlreq@tempboxa=0pt \ht\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
             \kern-\jlreq@tempdima\raise\jlreq@tempdimb\box\jlreq@tempboxa\kern\jlreq@tempdima
           }%
-          \vrule height10mm depth10mm width\@tombowwidth
           \jlreq@trimmarks@outputbanner{before@center@right}{%
             \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\hss\adjustbaseline\jlreq@trimmarks@bannerfont##1\hskip 5mm}%
             \jlreq@tempdima=\dimexpr 4pt \ifx l\jlreq@trimmarks@engine + \dp\jlreq@tempboxa\fi\relax
@@ -752,7 +779,8 @@
             \dp\jlreq@tempboxa=0pt \ht\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
             \kern\jlreq@tempdima\box\jlreq@tempboxa\kern-\jlreq@tempdima
           }%
-          \vrule height.5\@tombowwidth depth.5\@tombowwidth width10mm\hss
+          \g__jlreq_trimmarks_pattern_center_right_tl
+          \hss
         }%
       }%
       \vfill
@@ -840,7 +868,7 @@
         \setbox\jlreq@tempboxa=\hbox{% \@BC
           \yoko
           \setbox\jlreq@tempboxb=\hbox{
-            \g__jlreq_trimmarks_pattern_bottomcenter_tl
+            \g__jlreq_trimmarks_pattern_center_bottom_tl
           }%
           \jlreq@tempdimb=\wd\jlreq@tempboxb
           \ht\jlreq@tempboxb=0pt \dp\jlreq@tempboxb=0pt \wd\jlreq@tempboxb=0pt

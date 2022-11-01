@@ -131,6 +131,24 @@ Set the color of the trim marks. You have to load a package which defines `\colo
 * `black` -> `\color{black}`
 * `[cmyk]0.5,0.5,0.5,0` -> `\color[cmyk]{0.5,0.5,0.5,0}`
 
+### `trimmarks_pattern`
+Set the shape of the trim marks by the code. You can change the shapes of trim marks at the centers of top, bottom, left and right by the following code. Here, the specified code is the code for the top-center trim marks and rotated ones are put at the other places. Here, `graphicx` code should be loaded.
+```latex
+\jlreqtrimmarkssetup{
+  trimmarks_pattern = {
+    centers = {
+      \raisebox{3mm}{
+        \vrule width10mm height\jlreqtrimmarkswidth depth 0pt
+        \vrule height10mm width\jlreqtrimmarkswidth depth 3mm
+        \vrule width10mm height\jlreqtrimmarkswidth depth 0pt
+      }
+    }
+  }
+}
+```
+You can specify shapes for top, bottom, left and right independently. For example, you can change the shape at the top-center by `top-center=<code>`. Similarly one can use `bottom-center`，`left-center`，`right-center`. `graphix` package is not needed for these keys.
+
+
 ## LICENSE
 This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENSE).
 

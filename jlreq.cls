@@ -5,10 +5,10 @@
 %%
 % (based on JLReq 20200811 https://www.w3.org/TR/2020/NOTE-jlreq-20200811/)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{jlreq}[2022/07/13 jlreq]
+\ProvidesClass{jlreq}[2022/11/28 jlreq]
 \RequirePackage{l3keys2e}
 \RequirePackage{etoolbox}
-\RequirePackage{jlreq-helpers}[2021/08/12]
+\RequirePackage{jlreq-helpers}[2022/11/28]
 
 \ExplSyntaxOn
 \int_new:N \l__jlreq_tmpa_int
@@ -6590,7 +6590,7 @@
     \ifx p\jlreq@engine platex\fi
     \ifx u\jlreq@engine uplatex\fi
     ,setupname=jlreqsetup
-  ]{jlreq-complements}[2022-07-13]
+  ]{jlreq-complements}[2022-11-28]
 }
 \l__jlreq_tmpa_tl
 \jlreqsetup{

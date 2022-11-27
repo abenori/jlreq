@@ -175,6 +175,11 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Fixed a bug.
 * 2022-07-13
     - Fixed a bug: The position of running heads were not correct.
+* 2022-11-28
+    - Fixed a bug: did not register to running head when `\SetBlockHeadingSpaces` is used.
+    - Fixed a bug: wrong papersize for ISO C4.
+    - Added a package `jlreq-complements`
+    - Fixed some other bugs and adjust with some other packages.
 
 --------------
 Noriyuki Abe

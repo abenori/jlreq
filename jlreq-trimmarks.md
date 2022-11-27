@@ -179,6 +179,8 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Removed dependence on `etoolbox` package.
 * 2022-07-13
     - Fixed a bug: an error occurred when loading.
+* 2022-11-28
+    - Added `trimmarks_pattern` to `\jlreqtrimmarkssetup`.
 
 --------------
 Noriyuki Abe

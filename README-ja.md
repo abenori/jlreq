@@ -378,7 +378,7 @@ JFMの名前は次の通りです．`[]`で囲まれている文字は設定に�
 * `platex`, `uplatex`, `lulalatex`：エンジンの指定です．
 * `setupname=<名前>`：カスタマイズするための命令名を指定します．デフォルトでは`jlreqcomplementssetup`で，`jlreqcomplementssetup{<設定項目>}`とプリアンブルに書くことで設定できます．
 
-`jlreq`内では`\usepackage[<jlreq内で認識しているエンジン},setupname=jlreqsetup]{jlreq-complements}`相当で読み込みがされていますので，今までの`\jlreqsetup`で環境のカスタマイズをすることができます．なお，このように既存の名前を指定してうまく行くためにはもともとの命令と整合的である必要があります．通常は避けた方がよいでしょう．
+`jlreq`内では`\usepackage[<jlreq内で認識しているエンジン>,setupname=jlreqsetup]{jlreq-complements}`相当で読み込みがされていますので，今までの`\jlreqsetup`で環境のカスタマイズをすることができます．なお，このように既存の名前を指定してうまく行くためにはもともとの命令と整合的である必要があります．通常は避けた方がよいでしょう．
 
 ### `thebibliography`環境
 * `thebibliography_heading=<コード>`：`thebibliography`環境の見出しを出力する命令を指定します．

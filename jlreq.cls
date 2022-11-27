@@ -6590,7 +6590,7 @@
     \ifx p\jlreq@engine platex\fi
     \ifx u\jlreq@engine uplatex\fi
     ,setupname=jlreqsetup
-  ]{jlreq-complements}[2022-11-28]
+  ]{jlreq-complements}[2022/11/28]
 }
 \l__jlreq_tmpa_tl
 \jlreqsetup{

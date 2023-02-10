@@ -3055,7 +3055,7 @@
     \dim_set:Nn \l__jlreq_tmpa_dim { \l__jlreq_tmpa_dim / \l__jlreq_cutinheading_linecount_tl }
     % \l_jlreq_tmpb_boxに見出し部分を，\l__jlreq_cutinheading_linecount_tlに見出し自身に何行使うかを入れる
     \int_compare:nTF { \l__jlreq_cutinheading_linecount_tl = 1 }{
-      \vbox_set:Nn \l_jlreq_tmpb_box {\parindent=0pt\rightskip=0pt\leftskip=0pt\hbox_unpack_drop:N \l_jlreq_tmpa_box}
+      \vbox_set:Nn \l_jlreq_tmpb_box {\parindent=0pt\rightskip=0pt\leftskip=0pt\box_use_drop:N \l_jlreq_tmpa_box}
       \tl_set:Nn \l__jlreq_cutinheading_linecount_tl {2}
     }{
       \jlreq@inlinenote@determinelength{#6}{#1}{}{\l__jlreq_cutinheading_linecount_tl}{\l__jlreq_cutinheading_linecount_tl}{\l__jlreq_tmpa_dim}{\linewidth}%

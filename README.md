@@ -180,6 +180,8 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Fixed a bug: wrong papersize for ISO C4.
     - Added a package `jlreq-complements`
     - Fixed some other bugs and adjust with some other packages.
+* 2023-03-05
+    - Fixed a bug on cutin headings.
 
 --------------
 Noriyuki Abe

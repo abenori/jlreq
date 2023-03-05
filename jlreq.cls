@@ -5,7 +5,7 @@
 %%
 % (based on JLReq 20200811 https://www.w3.org/TR/2020/NOTE-jlreq-20200811/)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{jlreq}[2022/11/28 jlreq]
+\ProvidesClass{jlreq}[2023/03/05 jlreq]
 \RequirePackage{l3keys2e}
 \RequirePackage{etoolbox}
 \RequirePackage{jlreq-helpers}[2022/11/28]

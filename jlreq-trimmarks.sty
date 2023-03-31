@@ -571,9 +571,9 @@
 % left=gutter?
 \def\ifjlreq@trimmarks@leftisgutter{%
   \ifjlreq@trimmarks@tate {
-    \bool_if:nTF {  ! ( \int_if_odd_p:n { \c@page } || ! \legacy_if_p:n { @twoside } ) )  }
+    \bool_if:nTF {  ! ( \int_if_odd_p:n { \c@page } || ! \legacy_if_p:n { @twoside } ) }
   }{
-    \bool_if:nTF { ( \int_if_odd_p:n { \c@page } || ! \legacy_if_p:n { @twoside } ) }
+    \bool_if:nTF {    ( \int_if_odd_p:n { \c@page } || ! \legacy_if_p:n { @twoside } ) }
   }
 }
 \def\jlreq@trimmarks@bleed@left{\ifjlreq@trimmarks@leftisgutter{\jlreq@trimmarks@bleed@gutter}{\expandafter\csname jlreq@trimmarks@bleed@fore-edge\endcsname}}

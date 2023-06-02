@@ -2216,10 +2216,11 @@
   \jlreq@ifgluezero\jlreq@tempskipb{}{\vskip\jlreq@tempskipb}%
   \edef\jlreq@do{%
     \dim_compare:nF { \parskip=0pt } {
-      \exp_not:N \cs_set:Nn \exp_not:N \g__jlreq_gyodori_hook_par: {
-        \noexpand\parskip=\the\parskip\noexpand\relax
-        \exp_not:n { \cs_set:Nn \g__jlreq_gyodori_hook_par: {} }
-      }
+%      \exp_not:N \cs_set:Nn \exp_not:N \g__jlreq_gyodori_hook_par: {
+%        \noexpand\parskip=\the\parskip\noexpand\relax
+%        \exp_not:n { \cs_set:Nn \g__jlreq_gyodori_hook_par: {} }
+%      }
+      \exp_not:N \AddToHook { para/before } { \noexpand\parskip=\the\parskip\noexpand\relax }
       \noexpand\parskip=0pt
     }
   }%

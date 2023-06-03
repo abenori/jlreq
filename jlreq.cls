@@ -2908,7 +2908,7 @@
     \unexpanded{%
     \if@noskipsec\leavevmode\fi
     \begingroup
-      \def\jlreq@do{\global\@noskipsectrue}%
+      \def\jlreq@do{\@nobreakfalse\global\@noskipsectrue}%
       \ifnum0\jlreq@ifempty{#3}{}{1}\ifnum #2>\c@secnumdepth 1\fi>0
         \def\jlreq@tempa##1{#8}%
       \else
@@ -2917,7 +2917,6 @@
       \fi
       \par}%
       \unexpanded{\tl_put_right:Nx \jlreq@do}{%
-        \unexpanded{\unexpanded{\@nobreakfalse\global\@noskipsectrue}}%
         \unexpanded{\noexpand\everypar}{%
           \unexpanded{%
           \noexpand\if@noskipsec

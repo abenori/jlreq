@@ -2917,6 +2917,7 @@
       \fi
       \par}%
       \unexpanded{\tl_put_right:Nx \jlreq@do}{%
+        \unexpanded{\unexpanded{\@nobreakfalse\global\@noskipsectrue}}%
         \unexpanded{\noexpand\everypar}{%
           \unexpanded{%
           \noexpand\if@noskipsec
@@ -2930,9 +2931,9 @@
           \noexpand\else
             \unexpanded{\everypar{}}%
           }%
-            \ifx l\jlreq@engine\else
-              \unexpanded{\unexpanded{\let\jlreq@hook@everypar\jlreq@openbracket@hook}}%
-            \fi
+          \ifx l\jlreq@engine\else
+            \unexpanded{\unexpanded{\let\jlreq@hook@everypar\jlreq@openbracket@hook}}%
+          \fi
          \unexpanded{\noexpand\fi}%
         }%
       }%

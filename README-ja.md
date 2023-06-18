@@ -381,7 +381,7 @@ JFMの名前は次の通りです．`[]`で囲まれている文字は設定に�
 `jlreq`内では`\usepackage[<jlreq内で認識しているエンジン>,setupname=jlreqsetup]{jlreq-complements}`相当で読み込みがされていますので，今までの`\jlreqsetup`で環境のカスタマイズをすることができます．なお，このように既存の名前を指定してうまく行くためにはもともとの命令と整合的である必要があります．通常は避けた方がよいでしょう．
 
 ### `thebibliography`環境
-* `thebibliography_heading=<コード>`：`thebibliography`環境の見出しを出力する命令を指定します．
+* `thebibliography_heading=<コード>`：`thebibliography`環境の見出しを出力する命令を指定します．`thebibliography_heading={\section*{\refname}}`のように使います．
 * `thebibliography_after_label_space=<寸法>`：`thebibliography`環境における各項目のラベル以降の空きを指定します．
 * `thebibliography_indent=<寸法>`：`thebibliography`環境全体の字下げ量を指定します．
 * `thebibliography_mark=<コード>`：`thebibliography`環境の見出しを柱に登録するためのコードを指定します．
@@ -401,7 +401,7 @@ JFMの名前は次の通りです．`[]`で囲まれている文字は設定に�
 * `theorem_label_font=<フォント設定コード>`：定理環境のラベル部分のフォントを設定します．
 * `theorem_font=<フォント設定コード>`：定理環境本体のフォントを設定します．
 * `theorem_indent=<寸法>`：定理環境本体の字下げ量を指定します．
-* `proof_label_font=<フォント設定コード>`：`amsthm`パッケージが読み込まれたときのみ有効な設定です．
+* `proof_label_font=<フォント設定コード>`：`amsthm`パッケージが読み込まれたときのみ有効な設定です．`proof`環境のラベルのフォントを指定します．
 
 `amsthm`パッケージが読み込まれると，新しい定理スタイル`jlreq`が定義され，現在のスタイルが`jlreq`へと変更されます．このとき，上記設定はこの`jlreq`スタイルへの設定として機能します．
 
@@ -572,6 +572,10 @@ JFMの名前は次の通りです．`[]`で囲まれている文字は設定に�
     - その他バグ修正やその他のパッケージとの調整など．
 * 2023-03-05
     - 窓見出しに関するバグ修正
+* 2023-06-19
+    - LuaLaTeX利用時の`everyhook'パッケージの利用をやめた（ドキュメントと整合的でなかった）．
+    - `enumerate'環境直前の空白が入らないことがあったのを修正．
+    - `use_reverse_pagination`に関するバグ修正．
 
 --------------
 Noriyuki Abe

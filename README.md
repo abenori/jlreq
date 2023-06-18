@@ -182,6 +182,10 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Fixed some other bugs and adjust with some other packages.
 * 2023-03-05
     - Fixed a bug on cutin headings.
+* 2023-06-19
+    - Stopped to load `everyhook' package LuaLaTeX (it was not compatible with the document).
+    - Fixed a bug: a space before `enumerate' environment was not inserted sometimes.
+    - Fixed a bug on `use_reverse_pagination`.
 
 --------------
 Noriyuki Abe

@@ -181,6 +181,8 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Fixed a bug: an error occurred when loading.
 * 2022-11-28
     - Added `trimmarks_pattern` to `\jlreqtrimmarkssetup`.
+* 2023-06-19
+    - Fixed a bug: an error occurred when the package is loaded with tate mode.
 
 --------------
 Noriyuki Abe

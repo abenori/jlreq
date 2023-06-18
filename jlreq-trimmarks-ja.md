@@ -187,6 +187,8 @@ dviドライバの指定です．エンジンに`lualatex`を利用する場合�
     - 読み込み時にエラーが出るバグ修正．
 * 2022-11-28
     - `trimmarks_pattern`を`\jlreqtrimmarkssetup`に追加．
+* 2023-06-19
+    - 縦書きで読み込み時にエラーが出るバグ修正．
 
 --------------
 Noriyuki Abe

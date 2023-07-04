@@ -2082,6 +2082,7 @@
       \jlreq@ifempty{#2}{}{\unexpanded{\hsize=\dimexpr\hsize - #2\relax}}%
       \jlreq@ifempty{#3}{}{\unexpanded{\hsize=\dimexpr\hsize - #3\relax}}%
       \unexpanded{#4}%
+      \par
     }%
   }%
 }
@@ -2129,7 +2130,7 @@
 % {1 = 前空き}{2 = 後ろ空き}{3 = トータル行数}{4 = 出力}
 % 最後には\nobreak（と\vskip）が入っている
 \long\def\jlreq@BlockHeading@start@gyodori#1#2#3#4{\par{%
-  \setbox\jlreq@tempboxa=\vbox{#4}%
+  \setbox\jlreq@tempboxa=\vbox{#4\par}%
   % \jlreq@tempskip(a/b)に前/後ろに入れるべき値を入れる
   % #1がa:ならばその値は\jlreq@tempskipaには足さず\jlreq@tempskipcに入れておく
   \jlreq@tempskipa=0pt

@@ -5743,8 +5743,6 @@
 }{
   \keys_set:nn { jlreqsetup } { tableofcontents_heading = { \chapter*{\contentsname} } }
 }
-  
-
 
 % JIS X 4051自身の目次に近づけようかと……なりきれてないけど．
 % 文字の大きさは全て同じ（\normalsize）にする．
@@ -5754,8 +5752,8 @@
 % 「トップ」というか，一番最初に現れた見出しを入れる．
 % リーダーは.から・に変更しました．
 \def\@dottedtocline#1#2#3#4#5{%
-  \jlreq@set@top@contents{#1}%
   \ifnum #1>\c@tocdepth \else
+    \jlreq@set@top@contents{#1}%
     \vskip\toclineskip
     {\leftskip #2\relax \rightskip \@tocrmarg \parfillskip -\rightskip
     \parindent #2\relax\@afterindenttrue
@@ -5773,7 +5771,8 @@
     \hfill\nobreak
     \hb@xt@\@pnumwidth{\hss\normalfont\normalcolor #5}%
     \par}%
-  \fi}
+  \fi
+}
 
 % listoffigures
 \newcommand{\listoffigures}{%

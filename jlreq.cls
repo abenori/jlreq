@@ -5731,17 +5731,31 @@
 \newcommand{\tableofcontents}{%
   \jlreq@top@contents=-100\relax
   \if@twocolumn
-    \@restonecoltrue\onecolumn
+    \bool_if:NTF \g__jlreq_tableofcontents_twocolumn_bool {
+      \@restonecolfalse
+    }{
+      \@restonecoltrue\onecolumn
+    }
   \else
-    \@restonecolfalse
+    % スイッチの流用
+    \bool_if:NTF \g__jlreq_tableofcontents_twocolumn_bool {
+      \@restonecoltrue\twocolumn
+    }{
+      \@restonecolfalse
+    }
   \fi
   \prop_item:Nn \g__jlreq_tableofcontents_prop { heading }
   \@mkboth{\contentsname}{\contentsname}%
   \@starttoc{toc}%
-  \if@restonecol\twocolumn\fi
+  \if@restonecol
+    \bool_if:NTF \g__jlreq_tableofcontents_twocolumn_bool { \onecolumn } { \twocolumn }
+  \fi
 }
+\bool_new:N \g__jlreq_tableofcontents_twocolumn_bool
+\bool_gset_false:N \g__jlreq_tableofcontents_twocolumn_bool
 \keys_define:nn { jlreqsetup } {
-  tableofcontents_heading .code:n = { \prop_gput:Nnn \g__jlreq_tableofcontents_prop { heading } {#1} }
+  tableofcontents_heading .code:n = { \prop_gput:Nnn \g__jlreq_tableofcontents_prop { heading } {#1} },
+  tableofcontents_twocolumn .bool_gset:N = \g__jlreq_tableofcontents_twocolumn_bool
 }
 \str_if_eq:VnTF \jlreq@article@type { article } {
   \keys_set:nn { jlreqsetup } { tableofcontents_heading = { \section*{\contentsname} } }

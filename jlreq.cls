@@ -5303,6 +5303,9 @@
   \fi
 }
 
+\bool_new:N \g__jlreq_beforemaketitle_bool
+\bool_gset_true:N \g__jlreq_beforemaketitle_bool
+
 \if@titlepage
   \newcommand{\maketitle}{%
     % jarticleとかからあまり変更していない
@@ -5380,6 +5383,7 @@
   \global\let\author\relax
   \global\let\date\relax
   \global\let\and\relax
+  \bool_gset_false:N \g__jlreq_beforemaketitle_bool
 }%
 % \vskipを\baselineskipにしてみた．
 \def\@maketitle{%
@@ -5431,7 +5435,7 @@
     }
   \else
     \newenvironment{abstract}{%
-      \ifnum0\if@twocolumn\else1\fi\ifjlreq@preamble1\fi>0
+      \bool_if:nTF { (! \legacy_if_p:n { @twocolumn } ) || \bool_if_p:N \g__jlreq_beforemaketitle_bool } {
         \ifjlreq@preamble
           \ifx l\jlreq@engine\else
             \def\jlreq@parhook@abstract{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}%
@@ -5475,11 +5479,11 @@
           \parsep\z@ \@plus.1\jlreq@zh
         }%
         \item\relax
-      \else
+      }{
         \section*{\abstractname}%
-      \fi
+      }
     }{%
-      \ifnum0\if@twocolumn\else1\fi\ifjlreq@preamble1\fi>0
+      \bool_if:nT { (! \legacy_if_p:n { @twocolumn } ) || \bool_if_p:N \g__jlreq_beforemaketitle_bool } {
         \endlist
         \egroup
         \vspace{\baselineskip}%
@@ -5487,14 +5491,15 @@
           \end{minipage}
         \fi
         \egroup
-      \fi
+      }
       \ifjlreq@preamble
         \ifx l\jlreq@engine\else
           \def\jlreq@parhook@abstract{}%
         \fi
-      \else
-        \unvbox\jlreq@abstractbox
       \fi
+      \bool_if:NF \g__jlreq_beforemaketitle_bool {
+        \unvbox\jlreq@abstractbox
+      }
     }
   \fi
 }

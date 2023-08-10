@@ -2227,8 +2227,8 @@
   }%
   \expandafter}\jlreq@do
 }
-\cs_set:Nn \g__jlreq_gyodori_hook_par: {}
-\PushPostHook{par}{\g__jlreq_gyodori_hook_par:}
+%\cs_set:Nn \g__jlreq_gyodori_hook_par: {}
+%\PushPostHook{par}{\g__jlreq_gyodori_hook_par:}
 
 
 % 行取り情報をゲットだぜ

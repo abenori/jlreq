@@ -5417,9 +5417,9 @@
 %.. abstract
 \str_if_eq:VnF \jlreq@article@type { book } {
   \def\jlreq@parhook@abstract{}
-  \bool_new:N \g__jlreq_abstract_in_maketitle_bool
-  \keys_define:nn { jlreqsetup } { abstract_in_maketitle .bool_set:N = \g__jlreq_abstract_in_maketitle_bool }
-  \jlreqsetup { abstract_in_maketitle = false }
+  \bool_new:N \g__jlreq_abstract_with_maketitle_bool
+  \keys_define:nn { jlreqsetup } { abstract_with_maketitle .bool_set:N = \g__jlreq_abstract_with_maketitle_bool }
+  \jlreqsetup { abstract_with_maketitle = false }
   \newbox\jlreq@abstractbox
   \newcommand*{\abstractname}{概要}
   \if@titlepage
@@ -5441,7 +5441,7 @@
       \bool_if:nTF {
         (! \legacy_if_p:n { @twocolumn } ) ||
         \g__jlreq_inpreamble_bool ||
-        ( \g__jlreq_beforemaketitle_bool && \g__jlreq_abstract_in_maketitle_bool )
+        ( \g__jlreq_beforemaketitle_bool && \g__jlreq_abstract_with_maketitle_bool )
       } {
         \bool_if:NT \g__jlreq_inpreamble_bool {
           \ifx l\jlreq@engine\else
@@ -5493,7 +5493,7 @@
       \bool_if:nT {
         (! \legacy_if_p:n { @twocolumn } ) ||
         \g__jlreq_inpreamble_bool ||
-        ( \g__jlreq_beforemaketitle_bool && \g__jlreq_abstract_in_maketitle_bool )
+        ( \g__jlreq_beforemaketitle_bool && \g__jlreq_abstract_with_maketitle_bool )
       } {
         \endlist
         \egroup
@@ -5510,7 +5510,7 @@
       }
       \bool_if:nF {
         \g__jlreq_inpreamble_bool ||
-        ( \g__jlreq_beforemaketitle_bool && \g__jlreq_abstract_in_maketitle_bool )
+        ( \g__jlreq_beforemaketitle_bool && \g__jlreq_abstract_with_maketitle_bool )
       }{
         \unvbox\jlreq@abstractbox
       }

@@ -48,7 +48,7 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
 `\section*[running head]{見出し文字列}[副題]`というように，通常の書式に加えて副題を受け付けられるように拡張されています．その他，`\part`（articleのみ），`\chapter`（book/reportのみ），`\subsection`，`\subsubsection`も副題を受け付けます．
 
 ### `abstract`環境
-プリアンブルにもかけ，そのときは`\maketitle`とともに出力されます．二段組の場合は，段組にならず概要を出力することができます．ただし今では非推奨の方法です．`\jlreqsetup`で`abstract_in_maketitle=true`を指定して`\maketitle`よりも前に書くことで同様のことができます．
+プリアンブルにもかけ，そのときは`\maketitle`とともに出力されます．二段組の場合は，段組にならず概要を出力することができます．ただし今では非推奨の方法です．`\jlreqsetup`で`abstract_with_maketitle=true`を指定して`\maketitle`よりも前に書くことで同様のことができます．
 
 ### `\sidenote`
 この命令は傍注の幅が正の時にのみ定義されます．デフォルトの基本版面ではこの幅は0に設定されています．従って`\sidenote`は定義されません．後の基本版面の設定を参考にしてください．
@@ -205,7 +205,7 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
 * `appendix_pagebreak`，`appendix_pagestyle`，`appendix_pagination`はありません．
 
 ### 概要
-* `abstract_in_maketitle=[true/false]`：abstract環境が`\maketitle`に先行して書かれた場合，その中身を`\maketitle`とともに遅延します．二段組みの場合でも一段で出力されます．デフォルトは`false`です．
+* `abstract_with_maketitle=[true/false]`：abstract環境が`\maketitle`に先行して書かれた場合，その中身を`\maketitle`とともに遅延します．二段組みの場合でも一段で出力されます．デフォルトは`false`です．
 
 ## 見出し
 新しい見出しを`\New***Heading`という命令で作ることができます（***には見出しの種類に応じた文字列が入る）．書式はすべて

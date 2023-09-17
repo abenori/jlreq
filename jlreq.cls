@@ -57,9 +57,9 @@
 }
 
 % preambleにいるかのスイッチ
-\newif\ifjlreq@preamble
-\jlreq@preambletrue
-\AtBeginDocument{\jlreq@preamblefalse}
+\bool_new:N \g__jlreq_inpreamble_bool
+\bool_gset_true:N \g__jlreq_inpreamble_bool
+\AtBeginDocument{ \bool_gset_false:N \g__jlreq_inpreamble_bool }
 
 \def\jlreq@saveoriginalcs#1{%
   \@ifundefined{#1}{
@@ -5415,8 +5415,11 @@
 }
 
 %.. abstract
-\def\jlreq@parhook@abstract{}
 \str_if_eq:VnF \jlreq@article@type { book } {
+  \def\jlreq@parhook@abstract{}
+  \bool_new:N \g__jlreq_abstract_in_maketitle_bool
+  \keys_define:nn { jlreqsetup } { abstract_in_maketitle .bool_set:N = \g__jlreq_abstract_in_maketitle_bool }
+  \jlreqsetup { abstract_in_maketitle = false }
   \newbox\jlreq@abstractbox
   \newcommand*{\abstractname}{概要}
   \if@titlepage
@@ -5435,21 +5438,25 @@
     }
   \else
     \newenvironment{abstract}{%
-      \bool_if:nTF { (! \legacy_if_p:n { @twocolumn } ) || \bool_if_p:N \g__jlreq_beforemaketitle_bool } {
-        \ifjlreq@preamble
+      \bool_if:nTF {
+        (! \legacy_if_p:n { @twocolumn } ) ||
+        \g__jlreq_inpreamble_bool ||
+        ( \g__jlreq_beforemaketitle_bool && \g__jlreq_abstract_in_maketitle_bool )
+      } {
+        \bool_if:NT \g__jlreq_inpreamble_bool {
           \ifx l\jlreq@engine\else
             \def\jlreq@parhook@abstract{\futurelet\jlreq@nextchar\jlreq@openbracket@hook}%
             \PushPostHook{par}{\jlreq@parhook@abstract}%
           \fi
-        \fi
+        }
         % とりあえず全部ボックスに入れる．
         \global\setbox\jlreq@abstractbox=\vtop\bgroup
-        \ifjlreq@preamble
+        \bool_if:NT \g__jlreq_inpreamble_bool {
           % preamble後っぽく振る舞う
           \@noskipsecfalse
           % \@nodocumentが入っているので一時的に無効化
           \everypar{}%
-        \fi
+        }
         \if@twocolumn
           \parindent=0pt
           \hsize=\textwidth
@@ -5483,7 +5490,11 @@
         \section*{\abstractname}%
       }
     }{%
-      \bool_if:nT { (! \legacy_if_p:n { @twocolumn } ) || \bool_if_p:N \g__jlreq_beforemaketitle_bool } {
+      \bool_if:nT {
+        (! \legacy_if_p:n { @twocolumn } ) ||
+        \g__jlreq_inpreamble_bool ||
+        ( \g__jlreq_beforemaketitle_bool && \g__jlreq_abstract_in_maketitle_bool )
+      } {
         \endlist
         \egroup
         \vspace{\baselineskip}%
@@ -5492,12 +5503,15 @@
         \fi
         \egroup
       }
-      \ifjlreq@preamble
+      \bool_if:NT \g__jlreq_inpreamble_bool {
         \ifx l\jlreq@engine\else
           \def\jlreq@parhook@abstract{}%
         \fi
-      \fi
-      \bool_if:NF \g__jlreq_beforemaketitle_bool {
+      }
+      \bool_if:nF {
+        \g__jlreq_inpreamble_bool ||
+        ( \g__jlreq_beforemaketitle_bool && \g__jlreq_abstract_in_maketitle_bool )
+      }{
         \unvbox\jlreq@abstractbox
       }
     }

@@ -41,7 +41,7 @@ dviドライバの指定です．エンジンに`lualatex`を利用する場合�
 
 ### `trimmarks_paper`
 トンボ付きの紙サイズを指定します．
-* `trimmarks_paper=a4`のように，`a0--a10`, `b0--b10`, `c2--c8`（BはJIS B列）を指定できる他，`trimmarks_paper={<width>,<height>}`と直接寸法を指定することができます．
+* `trimmarks_paper=a4paper`のように，`a0paper--a10paper`, `b0paper--b10paper`, `c2paper--c8paper`を指定できる他，`trimmarks_paper={<width>,<height>}`と直接寸法を指定することができます．B列はISO B列です．JIS B列を指定する場合は`b0j--b10j`を指定してください．
 * `a4+{1cm,2cm}`や`{10cm,20cm}+{1cm,2cm}`のように`<紙サイズ>+{<寸法横>,<寸法縦>}`とした場合は，指定された紙サイズから指定された寸法だけ増やした紙サイズを設定します．
 * `a4+2cm`は`a4+{2cm,2cm}`と等価です．
 * `+2cm`と紙サイズの部分を省略すると，現在の紙サイズを利用します．

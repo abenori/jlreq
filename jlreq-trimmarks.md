@@ -39,7 +39,7 @@ Set the dvi driver. You do not have to specify it when using the engine `lualate
 ### `trimmarks_paper`
 Set the size of the paper including trim marks.
 
-* `trimmarks_paper=<paper type>`: specify via the paper type. for the paper type, you can use `a0--a10`, `b0--b10` and `c2--c8`. Note that `b0--b10` is `JIS B' (Japanese B-series variant).
+* `trimmarks_paper=<paper type>`: specify via the paper type. For the paper type, you can use `a0paper--a10paper`, `b0paper--b10paper` and `c2paper--c8paper`. Note that `b0--b10` is ISO B. If you wan to specify JIS B (Japanese B-series variant), use `b0j--b10j`.
 * `trimmarks_paper={<width>,height>}`: specify via the width and height.
 * `trimmarks_paper=<paper size>+{<width>,<height>}` (e.g. `trimmarks_paper=a4+{1cm,2cm}`): `<width>` (resp. `<height>`) is added to the width (resp. height) of the paper size specified by `<paper size>`  For `<paper size>`, one can use `<paper type>` or `{<width>,<height>}` as in the above.
 * `trimmarks_paper=a4+2cm` is equivalent to `trimmarks_paper=a4+{2cm,2cm}`.

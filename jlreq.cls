@@ -1758,7 +1758,7 @@
     \keys_set:nn { DeclareTobiraHeading:#1 } {#3}
     \def\jlreq@do{}%
     \ifx\jlreq@format\@undefined
-      \def\jlreq@format##1##2{##1##2}%
+      \long\def\jlreq@format##1##2{##1##2}%
     \fi
     \edef\jlreq@formatwlabel{\noexpand\jlreq@format{\exp_not:o {\jlreq@label@format}}}%
     \jlreq@heading@make@l@{#1}{#2}{\jlreq@label@format}%
@@ -2436,7 +2436,7 @@
       \exp_not:o {\jlreq@heading@text@format}%
     }%
     % 副題：ラベルありかなしかはhangindentの扱いだけなので，他はまとめる
-    \def\jlreq@make@subtitle@format##1##2{%
+    \long\def\jlreq@make@subtitle@format##1##2{%
       \edef##1{%
         \ifjlreq@subtitle@break
           \noexpand\par
@@ -2819,7 +2819,7 @@
   \jlreq@do
 }
 % #2: デフォルト値を使うならば*，#3#4#5が設定された値，#6#7#8がデフォルト値，#9は偶数ページの
-\def\jlreq@BlockHeading@spaces@output@@@@#1#2#3#4#5#6#7#8#9{%
+\long\def\jlreq@BlockHeading@spaces@output@@@@#1#2#3#4#5#6#7#8#9{%
   \edef\jlreq@tempa{%
     \unexpanded{\long\def\jlreq@tempa##1}{\exp_args:Nc \exp_not:o {jlreq@BlockHeading@spaces@current@format@\the\jlreq@tempcnta}}%
   }%
@@ -2891,10 +2891,10 @@
     \begingroup
       \def\jlreq@do{\@nobreakfalse\global\@noskipsectrue}%
       \ifnum0\jlreq@ifempty{#3}{}{1}\ifnum #2>\c@secnumdepth 1\fi>0
-        \def\jlreq@tempa##1{#8}%
+        \long\def\jlreq@tempa##1{#8}%
       \else
         \tl_put_right:Nn \jlreq@do {\refstepcounter{#1}}%
-        \def\jlreq@tempa##1{#7}%
+        \long\def\jlreq@tempa##1{#7}%
       \fi
       \par}%
       \unexpanded{\tl_put_right:Nx \jlreq@do}{%
@@ -3358,7 +3358,7 @@
 \def\footnote{%
   \jlreq@footnote{\footnote}{\footnotemark}{\jlreq@footnotetext@for@footnote}%
 }
-\def\jlreq@footnote#1#2#3{%
+\long\def\jlreq@footnote#1#2#3{%
   \jlreq@hook@prenote
   \@ifnextchar[{\jlreq@footnote@impl@woption{#1}{#2}{#3}}{\jlreq@footnote@impl@wooption{#1}{#2}{#3}}%
 }
@@ -3990,7 +3990,7 @@
 % * それ以降はX
 % として整形した際に，#5行以内に収まる．
 % \jlreq@resultboxに整形結果を返す（垂直ボックス）．見つからなかったらvoid．\globalに設定する．
-\def\jlreq@inlinenote@determinelength#1#2#3#4#5#6#7{%
+\long\def\jlreq@inlinenote@determinelength#1#2#3#4#5#6#7{%
   \begingroup
   %  \message{#1 の試行開始，行数 = #5, \the\dimexpr#6\relax から \the\dimexpr#7\relaxまで}%
     \@tempcnta=1\relax
@@ -5580,7 +5580,7 @@
   itemization_beforeafter_space .code:n = {\jlreq@jlreqsetup@itemization{jlreq@itemization@beforeafter@space@envlist}{jlreq@itemization@beforeafter@space@setting}{#1}},
   itemization_itemsep .code:n = {\jlreq@jlreqsetup@withenv{jlreq@itemization@itemsep@envlist}{jlreq@itemization@itemsep@setting}{#1}},
   itemization_labelsep .code:n = {\jlreq@jlreqsetup@withenv{jlreq@itemization@labelsep@envlist}{jlreq@itemization@labelsep@setting}{#1}},
-  itemization_label_length .code:n = {\jlreq@jlreqsetup@itemization{jlreq@itemization@label@length@envlist}{jlreq@itemization@label@length@setting}{#1}}
+  itemization_label_length .code:n = {\jlreq@jlreqsetup@itemization{jlreq@itemization@label@length@envlist}{jlreq@itemization@label@length@setting}{#1}},
 }
 % enumerate, itemize用初期化，#1 = i,ii,...
 \def\jlreq@init@list#1{%
@@ -6329,7 +6329,6 @@
   \renewcommand{\theparagraph}{\thesubsubsection .\arabic{paragraph}}
   \renewcommand{\thesubparagraph}{\theparagraph .\arabic{subparagraph}}
   \str_if_eq:VnTF \jlreq@article@type { article } {
-\def\X{}
     \NewBlockHeading{part}{0}{font={\jlreq@keepbaselineskip{\LARGE\sffamily\gtfamily\bfseries}},label_format={第\thepart 部},lines=4,after_label_space=1\jlreq@zw,second_heading_text_indent={-1\jlreq@zw,1\jlreq@zw},subtitle_font={\jlreq@keepbaselineskip{\large}}}
     \renewcommand{\thesection}{\arabic{section}}
   }{% book, report

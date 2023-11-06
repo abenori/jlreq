@@ -808,14 +808,14 @@
 \edef\jlreq@jafontscale{\strip@pt\jlreq@resultdimen}
 \__jlreq_aftercls_addtodeletecs:N \jlreq@jafontscale
 \ifx l\jlreq@engine
-  \DeclareFontShape{JY3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont :jfm=jlreq;script=latn;-kern}{}
-  \DeclareFontShape{JY3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont :jfm=jlreq;script=latn;-kern}{}
-  \DeclareFontShape{JT3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont :jfm=jlreqv;script=latn;-kern}{}
-  \DeclareFontShape{JT3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont :jfm=jlreqv;script=latn;-kern}{}
-  \DeclareFontShape{JY3}{mc}{m}{n-jidori}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont :jfm=jlreq-jidori;script=latn;-kern}{}
-  \DeclareFontShape{JY3}{gt}{m}{n-jidori}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont :jfm=jlreq-jidori;script=latn;-kern}{}
-  \DeclareFontShape{JT3}{mc}{m}{n-jidori}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont :jfm=jlreqv-jidori;script=latn;-kern}{}
-  \DeclareFontShape{JT3}{gt}{m}{n-jidori}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont :jfm=jlreqv-jidori;script=latn;-kern}{}
+  \DeclareFontShape{JY3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont :jfm=jlreq;-kern}{}
+  \DeclareFontShape{JY3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont :jfm=jlreq;-kern}{}
+  \DeclareFontShape{JT3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont :jfm=jlreqv;-kern}{}
+  \DeclareFontShape{JT3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont :jfm=jlreqv;-kern}{}
+  \DeclareFontShape{JY3}{mc}{m}{n-jidori}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont :jfm=jlreq-jidori;-kern}{}
+  \DeclareFontShape{JY3}{gt}{m}{n-jidori}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont :jfm=jlreq-jidori;-kern}{}
+  \DeclareFontShape{JT3}{mc}{m}{n-jidori}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont :jfm=jlreqv-jidori;-kern}{}
+  \DeclareFontShape{JT3}{gt}{m}{n-jidori}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont :jfm=jlreqv-jidori;-kern}{}
 \else
   \DeclareFontShape{\jlreq@yokokanjiencoding}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmname}{}
   \DeclareFontShape{\jlreq@yokokanjiencoding}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\jlreq@jfmnameg}{}

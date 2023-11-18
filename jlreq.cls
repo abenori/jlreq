@@ -2062,7 +2062,7 @@
       \jlreq@ifempty{#2}{}{\unexpanded{\hsize=\dimexpr\hsize - #2\relax}}%
       \jlreq@ifempty{#3}{}{\unexpanded{\hsize=\dimexpr\hsize - #3\relax}}%
       \unexpanded{#4}%
-      \par
+      \noexpand\par
     }%
   }%
 }

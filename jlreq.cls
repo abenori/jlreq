@@ -482,6 +482,7 @@
   % http://oku.edu.mie-u.ac.jp/tex/mod/forum/discuss.php?d=1508&parent=8435
   \if@tate\AtEndPreamble{\par}\fi
 \fi
+% \zwや\zhが再定義されても動くようにするために内部では\jlreq@zw，\jlreq@zhを使う．
 \let\jlreq@zw=\zw
 \let\jlreq@zh=\zh
 \if@tate
@@ -529,8 +530,8 @@
 % 組方向を判定
 % \jlreq@if(y|t)(dir|box)を定義する．
 \jlreq@if{\ifx l\jlreq@engine\fi}{
-  \def\jlreq@ifydir { \int_compare:nTF { \ltjgetparameter{direction} == 4 } }
-  \def\jlreq@iftdir { \int_compare:nTF { (\ltjgetparameter{direction}-(\ltjgetparameter{direction}/8)*8) == 3 } }
+  \def\jlreq@ifydir  { \int_compare:nTF { \ltjgetparameter{direction} == 4 } }
+  \def\jlreq@iftdir  { \int_compare:nTF { (\ltjgetparameter{direction}-(\ltjgetparameter{direction}/8)*8) == 3 } }
   \def\jlreq@ifybox#1{ \int_compare:nTF { \ltjgetparameter{boxdir}{#1} == 4 } }
   \def\jlreq@iftbox#1{ \int_compare:nTF { (\ltjgetparameter{boxdir}{#1}-(\ltjgetparameter{boxdir}{#1}/8)*8) == 3 } }
 }{
@@ -3347,6 +3348,7 @@
 
 \ifx l\jlreq@engine
   \fnfixbottomtrue
+  \IfFileExists{stfloats.sty}{\RequirePackage{stfloats}\fnbelowfloat}{}
 \fi
 
 % \footnoteと\footnotemarkの前後に\jlreq@hook@prenote/\jlreq@hook@postnoteを入れる
@@ -3583,6 +3585,8 @@
 \long\def\jlreq@output@endnotes#1#2{%
   \expandafter\def\csname\jlreq@endnotemarkname\endcsname{#1}%
   \item\@makeendtext{#2}%
+  % グルーピングした方がよいか？ https://okumuralab.org/tex/mod/forum/discuss.php?d=3669
+  % \item\leavevmode {\@makeendtext{#2}}%
 }
 
 \newcommand*{\theendnotes}{%

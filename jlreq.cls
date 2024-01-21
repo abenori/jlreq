@@ -4616,7 +4616,6 @@
         \tl_put_right:Nx \l__jlreq_tmpa_tl { \exp_not:n {\hskip\dimexpr} \jlreq@expand@speciallength{\jlreq@headfoot@sidemargin} \legacy_if:nT { @tate } { \exp_not:n { + \topskip - \Cht } } \exp_not:N \relax }
       }
     }
-    \message{[[[\exp_not:o \l__jlreq_tmpa_tl]]]}
     \tl_set:Nx \l__jlreq_do_tl { \exp_not:n {\tl_set:Nn #1 } { \exp_not:o \l__jlreq_tmpa_tl } }
   \exp_after:wN \group_end:
   \l__jlreq_do_tl
@@ -5015,7 +5014,7 @@
 }
 
 \if@tate
-  \def\jlreqyokoheadlength{\textheight}
+  \def\jlreqyokoheadlength{\textwidth}
 \else
   \ifdim\jlreq@sidenote@length>0pt
     \if@twocolumn

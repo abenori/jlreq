@@ -4602,7 +4602,7 @@
         \tl_if_empty:nF { #4 } { \exp_not:n { \hbox to~0pt { \hss #4 } } }
       }
     }
-    % \l__jlreq_tmpa_tlにフォーマットを適用し\l__jlreq_tmpc_tlに代入
+    % \l__jlreq_tmpa_tlにフォーマットを適用し\l__jlreq_tmpa_tlに代入
     \__jlreq_pagestyle_applyformat:NoNN \l__jlreq_tmpa_tl \l__jlreq_tmpa_tl #5 #6
     % 横方向の調整
     \tl_if_empty:nF {#2} {
@@ -4891,13 +4891,17 @@
       }
       % 位置調整，左側に柱+ノンブルがある場合
       \tl_set:Nx \l__jlreq_tmpa_tl {
-         \exp_not:n { \hskip\dimexpr } \legacy_if:nT { @tate } { \exp_not:n { - \Cdp } } \exp_not:n { - \headsep - 1\jlreq@zw\relax }
-         \exp_not:n { \box\@tempboxa\hfill }
+         \exp_not:n { \hskip\dimexpr - \headsep - 1\jlreq@zw }
+         \legacy_if:nTF { @tate } { \exp_not:n { - \Cdp } }
+            { \dim_compare:nNnF { \jlreq@sidenote@length + \jlreq@sidenote@sep } {=} { 0pt } { - \the\dimexpr\jlreq@sidenote@length + \jlreq@sidenote@sep\relax } }
+         \exp_not:n { \relax\box\@tempboxa\hfill }
       }
       % 位置調整，右側に柱+ノンブルがある場合
       \tl_set:Nx \l__jlreq_tmpb_tl {
-         \exp_not:n { \hskip\dimexpr\textwidth } \legacy_if:nT { @tate } { \exp_not:n { - \topskip + \Cht } } \exp_not:n { + \headsep\relax }
-         \exp_not:n { \box\@tempboxa\hss }
+        \exp_not:n { \hskip\dimexpr\textwidth + \headsep }
+        \legacy_if:nTF { @tate } { \exp_not:n { - \topskip + \Cht } } 
+          { \dim_compare:nNnF { \jlreq@sidenote@length + \jlreq@sidenote@sep } {=} { 0pt } { + \the\dimexpr\jlreq@sidenote@length + \jlreq@sidenote@sep\relax } }
+        \exp_not:n { \relax\box\@tempboxa\hss }
       }
       % 位置調整とすでに構築したブロックをくっつける．
       \legacy_if:nTF { @tate } {
@@ -5026,7 +5030,7 @@
     \def\jlreqyokoheadlength{\dimexpr\textwidth\relax}
   \fi
 \fi
-\edef\jlreqtateheadlength{\unexpanded{\dimexpr\headsep + \headheight + \textheight}\if@tate\else\unexpanded{- \topskip + 1\jlreq@zh}\fi\noexpand\relax}
+\edef\jlreqtateheadlength{\unexpanded{\dimexpr\textheight}\if@tate\else\unexpanded{- \topskip + 1\jlreq@zh}\fi\noexpand\relax}
 
 \NewDocumentCommand{\NewPageStyle} { m +m } {%
   \expandafter\@ifdefinable\csname ps@#1\endcsname{\DeclarePageStyle{#1}{#2}}%

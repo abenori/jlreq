@@ -5247,11 +5247,20 @@
 
 %.. figure環境
 \newcounter{figure}
-\str_if_eq:VnTF \jlreq@article@type { article } {
-  \renewcommand{\thefigure}{\@arabic\c@figure}
-}{%
-  \@addtoreset{figure}{chapter}
-  \renewcommand{\thefigure}{\ifnum\c@chapter>\z@\thechapter.\fi \@arabic\c@figure}
+\legacy_if:nTF { @tate } {
+  \str_if_eq:VnTF \jlreq@article@type { article } {
+    \renewcommand{\thefigure}{\tatechuyoko*{\@arabic\c@figure}}
+  }{%
+    \@addtoreset{table}{chapter}
+    \renewcommand{\thefigure}{\tatechuyoko*{\ifnum\c@chapter>\z@\thechapter.\fi \@arabic\c@figure}}
+  }
+}{
+  \str_if_eq:VnTF \jlreq@article@type { article } {
+    \renewcommand{\thefigure}{\@arabic\c@figure}
+  }{%
+    \@addtoreset{figure}{chapter}
+    \renewcommand{\thefigure}{\ifnum\c@chapter>\z@\thechapter.\fi \@arabic\c@figure}
+  }
 }
 \newcommand*{\fps@figure}{h}
 \newcommand*{\ftype@figure}{1}
@@ -5262,11 +5271,20 @@
 
 %.. table環境
 \newcounter{table}
-\str_if_eq:VnTF \jlreq@article@type { article } {
-  \renewcommand{\thetable}{\@arabic\c@table}
-}{%
-  \@addtoreset{table}{chapter}
-  \renewcommand{\thetable}{\ifnum\c@chapter>\z@\thechapter.\fi \@arabic\c@table}
+\legacy_if:nTF { @tate } {
+  \str_if_eq:VnTF \jlreq@article@type { article } {
+    \renewcommand{\thetable}{\tatechuyoko*{\@arabic\c@table}}
+  }{%
+    \@addtoreset{table}{chapter}
+    \renewcommand{\thetable}{\tatechuyoko*{\ifnum\c@chapter>\z@\thechapter.\fi \@arabic\c@table}}
+  }
+}{
+  \str_if_eq:VnTF \jlreq@article@type { article } {
+    \renewcommand{\thetable}{\@arabic\c@table}
+  }{%
+    \@addtoreset{table}{chapter}
+    \renewcommand{\thetable}{\ifnum\c@chapter>\z@\thechapter.\fi \@arabic\c@table}
+  }
 }
 \newcommand*{\fps@table}{h}
 \newcommand*{\ftype@table}{2}

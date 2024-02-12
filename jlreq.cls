@@ -4332,9 +4332,7 @@
       \tl_set:Nx \l__jlreq_tmpb_tl { \exp_args:No \exp_not:n {\use_ii:nn ##1} } % 中身
       \tl_put_right:Nx \l__jlreq_result_tl {
         \exp_not:N \hbox to~0pt {
-          \exp_not:n {\hskip\glueexpr\headsep + \headheight}
-          \legacy_if:nF { @tate } { \exp_not:n {+ \topskip - \Cht} }
-          \tl_if_empty:oF \l__jlreq_tmpa_tl { + \exp_not:o \l__jlreq_tmpa_tl } \exp_not:N \relax
+          \tl_if_empty:oF \l__jlreq_tmpa_tl { \exp_not:n { \hskip\dimexpr } \exp_not:o \l__jlreq_tmpa_tl \exp_not:N \relax }
           \exp_not:o \l__jlreq_tmpb_tl
           \exp_not:N \hss
         }
@@ -4876,11 +4874,19 @@
         \tl_set:Nn \l__jlreq_tmpb_tl {####1} % デフォルトフォーマット
         \__jlreq_pagestyle_applyformat:NocN \l__jlreq_tmpa_tl \l__jlreq_tmpa_tl { l__jlreq_pagestyle_##1_top_format_tl } \l__jlreq_tmpb_tl
         % 周りのボックスをつける．結果は\l__jlreq_tmpa_propにいれる．
+        % \topskip > 最初のボックスの高さを仮定する．
         \prop_put:Nnx \l__jlreq_tmpa_prop { ##1-top } {
           \exp_not:n {\setbox\@tempboxa=\hbox to \dimexpr\headsep + \headheight + \textheight}
-            \legacy_if:nF { @tate } { \exp_not:n { - \topskip + 1\jlreq@zh } }
+            \legacy_if:nF { @tate } { \exp_not:n { + \Cdp } }
             \exp_not:N \relax
-            { \exp_not:n { \tate\adjustbaseline } \exp_not:o \l__jlreq_tmpa_tl }
+            { \exp_not:n { \tate\adjustbaseline \hskip \dimexpr \headsep + \headheight }
+              \legacy_if:nF { @tate } { \exp_not:n + \topskip - \Cht }
+              \exp_not:N \relax
+              \hbox to \legacy_if:nF { @tate } { \exp_not:N \dimexpr }
+              \textheight 
+              \legacy_if:nF { @tate } { \exp_not:n { - \topskip + 1\jlreq@zh \relax } }
+              { \exp_not:o \l__jlreq_tmpa_tl }
+            }
           % Underful対策
           \ifx l\jlreq@engine
             \unexpanded{\wd\@tempboxa=\headheight}%

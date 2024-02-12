@@ -4880,7 +4880,7 @@
             \legacy_if:nF { @tate } { \exp_not:n { + \Cdp } }
             \exp_not:N \relax
             { \exp_not:n { \tate\adjustbaseline \hskip \dimexpr \headsep + \headheight }
-              \legacy_if:nF { @tate } { \exp_not:n + \topskip - \Cht }
+              \legacy_if:nF { @tate } { \exp_not:n { + \topskip - \Cht } }
               \exp_not:N \relax
               \hbox to \legacy_if:nF { @tate } { \exp_not:N \dimexpr }
               \textheight 

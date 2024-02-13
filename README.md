@@ -186,6 +186,15 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Stopped to load `everyhook' package LuaLaTeX (it was not compatible with the document).
     - Fixed a bug: a space before `enumerate' environment was not inserted sometimes.
     - Fixed a bug on `use_reverse_pagination`.
+* 2024-02-13
+    - Added some `\par` (for hook system in LaTeX kernel)
+    - Added `tableofcontents_twocolumn` and `abstract_with_maketitle` to `\jlreqsetup`.
+    - Deleted `\PushPostHook`.
+    - Some modifications of jfm.
+    - Fixed a bug: heading command may have an infinite loop.
+    - Load `stfloats` with LuaLaTeX.
+    - Improved position adjustment in pagestyle.
+    - Some other improvements etc.
 
 --------------
 Noriyuki Abe

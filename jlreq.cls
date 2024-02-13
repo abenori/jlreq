@@ -5,10 +5,10 @@
 %%
 % (based on JLReq 20200811 https://www.w3.org/TR/2020/NOTE-jlreq-20200811/)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{jlreq}[2023/06/19 jlreq]
+\ProvidesClass{jlreq}[2024/02/13 jlreq]
 \RequirePackage{l3keys2e}
 \RequirePackage{etoolbox}
-\RequirePackage{jlreq-helpers}[2023/06/19]
+\RequirePackage{jlreq-helpers}[2024/02/13]
 
 \ExplSyntaxOn
 \int_new:N \l__jlreq_tmpa_int

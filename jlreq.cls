@@ -28,6 +28,8 @@
 \box_new:N \l_jlreq_tmpb_box
 \box_new:N \l_jlreq_tmpc_box
 \prop_new:N \l__jlreq_tmpa_prop
+\prop_new:N \l__jlreq_tmpb_prop
+\prop_new:N \l__jlreq_tmpc_prop
 
 \tl_new:N \l__jlreq_result_tl
 \prop_new:N \l__jlreq_result_prop

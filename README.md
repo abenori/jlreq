@@ -195,7 +195,8 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Load `stfloats` with LuaLaTeX.
     - Improved position adjustment in pagestyle.
     - Some other improvements etc.
-
+* 2024-02-16
+    - Fixed a bug.
 --------------
 Noriyuki Abe
 https://github.com/abenori/jlreq

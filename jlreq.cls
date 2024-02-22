@@ -11,22 +11,34 @@
 \RequirePackage{jlreq-helpers}[2024/02/13]
 
 \ExplSyntaxOn
+\cs_new:Nn \l_jlreq_do: {}
 \int_new:N \l__jlreq_tmpa_int
+\int_new:N \l__jlreq_tmpb_int
+\int_new:N \l__jlreq_tmpc_int
 \tl_new:N \l__jlreq_tmpa_tl
 \tl_new:N \l__jlreq_tmpb_tl
 \tl_new:N \l__jlreq_tmpc_tl
-\cs_new:Nn \l_jlreq_do: {}
 \str_new:N \l__jlreq_tmpa_str
 \str_new:N \l__jlreq_tmpb_str
 \str_new:N \l__jlreq_tmpc_str
-\bool_new:N \l_jlreq_tmpa_bool
-\clist_new:N \l_jlreq_tmpa_clist
+\bool_new:N \l__jlreq_tmpa_bool
+\bool_new:N \l__jlreq_tmpb_bool
+\bool_new:N \l__jlreq_tmpc_bool
+\clist_new:N \l__jlreq_tmpa_clist
+\clist_new:N \l__jlreq_tmpb_clist
+\clist_new:N \l__jlreq_tmpc_clist
 \seq_new:N \l__jlreq_tmpa_seq
+\seq_new:N \l__jlreq_tmpb_seq
+\seq_new:N \l__jlreq_tmpc_seq
 \dim_new:N \l__jlreq_tmpa_dim
-\skip_new:N \l_jlreq_tmpa_skip
-\box_new:N \l_jlreq_tmpa_box
-\box_new:N \l_jlreq_tmpb_box
-\box_new:N \l_jlreq_tmpc_box
+\dim_new:N \l__jlreq_tmpb_dim
+\dim_new:N \l__jlreq_tmpc_dim
+\skip_new:N \l__jlreq_tmpa_skip
+\skip_new:N \l__jlreq_tmpb_skip
+\skip_new:N \l__jlreq_tmpc_skip
+\box_new:N \l__jlreq_tmpa_box
+\box_new:N \l__jlreq_tmpb_box
+\box_new:N \l__jlreq_tmpc_box
 \prop_new:N \l__jlreq_tmpa_prop
 \prop_new:N \l__jlreq_tmpb_prop
 \prop_new:N \l__jlreq_tmpc_prop
@@ -3027,8 +3039,8 @@
 \cs_set:Nn \__jlreq_CutinHeading_start_aux:nnnnnn{%
   % 一行で処理したときの見出し長さを計測
   \group_begin:
-    \hbox_set:Nn \l_jlreq_tmpa_box {#1#6}
-    \dim_set:Nn \l__jlreq_tmpa_dim { \box_wd:N \l_jlreq_tmpa_box}
+    \hbox_set:Nn \l__jlreq_tmpa_box {#1#6}
+    \dim_set:Nn \l__jlreq_tmpa_dim { \box_wd:N \l__jlreq_tmpa_box}
     % 何行必要かを\l__jlreq_cutinheading_linecount_tlに入れる
     \dim_compare:nTF { \l__jlreq_tmpa_dim > #5} {
       \tl_set:Nn \l__jlreq_cutinheading_linecount_tl {3}
@@ -3038,31 +3050,31 @@
       } { \tl_set:Nn \l__jlreq_cutinheading_linecount_tl {1} } }
     % \l__jlreq_tmpa_dimが実際の一行の長さに近い
     \dim_set:Nn \l__jlreq_tmpa_dim { \l__jlreq_tmpa_dim / \l__jlreq_cutinheading_linecount_tl }
-    % \l_jlreq_tmpb_boxに見出し部分を，\l__jlreq_cutinheading_linecount_tlに見出し自身に何行使うかを入れる
+    % \l__jlreq_tmpb_boxに見出し部分を，\l__jlreq_cutinheading_linecount_tlに見出し自身に何行使うかを入れる
     \int_compare:nTF { \l__jlreq_cutinheading_linecount_tl = 1 }{
-      \vbox_set:Nn \l_jlreq_tmpb_box {\parindent=0pt\rightskip=0pt\leftskip=0pt\box_use_drop:N \l_jlreq_tmpa_box}
+      \vbox_set:Nn \l__jlreq_tmpb_box {\parindent=0pt\rightskip=0pt\leftskip=0pt\box_use_drop:N \l__jlreq_tmpa_box}
       \tl_set:Nn \l__jlreq_cutinheading_linecount_tl {2}
     }{
       \jlreq@inlinenote@determinelength{#6}{#1}{}{\l__jlreq_cutinheading_linecount_tl}{\l__jlreq_cutinheading_linecount_tl}{\l__jlreq_tmpa_dim}{\linewidth}%
-      \box_set_eq:NN \l_jlreq_tmpb_box \jlreq@resultbox
+      \box_set_eq:NN \l__jlreq_tmpb_box \jlreq@resultbox
       \tl_set:Nn \l__jlreq_cutinheading_linecount_tl {3}
     }
     % 普通の一行の高さ/深さに合わせて見出しのボックスを作る
-    \setbox\l_jlreq_tmpa_box =\vtop to \dimexpr\numexpr\l__jlreq_cutinheading_linecount_tl - 1\relax\baselineskip + 1\jlreq@zh\relax{\skip_vertical:n {0pt~plus~1fill~minus~1fill} \box_use_drop:N \l_jlreq_tmpb_box \skip_vertical:n {0pt~plus~1fill~minus~1fill}}%
+    \setbox\l__jlreq_tmpa_box =\vtop to \dimexpr\numexpr\l__jlreq_cutinheading_linecount_tl - 1\relax\baselineskip + 1\jlreq@zh\relax{\skip_vertical:n {0pt~plus~1fill~minus~1fill} \box_use_drop:N \l__jlreq_tmpb_box \skip_vertical:n {0pt~plus~1fill~minus~1fill}}%
     % 高さを通常の一行のそれにする
-    \hbox_set:Nn \l_jlreq_tmpc_box {阿}
-    \box_set_dp:Nn \l_jlreq_tmpa_box { \box_ht:N \l_jlreq_tmpa_box + \box_dp:N \l_jlreq_tmpa_box - \box_ht:N \l_jlreq_tmpc_box }
-    \box_set_ht:Nn \l_jlreq_tmpa_box { \box_ht:N \l_jlreq_tmpc_box }
+    \hbox_set:Nn \l__jlreq_tmpc_box {阿}
+    \box_set_dp:Nn \l__jlreq_tmpa_box { \box_ht:N \l__jlreq_tmpa_box + \box_dp:N \l__jlreq_tmpa_box - \box_ht:N \l__jlreq_tmpc_box }
+    \box_set_ht:Nn \l__jlreq_tmpa_box { \box_ht:N \l__jlreq_tmpc_box }
     \noindent
     \hspace*{#2}%
-    \box_use:N \l_jlreq_tmpa_box
+    \box_use:N \l__jlreq_tmpa_box
     \hspace*{#3}%
     % でかい見出しボックスの分をキャンセルする空きを入れる
-    % \baselineskip - box_ht:N \l_jlreq_tmpc_boxはTeXが挿入するスキップの分
+    % \baselineskip - box_ht:N \l__jlreq_tmpc_boxはTeXが挿入するスキップの分
     \cs_set:Nx \l__jlreq_do:{
       \exp_not:N \par
-      \exp_not:N \skip_vertical:n {\dim_eval:n {-\box_ht:N \l_jlreq_tmpa_box - \box_dp:N \l_jlreq_tmpa_box - \baselineskip + \box_ht:N \l_jlreq_tmpc_box}}
-      \exp_not:N\hangindent= \dim_eval:n {#2 + \box_wd:N \l_jlreq_tmpa_box + #3} \exp_not:N \relax
+      \exp_not:N \skip_vertical:n {\dim_eval:n {-\box_ht:N \l__jlreq_tmpa_box - \box_dp:N \l__jlreq_tmpa_box - \baselineskip + \box_ht:N \l__jlreq_tmpc_box}}
+      \exp_not:N\hangindent= \dim_eval:n {#2 + \box_wd:N \l__jlreq_tmpa_box + #3} \exp_not:N \relax
       \exp_not:N\hangafter=-\l__jlreq_cutinheading_linecount_tl\relax
     }%
   \exp_after:wN \group_end:
@@ -3136,14 +3148,14 @@
     \str_set:Nn \l__jlreq_tmpa_str {#2}
     \str_case_e:nn { \jlreq@HeadingType {#1} } {
       { BlockHeading } {
-        \bool_set_false:N \l_jlreq_tmpa_bool
-        \str_if_in:NnT \l__jlreq_tmpa_str { before_space=  } { \bool_set_true:N \l_jlreq_tmpa_bool }
-        \str_if_in:NnT \l__jlreq_tmpa_str { before_space~= } { \bool_set_true:N \l_jlreq_tmpa_bool }
-        \bool_if:NT \l_jlreq_tmpa_bool {\tl_put_left:Nn \l__jlreq_tmpa_tl {before_lines={},} }
-        \bool_set_false:N \l_jlreq_tmpa_bool
-        \str_if_in:NnT \l__jlreq_tmpa_str { after_space=  } { \bool_set_true:N \l_jlreq_tmpa_bool }
-        \str_if_in:NnT \l__jlreq_tmpa_str { after_space~= } { \bool_set_true:N \l_jlreq_tmpa_bool }
-        \bool_if:NT \l_jlreq_tmpa_bool {\tl_put_left:Nn \l__jlreq_tmpa_tl {after_lines={},}}
+        \bool_set_false:N \l__jlreq_tmpa_bool
+        \str_if_in:NnT \l__jlreq_tmpa_str { before_space=  } { \bool_set_true:N \l__jlreq_tmpa_bool }
+        \str_if_in:NnT \l__jlreq_tmpa_str { before_space~= } { \bool_set_true:N \l__jlreq_tmpa_bool }
+        \bool_if:NT \l__jlreq_tmpa_bool {\tl_put_left:Nn \l__jlreq_tmpa_tl {before_lines={},} }
+        \bool_set_false:N \l__jlreq_tmpa_bool
+        \str_if_in:NnT \l__jlreq_tmpa_str { after_space=  } { \bool_set_true:N \l__jlreq_tmpa_bool }
+        \str_if_in:NnT \l__jlreq_tmpa_str { after_space~= } { \bool_set_true:N \l__jlreq_tmpa_bool }
+        \bool_if:NT \l__jlreq_tmpa_bool {\tl_put_left:Nn \l__jlreq_tmpa_tl {after_lines={},}}
       }
     }
     \cs_set:Nx \l_jlreq_do: {
@@ -6194,17 +6206,17 @@
       \ltj@setpar@global
       \cs_set:Nn \l_jlreq_do: {}
       \tl_if_empty:nF {#1} {
-        \skip_set:Nn \l_jlreq_tmpa_skip { #1 }
+        \skip_set:Nn \l__jlreq_tmpa_skip { #1 }
         \cs_set:Nx \l_jlreq_do: { \exp_not:o \l_jlreq_do:
-          \exp_not:N \cs_set:Npn \exp_not:N \jlreqkanjiskip { \skip_use:N \l_jlreq_tmpa_skip }
-          \exp_not:N \ltjsetkanjiskip \skip_use:N \l_jlreq_tmpa_skip
+          \exp_not:N \cs_set:Npn \exp_not:N \jlreqkanjiskip { \skip_use:N \l__jlreq_tmpa_skip }
+          \exp_not:N \ltjsetkanjiskip \skip_use:N \l__jlreq_tmpa_skip
         }
       }
       \tl_if_empty:nF {#2} {
-        \skip_set:Nn \l_jlreq_tmpa_skip { #2 }
+        \skip_set:Nn \l__jlreq_tmpa_skip { #2 }
         \cs_set:Nx \l_jlreq_do: { \exp_not:o \l_jlreq_do:
-          \exp_not:N \cs_set:Npn \exp_not:N \jlreqxkanjiskip { \skip_use:N \l_jlreq_tmpa_skip }
-          \exp_not:N \ltjsetxkanjiskip \skip_use:N \l_jlreq_tmpa_skip
+          \exp_not:N \cs_set:Npn \exp_not:N \jlreqxkanjiskip { \skip_use:N \l__jlreq_tmpa_skip }
+          \exp_not:N \ltjsetxkanjiskip \skip_use:N \l__jlreq_tmpa_skip
         }
       }
     \exp_after:wN \group_end:
@@ -6215,17 +6227,17 @@
     \group_begin:
       \cs_set:Nn \l_jlreq_do: {}
       \tl_if_empty:nF {#1} {
-        \skip_set:Nn \l_jlreq_tmpa_skip { #1 }
+        \skip_set:Nn \l__jlreq_tmpa_skip { #1 }
         \cs_set:Nx \l_jlreq_do: { \exp_not:o \l_jlreq_do:
-          \exp_not:N \cs_set:Npx \exp_not:N \jlreqkanjiskip { \skip_use:N \l_jlreq_tmpa_skip }
-          \exp_not:N \skip_set:Nn \exp_not:N \kanjiskip { \skip_use:N \l_jlreq_tmpa_skip }
+          \exp_not:N \cs_set:Npx \exp_not:N \jlreqkanjiskip { \skip_use:N \l__jlreq_tmpa_skip }
+          \exp_not:N \skip_set:Nn \exp_not:N \kanjiskip { \skip_use:N \l__jlreq_tmpa_skip }
         }
       }
       \tl_if_empty:nF {#2} {
-        \skip_set:Nn \l_jlreq_tmpa_skip { #2 }
+        \skip_set:Nn \l__jlreq_tmpa_skip { #2 }
         \cs_set:Nx \l_jlreq_do: { \exp_not:o \l_jlreq_do:
-          \exp_not:N \cs_set:Npx \exp_not:N \jlreqxkanjiskip { \skip_use:N \l_jlreq_tmpa_skip }
-          \exp_not:N \skip_set:Nn \exp_not:N \xkanjiskip { \skip_use:N \l_jlreq_tmpa_skip }
+          \exp_not:N \cs_set:Npx \exp_not:N \jlreqxkanjiskip { \skip_use:N \l__jlreq_tmpa_skip }
+          \exp_not:N \skip_set:Nn \exp_not:N \xkanjiskip { \skip_use:N \l__jlreq_tmpa_skip }
         }
       }
     \exp_after:wN \group_end:

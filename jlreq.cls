@@ -6,7 +6,6 @@
 % (based on JLReq 20200811 https://www.w3.org/TR/2020/NOTE-jlreq-20200811/)
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{jlreq}[2024/02/16 jlreq]
-\RequirePackage{l3keys2e}
 \RequirePackage{etoolbox}
 \RequirePackage{jlreq-helpers}[2024/02/13]
 
@@ -103,7 +102,8 @@
 % ものは\jlreq@option@<key>に格納する．
 % _とかは@に変換する．
 % エンジン類
-\keys_define:nn { jlreq } {
+\DeclareKeys [jlreq] {
+  name.usage = load,
   uplatex .code:n = { \let\jlreq@engine=u }, uplatex .value_forbidden:n = true,
   platex .code:n = { \let\jlreq@engine=p }, platex .value_forbidden:n = true,
   lualatex .code:n = { \let\jlreq@engine=l }, lualatex .value_forbidden:n = true,
@@ -127,13 +127,13 @@
     \tl_gput_right:Nn \g__jlreq_papersizelist_tl { { ##1 } { \setlength{\paperwidth}{#3} \setlength{\paperheight}{#4} } }
   }
   \clist_map_inline:nn {#2} {
-    \keys_define:nn { jlreq } {
+    \DeclareKeys [jlreq] {
       ##1 .code:n = { \setlength{\paperwidth}{#3} \setlength{\paperheight}{#4} },
       ##1 .value_forbidden:n = true
     }
   }
 }
-\keys_define:nn { jlreq } {
+\DeclareKeys [jlreq] {
   paper .code:n = {
     \str_case:nVF {#1} \g__jlreq_papersizelist_tl {
       \jlreq@helper@dividebycomma{#1}%
@@ -165,7 +165,7 @@
   }
   \clist_map_inline:nn {#2} {
     \cs_set:Nx \l__jlreq_do: {
-      \exp_not:N \keys_define:nn { jlreq } {
+      \exp_not:N \DeclareKeys [jlreq] {
          ##1 .code:n = {
           \exp_not:o { \l__jlreq_tmpa:n {##1} }
           \exp_not:n { \setlength{\paperwidth}{#3} \setlength{\paperheight}{#4} }
@@ -288,7 +288,7 @@
 
 %.. フォントサイズ，行長，1ページあたりの行数で基本版面のサイズを決める（2.4.1.a）
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@fontsize
-\keys_define:nn { jlreq } {
+\DeclareKeys [jlreq] {
   fontsize .tl_set:N = \jlreq@option@fontsize,
   10pt .code:n = {\def\jlreq@option@fontsize{10pt}}, 10pt .value_forbidden:n = true,
   11pt .code:n = {\def\jlreq@option@fontsize{11pt}}, 11pt .value_forbidden:n = true,
@@ -299,42 +299,42 @@
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@jafontsize
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@jafontscale
 %.. 行の長さ
-\keys_define:nn { jlreq } { line_length .tl_set:N = \jlreq@option@line@length }
+\DeclareKeys [jlreq] { line_length .tl_set:N = \jlreq@option@line@length }
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@line@length
 %.. 1ページあたりの行数
-\keys_define:nn { jlreq } { number_of_lines .tl_set:N = \jlreq@option@number@of@lines }
+\DeclareKeys [jlreq] { number_of_lines .tl_set:N = \jlreq@option@number@of@lines }
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@number@of@lines
 
 % 地の空き量，のどの空き量で配置位置を決める（2.4.1.b）省略されたら中央配置．
 %.. 天
-\keys_define:nn { jlreq } { head_space .tl_set:N = \jlreq@option@head@space }
+\DeclareKeys [jlreq] { head_space .tl_set:N = \jlreq@option@head@space }
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@head@space
 %.. 地
-\keys_define:nn { jlreq } { foot_space .tl_set:N = \jlreq@option@foot@space }
+\DeclareKeys [jlreq] { foot_space .tl_set:N = \jlreq@option@foot@space }
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@foot@space
 %.. のど
-\keys_define:nn { jlreq } { gutter .tl_set:N = \jlreq@option@gutter }
+\DeclareKeys [jlreq] { gutter .tl_set:N = \jlreq@option@gutter }
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@gutter
 %.. 小口
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@fore@edge
-\keys_define:nn { jlreq } {
+\DeclareKeys [jlreq] {
   fore_edge .tl_set:N = \jlreq@option@fore@edge,
   fore-edge .tl_set:N = \jlreq@option@fore@edge
 }
 
 %.. 柱とノンブル
 % 本文とヘッダ/フッタの間の空き
-\keys_define:nn { jlreq } { headfoot_verticalposition .tl_set:N = \jlreq@option@headfoot@verticalpos }
+\DeclareKeys [jlreq] { headfoot_verticalposition .tl_set:N = \jlreq@option@headfoot@verticalpos }
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@headfoot@verticalpos
 % 柱やノンブルの左右の空き
-\keys_define:nn { jlreq } { headfoot_sidemargin .tl_set:N = \jlreq@headfoot@sidemargin }
+\DeclareKeys [jlreq] { headfoot_sidemargin .tl_set:N = \jlreq@headfoot@sidemargin }
 
 %.. 段間
-\keys_define:nn { jlreq } { column_gap .tl_set:N = \jlreq@option@column@gap }
+\DeclareKeys [jlreq] { column_gap .tl_set:N = \jlreq@option@column@gap }
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@column@gap
 
 %.. 行送り，指定無しの場合は文字サイズの1.7倍とする．（1.5から2倍が好ましい：2.4.2.d 注3）
-\keys_define:nn { jlreq } {
+\DeclareKeys [jlreq] {
   baselineskip .tl_set:N = \jlreq@option@baselineskip,
   linegap .code:n = { \def\jlreq@option@baselineskip{1zw + #1} }
 }
@@ -343,25 +343,25 @@
 %.. 組み方系
 % 行頭に括弧が来たときの配置：3.1.5
 % 段落頭指定_折り返し行頭指定 で与える．
-\keys_define:nn { jlreq } { open_bracket_pos .choices:nn = {zenkaku_tentsuki,zenkakunibu_nibu,nibu_tentsuki}{\def\jlreq@open@bracket@pos{#1}} }
+\DeclareKeys [jlreq] { open_bracket_pos .choices:nn = {zenkaku_tentsuki,zenkakunibu_nibu,nibu_tentsuki}{\def\jlreq@open@bracket@pos{#1}} }
 % ぶら下げ組みをするか：3.8.2 注1
 \newif\ifjlreq@burasage\jlreq@burasagefalse
-\keys_define:nn { jlreq } { hanging_punctuation .code:n = {\jlreq@burasagetrue}, hanging_punctuation .value_forbidden:n = true}
+\DeclareKeys [jlreq] { hanging_punctuation .code:n = {\jlreq@burasagetrue}, hanging_punctuation .value_forbidden:n = true}
 % jsarticleと同じkanjiskipを使う
 \newif\ifjlreq@narrow@kanjiskip\jlreq@narrow@kanjiskipfalse
-\keys_define:nn { jlreq } { narrow_kanjiskip .code:n = {\jlreq@narrow@kanjiskiptrue}, narrow_kanjiskip .value_forbidden:n = true}
+\DeclareKeys [jlreq] { narrow_kanjiskip .code:n = {\jlreq@narrow@kanjiskiptrue}, narrow_kanjiskip .value_forbidden:n = true}
 \__jlreq_aftercls_addtodeleteif:N \ifjlreq@narrow@kanjiskip
 
 %.. 注
 % 傍注のタイプ
-\keys_define:nn { jlreq } { sidenote_length .tl_set:N = \jlreq@option@sidenote@length }
+\DeclareKeys [jlreq] { sidenote_length .tl_set:N = \jlreq@option@sidenote@length }
 \__jlreq_aftercls_addtodeletecs:N \jlreq@option@sidenote@length
 
 %.. 逆ノンブル
 \newif\ifjlreq@option@use@reverse@pagination
 \__jlreq_aftercls_addtodeleteif:N \ifjlreq@option@use@reverse@pagination
 \jlreq@option@use@reverse@paginationfalse
-\keys_define:nn { jlreq } { use_reverse_pagination .code:n = {\jlreq@option@use@reverse@paginationtrue}, use_reverse_pagination .value_forbidden:n = true }
+\DeclareKeys [jlreq] { use_reverse_pagination .code:n = {\jlreq@option@use@reverse@paginationtrue}, use_reverse_pagination .value_forbidden:n = true }
 
 %.. もろもろ
 \newif\if@restonecol\@restonecolfalse
@@ -370,7 +370,7 @@
 \newif\if@tate \@tatefalse
 \newif\ifjlreq@option@titlepage \jlreq@option@titlepagefalse % titlepageかnotitlepageかが指定された
 \__jlreq_aftercls_addtodeleteif:N \ifjlreq@option@titlepage
-\keys_define:nn { jlreq } {
+\DeclareKeys [jlreq] {
   landscape .code:n = {\@landscapetrue}, landscape .value_forbidden:n = true,
   tombo .code:n = {\ClassWarningNoLine{jlreq}{The~option~`tombo'~is~not~supported~by~jlreq~class.~Please~use~the~jlreq-trimmarks~package}},
   tombow .code:n = {\ClassWarningNoLine{jlreq}{The~option~`tombow'~is~not~supported~by~jlreq~class.~Please~use~the~jlreq-trimmarks~package}}, 
@@ -380,7 +380,7 @@
 
 \newif\ifjlreq@option@twoside\jlreq@option@twosidefalse % onesideかtwosideが指定された
 \__jlreq_aftercls_addtodeleteif:N \ifjlreq@option@twoside
-\keys_define:nn { jlreq } {
+\DeclareKeys [jlreq] {
   oneside .code:n = { \@twosidefalse\@mparswitchfalse\jlreq@option@twosidetrue }, oneside .value_forbidden:n = true,
   twoside .code:n = { \@twosidetrue\@mparswitchtrue\jlreq@option@twosidetrue }, twoside .value_forbidden:n = true,
   onecolumn .code:n = { \@twocolumnfalse }, onecolumn .value_forbidden:n = true,
@@ -393,7 +393,7 @@
 \newif\if@openright
 \newif\ifjlreq@option@open \jlreq@option@openfalse % openrightかopenanyが指定された
 \__jlreq_aftercls_addtodeleteif:N \ifjlreq@option@open
-\keys_define:nn { jlreq } {
+\DeclareKeys [jlreq] {
   openright .code:n = { \@openrighttrue\jlreq@option@opentrue }, openright .value_forbidden:n = true,
   openany .code:n = { \@openrightfalse\jlreq@option@opentrue }, openany .value_forbidden:n = true,
   leqno .code:n = { \input{leqno.clo } }, leqno .value_forbidden:n = true,
@@ -401,12 +401,12 @@
 }
 \newif\ifjlreq@option@enablejfam \jlreq@option@enablejfamtrue
 \__jlreq_aftercls_addtodeleteif:N \ifjlreq@option@enablejfam
-\keys_define:nn { jlreq } { disablejfam .code:n = { \jlreq@option@enablejfamfalse }, disablejfam .value_forbidden:n = true}
+\DeclareKeys [jlreq] { disablejfam .code:n = { \jlreq@option@enablejfamfalse }, disablejfam .value_forbidden:n = true}
 
 \def\jlreq@note#1{}
-\keys_define:nn { jlreq } { jlreq_notes .code:n = { \def\jlreq@note##1{\message{^^JJLReq note: ##1^^J}}}, jlreq_notes .value_forbidden:n = true}
+\DeclareKeys [jlreq] { jlreq_notes .code:n = { \def\jlreq@note##1{\message{^^JJLReq note: ##1^^J}}}, jlreq_notes .value_forbidden:n = true}
 
-\keys_set:nn { jlreq } {
+\SetKeys [jlreq] {
   article_type=article,paper=a4,
   number_of_lines={},line_length = {},
   head_space={},foot_space={},gutter={},fore_edge={},
@@ -415,7 +415,7 @@
   headfoot_verticalposition = {},headfoot_sidemargin={0pt},
   open_bracket_pos=zenkaku_tentsuki,
   onecolumn,final }
-\ProcessKeysOptions { jlreq }
+\ProcessKeyOptions [jlreq]
 
 \legacy_if:nF { jlreq@option@titlepage } {
   \str_if_eq:VnTF \jlreq@article@type { article } { \@titlepagefalse } { \@titlepagetrue }

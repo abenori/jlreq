@@ -1,7 +1,6 @@
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{jlreq-complements}[2022/11/28 jlreq-complements]
 \RequirePackage{jlreq-helpers}[2022/11/28]
-\RequirePackage{l3keys2e}
 
 \ExplSyntaxOn
 
@@ -9,7 +8,7 @@
 \str_new:N \g__jlreq_complements_engine_str
 \tl_new:N \g__jlreq_complements_finally
 
-\keys_define:nn { jlreq-complements } {
+\DeclareKeys [jlreq-complements] {
   setupname .code:n = {
     \str_set:Nn \g__jlreq_complements_setupname_str {#1}
   },
@@ -20,8 +19,8 @@
   lualatex .code:n = { \str_set:Nn \g__jlreq_complements_engine_str { lualatex } },
   lualatex .value_forbidden:n = true,
 }
-\keys_set:nn { jlreq-complements } { setupname = jlreqcomplementssetup }
-\ProcessKeysOptions { jlreq-complements }
+\SetKeys [jlreq-complements] { setupname = jlreqcomplementssetup }
+\ProcessKeyOptions [jlreq-complements]
 
 \str_if_empty:NT \g__jlreq_complements_engine_str {
   \jlreq@helper@guessengine

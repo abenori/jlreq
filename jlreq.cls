@@ -335,10 +335,9 @@
 
 %.. 行送り，指定無しの場合は文字サイズの1.7倍とする．（1.5から2倍が好ましい：2.4.2.d 注3）
 \DeclareKeys [jlreq] {
-  baselineskip .tl_set:N = \jlreq@option@baselineskip,
-  linegap .code:n = { \def\jlreq@option@baselineskip{1zw + #1} }
+  baselineskip .tl_set:N = \jlreqbaselineskip,
+  linegap .code:n = { \def\jlreqbaselineskip{1zw + #1} }
 }
-\__jlreq_aftercls_addtodeletecs:N \jlreq@option@baselineskip
 
 %.. 組み方系
 % 行頭に括弧が来たときの配置：3.1.5
@@ -414,7 +413,8 @@
   sidenote_length=0pt,column_gap={2zw},
   headfoot_verticalposition = {},headfoot_sidemargin={0pt},
   open_bracket_pos=zenkaku_tentsuki,
-  onecolumn,final }
+  onecolumn,final
+}
 \ProcessKeyOptions [jlreq]
 
 \legacy_if:nF { jlreq@option@titlepage } {
@@ -1201,23 +1201,22 @@
 % \baselineskipの計算
 % いったん文字サイズを変更（(u)platexの際にzh/zwをきちんとするため）
 \@setfontsize\normalsize{\jlreq@fontsize}{\jlreq@fontsize}%
-\newdimen\jlreq@baselineskip
+% 現在の\baselineskipを計算し#1に入れる
 \ifx l\jlreq@engine
-  \setlength{\jlreq@baselineskip}{%
-    \dimexpr\directlua{
+  \edef\jlreqbaselineskip{
+    \directlua{
       local~act = string.char(92)~
-      local~s = [[\jlreq@option@baselineskip]]~
+      local~s = [[\jlreqbaselineskip]]~
       s = s:gsub("[QH]",act .. "dimexpr 0.25mm" .. act .. "relax"):gsub("zh",act .. "zh"):gsub("zw",act .. "zw")~
-      tex.print(s)~
-    }\relax
-  }%
-\else
-  \setlength{\jlreq@baselineskip}{\dimexpr\jlreq@option@baselineskip\relax}
+      tex.print(act .. "unexpanded{" .. s .. "}")~
+    }
+  }
 \fi
-\ifdim\jlreq@fontsize>\jlreq@baselineskip
+\dim_set:Nn \l__jlreq_tmpa_dim {\jlreqbaselineskip}
+\ifdim\jlreq@fontsize>\l__jlreq_tmpa_dim
   \ClassError{jlreq}{The~baselineskip~is~less~than~fontsize}{\@ehc}%
 \fi
-\bool_if:nT { \dim_compare_p:n { \jlreq@baselineskip < 1.5\zw } || \dim_compare_p:n { \jlreq@baselineskip > 2\zw } } {
+\bool_if:nT { \dim_compare_p:n { \l__jlreq_tmpa_dim < 1.5\zw } || \dim_compare_p:n { \l__jlreq_tmpa_dim > 2\zw } } {
   \jlreq@note { 行間は二分以上全角以下が望ましい (2.4.2.d~注3)．}
 }
 
@@ -1278,7 +1277,7 @@
 \fi
 
 \renewcommand{\normalsize}{%
-  \@setfontsize\normalsize{\jlreq@fontsize}{\jlreq@baselineskip}%
+  \@setfontsize\normalsize{\jlreq@fontsize}{\dimexpr\jlreqbaselineskip\relax}%
   \abovedisplayskip 1.1\jlreq@fontsize \@plus .3\jlreq@fontsize \@minus .4\jlreq@fontsize
   \abovedisplayshortskip \z@ \@plus .3\jlreq@fontsize
   \belowdisplayskip .9\jlreq@fontsize \@plus.3\jlreq@fontsize \@minus.4\jlreq@fontsize
@@ -1298,26 +1297,49 @@
 % 2.5.2 \baselineskipは一定の方がよい？
 % \@listiは再定義しないようにした．（\normalsizeと共用でJLReq通りだと思う．）
 \newcommand{\footnotesize}{%
-  \@setfontsize\footnotesize{.8\jlreq@fontsize}{\dimexpr 115\jlreq@baselineskip/170\relax}% 脚注文字サイズの二分より少し小さい値を行間に: 4.2.5.e
+  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
+  \@setfontsize\footnotesize{.8\jlreq@fontsize}{\dimexpr 115\jlreq@tempdima/170\relax}% 脚注文字サイズの二分より少し小さい値を行間に: 4.2.5.e
   \abovedisplayskip .6\jlreq@fontsize \@plus.2\jlreq@fontsize \@minus.4\jlreq@fontsize
   \abovedisplayshortskip \z@ \@plus.1\jlreq@fontsize
   \belowdisplayshortskip .3\jlreq@fontsize \@plus.1\jlreq@fontsize \@minus.2\jlreq@fontsize
   \belowdisplayskip \abovedisplayskip}
-% tsize10.cloの引数を，そのまま\jlreq@fontsize/\jlreq@baselineskipでスケーリングしているだけ．
+% tsize10.cloの引数を，そのまま\jlreq@fontsize/\jlreqbaselineskipでスケーリングしているだけ．
 \newcommand{\small}{%
   % jsarticleのもの
-  \@setfontsize\small{.9\jlreq@fontsize}{\dimexpr 13\jlreq@baselineskip/17\relax}%
+  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
+  \@setfontsize\small{.9\jlreq@fontsize}{\dimexpr 13\jlreq@tempdima/17\relax}%
   \abovedisplayskip .9\jlreq@fontsize \@plus.3\jlreq@fontsize \@minus.4\jlreq@fontsize
   \abovedisplayshortskip \z@ \@plus.3\jlreq@fontsize
   \belowdisplayshortskip \abovedisplayshortskip
   \belowdisplayskip \abovedisplayskip}
-\newcommand{\scriptsize}{\@setfontsize\scriptsize{\dimexpr 7\jlreq@fontsize/10\relax}{\dimexpr 8\jlreq@baselineskip/17\relax}}
-\newcommand{\tiny}{\@setfontsize\tiny{\dimexpr 5\jlreq@fontsize/10\relax}{\dimexpr 6\jlreq@baselineskip/17\relax}}
-\newcommand{\large}{\@setfontsize\large{\dimexpr12\jlreq@fontsize/10\relax}{\jlreq@baselineskip}}
-\newcommand{\Large}{\@setfontsize\Large{\dimexpr14\jlreq@fontsize/10\relax}{\dimexpr 21\jlreq@baselineskip/17\relax}}
-\newcommand{\LARGE}{\@setfontsize\LARGE{\dimexpr17\jlreq@fontsize/10\relax}{\dimexpr 25\jlreq@baselineskip/17\relax}}
-\newcommand{\huge}{\@setfontsize\huge{2\jlreq@fontsize}{\dimexpr 28\jlreq@baselineskip/17\relax}}
-\newcommand{\Huge}{\@setfontsize\Huge{\dimexpr 25\jlreq@fontsize/10\relax}{\dimexpr 33\jlreq@baselineskip/17\relax}}
+\newcommand{\scriptsize}{
+  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
+  \@setfontsize\scriptsize{\dimexpr 7\jlreq@fontsize/10\relax}{\dimexpr 8\jlreq@tempdima/17\relax}
+}
+\newcommand{\tiny}{
+  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
+  \@setfontsize\tiny{\dimexpr 5\jlreq@fontsize/10\relax}{\dimexpr 6\jlreq@tempdima/17\relax}
+}
+\newcommand{\large}{
+  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
+  \@setfontsize\large{\dimexpr12\jlreq@fontsize/10\relax}{\jlreq@tempdima}
+}
+\newcommand{\Large}{
+  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
+  \@setfontsize\Large{\dimexpr14\jlreq@fontsize/10\relax}{\dimexpr 21\jlreq@tempdima/17\relax}
+}
+\newcommand{\LARGE}{
+  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
+  \@setfontsize\LARGE{\dimexpr17\jlreq@fontsize/10\relax}{\dimexpr 25\jlreq@tempdima/17\relax}
+}
+\newcommand{\huge}{
+  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
+  \@setfontsize\huge{2\jlreq@fontsize}{\dimexpr 28\jlreq@tempdima/17\relax}
+}
+\newcommand{\Huge}{
+  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
+  \@setfontsize\Huge{\dimexpr 25\jlreq@fontsize/10\relax}{\dimexpr 33\jlreq@tempdima/17\relax}
+}
 
 %. plextから拝借
 \def\jlreq@Kanji#1{\expandafter\kansuji\csname c@#1\endcsname}
@@ -4010,7 +4032,7 @@
 % \jlreq@resultboxに整形結果を返す（垂直ボックス）．見つからなかったらvoid．\globalに設定する．
 \long\def\jlreq@inlinenote@determinelength#1#2#3#4#5#6#7{%
   \begingroup
-  %  \message{#1 の試行開始，行数 = #5, \the\dimexpr#6\relax から \the\dimexpr#7\relaxまで}%
+%    \message{#1 の試行開始，行数 = #5, \the\dimexpr#6\relax から \the\dimexpr#7\relax まで（長さ\the\dimexpr #7 - #6\relax ）}%
     \@tempcnta=1\relax
     \def\@tempa{}%
     % 調整に使う行の\parshape指定を\@tempaに入れる．長さは\jlreq@tempdima．
@@ -4031,12 +4053,12 @@
           \parindent=0pt\leftskip=0pt\rightskip=0pt
           \parshape #5~#3~\@tempa 0pt~\the\maxdimen
           #1\par\global\@tempcntb=\prevgraf}%
-  %      \message{\string\jlreq@tempdima = \the\jlreq@tempdima で試行，行数は\the\@tempcntb , 書式 #5 #3 \@tempa 0pt \the\maxdimen}%
+%        \message{\string\jlreq@tempdima = \the\jlreq@tempdima で試行，行数は\the\@tempcntb , 書式~#5~#3~\@tempa~0pt~\the\maxdimen}%
       \fi
       \jlreq@getlastbox{\@tempboxa}%
       \setbox\jlreq@tempboxa=\box\jlreq@resultbox
       \ifnum\@tempcntb<#5\relax% 行数が達していないならOK
-  %      \message{行数 = \the\@tempcntb により確定}
+%        \message{行数 = \the\@tempcntb により確定}
         % #5行になるまで空の水平ボックスを加えていく．
         \global\setbox\jlreq@resultbox=\vbox{#2%
           \unvbox\@tempboxa\hbox{\unhbox\jlreq@tempboxa\unskip\unskip\unpenalty}%
@@ -4046,7 +4068,7 @@
         % そうでない場合は最後の二行の長さを比較する
         \jlreq@getlastbox{\@tempboxa}%
         \setbox\jlreq@tempboxb=\box\jlreq@resultbox
-  %      \message{最終行の長さ \the\wd\jlreq@tempboxa, その前の長さ \the\wd\jlreq@tempboxb}%
+%        \message{最終行の長さ \the\wd\jlreq@tempboxa, その前の長さ \the\wd\jlreq@tempboxb}%
         \ifdim\wd\jlreq@tempboxa>\wd\jlreq@tempboxb
           \advance\jlreq@tempdima by 0.3pt\relax% 0.3ptに意味はない
         \else

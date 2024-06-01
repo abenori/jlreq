@@ -1867,31 +1867,21 @@
 
 %.. 別行見出し
 % \jlreq@BlockHeading@start：別行見出しを出力する命令．
-% \jlreq@BlockHeading@start{1 = 命令名}{2 = レベル}{3 = スペース関連}{4 = カウンタ関連}{5 =  フォーマット関連}{6 = 全体フォーマット}*{見出し}[副題]
+% \jlreq@BlockHeading@start{1 = 命令名}{2 = レベル}{3 = スペース関連}{4 = カウンタ関連}*[running head]{見出し}[副題]
 % カウンタ関連=-,*,無し：-はカウンタ関連を処理しない．*はさらに目次に追加しない（星付き命令と同様）．星付きで呼び出された時は常に*同等．
 % スペース関連={配置:lcr（左中央右）}{字下げ（寸法）}{字上げ（寸法）}{前空き}{後空き}{行取りの行数}{空か*か，偶数ページでも改ページを許可するならば空}
 % 前/後空きはprefixにa:/s:/r:が入る．r:は空きがその値そのものになる．a:/s:は行取りに加えて入る．a:で指定された空きはページ行頭では入らない
 % 後空きの時はs:は指定できない．
-% フォーマット関連：
-% フォーマット関連={{ラベルのみのフォーマット}{ラベルフォーマット}{見出し文字列フォーマット}{見出し文字列フォーマット（ラベル無し）}{副題フォーマット}{副題フォーマット（ラベル無し）}}{{前フォーマットラベルあり}{前フォーマットラベルなし}{見出し全体のフォーマット}{後ろフォーマットラベルあり}{後ろフォーマットラベルなし}}
+% フォーマット関連：あらかじめマクロに入れておく
+% \jlreq@BlockHeading@start@eachformat: {ラベルのみのフォーマット}{ラベルフォーマット}{見出し文字列フォーマット}{見出し文字列フォーマット（ラベル無し）}{副題フォーマット}{副題フォーマット（ラベル無し）}
+% \jlreq@BlockHeading@start@format: {前フォーマットラベルあり}{前フォーマットラベルなし}{見出し全体のフォーマット}{後ろフォーマットラベルあり}{後ろフォーマットラベルなし}
+% \jlreq@BlockHeading@start@totalformat: 全体フォーマット
 % 見出しそのものは「全体フォーマット」に従い出力される．パラメータトークン#1を含み，#1=見出し本体：スペース関連と上の「見出し全体のフォーマット」に基づいて整形される．
 % 見出し全体のフォーマット内では#1=ラベル，#2=見出し文字列，#3=副題，それぞれ各々のフォーマットに基づき整形される．
 % ラベルフォーマットでは#1=カウンタ名，見出し文字列フォーマットでは#1=見出し文字列，副題フォーマットでは#1=副題
 % ラベルのみのフォーマットは目次に使われる．
-\long\def\jlreq@BlockHeading@start#1#2#3#4#5#6{%
-  \if@noskipsec\leavevmode\fi
-  % #5と#6は\parを含むかもしれないので引数渡しはしない（後の\@ifstarで詰まる）
-  \edef\jlreq@BlockHeading@start@eachformat{\exp_not:o {\@firstoftwo#5}}%
-  \edef\jlreq@BlockHeading@start@format{\exp_not:o {\@secondoftwo#5}}%
-  \edef\jlreq@BlockHeading@start@totalformat{\unexpanded{#6}}%
-  \jlreq@BlockHeading@start@{#1}{#2}{#3}{#4}%
-}
-% {1 = 命令}{2 = レベル}{3 = スペース関連}
-\long\def\jlreq@BlockHeading@start@#1#2#3#4{%
-  \@ifstar{\@dblarg{\jlreq@BlockHeading@start@@{#1}{#2}{#3}{*}}}{\@dblarg{\jlreq@BlockHeading@start@@{#1}{#2}{#3}{#4}}}%
-}
 % {1 = 命令}{2 = レベル}{3 = スペース関連}{4 = *}[5 = running head]{6 = 見出し}
-\long\def\jlreq@BlockHeading@start@@#1#2#3#4[#5]#6{%
+\long\def\jlreq@BlockHeading@start#1#2#3#4[#5]#6{%
   \@ifnextchar[{\jlreq@BlockHeading@start@@@{#1}{#2}{#3}{#4}{#5}{#6}}{\jlreq@BlockHeading@start@@@{#1}{#2}{#3}{#4}{#5}{#6}[]}%
 }
 
@@ -2532,32 +2522,55 @@
         \def\jlreq@totalformat@after{}%
       }%
     \fi
+    % フォーマットを指定のマクロに入れる命令群
+    \tl_set:Nx \l__jlreq_tmpa_tl {
+      \exp_not:n {\edef\jlreq@BlockHeading@start@eachformat}{\exp_not:N \unexpanded{%
+        {\exp_not:o {\jlreq@label@format}}{\exp_not:o {\jlreq@label@format@modified}}%
+        {\exp_not:o {\jlreq@heading@text@format@wlabel}}{\exp_not:o {\jlreq@heading@text@format@wolabel}}%
+        {\exp_not:o {\jlreq@subtitle@format@wlabel}}{\exp_not:o {\jlreq@subtitle@format@wolabel}}%
+      }}%
+      \exp_not:n {\edef\jlreq@BlockHeading@start@format}{\exp_not:N \unexpanded{%
+        {\exp_not:o {\jlreq@pre@format@wlabel}}{\exp_not:o {\jlreq@pre@format@wolabel}}%
+        {\exp_not:o {\jlreq@format}}%
+        {}{}%
+      }}%
+      \exp_not:n {\edef\jlreq@BlockHeading@start@totalformat}{\exp_not:N \unexpanded{%
+        {\exp_not:n {
+          \par
+          \addpenalty\@secpenalty
+          \addvspace{0pt}\relax % 改ページ関係（#54,#100），よくわかっていない
+        }}
+        {\exp_not:o {\jlreq@totalformat}}{\exp_not:o {\jlreq@totalformat@after}}%
+      }}%
+    }
+    % \jlreq@BlockHeading@startの第四引数
+    \tl_set:Nx \l__jlreq_tmpb_tl {
+      {\exp_not:o {\jlreq@align}}{\exp_not:o {\jlreq@indent}}{\exp_not:o {\jlreq@end@indent}}\exp_not:o {\jlreq@spaceset}{\exp_not:o {\jlreq@allowbreak@evenpage}}
+    }
     \edef\jlreq@do{%
       \exp_not:o {\jlreq@do}%
+      \str_if_eq:nnT {#1}{chapter}{
+        \exp_not:n {\edef\@chapter}{\exp_not:N \exp_not:n {
+          \exp_not:o \l__jlreq_tmpa_tl
+          \exp_not:N \jlreq@BlockHeading@start{\exp_not:n {#1}}{\exp_not:n {#2}}{\exp_not:o {\l__jlreq_tmpb_tl}}{\ifjlreq@number\else -\fi}
+        }}
+        \exp_not:n {\edef\@schapter}{\exp_not:N \exp_not:n {
+          \exp_not:o \l__jlreq_tmpa_tl
+          \exp_not:N \@dblarg{\exp_not:N \jlreq@BlockHeading@start{\exp_not:n {#1}}{\exp_not:n {#2}}{\exp_not:o {\l__jlreq_tmpb_tl}}{*}}
+        }}%
+      }
       \noexpand\edef\exp_not:c {jlreq@headingcs@#1}{\noexpand\unexpanded{%
         \exp_not:N \g__jlreq_hook_beforeheading:n {#1}
         \exp_not:o {\jlreq@pagebreak}%
         \tl_if_empty:NF \l__jlreq_pagestyle_tl { \exp_not:N \thispagestyle {\exp_not:o { \l__jlreq_pagestyle_tl } } }
-        \unexpanded{\jlreq@BlockHeading@start{#1}{#2}}%
-        {{\exp_not:o {\jlreq@align}}{\exp_not:o {\jlreq@indent}}{\exp_not:o {\jlreq@end@indent}}\exp_not:o {\jlreq@spaceset}{\exp_not:o {\jlreq@allowbreak@evenpage}}}%
-        {\ifjlreq@number\else -\fi}%
-        {%
-          {%
-            {\exp_not:o {\jlreq@label@format}}{\exp_not:o {\jlreq@label@format@modified}}%
-            {\exp_not:o {\jlreq@heading@text@format@wlabel}}{\exp_not:o {\jlreq@heading@text@format@wolabel}}%
-            {\exp_not:o {\jlreq@subtitle@format@wlabel}}{\exp_not:o {\jlreq@subtitle@format@wolabel}}%
-          }%
-          {%
-            {\exp_not:o {\jlreq@pre@format@wlabel}}{\exp_not:o {\jlreq@pre@format@wolabel}}%
-            {\exp_not:o {\jlreq@format}}%
-            {}{}%
-          }%
-        }%
-        {{\exp_not:n {
-          \par
-          \addpenalty\@secpenalty
-          \addvspace{0pt}\relax % 改ページ関係（#54,#100），よくわかっていない
-        }}{\exp_not:o {\jlreq@totalformat}}{\exp_not:o {\jlreq@totalformat@after}}}%
+        \str_if_eq:nnTF {#1}{chapter}{
+          \exp_not:n { \secdef\@chapter\@schapter }
+        }{
+          \exp_not:o \l__jlreq_tmpa_tl
+          \exp_not:N \@ifstar
+            {\exp_not:N \@dblarg{\exp_not:N \jlreq@BlockHeading@start{\exp_not:n {#1}}{\exp_not:n {#2}}{\exp_not:o {\l__jlreq_tmpb_tl}}{*}}}%
+            {\exp_not:N \@dblarg{\exp_not:N \jlreq@BlockHeading@start{\exp_not:n {#1}}{\exp_not:n {#2}}{\exp_not:o {\l__jlreq_tmpb_tl}}{\ifjlreq@number\else -\fi}}}%
+        }
       }}%
       \noexpand\def\exp_not:c {#1}{\exp_not:c {jlreq@headingcs@#1}}%
     }%

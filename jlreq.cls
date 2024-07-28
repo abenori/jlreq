@@ -2294,6 +2294,10 @@
 % \DeclareBlockHeading{命令名}{レベル}{設定}
 \seq_new:N \l__jlreq_BlockHeading_allheadings_seq
 \NewDocumentCommand {\DeclareBlockHeading} { m m +m } {
+  \str_if_eq:nnT {#1}{chapter}{
+    \@ifundefined{@chapter}{\def\@chapter{\jlreq@chapter}}{}
+    \@ifundefined{@schapter}{\def\@schapter{\jlreq@schapter}}{}
+  }
   \def\jlreq@do{\@removeelement{#1}}%
   \seq_put_right:Nn \l__jlreq_heading_allheadings_seq {#1}
   \seq_remove_duplicates:N \l__jlreq_heading_allheadings_seq
@@ -2550,11 +2554,11 @@
     \edef\jlreq@do{%
       \exp_not:o {\jlreq@do}%
       \str_if_eq:nnT {#1}{chapter}{
-        \exp_not:n {\edef\@chapter}{\exp_not:N \exp_not:n {
+        \exp_not:n {\edef\jlreq@chapter}{\exp_not:N \exp_not:n {
           \exp_not:o \l__jlreq_tmpa_tl
           \exp_not:N \jlreq@BlockHeading@start{\exp_not:n {#1}}{\exp_not:n {#2}}{\exp_not:o {\l__jlreq_tmpb_tl}}{\ifjlreq@number\else -\fi}
         }}
-        \exp_not:n {\edef\@schapter}{\exp_not:N \exp_not:n {
+        \exp_not:n {\edef\jlreq@schapter}{\exp_not:N \exp_not:n {
           \exp_not:o \l__jlreq_tmpa_tl
           \exp_not:N \@dblarg{\exp_not:N \jlreq@BlockHeading@start{\exp_not:n {#1}}{\exp_not:n {#2}}{\exp_not:o {\l__jlreq_tmpb_tl}}{*}}
         }}%

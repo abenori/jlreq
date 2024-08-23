@@ -1882,17 +1882,17 @@
 % ラベルのみのフォーマットは目次に使われる．
 % {1 = 命令}{2 = レベル}{3 = スペース関連}{4 = *}[5 = running head]{6 = 見出し}
 \long\def\jlreq@BlockHeading@start#1#2#3#4[#5]#6{%
-  \@ifnextchar[{\jlreq@BlockHeading@start@@@{#1}{#2}{#3}{#4}{#5}{#6}}{\jlreq@BlockHeading@start@@@{#1}{#2}{#3}{#4}{#5}{#6}[]}%
+  \@ifnextchar[{\jlreq@BlockHeading@start@i{#1}{#2}{#3}{#4}{#5}{#6}}{\jlreq@BlockHeading@start@i{#1}{#2}{#3}{#4}{#5}{#6}[]}%
 }
 
 % {1 = 命令}{2 = レベル}{3 = スペース関連}{4 = *}{5 = running head}{6 = 見出し}[7 = 副題]
-\long\def\jlreq@BlockHeading@start@@@#1#2#3#4#5#6[#7]{%
-  \edef\jlreq@do{\unexpanded{\jlreq@BlockHeading@start@@@@{#1}{#2}{#3}}{\exp_not:o {\jlreq@BlockHeading@start@totalformat}}}%
+\long\def\jlreq@BlockHeading@start@i#1#2#3#4#5#6[#7]{%
+  \edef\jlreq@do{\unexpanded{\jlreq@BlockHeading@start@ii{#1}{#2}{#3}}{\exp_not:o {\jlreq@BlockHeading@start@totalformat}}}%
   \jlreq@do{#4}{#5}{#6}{#7}%
 }
 
 % {1 = 命令}{2 = レベル}{3 = スペース関連}{4 = 全フォーマット}{5 = *}{6 = running head}{7 = 見出し}{8 = 副題}
-\long\def\jlreq@BlockHeading@start@@@@#1#2#3#4#5#6#7#8{%
+\long\def\jlreq@BlockHeading@start@ii#1#2#3#4#5#6#7#8{%
   \global\advance\jlreq@BlockHeading@spaces@current@count by 1
   \tl_gput_right:Nn \jlreq@BlockHeading@spaces@current@sequence {_#1}%
   \edef\jlreq@tempa##1##2##3##4##5##6##7{%
@@ -2224,18 +2224,12 @@
   \jlreq@ifgluezero\jlreq@tempskipb{}{\vskip\jlreq@tempskipb}%
   \edef\jlreq@do{%
     \dim_compare:nF { \parskip=0pt } {
-%      \exp_not:N \cs_set:Nn \exp_not:N \g__jlreq_gyodori_hook_par: {
-%        \noexpand\parskip=\the\parskip\noexpand\relax
-%        \exp_not:n { \cs_set:Nn \g__jlreq_gyodori_hook_par: {} }
-%      }
       \exp_not:N \AddToHook { para/before } { \noexpand\parskip=\the\parskip\noexpand\relax }
       \noexpand\parskip=0pt
     }
   }%
   \expandafter}\jlreq@do
 }
-%\cs_set:Nn \g__jlreq_gyodori_hook_par: {}
-%\PushPostHook{par}{\g__jlreq_gyodori_hook_par:}
 
 
 % 行取り情報をゲットだぜ
@@ -2294,10 +2288,6 @@
 % \DeclareBlockHeading{命令名}{レベル}{設定}
 \seq_new:N \l__jlreq_BlockHeading_allheadings_seq
 \NewDocumentCommand {\DeclareBlockHeading} { m m +m } {
-  \str_if_eq:nnT {#1}{chapter}{
-    \@ifundefined{@chapter}{\def\@chapter{\jlreq@chapter}}{}
-    \@ifundefined{@schapter}{\def\@schapter{\jlreq@schapter}}{}
-  }
   \def\jlreq@do{\@removeelement{#1}}%
   \seq_put_right:Nn \l__jlreq_heading_allheadings_seq {#1}
   \seq_remove_duplicates:N \l__jlreq_heading_allheadings_seq
@@ -2553,30 +2543,19 @@
     }
     \edef\jlreq@do{%
       \exp_not:o {\jlreq@do}%
-      \str_if_eq:nnT {#1}{chapter}{
-        \exp_not:n {\edef\jlreq@chapter}{\exp_not:N \exp_not:n {
-          \exp_not:o \l__jlreq_tmpa_tl
-          \exp_not:N \jlreq@BlockHeading@start{\exp_not:n {#1}}{\exp_not:n {#2}}{\exp_not:o {\l__jlreq_tmpb_tl}}{\ifjlreq@number\else -\fi}
-        }}
-        \exp_not:n {\edef\jlreq@schapter}{\exp_not:N \exp_not:n {
-          \exp_not:o \l__jlreq_tmpa_tl
-          \exp_not:N \@dblarg{\exp_not:N \jlreq@BlockHeading@start{\exp_not:n {#1}}{\exp_not:n {#2}}{\exp_not:o {\l__jlreq_tmpb_tl}}{*}}
-        }}%
-      }
       \noexpand\edef\exp_not:c {jlreq@headingcs@#1}{\noexpand\unexpanded{%
         \exp_not:N \g__jlreq_hook_beforeheading:n {#1}
         \exp_not:o {\jlreq@pagebreak}%
         \tl_if_empty:NF \l__jlreq_pagestyle_tl { \exp_not:N \thispagestyle {\exp_not:o { \l__jlreq_pagestyle_tl } } }
-        \str_if_eq:nnTF {#1}{chapter}{
-          \exp_not:n { \secdef\@chapter\@schapter }
-        }{
-          \exp_not:o \l__jlreq_tmpa_tl
-          \exp_not:N \@ifstar
-            {\exp_not:N \@dblarg{\exp_not:N \jlreq@BlockHeading@start{\exp_not:n {#1}}{\exp_not:n {#2}}{\exp_not:o {\l__jlreq_tmpb_tl}}{*}}}%
-            {\exp_not:N \@dblarg{\exp_not:N \jlreq@BlockHeading@start{\exp_not:n {#1}}{\exp_not:n {#2}}{\exp_not:o {\l__jlreq_tmpb_tl}}{\ifjlreq@number\else -\fi}}}%
-        }
-      }}%
-      \noexpand\def\exp_not:c {#1}{\exp_not:c {jlreq@headingcs@#1}}%
+        \exp_not:o \l__jlreq_tmpa_tl
+        \exp_not:N \@ifstar
+          {\exp_not:N \@dblarg{\exp_not:N \jlreq@BlockHeading@start{\exp_not:n {#1}}{\exp_not:n {#2}}{\exp_not:o {\l__jlreq_tmpb_tl}}{*}}}%
+          {\exp_not:N \@dblarg{\exp_not:N \jlreq@BlockHeading@start{\exp_not:n {#1}}{\exp_not:n {#2}}{\exp_not:o {\l__jlreq_tmpb_tl}}{\ifjlreq@number\else -\fi}}}%
+       }
+      }%
+      \noexpand\def\exp_not:c {#1}{
+        \exp_not:c {jlreq@headingcs@#1}
+      }%
     }%
   \expandafter\endgroup
   \jlreq@do

@@ -573,6 +573,12 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Some other improvements etc.
 * 2024-02-16
     - Fixed a bug.
+* 2024-08-23
+    - Fixed bugs.
+    - Changed the name of some internal variables.
+    - Added the usage of this class to English document.
+    - Use `\DeclareKeys` etc.
+    - Changed the internal processing of block headings a little.
 
 --------------
 Noriyuki Abe

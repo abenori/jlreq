@@ -183,8 +183,10 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Added `trimmarks_pattern` to `\jlreqtrimmarkssetup`.
 * 2023-06-19
     - Fixed a bug: an error occurred when the package is loaded with tate mode.
-* 2023-02-13
+* 2024-02-13
     - Fixed a bug in a document.
+* 2024-08-23
+    - Use `\DeclareKeys` etc.
 
 --------------
 Noriyuki Abe

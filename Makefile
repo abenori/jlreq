@@ -36,16 +36,16 @@ jfm: \
 	rm -f rml.tfm rmlv.tfm gbm.tfm gbmv.tfm uprml-h.tfm uprml-hq.tfm upgbm-h.tfm upgbm-hq.tfm uprml-v.tfm uprml-vq.tfm upgbm-v.tfm upgbm-vq.tfm
 
 # .pl
-u%-v.pl: jfm-%v-pl.lua luajfm2pl.lua
+ujlreq-v.pl ubjlreq-v.pl uzjlreq-v.pl ubzjlreq-v.pl: u%-v.pl: jfm-%v-pl.lua luajfm2pl.lua
 	texlua luajfm2pl.lua $*v-pl $@
 
-%-v.pl: jfm-%v-pl.lua luajfm2pl.lua
+jlreq-v.pl bjlreq-v.pl zjlreq-v.pl bzjlreq-v.pl: %-v.pl: jfm-%v-pl.lua luajfm2pl.lua
 	texlua luajfm2pl.lua --noutf $*v-pl $@
 
-u%.pl: jfm-%-pl.lua luajfm2pl.lua
+ujlreq.pl ubjlreq.pl uzjlreq.pl ubzjlreq.pl: u%.pl: jfm-%-pl.lua luajfm2pl.lua
 	texlua luajfm2pl.lua $*-pl $@
 
-%.pl: jfm-%-pl.lua luajfm2pl.lua
+jlreq.pl bjlreq.pl zjlreq.pl bzjlreq.pl: %.pl: jfm-%-pl.lua luajfm2pl.lua
 	texlua luajfm2pl.lua --noutf $*-pl $@
 
 jlreq-jidori.pl: jfm-jlreq-jidori-pl.lua
@@ -62,34 +62,34 @@ ujlreq-v-jidori.pl: jfm-jlreqv-jidori-pl.lua
 
 
 # .vf
-u%g-q.vf: u%g-q.tfm
+ujlreqg-q.vf ubjlreqg-q.vf uzjlreqg-q.vf ubzjlreqg-q.vf: %.vf: %.tfm
 	makejvf -i -u jisq $< upgbm-hq.tfm
 
-u%-q.vf: u%-q.tfm
+ujlreq-q.vf ubjlreq-q.vf uzjlreq-q.vf ubzjlreq-q.vf: %.vf: %.tfm
 	makejvf -i -u jisq $< uprml-hq.tfm
 
-u%g-v.vf: u%g-v.tfm
+ujlreqg-v.vf ubjlreqg-v.vf uzjlreqg-v.vf ubzjlreqg-v.vf: %.vf: %.tfm
 	makejvf -i -u custom -t ${MAKEJVFCNF} $< upgbm-v.tfm
 
-u%g.vf: u%g.tfm u%g-q.tfm
-	makejvf -i -u custom -t ${MAKEJVFCNF} -H -U u$*g-q $< upgbm-h.tfm
+ujlreqg.vf ubjlreqg.vf uzjlreqg.vf ubzjlreqg.vf: %.vf: %.tfm %-q.tfm
+	makejvf -i -u custom -t ${MAKEJVFCNF} -H -U $*-q $< upgbm-h.tfm
 
-%g-v.vf: %g-v.tfm
+jlreqg-v.vf bjlreqg-v.vf zjlreqg-v.vf bzjlreqg-v.vf: %.vf: %.tfm
 	makejvf -i $< gbmv.tfm
 
-%g.vf: %g.tfm
+jlreqg.vf bjlreqg.vf zjlreqg.vf bzjlreqg.vf: %.vf: %.tfm
 	makejvf -i $< gbm.tfm
 
-u%-v.vf: u%-v.tfm
+ujlreq-v.vf ubjlreq-v.vf uzjlreq-v.vf ubzjlreq-v.vf: %.vf: %.tfm
 	makejvf -i -u custom -t ${MAKEJVFCNF} $< uprml-v.tfm
 
-%-v.vf: %-v.tfm
+jlreq-v.vf bjlreq-v.vf zjlreq-v.vf bzjlreq-v.vf: %.vf: %.tfm
 	makejvf -i $< rmlv.tfm
 
-u%.vf: u%.tfm u%-q.tfm
-	makejvf -i -u custom -t ${MAKEJVFCNF} -H -U u$*-q $< uprml-h.tfm
+ujlreq.vf ubjlreq.vf uzjlreq.vf ubzjlreq.vf: %.vf: %.tfm %-q.tfm
+	makejvf -i -u custom -t ${MAKEJVFCNF} -H -U $*-q $< uprml-h.tfm
 
-%.vf: %.tfm
+jlreq.vf bjlreq.vf zjlreq.vf bzjlreq.vf: %.vf: %.tfm
 	makejvf -i $< rml.tfm
 
 jlreq-jidori.vf: jlreq-jidori.tfm
@@ -124,28 +124,28 @@ ujlreqg-v-jidori.vf: ujlreqg-v-jidori.tfm
 
 
 # .tfm
-u%-q.tfm: u%.pl
+ujlreq-q.tfm ubjlreq-q.tfm uzjlreq-q.tfm ubzjlreq-q.tfm: %-q.tfm: %.pl
 	uppltotf -kanji=uptex $< $@
 
-u%g-q.tfm: u%-q.tfm
+ujlreqg-q.tfm ubjlreqg-q.tfm uzjlreqg-q.tfm ubzjlreqg-q.tfm: %g-q.tfm: %-q.tfm
 	cp $< $@
 
-%g-v.tfm: %-v.tfm
+jlreqg-v.tfm bjlreqg-v.tfm zjlreqg-v.tfm bzjlreqg-v.tfm ujlreqg-v.tfm ubjlreqg-v.tfm uzjlreqg-v.tfm ubzjlreqg-v.tfm: %g-v.tfm: %-v.tfm
 	cp $< $@
 
-%g.tfm: %.tfm
+jlreqg.tfm bjlreqg.tfm zjlreqg.tfm bzjlreqg.tfm ujlreqg.tfm ubjlreqg.tfm uzjlreqg.tfm ubzjlreqg.tfm: %g.tfm: %.tfm
 	cp $< $@
 
-u%.tfm: u%.pl
+ujlreq.tfm ubjlreq.tfm uzjlreq.tfm ubzjlreq.tfm ujlreq-v.tfm ubjlreq-v.tfm uzjlreq-v.tfm ubzjlreq-v.tfm: %.tfm: %.pl
 	uppltotf -kanji=uptex $< $@
 
-%.tfm: %.pl
+jlreq.tfm bjlreq.tfm zjlreq.tfm bzjlreq.tfm jlreq-v.tfm bjlreq-v.tfm zjlreq-v.tfm bzjlreq-v.tfm: %.tfm: %.pl
 	ppltotf -kanji=utf8 $< $@
 
-ujlreq%-jidori.tfm: ujlreq%-jidori.pl
+ujlreq-jidori.tfm ujlreq-v-jidori.tfm: %.tfm: %.pl
 	uppltotf -kanji=uptex $< $@
 
-jlreq%-jidori.tfm: jlreq%-jidori.pl
+jlreq-jidori.tfm jlreq-v-jidori.tfm: %.tfm: %.pl
 	ppltotf -kanji=utf8 $< $@
 
 ujlreqg-jidori.tfm: ujlreq-jidori.tfm

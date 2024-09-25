@@ -243,7 +243,10 @@ You can specify gyo-dori setting in one of the following ways.
 You can set the gyo-dori settings for block headings that are placed consecutively with `\SetBlockHeadingSpaces`. `\SetBlockHeadingSpaces` is used as follows: 
 
 ```latex
-\SetBlockHeadingSpaces { {_part{lines=3,before_lines=1},_section{lines=2},_subsection{lines=2}} [lines=5]{_section,23pt,_subsection,16pt} }
+\SetBlockHeadingSpaces {
+	{_part{lines=3,before_lines=1},_section{lines=2},_subsection{lines=2}}
+	[lines=5]{_section,23pt,_subsection,16pt}
+}
 ```
 
 This means the following.
@@ -579,6 +582,9 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Added the usage of this class to English document.
     - Use `\DeclareKeys` etc.
     - Changed the internal processing of block headings a little.
+* 2024-09-26
+    - Removed pattern matchings from Makefile.
+
 
 --------------
 Noriyuki Abe

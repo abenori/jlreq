@@ -1,37 +1,39 @@
 TEXMF:=$(shell kpsewhich -var-value=TEXMFHOME)
 MAKEJVFCNF:=$(shell ls -R $(shell kpsewhich --var-value=TEXMFDIST)/fonts/source | awk '/:$$/{sub(/:$$/,"");f=$$0} tolower($$0) ~ /makejvf-upjpn\.cnf$$/{print f"/"$$0}' | head -n 1)
 
-.PHONY: all jfm doc latexdoc pdfdoc htmldoc jfm-install cls-install sty-install install tds uninstall jfmclean docclean clean
-
-all: jfm
-
-jfm: \
-	jfm-jlreqv.lua jfm-jlreqv-jidori.lua \
-	jlreq.tfm bjlreq.tfm zjlreq.tfm bzjlreq.tfm \
-	jlreq.vf bjlreq.vf zjlreq.vf bzjlreq.vf \
-	ujlreq.tfm ubjlreq.tfm uzjlreq.tfm ubzjlreq.tfm \
+VFS = jlreq.vf bjlreq.vf zjlreq.vf bzjlreq.vf \
 	ujlreq.vf ubjlreq.vf uzjlreq.vf ubzjlreq.vf \
-	ujlreq-q.tfm ubjlreq-q.tfm uzjlreq-q.tfm ubzjlreq-q.tfm \
 	ujlreq-q.vf ubjlreq-q.vf uzjlreq-q.vf ubzjlreq-q.vf \
-	jlreqg.tfm bjlreqg.tfm zjlreqg.tfm bzjlreqg.tfm \
 	jlreqg.vf bjlreqg.vf zjlreqg.vf bzjlreqg.vf \
-	ujlreqg.tfm ubjlreqg.tfm uzjlreqg.tfm ubzjlreqg.tfm \
 	ujlreqg.vf ubjlreqg.vf uzjlreqg.vf ubzjlreqg.vf \
-	ujlreqg-q.tfm ubjlreqg-q.tfm uzjlreqg-q.tfm ubzjlreqg-q.tfm \
 	ujlreqg-q.vf ubjlreqg-q.vf uzjlreqg-q.vf ubzjlreqg-q.vf \
-	jlreq-v.tfm bjlreq-v.tfm zjlreq-v.tfm bzjlreq-v.tfm \
 	jlreq-v.vf bjlreq-v.vf zjlreq-v.vf bzjlreq-v.vf \
-	ujlreq-v.tfm ubjlreq-v.tfm uzjlreq-v.tfm ubzjlreq-v.tfm \
 	ujlreq-v.vf ubjlreq-v.vf uzjlreq-v.vf ubzjlreq-v.vf \
-	jlreqg-v.tfm bjlreqg-v.tfm zjlreqg-v.tfm bzjlreqg-v.tfm \
 	jlreqg-v.vf bjlreqg-v.vf zjlreqg-v.vf bzjlreqg-v.vf \
-	ujlreqg-v.tfm ubjlreqg-v.tfm uzjlreqg-v.tfm ubzjlreqg-v.tfm \
 	ujlreqg-v.vf ubjlreqg-v.vf uzjlreqg-v.vf ubzjlreqg-v.vf \
 	jlreq-jidori.tfm jlreq-jidori.vf jlreqg-jidori.tfm jlreqg-jidori.vf \
 	jlreq-v-jidori.tfm jlreq-v-jidori.vf jlreqg-v-jidori.tfm jlreqg-v-jidori.vf \
 	ujlreq-jidori.tfm ujlreq-jidori.vf ujlreqg-jidori.tfm ujlreqg-jidori.vf \
 	ujlreq-jidori-q.tfm ujlreq-jidori-q.vf ujlreqg-jidori-q.tfm ujlreqg-jidori-q.vf \
 	ujlreq-v-jidori.tfm ujlreq-v-jidori.vf ujlreqg-v-jidori.tfm ujlreqg-v-jidori.vf
+
+TFMS = jlreq.tfm bjlreq.tfm zjlreq.tfm bzjlreq.tfm \
+	ujlreq.tfm ubjlreq.tfm uzjlreq.tfm ubzjlreq.tfm \
+	ujlreq-q.tfm ubjlreq-q.tfm uzjlreq-q.tfm ubzjlreq-q.tfm \
+	jlreqg.tfm bjlreqg.tfm zjlreqg.tfm bzjlreqg.tfm \
+	ujlreqg.tfm ubjlreqg.tfm uzjlreqg.tfm ubzjlreqg.tfm \
+	ujlreqg-q.tfm ubjlreqg-q.tfm uzjlreqg-q.tfm ubzjlreqg-q.tfm \
+	jlreq-v.tfm bjlreq-v.tfm zjlreq-v.tfm bzjlreq-v.tfm \
+	ujlreq-v.tfm ubjlreq-v.tfm uzjlreq-v.tfm ubzjlreq-v.tfm \
+	jlreqg-v.tfm bjlreqg-v.tfm zjlreqg-v.tfm bzjlreqg-v.tfm \
+	ujlreqg-v.tfm ubjlreqg-v.tfm uzjlreqg-v.tfm ubzjlreqg-v.tfm
+
+
+.PHONY: all jfm doc latexdoc pdfdoc htmldoc jfm-install cls-install sty-install install tds uninstall jfmclean docclean clean
+
+all: jfm
+
+jfm: jfm-jlreqv.lua jfm-jlreqv-jidori.lua $(VFS) $(TFMS)
 	
 	rm -f rml.tfm rmlv.tfm gbm.tfm gbmv.tfm uprml-h.tfm uprml-hq.tfm upgbm-h.tfm upgbm-hq.tfm uprml-v.tfm uprml-vq.tfm upgbm-v.tfm upgbm-vq.tfm
 
@@ -202,9 +204,9 @@ jlreq-trimmarks.html: jlreq-trimmarks.md README-template.html
 
 jfm-install: jfm
 	mkdir -p ${TEXMF}/fonts/tfm/public/jlreq
-	install *.tfm ${TEXMF}/fonts/tfm/public/jlreq
+	install ${TFMS} ${TEXMF}/fonts/tfm/public/jlreq
 	mkdir -p ${TEXMF}/fonts/vf/public/jlreq
-	install *.vf ${TEXMF}/fonts/vf/public/jlreq
+	install ${VFS} ${TEXMF}/fonts/vf/public/jlreq
 	mkdir -p ${TEXMF}/tex/luatex/jlreq
 	install jfm-jlreqv.lua jfm-jlreq.lua jfm-jlreq-jidori.lua jfm-jlreqv-jidori.lua ${TEXMF}/tex/luatex/jlreq
 
@@ -222,9 +224,9 @@ install: jfm-install cls-install sty-install
 
 tds: jfm jlreq.cls README.md README-ja.md LICENSE jlreq.html jlreq-ja.html jlreq-trimmarks.html jlreq-trimmarks-ja.html jlreq.pdf jlreq-ja.pdf
 	mkdir -p ./tds/fonts/tfm/public/jlreq
-	cp -f *.tfm ./tds/fonts/tfm/public/jlreq
+	cp -f ${TFMS} ./tds/fonts/tfm/public/jlreq
 	mkdir -p ./tds/fonts/vf/public/jlreq
-	cp -f *.vf ./tds/fonts/vf/public/jlreq
+	cp -f ${VFS} ./tds/fonts/vf/public/jlreq
 	mkdir -p ./tds/tex/luatex/jlreq
 	cp jfm-jlreq.lua ./tds/tex/luatex/jlreq
 	cp jfm-jlreqv.lua ./tds/tex/luatex/jlreq
@@ -261,7 +263,7 @@ uninstall:
 	rm -rf ${TEXMF}/tex/latex/jlreq
 
 jfmclean:
-	rm -f *jlreq*.tfm *jlreq*.pl *jlreq*.vf
+	rm -f *jlreq*.pl ${VFS} ${TFMS}
 	rm -f jfm-jlreqv.lua
 	rm -f jfm-*jlreq*-pl.lua
 	rm -f jfm-jlreqv-jidori.lua

@@ -203,6 +203,8 @@ local function class_check(clstable,class,version,position)
 				if array_check(v,k,position) == true then
 					if #v == 0 then print("end_ajudst is empty" .. position_msg(position)) end
 				end
+			elseif version >= 3 and (k == "round_threshold") then
+				type_check(v,"number",k,position)
 			else
 				print_error("key " .. k .. " is not allowed" .. position_msg(position))
 			end

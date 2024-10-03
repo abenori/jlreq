@@ -1,6 +1,20 @@
 TEXMF:=$(shell kpsewhich -var-value=TEXMFHOME)
 MAKEJVFCNF:=$(shell ls -R $(shell kpsewhich --var-value=TEXMFDIST)/fonts/source | awk '/:$$/{sub(/:$$/,"");f=$$0} tolower($$0) ~ /makejvf-upjpn\.cnf$$/{print f"/"$$0}' | head -n 1)
 
+TFMS = jlreq.tfm bjlreq.tfm zjlreq.tfm bzjlreq.tfm \
+	ujlreq.tfm ubjlreq.tfm uzjlreq.tfm ubzjlreq.tfm \
+	ujlreq-q.tfm ubjlreq-q.tfm uzjlreq-q.tfm ubzjlreq-q.tfm \
+	jlreqg.tfm bjlreqg.tfm zjlreqg.tfm bzjlreqg.tfm \
+	ujlreqg.tfm ubjlreqg.tfm uzjlreqg.tfm ubzjlreqg.tfm \
+	ujlreqg-q.tfm ubjlreqg-q.tfm uzjlreqg-q.tfm ubzjlreqg-q.tfm \
+	jlreq-v.tfm bjlreq-v.tfm zjlreq-v.tfm bzjlreq-v.tfm \
+	ujlreq-v.tfm ubjlreq-v.tfm uzjlreq-v.tfm ubzjlreq-v.tfm \
+	jlreqg-v.tfm bjlreqg-v.tfm zjlreqg-v.tfm bzjlreqg-v.tfm \
+	ujlreqg-v.tfm ubjlreqg-v.tfm uzjlreqg-v.tfm ubzjlreqg-v.tfm \
+	jlreq-jidori.tfm jlreqg-jidori.tfm jlreq-v-jidori.tfm jlreqg-v-jidori.tfm \
+	ujlreq-jidori.tfm ujlreqg-jidori.tfm ujlreq-v-jidori.tfm ujlreqg-v-jidori.tfm \
+	ujlreq-jidori-q.tfm ujlreqg-jidori-q.tfm
+
 VFS = jlreq.vf bjlreq.vf zjlreq.vf bzjlreq.vf \
 	ujlreq.vf ubjlreq.vf uzjlreq.vf ubzjlreq.vf \
 	ujlreq-q.vf ubjlreq-q.vf uzjlreq-q.vf ubzjlreq-q.vf \
@@ -11,22 +25,9 @@ VFS = jlreq.vf bjlreq.vf zjlreq.vf bzjlreq.vf \
 	ujlreq-v.vf ubjlreq-v.vf uzjlreq-v.vf ubzjlreq-v.vf \
 	jlreqg-v.vf bjlreqg-v.vf zjlreqg-v.vf bzjlreqg-v.vf \
 	ujlreqg-v.vf ubjlreqg-v.vf uzjlreqg-v.vf ubzjlreqg-v.vf \
-	jlreq-jidori.tfm jlreq-jidori.vf jlreqg-jidori.tfm jlreqg-jidori.vf \
-	jlreq-v-jidori.tfm jlreq-v-jidori.vf jlreqg-v-jidori.tfm jlreqg-v-jidori.vf \
-	ujlreq-jidori.tfm ujlreq-jidori.vf ujlreqg-jidori.tfm ujlreqg-jidori.vf \
-	ujlreq-jidori-q.tfm ujlreq-jidori-q.vf ujlreqg-jidori-q.tfm ujlreqg-jidori-q.vf \
-	ujlreq-v-jidori.tfm ujlreq-v-jidori.vf ujlreqg-v-jidori.tfm ujlreqg-v-jidori.vf
-
-TFMS = jlreq.tfm bjlreq.tfm zjlreq.tfm bzjlreq.tfm \
-	ujlreq.tfm ubjlreq.tfm uzjlreq.tfm ubzjlreq.tfm \
-	ujlreq-q.tfm ubjlreq-q.tfm uzjlreq-q.tfm ubzjlreq-q.tfm \
-	jlreqg.tfm bjlreqg.tfm zjlreqg.tfm bzjlreqg.tfm \
-	ujlreqg.tfm ubjlreqg.tfm uzjlreqg.tfm ubzjlreqg.tfm \
-	ujlreqg-q.tfm ubjlreqg-q.tfm uzjlreqg-q.tfm ubzjlreqg-q.tfm \
-	jlreq-v.tfm bjlreq-v.tfm zjlreq-v.tfm bzjlreq-v.tfm \
-	ujlreq-v.tfm ubjlreq-v.tfm uzjlreq-v.tfm ubzjlreq-v.tfm \
-	jlreqg-v.tfm bjlreqg-v.tfm zjlreqg-v.tfm bzjlreqg-v.tfm \
-	ujlreqg-v.tfm ubjlreqg-v.tfm uzjlreqg-v.tfm ubzjlreqg-v.tfm
+	jlreq-jidori.vf jlreqg-jidori.vf jlreq-v-jidori.vf jlreqg-v-jidori.vf \
+	ujlreq-jidori.vf ujlreqg-jidori.vf ujlreq-v-jidori.vf ujlreqg-v-jidori.vf \
+	ujlreq-jidori-q.vf ujlreqg-jidori-q.vf
 
 
 .PHONY: all jfm doc latexdoc pdfdoc htmldoc jfm-install cls-install sty-install install tds uninstall jfmclean docclean clean

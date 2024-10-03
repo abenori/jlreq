@@ -584,6 +584,8 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Changed the internal processing of block headings a little.
 * 2024-09-26
     - Removed pattern matchings from Makefile.
+* 2024-10-04
+    - Fixed: tfm files are mixed into the list of vf files in Makefile.
 
 
 --------------

@@ -5772,13 +5772,6 @@
 \newdimen\@lnumwidth
 \def\numberline#1{\hbox to\@lnumwidth{#1\hfil}}
 
-% from latex.ltx
-\legacy_if:nT { @tate } {
-  \def\addcontentsline#1#2#3{%
-    \addtocontents{#1}{\protect\contentsline{#2}{#3}{\tatechuyoko*{\thepage}}{}%
-                       \protected@file@percent}}
-}
-
 \newcount\jlreq@top@contents % トップ見出しを入れる．レベルと同じ値．
 \jlreq@top@contents=-100
 \def\jlreq@set@top@contents#1{%
@@ -5846,7 +5839,7 @@
     {#4}\nobreak
     \leaders\hbox{$\m@th\mkern \@dotsep mu$\null\inhibitglue ・\inhibitglue\null$\m@th\mkern \@dotsep mu$}%
     \hfill\nobreak
-    \hb@xt@\@pnumwidth{\hss\normalfont\normalcolor #5}%
+    \hb@xt@\@pnumwidth{\hss\normalfont\normalcolor \tatechuyoko*{#5}}%
     \par}%
   \fi
 }

@@ -1276,14 +1276,26 @@
   \jlreq@do
 \fi
 
-\renewcommand{\normalsize}{%
-  \@setfontsize\normalsize{\jlreq@fontsize}{\dimexpr\jlreqbaselineskip\relax}%
-  \abovedisplayskip 1.1\jlreq@fontsize \@plus .3\jlreq@fontsize \@minus .4\jlreq@fontsize
-  \abovedisplayshortskip \z@ \@plus .3\jlreq@fontsize
-  \belowdisplayskip .9\jlreq@fontsize \@plus.3\jlreq@fontsize \@minus.4\jlreq@fontsize
-  \belowdisplayshortskip \belowdisplayskip
-  \let\@listi\@listI}
+\cs_new:Nn \__jlreq_definenormalsize: {
+  \edef\jlreq@tempa{
+    \unexpanded{\@setfontsize\normalsize}{\the\dimexpr\jlreq@fontsize\relax}{\the\dimexpr\jlreqbaselineskip\relax}%
+    \noexpand\abovedisplayskip \the\glueexpr1.1\jlreq@fontsize \@plus .3\jlreq@fontsize \@minus .4\jlreq@fontsize\relax
+    \noexpand\abovedisplayshortskip \the\glueexpr\z@ \@plus .3\jlreq@fontsize\relax
+    \noexpand\belowdisplayskip \the\glueexpr.9\jlreq@fontsize \@plus.3\jlreq@fontsize \@minus.4\jlreq@fontsize\relax
+    \unexpanded{\belowdisplayshortskip \belowdisplayskip  \let\@listi\@listI}%
+  }
+  \exp_args:Nno \renewcommand {\normalsize} {\jlreq@tempa}
+}
+\__jlreq_definenormalsize:
 
+%\renewcommand{\normalsize}{%
+%  \@setfontsize\normalsize{\jlreq@fontsize}{\dimexpr\jlreqbaselineskip\relax}%
+%  \abovedisplayskip 1.1\jlreq@fontsize \@plus .3\jlreq@fontsize \@minus .4\jlreq@fontsize
+%  \abovedisplayshortskip \z@ \@plus .3\jlreq@fontsize
+%  \belowdisplayskip .9\jlreq@fontsize \@plus.3\jlreq@fontsize \@minus.4\jlreq@fontsize
+%  \belowdisplayshortskip \belowdisplayskip
+%  \let\@listi\@listI}
+%
 \if@tate\tate\fi % ここで発行しておく
 \mcfamily\selectfont\normalsize
 \setbox\jlreq@tempboxa\hbox{阿}
@@ -1296,50 +1308,86 @@
 % 4.1.3.a
 % 2.5.2 \baselineskipは一定の方がよい？
 % \@listiは再定義しないようにした．（\normalsizeと共用でJLReq通りだと思う．）
-\newcommand{\footnotesize}{%
-  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
-  \@setfontsize\footnotesize{.8\jlreq@fontsize}{\dimexpr 115\jlreq@tempdima/170\relax}% 脚注文字サイズの二分より少し小さい値を行間に: 4.2.5.e
-  \abovedisplayskip .6\jlreq@fontsize \@plus.2\jlreq@fontsize \@minus.4\jlreq@fontsize
-  \abovedisplayshortskip \z@ \@plus.1\jlreq@fontsize
-  \belowdisplayshortskip .3\jlreq@fontsize \@plus.1\jlreq@fontsize \@minus.2\jlreq@fontsize
-  \belowdisplayskip \abovedisplayskip}
+% \jlreq@fontsizeの値を展開して定義．
+\cs_new:Nn \__jlreq_definefontsizecommands: {
+  \edef\jlreq@tempa{%
+    \unexpanded{\setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}}%
+    \noexpand\@setfontsize\noexpand\footnotesize{\the\dimexpr.8\jlreq@fontsize\relax}{\unexpanded{\dimexpr 115\jlreq@tempdima/170\relax}}% 脚注文字サイズの二分より少し小さい値を行間に: 4.2.5.e
+    \noexpand\abovedisplayskip \the\glueexpr .6\jlreq@fontsize \@plus \dimexpr.2\jlreq@fontsize \@minus \dimexpr.4\jlreq@fontsize\relax
+    \noexpand\abovedisplayshortskip \the\glueexpr\z@ \@plus \dimexpr.1\jlreq@fontsize\relax
+    \noexpand\belowdisplayshortskip \the\glueexpr.3\jlreq@fontsize \@plus\dimexpr.1\jlreq@fontsize \@minus\dimexpr.2\jlreq@fontsize\relax
+    \unexpanded{\belowdisplayskip \abovedisplayskip}%
+  }
+  \exp_args:Nno \newcommand {\footnotesize} {\jlreq@tempa}
+  \edef\jlreq@tempa{%
+    \unexpanded{\setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}}%
+    \unexpanded{\@setfontsize\small}{\the\dimexpr.9\jlreq@fontsize\relax}{\unexpanded{\dimexpr 13\jlreq@tempdima/17\relax}}%
+    \noexpand\abovedisplayskip \the\glueexpr.9\jlreq@fontsize \@plus.3\jlreq@fontsize \@minus.4\jlreq@fontsize\relax
+    \noexpand\abovedisplayshortskip \the\glueexpr\z@ \@plus.3\jlreq@fontsize\relax
+    \unexpanded{\belowdisplayshortskip \abovedisplayshortskip
+    \belowdisplayskip \abovedisplayskip}%
+  }
+  \exp_args:Nno \newcommand {\small} {\jlreq@tempa}
+  \cs_new:Nn \l__jlreq_do:Nnn {
+    \edef\jlreq@tempa{%
+      \unexpanded{\setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}}%
+      \unexpanded{\@setfontsize##1}{\the\dimexpr ##2\relax}{\unexpanded{\the\dimexpr ##3\relax}}%
+    }
+    \exp_args:Nno \newcommand {##1} {\jlreq@tempa}
+  }
+  \l__jlreq_do:Nnn { \scriptsize } { 7\jlreq@fontsize/10 }  { 8\jlreq@tempdima/17 }
+  \l__jlreq_do:Nnn { \tiny }       { 5\jlreq@fontsize/10 }  { 6\jlreq@tempdima/17 }
+  \l__jlreq_do:Nnn { \large }      { 12\jlreq@fontsize/10 } { \jlreq@tempdima }
+  \l__jlreq_do:Nnn { \Large }      { 14\jlreq@fontsize/10 } { 21\jlreq@tempdima/17 }
+  \l__jlreq_do:Nnn { \LARGE }      { 17\jlreq@fontsize/10 } { 25\jlreq@tempdima/17 }
+  \l__jlreq_do:Nnn { \huge }       { 2\jlreq@fontsize }     { 28\jlreq@tempdima/17 }
+  \l__jlreq_do:Nnn { \Huge }       { 25\jlreq@fontsize/10 } { 33\jlreq@tempdima/17 }
+}
+\__jlreq_definefontsizecommands:
+%\newcommand{\footnotesize}{%
+%  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
+%  \@setfontsize\footnotesize{.8\jlreq@fontsize}{\dimexpr 115\jlreq@tempdima/170\relax}% 脚注文字サイズの二分より少し小さい値を行間に: 4.2.5.e
+%  \abovedisplayskip .6\jlreq@fontsize \@plus.2\jlreq@fontsize \@minus.4\jlreq@fontsize
+%  \abovedisplayshortskip \z@ \@plus.1\jlreq@fontsize
+%  \belowdisplayshortskip .3\jlreq@fontsize \@plus.1\jlreq@fontsize \@minus.2\jlreq@fontsize
+%  \belowdisplayskip \abovedisplayskip}
 % tsize10.cloの引数を，そのまま\jlreq@fontsize/\jlreqbaselineskipでスケーリングしているだけ．
-\newcommand{\small}{%
-  % jsarticleのもの
-  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
-  \@setfontsize\small{.9\jlreq@fontsize}{\dimexpr 13\jlreq@tempdima/17\relax}%
-  \abovedisplayskip .9\jlreq@fontsize \@plus.3\jlreq@fontsize \@minus.4\jlreq@fontsize
-  \abovedisplayshortskip \z@ \@plus.3\jlreq@fontsize
-  \belowdisplayshortskip \abovedisplayshortskip
-  \belowdisplayskip \abovedisplayskip}
-\newcommand{\scriptsize}{
-  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
-  \@setfontsize\scriptsize{\dimexpr 7\jlreq@fontsize/10\relax}{\dimexpr 8\jlreq@tempdima/17\relax}
-}
-\newcommand{\tiny}{
-  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
-  \@setfontsize\tiny{\dimexpr 5\jlreq@fontsize/10\relax}{\dimexpr 6\jlreq@tempdima/17\relax}
-}
-\newcommand{\large}{
-  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
-  \@setfontsize\large{\dimexpr12\jlreq@fontsize/10\relax}{\jlreq@tempdima}
-}
-\newcommand{\Large}{
-  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
-  \@setfontsize\Large{\dimexpr14\jlreq@fontsize/10\relax}{\dimexpr 21\jlreq@tempdima/17\relax}
-}
-\newcommand{\LARGE}{
-  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
-  \@setfontsize\LARGE{\dimexpr17\jlreq@fontsize/10\relax}{\dimexpr 25\jlreq@tempdima/17\relax}
-}
-\newcommand{\huge}{
-  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
-  \@setfontsize\huge{2\jlreq@fontsize}{\dimexpr 28\jlreq@tempdima/17\relax}
-}
-\newcommand{\Huge}{
-  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
-  \@setfontsize\Huge{\dimexpr 25\jlreq@fontsize/10\relax}{\dimexpr 33\jlreq@tempdima/17\relax}
-}
+%\newcommand{\small}{%
+%  % jsarticleのもの
+%  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
+%  \@setfontsize\small{.9\jlreq@fontsize}{\dimexpr 13\jlreq@tempdima/17\relax}%
+%  \abovedisplayskip .9\jlreq@fontsize \@plus.3\jlreq@fontsize \@minus.4\jlreq@fontsize
+%  \abovedisplayshortskip \z@ \@plus.3\jlreq@fontsize
+%  \belowdisplayshortskip \abovedisplayshortskip
+%  \belowdisplayskip \abovedisplayskip}
+%\newcommand{\scriptsize}{
+%  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
+%  \@setfontsize\scriptsize{\dimexpr 7\jlreq@fontsize/10\relax}{\dimexpr 8\jlreq@tempdima/17\relax}
+%}
+%\newcommand{\tiny}{
+%  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
+%  \@setfontsize\tiny{\dimexpr 5\jlreq@fontsize/10\relax}{\dimexpr 6\jlreq@tempdima/17\relax}
+%}
+%\newcommand{\large}{
+%  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
+%  \@setfontsize\large{\dimexpr12\jlreq@fontsize/10\relax}{\jlreq@tempdima}
+%}
+%\newcommand{\Large}{
+%  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
+%  \@setfontsize\Large{\dimexpr14\jlreq@fontsize/10\relax}{\dimexpr 21\jlreq@tempdima/17\relax}
+%}
+%\newcommand{\LARGE}{
+%  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
+%  \@setfontsize\LARGE{\dimexpr17\jlreq@fontsize/10\relax}{\dimexpr 25\jlreq@tempdima/17\relax}
+%}
+%\newcommand{\huge}{
+%  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
+%  \@setfontsize\huge{2\jlreq@fontsize}{\dimexpr 28\jlreq@tempdima/17\relax}
+%}
+%\newcommand{\Huge}{
+%  \setlength{\jlreq@tempdima}{\dimexpr\jlreqbaselineskip\relax}
+%  \@setfontsize\Huge{\dimexpr 25\jlreq@fontsize/10\relax}{\dimexpr 33\jlreq@tempdima/17\relax}
+%}
 
 %. plextから拝借
 \def\jlreq@Kanji#1{\expandafter\kansuji\csname c@#1\endcsname}

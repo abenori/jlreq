@@ -509,13 +509,18 @@
 
 %. helper2（エンジン依存系：和文文字を含むものもこれ以降）
 % #1のboxを今の真ん中に配置する．
+% \hboxじゃないとダメかも
+% 高さと深さは普通の文字にあわせる
 \def\jlreq@box@putcenter#1{%
   \begingroup
     \jlreq@tempdima=\dimexpr(\ht#1 - \dp#1)/2\relax
     \setbox\jlreq@tempboxa=\hbox{阿}%
+    \jlreq@tempdima=\dimexpr(\ht\jlreq@tempboxa - \dp\jlreq@tempboxa)/2 - \jlreq@tempdima\relax
     \edef\jlreq@do{%
-      \noexpand\lower\the\dimexpr(\jlreq@tempdima - (\ht\jlreq@tempboxa - \dp\jlreq@tempboxa)/2)\relax\unexpanded{\box#1}%
-    }%
+      \unexpanded{\ht#1}=\the\dimexpr\ht\jlreq@tempboxa - \jlreq@tempdima\relax
+      \unexpanded{\dp#1}=\the\dimexpr\dp\jlreq@tempboxa + \jlreq@tempdima\relax
+      \noexpand\raise\the\jlreq@tempdima\unexpanded{\box#1}%
+    }
   \expandafter\endgroup
   \jlreq@do
 }
@@ -4013,6 +4018,7 @@
             \hbox{\unhbox\jlreq@tempboxa}%
             \hbox{\unhbox\jlreq@tempboxb}}%
         \fi
+        \setbox\jlreq@tempboxa=\hbox{\box\jlreq@tempboxa}%
         \jlreq@box@putcenter\jlreq@tempboxa
       }%
       \advance\@tempcnta by 2\relax

@@ -2340,6 +2340,10 @@
 % \DeclareBlockHeading{命令名}{レベル}{設定}
 \seq_new:N \l__jlreq_BlockHeading_allheadings_seq
 \NewDocumentCommand {\DeclareBlockHeading} { m m +m } {
+  \bool_if:nT { \str_if_eq_p:nn {#1} {chapter} || \str_if_eq_p:nn {#1} {part} } {
+    \@ifundefined{@#1}{\exp_args:Nco \edef {@#1} { \csname jlreq@#1 \endcsname} }{}
+    \@ifundefined{@s#1}{\exp_args:Nco \edef {@s#1} { \csname jlreq@s#1 \endcsname} }{}
+  }%
   \def\jlreq@do{\@removeelement{#1}}%
   \seq_put_right:Nn \l__jlreq_heading_allheadings_seq {#1}
   \seq_remove_duplicates:N \l__jlreq_heading_allheadings_seq
@@ -2595,16 +2599,29 @@
     }
     \edef\jlreq@do{%
       \exp_not:o {\jlreq@do}%
+      \bool_if:nT { \str_if_eq_p:nn {#1} {chapter} || \str_if_eq_p:nn {#1} {chapter} } {
+        \exp_not:N \edef \exp_not:c {jlreq@#1}{\exp_not:N \exp_not:n {
+          \exp_not:o \l__jlreq_tmpa_tl
+          \exp_not:N \jlreq@BlockHeading@start{\exp_not:n {#1}}{\exp_not:n {#2}}{\exp_not:o {\l__jlreq_tmpb_tl}}{\ifjlreq@number\else -\fi}
+        }}
+        \exp_not:N \edef \exp_not:c {jlreq@schapter}{\exp_not:N \exp_not:n {
+          \exp_not:o \l__jlreq_tmpa_tl
+          \exp_not:N \@dblarg{\exp_not:N \jlreq@BlockHeading@start{\exp_not:n {#1}}{\exp_not:n {#2}}{\exp_not:o {\l__jlreq_tmpb_tl}}{*}}
+        }}%
+      }
       \noexpand\edef\exp_not:c {jlreq@headingcs@#1}{\noexpand\unexpanded{%
         \exp_not:N \g__jlreq_hook_beforeheading:n {#1}
         \exp_not:o {\jlreq@pagebreak}%
         \tl_if_empty:NF \l__jlreq_pagestyle_tl { \exp_not:N \thispagestyle {\exp_not:o { \l__jlreq_pagestyle_tl } } }
-        \exp_not:o \l__jlreq_tmpa_tl
-        \exp_not:N \@ifstar
-          {\exp_not:N \@dblarg{\exp_not:N \jlreq@BlockHeading@start{\exp_not:n {#1}}{\exp_not:n {#2}}{\exp_not:o {\l__jlreq_tmpb_tl}}{*}}}%
-          {\exp_not:N \@dblarg{\exp_not:N \jlreq@BlockHeading@start{\exp_not:n {#1}}{\exp_not:n {#2}}{\exp_not:o {\l__jlreq_tmpb_tl}}{\ifjlreq@number\else -\fi}}}%
-       }
-      }%
+        \bool_if:nTF { \str_if_eq_p:nn {#1} {chapter} || \str_if_eq_p:nn {#1} {chapter} } {
+          \exp_not:N \secdef \exp_not:c {@#1} \exp_not:c {@s#1}
+        }{
+          \exp_not:o \l__jlreq_tmpa_tl
+          \exp_not:N \@ifstar
+            {\exp_not:N \@dblarg{\exp_not:N \jlreq@BlockHeading@start{\exp_not:n {#1}}{\exp_not:n {#2}}{\exp_not:o {\l__jlreq_tmpb_tl}}{*}}}%
+            {\exp_not:N \@dblarg{\exp_not:N \jlreq@BlockHeading@start{\exp_not:n {#1}}{\exp_not:n {#2}}{\exp_not:o {\l__jlreq_tmpb_tl}}{\ifjlreq@number\else -\fi}}}%
+        }
+      }}%
       \noexpand\def\exp_not:c {#1}{
         \exp_not:c {jlreq@headingcs@#1}
       }%

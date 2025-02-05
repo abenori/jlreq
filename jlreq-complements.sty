@@ -210,12 +210,15 @@
 
 \let\jlreq@complements@original@@begintheorem=\@begintheorem
 \let\jlreq@complements@original@@opargbegintheorem=\@opargbegintheorem
-\def\@begintheorem#1#2{\topsep=\dimexpr\prop_item:Nn \g__jlreq_complements_theorem_prop { beforeafter_space }\relax
+\def\@begintheorem#1#2{%
+  \topsep=\dimexpr\prop_item:Nn \g__jlreq_complements_theorem_prop { beforeafter_space }\relax
   \trivlist\labelsep=1\jlreq@zw\relax
   \itemindent=\dimexpr\prop_item:Nn \g__jlreq_complements_theorem_prop { indent }\relax
   \prop_item:Nn \g__jlreq_complements_theorem_prop { font }
    \item[\hskip \labelsep{\reset@font\prop_item:Nn \g__jlreq_complements_theorem_prop { label_font } #1\ #2}]}
-\def\@opargbegintheorem#1#2#3{\topsep=\dimexpr\prop_item:Nn \g__jlreq_complements_theorem_prop { beforeafter_space }\relax
+\def\@opargbegintheorem#1#2#3{%
+  \renewcommand{\@currentlabelname}{#3}%
+  \topsep=\dimexpr\prop_item:Nn \g__jlreq_complements_theorem_prop { beforeafter_space }\relax
   \trivlist\labelsep=1\jlreq@zw\relax
   \itemindent=\dimexpr\prop_item:Nn \g__jlreq_complements_theorem_prop { indent }\relax
   \prop_item:Nn \g__jlreq_complements_theorem_prop { font }

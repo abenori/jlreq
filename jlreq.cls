@@ -1855,6 +1855,7 @@
     \edef\jlreq@do{%
       \exp_not:o {\jlreq@do}%
       \noexpand\def\exp_not:c {jlreq@TobiraHeading@start@#1}[####1]####2{%
+        \unexpanded{\renewcommand{\@currentlabelname}}{####1}%
         \ifjlreq@number
           \unexpanded{\ifnum#2>\c@secnumdepth\else}%
             \unexpanded{\refstepcounter{#1}}%
@@ -2092,6 +2093,7 @@
     \edef\jlreq@tempa{\jlreq@BlockHeading@start@getonlylabelformat#4}%
     \edef\jlreq@do{%
       \unexpanded{\def\jlreq@resulta}{%
+        \unexpanded{\renewcommand{\@currentlabelname}{#7}}%
         \ifx\jlreq@tempc\@empty
           \unexpanded{\long\gdef\jlreqHeadingLabel####1{####1}}%
           \unexpanded{\refstepcounter{#1}}%
@@ -2992,6 +2994,7 @@
     \if@noskipsec\leavevmode\fi
     \begingroup
       \def\jlreq@do{\@nobreakfalse\global\@noskipsectrue}%
+      \renewcommand{\@currentlabelname}{#4}%
       \ifnum0\jlreq@ifempty{#3}{}{1}\ifnum #2>\c@secnumdepth 1\fi>0
         \long\def\jlreq@tempa##1{#8}%
       \else
@@ -3129,7 +3132,7 @@
     \hbox_set:Nn \l__jlreq_tmpa_box {#1#6}
     \dim_set:Nn \l__jlreq_tmpa_dim { \box_wd:N \l__jlreq_tmpa_box}
     % 何行必要かを\l__jlreq_cutinheading_linecount_tlに入れる
-    \dim_compare:nTF { \l__jlreq_tmpa_dim > #5} {
+    \dim_compare:nTF { \l__jlreq_tmpa_dim > #5 } {
       \tl_set:Nn \l__jlreq_cutinheading_linecount_tl {3}
     }{
       \dim_compare:nTF { \l__jlreq_tmpa_dim > #4 }{
@@ -3166,6 +3169,7 @@
     }%
   \exp_after:wN \group_end:
   \l__jlreq_do:
+  \renewcommand{\@currentlabelname}{#6}%
   \prevdepth=0pt\relax
   % 改段落が起こっても\hang****をキープするように\parを書き換えておく（終わったら元に戻す）．
   \def\par{%

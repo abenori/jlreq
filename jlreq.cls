@@ -1810,7 +1810,7 @@
       \jlreq@iffirsttoken{##1}{*}{}{%
         \csname #1mark\endcsname{##3}%
         \@ifpackageloaded{hyperref}{\phantomsection}{}%
-        \jlreq@if{\ifnum0\jlreq@iffirsttoken{##1}{-}{1}{}\ifnum #2>\c@secnumdepth 1\fi>0\fi}%
+        \jlreq@if{\ifnum0\jlreq@iffirsttoken{##1}{-}{1}{}\ifnum #2>\c@secnumdepth 1\fi>0~\fi}
           {\addcontentsline{toc}{#1}{##3}}%
           {\addcontentsline{toc}{#1}{\jlreq@ifempty{##2}{}{\protect\numberline{##2}}##3}}%
       }{}%

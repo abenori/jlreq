@@ -1865,6 +1865,7 @@
           {\long\gdef\jlreqHeadingText####1{}}%
           {\long\gdef\jlreqHeadingText####1{####1}}%
         }%
+        \exp_not:c {jlreq@heading@maketoc@#1}{\ifjlreq@number\else -\fi}{\exp_not:o {\jlreq@label@format}}{####1}%
         \ifjlreq@number
           \unexpanded{\jlreq@if{\ifnum#2>\c@secnumdepth\relax\fi}}{%
             \unexpanded{\long\gdef\jlreqHeadingLabel####1{}}%
@@ -1877,7 +1878,6 @@
           \unexpanded{\long\gdef\jlreqHeadingLabel####1{}}%
           \exp_not:o {\jlreq@format{}{##1}}%
         \fi
-        \exp_not:c {jlreq@heading@maketoc@#1}{\ifjlreq@number\else -\fi}{\exp_not:o {\jlreq@label@format}}{####1}%
         \noexpand\@afterheading
         \exp_not:o {\jlreq@heading@clearpage}%
         \unexpanded{\if@restonecol\twocolumn\fi}%
@@ -1888,8 +1888,8 @@
           {\long\gdef\jlreqHeadingText####1{}}%
           {\long\gdef\jlreqHeadingText####1{####1}}%
         }%
-        \exp_not:o {\jlreq@format{}{##1}}
         \exp_not:c {jlreq@heading@maketoc@#1}{*}{\exp_not:o {\jlreq@label@format}}{####1}%
+        \exp_not:o {\jlreq@format{}{##1}}
         \noexpand\@afterheading
         \exp_not:o {\jlreq@heading@clearpage}%
         \unexpanded{\if@restonecol\twocolumn\fi}%
@@ -2106,12 +2106,12 @@
         \jlreq@ifempty{#9}%
           {\unexpanded{\long\gdef\jlreqHeadingSubtitle####1{}}}%
           {\unexpanded{\long\gdef\jlreqHeadingSubtitle####1{####1}}}%
+        \exp_not:c {jlreq@heading@maketoc@#1}{\unexpanded{#6}}{\exp_not:o {\jlreq@tempa}}{\unexpanded{#7}}%
       }%
       \unexpanded{\def\jlreq@resultb}{%
         \exp_not:o {\jlreq@result}%
       }%
       \unexpanded{\def\jlreq@resultc}{%
-        \exp_not:c {jlreq@heading@maketoc@#1}{\unexpanded{#6}}{\exp_not:o {\jlreq@tempa}}{\unexpanded{#7}}%
       }%
     }%
   \expandafter\endgroup
@@ -3009,8 +3009,8 @@
             \unexpanded{\global\@noskipsecfalse}%
             \unexpanded{{\setbox\jlreq@tempboxa\lastbox}}%
             \noexpand\begingroup
-              \exp_not:o {\jlreq@tempa{#5}}%
               \exp_not:c {jlreq@heading@maketoc@#1}\unexpanded{{#3}{#6}{#4}}%
+              \exp_not:o {\jlreq@tempa{#5}}%
             \noexpand\endgroup
             \noexpand\inhibitglue
           \noexpand\else

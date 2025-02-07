@@ -1821,6 +1821,10 @@
 %.. 中/半扉見出し
 % addcontentslineに渡すやつ：番号出すのと出さないの
 \NewDocumentCommand{\DeclareTobiraHeading}{ m m +m } {
+  \bool_if:nT { \str_if_eq_p:nn {#1} {part} || \str_if_eq_p:nn {#1} {chapter} } {
+    \@ifundefined{@#1}{\exp_args:Nco \edef {@#1} { \csname jlreq@#1 \endcsname} }{}
+    \@ifundefined{@s#1}{\exp_args:Nco \edef {@s#1} { \csname jlreq@s#1 \endcsname} }{}
+  }%
   \seq_put_right:Nn \l__jlreq_heading_allheadings_seq {#1}
   \seq_remove_duplicates:N \l__jlreq_heading_allheadings_seq
   \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}%
@@ -1894,11 +1898,20 @@
         \exp_not:o {\jlreq@heading@clearpage}%
         \unexpanded{\if@restonecol\twocolumn\fi}%
       }%
+      \bool_if:nT { \str_if_eq_p:nn {#1} {part} || \str_if_eq_p:nn {#1} {chapter} } {
+        \noexpand\let \exp_not:c {jlreq@#1} \exp_not:c {jlreq@TobiraHeading@start@#1}
+        \noexpand\let \exp_not:c {jlreq@s#1} \exp_not:c {jlreq@TobiraHeading@start@s@#1}
+      }
       \noexpand\def\exp_not:c {jlreq@headingcs@#1}{%
         % 改丁．これでよいのかな．
         \unexpanded{\if@twocolumn\onecolumn\@restonecoltrue\else\@restonecolfalse\fi\jlreq@cleartooddpage[empty]}%
         \ifx\jlreq@pagestyle\@empty\else\noexpand\thispagestyle{\exp_not:o {\jlreq@pagestyle}}\fi
-        \noexpand\secdef{\exp_not:c {jlreq@TobiraHeading@start@#1}}{\exp_not:c {jlreq@TobiraHeading@start@s@#1}}}%
+        \bool_if:nTF { \str_if_eq_p:nn {#1} {part} || \str_if_eq_p:nn {#1} {chapter} } {
+          \noexpand\secdef{\exp_not:c {jlreq@#1}}{\exp_not:c {jlreq@s#1}}%
+        }{
+          \noexpand\secdef{\exp_not:c {jlreq@TobiraHeading@start@#1}}{\exp_not:c {jlreq@TobiraHeading@start@s@#1}}%
+        }
+      }
       \noexpand\def\exp_not:c {#1}{%
         \exp_not:N \g__jlreq_hook_beforeheading:n {#1}
         \exp_not:c {jlreq@headingcs@#1}%
@@ -2342,7 +2355,7 @@
 % \DeclareBlockHeading{命令名}{レベル}{設定}
 \seq_new:N \l__jlreq_BlockHeading_allheadings_seq
 \NewDocumentCommand {\DeclareBlockHeading} { m m +m } {
-  \bool_if:nT { \str_if_eq_p:nn {#1} {chapter} || \str_if_eq_p:nn {#1} {part} } {
+  \bool_if:nT { \str_if_eq_p:nn {#1} {part} || \str_if_eq_p:nn {#1} {chapter} } {
     \@ifundefined{@#1}{\exp_args:Nco \edef {@#1} { \csname jlreq@#1 \endcsname} }{}
     \@ifundefined{@s#1}{\exp_args:Nco \edef {@s#1} { \csname jlreq@s#1 \endcsname} }{}
   }%
@@ -2601,7 +2614,7 @@
     }
     \edef\jlreq@do{%
       \exp_not:o {\jlreq@do}%
-      \bool_if:nT { \str_if_eq_p:nn {#1} {chapter} || \str_if_eq_p:nn {#1} {chapter} } {
+      \bool_if:nT { \str_if_eq_p:nn {#1} {part} || \str_if_eq_p:nn {#1} {chapter} } {
         \exp_not:N \edef \exp_not:c {jlreq@#1}{\exp_not:N \exp_not:n {
           \exp_not:o \l__jlreq_tmpa_tl
           \exp_not:N \jlreq@BlockHeading@start{\exp_not:n {#1}}{\exp_not:n {#2}}{\exp_not:o {\l__jlreq_tmpb_tl}}{\ifjlreq@number\else -\fi}
@@ -2615,7 +2628,7 @@
         \exp_not:N \g__jlreq_hook_beforeheading:n {#1}
         \exp_not:o {\jlreq@pagebreak}%
         \tl_if_empty:NF \l__jlreq_pagestyle_tl { \exp_not:N \thispagestyle {\exp_not:o { \l__jlreq_pagestyle_tl } } }
-        \bool_if:nTF { \str_if_eq_p:nn {#1} {chapter} || \str_if_eq_p:nn {#1} {chapter} } {
+        \bool_if:nTF { \str_if_eq_p:nn {#1} {part} || \str_if_eq_p:nn {#1} {chapter} } {
           \exp_not:N \secdef \exp_not:c {@#1} \exp_not:c {@s#1}
         }{
           \exp_not:o \l__jlreq_tmpa_tl
@@ -2976,20 +2989,15 @@
 %.. 同行見出し
 % {1 = 命令名}{2 = レベル}{3 = */-}{4 = ラベルフォーマット}{5 = ラベルありフォーマット}{6 = ラベルなしフォーマット}
 % 4,5は見出し文字列が#1になる．
-\long\def\jlreq@RuninHeading@start#1#2#3#4#5#6{%
-  \edef\jlreq@RuninHeading@start@format@label{\unexpanded{#4}}%
-  \edef\jlreq@RuninHeading@start@format@wlabel{\unexpanded{#5}}%
-  \edef\jlreq@RuninHeading@start@format@wolabel{\unexpanded{#6}}%
-  \@ifstar{\@dblarg{\jlreq@RuninHeading@start@{#1}{#2}{*}}}{\@dblarg{\jlreq@RuninHeading@start@{#1}{#2}{#3}}}%
-}
+% \@dblargはパラメータを持っていると失敗するので一度退避
 % {1 = 命令名}{2 = レベル}{3 = */-}{4 = running head}{5 = 見出し}
-\long\def\jlreq@RuninHeading@start@#1#2#3[#4]#5{%
-  \edef\jlreq@do{\unexpanded{\jlreq@RuninHeading@start@@{#1}{#2}{#3}{#4}{#5}}{\exp_not:o {\jlreq@RuninHeading@start@format@label}}{\exp_not:o {\jlreq@RuninHeading@start@format@wlabel}}{\exp_not:o {\jlreq@RuninHeading@start@format@wolabel}}}%
+\long\def\jlreq@RuninHeading@start#1#2#3[#4]#5{%
+  \edef\jlreq@do{\unexpanded{\jlreq@RuninHeading@start@{#1}{#2}{#3}{#4}{#5}}{\exp_not:o {\jlreq@RuninHeading@start@format@label}}{\exp_not:o {\jlreq@RuninHeading@start@format@wlabel}}{\exp_not:o {\jlreq@RuninHeading@start@format@wolabel}}}%
   \jlreq@do
 }
 % {1 = 命令名}{2 = レベル}{3 = *}{4 = running head}{5 = 見出し}{6 = ラベルフォーマット}{7 = ラベルありフォーマット}{8 = ラベルなしフォーマット}
 \edef\jlreq@tempa{%
-  \unexpanded{\long\def\jlreq@RuninHeading@start@@#1#2#3#4#5#6#7#8}{%
+  \unexpanded{\long\def\jlreq@RuninHeading@start@#1#2#3#4#5#6#7#8}{%
     \unexpanded{%
     \if@noskipsec\leavevmode\fi
     \begingroup
@@ -3034,6 +3042,10 @@
   \__jlreq_declare_runin_heading:nnn {#1} {#2} {#3}
 }
 \cs_set:Nn \__jlreq_declare_runin_heading:nnn {
+  \bool_if:nT { \str_if_eq_p:nn {#1} {part} || \str_if_eq_p:nn {#1} {chapter} } {
+    \@ifundefined{@#1}{\exp_args:Nco \edef {@#1} { \csname jlreq@#1 \endcsname} }{}
+    \@ifundefined{@s#1}{\exp_args:Nco \edef {@s#1} { \csname jlreq@s#1 \endcsname} }{}
+  }%
   \def\jlreq@do{\@removeelement{#1}}%
   \seq_put_right:Nn \l__jlreq_heading_allheadings_seq {#1}
   \seq_remove_duplicates:N \l__jlreq_heading_allheadings_seq
@@ -3089,16 +3101,25 @@
     \jlreq@heading@make@l@{#1}{#2}{\l__jlreq_label_format_tl}%
     \cs_set:Nx \l__jlreq_do: {
       \exp_not:o { \jlreq@result }
+      \bool_if:nT { \str_if_eq_p:nn {#1} {part} || \str_if_eq_p:nn {#1} {chapter} } {
+        \exp_not:N \def \exp_not:c {jlreq@s#1} {\exp_not:n {\@dblarg{\jlreq@RuninHeading@start{#1}{#2}{*}}}}
+        \exp_not:N \def \exp_not:c {jlreq@#1} {\exp_not:N \@dblarg {\exp_not:n {\jlreq@RuninHeading@start{#1}{#2}}{\bool_if:NF \l__jlreq_number_bool {-}}}}
+      }
       % パラメータトークンを含むので，\edefして\unexpandedで包む
       \noexpand\edef\exp_not:c {#1}{%
-        \noexpand\unexpanded{%
+        \noexpand\unexpanded{
+          \exp_not:N \edef \exp_not:N \jlreq@RuninHeading@start@format@label{\exp_not:N \unexpanded{\exp_not:o {\l__jlreq_label_format_tl}}}
+          \exp_not:N \edef \exp_not:N \jlreq@RuninHeading@start@format@wlabel{\exp_not:N \unexpanded{\exp_not:o {\l__jlreq_format_wlabel_tl}}}
+          \exp_not:N \edef \exp_not:N \jlreq@RuninHeading@start@format@wolabel{\exp_not:N \unexpanded{\exp_not:o {\l__jlreq_format_wolabel_tl}}}
           \exp_not:N \g__jlreq_hook_beforeheading:n {#1}
-          \exp_not:n {\jlreq@RuninHeading@start{#1}{#2}}
-            {\bool_if:NF \l__jlreq_number_bool {-}}
-            {\exp_not:o {\l__jlreq_label_format_tl}}
-            {\exp_not:o {\l__jlreq_format_wlabel_tl}}
-            {\exp_not:o {\l__jlreq_format_wolabel_tl}}
-        }%
+          \bool_if:nTF { \str_if_eq_p:nn {#1} {part} || \str_if_eq_p:nn {#1} {chapter} } {
+            \exp_not:N \@ifstar \exp_not:c {jlreq@s#1} \exp_not:c {jlreq@#1}
+          }{
+            \noexpand\@ifstar
+              {\exp_not:n {\@dblarg{\jlreq@RuninHeading@start{#1}{#2}{*}}}}
+              {\exp_not:N \@dblarg {\exp_not:n {\jlreq@RuninHeading@start{#1}{#2}}{\bool_if:NF \l__jlreq_number_bool {-}}}}
+          }
+        }
       }%
     }%
   \exp_after:wN \group_end:
@@ -3191,6 +3212,10 @@
 }
 
 \NewDocumentCommand{\DeclareCutinHeading}{ m m +m }{
+  \bool_if:nT { \str_if_eq_p:nn {#1} {part} || \str_if_eq_p:nn {#1} {chapter} } {
+    \@ifundefined{@#1}{\exp_args:Nco \edef {@#1} { \csname jlreq@#1 \endcsname} }{}
+    \@ifundefined{@s#1}{\exp_args:Nco \edef {@s#1} { \csname jlreq@s#1 \endcsname} }{}
+  }%
   \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}
   \expandafter\def\csname jlreq@heading@setting@#1\endcsname{#3}
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewCutinHeading}
@@ -3214,9 +3239,18 @@
       \jlreq@note{窓見出しと本文との空き量は，基本版面の文字サイズの全角以上，2倍未満とする~(4.1.10.c)．}%
     }{}%
     \cs_set:Nx \l__jlreq_do: {
+      \bool_if:nT { \str_if_eq_p:nn {#1} {part} || \str_if_eq_p:nn {#1} {chapter} } {
+        % 採番はつねになし
+        \exp_not:N \def \exp_not:c {jlreq@s#1} {\exp_not:N \__jlreq_CutinHeading_start:nnnnnnn{#1}{\exp_not:o \l__jlreq_fontcommand_tl}{\exp_not:o \l__jlreq_indent_tl}{\exp_not:o \l__jlreq_after_space_tl}{\exp_not:o \l__jlreq_onelinemax_tl}{\exp_not:o \l__jlreq_twolinemax_tl}}
+        \exp_not:N \def \exp_not:c {jlreq@#1} {}
+      }
       \exp_not:N \DeclareDocumentCommand \exp_not:c {#1} {m} {
         \exp_not:N \g__jlreq_hook_beforeheading:n {#1}
-        \exp_not:N \__jlreq_CutinHeading_start:nnnnnnn{#1}{\exp_not:o \l__jlreq_fontcommand_tl}{\exp_not:o \l__jlreq_indent_tl}{\exp_not:o \l__jlreq_after_space_tl}{\exp_not:o \l__jlreq_onelinemax_tl}{\exp_not:o \l__jlreq_twolinemax_tl}{####1}
+        \bool_if:nTF { \str_if_eq_p:nn {#1} {part} || \str_if_eq_p:nn {#1} {chapter} } {
+          \exp_not:c {jlreq@s#1} {####1}
+        }{
+          \exp_not:N \__jlreq_CutinHeading_start:nnnnnnn{#1}{\exp_not:o \l__jlreq_fontcommand_tl}{\exp_not:o \l__jlreq_indent_tl}{\exp_not:o \l__jlreq_after_space_tl}{\exp_not:o \l__jlreq_onelinemax_tl}{\exp_not:o \l__jlreq_twolinemax_tl}{####1}
+        }
       }
     }
   \exp_after:wN \group_end:
@@ -3274,15 +3308,13 @@
 }
 
 \def\jlreq@HeadingType#1{%
-  \ifcsname jlreq@heading@type@#1\endcsname
+  \jlreq@if{\ifcsname jlreq@heading@type@#1\endcsname\fi}{%
     \jlreq@HeadingType@{#1}{\RenewTobiraHeading}{TobiraHeading}{%
     \jlreq@HeadingType@{#1}{\RenewBlockHeading}{BlockHeading}{%
     \jlreq@HeadingType@{#1}{\RenewRuninHeading}{RuninHeading}{%
     \jlreq@HeadingType@{#1}{\RenewCutinHeading}{CutinHeading}{%
     UnknownHeading}}}}%
-  \else
-    UndefinedHeading%
-  \fi
+  }{UndefinedHeading}%
 }
 \def\jlreq@HeadingType@#1#2{%
   \jlreq@if{\expandafter\expandafter\expandafter\ifx\csname jlreq@heading@type@#1\endcsname#2\fi}%

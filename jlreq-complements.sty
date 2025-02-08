@@ -71,7 +71,7 @@
 %. thebibliography
 \prop_new:N \g__jlreq_complements_thebibliography_prop
 
-\clist_map_inline:nn { heading,mark,precode,postcode,indent,after_label_space } {
+\clist_map_inline:nn { heading,mark,precode,postcode,presystemcode,postsystemcode,indent,after_label_space } {
   \keys_define:Vn \g__jlreq_complements_setupname_str {
     thebibliography_#1 .code:n = {
       \prop_gput:Nnn \g__jlreq_complements_thebibliography_prop { #1 } { ##1 }
@@ -86,9 +86,12 @@
   thebibliography_indent = { 0pt },
   thebibliography_precode = {},
   thebibliography_postcode = {},
+  thebibliography_presystemcode = {},
+  thebibliography_postsystemcode = {},
 }
 
 \renewenvironment{thebibliography}[1]{%
+  \prop_item:Nn \g__jlreq_complements_thebibliography_prop { presystemcode }
   \prop_item:Nn \g__jlreq_complements_thebibliography_prop { precode }
   \prop_item:Nn \g__jlreq_complements_thebibliography_prop { heading }
   \prop_item:Nn \g__jlreq_complements_thebibliography_prop { mark }
@@ -111,12 +114,13 @@
   \def\@noitemerr{\@latex@warning{Empty~`thebibliography'~environment}}%
   \endlist
   \prop_item:Nn \g__jlreq_complements_thebibliography_prop { postcode }
+  \prop_item:Nn \g__jlreq_complements_thebibliography_prop { postsystemcode }
 }
 \let\@openbib@code\@empty
 
 %. theindex
 \prop_new:N \g__jlreq_complements_theindex_prop
-\clist_map_inline:nn { precode,postcode,heading,mark,column_gap,column_rule_width,pagestyle } {
+\clist_map_inline:nn { precode,postcode,presystemcode,postsystemcode,heading,mark,column_gap,column_rule_width,pagestyle } {
   \keys_define:Vn \g__jlreq_complements_setupname_str {
     theindex_#1 .code:n = {
       \prop_gput:Nnn \g__jlreq_complements_theindex_prop { #1 } { ##1 }
@@ -135,6 +139,8 @@
 \keys_set:Vn \g__jlreq_complements_setupname_str {
   theindex_precode = {},
   theindex_postcode = {},
+  theindex_presystemcode = {},
+  theindex_postsystemcode = {},
   theindex_heading = { \section*{\indexname} },
   theindex_mark = { \@mkboth{\indexname}{\indexname} },
   theindex_column_gap = { 2\jlreq@zw },
@@ -149,6 +155,7 @@
 \bool_new:N \l__jlreq_complements_resttate_bool
 \bool_new:N \l__jlreq_complements_theindex_maincolumn_bool
 \renewenvironment{theindex}{%
+  \prop_item:Nn \g__jlreq_complements_theindex_prop { presystemcode }
   \prop_item:Nn \g__jlreq_complements_theindex_prop { precode }
   \bool_set_false:N \l__jlreq_complements_resttate_bool
   \bool_if:NT \g__jlreq_complements_theindex_yoko_bool {
@@ -182,6 +189,7 @@
   \clearpage
   \bool_if:NT \l__jlreq_complements_resttate_bool { \tate }
   \prop_item:Nn \g__jlreq_complements_theindex_prop { postcode }
+  \prop_item:Nn \g__jlreq_complements_theindex_prop { postsystemcode }
 }
 
 %. 定理環境

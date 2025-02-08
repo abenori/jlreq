@@ -6818,10 +6818,10 @@
 }
 \l__jlreq_tmpa_tl
 \jlreqsetup{
-  thebibliography_precode = { \jlreq@oldfontcommand@enable },
-  thebibliography_postcode = { \jlreq@oldfontcommand@disable },
-  theindex_precode = { \jlreq@oldfontcommand@enable },
-  theindex_postcode = { \jlreq@oldfontcommand@disable }
+  thebibliography_presystemcode = { \jlreq@oldfontcommand@enable },
+  thebibliography_postsystemcode = { \jlreq@oldfontcommand@disable },
+  theindex_presystemcode = { \jlreq@oldfontcommand@enable },
+  theindex_postsystemcode = { \jlreq@oldfontcommand@disable }
 }
 
 \ExplSyntaxOff

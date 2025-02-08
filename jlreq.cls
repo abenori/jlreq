@@ -1818,13 +1818,29 @@
   }{}%
 }
 
-%.. 中/半扉見出し
-% addcontentslineに渡すやつ：番号出すのと出さないの
-\NewDocumentCommand{\DeclareTobiraHeading}{ m m +m } {
+% #1がchapterならば#3を\@makechapterhead{#2}経由で出力するコードを出す．\edef内で使う．
+% 必要なら#3は\exp_not:nなどで囲う．
+\cs_set:Nn \__jlreq_insertmakechapterhead:nnn {
+  \str_if_eq:nnTF {#1} {chapter}{
+    \exp_not:N \edef \exp_not:N \jlreq@@makechapterhead { \exp_not:N \unexpanded { #3 } }
+    \exp_not:n { \@makechapterhead{#2} }
+  }{ #3 }
+}
+
+% #1がchapterならば\@chapter,\@schapter,\@makechapterheadを定義
+% #1がpartならば\@part,\@spartを定義
+\cs_set:Nn \__jlreq_define_compatible_heading_macros:n {
   \bool_if:nT { \str_if_eq_p:nn {#1} {part} || \str_if_eq_p:nn {#1} {chapter} } {
     \@ifundefined{@#1}{\exp_args:Nco \edef {@#1} { \csname jlreq@#1 \endcsname} }{}
     \@ifundefined{@s#1}{\exp_args:Nco \edef {@s#1} { \csname jlreq@s#1 \endcsname} }{}
   }%
+  \str_if_eq:nnT {#1} {chapter} { \@ifundefined{@makechapterhead} { \def\@makechapterhead##1{ \jlreq@@makechapterhead } }{} }
+}
+
+%.. 中/半扉見出し
+% addcontentslineに渡すやつ：番号出すのと出さないの
+\NewDocumentCommand{\DeclareTobiraHeading}{ m m +m } {
+  \__jlreq_define_compatible_heading_macros:n {#1}
   \seq_put_right:Nn \l__jlreq_heading_allheadings_seq {#1}
   \seq_remove_duplicates:N \l__jlreq_heading_allheadings_seq
   \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}%
@@ -1876,11 +1892,11 @@
             \exp_not:o {\jlreq@format{}{##1}}%
           }{%
             \unexpanded{\long\gdef\jlreqHeadingLabel####1{####1}}%
-            \expandafter\exp_not:o \expandafter{\jlreq@formatwlabel{##2}}%
+            \__jlreq_insertmakechapterhead:nnn {#1} {##2} { \expandafter\exp_not:o \expandafter{\jlreq@formatwlabel{##2}} }
           }%
         \else
           \unexpanded{\long\gdef\jlreqHeadingLabel####1{}}%
-          \exp_not:o {\jlreq@format{}{##1}}%
+          \__jlreq_insertmakechapterhead:nnn {#1} {##2} { \expandafter\exp_not:o \expandafter{\jlreq@format{}{##2}} }
         \fi
         \noexpand\@afterheading
         \exp_not:o {\jlreq@heading@clearpage}%
@@ -1893,7 +1909,7 @@
           {\long\gdef\jlreqHeadingText####1{####1}}%
         }%
         \exp_not:c {jlreq@heading@maketoc@#1}{*}{\exp_not:o {\jlreq@label@format}}{####1}%
-        \exp_not:o {\jlreq@format{}{##1}}
+        \__jlreq_insertmakechapterhead:nnn {#1} {##1} { \expandafter\exp_not:o \expandafter{\jlreq@format{}{##1}} }
         \noexpand\@afterheading
         \exp_not:o {\jlreq@heading@clearpage}%
         \unexpanded{\if@restonecol\twocolumn\fi}%
@@ -1971,6 +1987,7 @@
     \exp_not:o { \jlreq@resultc }
   }%
   % 連続する見出しの間の処理をするために，即時では出力せず，いったんマクロに格納する．
+  % \jlreq@BlockHeading@spaces@current@headingname@<n>: sectionとか
   % \jlreq@BlockHeading@spaces@current@beforeoutsideiffirst@<n>
   % \jlreq@BlockHeading@spaces@current@before@<n>
   % \jlreq@BlockHeading@start@gyodori\jlreq@BlockHeading@spaces@current@space@<n>{jlreq@BlockHeading@spaces@current@output@<n>}
@@ -1980,6 +1997,7 @@
   % \jlreq@BlockHeading@spaces@current@afteroutsideiflast@<n>
   % として後に呼び出される．（spaceは書き換えられる可能性がある．）
   % outsideとついているものは全体が行取りされた場合はその外に出される．
+  \expandafter\def\csname jlreq@BlockHeading@spaces@current@headingname@\the\jlreq@BlockHeading@spaces@current@count\endcsname{#1}%
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@output@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
     \exp_not:o {\jlreq@resultb}%
   }%
@@ -1999,7 +2017,7 @@
   }%
   \long\def\@tempa##1##2##3{##2}%
   \expandafter\xdef\csname jlreq@BlockHeading@spaces@current@format@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
-    \exp_not:o {\@tempa#4}%
+    \__jlreq_insertmakechapterhead:nnn {#1} {#7} { \exp_not:o {\@tempa#4} }
   }%
   \long\def\@tempa##1##2##3{##3}%
   \expandafter\gdef\csname jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count\endcsname{%
@@ -2122,7 +2140,7 @@
         \exp_not:c {jlreq@heading@maketoc@#1}{\unexpanded{#6}}{\exp_not:o {\jlreq@tempa}}{\unexpanded{#7}}%
       }%
       \unexpanded{\def\jlreq@resultb}{%
-        \exp_not:o {\jlreq@result}%
+        \exp_not:o {\jlreq@result}
       }%
       \unexpanded{\def\jlreq@resultc}{%
       }%
@@ -2355,10 +2373,7 @@
 % \DeclareBlockHeading{命令名}{レベル}{設定}
 \seq_new:N \l__jlreq_BlockHeading_allheadings_seq
 \NewDocumentCommand {\DeclareBlockHeading} { m m +m } {
-  \bool_if:nT { \str_if_eq_p:nn {#1} {part} || \str_if_eq_p:nn {#1} {chapter} } {
-    \@ifundefined{@#1}{\exp_args:Nco \edef {@#1} { \csname jlreq@#1 \endcsname} }{}
-    \@ifundefined{@s#1}{\exp_args:Nco \edef {@s#1} { \csname jlreq@s#1 \endcsname} }{}
-  }%
+  \__jlreq_define_compatible_heading_macros:n {#1}
   \def\jlreq@do{\@removeelement{#1}}%
   \seq_put_right:Nn \l__jlreq_heading_allheadings_seq {#1}
   \seq_remove_duplicates:N \l__jlreq_heading_allheadings_seq
@@ -2670,6 +2685,8 @@
 % 現在状況保存に以下のマクロを使う，nは1から始まる．
 % \jlreq@BlockHeading@spaces@current@sequence
 %   : 現在どのような見出しが続いているかリスト．
+% \jlreq@BlockHeading@spaces@current@headingname@@<n>
+%   : 現在処理中のn番目の見出し命令名（sectionなど）
 % \jlreq@BlockHeading@spaces@current@space@<n>
 %   : 現在処理中のn番目の見出しに対する空き情報．{前空き}{後ろ空き}{トータル行数}{偶数ページbreak情報}．n=1から始まる．
 % \jlreq@BlockHeading@spaces@current@output@<n>
@@ -3018,7 +3035,7 @@
             \unexpanded{{\setbox\jlreq@tempboxa\lastbox}}%
             \noexpand\begingroup
               \exp_not:c {jlreq@heading@maketoc@#1}\unexpanded{{#3}{#6}{#4}}%
-              \exp_not:o {\jlreq@tempa{#5}}%
+              \__jlreq_insertmakechapterhead:nnn {#1} {#5} { \exp_not:o {\jlreq@tempa{#5}} }
             \noexpand\endgroup
             \noexpand\inhibitglue
           \noexpand\else
@@ -3042,10 +3059,7 @@
   \__jlreq_declare_runin_heading:nnn {#1} {#2} {#3}
 }
 \cs_set:Nn \__jlreq_declare_runin_heading:nnn {
-  \bool_if:nT { \str_if_eq_p:nn {#1} {part} || \str_if_eq_p:nn {#1} {chapter} } {
-    \@ifundefined{@#1}{\exp_args:Nco \edef {@#1} { \csname jlreq@#1 \endcsname} }{}
-    \@ifundefined{@s#1}{\exp_args:Nco \edef {@s#1} { \csname jlreq@s#1 \endcsname} }{}
-  }%
+  \__jlreq_define_compatible_heading_macros:n {#1}
   \def\jlreq@do{\@removeelement{#1}}%
   \seq_put_right:Nn \l__jlreq_heading_allheadings_seq {#1}
   \seq_remove_duplicates:N \l__jlreq_heading_allheadings_seq
@@ -3141,22 +3155,22 @@
   \if@noskipsec\leavevmode\fi
   \par
   \int_compare:nTF { \hangafter=1 } {
-    \__jlreq_CutinHeading_start_aux:nnnnnn{#2}{#3}{#4}{#5}{#6}{#7}%
+    \__jlreq_CutinHeading_start_aux:nnnnnnn{#1}{#2}{#3}{#4}{#5}{#6}{#7}%
   }{%
     \ClassError{jlreq}{Can~not~use~\expandafter\string\csname#1\endcsname\space here}{\@ehc}%
   }%
 }
-% 1 = 書式指定，2 = インデント, 3 = 見出しと本文の間, 4 = これを越えたら二行以上，5 = これを越えたら三行以上，6 = テキスト
-\cs_set:Nn \__jlreq_CutinHeading_start_aux:nnnnnn{%
+% 1 = 命令名，2 = 書式指定，3 = インデント, 4 = 見出しと本文の間, 5 = これを越えたら二行以上，6 = これを越えたら三行以上，7 = テキスト
+\cs_set:Nn \__jlreq_CutinHeading_start_aux:nnnnnnn{%
   % 一行で処理したときの見出し長さを計測
   \group_begin:
-    \hbox_set:Nn \l__jlreq_tmpa_box {#1#6}
+    \hbox_set:Nn \l__jlreq_tmpa_box {#2#7}
     \dim_set:Nn \l__jlreq_tmpa_dim { \box_wd:N \l__jlreq_tmpa_box}
     % 何行必要かを\l__jlreq_cutinheading_linecount_tlに入れる
-    \dim_compare:nTF { \l__jlreq_tmpa_dim > #5 } {
+    \dim_compare:nTF { \l__jlreq_tmpa_dim > #6 } {
       \tl_set:Nn \l__jlreq_cutinheading_linecount_tl {3}
     }{
-      \dim_compare:nTF { \l__jlreq_tmpa_dim > #4 }{
+      \dim_compare:nTF { \l__jlreq_tmpa_dim > #5 }{
         \tl_set:Nn \l__jlreq_cutinheading_linecount_tl {2}
       } { \tl_set:Nn \l__jlreq_cutinheading_linecount_tl {1} } }
     % \l__jlreq_tmpa_dimが実際の一行の長さに近い
@@ -3166,7 +3180,7 @@
       \vbox_set:Nn \l__jlreq_tmpb_box {\parindent=0pt\rightskip=0pt\leftskip=0pt\box_use_drop:N \l__jlreq_tmpa_box}
       \tl_set:Nn \l__jlreq_cutinheading_linecount_tl {2}
     }{
-      \jlreq@inlinenote@determinelength{#6}{#1}{}{\l__jlreq_cutinheading_linecount_tl}{\l__jlreq_cutinheading_linecount_tl}{\l__jlreq_tmpa_dim}{\linewidth}%
+      \jlreq@inlinenote@determinelength{#7}{#2}{}{\l__jlreq_cutinheading_linecount_tl}{\l__jlreq_cutinheading_linecount_tl}{\l__jlreq_tmpa_dim}{\linewidth}%
       \box_set_eq:NN \l__jlreq_tmpb_box \jlreq@resultbox
       \tl_set:Nn \l__jlreq_cutinheading_linecount_tl {3}
     }
@@ -3177,20 +3191,29 @@
     \box_set_dp:Nn \l__jlreq_tmpa_box { \box_ht:N \l__jlreq_tmpa_box + \box_dp:N \l__jlreq_tmpa_box - \box_ht:N \l__jlreq_tmpc_box }
     \box_set_ht:Nn \l__jlreq_tmpa_box { \box_ht:N \l__jlreq_tmpc_box }
     \noindent
-    \hspace*{#2}%
-    \box_use:N \l__jlreq_tmpa_box
-    \hspace*{#3}%
+    \str_if_eq:nnTF {#1} {chapter}{
+      \def\jlreq@@makechapterhead{
+        \hspace*{#3}%
+        \box_use:N \l__jlreq_tmpa_box
+        \hspace*{#4}%
+      }
+      \@makechapterhead{#7}%
+    }{
+      \hspace*{#3}%
+      \box_use:N \l__jlreq_tmpa_box
+      \hspace*{#4}%
+    }
     % でかい見出しボックスの分をキャンセルする空きを入れる
     % \baselineskip - box_ht:N \l__jlreq_tmpc_boxはTeXが挿入するスキップの分
     \cs_set:Nx \l__jlreq_do:{
       \exp_not:N \par
       \exp_not:N \skip_vertical:n {\dim_eval:n {-\box_ht:N \l__jlreq_tmpa_box - \box_dp:N \l__jlreq_tmpa_box - \baselineskip + \box_ht:N \l__jlreq_tmpc_box}}
-      \exp_not:N\hangindent= \dim_eval:n {#2 + \box_wd:N \l__jlreq_tmpa_box + #3} \exp_not:N \relax
+      \exp_not:N\hangindent= \dim_eval:n {#3 + \box_wd:N \l__jlreq_tmpa_box + #4} \exp_not:N \relax
       \exp_not:N\hangafter=-\l__jlreq_cutinheading_linecount_tl\relax
     }%
   \exp_after:wN \group_end:
   \l__jlreq_do:
-  \renewcommand{\@currentlabelname}{#6}%
+  \renewcommand{\@currentlabelname}{#7}%
   \prevdepth=0pt\relax
   % 改段落が起こっても\hang****をキープするように\parを書き換えておく（終わったら元に戻す）．
   \def\par{%
@@ -3212,10 +3235,7 @@
 }
 
 \NewDocumentCommand{\DeclareCutinHeading}{ m m +m }{
-  \bool_if:nT { \str_if_eq_p:nn {#1} {part} || \str_if_eq_p:nn {#1} {chapter} } {
-    \@ifundefined{@#1}{\exp_args:Nco \edef {@#1} { \csname jlreq@#1 \endcsname} }{}
-    \@ifundefined{@s#1}{\exp_args:Nco \edef {@s#1} { \csname jlreq@s#1 \endcsname} }{}
-  }%
+  \__jlreq_define_compatible_heading_macros:n {#1}
   \expandafter\def\csname jlreq@heading@level@#1\endcsname{#2}
   \expandafter\def\csname jlreq@heading@setting@#1\endcsname{#3}
   \expandafter\def\csname jlreq@heading@type@#1\endcsname{\RenewCutinHeading}

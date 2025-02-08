@@ -3511,12 +3511,41 @@
 % \footnoteと\footnotemarkの前後に\jlreq@hook@prenote/\jlreq@hook@postnoteを入れる
 \jlreq@saveoriginalcs{footnote}
 \jlreq@saveoriginalcs{footnotemark}
+\newcounter{__jlreq_footnotetemporary}
+\def\jlreq@savedHref{}
+\long\def\jlreq@footnotemark@for@footnote[#1]{%
+  \@ifpackageloaded{hyperref}{%
+    \def\jlreq@result{%
+      \setcounter{__jlreq_footnotetemporary}{\value{footnote}}%
+      \setcounter{footnote}{\numexpr #1 - 1\relax}%
+      \footnotemark
+      \let\jlreq@savedHref\Hy@footnote@currentHref
+      \setcounter{footnote}{\value{__jlreq_footnotetemporary}}%
+    }%
+  }{%
+    \def\jlreq@result{\footnotemark[#1]}%
+  }%
+}
 \long\def\jlreq@footnotetext@for@footnote[#1]#2{%
-  \def\jlreq@result{\footnotetext[#1]{#2}}%
+  \@ifpackageloaded{hyperref}{%
+    \edef\jlreq@result{%
+      \exp_not:n {\setcounter{__jlreq_footnotetemporary}{\value{footnote}}}%
+      \exp_not:n {\setcounter{footnote}{#1}}%
+      \exp_not:n {\def\Hy@footnote@currentHref}{\exp_not:o {\jlreq@savedHref}}%
+      \exp_not:n {\footnotetext{#2}}%
+      \exp_not:n {\setcounter{footnote}{\value{__jlreq_footnotetemporary}}}%
+    }%
+  }{%
+    \def\jlreq@result{\footnotetext[#1]{#2}}%
+  }%
 }
+
 \def\footnote{%
-  \jlreq@footnote{\footnote}{\footnotemark}{\jlreq@footnotetext@for@footnote}%
+  \jlreq@footnote{\footnote}{\jlreq@footnotemark@for@footnote}{\jlreq@footnotetext@for@footnote}%
 }
+% 1 = \footnote, 2 = \footnotemark, 3 = \footnotetextを想定
+% ただし#2と#3は実行するべきものを\jlreq@resultに入れて返すように実装されている必要がある．
+% 通常は#1を実行するだけ．脚注の出力を次ページなどまで遅延する必要があるときは#2でマークだけだし#3で遅延して出力する．
 \long\def\jlreq@footnote#1#2#3{%
   \jlreq@hook@prenote
   \@ifnextchar[{\jlreq@footnote@impl@woption{#1}{#2}{#3}}{\jlreq@footnote@impl@wooption{#1}{#2}{#3}}%
@@ -3555,7 +3584,7 @@
     \expandafter\gdef\expandafter\jlreq@footnote@delayfootnoteslist\expandafter{\expandafter}%
     \jlreq@footnote@delayfootnoteslist
   }
-  \tl_put_left:Nn \@opcol{\jlreq@hook@@opcol}
+  \tl_put_left:Nn \@opcol{\jlreq@hook@@opcol} % カーネルへ入り込む
   % \jlreq@footnote@delayfootnote@delay#1#2：#1ページ目に#2を出す
   % \jlreq@footnote@delayfootnote@page：何ページ目に\footnotetextを入れるかを\jlreq@resultcntに入れる．その場での場合は-1．
   \if@twocolumn

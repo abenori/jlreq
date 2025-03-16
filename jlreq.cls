@@ -6,7 +6,6 @@
 % (based on JLReq 20200811 https://www.w3.org/TR/2020/NOTE-jlreq-20200811/)
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{jlreq}[2024/10/04 jlreq]
-\RequirePackage{etoolbox}
 \RequirePackage{jlreq-helpers}[2024/02/13]
 
 \ExplSyntaxOn
@@ -1225,7 +1224,7 @@
   \jlreq@note { 行間は二分以上全角以下が望ましい (2.4.2.d~注3)．}
 }
 
-\emergencystretch 3\jlreq@gol
+\emergencystretch 3\jlreq@zh
 \setlength{\parindent}{1\zw}
 \newcommand{\jlreqparindent}{1\zw}
 \apptocmd\set@fontsize {
@@ -2253,7 +2252,7 @@
       \jlreq@tempskipb=\glueexpr\jlreq@ushiroaki\relax
     \fi
   \else
-    % 行取り時の前後の空きを足した値を\jlreq@tempdimaに入れる
+    % 行取り時の前後の空きを足した値を\jlreq@tempskipaに入れる
     \jlreq@tempdima=\glueexpr(#3\baselineskip - \baselineskip - \ht\jlreq@tempboxa - \dp\jlreq@tempboxa)\relax
     \ifx\jlreq@maeakitype\@empty
       \jlreq@tempskipa=\glueexpr(\jlreq@tempdima + \dp\jlreq@tempboxb - \ht\jlreq@tempboxb)/2\relax
@@ -3379,7 +3378,7 @@
         \hbox{}\hbox{\@textsuperscript{\normalfont\jlreq@referencemark@format{##1}}}\hbox{}%
       }{%
         \setbox\@tempboxa=\hbox{\scriptsize\jlreq@referencemark@format{##1}}%
-        \raise\dimexpr.5\jlreq@gol - \ht\@tempboxa\relax\box\@tempboxa
+        \raise\dimexpr.5\jlreq@zh - \ht\@tempboxa\relax\box\@tempboxa
       }%
     }
     \def\jlreq@hook@prenote{\inhibitglue}
@@ -3441,7 +3440,7 @@
 %.. 脚注（4.2.5）
 % （縦書きの時は傍注，4.2.6）
 % 罫線の前は行間分，最大＋文字サイズ分伸びる（4.2.5.g）
-\setlength{\skip\footins}{\dimexpr\baselineskip - 1\jlreq@gol \relax plus 1\jlreq@gol}
+\setlength{\skip\footins}{\dimexpr\baselineskip - 1\jlreq@zh \relax plus 1\jlreq@zh}
 % 罫線の長さは，基本版面で設定した行長にもよるが，行長の1/3くらいにする．
 \def\jlreq@footnote@rulewidth{0.333\columnwidth}
 \begingroup
@@ -3717,7 +3716,7 @@
 % 文字サイズは\footnotesizeを使う
 \newdimen\jlreq@endnote@prepostspace
 % 前の分との間は行間分空ける（4.2.4.f）
-\jlreq@endnote@prepostspace=\dimexpr\baselineskip - 1\jlreq@gol\relax
+\jlreq@endnote@prepostspace=\dimexpr\baselineskip - 1\jlreq@zh\relax
 \newdimen\jlreq@endnote@indent
 % 現在の後注一覧を，\jlreq@endnote@textsに{{合印1}{後注1}}{{合印2}{後注2}}...の形で保持する
 \def\jlreq@endnote@texts{}
@@ -3779,7 +3778,7 @@
   \ifx\jlreq@endnote@texts\@empty\else
     \let\jlreq@tempa=\jlreq@endnote@texts
     \gdef\jlreq@endnote@texts{}%
-    \edef\jlreq@endnote@beforeafterspace{\the\dimexpr\baselineskip - 1\jlreq@gol\relax plus \the\dimexpr 1\jlreq@gol\relax}%
+    \edef\jlreq@endnote@beforeafterspace{\the\dimexpr\baselineskip - 1\jlreq@zh\relax plus \the\dimexpr 1\jlreq@zh\relax}%
     \begingroup
       \par
       \footnotesize
@@ -4018,7 +4017,7 @@
         \tl_set:Nn \l__jlreq_tmpa_tl { \jlreq@open@bracket@before@space }
       }
     }
-    \edef\jlreq@warichu@opening{\expandonce{\l__jlreq_tmpa_tl}\unexpanded{#1}}
+    \edef\jlreq@warichu@opening{\exp_not:o {\l__jlreq_tmpa_tl}\unexpanded{#1}}
   },
   warichu_closing .tl_set:N = \jlreq@warichu@closing
 }
@@ -5245,8 +5244,8 @@
 
 %. フロート関連
 % 4.3.3.dの例，縦組みの時だけど横にも適用……
-\setlength{\floatsep}{1\jlreq@gol plus 1\jlreq@gol}
-\setlength{\textfloatsep}{1\jlreq@gol plus \baselineskip}
+\setlength{\floatsep}{1\jlreq@zh plus 1\jlreq@zh}
+\setlength{\textfloatsep}{1\jlreq@zh plus \baselineskip}
 \intextsep=\textfloatsep
 \dblfloatsep=\floatsep
 \dbltextfloatsep=\textfloatsep
@@ -5435,7 +5434,7 @@
 }
 
 % 特に根拠のない値
-\setlength\abovecaptionskip{.5\jlreq@gol}
+\setlength\abovecaptionskip{.5\jlreq@zh}
 \setlength\belowcaptionskip{0pt}
 
 %.. figure環境
@@ -5870,7 +5869,7 @@
     \labelwidth\z@
     \labelsep\z@
     \topsep=\dimexpr\jlreq@quote@beforeafter@space\relax
-    \parsep\z@ \@plus.1\jlreq@gol}%
+    \parsep\z@ \@plus.1\jlreq@zh}%
     \item\relax\jlreq@quote@fontsize}{\endlist}
 \newenvironment{quote}
   {\list{}{%
@@ -5922,7 +5921,7 @@
 \newcommand{\@dotsep}{2} % 狭くしてみた
 \prop_new:N \g__jlreq_tableofcontents_prop
 \newskip\toclineskip
-\setlength\toclineskip{0\jlreq@gol plus .02\jlreq@gol}
+\setlength\toclineskip{0\jlreq@zh plus .02\jlreq@zh}
 % tarticleから
 \newdimen\@lnumwidth
 \def\numberline#1{\hbox to\@lnumwidth{#1\hfil}}
@@ -6006,7 +6005,7 @@
   \@mkboth{\listfigurename}{\listfigurename}%
   \@starttoc{lof}%
 }
-\newcommand*{\l@figure}{\@dottedtocline{1}{0\jlreq@gol}{2\jlreq@gol}}
+\newcommand*{\l@figure}{\@dottedtocline{1}{0\jlreq@zh}{2\jlreq@zh}}
 \newcommand{\listoftables}{%
   \jlreq@top@contents=-100
   \section*{\listtablename}%
@@ -6054,7 +6053,7 @@
   \@mkboth{\indexname}{\indexname}%
   \jlreq@theindex@pagestyle
   \parindent\z@
-  \parskip\z@ \@plus .03\jlreq@gol\relax
+  \parskip\z@ \@plus .03\jlreq@zh\relax
   \let\item\@idxitem
 }{%
   \ifx\jlreq@theindex@savedpagestyle\@undefined\else\expandafter\pagestyle\expandafter{\jlreq@theindex@savedpagestyle}\fi
@@ -6066,7 +6065,7 @@
 \newcommand{\@idxitem}{\par\hangindent 4\jlreq@mol}
 \newcommand{\subitem}{\@idxitem \hspace*{2\jlreq@mol}}
 \newcommand{\subsubitem}{\@idxitem \hspace*{3\jlreq@mol}}
-\newcommand{\indexspace}{\par \vskip 1\jlreq@gol \@plus .5\jlreq@gol \@minus .3\jlreq@gol\relax}
+\newcommand{\indexspace}{\par \vskip 1\jlreq@zh \@plus .5\jlreq@zh \@minus .3\jlreq@zh\relax}
 \def\jlreq@theindex@pagestyle{\pagestyle{plain}}
 
 %. 前付，後付，付録

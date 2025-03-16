@@ -591,6 +591,11 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Removed pattern matchings from Makefile.
 * 2024-10-04
     - Fixed: tfm files are mixed into the list of vf files in Makefile.
+* 2025-03-16
+    - Improved compatibility with the hyperref package.
+    - Adjusted the depth and height of side notes to match the surrounding text.
+    - Changed the placement of `\addcontentsline` in heading commands.
+    - Modified the default values for spacing around theorem environments and the font of headings.
 
 
 --------------

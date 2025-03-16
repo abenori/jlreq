@@ -5,7 +5,7 @@
 %%
 % (based on JLReq 20200811 https://www.w3.org/TR/2020/NOTE-jlreq-20200811/)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{jlreq}[2024/10/04 jlreq]
+\ProvidesClass{jlreq}[2025/3/16 jlreq]
 \RequirePackage{jlreq-helpers}[2024/02/13]
 
 \ExplSyntaxOn
@@ -6806,7 +6806,7 @@
     \ifx p\jlreq@engine platex\fi
     \ifx u\jlreq@engine uplatex\fi
     ,setupname=jlreqsetup
-  ]{jlreq-complements}[2022/11/28]
+  ]{jlreq-complements}[2025/03/16]
 }
 \l__jlreq_tmpa_tl
 \jlreqsetup{

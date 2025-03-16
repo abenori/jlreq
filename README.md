@@ -101,6 +101,7 @@ In the following, the following usage will be used:
     - `zw`, `zh`: Interpreted as full-width width.
 * `<code>`: LaTeX code.
 * `<font setting code>`: Commands for font settings, such as `\Large` or `\bfseries`. Multiple specifications like `\Large\bfseries` are also possible.
+* `<counter_name>`: The name of the counter in LaTeX.
 
 ### Kihon-hanmen
 Class option.
@@ -144,6 +145,7 @@ Specified by `\jlreqsetup`.
 * `sidenote_type=[number/symbol]`: Determines the correspondence between the sidenote and the text. Options are `number` (default, with a serial number indicating the note) or `symbol` (with a specific symbol and the word with the note emphasized).
 * `sidenote_symbol=<code>`: When `sidenote_type=symbol` is specified, this sets the symbol to be used at the note's location. THe default is *
 * `sidenote_keyword_font=<font setting code>`: Specifies the font for the word with the sidenote when `sidenote_type=symbol` is used.
+* `endnote_counter=<counter_name>`: The counter name used for endnotes. The default is endnote_counter=footnote.
 * `endnote_second_indent=<dimension>`: Sets the indent for the second and subsequent lines of endnotes.
 ` endnote_position=[headings/paragraph/{_<heading name 1>,_<heading name 2>,...}]`: The output location of the endnote can be specified. `headings` will output the note before each heading (default), `paragraph` will output it when a new paragraph starts, and specifying `endnote_position={_chapter,_section}` will output it before `\chapter` and `\section`. To specify `<_heading name>`, the target heading must be created using the functionality of this class file.
 * `warichu_opening=<code>`, `warichu_closing=<code>`: These are inserted before and after the warichu (split annotation). The default is parentheses ().
@@ -184,6 +186,9 @@ There are also settings that change `frontmatter` to `mainmatter`, `backmatter`,
 * `restore=[true/false]` is an invalid setting.
 * Pmainmatter_pagination` cannot specify continuous or independent.
 * `appendix_pagebreak`, `appendix_pagestyle`, `appendix_pagination` do not exist.
+
+When using the `book` class option, by default, `frontmatter_heading` is set to `chapter={number=false, restore=true}` and `backmatter_heading` is set to `chapter={number=false}`. Therefore, if you change `\chapter` to a cutin heading, an error will occur, so please adjust the settings as needed.
+
 
 #### Abstract
 * `abstract_with_maketitle=[true/false]`: If the abstract environment is written before `\maketitle`, it delays its content and outputs it with `\maketitle`. Even in the case of two columns, it is output in one column. The default is false. This option is available only when `article` and `report` are specified.

@@ -121,6 +121,7 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
     - `zw`, `zh`：全角幅として解釈されます．
 * `<コード>`：LaTeXのコードです．
 * `<フォント設定コード>`：`\Large`や`\bfseries`のようなフォント設定の命令です．`\Large\bfseries`のように複数指定することもできます．
+* `<カウンタ名>`: LaTeXのカウンタの名前です．
 
 
 ### 基本版面
@@ -162,6 +163,7 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
 * `sidenote_type=[number/symbol]`：傍注と本文との対応の方法を指定します．`number`が規定で，注の位置に通し番号が入り，それにより対応が示されます．`symbol`とすると，注の位置に特定の記号が入り，また注がついている単語が強調されます．
 * `sidenote_symbol=<コード>`：`sidenote_symbol=symbol`の時に，注の位置に入る記号．デフォルト＊
 * `sidenote_keyword_font=<フォント設定コード>`：`sidenote_symbol=symbol`の時に，注のついている単語のフォント指定．デフォルトは無し（強調しない）
+* `endnote_counter=<カウンタ名>`: 後注に使うカウンタ名です．デフォルトは`endnote_counter=footnote`．
 * `endnote_second_indent=<寸法>`: 後柱の二行目以降の字下げ量を指定します．一行目からの相対字下げ量です．
 * `endnote_position=[headings/paragraph/{_<見出し名1>,_<見出し名2>,...}]`：後注の出力場所を指定します．`headings`は各見出しの直前（デフォルト），`paragraph`は改段落の際に出力します．また，`endnote_position={_chapter,_section}`とすると，`\chapter`と`\section`の直前に出力します．`<_見出し名>`を指定するためには，対象の見出しが本クラスファイルの機能を使って作られていなければいけません．
 * `warichu_opening=<コード>`, `warichu_closing=<コード>`：それぞれ，割注の前と後ろに挿入されます．デフォルトは`（`と`）`です．
@@ -203,6 +205,8 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
 * `restore=[true/false]`は無効な設定です．
 * `mainmatter_pagination`に`continuous`と`independent`は指定できません．
 * `appendix_pagebreak`，`appendix_pagestyle`，`appendix_pagination`はありません．
+
+クラスオプションに`book`をしているときには，デフォルトでは`frontmatter_heading`に`chapter={number=false, restore = true}`および`backmatter_heading = {chapter = {number = false}}`を指定しています．したがって，`\chapter`を窓見出しに変更している場合はエラーが発生しますので，必要に応じて設定をし直してください．
 
 ### 概要
 * `abstract_with_maketitle=[true/false]`：abstract環境が`\maketitle`に先行して書かれた場合，その中身を`\maketitle`とともに遅延します．二段組みの場合でも一段で出力されます．デフォルトは`false`です．`article`および`report`時のみ．

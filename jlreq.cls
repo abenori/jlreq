@@ -1227,10 +1227,8 @@
 \emergencystretch 3\jlreq@zh
 \setlength{\parindent}{1\zw}
 \newcommand{\jlreqparindent}{1\zw}
-\apptocmd\set@fontsize {
+\AddToHook{cmd/set@fontsize/after}{
   \expandafter\def\expandafter\size@update\expandafter{\size@update\g__jlreq_setfontsizehook_tl}
-}{}{
-  \ClassWarningNoLine { jlreq } { `\string\apptocmd`~to~`\string\size@update`~failed,~maybe~a~bug}
 }
 \tl_new:N \g__jlreq_setfontsizehook_tl
 \tl_set:Nn \g__jlreq_setfontsizehook_tl { 
@@ -3816,8 +3814,9 @@
 \let\@makeendmark=\@makefnmark
 
 \cs_new:Nn \g__jlreq_endnote_hook_beforeheading:n {}
-\apptocmd \g__jlreq_hook_beforeheading:n { \g__jlreq_endnote_hook_beforeheading:n {#1} }{}{
-  \ClassWarningNoLine { jlreq } { `\string\apptocmd`~to~`\string\g__jlreq_hook_beforeheading:n`~failed,~maybe~a~bug}
+\cs_set:Ne \g__jlreq_hook_beforeheading:n { 
+  \exp_not:o { \g__jlreq_hook_beforeheading:n {#1} }
+  \exp_not:n { \g__jlreq_endnote_hook_beforeheading:n {#1} }
 }
 % \theendnoteの出力を仕込む
 \keys_define:nn { jlreqsetup } {

@@ -4304,40 +4304,23 @@
 }
 
 %.. マークの拡張
-\def\jlreq@markregistername#1{jlreq@extramark@register@#1}
-\def\jlreq@extraleftmark#1{\jlreq@extramark@{#1}{\expandafter\@firstoftwo\botmarks}}
-\def\jlreq@extrarightmark#1{\jlreq@extramark@{#1}{\expandafter\@secondoftwo\firstmarks}}
-\def\jlreq@extramark@#1#2{\jlreq@if{\ifcsname\jlreq@markregistername{#1}\endcsname\fi}%
-  {\expandafter\jlreq@extramark@@\expandafter{\csname \jlreq@markregistername{#1}\endcsname}{#2}}%
-  {}%
-}
-\def\jlreq@extramark@@#1#2{#2#1\@empty\@empty}
+\mark_new_class:n {jlreq-1-left}
+\mark_new_class:n {jlreq-1-right}
+\mark_new_class:n {jlreq-1-right-nonempty}
+\mark_new_class:n {jlreq-2-left}
+\mark_new_class:n {jlreq-2-right}
+\mark_new_class:n {jlreq-2-right-nonempty}
 
-
+\def\jlreq@extraleftmark#1{\mark_use_last:nn{page}{jlreq-#1-left}}
+\def\jlreq@extrarightmark#1{\mark_use_first:nn{page}{jlreq-#1-right}}
 \def\jlreq@extramarkright#1#2{%
-  \jlreq@if{\ifcsname\jlreq@markregistername{#1}\endcsname\fi}{%
-    \expandafter\expandafter\expandafter\jlreq@extramarkright@\csname\jlreq@markregistername{#1}@themark\endcsname{#2}{#1}%
-  }{%
-    \jlreq@extramarkboth{#1}{}{#2}%
-  }%
-}
-\def\jlreq@extramarkright@#1#2#3#4{%
-  \jlreq@extramarkboth{#4}{#1}{#3}%
+  \mark_insert:nn {jlreq-#1-right} {#2}
+  \tl_if_empty:nF {#2} { \mark_insert:nn{jlreq-#1-right-nonempty}{#2} }
 }
 \def\jlreq@extramarkboth#1#2#3{
-  \jlreq@if{\ifcsname\jlreq@markregistername{#1}\endcsname\fi}{}{%
-    \expandafter\newmarks\csname\jlreq@markregistername{#1}\endcsname
-    \expandafter\def\csname\jlreq@markregistername{#1}@themark\endcsname{{}{}}%
-  }%
-  \begingroup
-    \let\label\relax
-    \let\index\relax
-    \let\glossary\relax
-    \expandafter\unrestored@protected@xdef\csname\jlreq@markregistername{#1}@themark\endcsname{ {#2}{#3} }
-    \expandafter\expandafter\expandafter\@temptokena\expandafter\expandafter\expandafter{\csname\jlreq@markregistername{#1}@themark\endcsname}%
-    \expandafter\marks\csname\jlreq@markregistername{#1}\endcsname{\the\@temptokena}%
-  \endgroup
-  \if@nobreak\ifvmode\nobreak\fi\fi  
+  \mark_insert:nn {jlreq-#1-left} {#2}
+  \mark_insert:nn {jlreq-#1-right} {#3}
+  \tl_if_empty:nF {#3} { \mark_insert:nn{jlreq-#1-right-nonempty}{#3} }
 }
 
 \let\jlreq@markboth=\markboth

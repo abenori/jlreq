@@ -1529,7 +1529,7 @@
       \divide\textwidth\@tempdima\multiply\textwidth\@tempdima
     \else
       \jlreq@determine@kihonhanmen@warning
-      \setlength{\textwidth}{\dimexpr\paperheight - \jlreq@option@head@space - \jlreq@option@foot@space \relax}
+      \setlength{\textwidth}{\dimexpr\paperheight - \jlreq@speciallength{\jlreq@option@head@space} - \jlreq@speciallength{\jlreq@option@foot@space} \relax}
     \fi
   \else
     \ifnum 0\ifx\jlreq@option@gutter\@empty 1\fi\ifx\jlreq@option@fore@edge\@empty 1\fi>0
@@ -1537,7 +1537,7 @@
       \divide\textwidth\@tempdima\multiply\textwidth\@tempdima
     \else
       \jlreq@determine@kihonhanmen@warning
-      \setlength{\textwidth}{\dimexpr\paperwidth - \jlreq@option@gutter - \jlreq@option@fore@edge\relax}
+      \setlength{\textwidth}{\dimexpr\paperwidth - \jlreq@speciallength{\jlreq@option@gutter} - \jlreq@speciallength{\jlreq@option@fore@edge}\relax}
     \fi
   \fi
   \if@twocolumn
@@ -1582,7 +1582,7 @@
       \jlreq@adjusttextheight
     \else
       \jlreq@determine@kihonhanmen@warning
-      \setlength{\textheight}{\dimexpr\paperwidth - \jlreq@option@gutter - \jlreq@option@fore@edge + \topskip - 1\zw\relax}
+      \setlength{\textheight}{\dimexpr\paperwidth - \jlreq@speciallength{\jlreq@option@gutter} - \jlreq@speciallength{\jlreq@option@fore@edge} + \topskip - 1\zw\relax}
     \fi
   \else
     \ifnum 0\ifx\jlreq@option@head@space\@empty 1\fi\ifx\jlreq@option@foot@space\@empty 1\fi>0
@@ -1590,7 +1590,7 @@
       \jlreq@adjusttextheight
     \else
       \jlreq@determine@kihonhanmen@warning
-      \setlength{\textheight}{\dimexpr\paperheight  + 2\topskip - 1\zh -  \Cht - \jlreq@option@head@space - \jlreq@option@foot@space\relax}
+      \setlength{\textheight}{\dimexpr\paperheight  + 2\topskip - 1\zh -  \Cht - \jlreq@speciallength{\jlreq@option@head@space} - \jlreq@speciallength{\jlreq@option@foot@space}\relax}
     \fi
   \fi
 \else
@@ -4174,12 +4174,12 @@
 % \jlreq@resultboxに整形結果を返す（垂直ボックス）．見つからなかったらvoid．\globalに設定する．
 \long\def\jlreq@inlinenote@determinelength#1#2#3#4#5#6#7{%
   \begingroup
-%    \message{#1 の試行開始，行数 = #5, \the\dimexpr#6\relax から \the\dimexpr#7\relax まで（長さ\the\dimexpr #7 - #6\relax ）}%
+    \message{#1 の試行開始，行数 = #5, \the\dimexpr#6\relax から \the\dimexpr#7\relax まで（長さ\the\dimexpr #7 - #6\relax ）}%
     \@tempcnta=1\relax
     \def\@tempa{}%
     % 調整に使う行の\parshape指定を\@tempaに入れる．長さは\jlreq@tempdima．
     \@whilenum\@tempcnta<#4\do{%
-      \expandafter\def\expandafter\@tempa\expandafter{\@tempa 0pt~\the\jlreq@tempdima}%
+      \expandafter\def\expandafter\@tempa\expandafter{\@tempa\space 0pt~\the\jlreq@tempdima}%
       \advance\@tempcnta by 1\relax
     }%
     \@tempcnta=0
@@ -4195,12 +4195,12 @@
           \parindent=0pt\leftskip=0pt\rightskip=0pt
           \parshape #5~#3~\@tempa 0pt~\the\maxdimen
           #1\par\global\@tempcntb=\prevgraf}%
-%        \message{\string\jlreq@tempdima = \the\jlreq@tempdima で試行，行数は\the\@tempcntb , 書式~#5~#3~\@tempa~0pt~\the\maxdimen}%
+        \message{\string\jlreq@tempdima = \the\jlreq@tempdima で試行，行数は\the\@tempcntb , 書式~#5~#3~\@tempa\space 0pt~\the\maxdimen}%
       \fi
       \jlreq@getlastbox{\@tempboxa}%
       \setbox\jlreq@tempboxa=\box\jlreq@resultbox
       \ifnum\@tempcntb<#5\relax% 行数が達していないならOK
-%        \message{行数 = \the\@tempcntb により確定}
+        \message{行数 = \the\@tempcntb により確定}
         % #5行になるまで空の水平ボックスを加えていく．
         \global\setbox\jlreq@resultbox=\vbox{#2%
           \unvbox\@tempboxa\hbox{\unhbox\jlreq@tempboxa\unskip\unskip\unpenalty}%
@@ -4210,7 +4210,7 @@
         % そうでない場合は最後の二行の長さを比較する
         \jlreq@getlastbox{\@tempboxa}%
         \setbox\jlreq@tempboxb=\box\jlreq@resultbox
-%        \message{最終行の長さ \the\wd\jlreq@tempboxa, その前の長さ \the\wd\jlreq@tempboxb}%
+        \message{最終行の長さ \the\wd\jlreq@tempboxa, その前の長さ \the\wd\jlreq@tempboxb}%
         \ifdim\wd\jlreq@tempboxa>\wd\jlreq@tempboxb
           \advance\jlreq@tempdima by 0.3pt\relax% 0.3ptに意味はない
         \else

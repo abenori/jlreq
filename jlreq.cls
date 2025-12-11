@@ -4094,13 +4094,17 @@
         \jlreq@tempdima=-1pt\relax
       \fi
       {%
-        \edef\@tempa{\the\vbadness}%
-        \vbadness=10000
-        \setbox\jlreq@tempboxa=\vsplit\@tempboxa to \dimexpr\jlreq@inlinenote@baselineskip*2\relax
-        \vbadness=\@tempa\relax
-        \jlreq@getlastbox{\jlreq@tempboxa}%
+%        \edef\@tempa{\the\vbadness}%
+%        \vbadness=10000
+%        \setbox\jlreq@tempboxa=\vsplit\@tempboxa to \dimexpr\jlreq@inlinenote@baselineskip*2\relax
+%        \vbadness=\@tempa\relax
+%        \jlreq@getlastbox{\jlreq@tempboxa}%
+%        \setbox\jlreq@tempboxb=\box\jlreq@resultbox
+%        \jlreq@getlastbox{\jlreq@tempboxa}%
+%        \setbox\jlreq@tempboxa=\box\jlreq@resultbox
+        \jlreq@getlastbox{\@tempboxa}%
         \setbox\jlreq@tempboxb=\box\jlreq@resultbox
-        \jlreq@getlastbox{\jlreq@tempboxa}%
+        \jlreq@getlastbox{\@tempboxa}%
         \setbox\jlreq@tempboxa=\box\jlreq@resultbox
         \ifdim\jlreq@tempdima>0pt\relax
           \setbox\jlreq@tempboxa=\vbox{\jlreq@inlinenote@fontsize
@@ -4174,7 +4178,7 @@
 % \jlreq@resultboxに整形結果を返す（垂直ボックス）．見つからなかったらvoid．\globalに設定する．
 \long\def\jlreq@inlinenote@determinelength#1#2#3#4#5#6#7{%
   \begingroup
-    \message{#1 の試行開始，行数 = #5, \the\dimexpr#6\relax から \the\dimexpr#7\relax まで（長さ\the\dimexpr #7 - #6\relax ）}%
+%    \message{#1 の試行開始，行数 = #5, \the\dimexpr#6\relax から \the\dimexpr#7\relax まで（長さ\the\dimexpr #7 - #6\relax ）}%
     \@tempcnta=1\relax
     \def\@tempa{}%
     % 調整に使う行の\parshape指定を\@tempaに入れる．長さは\jlreq@tempdima．
@@ -4195,12 +4199,12 @@
           \parindent=0pt\leftskip=0pt\rightskip=0pt
           \parshape #5~#3~\@tempa 0pt~\the\maxdimen
           #1\par\global\@tempcntb=\prevgraf}%
-        \message{\string\jlreq@tempdima = \the\jlreq@tempdima で試行，行数は\the\@tempcntb , 書式~#5~#3~\@tempa\space 0pt~\the\maxdimen}%
+%        \message{\string\jlreq@tempdima = \the\jlreq@tempdima で試行，行数は\the\@tempcntb , 書式~#5~#3~\@tempa\space 0pt~\the\maxdimen}%
       \fi
       \jlreq@getlastbox{\@tempboxa}%
       \setbox\jlreq@tempboxa=\box\jlreq@resultbox
       \ifnum\@tempcntb<#5\relax% 行数が達していないならOK
-        \message{行数 = \the\@tempcntb により確定}
+%        \message{行数 = \the\@tempcntb により確定}
         % #5行になるまで空の水平ボックスを加えていく．
         \global\setbox\jlreq@resultbox=\vbox{#2%
           \unvbox\@tempboxa\hbox{\unhbox\jlreq@tempboxa\unskip\unskip\unpenalty}%
@@ -4210,7 +4214,7 @@
         % そうでない場合は最後の二行の長さを比較する
         \jlreq@getlastbox{\@tempboxa}%
         \setbox\jlreq@tempboxb=\box\jlreq@resultbox
-        \message{最終行の長さ \the\wd\jlreq@tempboxa, その前の長さ \the\wd\jlreq@tempboxb}%
+%        \message{最終行の長さ \the\wd\jlreq@tempboxa, その前の長さ \the\wd\jlreq@tempboxb}%
         \ifdim\wd\jlreq@tempboxa>\wd\jlreq@tempboxb
           \advance\jlreq@tempdima by 0.3pt\relax% 0.3ptに意味はない
         \else

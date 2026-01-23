@@ -5447,7 +5447,7 @@
     \renewcommand{\thefigure}{\ifnum\c@chapter>\z@\thechapter.\fi \@arabic\c@figure}
   }
 }
-\newcommand*{\fps@figure}{h}
+\newcommand*{\fps@figure}{tbp}
 \newcommand*{\ftype@figure}{1}
 \newcommand*{\ext@figure}{lof}
 \newcommand*{\fnum@figure}{\figurename\thefigure}
@@ -5471,7 +5471,7 @@
     \renewcommand{\thetable}{\ifnum\c@chapter>\z@\thechapter.\fi \@arabic\c@table}
   }
 }
-\newcommand*{\fps@table}{h}
+\newcommand*{\fps@table}{tbp}
 \newcommand*{\ftype@table}{2}
 \newcommand*{\ext@table}{lot}
 \newcommand*{\fnum@table}{\tablename\thetable}

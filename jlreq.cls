@@ -4094,7 +4094,7 @@
         \jlreq@tempdima=-1pt\relax
       \fi
       {%
-        \edef\@tempa{\the\vfuzz}%
+        \jlreq@tempdimc=\vfuzz\relax
         \vfuzz=\maxdimen
 %        \setbox\jlreq@tempboxa=\vsplit\@tempboxa to \dimexpr\jlreq@inlinenote@baselineskip*2\relax
 %        \jlreq@getlastbox{\jlreq@tempboxa}%
@@ -4118,7 +4118,7 @@
         \fi
         \setbox\jlreq@tempboxa=\hbox{\box\jlreq@tempboxa}%
         \jlreq@box@putcenter\jlreq@tempboxa
-        \vfuzz=\@tempa\relax
+        \vfuzz=\jlreq@tempdimc\relax
       }%
       \advance\@tempcnta by 2\relax
     }%
@@ -5435,7 +5435,11 @@
     \renewcommand{\thefigure}{\ifnum\c@chapter>\z@\thechapter.\fi \@arabic\c@figure}
   }
 }
-\newcommand*{\fps@figure}{h}
+\if@twocolumn
+  \newcommand*{\fps@figure}{tbp}
+\else
+  \newcommand*{\fps@figure}{htbp}
+\fi
 \newcommand*{\ftype@figure}{1}
 \newcommand*{\ext@figure}{lof}
 \newcommand*{\fnum@figure}{\figurename\thefigure}
@@ -5459,7 +5463,11 @@
     \renewcommand{\thetable}{\ifnum\c@chapter>\z@\thechapter.\fi \@arabic\c@table}
   }
 }
-\newcommand*{\fps@table}{h}
+\if@twocolumn
+  \newcommand*{\fps@table}{tbp}
+\else
+  \newcommand*{\fps@table}{htbp}
+\fi
 \newcommand*{\ftype@table}{2}
 \newcommand*{\ext@table}{lot}
 \newcommand*{\fnum@table}{\tablename\thetable}

@@ -905,7 +905,7 @@
   \cs_set:Nn \__jlreq_hook_everypar: {}
   \def\@item[#1]{%
     \cs_set:Nn \__jlreq_hook_everypar: { \cs_set:Nn \__jlreq_hook_everypar: {} \inhibitglue }
-    \jlreq@useoriginalcs{@item}[#1]%
+    \jlreq@useoriginalcs{@item}[{#1}]%
     \expandafter\everypar\expandafter{\the\everypar\__jlreq_hook_everypar:}
   }
 \else

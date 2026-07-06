@@ -2716,7 +2716,7 @@
     \edef\jlreq@do{%
       \unexpanded{%
         \clist_map_inline:Nn \jlreq@BlockHeading@spaces@headingslist {
-          \expandafter\let\csname jlreq@BlockHeading@spaces@setlist@####1\endcsname=\@undefined
+          \expandafter\let\csname jlreq@BlockHeading@spaces@setlist@##1\endcsname=\@undefined
         }%
       }%
       \unexpanded{\def\jlreq@BlockHeading@spaces@headingslist}{\exp_not:o {\jlreq@tempa}}%

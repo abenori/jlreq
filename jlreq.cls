@@ -2075,7 +2075,7 @@
   \@ifnextchar[{\jlreq@BlockHeading@start@afterheading@saveafter@option@}{\jlreq@BlockHeading@start@afterheading@saveafter@arguments}%
 }
 \long\def\jlreq@BlockHeading@start@afterheading@saveafter@option@[#1]{%
-  \tl_put_right:cx {jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count} {\exp_not:n {[#1]}}
+  \tl_put_right:cx {jlreq@BlockHeading@spaces@current@after@\the\jlreq@BlockHeading@spaces@current@count} {\exp_not:n {[{#1}]}}
   \jlreq@BlockHeading@start@afterheading@saveafter@arguments
 }
 % 引数を保存し続けるループ
@@ -3513,7 +3513,7 @@
       \setcounter{footnote}{\value{__jlreq_footnotetemporary}}%
     }%
   }{%
-    \def\jlreq@result{\footnotemark[#1]}%
+    \def\jlreq@result{\footnotemark[{#1}]}%
   }%
 }
 \long\def\jlreq@footnotetext@for@footnote[#1]#2{%
@@ -3526,7 +3526,7 @@
       \exp_not:n {\setcounter{footnote}{\value{__jlreq_footnotetemporary}}}%
     }%
   }{%
-    \def\jlreq@result{\footnotetext[#1]{#2}}%
+    \def\jlreq@result{\footnotetext[{#1}]{#2}}%
   }%
 }
 
@@ -3545,7 +3545,7 @@
   \@ifnextchar[{\jlreq@footnotemark@impl@woption}{\jlreq@footnotemark@impl@wooption}%
 }
 \long\def\jlreq@footnotemark@impl@woption[#1]{%
-  \jlreq@useoriginalcs{footnotemark}[#1]%
+  \jlreq@useoriginalcs{footnotemark}[{#1}]%
   \jlreq@hook@postnote
 }
 \long\def\jlreq@footnotemark@impl@wooption{%
@@ -3636,8 +3636,8 @@
     \begingroup
       \edef\jlreq@do{\unexpanded{%
         \jlreq@restore@original@footnotes
-        \def\jlreq@result{}#2[#4]\jlreq@result
-        \def\jlreq@result{}#3[#4]{#5}%
+        \def\jlreq@result{}#2[{#4}]\jlreq@result
+        \def\jlreq@result{}#3[{#4}]{#5}%
         \jlreq@restore@jlreq@footnotes}%
         \int_compare:nTF { \jlreq@resultcnt=-1 }{\noexpand\jlreq@result}{\unexpanded{%
           \tl_gput_right:Nx \jlreq@footnote@delayfootnoteslist {%
@@ -3675,7 +3675,7 @@
 }{
   \long\def\jlreq@footnote@impl@woption#1#2#3[#4]#5{%
     \jlreq@restore@original@footnotes
-    #1[#4]{#5}%
+    #1[{#4}]{#5}%
     \jlreq@restore@jlreq@footnotes
     \jlreq@hook@postnote
   }

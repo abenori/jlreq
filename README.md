@@ -596,7 +596,13 @@ This package is distributed under the BSD 2-Clause License. See [LICENSE](LICENS
     - Adjusted the depth and height of side notes to match the surrounding text.
     - Changed the placement of `\addcontentsline` in heading commands.
     - Modified the default values for spacing around theorem environments and the font of headings.
-
+* 2026-07-17
+    - Switched to the new `\mark` system.
+    - Fixed: `\warichu` containing g was not split correctly.
+    - Fixed: `zw` couldn't be used in some class options.
+    - Changed the float placement settings.
+    - Fixed: `\SetBlockHeadingSpaces` did not clear existing settings.
+    - Fixed some bugs.
 
 --------------
 Noriyuki Abe

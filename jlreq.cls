@@ -5,7 +5,7 @@
 %%
 % (based on JLReq 20200811 https://www.w3.org/TR/2020/NOTE-jlreq-20200811/)
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{jlreq}[2025/3/16 jlreq]
+\ProvidesClass{jlreq}[2026/7/17 jlreq]
 \RequirePackage{jlreq-helpers}[2024/02/13]
 
 \ExplSyntaxOn

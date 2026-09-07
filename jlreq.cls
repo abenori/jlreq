@@ -3882,7 +3882,7 @@
 \dim_compare:nT { \jlreq@sidenote@length > 0pt } {
   \def\jlreq@sidenotemarkname{@thefnmark}% 合印用番号を一時的に入れるマクロ名
   \long\def\@sidenotetext#1{%
-    \marginpar{\reset@font\footnotesize
+    \marginpar{\leavevmode\reset@font\footnotesize
       \color@begingroup\normalcolor
       \@makesidetext{#1}%
       \color@endgroup

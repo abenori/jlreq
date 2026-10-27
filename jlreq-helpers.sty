@@ -378,10 +378,15 @@
   \token_if_primitive:NTF \directlua {
     \let\jlreq@result=l
   }{
-    \let\jlreq@result=p
-    \token_if_primitive:NT \ucs {
-      \int_compare:nT { \ucs"FA4A = "FA4A } {
-        \let\jlreq@result=u
+    % \pdftexversionはpdfTeXのみが持つプリミティブ（pTeX/upTeX/XeTeX/LuaTeXにはない）
+    \token_if_primitive:NTF \pdftexversion {
+      \let\jlreq@result=d
+    }{
+      \let\jlreq@result=p
+      \token_if_primitive:NT \ucs {
+        \int_compare:nT { \ucs"FA4A = "FA4A } {
+          \let\jlreq@result=u
+        }
       }
     }
   }

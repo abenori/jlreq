@@ -1,0 +1,17 @@
+% ruby-parity.tex -- 位置 parity ソース（pdflatex vs lualatex+ruby.sty）。
+% 同一 provider（CJK の ruby.sty）を両エンジンで読み、annotation/base の
+% 幾何を tests/check-ruby-parity.py が比較する。runner が
+% \documentclass の engine 指定を sed で差し替えるため、クラス行は
+%   \documentclass[paper=a5]{jlreq}      （lualatex 側: そのまま）
+%   \documentclass[pdflatex,paper=a5]{jlreq} （pdflatex 側: sed 差し込み）
+% の形にしておくこと（順序固定）。
+% 本文は 1 行目を長くして折返しを1行目末尾に置き、ルビ行が単独行に
+% なるようにする（チェックスクリプトは 依/存/いぞん を最初の出現で
+% 拾う: この文書内でこれらの字が複数回出ないよう本文を固定している）。
+\documentclass[paper=a5]{jlreq}
+\pagestyle{empty}
+\usepackage{ruby}
+\begin{document}
+\noindent あいうえおかきくけこさしすせそたちつてとなにぬねの
+への\ruby{依存}{いぞん}という語を埋め込む。
+\end{document}

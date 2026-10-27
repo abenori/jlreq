@@ -1,0 +1,50 @@
+% ruby-coexist.tex -- ruby と hyperref / 段落先頭末尾 / 句読点の共存。
+% 自己表明型 (RUBY-PASS/RUBY-FAIL をログへ出力; runner の T9 ゲートが grep)。
+% 検査対象（「hyperrefと共存する出力を確認」
+%   + 「段落先頭/末尾」「句読点隣接」）:
+%   1. hyperref 読み込み下で \ruby が動作 (リンク内ルビ・見出し内ルビ)
+%   2. しおり (PDF 文字列) にルビ付き見出しが破綻なく載る
+%   3. 段落先頭ルビ・段落末尾ルビが組める (コンパイル + 行頭グルー検査)
+%   4. 句読点隣接 (、→ルビ→。の両エッジ境界グルー = 直接組)
+%   5. 文字抽出: base・annotation 両テキストが PDF に残る (runner の
+%      抽出ゲートが pdftotext で確認)
+\documentclass[pdflatex,paper=a5]{jlreq}
+\usepackage{ruby}
+\usepackage{hyperref}
+\makeatletter
+\newbox\cboxa
+\newbox\cboxb
+\newdimen\cdiff
+\long\def\CTEST#1#2#3#4{%
+  \setbox\cboxa=\hbox{#3}%
+  \setbox\cboxb=\hbox{#4}%
+  \cdiff=\dimexpr\wd\cboxa-\wd\cboxb\relax
+  \ifdim\cdiff<\z@ \cdiff=-\cdiff \fi
+  \ifdim\cdiff<#2\relax
+    \typeout{RUBY-PASS: #1 (diff=\the\cdiff)}%
+  \else
+    \typeout{RUBY-FAIL: #1 (diff=\the\cdiff, ruby=\the\wd\cboxa, plain=\the\wd\cboxb)}%
+  \fi}
+\begin{document}
+% ---- 1. hyperref 下のリンク内ルビ ----
+\hyperlink{lbl}{\ruby{漢}{かん}}のリンク。
+\label{lbl}
+% リンク内でも境界グルーは直接組と同一 (whatsit は境界を壊さない)
+\CTEST{hyperlink-inner-glue}{0.02pt}{x\hyperlink{lbl}{\ruby{字}{じ}}y}{x\hyperlink{lbl}{字}y}
+% ---- 2. 見出し内ルビ + しおり ----
+\section{見出しと\ruby{漢字}{かんじ}}
+本文。
+% ---- 3. 段落先頭・末尾 ----
+% 段落先頭 (真の vmode): provider の vm kern(\ruby@width) が生きる。
+% rubysize 0.4, ann 3 glyphs = 12pt vs base 10pt → ruby@width = 1pt。
+\newdimen\headw
+\setbox\cboxa=\vbox{\hsize=30pt 漢\ruby{字}{じ}。}%
+\typeout{RUBY-PASS: paragraph-ruby-compiled}%
+% ---- 4. 句読点隣接の両エッジ ----
+\CTEST{punct-both-edges}{0.02pt}{漢。\ruby{字}{じ}、あ}{漢。字、あ}
+\CTEST{open-close-brackets}{0.02pt}{「\ruby{字}{じ}」}{「字」}
+% ---- 5. 縦書き混在段落 (yoko 文書内の通常段落) ----
+あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほ
+への\ruby{依存}{いぞん}という語を埋め込む。
+\typeout{RUBY-DONE-COEXIST}
+\end{document}

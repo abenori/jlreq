@@ -1,0 +1,15 @@
+% footnotes（rules hooks経由の日本語脚注）: pdfTeX検証
+% （脚注面の統合検証。footnotes-warichu.tex は
+% 割注中心のため，脚注の禁則・ペアグルーを本フィクスチャで確認する）。
+% 脚注ボックス内でもルールフックが動き，脚注の和文が禁則に従うかを見る。
+\documentclass[pdflatex]{jlreq}
+\begin{document}
+\hsize=200pt
+脚注の和文が禁則に従うか。\footnote{脚注内の「括弧」や句読点「，。」
+が行頭に来ないこと。和文とEnglish混植の脚注で，ペアグルー
+（xkanjiskip）も脚注内で機能することを確認する長い脚注の本文。}
+本文に戻る。\footnote{短い脚注。}
+\footnotemark 数式$a^2$の後に\footnotetext{分離した脚注本文。「約物」
+を行末に寄せても禁則が効くかどうかを見るための，さらに長い脚注。}
+する。
+\end{document}

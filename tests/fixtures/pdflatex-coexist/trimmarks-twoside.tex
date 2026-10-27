@@ -1,0 +1,18 @@
+% trimmarks-twoside.tex -- per-page pageattr gate (twoside, asymmetric bleed).
+% The d driver used to patch \@outputpage with \tl_put_left/right:Nx:
+% page 2 got no attributes at all (the prefix ran after the page counter
+% advanced) and every shipped page raised "Missing number" from the
+% unbalanced \ifodd\else...\fi suffix tail (see the git history of
+% jlreq-trimmarks.sty 1093-1101). The rework sets the attrs from a
+% labeled shipout/before hook that reads the page counter at shipout time.
+% Verification: tests/check-trimmarks-pageattr.py dumps every page's raw
+% dictionary (pymupdf) and asserts, with gutter=0mm / fore-edge=6mm:
+%   odd  pages: BleedBox left  = TrimBox left  (=72.00313)
+%               BleedBox right = TrimBox right + 6mm (=587.93110)
+%   even pages: BleedBox left  = TrimBox left  - 6mm (=54.99452)
+%               BleedBox right = TrimBox right (=570.92250)
+%   every page: TrimBox present exactly once, no "Missing number" in the
+%   compile log, no papersize special under the d driver.
+\documentclass[pdflatex,paper=b5,twoside]{jlreq}
+\usepackage[bleed_margin={gutter=0mm,fore-edge=6mm,top=3mm,bottom=3mm}]{jlreq-trimmarks}
+\begin{document}あ\newpage い\newpage う\end{document}

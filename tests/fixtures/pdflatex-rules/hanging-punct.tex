@@ -1,0 +1,72 @@
+% ぶら下げ（hanging_punctuation, -b 変種）の実測検証
+% 現行機構: ぶら下げは \pdfprotrudechars/\rpcode/裸字形ではなく，
+% -b 変種 JFM のクラス6/7 end_adjust 負候補 {-0.5, 0, 0.5} を含む
+% 候補列 kern(e1) penalty(p) kern(e2-e1) penalty(p) ... kern(-em)
+% penalty(10000) として行末だけに効く（ltj-adjust.lua
+% insert_lineend_kern と同一構造）。視覚突出しは JFM幅付き字形box
+% （クラス6/7: 0.5zw box + 全幅グリフ, align=left）が本来持つ
+% インクのはみ出しであり，負候補は行詰めの選択肢を与える。
+%   case A: クラス7（、）, case B: クラス6（。）, case C: 混在長文の安定性。
+% 検証（すべてログ内判定）:
+%   - 候補列の発火: 行1（、で終わる行）を galley から取り出し，
+%     \rightskip を除いた末尾ノードが候補列の差分カーン（10pt本文で
+%     ±5pt = 0.5zw の候補差）であること。行末 break だけが候補列の
+%     途中で停止する（行中では列は正味0で畳まれ，末尾は
+%     kern(-em)+penalty(10000) の直後の pair glue になる）。
+%   - 段落行数: 9字+、が行1に収まる（\prevgraf=2）。
+\documentclass[pdflatex,hanging_punctuation]{jlreq}
+\makeatletter
+\parindent=0pt
+\newbox\hgalleybox
+\newbox\hlinebox
+\newdimen\hlastkern
+\newbox\hboxa
+% galley を行ボックスに分解し，行1を \hboxa に入れる（2行組なので
+% lastbox→unskip→unpenalty→lastbox の順に遡る）
+\def\hang@firstline{%
+  \setbox\hgalleybox=\vbox{\unvbox\hgalleybox
+    \global\setbox\hboxa=\lastbox
+    \unskip\unpenalty
+    \global\setbox\hboxa=\lastbox}}
+% <name> <text>: 2行組（9字+、|9字）で行1末尾の候補列カーンを読む
+\def\hangtest#1#2{%
+  \setbox\hgalleybox=\vbox{\hsize=95pt #2\par
+    \xdef\hang@prevgraf{\the\prevgraf}}%
+  \hang@firstline
+  % 行1の中身をほどき，rightskip(+penalty) を除いた末尾 kern を読む
+  \setbox\hlinebox=\hbox{\unhbox\hboxa
+    \unskip
+    \ifnum\lastnodetype=13 \unpenalty \fi
+    \global\hlastkern=\lastkern}%
+  \typeout{P3DBG #1 lastkern=\the\hlastkern, prevgraf=\hang@prevgraf}%
+  \@tempdima=\hlastkern
+  \ifdim\@tempdima<\z@ \@tempdima=-\@tempdima \fi
+  \ifdim\@tempdima=5pt
+    \typeout{HANG-PASS:#1 candidate-kern=\the\hlastkern\space (series active)}%
+  \else
+    \typeout{HANG-FAIL:#1 candidate-kern=[\the\hlastkern] expected=[+-5pt]}%
+  \fi
+  \ifnum\hang@prevgraf=2
+    \typeout{HANG-PASS:#1 lines=2}%
+  \else
+    \typeout{HANG-FAIL:#1 lines=\hang@prevgraf\space expected=2}%
+  \fi
+}
+
+\begin{document}
+\hangtest{A}{漢漢漢漢漢漢漢漢漢、漢漢漢漢漢漢漢漢漢}
+\hangtest{B}{漢漢漢漢漢漢漢漢漢。漢漢漢漢漢漢漢漢漢}
+% ---- case C: 混在長文の安定性（ぶら下げ＋禁則＋ペアグルーが共存して
+% エラーなく組めること：行数だけ簡易確認）
+\setbox\hgalleybox=\vbox{\hsize=200pt
+  昔々，あるところにお爺さんとお婆さんがありました。お爺さんは山へ
+  芝刈りに，お婆さんは川へ洗濯に行きました。川を下ってきた大きな桃を
+  拾って帰ると，桃が割れて中から元気な男の子が飛び出しました。%
+  \par\xdef\hang@prevgraf{\the\prevgraf}}
+\ifnum\hang@prevgraf>0
+  \typeout{HANG-PASS:C lines=\hang@prevgraf}%
+\else
+  \typeout{HANG-FAIL:C lines=\hang@prevgraf}%
+\fi
+
+\end{document}

@@ -1,0 +1,52 @@
+% pdflatex-tate-basic.tex -- tate path fixture (shipout rotation).
+% Box-measure assertions (no savepos: \pdflastxpos is unusable inline
+% in this pipeline -- resolves only at shipout).
+%   ORDER : a 2-glyph run in an \hbox has natural width exactly 2zw
+%           (per-glyph rotated wrapper keeps the 1zw advance).
+%   WRAP  : a galley \vbox with \hsize=20zw and 41 glyphs breaks into
+%           lines; count via \ht/\baselineskip.
+%   KIN   : boxdump of a galley with 、 subject to wrap; the runner's
+%           tests/check-tate-boxdump.py verifies no 、。 opens a galley
+%           line (their pre-break penalty is honored).
+%   PAGES : the document ships at least 2 pages (multi-page rotation).
+\documentclass[pdflatex,tate,paper=a5,line_length=20zw]{jlreq}
+\pagestyle{empty}
+\makeatletter
+\begin{document}
+\typeout{TATE-MEAS zw=\the\dimexpr1\jlreq@zw\relax, baselineskip=\the\baselineskip,
+  textwidth=\the\textwidth, textheight=\the\textheight, oddside=\the\oddsidemargin,
+  topmargin=\the\topmargin}
+% --- ORDER: 2 グリフの自然幅 = 2zw
+\setbox\@tempboxa=\hbox{あい}
+\@tempdima=\dimexpr\wd\@tempboxa-2\jlreq@zw\relax
+\ifdim\@tempdima<\z@ \@tempdima=-\@tempdima\fi
+\ifdim\@tempdima<0.5pt\relax
+  \typeout{TATE-PASS: ORDER-advance-2zw (\the\wd\@tempboxa)}%
+\else
+  \typeout{TATE-FAIL: ORDER-advance-2zw (\the\wd\@tempboxa)}%
+\fi
+% --- WRAP: 20zw capacity、41 glyphs (〜) → 3 galley lines (per 20)
+\setbox\@tempboxa=\vbox{\hsize=20\jlreq@zw\baselineskip=\baselineskip
+  あいうえおかきくけこさしすせそたちつてと
+  なにぬねのはひふへほまみむめもやゆよわを
+  んアイウエオカキクケコサシスセソタチツテ}
+\@tempdima=\ht\@tempboxa
+% 60 glyphs, capacity 20zw, parindent 1zw on line 1 => lines hold 19+20+20+1
+% \ht = (1zw first-line content) + 3\baselineskip
+\@tempdimb=\dimexpr\ht\@tempboxa-3\baselineskip-1\jlreq@zw\relax
+\ifdim\@tempdimb<\z@ \@tempdimb=-\@tempdimb\fi
+\ifdim\@tempdimb<0.5pt\relax
+  \typeout{TATE-PASS: WRAP-lines-4-parindent (\the\@tempdima)}%
+\else
+  \typeout{TATE-FAIL: WRAP-lines-4-parindent (\the\@tempdima, expected \the\dimexpr3\baselineskip+1\jlreq@zw\relax)}%
+\fi
+% --- KIN+boxdump: 該当解析は tests/fixtures/pdflatex-tate-boxdump.tex +
+% tests/check-tate-boxdump.py が担当（\showbox は "-halt-on-error 非対応"）。
+% --- PAGES: 本文（2ページ以上出荷）
+私はその人を常に先生と呼んでいた。だからここでもただ先生と書くだけで本名は
+打ち明けないでしまう。これは世間を憚る遠慮というより、その方が私にとって
+自然だからである。漢字かな交じりの本文で複数段の縦組みを確認する。
+もう一段。さらに一段。縦組みで段が右から左へ進むかの確認用の文章だ。
+\clearpage
+二ページ目の本文である。右から左へ段が進むはずである。
+\end{document}

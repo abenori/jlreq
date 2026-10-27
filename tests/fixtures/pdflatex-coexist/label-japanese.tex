@@ -1,0 +1,15 @@
+% label-japanese.tex -- 日本語ラベルの \label/\ref 解決（昇格済みの通常ゲート）。
+% 契約: \label{日本語ラベル} で書き込んだラベルを \ref{日本語ラベル} で
+% 解決できる（uplatex/lualatex と同一契約、aux はcsname-safe正規化を
+% 挟む）対称正規化を実装済み（`\jlreqpdf@labelkey`; refs/\ pageref/
+% autoref/nameref/cref/refcount対応）。
+% ランナーは本fixtureを2パス実行し、(1) auxにラベル行が存在すること、
+% (2) \ref の位置に組上げされたテキストが節番号である（?? でない）
+% ことを要求する。lualatex の同一ソース2パスを参照として、
+% pdflatex の抽出が lualatex と同じ節番号を含むことも要求する。
+\documentclass{jlreq}
+\pagestyle{empty}
+\begin{document}
+\section{日本語ラベルの検証}\label{日本語ラベル}
+参照先の節番号は \ref{日本語ラベル} である。ページは \pageref{日本語ラベル}。
+\end{document}

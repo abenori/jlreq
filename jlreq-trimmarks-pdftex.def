@@ -1,0 +1,140 @@
+%% jlreq-trimmarks-pdftex.def
+%% pdfTeXplcore
+%% jlreq-trimmarks.sty d \input 
+%% d \iftombow pTeX
+%%   \ifx 
+%%   pTeX
+  \newif\iftombow \tombowfalse
+  \newif\iftombowdate \tombowdatetrue
+  \newdimen\@tombowwidth
+  \setlength{\@tombowwidth}{.1\p@}%
+  \newbox\@TL\newbox\@Tl
+  \newbox\@TC
+  \newbox\@TR\newbox\@Tr
+  \newbox\@BL\newbox\@Bl
+  \newbox\@BC
+  \newbox\@BR\newbox\@Br
+  \newbox\@CL
+  \newbox\@CR
+  \newtoks\@bannertoken
+  \@bannertoken{}%
+  % plcorecmtt9
+  \font\@bannerfont=cmtt9
+  % pTeX\hour/\minute
+  \newcount\hour
+  \newcount\minute
+  \AtBeginDocument{\hour=\time \divide\hour60\relax
+    \minute=\numexpr\time-60*\hour\relax}%
+  % \yoko: pdfTeXbox
+  \ifx\yoko\@undefined\let\yoko\relax\fi
+  % \tate: pdfTeX
+  \ifx\tate\@undefined
+    \def\tate{\PackageError{jlreq-trimmarks}{the~rotated~banner~requires~pTeX~primitives;~under~pdfTeX~use~show=trimmarks}{\@ehc}}%
+  \fi
+  \ifx\adjustbaseline\@undefined\let\adjustbaseline\relax\fi
+  % bleedlltjcore
+  \def\@tombowbleed{3mm}%
+  \newdimen\@@paperheight
+  \newdimen\@@paperwidth
+  \newdimen\@@topmargin
+  % maketombowbox / \@outputtombow 590
+  % \@tombowreset@@paper \@ifundefined
+  % pdfTeX\mag=1000
+  % 1truein == 1in
+  \def\@tombowreset@@paper{%
+    \@@topmargin\topmargin
+    \jlreq@if{\iftombow\fi}{
+      \@@paperwidth\paperwidth
+      \advance\@@paperwidth 2\dimexpr\@tombowbleed\relax
+      \@@paperheight\paperheight
+      \advance\@@paperheight 10mm\relax
+      \advance\@@paperheight 2\dimexpr\@tombowbleed\relax
+      \advance\@@topmargin 1in\relax
+      \advance\@themargin 1in\relax
+    }{}%
+  }
+  % lltjcore 221-223
+  \AddToHook{build/page/reset}[jlreq-trimmarks/pdftex]{\@tombowreset@@paper}%
+  % \mag≠1000 補正: pdfTeX の shipout ボックス内の cm 座標はすべて出荷時に
+  % mag 倍され，カーネルの background フック原点補正（\pdfhorigin 相殺）は
+  % 効くが \hoffset/\voffset 成分は描画の stored 座標に混入する．
+  % 実測（コンテントストリーム照合）: uplatex+dvipdfmx ではストック左上
+  % 隅から全描画が単純 mag 倍 (stored 座標は mag 不変) だが，d 側は
+  % x に +\hoffset・y に -\voffset が足されて物理位置が (hoff,voff)×mag
+  % だけずれる（@1200 で両軸 +14.45pt ずれ＝ink-bbox 56 27 860 1127 vs
+  % u 42 42 846 1141）．\put 原点から同量を差し引けば stored 座標は
+  % mag 不変となり u と一致する．\mag=1000 では hoffset/voffset≒0 かつ
+  % 従来値にビット一致させるため分岐する．
+  \ifnum\mag=1000
+    \def\jlreq@trimmarks@pdftex@tombowput{\put(72.27,-72.27)}%
+  \else
+    \def\jlreq@trimmarks@pdftex@tombowput{%
+      \put(\strip@pt\dimexpr72.27pt-\hoffset\relax,%
+           \strip@pt\dimexpr-72.27pt+\voffset\relax)}%
+  \fi
+  \AddToHook{shipout/background}[jlreq-trimmarks/pdftex]{%
+    \jlreq@trimmarks@pdftex@tombowput
+    {\lineskip\z@skip\lineskiplimit\z@\@outputtombow}%
+  }%
+  % plcoreの\@outputpageは\iftombow時に\vskip\@@topmargin（=\topmargin+1inを
+  % jlreq側sty:556-563が1trueinに読替）して本文ブロックをストック中央へ
+  % 1in沈めるが，d側のshipout/background方式にはその再配置機構が無い
+  % （実測：本文がuplatex比でちょうど1in上にあった．x側は\@themargin+1inで
+  % 既に実測一致）．等価として\topmarginに1trueinを一度だけ加える．
+  % エミュレーションは\voffsetではなく\topmarginで行う．\voffsetはshipout
+  % ボックス全体（shipout/backgroundの描画画像ごと）を動かすためトンボ線
+  % までずれるが，\topmarginは出力ルーチンの\vskip\topmargin経由で本文
+  % だけを動かす（plcoreの\vskip\@@topmarginそのもの）．1trueinは
+  % \mag=1000では1inと等しく，\mag後出しでも物理1inに丸まる．
+  \AtBeginDocument{\jlreq@if{\iftombow\fi}{\advance\topmargin 1truein\relax}{}}%
+  % \tate
+  \tombowdatefalse
+  %% ---------------------------------------------------------------
+  %% tate banner substitutes (graphicx rotation) -- tate-doc geometry.
+  %% \jlreq@trimmarks@pdf@rotatebanner{<text>}: banner text rotated 90deg
+  %% CW (\rotatebox{-90}) so it reads top-to-bottom, like the pTeX \tate
+  %% banner.  Natural dims of the rotated run: wd = H+D (cross extent of
+  %% the raw text box), ht = 0pt, dp = L (run length, ink descending from
+  %% the reference point).  The wrapper captures the two extents into
+  %% globally-assigned dimens -- cross and runlen -- for the slot
+  %% placement tails in jlreq-trimmarks.sty, which apply the per-family
+  %% stock corrections documented there (pTeX's tate-box ht/dp reads do
+  %% not transfer 1:1: the rotated ink always extends right of and below
+  %% the reference, while the pTeX box's ink-offset convention differs
+  %% per slot family).  Corrections measured against uplatex+dvipdfmx
+  %% ground truth: two bleed configurations, two page parities, run
+  %% lengths 2..11 chars; agreement 0.03pt (glyph bearings cancel
+  %% identically in both engines).
+  \newdimen\jlreq@trimmarks@pdf@cross
+  \newdimen\jlreq@trimmarks@pdf@runlen
+  %% dedicated scratch: the slot placement tails use
+  %% \jlreq@tempboxb for their own pre-shift wrapper, so the measuring
+  %% box here must NOT share that register (a shared register let the
+  %% slot's \dp read race with the move-out here and flipped the
+  %% bottom-slot ink direction).
+  \newbox\jlreq@trimmarks@pdf@rawbox
+  \def\jlreq@trimmarks@pdf@rotatebanner#1{%
+    \__jlreq_check_rotatebox:n { banner~(tate~slot) }%
+    \setbox\jlreq@trimmarks@pdf@rawbox=\hbox{\rotatebox{-90}{#1}}%
+    \global\jlreq@trimmarks@pdf@cross\wd\jlreq@trimmarks@pdf@rawbox
+    \global\jlreq@trimmarks@pdf@runlen\dp\jlreq@trimmarks@pdf@rawbox
+    \box\jlreq@trimmarks@pdf@rawbox
+  }%
+  %% Predefine every banner slot to \@empty.  An unassigned slot
+  %% (e.g. the before@/after@ center aliases that only exist once the
+  %% user sets them) is otherwise \let to \relax by \csname inside
+  %% \jlreq@trimmarks@outputbanner and its (tate) body would run.
+  \clist_map_variable:nNn { odd,even } \jlreq@trimmarks@pdf@par {
+    \clist_map_variable:nNn {
+      corner@top@left, tate@top@left, intate@top@left, yoko@top@left, inyoko@top@left,
+      corner@top@right, tate@top@right, intate@top@right, yoko@top@right, inyoko@top@right,
+      before@top@center, in@top@center, after@top@center,
+      before@center@left, after@center@left, in@center@left,
+      before@center@right, after@center@right, in@center@right,
+      corner@bottom@left, tate@bottom@left, intate@bottom@left, yoko@bottom@left, inyoko@bottom@left,
+      corner@bottom@right, tate@bottom@right, intate@bottom@right, yoko@bottom@right, inyoko@bottom@right,
+      before@bottom@center, in@bottom@center, after@bottom@center
+    } \jlreq@trimmarks@pdf@slot {
+      \@namedef{jlreq@trimmarks@banner@\jlreq@trimmarks@pdf@par @\jlreq@trimmarks@pdf@slot}{}%
+    }
+  }

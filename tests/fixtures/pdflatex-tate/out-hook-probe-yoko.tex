@@ -1,0 +1,22 @@
+% out-hook-probe-yoko.tex -- yoko counterpart of out-hook-probe.tex.
+% Same assertion markers; compiled with the yoko (non-tate) class so the
+% runner proves the hooks fire once per page when the backend does NOT
+% install the thin wrapper at all (yoko documents use the kernel
+% \@outputpage directly).
+\documentclass[pdflatex]{jlreq}
+\makeatletter
+\newcount\probe@n
+\AddToHook{build/page/before}{%
+  \global\advance\probe@n\@ne
+  \typeout{HOOK-BEFORE-\the\probe@n: page=\the\c@page, dir=n/a-yoko}}
+\AddToHook{build/page/after}{%
+  \typeout{HOOK-AFTER-\the\probe@n: page=\the\c@page}}
+\AddToHook{shipout/before}{%
+  \typeout{SHIPOUT-\the\probe@n: page=\the\c@page}}
+\begin{document}
+あああああああああああああああああああああああああああああああああああああ
+\clearpage
+いいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいい
+\clearpage
+うううううううううううううううううううううううううううううううううううう
+\end{document}

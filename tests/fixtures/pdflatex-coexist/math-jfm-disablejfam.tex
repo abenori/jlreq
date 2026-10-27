@@ -1,0 +1,20 @@
+% disablejfam 指定時の jfam 意味論（B19整合）: \mathmc/\mathgt は未定義のまま
+% （(u)pTeX の disablejfam と同じ）。ログに MATHMC-UNDEFINED-OK を出して確認。
+% 数式内和文の代替は \text{} または直打ち（backend で自然幅ボックス経由に
+% なった後者も組める）。
+\documentclass[pdflatex,disablejfam]{jlreq}
+\usepackage{amsmath}
+\begin{document}
+\ifdefined\mathmc
+  \typeout{MATHMC-DEFINED-NG}%
+\else
+  \typeout{MATHMC-UNDEFINED-OK}%
+\fi
+\ifdefined\mathgt
+  \typeout{MATHGT-DEFINED-NG}%
+\else
+  \typeout{MATHGT-UNDEFINED-OK}%
+\fi
+disablejfam 下の代替: $\text{和文}$ と直打ち $あ$ は組める。
+漢字混在も直打ちなら \begin{math} 漢 \end{math} で問題ない。
+\end{document}

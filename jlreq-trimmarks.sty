@@ -3,9 +3,12 @@
 \RequirePackage{jlreq-helpers}[2024/02/13]
 
 \ExplSyntaxOn
-% check \tombowdatetrue
+% check \tombowdatetrue（pdfTeXは後段の分離ファイル内の最小実装で提供）
 \ifx\tombowdatetrue\@undefined
-  \PackageError{jlreq-trimmarks}{This~package~only~works~with~pLaTeX,~upLaTeX~or~LuaTeX-ja}{\@ehc}
+  \jlreq@helper@guessengine
+  \ifx d\jlreq@result\else
+    \PackageError{jlreq-trimmarks}{This~package~only~works~with~pLaTeX,~upLaTeX~or~LuaTeX-ja}{\@ehc}
+  \fi
 \fi
 
 \cs_set:Nn \__jlreq_trimmarks_undeferr:n {\ClassError{jlreq-trimmarks}{Trying~to~delete~\string#1~even~though~it~is~not~defined,~may~be~a~bug}{\@ehc}}
@@ -50,7 +53,8 @@
 \DeclareKeys [jlreq-trimmarks] {
   lualatex .code:n = {\let\jlreq@trimmarks@engine=l}, .value_forbidden:n = true,
   uplatex .code:n = {\let\jlreq@trimmarks@engine=u}, .value_forbidden:n = true,
-  platex .code:n = {\let\jlreq@trimmarks@engine=p}, .value_forbidden:n = true
+  platex .code:n = {\let\jlreq@trimmarks@engine=p}, .value_forbidden:n = true,
+  pdflatex .code:n = {\let\jlreq@trimmarks@engine=d}, .value_forbidden:n = true
 }
 
 \tl_new:N \g__jlreq_trimmarks_papersizelist_tl
@@ -161,7 +165,21 @@
 \newif\ifjlreq@trimmarks@digital \jlreq@trimmarks@digitaltrue
 \newif\ifjlreq@trimmarks@show \jlreq@trimmarks@showtrue
 \newif\ifjlreq@trimmarks@show@artbox \jlreq@trimmarks@show@artboxfalse
-\tombowdatetrue
+\ifx\jlreq@trimmarks@engine\@undefined
+  \jlreq@helper@guessengine
+  \let\jlreq@trimmarks@engine=\jlreq@result
+\fi
+
+% pdfTeX: pTeX系tombow機構（plcore相当）は分離ファイルに置く．
+% （d分岐の中身に\iftombow等，pTeXでは実在する条件名が含まれるため，
+%   \ifxが偽の場合の条件スキップが対応を壊す．ファイル分離により
+%   pTeX系ではそもそも読み込まれない．）
+\ifx d\jlreq@trimmarks@engine
+  \input{jlreq-trimmarks-pdftex.def}
+\fi
+
+% pdfTeXでは回転バナー不可のため既定オフ（トンボのみ）．
+\ifx d\jlreq@trimmarks@engine\tombowdatefalse\else\tombowdatetrue\fi
 % flag: `show` is specified or not
 \newif\ifjlreq@trimmarks@option@show \jlreq@trimmarks@option@showfalse
 
@@ -501,17 +519,18 @@
   }
 }
 
-\ifx\jlreq@trimmarks@engine\@undefined
-  \jlreq@helper@guessengine
-  \let\jlreq@trimmarks@engine=\jlreq@result
-\fi
 
 \ifx\jlreq@trimmarks@driver\@undefined
   \ifx l\jlreq@trimmarks@engine
     \let\jlreq@trimmarks@driver=l
   \else
-    % default: dvipdfmx
-    \let\jlreq@trimmarks@driver=f
+    \ifx d\jlreq@trimmarks@engine
+      % pdfTeX: \pdfpageattrで直接PDF属性を設定する専用ドライバ
+      \let\jlreq@trimmarks@driver=d
+    \else
+      % default: dvipdfmx
+      \let\jlreq@trimmarks@driver=f
+    \fi
   \fi
 \fi
 
@@ -547,10 +566,18 @@
   }
 \fi
 
+% DVI drivers only (f/s/o): the papersize special tells the DVI->PDF
+% converter the stock size. The d driver outputs PDF directly (the stock
+% size is \pdfpagewidth/\pdfpageheight, set above), so a
+% \special{papersize=...} under d is DVI-only noise: pdfTeX logs
+% "Non-PDF special ignored!" for it on every page of every d-engine
+% trimmarks document (observed in the fixture logs).
 \ifx l\jlreq@trimmarks@driver\else
-  \jlreq@helper@divide{\the\mag pt}{1000pt}
-  \edef\@tempa{\noexpand\AtBeginDvi{\noexpand\special{papersize=\the\dimexpr\strip@pt\jlreq@resultdimen\dimexpr\jlreq@trimmarks@paperwidth\relax\relax, \the\dimexpr\strip@pt\jlreq@resultdimen\dimexpr\jlreq@trimmarks@paperheight\relax\relax}}}
-  \@tempa
+  \ifx d\jlreq@trimmarks@driver\else
+    \jlreq@helper@divide{\the\mag pt}{1000pt}
+    \edef\@tempa{\noexpand\AtBeginDvi{\noexpand\special{papersize=\the\dimexpr\strip@pt\jlreq@resultdimen\dimexpr\jlreq@trimmarks@paperwidth\relax\relax, \the\dimexpr\strip@pt\jlreq@resultdimen\dimexpr\jlreq@trimmarks@paperheight\relax\relax}}}
+    \@tempa
+  \fi
 \fi
 \@ifundefined{stockheight}{\newlength{\stockheight}}{}
 \@ifundefined{stockwidth}{\newlength{\stockwidth}}{}
@@ -673,17 +700,32 @@
           }%
           \vrule height\dimexpr 10mm + \jlreq@trimmarks@bleed@top\relax width\@tombowwidth depth\z@
           \jlreq@trimmarks@outputbanner{tate@top@left}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\jlreq@trimmarks@bannerfont##1\hss}%
+            \ifx d\jlreq@trimmarks@engine
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\jlreq@trimmarks@pdf@rotatebanner{\jlreq@trimmarks@bannerfont##1}\hss}%
+            \else
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\jlreq@trimmarks@bannerfont##1\hss}%
+            \fi
             \ifx l\jlreq@trimmarks@engine
               \jlreq@tempdima=\dimexpr 4pt + \ht\jlreq@tempboxa\relax
              \else
-              \jlreq@tempdima=\dimexpr 4pt + \wd\jlreq@tempboxa\relax
+              % d: the rotated banner's ink extends cross(=wd(R)) to
+              % the RIGHT of the reference while the pTeX tate box extends
+              % only ht above it; shift the anchor left by the cross extent
+              % to land the ink column at the stock position (measured
+              % against uplatex: two bleed configs, delta 5.48/5.47 =
+              % cross 5.5 minus glyph bearing).
+              \jlreq@tempdima=\dimexpr 4pt + \wd\jlreq@tempboxa
+                + \jlreq@trimmarks@pdf@cross\relax
             \fi
             \wd\jlreq@tempboxa=0pt \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \kern-\jlreq@tempdima\raise-5mm\box\jlreq@tempboxa\kern\jlreq@tempdima
           }%
           \jlreq@trimmarks@outputbanner{intate@top@left}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\jlreq@trimmarks@bannerfont##1\hss}%
+            \ifx d\jlreq@trimmarks@engine
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\jlreq@trimmarks@pdf@rotatebanner{\jlreq@trimmarks@bannerfont##1}\hss}%
+            \else
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\jlreq@trimmarks@bannerfont##1\hss}%
+            \fi
             \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@left \ifx l\jlreq@trimmarks@engine + \ht\jlreq@tempboxa\fi\relax
             \wd\jlreq@tempboxa=0pt \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \kern\jlreq@tempdima\box\jlreq@tempboxa\kern-\jlreq@tempdima
@@ -693,17 +735,28 @@
         \hbox to\z@{% \@Tr
           \yoko
           \jlreq@trimmarks@outputbanner{tate@top@right}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\jlreq@trimmarks@bannerfont##1\hss}%
+            \ifx d\jlreq@trimmarks@engine
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\jlreq@trimmarks@pdf@rotatebanner{\jlreq@trimmarks@bannerfont##1}\hss}%
+            \else
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\jlreq@trimmarks@bannerfont##1\hss}%
+            \fi
             \jlreq@tempdima=\dimexpr 4pt \ifx l\jlreq@trimmarks@engine + \dp\jlreq@tempboxa\fi\relax
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
             \kern\jlreq@tempdima\raise -5mm\box\jlreq@tempboxa\kern-\jlreq@tempdima
           }%
           \jlreq@trimmarks@outputbanner{intate@top@right}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\jlreq@trimmarks@bannerfont##1\hss}%
+            \ifx d\jlreq@trimmarks@engine
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\jlreq@trimmarks@pdf@rotatebanner{\jlreq@trimmarks@bannerfont##1}\hss}%
+            \else
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\jlreq@trimmarks@bannerfont##1\hss}%
+            \fi
             \ifx l\jlreq@trimmarks@engine
               \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@top + \ht\jlreq@tempboxa\relax
             \else
-              \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@top + \wd\jlreq@tempboxa\relax
+              % d: shift left by the cross extent (the rotated ink
+              % extends right of the reference; the pTeX box extends ht).
+              \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@top + \wd\jlreq@tempboxa
+                + \jlreq@trimmarks@pdf@cross\relax
             \fi
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
             \kern-\jlreq@tempdima\box\jlreq@tempboxa\kern\jlreq@tempdima
@@ -719,7 +772,11 @@
           \yoko\hss
           \g__jlreq_trimmarks_pattern_center_left_tl
           \jlreq@trimmarks@outputbanner{before@center@left}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\hss\adjustbaseline\jlreq@trimmarks@bannerfont##1\hskip 5mm}%
+            \ifx d\jlreq@trimmarks@engine
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\hss\jlreq@trimmarks@pdf@rotatebanner{\jlreq@trimmarks@bannerfont##1}\hskip 5mm}%
+            \else
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\hss\adjustbaseline\jlreq@trimmarks@bannerfont##1\hskip 5mm}%
+            \fi
             \ifx l\jlreq@trimmarks@engine
               \jlreq@tempdima=\dimexpr 4pt + \ht\jlreq@tempboxa\relax
              \else
@@ -729,7 +786,11 @@
             \kern-\jlreq@tempdima\box\jlreq@tempboxa\kern\jlreq@tempdima
           }%
           \jlreq@trimmarks@outputbanner{after@center@left}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\hskip 5mm\adjustbaseline\jlreq@trimmarks@bannerfont##1\hss}%
+            \ifx d\jlreq@trimmarks@engine
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\hskip 5mm\jlreq@trimmarks@pdf@rotatebanner{\jlreq@trimmarks@bannerfont##1}\hss}%
+            \else
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\hskip 5mm\adjustbaseline\jlreq@trimmarks@bannerfont##1\hss}%
+            \fi
             \ifx l\jlreq@trimmarks@engine
               \jlreq@tempdima=\dimexpr 4pt + \ht\jlreq@tempboxa\relax
              \else
@@ -739,7 +800,11 @@
             \kern-\jlreq@tempdima\box\jlreq@tempboxa\kern\jlreq@tempdima
           }%
           \jlreq@trimmarks@outputbanner{in@center@left}{%
-            \setbox\jlreq@tempboxa=\hbox{\tate\adjustbaseline\jlreq@trimmarks@bannerfont##1}%
+            \ifx d\jlreq@trimmarks@engine
+              \setbox\jlreq@tempboxa=\hbox{\jlreq@trimmarks@pdf@rotatebanner{\jlreq@trimmarks@bannerfont##1}}%
+            \else
+              \setbox\jlreq@tempboxa=\hbox{\tate\adjustbaseline\jlreq@trimmarks@bannerfont##1}%
+            \fi
             \ifx l\jlreq@trimmarks@engine
               \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@left + \ht\jlreq@tempboxa\relax
               \jlreq@tempdimb=.5\wd\jlreq@tempboxa
@@ -755,7 +820,11 @@
         \hbox to\z@{% \@CR
           \yoko
           \jlreq@trimmarks@outputbanner{in@center@right}{%
-            \setbox\jlreq@tempboxa=\hbox{\tate\adjustbaseline\jlreq@trimmarks@bannerfont##1}%
+            \ifx d\jlreq@trimmarks@engine
+              \setbox\jlreq@tempboxa=\hbox{\jlreq@trimmarks@pdf@rotatebanner{\jlreq@trimmarks@bannerfont##1}}%
+            \else
+              \setbox\jlreq@tempboxa=\hbox{\tate\adjustbaseline\jlreq@trimmarks@bannerfont##1}%
+            \fi
             \ifx l\jlreq@trimmarks@engine
               \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@right  + \ht\jlreq@tempboxa\relax
               \jlreq@tempdimb=0.5\wd\jlreq@tempboxa
@@ -767,13 +836,21 @@
             \kern-\jlreq@tempdima\raise\jlreq@tempdimb\box\jlreq@tempboxa\kern\jlreq@tempdima
           }%
           \jlreq@trimmarks@outputbanner{before@center@right}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\hss\adjustbaseline\jlreq@trimmarks@bannerfont##1\hskip 5mm}%
+            \ifx d\jlreq@trimmarks@engine
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\hss\jlreq@trimmarks@pdf@rotatebanner{\jlreq@trimmarks@bannerfont##1}\hskip 5mm}%
+            \else
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\hss\adjustbaseline\jlreq@trimmarks@bannerfont##1\hskip 5mm}%
+            \fi
             \jlreq@tempdima=\dimexpr 4pt \ifx l\jlreq@trimmarks@engine + \dp\jlreq@tempboxa\fi\relax
             \dp\jlreq@tempboxa=0pt \ht\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
             \kern\jlreq@tempdima\box\jlreq@tempboxa\kern-\jlreq@tempdima
           }%
           \jlreq@trimmarks@outputbanner{after@center@right}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\hskip 5mm\adjustbaseline\jlreq@trimmarks@bannerfont##1\hss}%
+            \ifx d\jlreq@trimmarks@engine
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\hskip 5mm\jlreq@trimmarks@pdf@rotatebanner{\jlreq@trimmarks@bannerfont##1}\hss}%
+            \else
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\hskip 5mm\adjustbaseline\jlreq@trimmarks@bannerfont##1\hss}%
+            \fi
             \jlreq@tempdima=\dimexpr 4pt \ifx l\jlreq@trimmarks@engine + \dp\jlreq@tempboxa\fi\relax
             \dp\jlreq@tempboxa=0pt \ht\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
             \kern\jlreq@tempdima\box\jlreq@tempboxa\kern-\jlreq@tempdima
@@ -789,7 +866,22 @@
           \vrule width10mm depth\@tombowwidth height\z@
           \vrule depth\dimexpr 10mm + \jlreq@trimmarks@bleed@bottom\relax width\@tombowwidth height\z@
           \jlreq@trimmarks@outputbanner{tate@bottom@left}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\hss\jlreq@trimmarks@bannerfont##1}%
+            \ifx d\jlreq@trimmarks@engine
+              % d: the bottom families must ASCEND from the anchor
+              % (the pTeX \hss-first tate box pushes the run upward).
+              % The rotated run descends from its reference, so the run
+              % is pre-shifted UP by its own length inside the slot
+              % wrapper (\raise-\dp..\box..); the wrapper's resulting
+              % height is flattened again by the zeroing below, so the
+              % tombow row geometry is untouched.  The ink then spans
+              % [anchor-runlen, anchor] as in uplatex ground truth and
+              % the ORIGINAL plcore placement (raise 5mm) is kept.
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\hss
+                \setbox\jlreq@tempboxb=\hbox{\jlreq@trimmarks@pdf@rotatebanner{\jlreq@trimmarks@bannerfont##1}}%
+                \raise\dp\jlreq@tempboxb\box\jlreq@tempboxb}%
+            \else
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\hss\jlreq@trimmarks@bannerfont##1}%
+            \fi
             \ifx l\jlreq@trimmarks@engine
               \jlreq@tempdima=\dimexpr 4pt + \ht\jlreq@tempboxa\relax
              \else
@@ -799,8 +891,24 @@
             \kern-\jlreq@tempdima\raise 5mm\box\jlreq@tempboxa\kern\jlreq@tempdima
           }%
           \jlreq@trimmarks@outputbanner{intate@bottom@left}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\hss\jlreq@trimmarks@bannerfont##1}%
-            \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@left \ifx l\jlreq@trimmarks@engine + \ht\jlreq@tempboxa\fi\relax
+            \ifx d\jlreq@trimmarks@engine
+              % d: the run ascends from the anchor (pre-shifted
+              % inside the wrapper; see tate@bottom@left).
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\hss
+                \setbox\jlreq@tempboxb=\hbox{\jlreq@trimmarks@pdf@rotatebanner{\jlreq@trimmarks@bannerfont##1}}%
+                \raise\dp\jlreq@tempboxb\box\jlreq@tempboxb}%
+            \else
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\hss\jlreq@trimmarks@bannerfont##1}%
+            \fi
+            \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@left
+              \ifx l\jlreq@trimmarks@engine + \ht\jlreq@tempboxa\fi\relax
+            \ifx d\jlreq@trimmarks@engine
+              % d: shift right by the cross extent so the ink
+              % column (extending right of the reference) lands at the
+              % trim-area edge as in uplatex (top-right in-slot shows
+              % the mirrored -cross correction).
+              \advance\jlreq@tempdima\jlreq@trimmarks@pdf@cross
+            \fi
             \wd\jlreq@tempboxa=0pt \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt
             \kern\jlreq@tempdima\box\jlreq@tempboxa\kern-\jlreq@tempdima
           }%
@@ -809,13 +917,36 @@
         \hbox to\z@{% \@Br
           \yoko
           \jlreq@trimmarks@outputbanner{tate@bottom@right}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\hss\jlreq@trimmarks@bannerfont##1}%
-            \jlreq@tempdima=\dimexpr\ifx l\jlreq@trimmarks@engine\ht\jlreq@tempboxa + \fi 4pt\relax
+            \ifx d\jlreq@trimmarks@engine
+              % d: the run ascends from the anchor (pre-shifted
+              % inside the wrapper; see tate@bottom@left) and the anchor
+              % is shifted right by the cross extent so the ink column
+              % (extending right of the reference) lands at the stock
+              % position.
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\hss
+                \setbox\jlreq@tempboxb=\hbox{\jlreq@trimmarks@pdf@rotatebanner{\jlreq@trimmarks@bannerfont##1}}%
+                \raise\dp\jlreq@tempboxb\box\jlreq@tempboxb}%
+            \else
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\hss\jlreq@trimmarks@bannerfont##1}%
+            \fi
+            \ifx l\jlreq@trimmarks@engine
+              \jlreq@tempdima=\dimexpr\ht\jlreq@tempboxa + 4pt\relax
+            \else
+              \jlreq@tempdima=\dimexpr 4pt + \jlreq@trimmarks@pdf@cross\relax
+            \fi
             \ht\jlreq@tempboxa=0pt \dp\jlreq@tempboxa=0pt \wd\jlreq@tempboxa=0pt
-            \kern\jlreq@tempdima\raise5mm\box\jlreq@tempboxa\kern-\jlreq@tempdima
+            \kern\jlreq@tempdima\raise 5mm\box\jlreq@tempboxa\kern-\jlreq@tempdima
           }%
           \jlreq@trimmarks@outputbanner{intate@bottom@right}{%
-            \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\hss\jlreq@trimmarks@bannerfont##1}%
+            \ifx d\jlreq@trimmarks@engine
+              % d: the run ascends from the anchor (pre-shifted
+              % inside the wrapper; see tate@bottom@left).
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\hss
+                \setbox\jlreq@tempboxb=\hbox{\jlreq@trimmarks@pdf@rotatebanner{\jlreq@trimmarks@bannerfont##1}}%
+                \raise\dp\jlreq@tempboxb\box\jlreq@tempboxb}%
+            \else
+              \setbox\jlreq@tempboxa=\hbox to 0pt{\tate\adjustbaseline\hss\jlreq@trimmarks@bannerfont##1}%
+            \fi
             \ifx l\jlreq@trimmarks@engine
               \jlreq@tempdima=\dimexpr\jlreq@trimmarks@bleed@right + \ht\jlreq@tempboxa\relax
             \else
@@ -991,6 +1122,11 @@
       \edef\@tempa{\noexpand\pdfvariable pageattr{\jlreq@trimmarks@pdfattribute@odd}}
       \@tempa
     \fi
+    \ifx d\jlreq@trimmarks@driver
+      % pdfTeX: \pdfvariableはLuaTeX専用．\pdfpageattrで同一の結果を得る．
+      \edef\@tempa{\noexpand\pdfpageattr{\jlreq@trimmarks@pdfattribute@odd}}
+      \@tempa
+    \fi
     \ifx f\jlreq@trimmarks@driver
       \tl_put_left:Nx \@outputtombow {\noexpand\special{pdf:~put~@thispage~<<\jlreq@trimmarks@pdfattribute@odd>>}}
     \fi
@@ -1009,6 +1145,19 @@
         \unexpanded{\ifodd\c@page\pdfvariable} pageattr{\jlreq@trimmarks@pdfattribute@odd}%
         \unexpanded{\else\pdfvariable} pageattr{\jlreq@trimmarks@pdfattribute@even}\noexpand\fi
       }
+    \fi
+    \ifx d\jlreq@trimmarks@driver
+      % pdfTeX: per-page pageattr is set by a labeled
+      % shipout/before hook (below), NOT by patching the \@outputpage
+      % token list. The tl_put_left/right prefix/suffix patch was fragile
+      % (it must survive the backend \@outputpage override, which copies
+      % the macro body at begin document, and any future thinning) and
+      % wrong: the prefix ran inside the output routine where \c@page is
+      % already advanced for the page AFTER the shipped one on even
+      % pages (attrs landed one page off in twoside asymmetric-bleed
+      % documents), and the suffix leaked an unbalanced
+      % \ifodd\else...\fi tail that surfaced as "Missing number" on
+      % every shipped page of such documents.
     \fi
     \ifx f\jlreq@trimmarks@driver
       \tl_put_left:Nx \@outputtombow {%
@@ -1029,6 +1178,37 @@
         end}\noexpand\fi
       }
     \fi
+  }
+\fi
+
+% pdfTeX: per-shipout pageattr application. Registered only when the
+% odd/even attribute sets differ (the symmetric case keeps the single
+% global assignment inside the digital block above). \AddToHook with the
+% label jlreq-trimmarks is re-runnable (same-label \AddToHook replaces,
+% never duplicates; \ShowHook{shipout/before} leaves an audit trail). At
+% each shipout the kernel runs this code with \c@page already holding the
+% shipping page's final number (verified empirically: a 3-page twoside
+% probe reports 1/2/3), so the parity test selects the exact page's
+% BleedBox set. \pdfpageattr is a REPLACE-per-execution primitive: the
+% value set here is the complete attribute string of the page being
+% built, the next page's hook run overwrites it again -- nothing
+% accumulates across pages and no key can appear twice in one page
+% dictionary. The attribute-set macros are undefined at end of package
+% (\__jlreq_trimmarks_afterpkg_addtodeletecs), so their VALUES are
+% captured once here into hook-owned macros and replayed per shipout.
+\ifx d\jlreq@trimmarks@driver
+  \jlreq@if{\ifx\jlreq@trimmarks@pdfattribute@odd\jlreq@trimmarks@pdfattribute@even\fi}{}{
+    \expandafter\def\expandafter\jlreq@trimmarks@pageattr@odd
+      \expandafter{\jlreq@trimmarks@pdfattribute@odd}%
+    \expandafter\def\expandafter\jlreq@trimmarks@pageattr@even
+      \expandafter{\jlreq@trimmarks@pdfattribute@even}%
+    \AddToHook{shipout/before}[jlreq-trimmarks]{%
+      \ifodd\c@page
+        \pdfpageattr\expandafter{\jlreq@trimmarks@pageattr@odd}%
+      \else
+        \pdfpageattr\expandafter{\jlreq@trimmarks@pageattr@even}%
+      \fi
+    }
   }
 \fi
 

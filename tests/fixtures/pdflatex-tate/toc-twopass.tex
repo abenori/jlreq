@@ -1,0 +1,30 @@
+% toc-twopass.tex -- acceptance gate: tate + \tableofcontents across
+% TWO passes. Root cause of the historical "Leaders not followed by
+% proper glue" on pass 2 (see docs/pdftex-internals.md):
+%   (1) the frame-pop \aftergroup inserted assignment tokens after
+%       EVERY closed box, and \leaders\hbox{...}<glue> requires the glue
+%       to follow the box with nothing unexpandable in between
+%       (fixed: neutralize at entry + boxbdd at reads, no
+%       \aftergroup);
+%   (2) the math-internal gate wrapped the leaders as
+%       {\leaders\hbox{..}}\hfill -- a group end between the leader box
+%       and its glue breaks the leader glue scan in PURE TeX (verified
+%       with plain article + {\leaders\hbox{a}}\hfill), independent of
+%       the backend (fixed: groupless on/off flag pair).
+% Assertions (log markers, runner checks both passes):
+%   TOC-PASS: printed after \tableofcontents in the body (once per pass)
+\documentclass[pdflatex,tate]{jlreq}
+\begin{document}
+\section{見出し一}
+あああああああああああああああああああああああああああああああああああああ
+\subsection{小見出し}
+いいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいい
+\section{見出し二}
+うううううううううううううううううううううううううううううううううううう
+\clearpage
+\tableofcontents
+\typeout{TOC-PASS}
+\clearpage
+\section{見出し三}
+えええええええええええええええええええええええええええええええええええ
+\end{document}

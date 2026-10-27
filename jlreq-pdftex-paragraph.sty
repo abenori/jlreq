@@ -1,0 +1,2045 @@
+%%
+%% This is file 'jlreq-pdftex-paragraph.sty'.
+%% Strict priority paragraph environment for the jlreq pdfTeX backend.
+%%
+%% Loaded by jlreq-pdftex.sty (never directly). User-facing environment:
+%%   \begin{jlreqparagraph} ... \end{jlreqparagraph}
+%% (no argument; one environment = one paragraph; normal paragraphs keep
+%% the native path).
+%%
+%% DESIGN (docs/pdftex-internals.md, jlreqparagraph section):
+%%  1. Snapshot every paragraph parameter at entry; the env never changes
+%%     them in the document (the measurement group re-installs the
+%%     snapshot values locally; the lualatex comparison flow receives the
+%%     same values).
+%%  2. Itemize the EXPLICIT input model ONCE:
+%%     * CJK glyphs: typeset once through the rules glyph layer into a
+%%       pool box (nest-guarded; class/JFM metrics as usual); every
+%%       boundary between items is evaluated by the SHARED rules
+%%       evaluator (\jlreqpdf@evalpair) and the candidate series is
+%%       emitted by the rules emitter (\jlreqpdf@emitboundary) -- the
+%%       native breaker sees exactly the usual kern/penalty/glue stream.
+%%     * Latin words: one box per word (kerning/ligatures inside; no
+%%       in-word breaks except explicit soft-hyphen/discretionary).
+%%     * Spaces, \hspace: explicit glue items (tier 50).
+%%     * \mbox/\makebox: opaque items (factory direction metadata).
+%%     * $...$ / \(...\): inline math, one box (backend math capture).
+%%     * \tatechuyoko: one box via the direction box factory.
+%%     * \label/\ref/\hyperlink: whatsits are captured INSIDE item boxes
+%%       (labels pend into the next/final item) so the line streams
+%%       contain no bare whatsits.
+%%     * ruby: adapter contract (\jlreqpar@rubyiface); polite error when
+%%       no adapter is present.
+%%     * Unknown macros, display math, floats, inserts/footnotes,
+%%       verbatim, non-local layout assignments: SPECIFIC errors at
+%%       itemization time. No silent approximate fallback.
+%%  3. Break ONCE with the native breaker: the items form one shadow
+%%     paragraph inside \vbox{\hsize=<snap> ...\par}. Net-zero markers
+%%     \vadjust{\kern<id>sp\kern-<id>sp} follow each item; the DISCARDED
+%%     measurement vbox is reverse-walked (lastnodetype-verified
+%%     lastbox/unskip/unpenalty/unkern) to recover per-line item ranges,
+%%     interline glue and penalties. User penalties are not clamped.
+%%  4. End-adjust recovery per line: natural repack width minus the known
+%%     naturals = the selected e; the tail kern/penalty series stripped
+%%     type-driven from the line copy must agree within 1sp. Unknown
+%%     nodes (chars, whatsits, discs) abort the recovery with an error.
+%%  5. Final line: the ltj aw_step1_last parfillskip condition; the
+%%     candidates ranked (|rem/total|, |rem|, |e|, e) lexicographically
+%%     (infinite orders take precedence; forbidden shrink/0-div/NaN
+%%     structurally avoided). Non-final lines keep the native candidate.
+%%  6. Priority fill per line (tier scale: JFM priority*10, kanjiskip 0,
+%%     xkanjiskip +10 stretch / -30 shrink, explicit glue 50; higher
+%%     tier first; the partially filled tier distributes proportionally;
+%%     stretch/shrink separate; finite shrink overflow = typeset defect
+%%     reported like TeX's own). sp-integer arithmetic, source-order
+%%     rounding, exact line width.
+%%  7. Assembly per line: the measurement line box is destructured by a
+%%     reverse node walk (boxes/glues/kerns/penalties only -- guaranteed
+%%     by the itemizer), the recorded glue data is applied by replacing
+%%     every glue with a fixed kern of its final size, and the line is
+%%     rebuilt in order by a second reverse pass (list reversal via the
+%%     \unhbox-append idiom); the rebuilt line must equal the measured
+%%     width within 1sp. Interline glue/penalties are replayed from the
+%%     walk; parskip was 0 during measurement and the ambient parskip is
+%%     inserted once at output; the first line box is appended to the
+%%     outer vlist so the outer prevdepth produces the normal baselineskip
+%%     glue; prevdepth/prevgraf are updated at the end. Markers and
+%%     measurement copies never ship out.
+%%
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{jlreq-pdftex-paragraph}
+  [2026/10/25 v0.1 jlreq strict paragraph environment]
+\RequirePackage{jlreq-pdftex-rules}
+
+\@ifundefined{jlreqpdf@pairspri}{%
+  \PackageError{jlreq-pdftex-paragraph}{jlreq-pdftex-rules~(P3)~not~loaded}{%
+    This module is loaded by jlreq-pdftex.sty; the P3 priority registers
+    are a hard prerequisite.\MessageBreak \@ehc}}{}
+
+% ============================================================================
+% 0. Scratch / node types
+% ============================================================================
+\newcount\jlreqpar@a \newcount\jlreqpar@b \newcount\jlreqpar@c
+\newdimen\jlreqpar@da \newdimen\jlreqpar@db \newdimen\jlreqpar@dc
+% \lastnodetype (probed on pdfTeX): 0 char, 1 h/vlist, 2 ligature,
+% 3 rule, 4 disc, 5 math, 8 whatsit, 10 mark, 11 glue, 12 kern,
+% 13 penalty, -1 empty list.
+\mathchardef\jlreqpar@t@char=0
+\mathchardef\jlreqpar@t@box=1
+\mathchardef\jlreqpar@t@disc=4
+\mathchardef\jlreqpar@t@whatsit=8
+\mathchardef\jlreqpar@t@glue=11
+\mathchardef\jlreqpar@t@kern=12
+\mathchardef\jlreqpar@t@pen=13
+
+% ============================================================================
+% 1. Parameter snapshot (the full parameter list)
+% ============================================================================
+\newdimen\jlreqpar@hsize      \newdimen\jlreqpar@parindent
+\newskip\jlreqpar@parskip    \newskip\jlreqpar@leftskip
+\newskip\jlreqpar@rightskip  \newskip\jlreqpar@parfillskip
+\newskip\jlreqpar@spaceskip  \newskip\jlreqpar@xspaceskip
+\newskip\jlreqpar@baselineskip \newskip\jlreqpar@lineskip
+\newdimen\jlreqpar@lineskiplimit
+\newdimen\jlreqpar@hangindent \newcount\jlreqpar@hangafter
+\newdimen\jlreqpar@emergencystretch
+\newcount\jlreqpar@pretolerance \newcount\jlreqpar@tolerance
+\newcount\jlreqpar@linepenalty \newcount\jlreqpar@hyphenpenalty
+\newcount\jlreqpar@exhyphenpenalty
+\newcount\jlreqpar@adjdemerits \newcount\jlreqpar@doublehyphendemerits
+\newcount\jlreqpar@finalhyphendemerits \newcount\jlreqpar@looseness
+\newcount\jlreqpar@clubpenalty \newcount\jlreqpar@widowpenalty
+\newcount\jlreqpar@interlinepenalty \newcount\jlreqpar@brokenpenalty
+\newcount\jlreqpar@prevgraf   \newdimen\jlreqpar@prevdepth
+\def\jlreqpar@clubpenalties{0}
+\def\jlreqpar@widowpenalties{0}
+\def\jlreqpar@interlinepenalties{0}
+\def\jlreqpar@pshapelen{0}
+\def\jlreqpar@pshapedata{}
+
+\def\jlreqpar@snapshot{%
+  \global\jlreqpar@hsize=\hsize
+  \global\jlreqpar@parindent=\parindent
+  \global\jlreqpar@parskip=\parskip
+  \global\jlreqpar@leftskip=\leftskip
+  \global\jlreqpar@rightskip=\rightskip
+  \global\jlreqpar@parfillskip=\parfillskip
+  \global\jlreqpar@spaceskip=\spaceskip
+  \global\jlreqpar@xspaceskip=\xspaceskip
+  \global\jlreqpar@baselineskip=\baselineskip
+  \global\jlreqpar@lineskip=\lineskip
+  \global\jlreqpar@lineskiplimit=\lineskiplimit
+  \global\jlreqpar@hangindent=\hangindent
+  \global\jlreqpar@hangafter=\hangafter
+  \global\jlreqpar@emergencystretch=\emergencystretch
+  \global\jlreqpar@pretolerance=\pretolerance
+  \global\jlreqpar@tolerance=\tolerance
+  \global\jlreqpar@linepenalty=\linepenalty
+  \global\jlreqpar@hyphenpenalty=\hyphenpenalty
+  \global\jlreqpar@exhyphenpenalty=\exhyphenpenalty
+  \global\jlreqpar@adjdemerits=\adjdemerits
+  \global\jlreqpar@doublehyphendemerits=\doublehyphendemerits
+  \global\jlreqpar@finalhyphendemerits=\finalhyphendemerits
+  \global\jlreqpar@looseness=\looseness
+  \global\jlreqpar@clubpenalty=\clubpenalty
+  \global\jlreqpar@widowpenalty=\widowpenalty
+  \global\jlreqpar@interlinepenalty=\interlinepenalty
+  \global\jlreqpar@brokenpenalty=\brokenpenalty
+  \global\jlreqpar@prevgraf=\prevgraf
+  \global\jlreqpar@prevdepth=\prevdepth
+  % e-TeX penalty ARRAYS: \the\<array> is invalid; read the count and
+  % the elements via \numexpr\<array> <idx>\relax (probed: idx 0 = the
+  % entry count, idx i>=1 = element i; zero errors).
+  \jlreqpar@a=\numexpr\clubpenalties 0\relax
+  \edef\jlreqpar@clubpenalties{\the\jlreqpar@a}%
+  \jlreqpar@b=0
+  \jlreqpar@arrloop\clubpenalties\jlreqpar@clubpenalties
+  \jlreqpar@a=\numexpr\widowpenalties 0\relax
+  \edef\jlreqpar@widowpenalties{\the\jlreqpar@a}%
+  \jlreqpar@b=0
+  \jlreqpar@arrloop\widowpenalties\jlreqpar@widowpenalties
+  \jlreqpar@a=\numexpr\interlinepenalties 0\relax
+  \edef\jlreqpar@interlinepenalties{\the\jlreqpar@a}%
+  \jlreqpar@b=0
+  \jlreqpar@arrloop\interlinepenalties\jlreqpar@interlinepenalties
+  \jlreqpar@snap@parshape}
+% \jlreqpar@arrloop{<array>}{<target macro>}: append elements 1..n
+\def\jlreqpar@arrloop#1#2{%
+  \ifnum\jlreqpar@b<\jlreqpar@a
+    \advance\jlreqpar@b1
+    \jlreqpar@c=\numexpr#1 \jlreqpar@b\relax
+    \expandafter\edef\expandafter#2\expandafter{#2\space\the\jlreqpar@c}%
+    \expandafter\jlreqpar@arrloop\expandafter#1\expandafter#2
+  \fi}
+
+% parshape snapshot (probed semantics):
+%   \numexpr\parshape 0\relax    = the line count n
+%   \parshapedimen<k>            = spec entries: k=2i-1 the indent of
+%                                 line i, k=2i the width of line i
+% (the whole shape is re-declared in the measurement vbox with the
+% same data; the comparison flow receives the same values).
+\def\jlreqpar@snap@parshape{%
+  \def\jlreqpar@pshapelen{0}\def\jlreqpar@pshapedata{}%
+  % the count read leaks a typeset "0" into the CURRENT LIST when no
+  % shape is active (probed); perform it inside a discarded hbox.
+  \setbox\jlreqpar@curbox=\vbox{\global\jlreqpar@a=\numexpr\parshape 0\relax}%
+  \ifnum\jlreqpar@a>0
+    \gdef\jlreqpar@pshapedata{}%
+    \jlreqpar@b=0
+    \jlreqpar@pshape@loop
+    \edef\jlreqpar@pshapelen{\the\jlreqpar@b}%
+  \fi}
+\def\jlreqpar@pshape@loop{%
+  \ifnum\jlreqpar@b<\jlreqpar@a
+    \advance\jlreqpar@b1
+    \jlreqpar@c=\numexpr 2*\jlreqpar@b-1\relax
+    \jlreqpar@da=\parshapedimen\jlreqpar@c\relax
+    \advance\jlreqpar@c1
+    \jlreqpar@db=\parshapedimen\jlreqpar@c\relax
+    \expandafter\edef\csname jlreqpar@pshapedata\endcsname{%
+      \jlreqpar@pshapedata
+      {\the\jlreqpar@da\space\the\jlreqpar@db}}%
+    \expandafter\jlreqpar@pshape@loop
+  \fi}
+
+% ============================================================================
+% 2. Item model (KEYED csname storage; TeX macros take <=9 parameters)
+% ============================================================================
+%   \jlreqpar@ITk@<id> kind: 1 cjk 2 word 3 math 4 tcy 5 opaque 6 ruby
+%                             7 space 8 hspace 9 kern 10 penalty 11 label
+%   \jlreqpar@ITb@<id> box register name (empty for glue/penalty items)
+%   \jlreqpar@ITg@<id> {wd}{ht}{dp}   pt strings
+%   \jlreqpar@ITc@<id> {first}{last}  JFM classes at the run edges
+%   \jlreqpar@ITp@<id> {spri}{shpri}  RIGHT-edge pair tier (JFM*10 scale
+%                                    applied at fill time)
+%   \jlreqpar@ITG@<id> {nat}{str}{shr} RIGHT-edge pair glue pt strings
+%   \jlreqpar@ITK@<id> {knat}{kstr}{kshr} kanjiskip companion pt strings
+%   \jlreqpar@ITn@<id> kin penalty at the RIGHT edge
+%   \jlreqpar@ITe@<id> end_adjust candidates of the LAST class (list)
+%   \jlreqpar@ITz@<id> zw     \jlreqpar@ITf@<id> font
+%   \jlreqpar@ITx@<id> extra: explicit glue spec for kind 7/8 (5 fields:
+%                             {nat}{str}{shr}{sorder}{shorder}), penalty
+%                             value for kind 10, marker text for 11
+\newcount\jlreqpar@nitems
+\newcount\jlreqpar@poolcur
+\newcount\jlreqpar@poolhi
+\newbox\jlreqpar@curbox
+
+% pool: \jlreqpar@PB@<n> box registers, reused across envs.
+% The registers are allocated at LOAD time (a fixed pool of 64): the
+% walk runs inside a box group, where a \newbox \chardef would be
+% LOCAL and vanish at the group close (probed: pool copies read back
+% void). A load-time pool is group-proof and bounds the nesting.
+\newcount\jlreqpar@poolmax \jlreqpar@poolmax=64
+\def\jlreqpar@poolinit{%
+  \jlreqpar@poolcur=0
+  \loop
+    \advance\jlreqpar@poolcur1
+    \expandafter\expandafter\expandafter\newbox
+      \csname jlreqpar@PB@\the\jlreqpar@poolcur\endcsname
+  \ifnum\jlreqpar@poolcur<\jlreqpar@poolmax
+  \repeat}
+\jlreqpar@poolinit
+\def\jlreqpar@poolalloc#1{%
+  \global\advance\jlreqpar@poolcur1
+  \ifnum\jlreqpar@poolcur>\jlreqpar@poolmax
+    \PackageError{jlreq-pdftex-paragraph}{box~pool~exhausted}{%
+      The~strict~paragraph~needs~more~than~
+      \the\jlreqpar@poolmax\space pooled~box~registers.%
+      \MessageBreak \@ehc}%
+  \fi
+  \edef#1{jlreqpar@PB@\the\jlreqpar@poolcur}}
+
+% field scratch: filled by the capture hooks, read by \itemsave/\itload
+\newcount\jlreqpar@F@kind
+\def\jlreqpar@F@box{}
+\newcount\jlreqpar@F@first
+\newcount\jlreqpar@F@last
+\newcount\jlreqpar@F@spri
+\newcount\jlreqpar@F@shpri
+\def\jlreqpar@F@nat{0pt}
+\def\jlreqpar@F@str{0pt}
+\def\jlreqpar@F@shr{0pt}
+\def\jlreqpar@F@knat{0pt}
+\def\jlreqpar@F@kstr{0pt}
+\def\jlreqpar@F@kshr{0pt}
+\newcount\jlreqpar@F@kin
+\def\jlreqpar@F@ea{}
+\def\jlreqpar@F@zw{0pt}
+\def\jlreqpar@F@font{}
+\def\jlreqpar@F@extra{}
+
+\def\jlreqpar@itemsave{%
+  \global\advance\jlreqpar@nitems1
+  \expandafter\xdef\csname jlreqpar@ITk@\the\jlreqpar@nitems\endcsname
+    {\the\jlreqpar@F@kind}%
+  \expandafter\xdef\csname jlreqpar@ITb@\the\jlreqpar@nitems\endcsname
+    {\jlreqpar@F@box}%
+  \expandafter\xdef\csname jlreqpar@ITg@\the\jlreqpar@nitems\endcsname
+    {{\the\wd\jlreqpar@curbox}{\the\ht\jlreqpar@curbox}%
+     {\the\dp\jlreqpar@curbox}}%
+  \expandafter\xdef\csname jlreqpar@ITc@\the\jlreqpar@nitems\endcsname
+    {{\the\jlreqpar@F@first}{\the\jlreqpar@F@last}}%
+  \expandafter\xdef\csname jlreqpar@ITp@\the\jlreqpar@nitems\endcsname
+    {{\the\jlreqpar@F@spri}{\the\jlreqpar@F@shpri}}%
+  \expandafter\xdef\csname jlreqpar@ITG@\the\jlreqpar@nitems\endcsname
+    {{\jlreqpar@F@nat}{\jlreqpar@F@str}{\jlreqpar@F@shr}}%
+  \expandafter\xdef\csname jlreqpar@ITK@\the\jlreqpar@nitems\endcsname
+    {{\jlreqpar@F@knat}{\jlreqpar@F@kstr}{\jlreqpar@F@kshr}}%
+  \expandafter\xdef\csname jlreqpar@ITn@\the\jlreqpar@nitems\endcsname
+    {\the\jlreqpar@F@kin}%
+  \expandafter\xdef\csname jlreqpar@ITe@\the\jlreqpar@nitems\endcsname
+    {\jlreqpar@F@ea}%
+  \expandafter\xdef\csname jlreqpar@ITz@\the\jlreqpar@nitems\endcsname
+    {\jlreqpar@F@zw}%
+  \expandafter\xdef\csname jlreqpar@ITf@\the\jlreqpar@nitems\endcsname
+    {\jlreqpar@F@font}%
+  \expandafter\xdef\csname jlreqpar@ITx@\the\jlreqpar@nitems\endcsname
+    {\jlreqpar@F@extra}}
+
+\def\jlreqpar@itload#1{%
+  \jlreqpar@F@kind=\csname jlreqpar@ITk@#1\endcsname\relax
+  \edef\jlreqpar@F@box{\csname jlreqpar@ITb@#1\endcsname}%
+  \expandafter\jlreqpar@split@geo\csname jlreqpar@ITg@#1\endcsname
+  \expandafter\jlreqpar@split@cls\csname jlreqpar@ITc@#1\endcsname
+  \expandafter\jlreqpar@split@pri\csname jlreqpar@ITp@#1\endcsname
+  \expandafter\jlreqpar@split@glu\csname jlreqpar@ITG@#1\endcsname
+  \expandafter\jlreqpar@split@kan\csname jlreqpar@ITK@#1\endcsname
+  \jlreqpar@F@kin=\csname jlreqpar@ITn@#1\endcsname\relax
+  \edef\jlreqpar@F@ea{\csname jlreqpar@ITe@#1\endcsname}%
+  \jlreqpar@da=\csname jlreqpar@ITz@#1\endcsname\relax
+  \edef\jlreqpar@F@zw{\the\jlreqpar@da}%
+  \edef\jlreqpar@F@font{\csname jlreqpar@ITf@#1\endcsname}%
+\edef\jlreqpar@F@extra{\csname jlreqpar@ITx@#1\endcsname}}
+\def\jlreqpar@split@geo#1#2#3{%
+  \wd\jlreqpar@curbox=#1\relax
+  \ht\jlreqpar@curbox=#2\relax
+  \dp\jlreqpar@curbox=#3\relax}
+\def\jlreqpar@split@cls#1#2{%
+  \jlreqpar@F@first=#1\relax
+  \jlreqpar@F@last=#2\relax}
+\def\jlreqpar@split@pri#1#2{%
+  \jlreqpar@F@spri=#1\relax
+  \jlreqpar@F@shpri=#2\relax}
+\def\jlreqpar@split@glu#1#2#3{%
+  \def\jlreqpar@F@nat{#1}\def\jlreqpar@F@str{#2}%
+  \def\jlreqpar@F@shr{#3}}
+\def\jlreqpar@split@kan#1#2#3{%
+  \def\jlreqpar@F@knat{#1}\def\jlreqpar@F@kstr{#2}%
+  \def\jlreqpar@F@kshr{#3}}
+
+% ============================================================================
+% 3. The environment shell
+% ============================================================================
+% The environment SPANS the measurement: the begin-code opens the
+% measurement vbox (\bgroup after \vbox), the document body is typeset
+% ONCE inside it (the capture hooks record items as they appear), and
+% the end-code closes the vbox and runs the strict flow. (A delimited
+% \end{...} grab is impossible: `{` cannot appear in a \def parameter
+% text.)
+\newenvironment{jlreqparagraph}{%
+  \par
+  \jlreqpar@snapshot
+  \jlreqpar@measure@open
+}{\jlreqpar@measure@close}
+% ============================================================================
+% 5. The reverse walk: per-line item ranges + interline glue/penalties
+% ============================================================================
+% walk data (GLOBAL; the walk runs inside the box-building group):
+%   \jlreqpar@LN@<n>@from/@to  item id range of line n (1-based,
+%                             recovered in REVERSE: line ids count up
+%                             as the walk descends)
+%   \jlreqpar@LN@<n>@wd/@box   measured width / pool box register name
+%   \jlreqpar@LX@<n>@glue      interline glue BEFORE line n as
+%                             {nat}{str}{shr}{sord}{shord} pt strings
+%   \jlreqpar@LX@<n>@pen       penalty list BEFORE line n (text list)
+\newcount\jlreqpar@wline
+\newcount\jlreqpar@wlastmark  % highest marker id seen so far
+\newcount\jlreqpar@wka \newcount\jlreqpar@wkb
+\newcount\jlreqpar@wsum
+\newbox\jlreqpar@wlinebox
+\newskip\jlreqpar@wskip
+
+\newbox\jlreqpar@walkbox
+\def\jlreqpar@walk{%
+  \global\jlreqpar@wline=0
+  \global\jlreqpar@wsum=0
+  \global\jlreqpar@wlastmark=0
+  \xdef\jlreqpar@LN@1@from{1}%
+  \setbox\jlreqpar@walkbox=\vbox{%
+    \unvbox\jlreqpar@measbox
+    \jlreqpar@walk@step}%
+  % NOTE: the recount/assemble runs OUTSIDE the walkbox group. Inside
+  % the walkbox TeX is in INTERNAL vertical mode -- emitted line
+  % boxes would land in the (discarded) walkbox (probed: the strict
+  % lines silently vanished). After the vbox closes we are back in
+  % the enclosing mode and the assembly appends to the real vlist.
+  \jlreqpar@recount}
+
+% one reverse-walk step. \lastnodetype is invalidated by \write-type
+% operations; between reads only pops/assignments happen.
+\def\jlreqpar@walk@step{%
+  \ifnum\lastnodetype=-1
+    \let\jlreqpar@wnext\jlreqpar@walk@end
+  \else
+    \ifnum\lastnodetype=\jlreqpar@t@kern
+      \let\jlreqpar@wnext\jlreqpar@walk@kern
+    \else
+    \ifnum\lastnodetype=\jlreqpar@t@box
+      \let\jlreqpar@wnext\jlreqpar@walk@box
+    \else
+    \ifnum\lastnodetype=\jlreqpar@t@glue
+      \let\jlreqpar@wnext\jlreqpar@walk@glue
+    \else
+    \ifnum\lastnodetype=\jlreqpar@t@pen
+      \let\jlreqpar@wnext\jlreqpar@walk@pen
+    \else
+      \let\jlreqpar@wnext\jlreqpar@walk@end
+    \fi\fi\fi\fi
+  \fi
+  \jlreqpar@wnext}
+
+% kern handling. A MARKER is a \kern<id>sp\kern-<id>sp pair (both
+% members nonzero, exact negations). Other kerns are LAYOUT kerns
+% (the rules backend's para/end tail kern etc.) and must be popped
+% singly and kept in the interline record. The distinction is made by
+% peeking: pop the first kern; if the NEXT node is a kern whose value
+% is the exact negation and both nonzero, it is a marker pair;
+% otherwise the first kern was a layout kern (record it and treat the
+% next node from the top of the walk).
+\def\jlreqpar@walk@kern{%
+  \global\jlreqpar@wka=\lastkern
+  \unkern
+  \ifnum\lastnodetype=\jlreqpar@t@kern
+    \global\jlreqpar@wkb=\lastkern
+    \ifnum-\jlreqpar@wka=\jlreqpar@wkb
+      \ifnum\jlreqpar@wka=0
+        % 0/0 pair: not a marker; drop both (net 0) and continue.
+        \unkern
+        \jlreqpar@walk@step
+      \else
+        % marker pair: pop the partner, record the id.
+        \unkern
+        \global\advance\jlreqpar@wsum\jlreqpar@wka
+        \global\advance\jlreqpar@wsum\jlreqpar@wkb
+        \ifnum\jlreqpar@wkb<0
+          \global\jlreqpar@wlastmark=-\jlreqpar@wkb
+        \else
+          \global\jlreqpar@wlastmark=\jlreqpar@wkb
+        \fi
+        \jlreqpar@walk@step
+      \fi
+    \else
+      % two kerns, NOT a marker pair: the first was layout; the second
+      % is re-processed as the walk's next node (it is still the LAST
+      % node -- do not pop it here).
+      \jlreqpar@kern@record
+      \jlreqpar@walk@step
+    \fi
+  \else
+    % single kern (no kern follower): layout kern.
+    \jlreqpar@kern@record
+    \jlreqpar@walk@step
+  \fi}
+% layout kern record: goes to the interline zone (currently the
+% interline kerns are simply consumed; the assembly replays glue and
+% penalties only, which suffices for baseline glue correctness).
+\def\jlreqpar@kern@record{\relax}
+
+% a line box: close the line's item range, stash the box.
+\def\jlreqpar@walk@box{%
+  \setbox\jlreqpar@wlinebox=\lastbox
+  \global\advance\jlreqpar@wline1
+  \expandafter\xdef\csname jlreqpar@LN@\the\jlreqpar@wline @to\endcsname
+    {\the\jlreqpar@wlastmark}%
+  \expandafter\xdef\csname jlreqpar@LN@\the\jlreqpar@wline @wd\endcsname
+    {\the\wd\jlreqpar@wlinebox}%
+  \jlreqpar@poolalloc\jlreqpar@regname
+  \expandafter\global\expandafter\setbox
+    \csname\jlreqpar@regname\endcsname=\copy\jlreqpar@wlinebox
+  \expandafter\xdef\csname jlreqpar@LN@\the\jlreqpar@wline @box\endcsname
+    {\jlreqpar@regname}%
+  % the NEXT (lower) line starts after this line's last item
+  \expandafter\xdef
+    \csname jlreqpar@LN@\the\numexpr\jlreqpar@wline+1\space @from\endcsname
+    {\the\numexpr\jlreqpar@wlastmark+1}%
+  \jlreqpar@walk@step}
+
+% interline glue (before the line below): record the FULL skip text
+% (\the<skip> keeps the plus/minus and fil orders verbatim).
+\def\jlreqpar@walk@glue{%
+  \global\jlreqpar@wskip=\lastskip
+  \unskip
+  \expandafter\xdef
+    \csname jlreqpar@LX@\the\numexpr\jlreqpar@wline+1\space @glue\endcsname
+    {\the\jlreqpar@wskip}%
+  \jlreqpar@walk@step}
+
+\def\jlreqpar@walk@pen{%
+  \expandafter\ifx\csname jlreqpar@LX@\the\numexpr\jlreqpar@wline+1\space
+      @pen\endcsname\relax
+    % first penalty of this zone: seed the list (COMMA separated)
+    \expandafter\xdef
+      \csname jlreqpar@LX@\the\numexpr\jlreqpar@wline+1\space @pen\endcsname
+      {\the\lastpenalty}%
+  \else
+    \expandafter\let\expandafter\jlreqpar@pentmp
+      \csname jlreqpar@LX@\the\numexpr\jlreqpar@wline+1\space @pen\endcsname
+    \expandafter\xdef
+      \csname jlreqpar@LX@\the\numexpr\jlreqpar@wline+1\space @pen\endcsname
+      {\the\lastpenalty,\jlreqpar@pentmp}%
+  \fi
+  \unpenalty
+  \jlreqpar@walk@step}
+
+\def\jlreqpar@walk@end{%
+  \ifnum\jlreqpar@wsum=0\else
+    \PackageError{jlreq-pdftex-paragraph}{marker~net~sum~nonzero}%
+      {Markers~must~sum~to~zero;~got~\the\jlreqpar@wsum sp.%
+       \MessageBreak \@ehc}%
+  \fi
+  % descending walk done; the driver (outside the walkbox) recounts.
+  \relax}
+
+% The walk numbered lines BOTTOM-UP (wline counts up while
+% descending). Re-key the walk data to TOP-DOWN line numbers.
+\def\jlreqpar@recount{%
+  \jlreqpar@a=\jlreqpar@wline % bottom-up count == total lines
+  \global\jlreqpar@nlines=\jlreqpar@wline
+  \jlreqpar@b=0
+  \jlreqpar@recount@loop
+  % assemble ONCE (the old tail-call shape ran it once per level).
+  \jlreqpar@assemble}
+\def\jlreqpar@recount@loop{%
+  \ifnum\jlreqpar@b<\jlreqpar@a
+    \advance\jlreqpar@b1
+    % bottom-up line b == top-down line (a-b+1)
+    \jlreqpar@c=\numexpr\jlreqpar@a-\jlreqpar@b+1\relax
+    \expandafter\let\expandafter\jlreqpar@tmp
+      \csname jlreqpar@LN@\the\jlreqpar@b @from\endcsname
+    \expandafter\xdef\csname jlreqpar@NL@\the\jlreqpar@c @from\endcsname
+      {\jlreqpar@tmp}%
+    \expandafter\let\expandafter\jlreqpar@tmp
+      \csname jlreqpar@LN@\the\jlreqpar@b @to\endcsname
+    \expandafter\xdef\csname jlreqpar@NL@\the\jlreqpar@c @to\endcsname
+      {\jlreqpar@tmp}%
+    \expandafter\let\expandafter\jlreqpar@tmp
+      \csname jlreqpar@LN@\the\jlreqpar@b @wd\endcsname
+    \expandafter\xdef\csname jlreqpar@NL@\the\jlreqpar@c @wd\endcsname
+      {\jlreqpar@tmp}%
+    \expandafter\let\expandafter\jlreqpar@tmp
+      \csname jlreqpar@LN@\the\jlreqpar@b @box\endcsname
+    \expandafter\xdef\csname jlreqpar@NL@\the\jlreqpar@c @box\endcsname
+      {\jlreqpar@tmp}%
+    % interline data BEFORE bottom-up line b sits between b and b-1;
+    % top-down it belongs after top-down line c=a-b+1 (the zone before
+    % the BOTTOM line, b=1, is the parskip zone -- dropped).
+    \expandafter\ifx\csname jlreqpar@LX@\the\jlreqpar@b @glue\endcsname\relax
+    \else
+      \expandafter\let\expandafter\jlreqpar@tmp
+        \csname jlreqpar@LX@\the\jlreqpar@b @glue\endcsname
+      \expandafter\xdef
+        \csname jlreqpar@LX@\the\jlreqpar@c @glue\endcsname{\jlreqpar@tmp}%
+    \fi
+    \expandafter\ifx\csname jlreqpar@LX@\the\jlreqpar@b @pen\endcsname\relax
+    \else
+      \expandafter\let\expandafter\jlreqpar@tmp
+        \csname jlreqpar@LX@\the\jlreqpar@b @pen\endcsname
+      \expandafter\xdef
+        \csname jlreqpar@LX@\the\jlreqpar@c @pen\endcsname{\jlreqpar@tmp}%
+    \fi
+    % tail recursion: when done, simply return (the driver assembles).
+    \expandafter\jlreqpar@recount@loop
+  \fi}
+% ============================================================================
+% 4. The strict flow (spanning environment: open -> body -> close)
+% ============================================================================
+\newbox\jlreqpar@measbox
+\newcount\jlreqpar@nlines
+
+% begin-code tail: opens the measurement vbox. The document body is
+% typeset ONCE inside it; the capture hooks record the items.
+\def\jlreqpar@measure@open{%
+  \global\jlreqpar@nitems=0
+  \global\jlreqpar@poolcur=0
+  \begingroup
+    \hsize=\jlreqpar@hsize
+    \parindent=\jlreqpar@parindent
+    \leftskip=\jlreqpar@leftskip
+    \rightskip=\jlreqpar@rightskip
+    \parfillskip=\jlreqpar@parfillskip
+    \baselineskip=\jlreqpar@baselineskip
+    \lineskip=\jlreqpar@lineskip
+    \lineskiplimit=\jlreqpar@lineskiplimit
+    \pretolerance=\jlreqpar@pretolerance
+    \tolerance=\jlreqpar@tolerance
+    \emergencystretch=\jlreqpar@emergencystretch
+    \linepenalty=\jlreqpar@linepenalty
+    \hyphenpenalty=\jlreqpar@hyphenpenalty
+    \exhyphenpenalty=\jlreqpar@exhyphenpenalty
+    \adjdemerits=\jlreqpar@adjdemerits
+    \doublehyphendemerits=\jlreqpar@doublehyphendemerits
+    \finalhyphendemerits=\jlreqpar@finalhyphendemerits
+    \looseness=\jlreqpar@looseness
+    \clubpenalty=\jlreqpar@clubpenalty
+    \widowpenalty=\jlreqpar@widowpenalty
+    \interlinepenalty=\jlreqpar@interlinepenalty
+    \brokenpenalty=\jlreqpar@brokenpenalty
+    \hangindent=\jlreqpar@hangindent
+    \hangafter=\jlreqpar@hangafter
+    \ifx\parshapelength\undefined\else
+      \ifnum\jlreqpar@pshapelen>0
+        \expandafter\parshape\number\jlreqpar@pshapelen\jlreqpar@pshapedata
+      \fi
+    \fi
+    \parskip=0pt        % measurement parskip = 0
+    \spaceskip=\jlreqpar@spaceskip
+    \xspaceskip=\jlreqpar@xspaceskip
+    \jlreqpar@setup@hooks
+    % NOTE: boxing every 1zw glyph (\jlreqpdf@boxglyphs=1) was
+    % probed and REJECTED for the default path -- it changes the
+    % inter-glyph node stream enough to alter native line breaks
+    % (overfull regressions in strict-basic). The distribution engine
+    % instead walks what IS walkable: punct-class glyphs are already
+    % JFM-width boxes natively, and lines whose interior still
+    % holds bare chars/whatsits/ins nodes are SKIPPED (native line
+    % box kept; \jlreqpar@distskip). Setting the flag remains
+    % available for the follow-up that boxes latin words as items.
+    \global\jlreqpdf@boxglyphs=1
+    \global\setbox\jlreqpar@measbox=\vbox\bgroup}
+
+% end-code: closes the measurement vbox, then runs the strict flow.
+\def\jlreqpar@measure@close{%
+      % the last glyph's class/zw for aw_step1_last are captured by the
+      % placeglyph hook (\jlreqpar@lastcls/\jlreqpar@lastzw) -- reading
+      % \jlreqpdf@lastclass HERE is wrong: the trailing input space has
+      % already turned it into 93 (probed).
+      \par
+    \egroup
+    \jlreqpar@teardown@hooks
+    % restore the native glyph mode for the text AFTER the environment
+    % (the measurement used boxed glyphs; the outer native paragraphs
+    % must keep the unboxed stream)
+    \global\jlreqpdf@boxglyphs=0
+    % line count is recovered by the walk (recount sets \nlines).
+  \endgroup
+  \jlreqpar@walk}
+
+% ---------------------------------------------------------------------------
+% 4b. item capture hooks
+% ---------------------------------------------------------------------------
+\def\jlreqpar@setup@hooks{%
+  \global\jlreqpar@bdseq=0
+  \jlreqpar@hook@emitters
+  \jlreqpar@hook@hbox
+  \jlreqpar@hook@explicit
+  \jlreqpar@hook@forbidden}
+\def\jlreqpar@teardown@hooks{%
+  \jlreqpar@unhook@emitters
+  \jlreqpar@unhook@hbox
+  \jlreqpar@unhook@explicit
+  \jlreqpar@unhook@forbidden}
+
+% marker: net-zero kern pair via \vadjust (horizontal mode only)
+\def\jlreqpar@mark{%
+  \vadjust{\kern\the\jlreqpar@nitems sp\kern-\the\jlreqpar@nitems sp}}
+
+% --- \mbox/\makebox -> one opaque item --------------------------------------
+\def\jlreqpar@hook@hbox{%
+  \let\jlreqpar@saved@mbox\mbox
+  \let\jlreqpar@saved@makebox\makebox
+  \def\mbox{\jlreqpar@cap@mbox}%
+  \def\makebox{\jlreqpar@cap@makebox}}
+\def\jlreqpar@unhook@hbox{%
+  \let\mbox\jlreqpar@saved@mbox
+  \let\makebox\jlreqpar@saved@makebox}
+\long\def\jlreqpar@cap@mbox#1{%
+  \jlreqpar@cap@opaque{\hbox{#1}}}
+\def\jlreqpar@cap@makebox{%
+  \@ifnextchar[{\jlreqpar@cap@makebox@a}{\jlreqpar@cap@makebox@plain}}
+\long\def\jlreqpar@cap@makebox@plain#1{%
+  \jlreqpar@cap@opaque{\hbox{#1}}}
+\def\jlreqpar@cap@makebox@a[#1]{%
+  \@ifnextchar[{\jlreqpar@cap@makebox@b[#1]}{\jlreqpar@cap@makebox@w[#1]}}
+\long\def\jlreqpar@cap@makebox@w[#1]#2{%
+  \jlreqpar@skipval=#1\relax
+  \jlreqpar@cap@opaque{\hb@xt@ \jlreqpar@skipval{#2}}}
+% makebox with an explicit position: the kernel's \mb@xt@ is not
+% available in this format build (probed: undefined); realize the
+% four positions with \hb@xt@ and \hss spacers directly.
+\long\def\jlreqpar@cap@makebox@b[#1][#2]#3{%
+  \jlreqpar@cap@opaque{\hb@xt@ #1{%
+    \def\jlreqpar@mbpos{#2}%
+    \def\jlreqpar@mbtmp{s}\ifx\jlreqpar@mbpos\jlreqpar@mbtmp
+      \hss#3\hss
+    \else
+      \def\jlreqpar@mbtmp{l}\ifx\jlreqpar@mbpos\jlreqpar@mbtmp
+        \hss#3%
+      \else
+        \def\jlreqpar@mbtmp{c}\ifx\jlreqpar@mbpos\jlreqpar@mbtmp
+          \hss#3\hss
+        \else
+          #3\hss
+        \fi
+      \fi
+    \fi}}}
+% capture: build the box ONCE into a pool register, record the item and
+% the marker, then CONTRIBUTE the same box to the measurement stream.
+\long\def\jlreqpar@cap@opaque#1{%
+  \jlreqpar@poolalloc\jlreqpar@regname
+  \expandafter\setbox\csname\jlreqpar@regname\endcsname=#1%
+  \jlreqpar@F@kind=5
+  \edef\jlreqpar@F@box{\jlreqpar@regname}%
+  \setbox\jlreqpar@curbox=\expandafter\copy
+    \csname\jlreqpar@regname\endcsname
+  \jlreqpar@readpairstate
+  \jlreqpar@itemsave
+  \jlreqpar@mark
+  \expandafter\box\csname\jlreqpar@regname\endcsname}
+\def\jlreqpar@regname{jlreqpar@PB@0}
+
+% snapshot the CURRENT boundary state into the field scratch.
+\def\jlreqpar@readpairstate{%
+  \jlreqpar@F@first=\jlreqpdf@lastclass
+  \jlreqpar@F@last=\jlreqpdf@lastclass
+  \jlreqpar@F@spri=0
+  \jlreqpar@F@shpri=0
+  \def\jlreqpar@F@nat{0pt}%
+  \def\jlreqpar@F@str{0pt}%
+  \def\jlreqpar@F@shr{0pt}%
+  \def\jlreqpar@F@knat{0pt}%
+  \def\jlreqpar@F@kstr{0pt}%
+  \def\jlreqpar@F@kshr{0pt}%
+  \jlreqpar@F@kin=0
+  \def\jlreqpar@F@ea{}%
+  \jlreqpar@da=\jlreq@jareg
+  \edef\jlreqpar@F@zw{\the\jlreqpar@da}%
+  \edef\jlreqpar@F@font{\the\font}%
+  \def\jlreqpar@F@extra{}}
+
+% --- explicit glue constructs -----------------------------------------------
+% \hspace is an explicit glue ITEM (tier 50 at fill time): captured with
+% a marker. The break commands (\allowbreak/\nobreak/\linebreak/\penalty)
+% are NOT hooked: they are not items, they keep their native node
+% semantics in the shadow paragraph, and hooking them interferes with
+% the rules backend's internal use of the same commands (probed: the
+% candidate series with brackets hangs when \allowbreak/\nobreak are
+% wrapped -- the backend/CJK layer calls them inside contexts where a
+% \vadjust marker is illegal). The walk recovers them natively in the
+% interline zone; user penalties are never clamped.
+\def\jlreqpar@hook@explicit{%
+  \let\jlreqpar@saved@hspace\hspace
+  \def\hspace{\jlreqpar@cap@hspace}}
+\def\jlreqpar@unhook@explicit{%
+  \let\hspace\jlreqpar@saved@hspace}
+% NOTE: no \@ifstar at all -- after a CJK glyph the rules backend's
+% peek has already futurelet once and any following \@ifnextchar
+% scan mis-parses (probed: "Missing number {" / "Illegal unit").
+% The star form differs only by \ignorespaces; a textual star check
+% is done here without \@ifnextchar.
+\def\jlreqpar@cap@hspace{\futurelet\jlreqpar@nxt\jlreqpar@cap@hs@p}
+\def\jlreqpar@cap@hs@p{%
+  \ifx\jlreqpar@nxt*%
+    \expandafter\jlreqpar@cap@hs@st
+  \else
+    \expandafter\jlreqpar@cap@hs@ns
+  \fi}
+\def\jlreqpar@cap@hs@st*#1{\jlreqpar@cap@skip{#1}}
+\def\jlreqpar@cap@hs@ns#1{\jlreqpar@cap@skip{#1}}
+\newskip\jlreqpar@skipval
+\def\jlreqpar@cap@skip#1{%
+  % NOTE: \skip={...} (a brace-group glue) mis-scans in this backend
+  % (probed: "Missing number {" and a 0pt assignment); route the glue
+  % through a scratch macro and assign brace-free.
+  \def\jlreqpar@skiparg{#1}%
+  \jlreqpar@skipval=\jlreqpar@skiparg
+  \hskip\jlreqpar@skipval
+  \jlreqpar@mark}
+
+% --- forbidden constructs: SPECIFIC errors at itemization time -------
+% The strict input model rejects display math, floats, inserts
+% (footnotes/marginpars) and verbatim inside the environment: each
+% would contribute material outside the item stream. The guards fire
+% with a jlreq-pdftex-paragraph error naming the construct.
+\def\jlreqpar@forbidden@err#1{%
+  \PackageError{jlreq-pdftex-paragraph}{#1~is~not~allowed~inside~jlreqparagraph}{%
+    The~strict~input~model~rejects~it:~display~math,~floats,~inserts\MessageBreak
+    (footnotes,~marginpar)~and~verbatim~contribute~material~outside~the\MessageBreak
+    item~stream.~Use~them~outside~the~environment.\MessageBreak \@ehc}}
+
+\def\jlreqpar@hook@forbidden{%
+  \let\jlreqpar@saved@footnote\footnote
+  \let\jlreqpar@saved@footnotemark\footnotemark
+  \let\jlreqpar@saved@marginpar\marginpar
+  \let\jlreqpar@saved@bracket\[%
+  \def\footnote{\jlreqpar@forbidden@err{footnote}}%
+  \def\footnotemark{\jlreqpar@forbidden@err{footnotemark}}%
+  \def\marginpar{\jlreqpar@forbidden@err{marginpar}}%
+  \def\[{\jlreqpar@forbidden@err{display~math}}}
+\def\jlreqpar@unhook@forbidden{%
+  \let\footnote\jlreqpar@saved@footnote
+  \let\footnotemark\jlreqpar@saved@footnotemark
+  \let\marginpar\jlreqpar@saved@marginpar
+  \let\[\jlreqpar@saved@bracket}
+% ============================================================================
+% 6. End-adjust recovery: selected e per line (natural repack - naturals)
+% ============================================================================
+\newdimen\jlreqpar@eadj      % recovered selected e (sp)
+\newcount\jlreqpar@isfinal
+\newdimen\jlreqpar@tailk
+\newskip\jlreqpar@gskip
+\def\jlreqpar@lineref{xx}
+
+\def\jlreqpar@recover@all{%
+  \jlreqpar@a=0
+  \jlreqpar@recover@loop}
+\def\jlreqpar@recover@loop{%
+  \ifnum\jlreqpar@a<\jlreqpar@nlines
+    \advance\jlreqpar@a1
+    \jlreqpar@recover@line{\the\jlreqpar@a}%
+    \expandafter\jlreqpar@recover@loop
+  \fi}
+
+\def\jlreqpar@recover@line#1{%
+  \expandafter\let\expandafter\jlreqpar@lineref
+    \csname jlreqpar@NL@#1@box\endcsname
+  \global\jlreqpar@isfinal=0
+  {\jlreqpar@rec@tail{#1}}}
+
+% tail destructure. The line box is an HBOX: \unhcopy it into a fresh
+% hbox UNDER CONSTRUCTION and run the pop loop INSIDE it, so the pops
+% (\unpenalty/\unkern/\unskip) act on the COPIED line's node list --
+% NOT on the enclosing vertical list (probed twice: an outside loop
+% popped the page list, corrupting the layout and typesetting stray
+% material).
+\def\jlreqpar@rec@tail#1{%
+  \jlreqpar@tailk=0pt
+  \setbox\jlreqpar@curbox=\hbox{%
+    \expandafter\expandafter\expandafter\unhcopy
+      \csname\jlreqpar@lineref\endcsname
+    \jlreqpar@tail@loop}}
+
+% The loop is ARGUMENT-FREE: the continuation \jlreqpar@tnext is
+% called with NO argument. (An earlier shape passed {<line>} to every
+% step; at exit the leftover \relax{1} TYPESET the line number onto
+% the page -- probed.)
+\def\jlreqpar@tail@loop{%
+  \ifnum\lastnodetype=\jlreqpar@t@pen
+    \unpenalty
+    \let\jlreqpar@tnext\jlreqpar@tail@loop
+  \else
+    \ifnum\lastnodetype=\jlreqpar@t@kern
+      \jlreqpar@da=\lastkern
+      \unkern
+      \advance\jlreqpar@tailk\jlreqpar@da
+      \let\jlreqpar@tnext\jlreqpar@tail@loop
+    \else
+      \ifnum\lastnodetype=\jlreqpar@t@glue
+        \jlreqpar@gskip=\lastskip
+        \unskip
+        \ifnum\gluestretchorder\jlreqpar@gskip>0
+          \global\jlreqpar@isfinal=1
+        \fi
+        \let\jlreqpar@tnext\jlreqpar@tail@loop
+      \else
+        \ifnum\lastnodetype=\jlreqpar@t@box
+          \let\jlreqpar@tnext\relax
+        \else
+          \ifnum\lastnodetype=\jlreqpar@t@char
+            % a char node: the line's CONTENT begins -- the tail
+            % series is complete.
+            \let\jlreqpar@tnext\relax
+          \else
+            \ifnum\lastnodetype=-1
+              \let\jlreqpar@tnext\relax
+            \else
+              \PackageError{jlreq-pdftex-paragraph}
+                {unknown~node~in~line~tail}{%
+                Node~type~\the\lastnodetype\space in~a~line~tail.~The%
+                \MessageBreak strict~input~model~guarantees~boxes/~
+                glues/kerns/penalties~and~glyphs.\MessageBreak \@ehc}%
+              \let\jlreqpar@tnext\relax
+            \fi
+          \fi
+        \fi
+      \fi
+    \fi
+  \fi
+  \jlreqpar@tnext}
+
+% The recovered e of line #1 lands in the global
+% \jlreqpar@E@<n> after the tail walk.
+\def\jlreqpar@E@save#1{%
+  \expandafter\xdef\csname jlreqpar@E@#1\endcsname
+    {\the\jlreqpar@tailk}%
+  \expandafter\xdef\csname jlreqpar@FIN@#1\endcsname
+    {\the\jlreqpar@isfinal}}
+
+% ============================================================================
+% 9. Assembly and output
+% ============================================================================
+% For each top-down line: re-emit the line content in source order from
+% the ORIGINAL item boxes (moved once), with the boundary glue series
+% re-emitted at their FINAL sizes (tier fill result), the selected
+% end_adjust kern at the line end (non-final: native; final: the
+% aw_step1_last winner), the parfillskip/rightskip tails rebuilt from
+% the snapshot, and the interline glue/penalties replayed. The line is
+% packed to the measured width; the first line box is appended to the
+% outer vlist (ambient parskip once, outer prevdepth baseline glue),
+% the remaining lines follow with the walked interline data.
+\newcount\jlreqpar@outln
+\newbox\jlreqpar@outlinebox
+
+% ---- distribution engine -------------------------------------------
+% TIER SCALE (ltj-adjust.lua:79-101 + luatexja-adjust.sty:120-129 +
+% jlreq.cls:583-585): a glue's tier value is
+%     JFM pair glue ........... spri*10 / shpri*10  (jlreq -3..2 -> -30..20)
+%     kanjiskip companion ..... 0 / 0
+%     xkanjiskip-class pair ... 10 / -30
+%     explicit/word/skip glue  50 / 50
+% HIGHER value fills FIRST (aw_step2 walks at2pr tiers i=1.. where 1
+% is the largest value); the partially filled tier splits
+% proportionally; lower tiers get 0. Stretch and shrink are separate
+% passes; finite shrink beyond capacity is reported as a defect.
+%
+% Emitter-side recording: during measurement the module wraps
+% \jlreqpdf@emitglue@do / \jlreqpdf@emitkcomp (the rules backend's
+% glue emitters) so EVERY pair/companion glue is recorded, in
+% creation order, into a boundary table:
+%   \jlreqpar@BD@<seq>  {nat}{str}{shr}{sord}{shord}{stier}{shtier}{role}
+% role: 1 = JFM pair, 2 = kanjiskip companion, 3 = xkanjiskip-class
+% pair, 4 = explicit/space/skipzone (assigned at line assembly).
+% The xkanjiskip class is identified by the boundary's classes (one
+% side 27); kanjiskip companions by the emitkcomp wrapper; the
+% fallback (fbmode=1) pair is the (x)kanjiskip substitute itself.
+
+% \jlreqpar@gdef{<name>}{<body>}: global def by csname name (digits ok)
+\def\jlreqpar@gdef#1#2{%
+  \global\expandafter\def\csname #1\endcsname{#2}}
+% \jlreqpar@gxdef{<name>}{<body>}: global xdef by csname name
+\def\jlreqpar@gxdef#1#2{%
+  \global\expandafter\edef\csname #1\endcsname{#2}}
+
+\newif\ifjlreqpar@inv@stop
+\newcount\jlreqpar@diston \global\jlreqpar@diston=1
+\newif\ifjlreqpar@distskip
+\newcount\jlreqpar@distphase \global\jlreqpar@distphase=4
+\newcount\jlreqpar@dline \global\jlreqpar@dline=0
+\newcount\jlreqpar@bdseq      % boundary table cursor
+\newcount\jlreqpar@gk         % per-line glue index
+\newcount\jlreqpar@role
+\newdimen\jlreqpar@lnwd       % measured line width
+\newdimen\jlreqpar@natsum     % natural sum of the line's nodes
+\newdimen\jlreqpar@rem        % remainder to distribute
+
+% install/uninstall the emitter wrappers (measurement only)
+\def\jlreqpar@hook@emitters{%
+  \let\jlreqpar@saved@emitglue@do\jlreqpdf@emitglue@do
+  \let\jlreqpar@saved@emitkcomp\jlreqpdf@emitkcomp
+  \let\jlreqpar@saved@emitglue\jlreqpdf@emitglue
+  \def\jlreqpdf@emitglue@do{\jlreqpar@rec@pair\jlreqpar@saved@emitglue@do}%
+  \def\jlreqpdf@emitkcomp{\jlreqpar@rec@kanji\jlreqpar@saved@emitkcomp}%
+  % the FALLBACK pair path (fbmode=1: an undefined pair such as the
+  % kanji-kanji pair@0@0 whose glue is the live \jlreqkanjiskip
+  % verbatim) never reaches emitglue@do -- wrap the entry point so
+  % the fallback glue is recorded too (probed: without this every
+  % kanji-kanji boundary was missing from BD and classified as
+  % explicit tier 50 instead of the kanjiskip tier 0).
+  \def\jlreqpdf@emitglue{%
+    \ifnum\jlreqpdf@fbmode=1
+      \jlreqpar@rec@fallback
+      \hskip\jlreqpdf@fbskip
+    \else
+      \expandafter\jlreqpar@saved@emitglue
+    \fi}%
+  % capture each placed glyph's class+zw for the aw_step1_last final
+  % selection (the LAST placed glyph's class is the tail boundary's
+  % class; trailing input spaces turn lastclass into 93 before the
+  % env end-code runs -- probed).
+  \let\jlreqpar@saved@placeglyph\jlreqpdf@placeglyph
+  \def\jlreqpdf@placeglyph##1##2{%
+    \xdef\jlreqpar@lastcls{\the\jlreqpdf@curclass}%
+    \xdef\jlreqpar@lastzw{\the\jlreq@jareg}%
+    \jlreqpar@saved@placeglyph{##1}{##2}}%
+}
+\def\jlreqpar@unhook@emitters{%
+  \let\jlreqpdf@emitglue@do\jlreqpar@saved@emitglue@do
+  \let\jlreqpdf@emitkcomp\jlreqpar@saved@emitkcomp
+  \let\jlreqpdf@emitglue\jlreqpar@saved@emitglue
+  \let\jlreqpdf@placeglyph\jlreqpar@saved@placeglyph}
+% record the fallback (x)kanjiskip substitute glue: role 2 (or 3 for
+% the xkanjiskip side), tier 0/0 (the kanjiskip scale)
+\def\jlreqpar@rec@fallback{%
+  \global\advance\jlreqpar@bdseq1
+  \jlreqpar@role=2
+  \ifnum\jlreqpdf@lastclass=27 \jlreqpar@role=3
+  \else\ifnum\jlreqpdf@curclass=27 \jlreqpar@role=3
+  \fi\fi
+  \jlreqpar@da=\jlreqpdf@fbskip
+  \jlreqpar@db=\gluestretch\jlreqpdf@fbskip
+  \jlreqpar@dc=\glueshrink\jlreqpdf@fbskip
+  \expandafter\xdef\csname jlreqpar@BD@\the\jlreqpar@bdseq\endcsname
+    {{\the\jlreqpar@da}{\the\jlreqpar@db}{\the\jlreqpar@dc}%
+     {\the\gluestretchorder\jlreqpdf@fbskip}%
+     {\the\glueshrinkorder\jlreqpdf@fbskip}%
+     {0}{0}{\the\jlreqpar@role}}}
+
+% record a JFM pair glue (role by the boundary's classes)
+\def\jlreqpar@rec@pair{%
+  \global\advance\jlreqpar@bdseq1
+  \jlreqpar@role=1
+  \ifnum\jlreqpdf@lastclass=27 \jlreqpar@role=3
+  \else\ifnum\jlreqpdf@curclass=27 \jlreqpar@role=3
+  \fi\fi
+  \ifnum\jlreqpdf@fbmode=1
+    % fallback: the pair glue IS the (x)kanjiskip substitute
+    \ifnum\jlreqpar@role=3 \else \jlreqpar@role=2 \fi
+  \fi
+  \jlreqpar@da=\jlreqpdf@nat
+  \expandafter\xdef\csname jlreqpar@BD@\the\jlreqpar@bdseq\endcsname
+    {{\the\jlreqpar@da}{\the\jlreqpdf@str}{\the\jlreqpdf@shr}%
+     {\the\gluestretchorder\jlreqpdf@str}%
+     {\the\glueshrinkorder\jlreqpdf@shr}%
+     {\the\numexpr\jlreqpdf@pairspri*10\relax}%
+     {\the\numexpr\jlreqpdf@pairshpri*10\relax}%
+     {\the\jlreqpar@role}}}
+% record a kanjiskip companion glue (tier 0/0, role 2)
+\def\jlreqpar@rec@kanji{%
+  \global\advance\jlreqpar@bdseq1
+  \jlreqpar@role=2
+  \expandafter\xdef\csname jlreqpar@BD@\the\jlreqpar@bdseq\endcsname
+    {{\the\jlreqpdf@knat}{\the\jlreqpdf@kstr}{\the\jlreqpdf@kshr}%
+     {\the\gluestretchorder\jlreqpdf@kstr}%
+     {\the\glueshrinkorder\jlreqpdf@kshr}%
+     {0}{0}{2}}}
+
+\def\jlreqpar@assemble{%
+  \jlreqpar@recover@all
+  % per line: E@n and FIN@n
+  \jlreqpar@a=0
+  \jlreqpar@Esave@loop
+  % (aw_step1_last final selection runs INSIDE the fill, where the
+  % natsum/lnwd of each line are live -- the old no-arg call here
+  % mis-grabbed \jlreqpar@distribute@all as #1; probed.)
+  \jlreqpar@distribute@all
+  \jlreqpar@emit@lines}
+\def\jlreqpar@Esave@loop{%
+  \ifnum\jlreqpar@a<\jlreqpar@nlines
+    \advance\jlreqpar@a1
+    \jlreqpar@E@save{\the\jlreqpar@a}%
+    \expandafter\jlreqpar@Esave@loop
+  \fi}
+
+% final-line selection (aw_step1_last): the plan's bullet 5. For the
+% FINAL line the end_adjust candidate is re-chosen by the parfillskip
+% condition: among the last boundary's ascending candidates e_1..e_m,
+% pick the one minimizing the parfill slack
+%   slack(e) = lnwd - natsum - (e - e_native)
+%           = rem + e_native - e
+% lexicographically by (|slack|, |e|, e). All candidates face the same
+% parfill stretch total (fil), so ltj's first key |slack/total| keeps
+% the |slack| order; the (|e|, e) tiebreaks follow. The WINNER lands in
+% \jlreqpar@F@win (empty when no candidate list / no change needed).
+% The rebuild applies (e_win - e_native) to the final line's tail kern.
+\def\jlreqpar@final@sel#1{%
+  \global\let\jlreqpar@F@win\relax
+  % the last glyph's class (captured at measure close) drives the
+  % candidate series; zw from the same capture.
+  \expandafter\ifx\csname jlreqpdf@jfm@endadj@\jlreqpar@lastcls\endcsname\relax
+    % no end_adjust data for this class: nothing to re-choose
+  \else
+    \jlreqpar@finrank{\jlreqpar@lastcls}%
+  \fi}
+\newdimen\jlreqpar@finrem
+% defaults until the first placed glyph overwrites them (probed: a
+% run where finrank fired before any glyph hook write crashed with
+% an undefined lastzw)
+\def\jlreqpar@lastcls{0}
+\def\jlreqpar@lastzw{10pt}
+\newdimen\jlreqpar@finzw
+\newdimen\jlreqpar@fincand
+\newdimen\jlreqpar@finbestslack
+\newdimen\jlreqpar@dc
+\newdimen\jlreqpar@dd
+\newdimen\jlreqpar@finslack
+\newif\ifjlreqpar@finsilent
+\newdimen\jlreqpar@finbest
+\newif\ifjlreqpar@finhave
+% rank the class's two candidate fields (the generated endadj data
+% has EXACTLY two fields per class: {{e1}{e2}} -- verified in the .def;
+% classes 2/5/6/7). Direct unpack, no recursion/sentinel walkers (an
+% earlier custom walker mis-gobbled its tail group and leaked an \fi).
+\def\jlreqpar@finrank#1{%
+  \jlreqpar@finrem=\dimexpr\jlreqpar@lnwd-\jlreqpar@natsum\relax
+  \jlreqpar@da=\csname jlreqpar@E@\the\jlreqpar@nlines\endcsname\relax
+  \jlreqpar@finrem=\dimexpr\jlreqpar@finrem+\jlreqpar@da\relax
+  \jlreqpar@finhavefalse
+  \jlreqpar@finzw=\jlreqpar@lastzw\relax
+  \jlreqpar@finbest=0pt
+  \jlreqpar@finbestslack=0pt
+  \expandafter\jlreqpar@finunpack
+    \csname jlreqpdf@jfm@endadj@#1\endcsname
+  \jlreqpar@fin@finish}
+% #1 = the OUTER group {{f1}{f2}}; strip once so the two field groups
+% become the next two arguments
+\def\jlreqpar@finunpack#1{%
+  \expandafter\jlreqpar@finunpack@a#1}
+\def\jlreqpar@finunpack@a#1#2{%
+  \jlreqpar@finfield{#1}%
+  \jlreqpar@finfield{#2}}
+% evaluate one candidate field: e = ratio * zw; slack = finrem - e
+\def\jlreqpar@finfield#1{%
+  \jlreqpar@fincand=#1\jlreqpar@finzw\relax
+  \jlreqpar@finslack=\dimexpr\jlreqpar@finrem-\jlreqpar@fincand\relax
+  \ifjlreqpar@finhave
+    \jlreqpar@fin@cmp
+  \else
+    \jlreqpar@finhavetrue
+    \jlreqpar@finbest=\jlreqpar@fincand
+    \jlreqpar@finbestslack=\jlreqpar@finslack
+  \fi}
+
+% lexicographic (|slack|, |e|, e): smaller |slack| wins; tie: smaller
+% |e|; tie: smaller e. natsum includes the native e (the tail kern),
+% so finrem already carries +e_native; slack(e) = finrem - e.
+\def\jlreqpar@fin@cmp{%
+  \jlreqpar@da=\jlreqpar@finslack
+  \ifdim\jlreqpar@da<0pt \jlreqpar@da=-\jlreqpar@da \fi
+  \jlreqpar@db=\jlreqpar@finbestslack
+  \ifdim\jlreqpar@db<0pt \jlreqpar@db=-\jlreqpar@db \fi
+  \ifdim\jlreqpar@da<\jlreqpar@db
+    \jlreqpar@finbest=\jlreqpar@fincand
+    \jlreqpar@finbestslack=\jlreqpar@finslack
+  \else
+    \ifdim\jlreqpar@da=\jlreqpar@db
+      \jlreqpar@dc=\jlreqpar@fincand
+      \ifdim\jlreqpar@dc<0pt \jlreqpar@dc=-\jlreqpar@dc \fi
+      \jlreqpar@dd=\jlreqpar@finbest
+      \ifdim\jlreqpar@dd<0pt \jlreqpar@dd=-\jlreqpar@dd \fi
+      \ifdim\jlreqpar@dc<\jlreqpar@dd
+        \jlreqpar@finbest=\jlreqpar@fincand
+        \jlreqpar@finbestslack=\jlreqpar@finslack
+      \else
+        \ifdim\jlreqpar@dc=\jlreqpar@dd
+          \ifdim\jlreqpar@fincand<\jlreqpar@finbest
+            \jlreqpar@finbest=\jlreqpar@fincand
+            \jlreqpar@finbestslack=\jlreqpar@finslack
+          \fi
+        \fi
+      \fi
+    \fi
+  \fi}
+% after the walk: the winner replaces the native e only when different
+\def\jlreqpar@fin@finish{%
+  \ifjlreqpar@finhave
+    \jlreqpar@da=\csname jlreqpar@E@\the\jlreqpar@nlines\endcsname\relax
+    \expandafter\ifx\csname jlreqpar@verifywd\endcsname\relax
+      \jlreqpar@finsilenttrue
+    \else
+      \jlreqpar@finsilentfalse
+    \fi
+    \ifdim\jlreqpar@finbest=\jlreqpar@da
+      \ifjlreqpar@finsilent\else
+        \message{[FINS: native-e=\the\jlreqpar@da\space
+          win-e=same\space
+          rem=\the\jlreqpar@finrem\space]}%
+      \fi
+    \else
+      \xdef\jlreqpar@F@win{\the\jlreqpar@finbest}%
+      \ifjlreqpar@finsilent\else
+        \message{[FINS: native-e=\the\jlreqpar@da\space
+          win-e=\the\jlreqpar@finbest\space
+          rem=\the\jlreqpar@finrem\space
+          slack=\the\jlreqpar@finbestslack]}%
+      \fi
+    \fi
+  \fi}
+
+% ---------------------------------------------------------------------------
+% 9a. line emission: native-measured line boxes + walked interline data
+% ---------------------------------------------------------------------------
+% Each top-down line's content is the NATIVE-measured line box (its
+% break, its end_adjust candidate and its glue stretch all chosen by
+% the native breaker from the rules backend's exact node stream). The
+% emission appends them to the outer vlist:
+%   * the AMBIENT parskip is inserted once before the first line
+%     (measurement parskip was 0),
+%   * the first line box is appended as a normal box so the OUTER
+%     prevdepth drives the baselineskip glue (no extra baseline gap),
+%   * between lines the walked interline penalties and glue are
+%     replayed in their walked order,
+%   * prevdepth/prevgraf are updated from the last line.
+\def\jlreqpar@emit@lines{%
+  \ifnum\jlreqpar@nlines=0
+    \PackageError{jlreq-pdftex-paragraph}{empty~strict~paragraph}{%
+      The~jlreqparagraph~environment~produced~no~lines.\MessageBreak
+      \@ehc}%
+  \else
+    % return to the outer VERTICAL mode: the environment was opened
+    % inside the surrounding paragraph (horizontal mode); the line
+    % boxes are appended to the outer VLIST.
+    \par
+    % ambient parskip: ONCE, before the first line (measurement was 0)
+    \ifdim\jlreqpar@parskip=0pt\else
+      \vskip\jlreqpar@parskip
+    \fi
+    \jlreqpar@a=0
+    \jlreqpar@emit@loop
+    % outer state: prevdepth from the last line, prevgraf = nlines
+    \prevdepth=\jlreqpar@lastdepth
+    \prevgraf=\jlreqpar@nlines
+  \fi}
+
+\newdimen\jlreqpar@lastdepth
+\def\jlreqpar@emit@loop{%
+  \ifnum\jlreqpar@a<\jlreqpar@nlines
+    \advance\jlreqpar@a1
+    \expandafter\ifx\csname jlreqpar@NL@\the\jlreqpar@a @box\endcsname\relax
+    \else
+      % NOTE the DOUBLE \csname: \jlreqpar@NL@<n>@box stores the box
+      % register NAME as text (jlreqpar@PB@k); the outer \csname turns
+      % that text back into the register control sequence. ONE
+      % \expandafter per primitive suffices for the double \csname
+      % (the outer \csname expands the inner one while building).
+      \expandafter\setbox\jlreqpar@curbox=\expandafter\copy
+        \csname\csname jlreqpar@NL@\the\jlreqpar@a @box\endcsname\endcsname
+      \jlreqpar@lastdepth=\dp\jlreqpar@curbox
+      \expandafter\box
+        \csname\csname jlreqpar@NL@\the\jlreqpar@a @box\endcsname\endcsname
+    \fi
+    % replay the interline penalties + glue walked after this line
+    \expandafter\ifx\csname jlreqpar@LX@\the\jlreqpar@a @pen\endcsname\relax
+    \else
+      \expandafter\jlreqpar@emit@pens\expandafter
+        {\csname jlreqpar@LX@\the\jlreqpar@a @pen\endcsname}%
+    \fi
+    \expandafter\ifx\csname jlreqpar@LX@\the\jlreqpar@a @glue\endcsname\relax
+    \else
+      \expandafter\jlreqpar@emit@iglue
+        \csname jlreqpar@LX@\the\jlreqpar@a @glue\endcsname
+    \fi
+    \expandafter\jlreqpar@emit@loop
+  \fi}
+
+% penalty list replay: "<p1>,<p2>,..." comma separated (the walk stores
+% it that way). The kernel's \pl@for walker handles the empty case.
+\def\jlreqpar@emit@pens#1{%
+  \@for\jlreqpar@tmp:=#1\do{%
+    \penalty\jlreqpar@tmp\relax}}
+
+% interline glue replay: the store is the FULL walked skip text
+% (\the<skip>: natural, plus/minus and fil orders verbatim).
+\def\jlreqpar@emit@iglue#1{%
+  \jlreqpar@wskip=#1\relax
+  \vskip\jlreqpar@wskip}
+
+
+% ---------------------------------------------------------------------------
+% 10. Tier distribution (per line)
+% ---------------------------------------------------------------------------
+% Storage per line n, reverse-walked node index j (1 = the TAIL node):
+%   \jlreqpar@NW@<n>@<j>  node type (1 box, 11 glue, 12 kern, 13 pen)
+%   \jlreqpar@NS@<n>@<j>  {size-data} glue: {nat}{str}{shr}{sord}{shord}
+%   \jlreqpar@NZ@<n>      node count of line n
+% The glue INDEXING for the fill is FORWARD (k = 1..GN), built by
+% reversing; per glue k:
+%   \jlreqpar@GI@<n>@<k>  {nat}{str}{shr}{sord}{shord}{stier}{shtier}{role}
+%   \jlreqpar@GD@<n>@<k>  final delta (sp text; stretch>0 / shrink<0)
+%   \jlreqpar@GN@<n>      glue count
+\newcount\jlreqpar@nj
+\newcount\jlreqpar@bdcur    % boundary-table cursor for classification
+\newcount\jlreqpar@bdstart  % boundary index where the line's slice begins
+\newskip\jlreqpar@gsnat \newdimen\jlreqpar@gsstr \newdimen\jlreqpar@gsshr
+\newcount\jlreqpar@gssord \newcount\jlreqpar@gshord
+\newcount\jlreqpar@gstier \newcount\jlreqpar@gshtier
+\newcount\jlreqpar@tval
+\newdimen\jlreqpar@tiercap
+\newdimen\jlreqpar@need
+
+\def\jlreqpar@distribute@all{%
+  \global\jlreqpar@dline=0
+  \jlreqpar@distribute@loop}
+\def\jlreqpar@distribute@loop{%
+  % DEDICATED counter: \jlreqpar@a is shared scratch (the rebuild's
+  % penalty branch clobbers it; a clobbered loop counter produced
+  % line=-1 arguments and cascaded illegal-unit errors -- probed).
+  \ifnum\jlreqpar@dline<\jlreqpar@nlines
+    \global\advance\jlreqpar@dline1
+    \edef\jlreqpar@lnnum{\the\jlreqpar@dline}%
+    \ifnum\jlreqpar@distphase>0
+      \expandafter\jlreqpar@invline\expandafter{\jlreqpar@lnnum}%
+    \fi
+    \ifjlreqpar@distskip\else
+      \ifnum\jlreqpar@distphase>1
+        \expandafter\jlreqpar@classify\expandafter{\jlreqpar@lnnum}%
+      \fi
+      \ifnum\jlreqpar@distphase>2
+        \expandafter\jlreqpar@fill\expandafter{\jlreqpar@lnnum}%
+      \fi
+      \ifnum\jlreqpar@distphase>3
+        \expandafter\jlreqpar@rebuild\expandafter{\jlreqpar@lnnum}%
+      \fi
+    \fi
+    \expandafter\jlreqpar@distribute@loop
+  \fi}
+
+% ---- (a) inventory: reverse-walk the line interior -----------------------
+% The line interior (with boxed glyphs) holds only boxes/glues/kerns/
+% penalties. Glues at the tail zone (rightskip/parfillskip) are kept
+% with role 4 and NEVER redistributed (the plan's skip zone keeps its
+% native role; infinite orders win their own pass).
+\def\jlreqpar@invline#1{%
+  \global\jlreqpar@distskipfalse
+  \expandafter\let\expandafter\jlreqpar@lineref
+    \csname jlreqpar@NL@#1@box\endcsname
+  \global\jlreqpar@nj=0
+  {\jlreqpar@inv@tail{#1}}%
+  % NZ and the per-node macros were written inside the group (global)
+  \expandafter\xdef\csname jlreqpar@NZ@#1\endcsname{\the\jlreqpar@nj}}
+\def\jlreqpar@inv@tail#1{%
+  \setbox\jlreqpar@curbox=\hbox{%
+    \expandafter\expandafter\expandafter\unhcopy
+      \csname\jlreqpar@lineref\endcsname
+    \jlreqpar@inv@loop{#1}}}
+\def\jlreqpar@inv@loop#1{%
+  \def\jlreqpar@invln{#1}%
+  \jlreqpar@inv@step}
+\def\jlreqpar@inv@step{%
+  \ifnum\lastnodetype=-1
+    \let\jlreqpar@inext\relax
+  \else
+    \ifnum\lastnodetype=11
+      \let\jlreqpar@inext\jlreqpar@inv@glue
+    \else
+    \ifnum\lastnodetype=12
+      \let\jlreqpar@inext\jlreqpar@inv@kern
+    \else
+    \ifnum\lastnodetype=13
+      \let\jlreqpar@inext\jlreqpar@inv@pen
+    \else
+    \ifnum\lastnodetype=1
+      \let\jlreqpar@inext\jlreqpar@inv@box
+    \else
+      \ifnum\lastnodetype=0
+        % a bare char (unboxed latin word content): the line is not
+        % fully walkable -- SKIP the distribution for this line (the
+        % native line box is kept; latin word boxing is the itemizer
+        % follow-up).
+        \global\jlreqpar@distskiptrue
+        \let\jlreqpar@inext\relax
+      \else
+        \ifnum\lastnodetype=8
+          % whatsit (hyperref anchors, savepos): not re-emittable from
+          % the walk -- skip the line (native box kept).
+          \global\jlreqpar@distskiptrue
+          \let\jlreqpar@inext\relax
+        \else
+          \ifnum\lastnodetype=9
+            % mark node: same treatment.
+            \global\jlreqpar@distskiptrue
+            \let\jlreqpar@inext\relax
+          \else
+            \ifnum\lastnodetype=10
+              % ins node (label writes etc.): same treatment.
+              \global\jlreqpar@distskiptrue
+              \let\jlreqpar@inext\relax
+            \else
+              \ifnum\lastnodetype=4
+                % discretionary (explicit hyphenation): same treatment.
+                \global\jlreqpar@distskiptrue
+                \let\jlreqpar@inext\relax
+              \else
+        % unknown node: report and stop (the itemizer guarantees this
+        % cannot happen with boxed glyphs)
+        \PackageError{jlreq-pdftex-paragraph}
+          {unknown~node~in~line~inventory}{%
+          Node~type~\the\lastnodetype.~With~boxed~glyphs~the~line%
+          \MessageBreak interior~holds~boxes/glues/kerns/penalties~only.%
+          \MessageBreak \@ehc}%
+        \let\jlreqpar@inext\relax
+              \fi
+            \fi
+          \fi
+        \fi
+      \fi
+    \fi\fi\fi\fi
+  \fi
+  \jlreqpar@inext}
+\def\jlreqpar@inv@glue{%
+  \global\advance\jlreqpar@nj1
+  \jlreqpar@gsnat=\lastskip
+  \jlreqpar@gsstr=\gluestretch\jlreqpar@gsnat
+  \jlreqpar@gsshr=\glueshrink\jlreqpar@gsnat
+  \jlreqpar@gssord=\gluestretchorder\jlreqpar@gsnat
+  \jlreqpar@gshord=\glueshrinkorder\jlreqpar@gsnat
+  \expandafter\xdef\csname jlreqpar@NW@\jlreqpar@invln @\the\jlreqpar@nj\endcsname
+    {11}%
+  % field 1 = the NATURAL ALONE via a dimen capture (\the<skip> carries
+  % the full "nat plus.. minus.." text; downstream dimen assignments
+  % mis-scan and the leftover text ends up TYPESET in the rebuilt line
+  % -- probed: literal "plus 2.5pt" runs appeared in the output box).
+  \jlreqpar@da=\jlreqpar@gsnat
+  % field 6 = the FULL skip text (\the\lastskip: "nat plus X fil..."),
+  % captured while the node is still in the list -- the skip zone
+  % re-emits this VERBATIM (assembling "nat plus ... fil" from split
+  % fields loses the inter-word spaces and the assignment then
+  % mis-parses, leaking literal 'fil' glyphs -- probed).
+  \expandafter\xdef\csname jlreqpar@NS@\jlreqpar@invln @\the\jlreqpar@nj\endcsname
+    {{\the\jlreqpar@da}{\the\jlreqpar@gsstr}{\the\jlreqpar@gsshr}%
+     {\the\jlreqpar@gssord}{\the\jlreqpar@gshord}}%
+  \expandafter\xdef\csname jlreqpar@NSf@\jlreqpar@invln @\the\jlreqpar@nj\endcsname
+    {{\the\lastskip}}%
+  \unskip
+  \jlreqpar@inv@step}
+\def\jlreqpar@inv@kern{%
+  \global\advance\jlreqpar@nj1
+  \expandafter\xdef\csname jlreqpar@NW@\jlreqpar@invln @\the\jlreqpar@nj\endcsname
+    {12}%
+  \expandafter\xdef\csname jlreqpar@NS@\jlreqpar@invln @\the\jlreqpar@nj\endcsname
+    {{\the\lastkern}}%
+  \unkern
+  \jlreqpar@inv@step}
+\def\jlreqpar@inv@pen{%
+  \global\advance\jlreqpar@nj1
+  \expandafter\xdef\csname jlreqpar@NW@\jlreqpar@invln @\the\jlreqpar@nj\endcsname
+    {13}%
+  \expandafter\xdef\csname jlreqpar@NS@\jlreqpar@invln @\the\jlreqpar@nj\endcsname
+    {{\the\lastpenalty}}%
+  \unpenalty
+  \jlreqpar@inv@step}
+\def\jlreqpar@inv@box{%
+  \global\advance\jlreqpar@nj1
+  \setbox\jlreqpar@wlinebox=\lastbox
+  \expandafter\xdef\csname jlreqpar@NW@\jlreqpar@invln @\the\jlreqpar@nj\endcsname
+    {1}%
+  \expandafter\xdef\csname jlreqpar@NS@\jlreqpar@invln @\the\jlreqpar@nj\endcsname
+    {{\the\wd\jlreqpar@wlinebox}}%
+  \jlreqpar@inv@step}
+\def\jlreqpar@invln{0}
+
+% ---- (b) classify: forward glue list with tiers ---------------------------
+% The reverse-walk recorded nodes tail-first. The boundary table
+% (BD@seq) is in creation (forward) order. Within a line, the
+% pair/companion glues appear in forward order; the walk sees them in
+% reverse. Classification walks the reverse node list, consuming the
+% boundary table from the END downward for glues that match a BD spec
+% exactly (nat+str+shr). Non-matching glues are role 4 (tier 50/50).
+% The skip-zone tail glues (rightskip/parfillskip zone: the trailing
+% run of glues in the reverse walk before any box) are marked role 5
+% (excluded from the fill; they keep their native glue behavior).
+\def\jlreqpar@classify#1{%
+  \def\jlreqpar@clsarg{#1}%
+  \def\jlreqpar@clsln{#1}%
+  \expandafter\ifx\csname jlreqpar@NZ@#1\endcsname\relax
+    \jlreqpar@gxdef{jlreqpar@GN@#1}{0}%
+  \else
+    \global\jlreqpar@gk=0
+    \global\jlreqpar@bdcur=\jlreqpar@bdseq
+    \jlreqpar@nj=\csname jlreqpar@NZ@#1\endcsname\relax
+    \jlreqpar@c=\jlreqpar@nj
+    % iterate reverse node index j = nj down to 1 (plain loop)
+    \jlreqpar@classify@j{#1}%
+    \jlreqpar@gxdef{jlreqpar@GN@#1}{\the\jlreqpar@gk}%
+  \fi}
+\def\jlreqpar@classify@j#1{%
+  \ifnum\jlreqpar@c<1
+  \else
+    \expandafter\ifnum\csname jlreqpar@NW@#1@\the\jlreqpar@c\endcsname=11
+      \global\advance\jlreqpar@gk1
+      \jlreqpar@cls@split{jlreqpar@NS@#1@\the\jlreqpar@c}%
+      \jlreqpar@cls@match{#1}%
+    \fi
+    \advance\jlreqpar@c-1
+    \expandafter\jlreqpar@classify@j\expandafter{\jlreqpar@clsarg}%
+  \fi}
+% store the current glue (forward index gk) with tier/role
+\def\jlreqpar@cls@store#1#2#3#4{%
+  % nat via dimen capture (the \the<skip> text trap again).
+  \jlreqpar@da=\jlreqpar@gsnat
+  \expandafter\xdef\csname jlreqpar@GI@#1@\the\jlreqpar@gk\endcsname
+    {{\the\jlreqpar@da}{\the\jlreqpar@gsstr}{\the\jlreqpar@gsshr}%
+     {\the\jlreqpar@gssord}{\the\jlreqpar@gshord}{#2}{#3}{#4}}}
+% Match the current glue spec against the BD table: a POSITION-
+% INDEPENDENT first-match scan from the table top. The old cursor-
+% consume form decremented from bdseq while the classify walk runs
+% head-first (c = NZ..1) -- a direction mismatch that mis-aligned pair
+% glues onto wrong entries (a 」pair classified explicit tier 50/50
+% on one line and its JFM tier -10/--20 on another -- probed).
+% Position independence is CORRECT here because the BD table is
+% generated from ONE JFM: identical (nat,str,shr) specs always carry
+% identical tiers/roles, so which entry matches does not matter.
+% Non-BD glues (word spaces, explicit \hspace, rightskip) match nothing
+% and take the explicit role 4 / tier 50.
+\newcount\jlreqpar@bdscan
+\newif\ifjlreqpar@clsfound
+\def\jlreqpar@cls@match#1{%
+  % ROLE 5 (skip zone: kept as native glue, never redistributed):
+  % infinite-order glues (the parfillskip fil). Without this the
+  % rebuilt line had no stretch left -- underfull badness 10000.
+  \ifnum\jlreqpar@gssord>0
+    \jlreqpar@cls@store{#1}{50}{50}{5}%
+  \else
+    \ifnum\jlreqpar@gshord>0
+      \jlreqpar@cls@store{#1}{50}{50}{5}%
+    \else
+      \global\jlreqpar@bdscan=0
+      \jlreqpar@clsfoundfalse
+      \jlreqpar@cls@scana
+      \ifjlreqpar@clsfound\else
+        \jlreqpar@cls@store{#1}{50}{50}{4}%
+      \fi
+    \fi
+  \fi}
+% argument-free scan body (the line number rides in \jlreqpar@clsln;
+% argument-passing recursions inside \if..\else..\fi chains mis-grab)
+\def\jlreqpar@cls@scana{%
+  \ifnum\jlreqpar@bdscan<\jlreqpar@bdseq
+    \global\advance\jlreqpar@bdscan1
+    \jlreqpar@bd@split{jlreqpar@BD@\the\jlreqpar@bdscan}%
+    \ifdim\jlreqpar@bdnat=\jlreqpar@gsnat
+      \ifdim\jlreqpar@bdstr=\jlreqpar@gsstr
+        \ifdim\jlreqpar@bdshr=\jlreqpar@gsshr
+          \jlreqpar@cls@store{\jlreqpar@clsln}%
+            {\the\jlreqpar@bdstier}{\the\jlreqpar@bdshtier}%
+            {\the\jlreqpar@bdrole}%
+          \jlreqpar@clsfoundtrue
+        \fi
+      \fi
+    \fi
+    \ifjlreqpar@clsfound
+      \let\jlreqpar@clssnext\relax
+    \else
+      \let\jlreqpar@clssnext\jlreqpar@cls@scana
+    \fi
+  \else
+    \let\jlreqpar@clssnext\relax
+  \fi
+  \jlreqpar@clssnext}
+% \jlreqpar@cls@split{name}: expand \csname name\endcsname ONCE (the
+% NS macros expand to the field groups) and split the fields.
+\def\jlreqpar@cls@split#1{%
+  \expandafter\jlreqpar@cls@split@a\csname #1\endcsname}
+% #1 here is the NS MACRO TOKEN (one level); expand it once more so
+% the five field groups are the actual arguments.
+\def\jlreqpar@cls@split@a#1{%
+  \expandafter\jlreqpar@cls@split@b#1}
+\def\jlreqpar@cls@split@b#1#2#3#4#5{%
+  \jlreqpar@gsnat=#1\relax
+  \jlreqpar@gsstr=#2\relax
+  \jlreqpar@gsshr=#3\relax
+  \jlreqpar@gssord=#4\relax
+  \jlreqpar@gshord=#5\relax}
+\def\jlreqpar@bd@split#1{%
+  \expandafter\jlreqpar@bd@split@a\csname #1\endcsname}
+\def\jlreqpar@bd@split@a#1{%
+  \expandafter\jlreqpar@bd@split@b#1}
+\def\jlreqpar@bd@split@b#1#2#3#4#5#6#7#8{%
+  \jlreqpar@bdnat=#1\relax
+  \jlreqpar@bdstr=#2\relax
+  \jlreqpar@bdshr=#3\relax
+  \jlreqpar@gssord=#4\relax
+  \jlreqpar@gshord=#5\relax
+  \jlreqpar@bdstier=#6\relax
+  \jlreqpar@bdshtier=#7\relax
+  \jlreqpar@bdrole=#8\relax}
+\newdimen\jlreqpar@bdnat \newdimen\jlreqpar@bdstr \newdimen\jlreqpar@bdshr
+\newcount\jlreqpar@bdstier \newcount\jlreqpar@bdshtier \newcount\jlreqpar@bdrole
+
+% ---- (c) fill: tier-scaled distribution ----------------------------------
+% R = line width - natural sum. The natural sum is recomputed from the
+% inventory (boxes + kerns + glue naturals + the line's tail-kept
+% rightskip/parfillskip zone). Stretch pass (R>0) and shrink pass
+% (R<0) run separately. Tiers descending; infinite-order glues are
+% excluded (they win their own pass natively -- the line already used
+% them). Finite shrink beyond capacity: typeset defect report.
+\def\jlreqpar@fill#1{%
+  \jlreqpar@lnwd=\csname jlreqpar@NL@#1@wd\endcsname\relax
+  % ltj aw_step2 semantics: if the line contains an INFINITE-order
+  % glue (the parfillskip fil), it has already absorbed the line's
+  % stretch natively -- the finite-tier distribution is SKIPPED
+  % (distributing the parfill's share into finite pair glues would
+  % over-stretch them; probed: the last line's 130pt remainder tried
+  % to fill tier-50 word glues).
+  \jlreqpar@filpresent=0
+  \jlreqpar@gk=0
+  \jlreqpar@fill@filscan{#1}%
+  \jlreqpar@natsum=0pt
+  \jlreqpar@nj=\csname jlreqpar@NZ@#1\endcsname\relax
+  \jlreqpar@c=\jlreqpar@nj
+  \jlreqpar@fill@natsum{#1}%
+  \ifnum\jlreqpar@filpresent=1
+    % ltj aw_step2 semantics: a line with an INFINITE-order glue (the
+    % parfillskip fil) has had its stretch absorbed by the fil
+    % natively -- the finite-tier distribution is SKIPPED
+    % (distributing the parfill's share into finite pair glues would
+    % over-stretch them; probed: the last line's 130pt remainder tried
+    % to fill tier-50 word glues).
+    \jlreqpar@fill@filskip{#1}%
+  \else
+    \jlreqpar@rem=\dimexpr\jlreqpar@lnwd-\jlreqpar@natsum\relax
+    % zero all deltas first
+    \jlreqpar@gk=0
+    \jlreqpar@fill@zero{#1}%
+    \ifdim\jlreqpar@rem>0pt
+      \jlreqpar@fill@pass{#1}{1}%
+    \else
+      \ifdim\jlreqpar@rem<0pt
+        \jlreqpar@fill@pass{#1}{2}%
+      \fi
+    \fi
+  \fi
+  % aw_step1_last: the final line's end_adjust candidate is RE-CHOSEN
+  % by the parfillskip condition (lexicographic (|slack|, |e|, e);
+  % parfill stretch is fil so the |slack/total| key reduces to |slack|
+  % ordering -- all candidates face the same stretch total).
+  \expandafter\ifnum\csname jlreqpar@FIN@#1\endcsname=1
+    \jlreqpar@final@sel{#1}%
+  \fi}
+\def\jlreqpar@fill@filskip#1{%
+  % zero all deltas (the rebuild reads them; the parfill case keeps
+  % every glue at its native size)
+  \jlreqpar@gk=0
+  \jlreqpar@b=\csname jlreqpar@GN@#1\endcsname\relax
+  \loop
+    \ifnum\jlreqpar@gk<\jlreqpar@b
+    \advance\jlreqpar@gk1
+    \expandafter\xdef\csname jlreqpar@GD@#1@\the\jlreqpar@gk\endcsname{0pt}%
+  \repeat}
+\newcount\jlreqpar@filpresent
+% scan: any role-5 glue with an infinite order?
+\def\jlreqpar@fill@filscan#1{%
+  \jlreqpar@b=\csname jlreqpar@GN@#1\endcsname\relax
+  \loop
+    \ifnum\jlreqpar@gk<\jlreqpar@b
+    \advance\jlreqpar@gk1
+    \jlreqpar@ft@split{jlreqpar@GI@#1@\the\jlreqpar@gk}%
+    \ifnum\jlreqpar@ftrole=5
+      \ifnum\jlreqpar@ftsord>0
+        \jlreqpar@filpresent=1
+      \else
+        \ifnum\jlreqpar@ftshord>0
+          \jlreqpar@filpresent=1
+        \fi
+      \fi
+    \fi
+  \repeat}
+\def\jlreqpar@fill@natsum#1{%
+  \ifnum\jlreqpar@c<1
+  \else
+    \expandafter\ifnum\csname jlreqpar@NW@#1@\the\jlreqpar@c\endcsname=1
+      % box: the NS entry is {{wd}}; strip the group and add wd*1pt?
+      % NO -- wd was stored WITH its unit (\the\wd gives pt text).
+      \expandafter\jlreqpar@nat@kern{jlreqpar@NS@#1@\the\jlreqpar@c}%
+    \else
+      \expandafter\ifnum\csname jlreqpar@NW@#1@\the\jlreqpar@c\endcsname=11
+        \jlreqpar@cls@split{jlreqpar@NS@#1@\the\jlreqpar@c}%
+        \advance\jlreqpar@natsum\jlreqpar@gsnat
+      \else
+        \expandafter\ifnum\csname jlreqpar@NW@#1@\the\jlreqpar@c\endcsname=12
+          \jlreqpar@nat@kern{jlreqpar@NS@#1@\the\jlreqpar@c}%
+        \fi
+      \fi
+    \fi
+    \advance\jlreqpar@c-1
+    \expandafter\jlreqpar@fill@natsum\expandafter{\jlreqpar@lnnum}%
+  \fi}
+\def\jlreqpar@nat@kern#1{%
+  \expandafter\jlreqpar@nat@kern@a\csname #1\endcsname}
+% the NS kern/box entry is ONE brace group {{size}}; strip the group
+% and add the size (both kerns and box wds carry their pt unit).
+\def\jlreqpar@nat@kern@a#1{%
+  \expandafter\jlreqpar@nat@kern@b#1\relax}
+\def\jlreqpar@nat@kern@b#1{%
+  \advance\jlreqpar@natsum#1\relax}
+\def\jlreqpar@fill@zero#1{%
+  \ifnum\jlreqpar@gk<\csname jlreqpar@GN@#1\endcsname
+    \advance\jlreqpar@gk1
+    \expandafter\xdef\csname jlreqpar@GD@#1@\the\jlreqpar@gk\endcsname{0pt}%
+    \expandafter\jlreqpar@fill@zero\expandafter{\jlreqpar@lnnum}%
+  \fi}
+% pass: sign 1 = stretch, 2 = shrink. Tiers tried in descending order.
+% The distinct tier values present are scanned from the recorded list;
+% for each tier: capacity = sum of that tier's stretch (or shrink)
+% capacity; fill = min(|rem|, capacity); distribute proportionally by
+% capacity with source-order rounding; rem -= fill.
+\def\jlreqpar@fill@pass#1#2{%
+  % iterate tier values from high to low; the finite set of tier
+  % values appearing in jlreq's data + the explicit tier is:
+  %   stretch: 50, 20, 10, 0, -10, -20, -30
+  %   shrink : 50, 20, 0, -10, -20, -30
+  \jlreqpar@fill@tier{#1}{#2}{50}%
+  \jlreqpar@fill@tier{#1}{#2}{20}%
+  \jlreqpar@fill@tier{#1}{#2}{10}%
+  \jlreqpar@fill@tier{#1}{#2}{0}%
+  \jlreqpar@fill@tier{#1}{#2}{-10}%
+  \jlreqpar@fill@tier{#1}{#2}{-20}%
+  \jlreqpar@fill@tier{#1}{#2}{-30}%
+  \ifnum#2=2
+    % shrink pass: verify no finite overflow remains
+    \ifdim\jlreqpar@rem<0pt
+      \PackageWarning{jlreq-pdftex-paragraph}{%
+        Over-shrink~\the\jlreqpar@rem\space beyond~finite~shrink~capacity%
+        \MessageBreak (typeset~defect,~reported~like~TeX's~own)}%
+    \fi
+  \fi}
+% one tier: collect capacity; if rem still nonzero and capacity>0,
+% fill proportionally (source order = forward glue index order).
+\def\jlreqpar@fill@tier#1#2#3{%
+  \def\jlreqpar@signarg{#2}%
+  \def\jlreqpar@tierarg{#3}%
+  \ifdim\jlreqpar@rem=0pt
+  \else
+    % capacity of this tier
+    \jlreqpar@tiercap=0pt
+    \jlreqpar@gk=0
+    \jlreqpar@capsign=#2\relax
+    \jlreqpar@captier=#3\relax
+    \jlreqpar@ft@cap
+    \ifdim\jlreqpar@tiercap>0pt
+      \jlreqpar@need=\jlreqpar@rem
+      \ifdim\jlreqpar@need<0pt \jlreqpar@need=-\jlreqpar@need \fi
+      \ifdim\jlreqpar@need>\jlreqpar@tiercap
+        \jlreqpar@need=\jlreqpar@tiercap
+      \fi
+      % distribute need over the tier members proportionally
+      \jlreqpar@gk=0
+      \jlreqpar@ft@dist
+      \ifdim\jlreqpar@rem>0pt
+        \advance\jlreqpar@rem-\jlreqpar@need
+      \else
+        \advance\jlreqpar@rem\jlreqpar@need
+      \fi
+    \fi
+  \fi}
+% capacity scan: argument-free (sign/tier ride in dedicated counts;
+% the {\jlreqpar@lnnum}{signarg}{tierarg} argument chains inside
+% \if..\fi nesting mis-grab -- probed: the illegal-unit cascade).
+\newcount\jlreqpar@capsign \newcount\jlreqpar@captier
+\def\jlreqpar@ft@cap{%
+  \ifnum\jlreqpar@gk<\csname jlreqpar@GN@\jlreqpar@lnnum\endcsname
+    \advance\jlreqpar@gk1
+    \jlreqpar@ft@split{jlreqpar@GI@\jlreqpar@lnnum @\the\jlreqpar@gk}%
+    \ifnum\jlreqpar@ftrole>4 \else
+      \ifnum\jlreqpar@ftrole=5 \else
+        \ifnum\jlreqpar@capsign=1
+          \ifnum\jlreqpar@ftsord=0
+            \ifnum\jlreqpar@ftstier=\jlreqpar@captier
+              \ifdim\jlreqpar@ftstr>0pt
+                \advance\jlreqpar@tiercap\jlreqpar@ftstr
+              \fi
+            \fi
+          \fi
+        \else
+          \ifnum\jlreqpar@ftshord=0
+            \ifnum\jlreqpar@ftshtier=\jlreqpar@captier
+              \ifdim\jlreqpar@ftshr>0pt
+                \advance\jlreqpar@tiercap\jlreqpar@ftshr
+              \fi
+            \fi
+          \fi
+        \fi
+      \fi
+    \fi
+    \expandafter\jlreqpar@ft@cap
+  \fi}
+% proportional distribution within the tier with source-order
+% rounding: member share = need * cap_k / tiercap, accumulated in
+% integer sp with the running-remainder technique.
+% proportional distribution within the tier: argument-free (same
+% discipline as the capacity scan). The per-member share accumulates
+% into GD in integer sp; source order = increasing gk.
+\def\jlreqpar@ft@dist{%
+  \jlreqpar@dacc=0pt
+  \jlreqpar@drem=\jlreqpar@need
+  \jlreqpar@gk=0
+  \jlreqpar@ft@dista}
+\def\jlreqpar@ft@dista{%
+  \ifnum\jlreqpar@gk<\csname jlreqpar@GN@\jlreqpar@lnnum\endcsname
+    \advance\jlreqpar@gk1
+    \jlreqpar@ft@split{jlreqpar@GI@\jlreqpar@lnnum @\the\jlreqpar@gk}%
+    \ifnum\jlreqpar@ftrole>4 \else
+      \ifnum\jlreqpar@ftrole=5 \else
+        \ifnum\jlreqpar@capsign=1
+          \ifnum\jlreqpar@ftsord=0
+            \ifnum\jlreqpar@ftstier=\jlreqpar@captier
+              \ifdim\jlreqpar@ftstr>0pt
+                \jlreqpar@ft@share{1}%
+              \fi
+            \fi
+          \fi
+        \else
+          \ifnum\jlreqpar@ftshord=0
+            \ifnum\jlreqpar@ftshtier=\jlreqpar@captier
+              \ifdim\jlreqpar@ftshr>0pt
+                \jlreqpar@ft@share{2}%
+              \fi
+            \fi
+          \fi
+        \fi
+      \fi
+    \fi
+    \expandafter\jlreqpar@ft@dista
+  \fi}
+\def\jlreqpar@ft@share#1{%
+  % #1 = the SIGN (1 stretch / 2 shrink); the LINE index is
+  % \jlreqpar@lnnum (the committed form passed the line as #1 from the
+  % dista caller -- the arg-free dista now passes the sign; the GD
+  % table is keyed LINE@glue, so a sign-as-line write corrupted the
+  % delta table; probed: staged-tate GD@1@52 missing-number cascade).
+  % sp-integer proportional share (配分はsp整数). A
+  % \dimexpr<dimen>*<dimen> product is invalid TeX, so the share is
+  % computed as integer sp arithmetic:
+  %   share_sp = need_sp * cap_sp / tiercap_sp
+  % (\count<dimen> assigns the raw scaled point integer).
+  \jlreqpar@shn=\jlreqpar@need
+  \jlreqpar@shc=\jlreqpar@ftstr
+  \ifnum#1=1
+    \jlreqpar@sht=\jlreqpar@tiercap
+    \jlreqpar@shq=\numexpr\jlreqpar@shn*\jlreqpar@shc/\jlreqpar@sht\relax
+    \jlreqpar@db=\the\dimexpr\jlreqpar@shq sp\relax
+    \advance\jlreqpar@dacc\jlreqpar@db
+    \expandafter\xdef
+      \csname jlreqpar@GD@\jlreqpar@lnnum @\the\jlreqpar@gk\endcsname
+      {\the\dimexpr\csname jlreqpar@GD@\jlreqpar@lnnum @\the\jlreqpar@gk\endcsname
+       +0pt+\jlreqpar@db\relax}%
+  \else
+    \jlreqpar@shc=\jlreqpar@ftshr
+    \jlreqpar@sht=\jlreqpar@tiercap
+    \jlreqpar@shq=\numexpr\jlreqpar@shn*\jlreqpar@shc/\jlreqpar@sht\relax
+    \jlreqpar@db=\the\dimexpr\jlreqpar@shq sp\relax
+    \advance\jlreqpar@dacc\jlreqpar@db
+    \expandafter\xdef
+      \csname jlreqpar@GD@\jlreqpar@lnnum @\the\jlreqpar@gk\endcsname
+      {\the\dimexpr\csname jlreqpar@GD@\jlreqpar@lnnum @\the\jlreqpar@gk\endcsname
+       +0pt-\jlreqpar@db\relax}%
+  \fi}
+\newcount\jlreqpar@shn \newcount\jlreqpar@shc \newcount\jlreqpar@sht
+\newcount\jlreqpar@shq
+\newdimen\jlreqpar@dacc \newdimen\jlreqpar@drem
+% NOT REACHED for the bump (kept simple: the proportional division in
+% TeX dimensions is exact to sp for these magnitudes; the residual
+% check below reports >1sp mismatches).
+\def\jlreqpar@ft@lastbump#1#2#3{\relax}
+\def\jlreqpar@ft@split#1{%
+  \expandafter\jlreqpar@ft@split@a\csname #1\endcsname}
+\def\jlreqpar@ft@split@a#1{%
+  \expandafter\jlreqpar@ft@split@b#1}
+\def\jlreqpar@ft@split@b#1#2#3#4#5#6#7#8{%
+  \jlreqpar@ftnat=#1\relax
+  \jlreqpar@ftstr=#2\relax
+  \jlreqpar@ftshr=#3\relax
+  \jlreqpar@ftsord=#4\relax
+  \jlreqpar@ftshord=#5\relax
+  \jlreqpar@ftstier=#6\relax
+  \jlreqpar@ftshtier=#7\relax
+  \jlreqpar@ftrole=#8\relax}
+\newdimen\jlreqpar@ftnat \newdimen\jlreqpar@ftstr \newdimen\jlreqpar@ftshr
+\newcount\jlreqpar@ftsord \newcount\jlreqpar@ftshord
+\newcount\jlreqpar@ftstier \newcount\jlreqpar@ftshtier
+\newcount\jlreqpar@ftrole
+
+% ---- (d) rebuild: re-emit the line with final glue sizes -----------------
+% The line is rebuilt INSIDE the line's own box register: unhbox the
+% measurement copy into a fresh hbox under construction, walking the
+% reverse inventory and RE-EMITTING nodes forward is impossible from
+% a tail walk -- so the rebuild uses the SECOND reverse pass trick:
+% pop each node from the tail and PREPEND nothing (order preserved by
+% re-emitting into a list built by \unhbox-append in the SAME order is
+% not available). Instead the rebuild re-walks the interior and
+% replaces each glue ON THE SPOT: glues are popped (\unskip) and
+% immediately re-emitted as a kern of (nat + delta) at the same
+% position -- because the pop-and-emit happens at the TAIL, the node
+% ends up BEFORE the remaining nodes... which REVERSES the order.
+% Correct approach: the line content is re-emitted into a work box by
+% popping from the tail and PREPENDING via the box-list swap idiom is
+% complex; instead RE-BUILD by walking the reverse inventory and
+% emitting into a box in REVERSE order, then flipping that box via a
+% second unhbox... a flip needs the same problem.
+% FINAL APPROACH: rebuild FORWARD from the recorded inventory + the
+% item boxes still stored in the measurement copy: pop each node tail-
+% to-head, saving boxes into pool registers and re-emitting GLUES as
+% kerns; nodes end up reversed; then rotate: the reversal is undone by
+% building the final line via \unhbox of the reversed box appended to
+% an empty box -- no. THE PRACTICAL SOLUTION: emit forward into a new
+% hbox by RECURSIVE DESCENT: pop the tail node into a scratch box,
+% recurse (emitting the earlier nodes first), then emit the scratch
+% box -- a stack via recursion restores the order exactly.
+\def\jlreqpar@rebuild#1{%
+  % suppress badness reporting for the internal boxes (the pop pass
+  % leaves an empty work box; ltj's repack uses the same suppression
+  % -- tex.hbadness=10000 during repack)
+  \begingroup
+    \hbadness=10000
+    \global\jlreqpar@rbsl=0
+  \expandafter\let\expandafter\jlreqpar@lineref
+    \csname jlreqpar@NL@#1@box\endcsname
+  % PASS 1: pop the line's tail nodes into dedicated rebuild slots
+  % (RB@<k>, load-time allocated below) in REVERSE order (k=1 = the
+  % tail). The slot index tracks EVERY node so it matches the NW
+  % inventory indices; only boxes occupy their slot, other node kinds
+  % are popped and discarded (PASS 2 re-emits them from NW/NS data).
+  \setbox\jlreqpar@curbox=\hbox{%
+    \expandafter\unhcopy\csname\jlreqpar@lineref\endcsname
+    \jlreqpar@rb@pop}%
+  % PASS 2: emit head-first (c = rbsl down to 1). The line packs TO
+  % THE MEASURED WIDTH (the breaker packed the original to hsize; a
+  % natural-pack rebuild reports the content natural and the role-5
+  % parfill zone contributes 0 natural -- probed 264pt vs 440pt).
+  \jlreqpar@lnwd=\csname jlreqpar@NL@#1@wd\endcsname\relax
+  \setbox\jlreqpar@outlinebox=\hbox to\jlreqpar@lnwd{%
+    \global\jlreqpar@rgk=0
+    \jlreqpar@c=\jlreqpar@rbsl
+    \jlreqpar@rb@emit{#1}}%
+  % replace the line's pool box with the rebuilt one
+  \expandafter\global\setbox
+    \csname\csname jlreqpar@NL@#1@box\endcsname\endcsname
+    =\box\jlreqpar@outlinebox
+  % verification hook (define \jlreqpar@verifywd to enable):
+  % rebuilt width vs measured width must agree within 1sp.
+  \expandafter\ifx\csname jlreqpar@verifywd\endcsname\relax\else
+    \jlreqpar@da=\csname jlreqpar@NL@#1@wd\endcsname\relax
+    \expandafter\setbox\jlreqpar@wlinebox=\expandafter\copy
+      \csname\csname jlreqpar@NL@#1@box\endcsname\endcsname
+    \jlreqpar@db=\wd\jlreqpar@wlinebox
+    \advance\jlreqpar@db-\jlreqpar@da
+    \ifdim\jlreqpar@db<0pt \jlreqpar@db=-\jlreqpar@db \fi
+    \ifdim\jlreqpar@db<1sp
+      \message{[RBWD: line=#1 measured=\the\jlreqpar@da\space
+        rebuilt=\the\wd\jlreqpar@wlinebox\space delta=\the\jlreqpar@db\space
+        VERDICT=OK]}%
+    \else
+      \message{[RBWD: line=#1 measured=\the\jlreqpar@da\space
+        rebuilt=\the\wd\jlreqpar@wlinebox\space delta=\the\jlreqpar@db\space
+        VERDICT=DIFF]}%
+    \fi
+  \fi
+  \endgroup}
+\newcount\jlreqpar@rgk \newcount\jlreqpar@rn
+\newcount\jlreqpar@rbsl
+\newcount\jlreqpar@rbslmax \jlreqpar@rbslmax=1024
+% dedicated rebuild slots (load-time: \newbox inside the walk's group
+% would vanish at group close -- probed)
+{\count0=0
+ \loop
+   \advance\count0 1
+   \expandafter\expandafter\expandafter\newbox
+     \csname jlreqpar@RB@\the\count0\endcsname
+ \ifnum\count0<\jlreqpar@rbslmax
+ \repeat}
+% PASS 1 (argument-free dispatch walk)
+\def\jlreqpar@rb@pop{%
+  \ifnum\lastnodetype=-1
+    \let\jlreqpar@rbnext\relax
+  \else
+    \global\advance\jlreqpar@rbsl1
+    \ifnum\lastnodetype=1
+      % GLOBAL: PASS 1 runs inside the \hbox group; a local \setbox
+      % dies at group close and PASS 2 then emits EMPTY slots -- the
+      % rebuilt lines kept their \hbox-to width (the RBWD check only
+      % verifies width!) while ALL glyphs vanished from the page
+      % (probed: 33 chars at distphase=3 vs 2 at distphase=4).
+      \expandafter\global\setbox
+        \csname jlreqpar@RB@\the\jlreqpar@rbsl\endcsname=\lastbox
+    \else
+      \ifnum\lastnodetype=11
+        \unskip
+      \else
+        \ifnum\lastnodetype=12
+          \unkern
+        \else
+          \ifnum\lastnodetype=13
+            \unpenalty
+          \else
+            \global\advance\jlreqpar@rbsl-1
+            \let\jlreqpar@rbnext\relax
+          \fi
+        \fi
+      \fi
+    \fi
+    \ifx\jlreqpar@rbnext\relax\else
+      \let\jlreqpar@rbnext\jlreqpar@rb@pop
+    \fi
+  \fi
+  \jlreqpar@rbnext}
+% PASS 2 emit: head-first; the glue's forward index = the emit
+% counter rgk (the classify pass counted glues in the same order).
+\def\jlreqpar@rb@emit#1{%
+  \ifnum\jlreqpar@c<1
+    \let\jlreqpar@rbnext\relax
+  \else
+    \expandafter\ifnum\csname jlreqpar@NW@#1@\the\jlreqpar@c\endcsname=1
+      \expandafter\box\csname jlreqpar@RB@\the\jlreqpar@c\endcsname
+    \else
+      \expandafter\ifnum\csname jlreqpar@NW@#1@\the\jlreqpar@c\endcsname=11
+        \global\advance\jlreqpar@rgk1
+        \jlreqpar@ft@split{jlreqpar@GI@#1@\the\jlreqpar@rgk}%
+        \jlreqpar@rb@delta{#1}%
+      \else
+        \expandafter\ifnum\csname jlreqpar@NW@#1@\the\jlreqpar@c\endcsname=12
+          \jlreqpar@rb@kern{jlreqpar@NS@#1@\the\jlreqpar@c}%
+        \else
+          \expandafter\ifnum\csname jlreqpar@NW@#1@\the\jlreqpar@c\endcsname=13
+            \jlreqpar@rb@pen{jlreqpar@NS@#1@\the\jlreqpar@c}%
+          \fi
+        \fi
+      \fi
+    \fi
+    \global\advance\jlreqpar@c-1
+    \let\jlreqpar@rbnext\jlreqpar@rb@emit
+  \fi
+  \ifx\jlreqpar@rbnext\relax\else\jlreqpar@rbnext{#1}\fi}
+% emit a glue node at its FINAL size (skip zone keeps native glue)
+\def\jlreqpar@rb@delta#1{%
+  \ifnum\jlreqpar@ftrole=5
+    % the skip zone re-emits the walked FULL skip text; the line and
+    % node index ride in dedicated registers (argument-passing inside
+    % \if..\else..\fi chains mis-grabs -- probed repeatedly)
+    \def\jlreqpar@rbline{#1}%
+    \jlreqpar@rbc=\jlreqpar@c
+    \jlreqpar@rb@skipzone
+  \else
+    \jlreqpar@rb@finite{#1}%
+  \fi}
+\newcount\jlreqpar@rbc
+\def\jlreqpar@rb@skipzone{%
+  % re-emit the skip-zone glue VERBATIM from the walked NSf full-skip
+  % text (assembling the fil orders from split fields lost the word
+  % spaces and mis-parsed, leaking literal 'fil' glyphs -- probed).
+  \expandafter\jlreqpar@rb@sz@a
+    \csname jlreqpar@NSf@\jlreqpar@rbline @\the\jlreqpar@rbc\endcsname}
+\def\jlreqpar@rb@sz@a#1{%
+  \expandafter\jlreqpar@rb@sz@b#1}
+\def\jlreqpar@rb@sz@b#1{%
+  \hskip#1}
+\def\jlreqpar@rb@finite#1{%
+  \jlreqpar@db=\csname jlreqpar@GD@#1@\the\jlreqpar@rgk\endcsname\relax
+  \kern\dimexpr\jlreqpar@ftnat+\jlreqpar@db\relax}
+% kern re-emit: name-based double expansion (the NS entry is one brace
+% group {{size}}; strip before the primitive sees it). The FINAL
+% line's TAIL kern (node index c=1) additionally carries the
+% aw_step1_last re-selection delta (e_win - e_native) when F@win was
+% set by the final selection.
+\def\jlreqpar@rb@kern#1{%
+  \expandafter\jlreqpar@rb@kern@a\csname #1\endcsname}
+\def\jlreqpar@rb@kern@a#1{%
+  \expandafter\jlreqpar@rb@kern@b#1}
+\def\jlreqpar@rb@kern@b#1{%
+  \kern#1%
+  \ifnum\jlreqpar@c=1
+    \expandafter\ifnum\csname jlreqpar@FIN@\the\jlreqpar@lnnum\endcsname=1
+      \expandafter\ifx\jlreqpar@F@win\relax
+      \else
+        \jlreqpar@da=\csname jlreqpar@E@\the\jlreqpar@lnnum\endcsname\relax
+        \jlreqpar@db=\dimexpr\jlreqpar@F@win-\jlreqpar@da\relax
+        \ifdim\jlreqpar@db=0pt\else \kern\jlreqpar@db \fi
+      \fi
+    \fi
+  \fi}
+\def\jlreqpar@rb@pen#1{%
+  \expandafter\jlreqpar@rb@pen@a\csname #1\endcsname}
+\def\jlreqpar@rb@pen@a#1{%
+  \expandafter\jlreqpar@rb@pen@b#1}
+\def\jlreqpar@rb@pen@b#1{\penalty#1}
+\def\jlreqpar@clsarg{0}
+\endinput

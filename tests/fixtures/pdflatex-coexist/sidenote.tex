@@ -1,0 +1,37 @@
+% sidenote_type=number（傍注，4.2.7）: pdfTeX検証
+% 過去のpdfTeX不具合(a)の回帰フィクスチャ：number型\sidenoteが\marginpar
+% 内部のボックス調整で「Dimension too large」（\jlreq@tempdima代入）．
+% 真因は\set@fontsizeフックの\jlreq@jareg計算
+% （\dimexpr\f@size\jlreq@jafontscale pt → "10"+"1"+"pt" と数字連結され
+% 101pt化）で，\marginparの\@marginparresetが\normalsizeを呼んだ時点で
+% 箱内の\zw実寸が101ptになり，続く\footnotesizeの
+% \dimexpr115\jlreq@tempdima/170が溢れた．2段計算に修正済み（jlreq.cls d分岐）．
+% （symbol型の\CJK@punctchar不具合(b)は sidenote-symbol.tex で検証．
+% \jlreqsetupはプリアンブル専用なので別ファイルとした．）
+% \footnote/\endnote/\marginparとの共存も併せて確認する．
+\documentclass[pdflatex,sidenote_length=20zw]{jlreq}
+\begin{document}
+% --- sidenote_type=number（既定） ---
+傍注（番号型）の呼び出し\sidenote{番号型の傍注本文。「括弧」や句読点，
+English混植でもルールフックが効くことを見るための少し長い注。}の直後に本文が続く。
+
+分離型：マークだけ出し\sidenotemark て注文は \sidenotetext{分離した番号型の傍注本文。}
+あとから渡す形。オプション番号指定\sidenote[42]{明示番号の傍注。}も通す。
+
+% --- 共存する脚注・後注・単体 marginpar ---
+脚注\footnote{脚注本文。}と後注\endnote{後注本文。}，
+単体の\marginpar{欄外の＊マークと\footnotesize 小さい文字}もサイズ追従する。
+
+\theendnotes
+\makeatletter
+% 回帰ロック：マージン箱内でも\jlreq@jaregが正しくサイズ追従すること
+% （旧バグでは\marginpar箱内で101ptになっていた）
+\setbox0=\vbox{\reset@font\footnotesize
+  \ifdim\jlreq@jareg=8.00003pt\relax
+    \typeout{SIDENOTE-JAREG-OK: \the\jlreq@jareg}%
+  \else
+    \errmessage{SIDENOTE-JAREG-NG: \the\jlreq@jareg\space (expected 8.00003pt)}%
+  \fi
+  X}%
+\makeatother
+\end{document}

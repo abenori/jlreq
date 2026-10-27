@@ -1,0 +1,73 @@
+% pdflatex-tate-notes.tex -- tate 脚注/後注/傍注フィクスチャ
+% 検証内容（uplatex+tate を ground truth とした実測比較で確認済みの項目：
+% 脚注=最左端カラム上揃え／後注=本文直後のカラム／傍注(marginpar)=本文カラムの
+% 下方、いずれも縦組み正立，数ミリの家具由来オフセットを除き uplatex と一致）:
+%   NOTE-JAREG   : \footnotesize で \jlreq@jareg(\zw実寸)が 8pt に追従する
+%                  （横組 (a) バグの縦組挿入物内回帰ガード．旧バグでは101pt）
+%   NOTE-FNCOUNT : footnote/endnote/sidenote が共有カウンタを正しい順で
+%                  進める（本フィクスチャの系列で 7；uplatex GT でも同一）
+%   NOTE-THEFN   : 縦組の \thefootnote（4.2.2注3, （＊）形式）が展開可能で
+%                  空でない（\tatechuyoko* は pdfTeX では既知のパススルー）
+%   NOTE-ENDFLUSH: \theendnotes 出力で後注リストが空に戻る
+%   コンパイル成立自体が \sidenote/\sidenotemark/\sidenotetext/
+%   \marginpar/複数ページ脚注(twoside 遅延経路は別途 stress 確認)のゲート
+\documentclass[pdflatex,tate,paper=a5,sidenote_length=15zw]{jlreq}
+\pagestyle{empty}
+\begin{document}
+\makeatletter
+% --- NOTE-JAREG: 挿入物箱内のフォントサイズ追従
+\setbox\@tempboxa=\vbox{\reset@font\footnotesize
+  \xdef\jlreq@testjareg{\the\jlreq@jareg}X}%
+\ifdim\jlreq@testjareg=\dimexpr.8\jlreq@fontsize\relax
+  \typeout{TATE-PASS: NOTE-JAREG (\jlreq@testjareg)}%
+\else
+  \typeout{TATE-FAIL: NOTE-JAREG (\jlreq@testjareg, expected \the\dimexpr.8\jlreq@fontsize\relax)}%
+\fi
+\makeatother
+% --- 脚注（短いもの + 分離型）
+本文に脚注を付ける\footnote{縦組みの脚注テキスト。}さらに続く本文。
+分離型も\footnotemark 使う\footnotetext{分離した脚注。}。
+% --- 長い脚注（禁則ストレス：「」や、。が行をまたぐ位置に来る長さ）
+禁則の確認を兼ねた長い脚注\footnote{これは禁則処理の確認のための長めの脚注です。
+「開き括弧や句読点、そして閉じ括弧」が行頭や行末に来た場合の処理を確認するための
+テキストを含んでいます。さらに長くするために文を足します。縦組みの脚注は
+欄外側の左端に、上揃えで配置されるべきものです。}。
+% --- 後注 ×2（カウンタ共有の確認用）
+後注を一つ使う\endnote{縦組みの後注テキスト一。}。
+% --- 傍注（sidenote_type=number 既定）と単体 marginpar
+傍注の呼び出し\sidenote{縦組みの傍注テキスト。}と、
+分離型\sidenotemark も使い\sidenotetext{分離した傍注。}、
+単体の欄外メモ\marginpar{欄外メモ「括弧」つき。}も併記する。
+後注をもう一つ\endnote{縦組みの後注テキスト二。}。
+% --- NOTE-FNCOUNT / NOTE-THEFN / NOTE-ENDFLUSH
+\makeatletter
+% カウンタ共有経路（uplatex GT と同じ歩み）: \footnote→1, \footnotemark→2,
+% 長い\footnote→3, \endnote一→4, \sidenote→5, \sidenotemark→6, \endnote二→7
+\ifnum\c@footnote=7\relax
+  \typeout{TATE-PASS: NOTE-FNCOUNT (\the\c@footnote)}%
+\else
+  \typeout{TATE-FAIL: NOTE-FNCOUNT (\the\c@footnote, expected 5)}%
+\fi
+\protected@edef\jlreq@testfn{\thefootnote}%
+\ifx\jlreq@testfn\@empty
+  \typeout{TATE-FAIL: NOTE-THEFN (empty)}%
+\else
+  \typeout{TATE-PASS: NOTE-THEFN (\jlreq@testfn)}%
+\fi
+\ifx\jlreq@endnote@texts\@empty
+  \typeout{TATE-FAIL: NOTE-ENDPRE (endnote list empty before \string\theendnotes)}%
+\else
+  \typeout{TATE-PASS: NOTE-ENDPRE (endnotes pending)}%
+\fi
+\makeatother
+\theendnotes
+\makeatletter
+\ifx\jlreq@endnote@texts\@empty
+  \typeout{TATE-PASS: NOTE-ENDFLUSH (list flushed)}%
+\else
+  \typeout{TATE-FAIL: NOTE-ENDFLUSH (list not flushed)}%
+\fi
+\makeatother
+\newpage
+二ページ目の本文\footnote{二ページ目の脚注。}。複数ページでも脚注が出る。
+\end{document}

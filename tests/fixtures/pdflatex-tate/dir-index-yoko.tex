@@ -1,0 +1,37 @@
+% dir-index-yoko.tex -- theindex_yoko=true の横組み索引ページと
+% tate 復帰のゲート（jlreq-complements の常時yoko分岐）。
+% 契約（uplatex theindex_yoko=true 実測）:
+%   * 索引ページは本当に横組み（文字は横に並ぶ・見出しは水平中央）
+%   * ページ組みの行長は \textheight（pTeX の \yoko ページと同じ役割
+%     交換: 2段組の段幅=(textheight-columnsep)/2、uplatex 実測 147.4pt
+%     ・見出し中心一致）
+%   * 索引後のページは縦組みに復帰（列位置・柱の向きが元に戻る）
+\documentclass[pdflatex,tate,paper=a5]{jlreq}
+\jlreqsetup{theindex_yoko = true}
+\makeatletter
+\begin{document}
+本文。
+\begin{theindex}
+\item 阿伊, 3
+\item 伊宇, 5
+\end{theindex}
+% --- DIR-IDX-RESTORE: 索引ページ後に tate へ復帰
+本文再開。
+\ifnum\jlreqpdf@dir=1
+  \typeout{TATE-PASS: DIR-IDX-RESTORE (dir=1 after theindex_yoko pages)}%
+\else
+  \typeout{TATE-FAIL: DIR-IDX-RESTORE (dir=\the\jlreqpdf@dir, expected 1)}%
+\fi
+% --- DIR-IDX-PAGEDIR: ページ方向フラグも復帰（次ページは回転出荷）
+\ifnum\jlreqpdf@pagedir@count=1
+  \typeout{TATE-PASS: DIR-IDX-PAGEDIR (pagedir=1 restored)}%
+\else
+  \typeout{TATE-FAIL: DIR-IDX-PAGEDIR (pagedir=\the\jlreqpdf@pagedir@count, expected 1)}%
+\fi
+% --- DIR-IDX-HSIZE: \hsize も縦組み寸法に戻る
+\ifdim\hsize=\textwidth\relax
+  \typeout{TATE-PASS: DIR-IDX-HSIZE (hsize=textwidth restored)}%
+\else
+  \typeout{TATE-FAIL: DIR-IDX-HSIZE (hsize=\the\hsize, expected \the\textwidth)}%
+\fi
+\end{document}

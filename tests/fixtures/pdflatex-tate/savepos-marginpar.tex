@@ -1,0 +1,65 @@
+% savepos-marginpar.tex -- acceptance gate: \marginpar side/column
+% and deferred-footnote positions under d-tate, measured with savepos
+% in the LOGICAL frame (inner-frame X = reading vertical) and compared
+% against upLaTeX same-source numbers (see docs/pdftex-internals.md
+% 縦組み脚注パリティの数値表 for the recorded table).
+%
+% Method: a savepos marker inside the marginpar box and inside the
+% footnote text records the raw origin; the fixture converts ONCE
+% (X - origin terms, the same single conversion the class's
+% \jlreq@calc@current@linewidth performs) and prints:
+%   MPAR-POS : marginpar marker position along the line direction
+%              (logical X, pt from the line head) + raw savepos X.
+%   FNOTE-POS: deferred footnote marker position along the line
+%              direction + raw savepos X.
+% The runner compares both engines' converted numbers (0.1pt).
+% Deferred-note scenario: the footnote is declared on page 1 but its
+% text is inserted at the bottom of the SAME page after a forced
+% \clearpage boundary flush in twoside mode (the note travels with the
+% insertion register, not the page break).
+\documentclass[pdflatex,tate,paper=b5,twoside,line_length=20zw]{jlreq}
+\makeatletter
+\newcount\mp@n \mp@n=0
+% savepos helper (pdflatex branch of the class machinery; the uplatex
+% variant is produced by the runner with the same body via \savepos).
+\def\mp@mark#1{%
+  \global\advance\jlreq@reference@count by 1
+  \jlreq@ifprimitive{\pdfsavepos}{\pdfsavepos}{\savepos}%
+  \jlreq@ifprimitive{\pdfsavepos}{%
+    \jlreq@reference@label{#1.X.\the\jlreq@reference@count}{\noexpand\the\noexpand\pdflastxpos}%
+    \jlreq@reference@label{#1.Y.\the\jlreq@reference@count}{\noexpand\the\noexpand\pdflastypos}%
+  }{%
+    \jlreq@reference@label{#1.X.\the\jlreq@reference@count}{\noexpand\the\noexpand\lastxpos}%
+    \jlreq@reference@label{#1.Y.\the\jlreq@reference@count}{\noexpand\the\noexpand\lastypos}%
+  }%
+  \expandafter\xdef\csname #1@n\endcsname{\the\jlreq@reference@count}%
+}
+\def\mp@read#1{%
+  \expandafter\edef\csname mp@name\endcsname{#1.X.\csname #1@n\endcsname}%
+  \jlreq@resultdimen=\expandafter\jlreq@reference@ref\csname mp@name\endcsname{0} sp\relax}
+\begin{document}
+% ---- marginpar side/column (odd page)
+あいうえおかきくけこさしすせそ\marginpar{%
+  \mp@mark{mpar}%
+  傍注本文}%
+たちつてとないぬねの。
+\clearpage
+% ---- deferred footnote (even page): declared mid-line, flushed at
+% the bottom of the same column; marker inside the note text.
+はひふへほまみむめもやゆよらりるれろ\footnote{%
+  \mp@mark{fnote}%
+  遅延脚注本文。}わをん。
+\clearpage
+% report pass-2 values (pass 1 has no aux origins)
+\ifnum\jlreq@reference@count>0
+  \mp@read{mpar}%
+  \@tempdima=\dimexpr\jlreq@resultdimen\relax
+  \typeout{MPAR-POS: x=\the\@tempdima,
+    oddside=\the\oddsidemargin, hoffset=\the\hoffset,
+    totalleft=\the\@totalleftmargin}%
+  \mp@read{fnote}%
+  \@tempdima=\dimexpr\jlreq@resultdimen\relax
+  \typeout{FNOTE-POS: x=\the\@tempdima,
+    oddside=\the\oddsidemargin, hoffset=\the\hoffset}%
+\fi
+\end{document}

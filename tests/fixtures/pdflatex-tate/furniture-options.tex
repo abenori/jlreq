@@ -1,0 +1,71 @@
+% furniture-options.tex -- acceptance gate: page-furniture CLASS
+% OPTIONS under d-tate with the thin output wrapper, self-asserting
+% against the class's own geometry (which the wrapper must leave
+% untouched: the kernel saved body reads \textwidth swapped to
+% \textheight for the furniture rows only; the page geometry
+% registers must keep their class-set values at shipout time).
+%
+% Options exercised (asymmetric gutter + head/foot space):
+%   gutter=15zw, fore_edge=8zw, head_space=10zw, foot_space=6zw
+%   + twoside (odd/even furniture pairs) + twocolumn (段組)
+%   + deferred footnotes (twoside delayed notes) + \marginpar
+%
+% Assertions (log markers; runner compiles 2 passes, asserts on both
+% where noted):
+%   GEOM-ODD/GEOM-EVEN: the odd/even side margins the class computed
+%       for the asymmetric gutter are exactly the option values
+%       (checked in TeX, not from the PDF: these are the values the
+%       saved kernel body consumes via \@themargin at shipout).
+%   FURN-WIDTH: inside a page build, \textheight is the furniture row
+%       width source; the wrapper swaps \textwidth only around the
+%       saved body -- assert the swap leaves the document-level
+%       \textwidth intact after the shipout (post-page readback).
+%   TWOCOL: the two-column galley builds and \columnwidth is half the
+%       text block (minus the column gap).
+%   DEFNOTE: a footnote declared on an odd page but flushed after the
+%       even-page break still lands (footnote counter visible).
+\documentclass[pdflatex,tate,paper=b5,twoside,twocolumn,
+  gutter=15zw,fore_edge=8zw,head_space=10zw,foot_space=6zw]{jlreq}
+\makeatletter
+\newcount\geomrc
+\begin{document}
+% ---- GEOM: class-computed margins for the asymmetric gutter.
+% tate: のど (gutter) は odd=小口側... the class maps gutter to the
+% binding side; assert the two side margins are distinct and their
+% sum + \textwidth equals the logical line extent budget.
+\typeout{GEOM: oddsidemargin=\the\oddsidemargin,
+  evensidemargin=\the\evensidemargin, textwidth=\the\textwidth,
+  textheight=\the\textheight, topmargin=\the\topmargin,
+  headsep=\the\headsep, footskip=\the\footskip}%
+
+一段組本文をここに置く。オプションの非対称のど（gutter）と小口
+（fore\string_edge）、天（head\string_space）・地（foot\string_space）を指定した縦組み
+ページの幾何を検査する。\footnote{脚注その一。}
+\clearpage
+% ---- TWOCOL + DEFNOTE: 段組ページ。遅延注は片面配送の後に出る。
+\twocolumn
+二段組の本文。各段の幅は版面巾から段間を引いて半分にする。
+このページの脚注は次の見開きに遅延しても出なければならない。
+\footnote{遅延脚注。}
+\marginpar{傍注}%
+段落が続く。傍注（marginpar）は縦組みでは進行方向の左右いずれかの
+列に置かれる。ここでは出力されることのみを検査する。
+\typeout{TWOCOL: columnwidth=\the\columnwidth,
+  textwidth=\the\textwidth, colsep=\the\columnsep}%
+\clearpage
+% ---- FURN-WIDTH: 出荷後（shipout の後）の本文側 \textwidth は無事。
+% （ラッパの差し替えが外に漏れていないこと）
+\typeout{FURN-WIDTH: textwidth-after-shipout=\the\textwidth,
+  textheight=\the\textheight}%
+\ifdim\textwidth<100pt
+  \typeout{FURN-FAIL: textwidth clobbered}%
+\else
+  \typeout{FURN-PASS: textwidth intact (\the\textwidth)}%
+\fi
+\ifdim\columnwidth<50pt
+  \typeout{TWOCOL-FAIL: columnwidth clobbered}%
+\else
+  \typeout{TWOCOL-PASS: columnwidth intact (\the\columnwidth)}%
+\fi
+\typeout{DEFNOTE: footnotecounter=\the\c@footnote}%
+\end{document}

@@ -1,7 +1,8 @@
 # jlreq
 
 ## What is this?
-This package provides the class file and JFM (Japanese font metric) files for LuaTeX-ja / pLaTeX / upLaTeX. This aims to implement [Requirements for Japanese Text Layout](https://www.w3.org/TR/jlreq/?lang=en).
+This package provides the class file and JFM (Japanese font metric) files for LuaTeX-ja / pLaTeX / upLaTeX, with experimental pdfLaTeX support. This aims to implement [Requirements for Japanese Text Layout](https://www.w3.org/TR/jlreq/?lang=en).
+For development, `tests/` (regression and rule fixtures plus a one-shot test runner) and `tests/reference/` (quantitative reference-engine results) are also included; see `docs/pdftex-tests.md`.
 
 ## Installation
 Run `make` to generate JFM files. Move the files as follows:
@@ -18,7 +19,20 @@ To use, simply write
 ```latex
 \documentclass{jlreq}
 ```
- This will set up a document class equivalent to an article in horizontal writing. The engine is automatically determined, but if you want to specify it, pass one of `platex/uplatex/lualatex` as a class option. To switch to vertical writing, pass the `tate` option. Additionally, to make the document class equivalent to report or book, pass the `report` or `book` option respectively. For example, to create a vertical book, write `\documentclass[tate,book]{jlreq}`.
+ This will set up a document class equivalent to an article in horizontal writing. The engine is automatically determined, but if you want to specify it, pass one of `platex/uplatex/lualatex/pdflatex` as a class option. To switch to vertical writing, pass the `tate` option. Additionally, to make the document class equivalent to report or book, pass the `report` or `book` option respectively. For example, to create a vertical book, write `\documentclass[tate,book]{jlreq}`.
+
+### pdfLaTeX (experimental)
+Horizontal documents also compile with pdfLaTeX (experimental support). Pass the `pdflatex` class option, or let the engine be auto-detected. Internally it loads bxcjkjatype (CJKutf8 with IPAex Mincho/Gothic Type 1 fonts) and an experimental backend (`jlreq-pdftex.sty`), applying JFM-based inter-character glue, kinsoku (line-breaking rules) and Japanese/Latin spacing.
+
+* **Vertical writing (`tate`)** is supported through a shipout-rotation architecture (inner horizontal galley, glyphs pre-rotated +90°, page box rotated −90° at `\@outputpage`). Verified areas include: reading/column directions, kinsoku and punctuation placement (true vertical glyph forms from generated auxiliary vertical fonts), page furniture (asymmetric head_space/foot_space/gutter/fore_edge + twoside + two columns + deferred footnotes + marginpars — bit-identical to upLaTeX on same-source geometry), tate-chu-yoko (`\tatechuyoko`, 1zw advance matching upLaTeX), inline/display math (δ baseline per the pLaTeX `adjustbaseline` formula, sp-exact against upLaTeX), notes/floats, jlreq-trimmarks (including tate banners, 0.01pt parity on all slot families), ruby (via the ruby.sty provider adapter), warichu and savepos-based reference marks. All verified areas are covered by the test suite (`tests/run-pdftex-tests.sh`; the measurement tables are in `docs/pdftex-internals.md`). Two quantified residuals are registered in `docs/pdftex-internals.md`: multi-paragraph first-footnote-column (+4.95pt) and the first-column interlinear opener ((+3.49, −1.42)pt), both outside single-footnote common usage.
+* Hanging punctuation (`hanging_punctuation`, via the `-b` JFM variants) is expressed as the negative end_adjust candidate of the line-end kern/penalty series (line-end-limited; the in-line part is net zero), matching upLaTeX's protrusion amounts.
+* Japanese in math mode (`\mathmc`/`\mathgt`, direct Japanese input) is supported; math-mode text boxes (`\text`/`\mbox`/`\makebox`) are counter-shifted per style per the pTeX direction-agreement rule. Explicit raw `\hbox`/`\vbox`/`\vcenter` noads at the top level of an inline formula raise a ClassError suggesting `\mbox`/`\text` (pdfTeX has no API to recover the direction of an arbitrary primitive box).
+* Punctuation is typeset at its JFM class width (e.g. half-width), with the glyph placed per the JFM alignment (ink geometry matches the platex reference).
+* Japanese labels (`\label{日本語}`/`\ref`/`\pageref`), wareki `\today` (`year_style=wareki`, era boundary dates, kanji digits in vertical writing) and the `\西暦`/`\和暦`/`\　` spellings work (expandable normalization; aux is byte-compatible for ASCII labels).
+* **Strict priority paragraph**: the `jlreqparagraph` environment (`\begin{jlreqparagraph}...\end{jlreqparagraph}`, no argument, one environment = one paragraph; loaded automatically with the pdfLaTeX backend) snapshots every paragraph parameter and re-typesets the paragraph through the native line breaker with per-line recovery, for strict priority-aware stretch/shrink of the JFM pair glues. The input model is explicit (CJK runs, Latin words, spaces, `\inhibitglue`, `\hspace`/`\kern`/`\penalty`/`\allowbreak`, inline math, `\mbox`/`\makebox`, `\label`/hyperlinks); display math, footnotes and marginpars inside the environment raise specific errors. See `docs/pdftex-internals.md` (jlreqparagraph section).
+* Fonts: the default `ipaex-type1` preset uses IPAex Type 1 subfonts; `pdftex_fontset=haranoaji` (HaranoAji — the current standard Japanese font of TeX Live), `pdftex_fontset=ipa` and `pdftex_fontset=custom` + `pdftex_fontprofile=<file>` are also available. Vertical glyph data and the HaranoAji horizontal chain are derived from the TeX Live fonts at build time by `make pdftex-fonts` (fontTools + ttf2tfm; the repository ships no font binaries). Normal document compilation runs no Lua/Python.
+
+See `docs/pdftex-compatibility.md` for the full status matrix and `docs/pdftex-tests.md` for the verification method.
 
 Other common options accepted are `oneside/twoside/onecolumn/twocolumn/titlepage/notitlepage/draft/final/landscape/openright/openany/leqno/fleqn`. Also, passing the `disablejfam` option will not register Japanese fonts for use in mathematics.
 
@@ -63,7 +77,7 @@ Specifies the Japanese font size, similar to `\fontsize`. If `jafontscale=0.9` i
 A macro consisting of a single full-width space (U+3000). It inserts a Japanese character space. In LuaLaTeX, you can also input a Japanese character space with `　` alone.
 
 ### Others
-* Ruby and encircled points are not provided. It is recommended to use [PXrubrica](https://github.com/zr-tex8r/PXrubrica) or `luatexja-ruby` (for LuaLaTeX, included in the LuaTeX-ja package).
+* Ruby and encircled points are not provided by the class itself. It is recommended to use [PXrubrica](https://github.com/zr-tex8r/PXrubrica) or `luatexja-ruby` (for LuaLaTeX, included in the LuaTeX-ja package). Under pdfLaTeX, use the CJK package's `ruby` (`\usepackage{ruby}`, options `overlap`/`nooverlap`/`CJK`/`latin`, parameters `\rubysize`/`\rubysep`): the experimental pdfTeX backend ships a provider adapter (`jlreq-pdftex-ruby.sty`, loaded automatically) that connects the provider's `\ruby{base}{ruby}` to the backend's boundary/state machinery — annotation above the base in horizontal typesetting and on the reading-frame right in vertical typesetting, boundary glue equal to the plain-text class table, provider overlap logic preserved (see `docs/pdftex-compatibility.md`).
 
 * When using pLaTeX / upLaTeX, macros `\zw` and `\zh` that expand to `zw` and `zh`, respectively, are defined. In LuaLaTeX, macros of the same name are defined within LuaTeX-ja.
 

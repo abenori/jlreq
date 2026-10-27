@@ -1,0 +1,11 @@
+% haranoaji-tate.tex -- pdftex_fontset=haranoaji 縦組検査（追加fontset）。
+% 補助縦フォント（jlreqv-haranoaji-*）のvert字形 + ToUnicode抽出を検査。
+% 判定は runner 側: rc=0、ログマーカ、JLreqVertharanoaji 埋込、抽出照合。
+\RequirePackage{ifpdf}
+\documentclass[pdflatex,tate,pdftex_fontset=haranoaji]{jlreq}
+\begin{document}
+これは縦組みの原の味検証文書である。漢字「括弧」、句読点。ーっ‥
+の縦字形は補助縦フォントから供給される。脚注\footnote{縦の脚注。}と
+縦中横\tatechuyoko{2026}も検査する。あいうえおかきくけこ。
+\typeout{HARANOAJI-TATE-PASS}
+\end{document}

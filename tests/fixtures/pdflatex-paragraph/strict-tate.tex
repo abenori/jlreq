@@ -1,0 +1,12 @@
+% 受入: 縦組みでの厳密段落（方向エンジン上で動作すること）
+\documentclass[pdflatex,tate]{jlreq}
+\begin{document}
+通常縦段落。
+\begin{jlreqparagraph}
+縦組厳密段落。あいうえおかきくけこさしすせそ。たちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん。
+\end{jlreqparagraph}
+後続縦段落。
+\makeatletter
+\typeout{TATE-STRICT-PASS}
+\makeatother
+\end{document}

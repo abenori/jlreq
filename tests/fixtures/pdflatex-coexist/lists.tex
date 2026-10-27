@@ -1,0 +1,21 @@
+% 共存試験: リスト環境（enumerate/itemize/description・和文項目）
+\documentclass[pdflatex]{jlreq}
+\begin{document}
+\section{箇条書き}
+\begin{enumerate}
+\item 第一項目：和文の箇条書き．
+\item 第二項目：English mixed item.
+\begin{enumerate}
+\item 入れ子の項目（その一）
+\item 入れ子の項目（その二）
+\end{enumerate}
+\end{enumerate}
+\begin{itemize}
+\item 箇条書きの項目其の一
+\item 箇条書きの項目其其二
+\end{itemize}
+\begin{description}
+\item[用語の定義] これは説明のための項目である．
+\item[別の用語] English description item.
+\end{description}
+\end{document}

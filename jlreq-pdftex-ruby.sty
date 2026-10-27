@@ -1,0 +1,489 @@
+%%
+%% This is file 'jlreq-pdftex-ruby.sty'.
+%% Experimental pdfTeX backend for the jlreq class (internal use).
+%%
+%% Ruby provider adapter.
+%%
+%% The jlreq class itself provides NO \ruby (the README API policy is
+%% unchanged): the supported provider is the CJK package's ruby.sty
+%% (\usepackage{ruby}, options overlap/nooverlap/CJK/latin, params
+%% \rubysize/\rubysep). This file ADAPTS the provider to the backend's
+%% boundary/state machinery by hooking; it defines no ruby command of
+%% its own and copies no provider code (ruby.sty is GPLv2+, this
+%% backend is not).
+%%
+%% What the adapter does (contract):
+%%   * activates whether ruby.sty is loaded BEFORE or AFTER this file:
+%%     the LaTeX2e package hook `package/ruby/after-load' covers the
+%%     normal (preamble) order, a begin-document check covers the
+%%     already-loaded case. Installation is idempotent; with the
+%%     provider absent nothing is defined (no jlreq-native \ruby).
+%%   * wraps the provider's \ruby BODY (\csname ruby \endcsname; the
+%%     robust shell is untouched so moving arguments keep working):
+%%       1. saves the parent state (lastclass/lastnodechar/pend/
+%%          inhibit/lastzw/direction), \lastkern, \ruby@width and the
+%%          previous \lastnodetype at entry;
+%%       2. lets the provider build base/annotation boxes through its
+%%          OWN \sbox EXACTLY ONCE each; a thin \sbox wrap records the
+%%          base's first/last glyph classes and zw during that single
+%%          pass (\jlreqpdf@ruby@recordfirst, called from the rules
+%%          glyph hook) and snapshots the base's right edge at the
+%%          sbox close; the annotation sbox stays an isolated frame
+%%          (standard entry neutralization; no recording); the base
+%%          is never re-run to inspect its edges;
+%%       3. emits the left-edge boundary into the main text ONCE via
+%%          the shared evaluator (\jlreqpdf@emitpair):
+%%            - \lastkern = 1sp/2sp/5sp (the provider's "previous CJK
+%%              char / punctuation / ruby" sentinels): the provider's
+%%              adjacency chain calls its inter-character glue slot
+%%              exactly at the boundary; emit there, inside the
+%%              provider's \nobreak sandwich, between its own kerns;
+%%            - other previous nodes (latin run, explicit kern/glue,
+%%              candidate-series tail, a closed box): the provider
+%%              calls no glue slot; emit at the wrapper entry before
+%%              the provider's node stream;
+%%            - paragraph head (vmode) / math: no boundary glue exists
+%%              (line-head pairs are 0-natural; ruby-in-math is
+%%              outside the provider's contract); nothing is emitted;
+%%       4. restores the saved kern sentinel after the boundary glue
+%%          as a NET-ZERO marker (\lastkern stays 1sp/2sp/5sp as the
+%%          provider expects) so the provider's own consecutive-ruby
+%%          and overlap computation continues unchanged; the ruby is
+%%          never wrapped in an extra box;
+%%       5. on exit sets the running state to the base's RIGHT edge
+%%          (last class/zw/lastnodechar, pend=0, glyphmark cleared;
+%%          a pending \inhibitglue is consumed by the boundary
+%%          emission), so the NEXT boundary's pair glue is evaluated
+%%          against the base's last glyph, not against stale
+%%          annotation state.
+%%   * placement needs no transform: yoko renders the annotation above
+%%     the base (the provider's own vbox), tate lands it on the
+%%     reading-frame RIGHT under the shipout-rotation model (inner-
+%%     frame "above" maps to final "right"), and the annotation glyphs
+%%     follow their local direction through the ordinary glyph layer
+%%     (vertical forms in tate, per-glyph font profile).
+%%
+%% Non-goals (documented): no jlreq-native ruby API; PXrubrica's rich
+%% public API is not emulated; the provider's \rubylatin mode is
+%% respected (no boundary glue between a latin-mode ruby and the
+%% surrounding text); ruby inside math is the provider's own
+%% out-of-scope (the wrapper passes such calls through unchanged).
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{jlreq-pdftex-ruby}[2026/10/24 v0.1 jlreq pdfTeX ruby provider adapter (experimental)]
+\RequirePackage{jlreq-pdftex-rules}
+
+\makeatletter
+
+%. ------------------------------------------------ provider detection
+% idempotent installer. Called either from the package/ruby/after-load
+% hook (ruby.sty loaded later, the normal \usepackage{ruby} order) or
+% from \AtBeginDocument when the provider was already loaded. Does
+% nothing when \ruby is undefined (provider absent = feature absent;
+% no jlreq-native \ruby is ever defined).
+\def\jlreqpdf@ruby@install{%
+  \@ifundefined{ruby}{%
+    % provider not loaded: nothing to adapt
+  }{%
+    \expandafter\ifx\csname jlreqpdf@ruby@orig\endcsname\relax
+      % --- first installation -------------------------------------
+      % wrap the provider's \ruby BODY: \csname ruby \endcsname. The
+      % outer robust shell (\ruby) is left alone, so \protect-based
+      % moving-argument handling is unchanged (headings, bookmarks).
+      \expandafter\let\expandafter\jlreqpdf@ruby@orig\csname ruby \endcsname
+      \expandafter\def\csname ruby \endcsname##1##2{%
+        \jlreqpdf@ruby@run{\jlreqpdf@ruby@orig{##1}{##2}}}%
+      % thin \sbox wrap (fires only while a ruby call is active):
+      % records the base's edge state around the provider's OWN single
+      % \sbox build
+      \expandafter\let\expandafter\jlreqpdf@ruby@orig@sbox\csname sbox \endcsname
+      \expandafter\def\csname sbox \endcsname##1##2{%
+        \jlreqpdf@ruby@sbox{##1}{##2}}%
+    \fi
+  }}
+\AddToHook{package/ruby/after-load}{\jlreqpdf@ruby@install}
+\AtBeginDocument{\jlreqpdf@ruby@install}
+
+%. ---------------------------------------------------- sbox adaptation
+% \jlreqpdf@ruby@sbox{<reg>}{<content>}: pass-through to the provider's
+% own \sbox (base/annotation are built EXACTLY ONCE by the provider).
+% While a ruby call is active (\jlreqpdf@ruby@in=1) and the target is
+% the provider's base box (\z@ = box 0), arm the first-glyph recorder
+% before the build and snapshot the base's right-edge state right
+% after it. The annotation sbox (\@tempboxa) gets no recording: it is
+% an isolated frame (the standard everyhbox entry neutralization
+% isolates it; the wrapper's exit-state assignment discards whatever
+% the annotation leaves in the registers).
+\newcount\jlreqpdf@ruby@in       % 1 = inside an adapted \ruby call
+\newcount\jlreqpdf@ruby@rec      % 0=off 1=want first 2=got first
+\newcount\jlreqpdf@ruby@firstclass
+\newcount\jlreqpdf@ruby@lastclass
+\newcount\jlreqpdf@ruby@lastchar
+\newdimen\jlreqpdf@ruby@firstzw
+\newdimen\jlreqpdf@ruby@lastzw
+\newcount\jlreqpdf@ruby@sboxdepth % >0 while a ruby base/annotation \sbox
+                                % is being built (the slot emitter must
+                                % not fire inside those boxes)
+\long\def\jlreqpdf@ruby@sbox#1#2{%
+  \ifnum\jlreqpdf@ruby@in=\@ne
+    \ifx#1\z@
+      % base box: arm the recorder (the rules glyph hook records the
+      % first observed glyph's class/zw), build ONCE via the
+      % provider's own \sbox, then snapshot the right edge.
+      \global\jlreqpdf@ruby@rec=\@ne
+      \global\advance\jlreqpdf@ruby@sboxdepth\@ne
+      \jlreqpdf@ruby@orig@sbox{#1}{#2}%
+      \global\advance\jlreqpdf@ruby@sboxdepth\m@ne
+      % snapshot: the registers hold the base's LAST glyph state (the
+      % annotation sbox has not run yet)
+      \ifnum\jlreqpdf@ruby@rec=\@ne
+        % no CJK glyph observed in the base (pure latin base):
+        % alchar semantics, like \jlreqpdf@classofchar
+        \global\jlreqpdf@ruby@firstclass=27
+        \global\jlreqpdf@ruby@lastclass=27
+        \global\jlreqpdf@ruby@lastchar=-1
+        \global\jlreqpdf@ruby@firstzw=\jlreq@jareg
+        \global\jlreqpdf@ruby@lastzw=\jlreq@jareg
+      \else
+        \global\jlreqpdf@ruby@lastclass=\jlreqpdf@lastclass
+        \global\jlreqpdf@ruby@lastchar=\jlreqpdf@lastnodechar
+        \global\jlreqpdf@ruby@lastzw=\jlreqpdf@lastzw
+      \fi
+      % Deferred boundary emission (the no-sentinel hmode case):
+      % the wrapper-entry path cannot emit before the base is built
+      % (the base's first class is only recorded during this single
+      % \sbox pass), so the wrapper arms \jlreqpdf@ruby@defer and the
+      % emission runs HERE -- after the base snapshot, before the
+      % provider's annotation \sbox (no main-list nodes), its boundary
+      % section (reads \lastkern: our glue leaves 0, keeping the
+      % provider on its no-branch path exactly as before) and the
+      % ruby box. The glue thus precedes the ruby box in the main
+      % list: the boundary between the previous text and the ruby.
+      \ifnum\jlreqpdf@ruby@defer=\@ne
+        \global\jlreqpdf@ruby@defer=\z@
+        \jlreqpdf@ruby@emitboundary
+      \fi
+      \global\jlreqpdf@ruby@rec=\z@
+    \else
+      % annotation box (or a provider-internal box): isolated frame,
+      % no recording; the depth counter keeps the slot emitter out
+      \global\advance\jlreqpdf@ruby@sboxdepth\@ne
+      \jlreqpdf@ruby@orig@sbox{#1}{#2}%
+      \global\advance\jlreqpdf@ruby@sboxdepth\m@ne
+    \fi
+  \else
+    \jlreqpdf@ruby@orig@sbox{#1}{#2}%
+  \fi}
+%. ---------------------------------------------- the call wrapper
+% saved parent state
+\newcount\jlreqpdf@ruby@saveclass
+\newcount\jlreqpdf@ruby@savechar
+\newcount\jlreqpdf@ruby@savepend
+\newcount\jlreqpdf@ruby@saveinhibit
+\newcount\jlreqpdf@ruby@savedir
+\newcount\jlreqpdf@ruby@savelnt    % \lastnodetype snapshot at entry
+\newdimen\jlreqpdf@ruby@savelastzw
+\newdimen\jlreqpdf@ruby@savelastkern
+\newdimen\jlreqpdf@ruby@save@width
+\newcount\jlreqpdf@ruby@slot        % 1 = boundary still to be emitted
+                                    %      at the provider's glue slot
+\newcount\jlreqpdf@ruby@defer       % 1 = boundary to be emitted right
+                                    %      after the base \sbox snapshot
+% \jlreqpdf@ruby@run{<provider body call>}: #1 is the FULL call of the
+% provider's original \ruby with its two arguments already attached.
+\long\def\jlreqpdf@ruby@run#1{%
+  % ---- save the parent state (adapter contract: parent state, lastkern, ruby
+  %      width at adapter entry)
+  \global\jlreqpdf@ruby@saveclass=\jlreqpdf@lastclass
+  \global\jlreqpdf@ruby@savechar=\jlreqpdf@lastnodechar
+  \global\jlreqpdf@ruby@savepend=\jlreqpdf@pend
+  \global\jlreqpdf@ruby@saveinhibit=\jlreqpdf@inhibit
+  \global\jlreqpdf@ruby@savedir=\jlreqpdf@dir
+  \global\jlreqpdf@ruby@savelastzw=\jlreqpdf@lastzw
+  \global\jlreqpdf@ruby@savelastkern=\lastkern
+  \global\jlreqpdf@ruby@save@width=\ruby@width
+  \global\jlreqpdf@ruby@savelnt=\lastnodetype
+  % neutral edge-state defaults (a degenerate call -- ruby in math,
+  % an empty base -- must not leak a previous ruby's recordings)
+  \global\jlreqpdf@ruby@firstclass=27
+  \global\jlreqpdf@ruby@lastclass=27
+  \global\jlreqpdf@ruby@lastchar=-1
+  \global\jlreqpdf@ruby@firstzw=\jlreq@jareg
+  \global\jlreqpdf@ruby@lastzw=\jlreq@jareg
+  \global\jlreqpdf@ruby@defer=\z@
+  % a pending \inhibitglue belongs to the ruby's LEFT boundary: hold
+  % it in the save and keep the interior sbox frames from stealing it
+  % (the boundary emission re-arms it; the box entries keep the flag
+  % by design, so it must be 0 while the boxes are built)
+  \global\jlreqpdf@inhibit=0
+  % ---- decide where the single boundary emission goes:
+  %      * vmode (paragraph head): no boundary glue exists at a line
+  %        head (pair 90->first is 0-natural; only kerns/boxes follow,
+  %        so no break candidate is created either); the provider's
+  %        own vmode branch handles the head overhang.
+  %      * math: outside the provider's contract; pass through with
+  %        the parent state restored (no emission).
+  %      * \lastkern = 1sp/2sp/5sp (the provider's "previous CJK
+  %        char / punctuation / ruby" sentinels): the provider's
+  %        adjacency chain calls its inter-character glue slot
+  %        exactly at the boundary; emit there (inside the provider's
+  %        \nobreak sandwich, between its own kerns) via the slot.
+  %      * otherwise (latin run, explicit kern/glue, candidate-series
+  %        tail, a closed box): the provider calls no glue slot; the
+  %        emission is DEFERRED to the moment the base \sbox snapshot
+  %        has recorded the first class -- the \sbox wrapper runs it
+  %        right after the snapshot (still inside the provider call,
+  %        before its boundary section and its ruby box; the provider
+  %        reads \lastkern only after that and stays on its no-branch
+  %        path exactly as before).
+  \ifmmode
+    \global\jlreqpdf@ruby@slot=\z@
+  \else
+    \ifvmode
+      \global\jlreqpdf@ruby@slot=\z@
+    \else
+      \ifdim\lastkern=1sp
+        \global\jlreqpdf@ruby@slot=\@ne
+      \else
+        \ifdim\lastkern=2sp
+          \global\jlreqpdf@ruby@slot=\@ne
+        \else
+          \ifdim\lastkern=5sp
+            \global\jlreqpdf@ruby@slot=\@ne
+          \else
+            \global\jlreqpdf@ruby@slot=\z@
+            \global\jlreqpdf@ruby@defer=\@ne
+          \fi
+        \fi
+      \fi
+    \fi
+  \fi
+  % pre-call setup (the no-glue-slot cases)
+  \ifnum\jlreqpdf@ruby@slot=\@ne
+    % save/restore the inter-char glue macro around the call: the
+    % provider's adjacency chain calls \CJKglue at the boundary; ours
+    % is the one-shot emitter below.
+    \let\jlreqpdf@ruby@saveglue\CJKglue
+    \let\CJKglue\jlreqpdf@ruby@boundary
+  \else
+    \ifmmode
+      % math: restore the parent state verbatim (below) and pass
+      % through; nothing emitted
+    \else
+      \ifvmode
+        % line head: no emission (see above); a pending inhibit has
+        % nothing left to suppress (the boundary has no glue) -> it
+        % is consumed here
+        \global\jlreqpdf@ruby@saveinhibit=0
+      \fi
+    \fi
+  \fi
+  % ---- run the provider body EXACTLY ONCE (base/annotation via its
+  %      own \sbox, its own width computation, its own overlap chain)
+  \global\jlreqpdf@ruby@in=\@ne
+  #1%
+  \global\jlreqpdf@ruby@in=\z@
+  % ---- restore the inter-char glue macro (slot path)
+  \ifnum\jlreqpdf@ruby@slot=\@ne
+    \let\CJKglue\jlreqpdf@ruby@saveglue
+  \fi
+  % ---- exit state: the base's RIGHT edge (the base's last glyph
+  %      classes were recorded without polluting the parent state;
+  %      the next boundary evaluates prev = the base's last glyph)
+  \ifmmode
+    % math pass-through: restore the saved parent state verbatim
+    \global\jlreqpdf@lastclass=\jlreqpdf@ruby@saveclass
+    \global\jlreqpdf@lastnodechar=\jlreqpdf@ruby@savechar
+    \global\jlreqpdf@pend=\jlreqpdf@ruby@savepend
+    \global\jlreqpdf@inhibit=\jlreqpdf@ruby@saveinhibit
+    \global\jlreqpdf@lastzw=\jlreqpdf@ruby@savelastzw
+  \else
+    \global\jlreqpdf@lastclass=\jlreqpdf@ruby@lastclass
+    \global\jlreqpdf@lastnodechar=\jlreqpdf@ruby@lastchar
+    \global\jlreqpdf@pend=0
+    \global\jlreqpdf@inhibit=0
+    \global\jlreqpdf@lastzw=\jlreqpdf@ruby@lastzw
+    % a stale interior glyphmark (from the annotation) must not
+    % survive; the next observed glyph sets the mark again itself
+    \global\jlreqpdf@glyphmark=0
+  \fi
+  % ---- right edge: a LATIN (or math-shift) follower must get the
+  %      same [base-last -> latin] boundary glue plain text gets; the
+  %      plain machinery cannot emit it here (its peek runs only
+  %      after a CJK glyph, and the base's glyphs are inside the
+  %      box). A \futurelet at the wrapper exit discriminates the
+  %      follower (a CJK follower is handled by its own glyph hook
+  %      with the restored base-right-edge state; a group, control
+  %      sequence or explicit space needs nothing). The emitted glue
+  %      would reset \lastkern, so the provider's exit sentinel is
+  %      re-emitted as a net-0 marker right after it (the +-5sp ruby
+  %      marker iff the provider's global \ruby@width is still
+  %      positive -- exactly the condition under which ruby.sty
+  %      emits \ruby@kern, otherwise its +-1sp "ordinary CJK char"
+  %      marker), keeping consecutive-ruby overlap detection intact.
+  %      NOTE the \futurelet MUST be the last token of this macro's
+  %      replacement text: mid-macro it would see this macro's own
+  %      remaining body, not the document's follower (measured:
+  %      \futurelet before the trailing assignments saw \global and
+  %      mis-dispatched).
+  \global\jlreqpdf@dir=\jlreqpdf@ruby@savedir
+  \ifmmode
+    \expandafter\@gobble
+  \else
+    \expandafter\jlreqpdf@ruby@rpeek@do
+  \fi}
+\def\jlreqpdf@ruby@rpeek@do{\futurelet\jlreqpdf@next\jlreqpdf@ruby@rpeek}
+
+%. ------------------------------------------- the boundary emission
+% ONE emission via the shared evaluator, driven by the recorded base
+% edge classes. Runs with the registers temporarily holding:
+%   lastclass = the parent's previous class (the saved entry state),
+%               with the latin-adjacency rule of \jlreqpdf@latadj
+%               applied from the saved \lastnodetype (a paragraph/box
+%               head directly after a char node counts as class 27);
+%   curclass  = the base's FIRST glyph class (recorded during the
+%               single sbox pass);
+%   lastzw    = the parent's previous zw, \jlreq@jareg = the base's
+%               first zw (mixed-size boundary blend, ltj two_paverage).
+% \rubylatin (the provider's latin mode) suppresses the
+% inter-character glue on purpose: respect it (emit nothing).
+\def\jlreqpdf@ruby@emitboundary{%
+  \ifruby@CJK@
+    % re-arm the pending inhibit (it was held in the save so the
+    % interior boxes could not steal it); the shared evaluator
+    % consumes it exactly like at a plain-text boundary
+    \global\jlreqpdf@inhibit=\jlreqpdf@ruby@saveinhibit
+    \global\jlreqpdf@ruby@saveinhibit=0
+    \ifnum\jlreqpdf@ruby@saveclass=90
+      \ifnum\jlreqpdf@ruby@savelnt=0
+        % direct latin adjacency (the same discrimination as the
+        % rules machinery's \jlreqpdf@latadj: only a char node counts)
+        \global\jlreqpdf@lastclass=27
+      \else
+        \global\jlreqpdf@lastclass=90
+      \fi
+    \else
+      \global\jlreqpdf@lastclass=\jlreqpdf@ruby@saveclass
+    \fi
+    \global\jlreqpdf@curclass=\jlreqpdf@ruby@firstclass
+    \global\jlreqpdf@lastzw=\jlreqpdf@ruby@savelastzw
+    \begingroup
+      \jlreq@jareg=\jlreqpdf@ruby@firstzw
+      % the shared evaluator: inhibit consumption, xspc rules, pair
+      % lookup/fallback, end_adjust candidates, the boundary penalty
+      % -- exactly the plain-text boundary machinery. The group only
+      % brackets the \jlreq@jareg override; the emitted nodes land in
+      % the surrounding (main-text) list.
+      \jlreqpdf@emitpair
+    \endgroup
+    % restore the saved kern sentinel as a NET-ZERO marker so the
+    % provider's own adjacency reads (\ifnum\lastkern=1/2/5) and the
+    % overlap computation continue on the pre-ruby situation
+    \jlreqpdf@ruby@marker
+  \else
+    % \rubylatin: the provider wants no inter-character glue at the
+    % ruby edges; a pending \inhibitglue still counts as consumed
+    \global\jlreqpdf@ruby@saveinhibit=0
+  \fi}
+% the net-zero marker restoration (only meaningful when the saved
+% \lastkern was a provider/CJK sentinel; the wrapper-entry path never
+% has one, the slot path does -- kept shared for both call sites)
+\def\jlreqpdf@ruby@marker{%
+  \ifdim\jlreqpdf@ruby@savelastkern=1sp \kern-1sp\kern1sp
+  \else
+    \ifdim\jlreqpdf@ruby@savelastkern=2sp \kern-2sp\kern2sp
+    \else
+      \ifdim\jlreqpdf@ruby@savelastkern=5sp \kern-5sp\kern5sp
+      \fi
+    \fi
+  \fi}
+% the slot (the provider's inter-character glue position): emit the
+% boundary once, then fall through -- the provider's own kern/penalty
+% chain continues around it. The slot flag doubles as a one-shot guard
+% (a second \CJKglue call inside one ruby adds nothing), and the
+% sbox-depth guard keeps the provider's INTERNAL \CJKglue calls (the
+% CJK decoder emits one between the annotation's own glyphs, inside
+% the annotation \sbox) from consuming the slot: the emission
+% belongs to the main list only.
+\def\jlreqpdf@ruby@boundary{%
+  \ifnum\jlreqpdf@ruby@sboxdepth=\z@
+    \ifnum\jlreqpdf@ruby@slot=\@ne
+      \global\jlreqpdf@ruby@slot=\tw@
+      \jlreqpdf@ruby@emitboundary
+    \fi
+  \fi}
+
+% the right-edge follower peek (\jlreqpdf@ruby@rpeek): runs via
+% \futurelet at the wrapper exit with the exit state already set to
+% the base's right edge. A latin letter/digit or a math-shift token
+% gets the [base-last -> 27] boundary through the shared evaluator
+% (the same emission the plain machinery's peek@lat produces after a
+% bare CJK glyph); everything else is left to the follower's own
+% machinery. The provider's exit sentinel is re-emitted as a net-0
+% marker after the glue so \lastkern keeps the value consecutive
+% rubies are detected by.
+\def\jlreqpdf@ruby@rpeek{%
+  \ifx\jlreqpdf@next\@sptoken
+    % explicit space: neutral (the plain machinery's 93 semantics)
+    \global\jlreqpdf@lastclass=93
+  \else
+    \ifx\jlreqpdf@next\egroup
+      % group end: resume the peek after the group closes (the same
+      % pattern the plain machinery's peek uses; a CJK follower
+      % emits through its own glyph hook either way -- this only
+      % matters for a latin/math follower right after the group)
+      \aftergroup\jlreqpdf@ruby@rpeek@do
+    \else
+      \ifx\jlreqpdf@next$%
+        \jlreqpdf@ruby@rlat
+      \else
+        \ifx\jlreqpdf@next\jlreqpdf@tate@dollar@cmp
+          \jlreqpdf@ruby@rlat
+        \else
+          \ifcat\noexpand\jlreqpdf@next a%
+            \jlreqpdf@ruby@rlat
+          \else
+            \ifcat\noexpand\jlreqpdf@next 1%
+              \jlreqpdf@ruby@rlat
+            \else
+              % CJK bytes, control sequences: the follower's own hook
+              % handles the pair (a CJK glyph reads the restored
+              % base-right-edge state)
+            \fi
+          \fi
+        \fi
+      \fi
+    \fi
+  \fi}
+\def\jlreqpdf@ruby@rlat{%
+  \ifruby@CJK@
+    \global\jlreqpdf@curclass=27
+    \begingroup
+      \jlreqpdf@emitpair
+    \endgroup
+    \global\jlreqpdf@lastclass=27
+    % re-emit the provider's exit sentinel as a net-0 marker: 5sp
+    % iff its global \ruby@width is positive (the exact condition
+    % under which ruby.sty emits \ruby@kern), else +-1sp
+    \ifdim\ruby@width>\z@
+      \kern-5sp\kern5sp
+    \else
+      \kern-1sp\kern1sp
+    \fi
+  \fi}
+
+%. ------------------------- rules-side hook: first-glyph recording
+% Called from jlreq-pdftex-rules.sty's glyph hook while a ruby base
+% pass is armed; records the FIRST observed glyph's class and zw (the
+% base is never re-run for this). No-op when the provider is not in
+% use (\jlreqpdf@ruby@rec stays 0).
+\def\jlreqpdf@ruby@recordfirst{%
+  \ifnum\jlreqpdf@ruby@rec=\@ne
+    \global\jlreqpdf@ruby@firstclass=\jlreqpdf@curclass
+    \global\jlreqpdf@ruby@firstzw=\jlreq@jareg
+    \global\jlreqpdf@ruby@rec=\tw@
+  \fi}
+
+% NB: jlreq.cls reads the backend chain mid-class with @ as a letter;
+% keep that state (no \makeatother here), like jlreq-pdftex.sty.
+\endinput

@@ -1,0 +1,14 @@
+% U1: クラスオプションのQ/H単位（級・歯，1Q=1H=0.25mm，pTeXセマンティクス）
+% pdfTeXではクラスロード時書換えパスが「数字直後の」Q/Hを
+% \dimexpr 0.25mm\relax に変換する（fontsize/jafontsize等は
+% \c__jlreq_lenopt_clist に登録済み）．13Q = 13*0.25mm = 3.25mm.
+\documentclass[pdflatex,fontsize=13Q,jafontsize=13Q,baselineskip=20Q,head_space=10Q,foot_space=12Q,gutter=10Q,fore_edge=20mm,line_length=40zw,column_gap=4zw]{jlreq}
+\begin{document}
+\makeatletter
+\typeout{QH-FONTSIZE=\the\jlreq@fontsize}% 13Q の実測（期待: 3.25mm≒9.25pt）
+\typeout{QH-JAFONTSIZE=\the\jlreq@jafontsize}% 13Q の実測
+\typeout{QH-FSIZEMACRO=\f@size}% \normalsize の \f@size
+\typeout{QH-BLSKIP=\the\dimexpr\jlreqbaselineskip\relax}% 20Q = 5mm の実測
+\makeatother
+Q/H単位（級・歯）で版面を指定した文書．和文とEnglish混在で確認。
+\end{document}

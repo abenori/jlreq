@@ -1,0 +1,10 @@
+% 斜体・スラントの代替検証（太字・斜体の代替が無害であることを確認）。
+% CJKグリフに斜体フォントは存在しないため、和文は明朝のまま出力される
+% （代替なし=無害）。欧文はLM Italic/Slantに切替わることを確認する。
+% また斜体指定がCJKbold（text rendering 2 Tr）を誤って発行しないこと。
+\documentclass[pdflatex]{jlreq}
+\begin{document}
+通常の和文．{\itshape 斜体指定の和文と Latin italic.}
+{\slshape slanted和文と Latin slant.}通常に戻る．
+{\itshape\bfseries 太字斜体の和文と BoldItalic Latin.}戻る．
+\end{document}

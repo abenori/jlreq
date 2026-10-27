@@ -1,0 +1,31 @@
+% pdflatex-tate-math-movarg.tex -- moving argument 内の数式の保護
+% $ は cat3 のままなので \protected@edef/\write/\mark で捕捉機構は展開
+% されない。判定（runner: 2パス + ログ検査）:
+%   SECTION : 見出し移動引数内の $..$ が aux を破壊しない（2パス成立）
+%   MARK    : \mark 中の数式でエラーにならない
+%   BOOKMARK: hyperref しおり文字列の数式フォールバックが機能（.out に
+%             数式由来のASCII列が残る; hyperref 既存フォールバック）
+%   REFS    : 式番号 \label/\eqref が解決（2パス目で未解決警告なし）
+%   BODY    : 本文の行内数式も捕捉経路で成立
+% NOTE: tate + \tableofcontents の2パス目 "Leaders not followed by
+% proper glue" は既に解消済み（frame-pop \aftergroup と数式グループ
+% ラッパーの2原因; toc-twopass ゲートが検証）。本検査は移動引数の
+% 保護に焦点を当てる。
+\documentclass[pdflatex,tate,paper=a5]{jlreq}
+\usepackage{amsmath}
+\usepackage[unicode]{hyperref}
+\pagestyle{empty}
+\makeatletter
+\begin{document}
+\section{移動引数の試験 $a+b$}\label{sec:mov}
+本文: 式~\eqref{eq:mv} を参照。節~\ref{sec:mov}。
+\begin{equation}
+  x + y = z \label{eq:mv}
+\end{equation}
+\markboth{柱の試験 $m$}{柱の試験 $m$}
+漢字$a+b$漢字
+\typeout{TATE-PASS: SECTION (heading with math in moving arg)}%
+\typeout{TATE-PASS: MARK (mark with math ok)}%
+\typeout{TATE-PASS: BOOKMARK (hyperref math fallback; .out checked by runner)}%
+\typeout{TATE-PASS: BODY (inline math in body text)}%
+\end{document}

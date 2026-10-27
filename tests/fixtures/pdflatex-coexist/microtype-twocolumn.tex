@@ -1,0 +1,27 @@
+% 共存試験: microtype と twocolumn。
+% - twocolumn: 版面計算のcolumn_gap（既定2zw）と二段組の流し込みを検証。
+% - microtype: 欧文部分のプロトラクション。和文グリフ周囲のグルーは
+%   本バックエンドが管理するため両者の衝突がないことを確認する。
+\documentclass[pdflatex,twocolumn]{jlreq}
+\usepackage{microtype}
+\begin{document}
+\section{二段組の検証}
+二段組では，段間の空き（\texttt{column\_gap}，既定2zw）が正しく適用され，
+版面の行長が半分になる。jlreq.clsの版面計算は，\texttt{column\_gap}の
+zwリテラルをクラスロード時の書き換えパスで単位マクロに置換する。
+
+microtypeは欧文部分の字間調整（プロトラクション）を行う。Japanese text
+surrounds the English fragments; the backend state machine inserts the
+pair glue around them, and microtype protrusion applies only to the Latin
+glyphs. これは共存確認の本文である。段落が複数ある場合の段の均衡も見る。
+
+さらに段落を重ねて二段組の流し込みを確認する。行長が狭くなるため，
+禁則（行頭・行末）のペナルティと，括弧の前後の二分アキが通常より頻繁に
+効く。この段落でそれを観察する。「括弧」・中点「・」・感嘆符「！」も
+出現させる。English protrusion check: wonderful typesetting quality.
+
+四つ目の段落である。二段組では最終ページの段のそろえ（\texttt{flushbottom}）
+が既定で有効になる。この段落が右列に達する十分な長さを持つように，
+文章を続ける。和文とEnglishが混在する中で，状態機構のリセット（段落
+開始時のクラス90への戻し）が正しく働くことも確認対象である。
+\end{document}

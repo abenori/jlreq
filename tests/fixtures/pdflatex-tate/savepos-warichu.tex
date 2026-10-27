@@ -1,0 +1,47 @@
+% savepos-warichu.tex -- acceptance gate: savepos-driven machinery
+% (interlinear reference marks + 割注 warichu) under d-tate, with the
+% logical-frame line-extent computation checked against the class's
+% own geometry instead of the raw PDF X coordinate.
+%
+% The aux frame-id round-trip: \pdfsavepos positions are recorded per
+% \jlreq@reference@count id in the aux; pass 1 has no origins yet
+% (labels default to 0), so the geometric assertions are made on the
+% FINAL pass (the runner runs 2 passes and asserts on pass 2's log),
+% proving pass 2 consumes pass 1's origins.
+%
+% Assertions (log markers, asserted on pass 2 by the runner):
+%   MARK-POS  : an interlinear reference mark placed mid-line keeps the
+%               pair glue of the surrounding chars (same natural-width
+%               contract as the yoko interlinear fixture, in tate).
+%   REST-WIDTH: the warichu's internal savepos measurement (taken by
+%               the class at the warichu start) reports the rest of the
+%               logical line within tolerance: line 20zw, run of 5
+%               kanji + opening bracket before the warichu cell.
+%   WARICHU-OK: the warichu typeset (2 lines) and the paragraph ships.
+\documentclass[pdflatex,tate,paper=b5,line_length=20zw]{jlreq}
+\jlreqsetup{reference_mark=interlinear}
+\makeatletter
+\begin{document}
+% ---- MARK-POS: 合印を挟んでも前後のペアグルーが不変（横組版と同一契約）
+\newbox\mk@boxa \newbox\mk@boxb
+\setbox\mk@boxa=\hbox{あ、\footnote{注1}あ}%
+\setbox\mk@boxb=\hbox{あ、あ}%
+\@tempdima=\dimexpr\wd\mk@boxa-\wd\mk@boxb\relax
+\ifdim\@tempdima<\z@ \@tempdima=-\@tempdima\fi
+\ifdim\@tempdima<0.5pt
+  \typeout{MARK-POS: pair glue intact (\the\@tempdima)}%
+\else
+  \typeout{MARK-POS-FAIL: delta=\the\@tempdima}%
+\fi
+
+% ---- REST-WIDTH / WARICHU-OK: 割注（コマンド形式）。
+% 20zw の行に全角5文字を置いてから割注を開始。割注内部で
+% \jlreq@savepos@for@rest@linewidth が走り、
+% \jlreq@current@linewidth / \jlreq@rest@linewidth に
+% 論理行方向（=内枠 X 方向）の値が入る。
+あいうえお\warichu{割注一行目　割注二行目}残りの本文。
+\typeout{REST-WIDTH: current=\the\jlreq@current@linewidth,
+  rest=\the\jlreq@rest@linewidth, linewidth=\the\linewidth,
+  zw=\the\jlreq@zw}%
+続きの文章。ここで検査は終わる。\footnote{脚注も縦組みで出る。}
+\end{document}

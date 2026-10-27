@@ -1,0 +1,4 @@
+Auxiliary vertical font for the jlreq pdfTeX backend.
+Derived from /nix/store/dc6z4jb2hpj82mcbxfibpp98fyrfvada-texlive-2025-r78234-final-env-texmfdist/fonts/opentype/public/haranoaji/HaranoAjiMincho-Regular.otf; the glyph outlines are the source font's vertical (vert/vrt2) forms.
+copyright: Copyright (C) 2019-2025 Masamichi Hosoda, with Reserved Font Name 'Harano Aji'. © 2017-2024 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'.
+license: This Font Software is licensed under the SIL Open Font License, Version 1.1. This Font Software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the SIL Open Font License for the specific language, permissions and limitations governing your use of this Font Software.

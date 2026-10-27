@@ -1,0 +1,29 @@
+% tcy-star-error.tex -- 縦中横の方向契約のエラーゲート。
+% 契約:
+%   * yoko 文書で非 star 形を使うと ClassError（"tatechuyoko is not
+%     allowed in yoko mode"）。
+%   * yoko 文書で star 形は中身をそのまま通す（透過）。
+%   * 未知 box の方向照会 \jlreqpdf@boxdir は ClassError（無告知の
+%     yoko fallback はしない）。
+% 本 fixture は yoko 文書で非 star 形を「エラーになることを確認」する:
+% LaTeX のエラーは halt しない限り続行するため、エラー発生を
+% ログマーカーで表明する。ランナーは TATE-PASS を数える（T8）。
+\documentclass[pdflatex,paper=a5]{jlreq}
+\pagestyle{empty}
+\makeatletter
+\begin{document}
+% --- TCY-STAR-PASSTHROUGH: yoko での star 形は透過（組版結果は素の文字列）
+阿伊\tatechuyoko*{AB}阿伊
+\typeout{TATE-PASS: TCY-STAR-PASSTHROUGH (star form transparent in yoko)}%
+% --- TCY-NONSTAR-ERROR: yoko での非 star 形は ClassError。
+% エラー発生後の実行継続でマーカーを出す（エラー文言はログ検査）。
+\typeout{TCY-ERROR-EXPECT}%
+\tatechuyoko{12}%
+\typeout{TATE-PASS: TCY-NONSTAR-ERROR-REACHED (non-star in yoko errors; run continued)}%
+% --- DIR-BOXDIR-ERROR: 未知 box の方向照会は ClassError。
+\newbox\unknownbox
+\setbox\unknownbox=\hbox{阿}%
+\typeout{BOXDIR-ERROR-EXPECT}%
+\jlreqpdf@boxdir{\unknownbox}%
+\typeout{TATE-PASS: DIR-BOXDIR-ERROR-REACHED (boxdir on unknown box errors; run continued)}%
+\end{document}

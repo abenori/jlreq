@@ -1,0 +1,58 @@
+% 漢数字（\kansuji 相当）の pdfTeX バックエンド検証。
+%  * マクロ単体: \jlreq@pdf@kansuji の展開結果を \ifx でリテラル漢数字と照合
+%    （pTeX 実測仕様: 十進各桁を 〇一…九 に置換する桁置換。位取りなし、
+%     10→一〇、100→一〇〇、0→〇、負数→空。uplatex/platex で同一確認済み）
+%  * 実使用経路: 横組書籍の章見出し・目次で \thechapter を
+%    \jlreq@Kanji{chapter} 化（クラスが tate で張るのと同じ公開カウンタ経路を
+%    横組に適用した到達可能な使用例。TOC への \write 安全性も検証）
+%  * KANSUJI-PASS のログ行は uplatex の \kansuji 出力と漢数字が一致する。
+% 不一致時は \errmessage でコンパイル自体を失敗させる（rc≠0）。
+\documentclass[a4paper,pdflatex,book]{jlreq}
+\makeatletter
+\newcount\kjfail
+% ログ照合用プリンタ: 1桁を \detokenize 済みの生バイト列（実漢字）にする。
+% バックエンドの \jlreq@pdf@kansuji@run がこれを各桁に適用する。
+\def\kjdigitlog#1{%
+  \ifcase#1 \detokenize{〇}\or \detokenize{一}\or \detokenize{二}\or
+    \detokenize{三}\or \detokenize{四}\or \detokenize{五}\or
+    \detokenize{六}\or \detokenize{七}\or \detokenize{八}\or
+    \detokenize{九}\fi}
+\def\kjcheck#1#2{%
+  \edef\kjgot{\jlreq@pdf@kansuji@run\kjdigitlog{#1}}%
+  \edef\kjexp{\detokenize{#2}}%
+  \ifx\kjgot\kjexp
+    \typeout{KANSUJI-PASS #1 -> \kjgot}%
+  \else
+    \typeout{KANSUJI-FAIL #1 -> got [\kjgot] expected [\kjexp]}%
+    \global\advance\kjfail by 1 %
+  \fi}
+\makeatother
+\begin{document}
+\makeatletter
+% --- マクロ単体テスト（uplatex \kansuji の実測出力と一致すること）---
+\kjcheck{0}{〇}
+\kjcheck{1}{一}
+\kjcheck{5}{五}
+\kjcheck{10}{一〇}
+\kjcheck{11}{一一}
+\kjcheck{20}{二〇}
+\kjcheck{100}{一〇〇}
+\kjcheck{101}{一〇一}
+\kjcheck{110}{一一〇}
+\kjcheck{1000}{一〇〇〇}
+\kjcheck{2025}{二〇二五}
+\kjcheck{10000}{一〇〇〇〇}
+\kjcheck{-1}{}% 負数は空（pTeX と同じ）
+\ifnum\kjfail>0 \errmessage{kanji-numerals mismatch}\fi
+% --- 横組の実使用例: 章番号を漢数字に（tate 定義と同一のカウンタ経路）---
+\renewcommand{\thechapter}{\jlreq@Kanji{chapter}}
+\makeatother
+\tableofcontents
+\chapter{序章}
+本文テスト．
+\setcounter{chapter}{9}
+\chapter{十番目}
+本文．
+\chapter{十一番目}
+本文．
+\end{document}

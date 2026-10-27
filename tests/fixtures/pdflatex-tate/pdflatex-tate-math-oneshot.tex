@@ -1,0 +1,67 @@
+% pdflatex-tate-math-oneshot.tex -- 一回実行契約の実測
+% 判定（TATE-PASS/TATE-FAIL）:
+%   EM       : everymath が行内数式1式ごとにちょうど1回（$ と \( で2式）
+%   ED       : everydisplay が表示数式1式ごとにちょうど1回（\[ と $$ で2式）
+%   MATHMC   : \mathmc 本体の組版が「サイズ種類数」だけ（display/text の
+%              同一サイズ分岐は box+copy 共有で1回; script/scriptscript は
+%              実サイズが必要なため別組版。4分岐→3組版）
+%   MBOX     : \mbox 本体の組版が1回（box は \mathchoice 分岐を持たない）
+%   AMSTEXT  : \text は amstext 自身の4分岐実装のまま（再実装しない;
+%              コンパイルと counter が amstext の firstchoice ゲート通り）
+%   MATHLEVEL: \end{document} 時点で mathlevel が 0 に戻る（開始時処理が
+%              式ごとに1回だけ実行され、増減が対になっている）
+\documentclass[pdflatex,tate,paper=a5]{jlreq}
+\usepackage{amsmath}
+\pagestyle{empty}
+\makeatletter
+\newcount\emcount  \newcount\edcount
+\newcount\mcbodycount \newcount\mbbodycount
+\begin{document}
+\everymath{\global\advance\emcount1 }
+\everydisplay{\global\advance\edcount1 }
+漢$x$漢\(y\)漢
+\[
+  E=mc^2
+\]
+$$a+b$$
+\ifnum\emcount=2
+  \typeout{TATE-PASS: EM (\the\emcount, expected 2)}%
+\else
+  \typeout{TATE-FAIL: EM (\the\emcount, expected 2)}%
+\fi
+\ifnum\edcount=2
+  \typeout{TATE-PASS: ED (\the\edcount, expected 2)}%
+\else
+  \typeout{TATE-FAIL: ED (\the\edcount, expected 2)}%
+\fi
+% \mathmc 本体: 3種サイズの組版 = サイズ種類数（10pt分岐は box+copy 共有）
+\everymath{}
+\def\mcbody{\global\advance\mcbodycount1 }
+漢$\mathmc{\mcbody 漢}$漢
+\ifnum\mcbodycount=3
+  \typeout{TATE-PASS: MATHMC (\the\mcbodycount, expected 3 = distinct sizes)}%
+\else
+  \typeout{TATE-FAIL: MATHMC (\the\mcbodycount, expected 3)}%
+\fi
+% \mbox 本体: 1回
+\def\mbbody{\global\advance\mbbodycount1 }
+漢$\mbox{\mbbody 漢}$漢
+\ifnum\mbbodycount=1
+  \typeout{TATE-PASS: MBOX (\the\mbbodycount, expected 1)}%
+\else
+  \typeout{TATE-FAIL: MBOX (\the\mbbodycount, expected 1)}%
+\fi
+% amstext \text: コンパイルゲート + firstchoice 互換（counter は
+% amstext のパッチ済み \stepcounter が1回に制限する; 本体は4分岐）
+漢$\text{\mbbody 和文}$漢
+\ifnum\mbbodycount=5
+  \typeout{TATE-PASS: AMSTEXT (body fires per amstext branch; \the\mbbodycount total incl.\ mbox)}%
+\else
+  \typeout{TATE-FAIL: AMSTEXT (\the\mbbodycount)}%
+\fi
+\ifnum\@math@level=0
+  \typeout{TATE-PASS: MATHLEVEL (\the\@math@level)}%
+\else
+  \typeout{TATE-FAIL: MATHLEVEL (\the\@math@level, expected 0)}%
+\fi
+\end{document}

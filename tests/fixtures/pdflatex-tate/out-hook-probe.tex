@@ -1,0 +1,30 @@
+% out-hook-probe.tex -- acceptance probe: the kernel build/page hooks
+% and the hooked shipout flow through the thin d-tate wrapper EXACTLY
+% ONCE per page, in both d-tate and d-yoko documents.
+%   HOOK-BEFORE-<n> : one \AddToHook{build/page/before} firing per page
+%   HOOK-AFTER-<n>  : one \AddToHook{build/page/after} firing per page
+%   SHIPOUT-<n>     : one \AddToHook{shipout/before} firing per page
+% The runner (tests/run-pdftex-tests.sh) compiles this with
+% [pdflatex,tate] and [pdflatex] and requires, for each run:
+%   - 3 pages => exactly one firing of each marker per page number 1..3
+%   - no page number appears twice for the same hook
+%   - the tate run ships a rotated page (page 1 textwidth-furniture
+%     check: the run itself is byte-stable; rotation parity is covered
+%     by the existing tate fixtures).
+\documentclass[pdflatex,tate]{jlreq}
+\makeatletter
+\newcount\probe@n
+\AddToHook{build/page/before}{%
+  \global\advance\probe@n\@ne
+  \typeout{HOOK-BEFORE-\the\probe@n: page=\the\c@page, dir=\the\jlreqpdf@pagedir@count}}
+\AddToHook{build/page/after}{%
+  \typeout{HOOK-AFTER-\the\probe@n: page=\the\c@page}}
+\AddToHook{shipout/before}{%
+  \typeout{SHIPOUT-\the\probe@n: page=\the\c@page}}
+\begin{document}
+あああああああああああああああああああああああああああああああああああああ
+\clearpage
+いいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいい
+\clearpage
+うううううううううううううううううううううううううううううううううううう
+\end{document}

@@ -1,0 +1,24 @@
+% sidenote_type=symbol（傍注，4.2.7）: pdfTeX検証
+% 過去のpdfTeX不具合(b)の回帰フィクスチャ：symbol型\sidenoteが
+% 「Undefined control sequence」（\CJK@punctchar内部エラー）．
+% 既定マーク ＊（U+FF0A，CJK utf8 のアクティブ文字）を素の \edef で
+% \@thefnmark に入れており，アクティブ文字の展開連鎖が \edef 下で
+% \CJK@punctchar の内部定義（\def\CJK@tempa##1...）に踏み込んで壊れた．
+% \protected@edef 化で文字トークンを保持するよう修正済み（pTeX/upTeX/
+% LuaTeXでは和文文字は展開不能なので従来と同値）．
+\documentclass[pdflatex,sidenote_length=20zw]{jlreq}
+\jlreqsetup{sidenote_type=symbol}
+\begin{document}
+% --- sidenote_type=symbol ---
+記号型の傍注では\sidenote{強調されている語句}{その語句についての説明注。
+見出し付きで欄外に出る。}という形になる。
+
+分離型も：\sidenotemark{別の語句}文中に置き，\sidenotetext{別の語句}{分離した記号型の傍注本文。}
+注はあとで与える。
+
+% --- 共存する脚注・後注・単体 marginpar ---
+脚注\footnote{脚注本文。}と後注\endnote{後注本文。}，
+単体の\marginpar{欄外テスト}も通す。
+
+\theendnotes
+\end{document}

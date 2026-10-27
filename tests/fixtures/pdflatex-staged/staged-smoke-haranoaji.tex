@@ -1,0 +1,11 @@
+% staged-smoke-haranoaji.tex -- haranoaji fontset の staged TDS smoke。
+% yoko/tate 版と同じ契約（repo外cwd、staged TEXMFのみ、-no-shell-escape）。
+% 横組TTF（haranoaji-*-ttf.ttf）と補助縦フォント（jlreqv-haranoaji-*）が
+% pdfmapline の kpathsea 解決で埋め込まれることを検証する。
+\RequirePackage{ifpdf}
+\documentclass[pdflatex,tate,pdftex_fontset=haranoaji]{jlreq}
+\begin{document}
+これは原の味の配布検証用の縦組文書である。漢字「括弧」、句読点。ーっ‥
+脚注\footnote{縦の脚注。}も出す。
+\typeout{STAGED-HARA-PASS}
+\end{document}

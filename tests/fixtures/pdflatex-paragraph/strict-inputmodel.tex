@@ -1,0 +1,22 @@
+% 受入: 入力モデル一覧（許可構成要素すべて + 禁止構成の具体エラー）
+% 判定: ログ内 INM-PASS / INM-FAIL とエラー文言の存在。
+\documentclass[pdflatex]{jlreq}
+\usepackage[hidelinks]{hyperref}
+\begin{document}
+% ---- 許可: CJK連続, 欧文word, 空白, inhibitglue, hspace, kern,
+%      penalty, allowbreak, nobreak, inline math, mbox/makebox,
+%      tatechuyoko(yokoは透過), label/ref/hyperlink ----
+\begin{jlreqparagraph}
+漢字連続とEnglish wordsの混在。\inhibitglue 括弧前。あ\hspace{3pt}い。
+\kern2pt うえ\penalty42 お。か\allowbreak き\allowbreak く\allowbreak け。
+数式$x+y=z$を含む。\mbox{不透過箱}と\makebox[20pt][c]{makebox}。
+\hyperref[par:target]{リンク付き}\label{par:target}。
+\end{jlreqparagraph}
+\begin{jlreqparagraph}
+二つ目の環境。あいうえおかきくけこさしすせそ。敬称略。
+\end{jlreqparagraph}
+後続段落。
+\makeatletter
+\typeout{INM-PASS: allowed-constructs}
+\makeatother
+\end{document}

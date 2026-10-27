@@ -1,0 +1,17 @@
+% space-dispatcher.tex -- 全角空白綴り（\　）とliteral U+3000 の共存と
+% \西暦/\和暦 ディスパッチャ。
+% 検証:
+%   * \　（命令形）: 全角空白1字分 + 後続ASCII空白の無視
+%   * literal U+3000（文字として直接入力）: 通常の全角空白
+%   * \jaspace{zenkaku}: 同幅のskip
+%   * 未対応byte列: 未定義命令相当のエラー（エラー行の存在を検査）
+% 判定は tests/check-space-dispatcher.py（抽出テキストの整合検査）+
+% ラグ内の ERROR 行検査（\西暦との誤綴が ClassError になること）。
+\documentclass[pdflatex]{jlreq}
+\pagestyle{empty}
+\begin{document}
+A:あ\　い
+B:あ　い
+C:あ\jaspace{zenkaku}い
+D:あ\　い
+\end{document}

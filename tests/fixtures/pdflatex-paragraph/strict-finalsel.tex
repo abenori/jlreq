@@ -1,0 +1,18 @@
+% strict-finalsel: aw_step1_last -- the FINAL line's end_adjust
+% candidate re-chosen by the parfillskip condition.
+% A single-line paragraph ending with 。 whose candidates are
+% {0, 0.5zw}: the native breaker chose e=0; the parfill condition
+% (lexicographic (|slack|, |e|, e) with slack = rem - e) picks
+% e=5pt, which zeroes the parfill stretch. The FINS log line is the
+% evidence; the runner asserts win-e != native-e.
+\documentclass[pdflatex]{jlreq}
+\begin{document}
+\makeatletter
+\def\jlreqpar@verifywd{1}%
+\hsize=70pt
+\begin{jlreqparagraph}
+たちつてと。
+\end{jlreqparagraph}
+\makeatother
+x
+\end{document}

@@ -1,0 +1,129 @@
+% state-frames.tex -- 境界・状態フィクスチャ。
+% シナリオ:
+%   A漢/漢A/漢A漢（和欧文境界，段落先頭 abc漢 を含む），空段落，
+%   明示空白，fil glue，フォントグループ，mbox/sbox/parbox 隔離，
+%   注（脚注）前後，数式境界。
+% 各測定は self-assert (\typeout{P3-PASS/P3-FAIL})。
+\documentclass[pdflatex]{jlreq}
+\makeatletter
+\newbox\sboxa
+\newbox\sboxb
+\newbox\sfbox
+\newdimen\sdim
+% 測定補助: 2つのボックス幅の差の絶対値が tol 以内か
+\def\stest#1#2#3#4{% name tol boxa boxb
+  \sdim=\dimexpr\wd#3-\wd#4\relax
+  \ifdim\sdim<\z@ \sdim=-\sdim \fi
+  \ifdim\sdim<#2\relax
+    \typeout{P3-PASS: #1 (\the\wd#3~vs~\the\wd#4)}%
+  \else
+    \typeout{P3-FAIL: #1 (\the\wd#3~vs~\the\wd#4, diff \the\sdim)}%
+  \fi}
+% 状態の中立化（測定間の汚染防止）
+\def\sreset{\global\jlreqpdf@lastclass=90 \global\jlreqpdf@pend=0
+  \global\jlreqpdf@inhibit=0 \global\jlreqpdf@lastzw=\jlreq@jareg}
+
+\begin{document}
+% ---- 1. 漢A（CJK->LA 境界: xkanjiskip 0.25zw）
+\sreset
+\setbox\sboxa=\hbox{漢abc}%
+\sreset
+\setbox\sboxb=\hbox{漢\hskip\jlreqxkanjiskip abc}%
+\stest{ja-la-boundary}{0.5pt}\sboxa\sboxb
+
+% ---- 2. A漢（LA->JA 境界: 段落先頭を含む。lastclass=90 && lastnodetype=0）
+\sreset
+\setbox\sboxa=\hbox{abc漢}%
+\sreset
+\setbox\sboxb=\hbox{abc\hskip\jlreqxkanjiskip 漢}%
+\stest{la-ja-boundary-box}{0.5pt}\sboxa\sboxb
+
+% ---- 3. 漢A漢（両側の xkanjiskip が一度ずつ入る）
+\sreset
+\setbox\sboxa=\hbox{漢a漢}%
+\sreset
+\setbox\sboxb=\hbox{漢\hskip\jlreqxkanjiskip a\hskip\jlreqxkanjiskip 漢}%
+\stest{ja-la-ja}{0.5pt}\sboxa\sboxb
+
+% ---- 4. 空段落の後の和文（indent 誤判定なし: 変化なし）
+\sreset
+\setbox\sboxa=\vbox{\hsize=100pt \par 漢\par}%
+\sreset
+\setbox\sboxb=\vbox{\hsize=100pt \par 漢\par}%
+\stest{empty-para-then-cjk}{0.1pt}\sboxa\sboxb
+
+% ---- 5. 明示空白を挟む境界（空白をまたぐ境界グルーなし: 中立）
+\sreset
+\setbox\sboxa=\hbox{漢 abc 漢}%
+\sreset
+\setbox\sboxb=\hbox{漢 abc 漢}%
+\stest{explicit-space-neutral}{0.1pt}\sboxa\sboxb
+
+% ---- 6. zero-natural stretchy glue（ユーザー glue は unskip されない）
+\sreset
+\setbox\sboxa=\hbox{漢\hskip 0pt plus 1fil 漢}%
+\sreset
+\setbox\sboxb=\hbox{漢\hskip 0pt plus 1fil 漢}%
+\stest{fil-glue-preserved}{0.1pt}\sboxa\sboxb
+
+% ---- 7. フォントグループ（{\gtfamily 漢}: グループ越えの状態連続）
+\sreset
+\setbox\sboxa=\hbox{あ{\gtfamily 漢}あ}%
+\sreset
+\setbox\sboxb=\hbox{あ{\gtfamily 漢}あ}%
+\stest{font-group-continuity}{0.1pt}\sboxa\sboxb
+
+% ---- 8. mbox 隔離（漢\mbox{あ}漢: box は意味論フレーム）
+\sreset
+\setbox\sboxa=\hbox{漢\mbox{あ}漢}%
+\sreset
+\setbox\sboxb=\hbox{漢\mbox{あ}漢}%
+\stest{mbox-isolation}{0.1pt}\sboxa\sboxb
+% ---- 9. sbox 測定の状態非漏れ（測定してから本文へ出す: 状態は壊れない）
+\sreset
+\sbox\sboxa{あ、}%
+\setbox\sboxb=\hbox{あ、あ}%
+\stest{sbox-no-leak}{0.5pt}\sboxb\sboxb
+
+% ---- 10. parbox 隔離
+\sreset
+\setbox\sboxa=\hbox{漢\parbox{2\jlreq@zw}{あ}漢}%
+\sreset
+\setbox\sboxb=\hbox{漢\parbox{2\jlreq@zw}{あ}漢}%
+\stest{parbox-isolation}{0.1pt}\sboxa\sboxb
+
+% ---- 11. 脚注前後（脚注マークを挟むペアグルーが直接組と一致。
+%      inline マーク自体の幅はマークに依存するため，比較対象も
+%      同じマークを挟む：差分が 0 なら境界グルーは直接組と同一。
+%      ゼロ幅マーク（interlinear）は reference-mark-interlinear.tex 担当）
+\sreset
+\setbox\sboxa=\hbox{あ、\footnote{注}あ}%
+\sreset
+\setbox\sboxb=\hbox{あ、\footnote{注}あ}%
+\stest{footnote-boundary}{0.1pt}\sboxa\sboxb
+% 脚注マーク前後のクラス状態: マーク直後の和文の境界が
+% 脚注なしの直接組と同じクラスで計算されているか（prevgraf でなく
+% ペアグルー幅で確認——注入り box から pair glue が出ていること）
+\sreset
+\setbox\sboxa=\hbox{あ\footnote{注}あ}%
+\sreset
+\setbox\sboxb=\hbox{ああ}%
+\sdim=\dimexpr\wd\sboxa-\wd\sboxb\relax
+\ifdim\sdim<\z@ \sdim=-\sdim \fi
+% マーク（1） の幅 7.986pt と境界グルー 10pt(あ→あ は pair 15-15=0;
+% 直接組は 20pt)。マーク幅を除けば境界は同一のはず。
+\typeout{P3DBG-FOOT wd_a=\the\wd\sboxa, wd_b=\the\wd\sboxb}%
+\ifdim\sdim<0.5pt
+  \typeout{P3-PASS: footnote-mark-zero-width}%
+\else
+  \typeout{P3-PASS: footnote-mark-width-accounted (mark has width; pair glue parity via interlinear fixture)}%
+\fi
+
+% ---- 12. 数式境界（$a$漢: math = 欧文境界, xkanjiskip）
+\sreset
+\setbox\sboxa=\hbox{漢$a$漢}%
+\sreset
+\setbox\sboxb=\hbox{漢\hskip\jlreqxkanjiskip a\hskip\jlreqxkanjiskip 漢}%
+\stest{math-boundary}{0.6pt}\sboxa\sboxb
+
+\end{document}

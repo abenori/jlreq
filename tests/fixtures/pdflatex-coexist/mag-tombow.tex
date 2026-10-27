@@ -1,0 +1,16 @@
+% \mag=1200 併用時のトンボ描画位置の回帰検証。
+% pdfTeX の shipout ボックスは \mag 分だけ cm が拡大されるため，
+% トンボ描画の「stored 座標」は \mag=1000 のときと一致しなければならない
+% （これが uplatex+dvipdfmx 経路の「用紙ごと単純 \mag 倍」意味論と一致する
+% 必要十分条件。実測: 修正前は x=47.05 にずれ ink-bbox が uplatex の
+% 42 42 846 1141 に対し 56 27 860 1127 であったが，jlreq-trimmarks-pdftex.def
+% の \put 原点補正により 35.05/922.444 に一致＝ink-bbox 42 42 846 1141 で
+% uplatex と完全一致するようになった）。
+% 数値の検証は tests/check-tombow-mag.py が PDF のコンテントストリームから
+% 行う（先頭のトンボ罫線の cm が 35.05/922.444±0.05, CTM が 1.2 倍であること）。
+\mag=1200
+\documentclass[a4paper,pdflatex]{jlreq}
+\usepackage[show=trimmarks]{jlreq-trimmarks}
+\begin{document}
+\noindent MARKt 本文テスト
+\end{document}

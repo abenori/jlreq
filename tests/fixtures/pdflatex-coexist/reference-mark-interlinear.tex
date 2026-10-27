@@ -1,0 +1,63 @@
+% reference-mark-interlinear.tex -- V3 fixture
+% reference_mark=interlinear under the pdfTeX backend. Asserts that an
+% interlinear footnote mark does not disturb the spacing that the pTeX
+% route computes via \lastnodechar + \jlreq@fixjfm (penalty/JFM glue
+% between the char before the mark and the char after it):
+%   A) \hbox{あ、<mark>あ} must have the same natural width as
+%      \hbox{あ、あ} (pair glue 、->阿 from the class table; the
+%      zero-width mark itself adds nothing)
+%   B) \hbox{あ<mark>a} must have the same natural width as \hbox{あa}
+%      (CJK->LA boundary via postnote -> \jlreqpdf@peek@a; pTeX would
+%      insert the same xkanjiskip through \jlreq@fixjfm)
+%   C) a paragraph full of interlinear marks must still typeset (rc=0)
+\documentclass[pdflatex,paper=b5]{jlreq}
+\jlreqsetup{reference_mark=interlinear}
+\begin{document}
+\makeatletter
+\newbox\inter@boxa
+\newbox\inter@boxb
+% 計測間の汚染（前ボックス末尾の欧文が LA->JA 境界 glue を次ボックス先頭に
+% 作る）を防ぐため，各計測は直前状態を中立化してから行う．
+\def\inter@resetstate{\global\jlreqpdf@lastclass=90\relax\global\jlreqpdf@pend=0\relax}
+\inter@resetstate
+\setbox\inter@boxa=\hbox{あ、\footnote{注1}あ}
+\inter@resetstate
+\setbox\inter@boxb=\hbox{あ、あ}
+\@tempdima=\dimexpr\wd\inter@boxa - \wd\inter@boxb\relax
+\ifdim\@tempdima<\z@ \@tempdima=-\@tempdima\fi
+\ifdim\@tempdima<0.5pt
+  \typeout{INTER-PASS: JA pair glue across mark = direct (\the\wd\inter@boxa\space vs \the\wd\inter@boxb)}%
+\else
+  \typeout{INTER-FAIL: JA pair glue across mark differs (\the\wd\inter@boxa\space vs \the\wd\inter@boxb, diff \the\@tempdima)}%
+\fi
+\inter@resetstate
+\setbox\inter@boxa=\hbox{あ\footnote{注2}abc}
+\inter@resetstate
+\setbox\inter@boxb=\hbox{あabc}
+\@tempdima=\dimexpr\wd\inter@boxa - \wd\inter@boxb\relax
+\ifdim\@tempdima<\z@ \@tempdima=-\@tempdima\fi
+\ifdim\@tempdima<0.5pt
+  \typeout{INTER-PASS: CJK->LA boundary across mark = direct (\the\wd\inter@boxa\space vs \the\wd\inter@boxb)}%
+\else
+  \typeout{INTER-FAIL: CJK->LA boundary across mark differs (\the\wd\inter@boxa\space vs \the\wd\inter@boxb, diff \the\@tempdima)}%
+\fi
+% B2) 状態連続性の直接検証: 合印（と脚注本文処理）の中で汚れる
+%    \jlreqpdf@lastclass/\jlreqpdf@pend が postnote で正しく復帰し，
+%    「そこから見える直前クラス」が脚注手前の和文クラス（漢=0）に戻ること．
+\setbox\inter@boxa=\hbox{漢\footnote{注3}%
+  \ifnum\jlreqpdf@lastclass=0\relax
+    \ifnum\jlreqpdf@pend=0\relax
+      \typeout{INTER-PASS: class/pend restored across mark (lc=\the\jlreqpdf@lastclass, pend=\the\jlreqpdf@pend)}%
+    \else
+      \typeout{INTER-FAIL: pend=\the\jlreqpdf@pend\space after restore (lc=\the\jlreqpdf@lastclass)}%
+    \fi
+  \else
+    \typeout{INTER-FAIL: lc=\the\jlreqpdf@lastclass\space after restore (pend=\the\jlreqpdf@pend)}%
+  \fi
+  abc}
+\noindent
+以下は合印の連続使用（組版成立の確認）。テスト用の文です\footnote{あいうえお}、
+句読点の直後にも合印が来ます\footnote{かきくけこ}。欧文への接続abc\footnote{数字123}def、
+数式への接続\(x+y\)\footnote{さしすせ}たちつてと。漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字
+漢字漢字漢字漢字漢字漢字漢字漢字\footnote{折返}漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字。
+\end{document}

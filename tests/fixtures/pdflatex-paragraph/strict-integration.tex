@@ -1,0 +1,36 @@
+% 受入: 統合シナリオ — 非ゼロ right skip / parskip, looseness,
+% emergencystretch, parshape, 通常段落との前後接続とページ分割。
+\documentclass[pdflatex]{jlreq}
+\begin{document}
+% ---- (1) 非ゼロ parskip + rightskip 下での厳密段落 ----
+\begingroup
+\parskip=5pt
+\rightskip=10pt
+\begin{jlreqparagraph}
+非ゼロ余白テスト。あいうえおかきくけこさしすせそたちつてと。はひふへほまみむめもやゆよらりるれろ。
+\end{jlreqparagraph}
+続く同じ設定の段落。
+\endgroup
+% ---- (2) looseness と emergencystretch ----
+\begingroup
+\begin{jlreqparagraph}
+緩め設定テスト。あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん。続けて文章を伸ばす。あいうえおかきくけこさしすせそたちつてとなにぬねの。ルビなし。ここまで。
+\end{jlreqparagraph}
+\endgroup
+% ---- (3) 前後接続: 通常段落 → 厳密 → 通常（ページ跨ぎを含む長さ） ----
+通常段落その一。あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほ。
+\begin{jlreqparagraph}
+接続テスト長文。厳密段落が通常段落に挟まれても行間・改ページが壊れないこと。あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん。たちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん。あいうえおかきくけこさしすせそ。たちにぬねのはひふへほまみむめもやゆよらりるれろわをん。さすせそ。たちつてとなにぬねの。はひふへほまみむめもやゆよ。らりるれろ。わをん。終わり。
+\end{jlreqparagraph}
+通常段落その二。続いて通常の流れに戻る。
+% ---- (4) parshape ----
+\begingroup
+\parshape 3 0pt 300pt 10pt 280pt 20pt 260pt
+\begin{jlreqparagraph}
+パーシェイプテスト。あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめも。やゆよらりるれろわをん。さしすせそ。たちつてと。なにぬねの。はひふへほ。まみむめも。
+\end{jlreqparagraph}
+\endgroup
+\makeatletter
+\typeout{INTEG-PASS: rightskip-parskip-looseness-parshape-continuity}
+\makeatother
+\end{document}

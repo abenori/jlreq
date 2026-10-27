@@ -1,0 +1,32 @@
+% trimmarks-banner.tex -- pdfTeX backend banner parity fixture (V2).
+% show=banner opt-in under pdfTeX: default (yoko) banner plus
+% tate-positioned banners rendered via graphicx rotation
+% (\jlreq@trimmarks@pdf@rotatebanner; jlreq-trimmarks-pdftex.def).
+% Placement parity target: pTeX (uplatex) ground truth measured on the
+% reference banner PDF with pdftotext -bbox:
+%   top-left tate  : x[]52.0..59.5] y[86.2..161.5]   (right of left edge,
+%                    descending from just below the top side area)
+%   top-right tate : x[581.4..588.9] y[86.2..123.8]
+%   bottom-left    : x[52.0..59.5]   y[738.2..766.5]
+%   bottom-right   : x[581.4..588.9] y[738.2..766.5]
+%   in@center-left : x[70.0..77.5]   y[416.9..435.7]
+%   in@center-right: x[563.4..570.9] y[416.9..435.7]
+% 独立検証: tests/check-banner-slots.py が本PDFの各バナースロットの
+% bbox・書き込み方向を固定ジオメトリ窓で機械判定する（自己申告
+% typeout は削除済み）。
+\documentclass[pdflatex,paper=b5]{jlreq}
+\usepackage{graphicx}
+\usepackage[show={trimmarks,banner}]{jlreq-trimmarks}
+\jlreqtrimmarkssetup{
+  banner={
+    top-left     = { tate = { TATEBANNER-PROBE } },
+    top-right    = { tate = { RIGHTTOP } },
+    bottom-left  = { tate = { BLTATE } },
+    bottom-right = { tate = { BRTATE } },
+    center-left  = { in = { CLIN } },
+    center-right = { in = { CRIN } }
+  }
+}
+\begin{document}
+トンボと回転バナーのテスト。左上に縦読みの日付バナーが出る。
+\end{document}

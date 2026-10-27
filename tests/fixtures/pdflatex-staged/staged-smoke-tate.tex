@@ -1,0 +1,21 @@
+% staged-smoke-tate.tex -- 縦組み staged TDS smoke（回転出荷 +
+% 縦中横 + ルビ縦 + 厳密段落縦 = 配布物だけで縦文書が組めること）。
+% yoko 版 (staged-smoke-yoko.tex) と同じ契約: リポジトリ外 cwd、
+% TEXINPUTS/TEXFONTS/TEXENCS は staged TEXMF のみ、-no-shell-escape。
+\documentclass[pdflatex,tate]{jlreq}
+\usepackage{ruby}
+\begin{document}
+\section{はじめに}
+これは縦組みの配布検証用文書である。段落調整、約物「括弧」、句読点、
+Englishとの混植を含む本文。あいうえおかきくけこさしすせそたちつてと
+なにぬねのはひふへほまみむめもやゆよらりるれろわをん。脚注\footnote{縦
+組みの脚注。}も出す。縦中横は\tatechuyoko{12}や\tatechuyoko{2026}の
+ように使う。ルビは\ruby{漢字}{かんじ}のように右側へ振る。
+\begin{jlreqparagraph}
+縦組みの厳密段落。優先順位付き伸縮が厳密に扱われる。日本語とLatin
+混在、約物（「」、。）を含む複数行の段落。あいうえおかきくけこさしす
+せそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん。
+\end{jlreqparagraph}
+通常段落へ戻る。
+\typeout{STAGED-TATE-PASS}
+\end{document}

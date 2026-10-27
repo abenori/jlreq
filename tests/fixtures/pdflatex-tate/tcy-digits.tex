@@ -1,0 +1,75 @@
+% tcy-digits.tex -- 縦中横（\tatechuyoko）桁数・正規化の実測ゲート。
+% 契約（uplatex 同一ソース showbox・PDF bbox 実測で確立）:
+%   * 非 star 形は tate でだけ動作: 中身を 1 回だけ yoko frame で組み、
+%     advance = 1zw・cross extent = 体幅の半分ずつ・body baseline は
+%     進行起点に一致するよう正規化して直立配置する。
+%   * 1/2/3/4 桁: いずれも advance は 1zw 固定（uplatex showbox: 1→
+%     (2.5+2.5)x9.99998, 12→(5+5)x9.99998, 123→(7.5+7.5)x9.99998,
+%     1234→(10+10)x9.99998）。はみ出しは対称。
+%   * star 形は tate では非 star と同一構造（uplatex showbox 一致）。
+% 本 fixture はログ内で寸法を自己表明し、T8 の TATE-PASS 判定で検査される。
+\documentclass[pdflatex,tate,paper=a5]{jlreq}
+\pagestyle{empty}
+\makeatletter
+\begin{document}
+% --- TCY-BOX: 工場出力の box 寸法（1zw 正規化・中央割り）
+\newbox\tcybox
+\setbox\tcybox=\hbox{\tatechuyoko{1}}%
+\ifdim\wd\tcybox=\dimexpr1\jlreq@jareg\relax
+  \typeout{TATE-PASS: TCY-BOX-1 (wd=\the\wd\tcybox, ht=\the\ht\tcybox, dp=\the\dp\tcybox)}%
+\else
+  \typeout{TATE-FAIL: TCY-BOX-1 (wd=\the\wd\tcybox, expected \the\dimexpr1\jlreq@jareg\relax)}%
+\fi
+\setbox\tcybox=\hbox{\tatechuyoko{12}}%
+\ifdim\wd\tcybox=\dimexpr1\jlreq@jareg\relax
+  \typeout{TATE-PASS: TCY-BOX-2 (wd=\the\wd\tcybox)}%
+\else
+  \typeout{TATE-FAIL: TCY-BOX-2 (wd=\the\wd\tcybox)}%
+\fi
+\setbox\tcybox=\hbox{\tatechuyoko{123}}%
+\ifdim\wd\tcybox=\dimexpr1\jlreq@jareg\relax
+  \typeout{TATE-PASS: TCY-BOX-3 (wd=\the\wd\tcybox)}%
+\else
+  \typeout{TATE-FAIL: TCY-BOX-3 (wd=\the\wd\tcybox)}%
+\fi
+\setbox\tcybox=\hbox{\tatechuyoko{1234}}%
+\ifdim\wd\tcybox=\dimexpr1\jlreq@jareg\relax
+  \typeout{TATE-PASS: TCY-BOX-4 (wd=\the\wd\tcybox)}%
+\else
+  \typeout{TATE-FAIL: TCY-BOX-4 (wd=\the\wd\tcybox)}%
+\fi
+% --- TCY-CENTER: cross extent は体幅の半分ずつ（1234: ht=dp=w/2）
+\setbox\tcybox=\hbox{\tatechuyoko{1234}}%
+\ifdim\ht\tcybox=\dp\tcybox
+  \typeout{TATE-PASS: TCY-CENTER (ht=\the\ht\tcybox, dp=\the\dp\tcybox)}%
+\else
+  \typeout{TATE-FAIL: TCY-CENTER (ht=\the\ht\tcybox, dp=\the\dp\tcybox)}%
+\fi
+% --- TCY-SIZE: フォントサイズ変更で 1zw が追従する
+{\Large
+\setbox\tcybox=\hbox{\tatechuyoko{12}}%
+\ifdim\wd\tcybox=\dimexpr1\jlreq@jareg\relax
+  \typeout{TATE-PASS: TCY-SIZE-LARGE (wd=\the\wd\tcybox, jareg=\the\jlreq@jareg)}%
+\else
+  \typeout{TATE-FAIL: TCY-SIZE-LARGE (wd=\the\wd\tcybox, jareg=\the\jlreq@jareg)}%
+\fi
+}%
+{\footnotesize
+\setbox\tcybox=\hbox{\tatechuyoko{12}}%
+\ifdim\wd\tcybox=\dimexpr1\jlreq@jareg\relax
+  \typeout{TATE-PASS: TCY-SIZE-FOOTNOTE (wd=\the\wd\tcybox, jareg=\the\jlreq@jareg)}%
+\else
+  \typeout{TATE-FAIL: TCY-SIZE-FOOTNOTE (wd=\the\wd\tcybox, jareg=\the\jlreq@jareg)}%
+\fi
+}%
+% --- TCY-STAR: star 形も tate では同一の 1zw 正規化構造
+\setbox\tcybox=\hbox{\tatechuyoko*{123}}%
+\ifdim\wd\tcybox=\dimexpr1\jlreq@jareg\relax
+  \typeout{TATE-PASS: TCY-STAR (wd=\the\wd\tcybox)}%
+\else
+  \typeout{TATE-FAIL: TCY-STAR (wd=\the\wd\tcybox)}%
+\fi
+% --- 実レンダリング（PDF 幾何検査は check-tatechuyoko.py が担う）
+阿伊\tatechuyoko{1}阿伊\tatechuyoko{12}阿伊\tatechuyoko{123}阿伊\tatechuyoko{1234}阿伊
+阿伊\tatechuyoko*{AB}阿伊\tatechuyoko{345}阿伊
+\end{document}

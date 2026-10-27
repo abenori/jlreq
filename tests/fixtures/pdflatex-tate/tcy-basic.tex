@@ -1,0 +1,15 @@
+% tcy-basic.tex -- 縦中横（\tatechuyoko）の基本ゲート（通常ゲートへ昇格済み）。
+% 契約: \tatechuyoko{12} は縦組みで中身を1回だけ yoko frame で組み、
+% advance=1zw・cross=体幅の半分ずつ・baseline=進行起点 に正規化した
+% 直立数字として組む（uplatex 同一ソース showbox 実測: 12→(5+5)x1zw、
+% PDF bbox: digit baseline = slot 上端・桁は列中心に中央配置）。
+% star形 \tatechuyoko*{AB} は縦組みでも非star形と同一構造、横組みでは
+% 中身をそのまま通す。横組みでの非star形は ClassError（別fixture）。
+% ランナーは本fixtureの (1) コンパイル成立、(2) PDFテキストに '12' と
+% 'AB' が含まれること、(3) 2桁の縦中横が直立（bbox幅>高さ）である
+% ことを要求する（tests/check-tatechuyoko.py）。
+\documentclass[pdflatex,tate,paper=a5]{jlreq}
+\pagestyle{empty}
+\begin{document}
+縦中横のテスト。\tatechuyoko{12} は直立2桁。star形は \tatechuyoko*{AB} そのまま。
+\end{document}

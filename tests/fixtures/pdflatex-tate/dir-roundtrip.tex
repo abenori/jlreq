@@ -1,0 +1,66 @@
+% dir-roundtrip.tex -- 局所方向の往復（yoko-in-tate・tate-in-yoko）
+% と ifydir/iftdir の live 判定ゲート。
+% 契約:
+%   * \jlreqpdf@yokobox{...}: tate frame 内で中身を一度だけ yoko 方向で
+%     組み、advance = body の ht+dp、cross = 体幅の半分ずつで正規化。
+%   * \jlreqpdf@tatebox{...}: yoko frame 内で tate 断片を組み、回転
+%     埋込みで縦読みにする。
+%   * \jlreq@iftdir/\jlreq@ifydir は現在の frame 方向を読む（frame の
+%     push/pop で保存復帰）。
+\documentclass[pdflatex,tate,paper=a5]{jlreq}
+\pagestyle{empty}
+\makeatletter
+\begin{document}
+% --- DIR-MAIN: 主方向は tate（begin document で播種）
+\ifnum\jlreqpdf@dir=1
+  \typeout{TATE-PASS: DIR-MAIN (main direction tate)}%
+\else
+  \typeout{TATE-FAIL: DIR-MAIN (dir=\the\jlreqpdf@dir, expected 1)}%
+\fi
+% --- DIR-CLS: \jlreq@iftdir/\jlreq@ifydir は live（両方とも tate を返す）
+\edef\clsdir{\jlreq@iftdir{T}{Y}\jlreq@ifydir{Y}{T}}%
+\def\clsexp{TT}%
+\ifx\clsdir\clsexp
+  \typeout{TATE-PASS: DIR-CLS (iftdir=T ifydir=T at paragraph level)}%
+\else
+  \typeout{TATE-FAIL: DIR-CLS (got \clsdir, expected TT)}%
+\fi
+% --- DIR-ROUNDTRIP: yokobox 内は yoko、抜けたら tate に戻る
+% 工場は body を yoko 方向で組む: body 実行時の方向は 0、工場の直後は 1。
+\newbox\rtbox
+\edef\rtinner{-}%
+\setbox\rtbox=\hbox{\jlreqpdf@yokobox{\xdef\rtinner{\the\jlreqpdf@dir}}}%
+\ifnum\rtinner=0
+  \typeout{TATE-PASS: DIR-INNER (yokobox body ran in yoko frame)}%
+\else
+  \typeout{TATE-FAIL: DIR-INNER (inner dir=\rtinner, expected 0)}%
+\fi
+\ifnum\jlreqpdf@dir=1
+  \typeout{TATE-PASS: DIR-RESTORE (dir=1 after yokobox)}%
+\else
+  \typeout{TATE-FAIL: DIR-RESTORE (dir=\the\jlreqpdf@dir, expected 1)}%
+\fi
+% --- DIR-YOKOBOX-DIMS: tate 内 yokobox の正規化寸法
+% body: vrule ht 4pt dp 6pt + 幅 10pt の内容 → advance=10pt, ht=dp=5pt
+\newbox\ybox
+\setbox\ybox=\hbox{\jlreqpdf@yokobox{\vrule width 10pt height 4pt depth 6pt}}%
+\ifdim\wd\ybox=10pt\relax
+  \ifdim\ht\ybox=5pt\relax
+    \ifdim\dp\ybox=5pt\relax
+      \typeout{TATE-PASS: DIR-YOKOBOX-DIMS (wd=\the\wd\ybox, ht=\the\ht\ybox, dp=\the\dp\ybox)}%
+    \else
+      \typeout{TATE-FAIL: DIR-YOKOBOX-DIMS (dp=\the\dp\ybox, expected 5pt)}%
+    \fi
+  \else
+    \typeout{TATE-FAIL: DIR-YOKOBOX-DIMS (ht=\the\ht\ybox, expected 5pt)}%
+  \fi
+\else
+  \typeout{TATE-FAIL: DIR-YOKOBOX-DIMS (wd=\the\wd\ybox, expected 10pt)}%
+\fi
+% --- 実レンダリング: tate 行中の yoko 断片（数字）とその復帰
+阿伊\jlreqpdf@yokobox{ab}阿伊
+% --- DIR-TATEBOX: tate 断片は正常に組める（同一方向では恒等変換）
+\setbox\rtbox=\hbox{\jlreqpdf@tatebox{阿伊}}%
+\typeout{TATE-PASS: DIR-TATEBOX-IDENTITY (tatebox in tate = identity)}%
+阿伊
+\end{document}

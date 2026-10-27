@@ -1,0 +1,38 @@
+% label-packages.tex -- 日本語ラベルのパッケージ横断解決。
+% 検証対象:
+%   * \ref/\pageref（star両形）/\eqref（amsmath経由）
+%   * \autoref（hyperref）
+%   * \nameref（nameref）
+%   * \setcounterref/\getrefnumber（refcount; edef内完全展開）
+%   * \cref/\cpageref（cleveref; TL2025に入っている）
+%   * \hyperref[日本語ラベル]（リンク）
+%   * 3パス収束（aux安定）
+% 判定は tests/check-label-packages.py（抽出テキストの完全一致検査）。
+\documentclass[pdflatex]{jlreq}
+\usepackage{amsmath}
+\usepackage[unicode]{hyperref}
+\usepackage{refcount}
+\usepackage{cleveref}
+\pagestyle{empty}
+\begin{document}
+\section{日本語ラベルの検証}\label{日本語ラベル}
+\label{sec:ascii}
+\begin{equation}
+e^{i\pi}+1=0 \label{式:オイラー}
+\end{equation}
+REF: \ref{日本語ラベル}|\ref*{日本語ラベル}|\pageref{日本語ラベル}|\pageref*{日本語ラベル}
+EQREF: \eqref{式:オイラー}
+AUTOREF: \autoref{日本語ラベル}
+NAMEREF: \nameref{日本語ラベル}
+CREF: \cref{日本語ラベル}|\cpageref{日本語ラベル}
+HYPER: \hyperref[日本語ラベル]{リンク}
+ASCII: \ref{sec:ascii}|\cref{sec:ascii}
+\newcounter{rcnt}\setcounterref{rcnt}{日本語ラベル}
+COUNTERREF: \arabic{rcnt}
+GETREF: \getrefnumber{日本語ラベル}
+\makeatletter
+\edef\erefnum{\getrefnumber{日本語ラベル}}
+\typeout{LABELPKG-EDEF: [\erefnum]}
+\ifnum\erefnum=1 \typeout{LABELPKG-EDEF-OK}\else \typeout{LABELPKG-EDEF-FAIL}\fi
+\makeatother
+\end{document}

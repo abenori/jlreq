@@ -1,0 +1,146 @@
+% pdflatex-tate-math.tex -- 縦組み中の数式（frozen-everymath 統一キャプチャ + δ）
+% アサーションはすべて「測定値 vs 独立に計算した式」であって、実装定数を
+% 比較しない（旧 0.343zw 自己申告アサーションは撤去済み）。
+%
+% δ の理論値（plcore.ltx:776-792 と同一式）を本フィクスチャ内で
+% 「測定した M の寸法と JFM 値から」独立に計算し、実際の行内数式の
+% 基準線シフト（生 box との差分）と比較する:
+%   δ = (h_M+d_M−JH−JD)/2 + JD − d_M
+%   JH/JD = 縦JFM class 0 の高さ/深さ（対称: 0.5zw + 0.5zw = 1zw）
+% ground truth: uplatex [tate] 実測（jlreq-pdftex.sty の数式キャプチャ実測表）
+%   10pt: δ=3.44438pt, 14pt: δ=4.89066pt（tbaselineshift と一致）
+%   yoko では行内数式シフト無し（ybaselineshift=0 のまま）
+%
+% in-log アサーション（TATE-PASS/TATE-FAIL）:
+%   DELTA-10/14/TT/SF: 行内数式の実測 ht/dp が「生の数式 − δ」と一致
+%                      （δは式から独立計算; 0.1pt 精度）
+%   FORMULA          : 実測シフトと δ 式の一致（0.05pt）
+%   BOUND-A/B       : 和文→数式→和文の境界グルー（クラス27意味論）
+%   PAREN           : \(...\) 経路も同一の δ シフト
+%   ONESHOT         : everymath が式ごとにちょうど1回
+%   MSURROUND       : \mathsurround 非0でも1対だけ（幅差 = 2×ms）
+%   KIN-A/B         : 数式直後の 、。が桁頭に落ちない行頭禁則
+%   RAWBOX          : 捕捉本体の raw \hbox → ClassError、\text{..} 内は合法
+\documentclass[pdflatex,tate,paper=a5]{jlreq}
+\usepackage{amsmath}
+\pagestyle{empty}
+\makeatletter
+\begin{document}
+% ---- δ の独立計算（測定 M と JFM 値から; 実装の δ と別個に算出）----
+\setbox8=\hbox{M}%
+\@tempdima=\dimexpr(\ht8+\dp8-1\jlreq@zw)/2+.5\jlreq@zw-\dp8\relax
+\typeout{TATE-INFO: formula-delta-10=\the\@tempdima\space
+  (M h=\the\ht8\space d=\the\dp8\space zw=\the\jlreq@zw)}%
+% ---- DELTA-10: 行内数式の基準線シフト = δ（10pt 既定）----
+\setbox0=\hbox{$x$}%
+% 生参照: one-shot guard を立てたままにすると捕捉が素通りする
+%（同一式の再入力経路 = 実装の契約そのものを使った独立測定）
+\global\jlreqpdf@math@grab=1
+\setbox2=\hbox{$x$}%
+\global\jlreqpdf@math@grab=0
+\@tempdimb=\dimexpr\ht2-\ht0-\@tempdima\relax
+\ifdim\@tempdimb<\z@ \@tempdimb=-\@tempdimb\fi
+\ifdim\@tempdimb<0.05pt\relax
+  \typeout{TATE-PASS: DELTA-10 (shift=\the\dimexpr\ht2-\ht0\relax, formula=\the\@tempdima)}%
+\else
+  \typeout{TATE-FAIL: DELTA-10 (shift=\the\dimexpr\ht2-\ht0\relax, formula=\the\@tempdima)}%
+\fi
+% ---- DELTA-14: 14pt でも同一式が成立 ----
+{\fontsize{14}{14}\selectfont
+\setbox8=\hbox{M}%
+\@tempdima=\dimexpr(\ht8+\dp8-1\jlreq@zw)/2+.5\jlreq@zw-\dp8\relax
+\setbox0=\hbox{$x$}%
+\global\jlreqpdf@math@grab=1
+\setbox2=\hbox{$x$}%
+\global\jlreqpdf@math@grab=0
+\@tempdimb=\dimexpr\ht2-\ht0-\@tempdima\relax
+\ifdim\@tempdimb<\z@ \@tempdimb=-\@tempdimb\fi
+\ifdim\@tempdimb<0.05pt\relax
+  \typeout{TATE-PASS: DELTA-14 (shift=\the\dimexpr\ht2-\ht0\relax, formula=\the\@tempdima)}%
+\else
+  \typeout{TATE-FAIL: DELTA-14 (shift=\the\dimexpr\ht2-\ht0\relax, formula=\the\@tempdima)}%
+\fi}
+% ---- BOUND-A/B: 境界グルー幅（0.25zw 自然長; クラス27意味論）----
+\fontsize{10}{10}\selectfont
+\setbox0=\hbox{漢}%
+\setbox1=\hbox{$x$}%
+\setbox2=\hbox{漢$x$}%
+\@tempdima=\dimexpr\wd2-\wd0-\wd1-0.25\jlreq@zw\relax
+\ifdim\@tempdima<\z@ \@tempdima=-\@tempdima\fi
+\ifdim\@tempdima<0.05pt\relax
+  \typeout{TATE-PASS: BOUND-A (\the\dimexpr\wd2-\wd0-\wd1\relax)}%
+\else
+  \typeout{TATE-FAIL: BOUND-A (\the\dimexpr\wd2-\wd0-\wd1\relax, expected 0.25zw)}%
+\fi
+\setbox3=\hbox{$x$漢}%
+\@tempdima=\dimexpr\wd3-\wd1-\wd0-0.25\jlreq@zw\relax
+\ifdim\@tempdima<\z@ \@tempdima=-\@tempdima\fi
+\ifdim\@tempdima<0.05pt\relax
+  \typeout{TATE-PASS: BOUND-B (\the\dimexpr\wd3-\wd1-\wd0\relax)}%
+\else
+  \typeout{TATE-FAIL: BOUND-B (\the\dimexpr\wd3-\wd1-\wd0\relax, expected 0.25zw)}%
+\fi
+% ---- PAREN: \(...\) 経路も同一 δ ----
+\setbox5=\hbox{\(x\)}%
+\setbox6=\hbox{x}%
+\setbox8=\hbox{M}%
+\@tempdima=\dimexpr(\ht8+\dp8-1\jlreq@zw)/2+.5\jlreq@zw-\dp8\relax
+\@tempdimb=\dimexpr\ht6-\ht5-\@tempdima\relax
+\ifdim\@tempdimb<\z@ \@tempdimb=-\@tempdimb\fi
+\ifdim\@tempdimb<0.05pt\relax
+  \typeout{TATE-PASS: PAREN (paren-ht=\the\ht5, raw-ht=\the\ht6, delta=\the\@tempdima)}%
+\else
+  \typeout{TATE-FAIL: PAREN (diff=\the\@tempdimb, delta=\the\@tempdima)}%
+\fi
+% ---- ONESHOT: everymath が式ごとにちょうど1回 ----
+\newcount\emcount
+\everymath{\global\advance\emcount1 }
+漢\setbox7=\hbox{$y$}漢
+\setbox9=\hbox{$z$}%
+\ifnum\emcount=2
+  \typeout{TATE-PASS: ONESHOT (em=\the\emcount, 2 formulas)}%
+\else
+  \typeout{TATE-FAIL: ONESHOT (em=\the\emcount, expected 2)}%
+\fi
+\everymath{}
+% ---- MSURROUND: 非0 \mathsurround でも1対だけ ----
+\mathsurround=4pt
+\setbox10=\hbox{a$x$b}%
+% 生参照: guard 下で同一数式を素通りさせ、mathsurround 1対との差を測る
+\global\jlreqpdf@math@grab=1
+\setbox11=\hbox{a$x$b}%
+\global\jlreqpdf@math@grab=0
+\@tempdima=\dimexpr\wd10-\wd11\relax
+\ifdim\@tempdima<\z@ \@tempdima=-\@tempdima\fi
+\ifdim\@tempdima<0.05pt\relax
+  \typeout{TATE-PASS: MSURROUND (captured-wd=\the\wd10, passthrough-wd=\the\wd11; one pair only)}%
+\else
+  \typeout{TATE-FAIL: MSURROUND (diff=\the\@tempdima; capture added width)}%
+\fi
+\mathsurround=0pt
+% ---- KIN-A/B: 数式直後の閉じ約物が桁端で列頭に落ちない ----
+\setbox10=\vbox{\hsize=95pt\parindent=0pt
+  漢漢漢漢漢漢漢$x$、漢漢漢漢漢漢漢漢\par \global\count1=\prevgraf}%
+\unvbox10
+\ifnum\count1=2
+  \typeout{TATE-PASS: KIN-A comma-after-math lines=\the\count1}%
+\else
+  \typeout{TATE-FAIL: KIN-A comma-after-math lines=\the\count1}%
+\fi
+\setbox10=\vbox{\hsize=95pt\parindent=0pt
+  漢漢漢漢漢漢漢$x$。漢漢漢漢漢漢漢漢\par \global\count1=\prevgraf}%
+\unvbox10
+\ifnum\count1=2
+  \typeout{TATE-PASS: KIN-B stop-after-math lines=\the\count1}%
+\else
+  \typeout{TATE-FAIL: KIN-B stop-after-math lines=\the\count1}%
+\fi
+% ---- 混在: 行内各種・表示数式・数式中和文（コンパイルゲート）----
+混在確認: 公式 \(E=mc^2\) と $\sqrt{x^2+y^2}$、分数 $\frac{1}{2}$。
+表示:
+\[
+  \int_0^1 t^2\,dt = \frac{1}{3}, \qquad \sum_{i=1}^{n} i = \frac{n(n+1)}{2}
+\]
+表示のあとの和文。$$a^2+b^2=c^2$$ のあとも和文。
+数式中和文: $\text{和文}$、$\mathmc{漢}$ を含む式。数式内数式 $\text{$y$}$ も通る。
+\end{document}

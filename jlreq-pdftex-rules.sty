@@ -1,0 +1,1455 @@
+%%
+%% This is file 'jlreq-pdftex-rules.sty'.
+%% Experimental pdfTeX backend for the jlreq class (internal use).
+%%
+%% Loaded by jlreq-pdftex.sty only when the engine is pdfTeX (engine `d').
+%% NOT a public package: macro names and behaviour may change at any
+%% time while the backend is under development.
+%%
+%% Horizontal typesetting rules:
+%%   - loads the generated JFM data variant (jlreq-pdftex-jfm*.def)
+%%     selected by \ifjlreq@burasage / \jlreq@open@bracket@pos
+%%   - per-character state machine on the CJK output layer:
+%%     hooks the inner \CJKsymbol (both the plain and the punct route
+%%     funnel through it under noCJKpunct) and the \CJK@ignorespaces
+%%     token (post-glyph peek)
+%%   - JFM pair glue (nat/str/shr in zw) between adjacent classes;
+%%     undefined JA-JA pair -> \jlreqkanjiskip, undefined pair with a
+%%     latin side (class 27) -> \jlreqxkanjiskip (ltj fallback, which
+%%     is what gives plain kanji runs their stretchability)
+%%   - JA<->LA boundary xspc rules (jlreq.cls jaxspmode block)
+%%   - kinsoku penalties (pre/post break 10000) by class
+%%   - paragraph start resets the state to the JFM boundary class 90
+%%     (parbdd); math counts as a latin (alchar) boundary
+%%
+%% This module also owns: priority glue, end_adjust line-end correction,
+%% ratio blending of cross-JFM pairs (unused with jlreq's single JFM),
+%% burasage beyond .def variant selection.
+%%
+%% Hook surface notes (why these points):
+%%   - bxcjkjatype[noCJKpunct] leaves \CJKpunctsymbol = the OUTER
+%%     robust shell of \CJKsymbol; every UTF-8 route (2-byte \CJK@char,
+%%     3-byte \CJK@altchar, punct-routed \CJK@punctchar) calls
+%%     \CJKsymbol{\@tempcnta} with the DECIMAL CODEPOINT. Wrapping the
+%%     inner `\CJKsymbol ' (robust command internals) hooks them all.
+%%   - the byte macros append \CJK@ignorespaces after each char
+%%     (\CJKspace sets it to \@empty). We point it at our
+%%     own \futurelet peek to detect a CJK->latin/math boundary.
+%%   - CJK's own inter-char glue (\CJKglue / \CJK@nobreakglue) is
+%%     neutralized: our pair glue resets \lastkern so their machinery
+%%     would never fire after our nodes anyway, and their markers
+%%     (\CJK@kern / \CJK@CJK, +-1sp/-2sp net-zero kerns) stay intact
+%%     for third-party code. Double spacing is thereby impossible.
+%%
+%%
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{jlreq-pdftex-rules}[2026/10/23 v0.1 jlreq pdfTeX backend rules (experimental)]
+\RequirePackage{jlreq-pdftex}
+
+\makeatletter
+%. (kinsoku class tables now live with the unified boundary emitter
+%.  below; see "kinsoku per-class penalty tables")
+
+%. ----------------------------------------------- JFM data variant load
+% Suffix naming mirrors jlreq.cls's \jlreq@jfmname@prefix construction
+% (jlreq.cls:570-573) plus the pdfTeX-only "n" letter and the tate
+% series (12 variants = 2 dir x 3 open_bracket_pos x burasage):
+%   b = burasage, z = zenkakunibu_nibu, n = nibu_tentsuki.
+% Options are final at this point (\ProcessKeyOptions at jlreq.cls:418
+% runs before the backend loads at :494+).
+\def\jlreqpdf@variant@suffix{}
+\ifjlreq@burasage
+  \edef\jlreqpdf@variant@suffix{b\jlreqpdf@variant@suffix}%
+\fi
+% \jlreq@open@bracket@pos is set inside the l3keys choices callback, where
+% the letters may carry nonstandard catcodes (verified: \ifx against a
+% locally-tokenized "zenkakunibu_nibu" FAILS even though \meaning is
+% identical).  \pdfstrcmp compares the byte contents -- catcode-blind,
+% exactly like the class's own \str_if_eq:VnT comparisons.
+\ifnum\pdfstrcmp\expandafter{\jlreq@open@bracket@pos}{zenkakunibu_nibu}=0 \relax
+  \edef\jlreqpdf@variant@suffix{\jlreqpdf@variant@suffix z}%
+\else
+  \ifnum\pdfstrcmp\expandafter{\jlreq@open@bracket@pos}{nibu_tentsuki}=0 \relax
+    \edef\jlreqpdf@variant@suffix{\jlreqpdf@variant@suffix n}%
+  \fi
+\fi
+%. --------------------------------------------------- tate mode
+% tate クラスオプション時（\if@tate、jlreq.cls のオプション処理は
+% バックエンドより前に確定）は縦組み JFM データに切り替える。
+% yoko と同じ接尾辞システムを持つ（jlreq-pdftex-jfm-tate.def,
+% -tate-b, -tate-z, -tate-bz, -tate-n, -tate-bn）。
+% データ契約（frozen）:
+%   cls@<hex> / class@<n>{w}{h}{d}{align} / pair@<from>@<to> /
+%   kin@pre@<n> / kin@post@<n> / endadj@<n>{..} は yoko 系と同形式。
+%   （旧 off@<n> 生pt表は廃止。縦字形・位置補正はフォント
+%   プロファイル jlreq-pdftex-fonts-*.def が供給する em 単位データ。）
+% 不在は明示エラー（静かなフォールバックはしない）。
+\if@tate
+  \RequirePackage{graphicx}%
+  % tate suffix: "tate" + ("-" letters)?  (empty letters = plain -tate)
+  \ifx\jlreqpdf@variant@suffix\@empty
+    \edef\jlreqpdf@variant@file{jlreq-pdftex-jfm-tate.def}%
+  \else
+    \edef\jlreqpdf@variant@file{jlreq-pdftex-jfm-tate-\jlreqpdf@variant@suffix.def}%
+  \fi
+  \edef\jlreqpdf@variant@filetext{\jlreqpdf@variant@file}%
+  \IfFileExists{\jlreqpdf@variant@filetext}{%
+    \typeout{jlreq-pdftex-rules:~JFM~variant~\jlreqpdf@variant@filetext}%
+    \input\jlreqpdf@variant@filetext
+  }{%
+    \PackageError{jlreq-pdftex-rules}{%
+      tate JFM data file \jlreqpdf@variant@filetext\space is missing}{%
+      The pdfTeX tate path needs the vertical JFM data file\MessageBreak
+      \jlreqpdf@variant@filetext. Obtain it via `make pdftex-jfm'.\MessageBreak
+      \@ehc}%
+  }
+\else
+  \ifx\jlreqpdf@variant@suffix\@empty
+    \typeout{jlreq-pdftex-rules:~JFM~variant~jlreq-pdftex-jfm.def}%
+    \input{jlreq-pdftex-jfm.def}%
+  \else
+    \edef\jlreqpdf@variant@file{jlreq-pdftex-jfm-\jlreqpdf@variant@suffix.def}%
+    \IfFileExists{\jlreqpdf@variant@file}{%
+      \typeout{jlreq-pdftex-rules:~JFM~variant~\jlreqpdf@variant@file}%
+      \input\jlreqpdf@variant@file
+    }{%
+      \PackageError{jlreq-pdftex-rules}{%
+        JFM data file \jlreqpdf@variant@file\space is missing}{%
+        The pdfTeX backend needs the JFM data variant\MessageBreak
+        \jlreqpdf@variant@file\space for the current class options. Obtain
+        it via `make pdftex-jfm'.\MessageBreak
+        \@ehc}%
+    }
+  \fi
+\fi
+
+%. ------------------------------------------------------- state machine
+% Last-char-class state; values are the generated .def class numbers
+% plus two synthetic states:
+%   90 = paragraph/box boundary (JFM parbdd/boxbdd pseudo class; pair
+%        90->1 is defined {0,0,0}, all other 90->c pairs are undefined
+%        and fall back to \jlreqkanjiskip exactly as LuaTeX-ja does)
+%   93 = explicit space seen (neutral: no boundary glue across a user
+%        space, matching ltj's glue-node handling)
+% 27 (latin run / math) is a real JFM class (alchar); pairs with 27
+% define the JA<->LA glue, undefined 27 pairs fall back to
+% \jlreqxkanjiskip.
+% \global everywhere: the CJK layer expands inside {...} groups and the
+% state must survive them.
+\newcount\jlreqpdf@lastclass \global\jlreqpdf@lastclass=90
+% class of the glyph being processed (scratch, global: hook bodies run
+% inside the CJK decoder's own groups)
+\newcount\jlreqpdf@curclass \global\jlreqpdf@curclass=0
+% \inhibitglue interlock: 1 = suppress the next pair's glue (consumed
+% ONCE by the emitter -- real one-boundary suppression semantics)
+\newcount\jlreqpdf@inhibit \global\jlreqpdf@inhibit=0
+% pending post-break penalty of the previous glyph (half of the unified
+% boundary penalty p = post(prev)+pre(next); the pre half is added at
+% emission time and the SAME p is applied to every legal candidate)
+\newcount\jlreqpdf@pend \global\jlreqpdf@pend=0
+% pair glue scratch lengths (zw-scaled sp values)
+\newdimen\jlreqpdf@nat
+\newdimen\jlreqpdf@str
+\newdimen\jlreqpdf@shr
+% kanjiskip companion glue (separate node contribution)
+\newdimen\jlreqpdf@knat
+\newdimen\jlreqpdf@kstr
+\newdimen\jlreqpdf@kshr
+% codepoint scratch (decimal, from the CJK decoder)
+\newcount\jlreqpdf@cp \global\jlreqpdf@cp=0
+% zw of the glyph BEFORE / AT the current boundary (mixed-size blend:
+% ltj-jfmglue.lua:812-857 blend_diffmet with the default
+% diffmet_rule = two_paverage; both sides carry their own zw)
+\newdimen\jlreqpdf@zw@prev \global\jlreqpdf@zw@prev=1pt
+\newdimen\jlreqpdf@zw@cur  \global\jlreqpdf@zw@cur=1pt
+% last observed CJK codepoint (scalar; -1 at paragraph/box boundaries).
+% This IS the live \lastnodechar of this backend (jlreq-pdftex.sty
+% aliases jlreqpdftex@lastnodechar to the rules machinery; jlreq.cls
+% reads it via \jlreq@lastnodechar for \tatechuyoko etc.)
+\newcount\jlreqpdf@lastnodechar \global\jlreqpdf@lastnodechar=-1
+% per-boundary priority data (jlreqparagraph prerequisite): recorded
+% at every pair emission so the strict-paragraph repack flow can
+% read tier priorities without recomputing the lookup.
+\newcount\jlreqpdf@pairspri
+\newcount\jlreqpdf@pairshpri
+% \jlreqpdf@pairspri/@pairshpri hold the pair's stretch / shrink
+% priority (0 = plain finite glue); \jlreqpdf@knat/@kstr/@kshr
+% hold the kanjiskip companion components (0 when the pair's
+% kanjiskip_natural/stretch/shrink flags are 0). \jlreqpdf@nat/@str/
+% @shr hold the JFM pair glue itself. The jlreqparagraph module
+% reads these registers right after each boundary evaluation.
+% Flag: when 1, \jlreqpdf@placeglyph boxes EVERY glyph (1zw classes
+% too) -- set by the jlreqparagraph measurement so line interiors are
+% fully walkable (boxes/glues/kerns/penalties only, no bare chars).
+\newcount\jlreqpdf@boxglyphs \global\jlreqpdf@boxglyphs=0
+
+%. --------------------------------------------------- semantic frames
+% Box/paragraph boundaries must not inherit (nor leak) the running
+% inter-glyph state. Two mechanisms, both WITHOUT
+% \aftergroup (see the long comment below):
+%   * ENTRY: everyhbox/everyvbox tokens (prepended; the user's own
+%     tokens still run exactly once, after ours) neutralize the state
+%     at box start (boxbdd semantics: 90/-1/0) so the glyph layer
+%     inside starts from the neutral paragraph-boundary state. The
+%     inhibit flag is preserved (one-shot semantics: \inhibitglue
+%     issued just before a box must still suppress the first eligible
+%     boundary INSIDE it). Backend-internal boxes (charbox, math
+%     boxes, measurement boxes) bracket the guard count
+%     \jlreqpdf@nest so this hook is a no-op inside them.
+%   * CLOSE: no token is inserted. Reads that directly follow a box
+%     (\lastnodetype 13/14 with the glyphmark below clear) re-apply
+%     the same neutralization (boxbdd); the direction field of the
+%     old frame tuple is gone (the factory and theindex switch
+%     direction only inside nest-guarded boxes or outside boxes).
+% NOTE: the old design saved the state at entry and
+% restored it via \aftergroup\jlreqpdf@frame@pop at each box close.
+% \aftergroup inserts real assignment tokens right after the box --
+% and \leaders\hbox{...}<glue> REQUIRES the glue to follow the box
+% with nothing unexpandable in between. Every leader box (LaTeX TOC
+% dot leaders, user \leaders/\xleaders, \cleaders) therefore died
+% with "Leaders not followed by proper glue" -- reproduced for
+% yoko AND tate, with or without CJK in the leader box, with
+% article+rules.sty alone (no output routine involved). The tate TOC
+% pass-2 defect was exactly this, not a rotation problem. Candidate
+% measured unusable: the quantity is not readable in restricted
+% horizontal mode (\raise\hbox{}, math), so box entries there fail.
+% The present design (neutralize at entry + boxbdd at reads +
+% glyphmark to tell our own glyph boxes from user boxes) has the
+% same observable boundary semantics and leaves leader scans clean.
+%     glyphmark: 1 after each observed CJK glyph, 0 at each
+%     (non-backend) box entry. The backend's own glyph boxes are
+%     nest-guarded, so the mark distinguishes "\lastnodetype 13 is
+%     our charbox" (mark=1, ordinary pair lookup) from "a user box
+%     has just closed" (mark=0, boxbdd). Without the mark every tate
+%     glyph (a rotated charbox, 13) would read as a box boundary.
+\newcount\jlreqpdf@nest % backend-internal box guard (see glyph@tate/math)
+\newcount\jlreqpdf@glyphmark \global\jlreqpdf@glyphmark=0
+% Group-local direction enum, 0=yoko 1=tate, switched by the box
+% factory / theindex pages; the glyph layer reads it via
+% \jlreqpdftex@ifydir/@iftdir. The MAIN document direction seeds it
+% from \if@tate at begin document (jlreq-pdftex.sty).
+\newcount\jlreqpdf@dir \global\jlreqpdf@dir=0
+% neutral box-start state (boxbdd semantics: 90, no pending penalty).
+% Keep inhibit (see above); resync lastzw so the first interior
+% boundary blends against the live glyph size.
+\def\jlreqpdf@box@neutralize{%
+  \global\jlreqpdf@lastclass=90
+  \global\jlreqpdf@lastnodechar=-1
+  \global\jlreqpdf@pend=0
+  \global\jlreqpdf@lastzw=\jlreq@jareg
+  \global\jlreqpdf@glyphmark=0
+}
+% boxbdd re-neutralization at a read whose previous node is a closed
+% USER box (\lastnodetype 13/14 and glyphmark=0): the pair is
+% evaluated against the boundary pseudo class 90, not against the
+% stale interior state -- pTeX box semantics (boxes isolate JFM
+% state). Keep inhibit; resync lastzw.
+\def\jlreqpdf@boxbdd{%
+  \ifnum\jlreqpdf@glyphmark=0
+    \ifnum\lastnodetype=13
+      \jlreqpdf@boxbdd@
+    \else
+      \ifnum\lastnodetype=14
+        \expandafter\jlreqpdf@boxbdd@
+      \fi
+    \fi
+  \fi}
+\def\jlreqpdf@boxbdd@{%
+  \global\jlreqpdf@lastclass=90
+  \global\jlreqpdf@lastnodechar=-1
+  \global\jlreqpdf@pend=0
+  \global\jlreqpdf@lastzw=\jlreq@jareg
+}
+% class-side reader variant (jlreq.cls \tatechuyoko/\　 consumers):
+% when the reader directly follows a closed user box, the observed
+% lastnodechar must read as "no preceding char" (-1), matching the
+% boxbdd semantics of the glyph-side reader above.
+\def\jlreqpdf@boxbddlastchar{%
+  \ifnum\jlreqpdf@glyphmark=0
+    \ifnum\lastnodetype=13
+      \global\jlreqpdf@lastnodechar=-1
+    \else
+      \ifnum\lastnodetype=14
+        \global\jlreqpdf@lastnodechar=-1
+      \fi
+    \fi
+  \fi}
+% neutral paragraph start (everypar / para/begin / math entry): the
+% boundary class, pending penalty, the last-node scalar and the
+% inhibit flag reset; lastzw re-syncs to the CURRENT zw so the first
+% boundary of the paragraph blends against the live glyph size (the
+% init 1pt must not leak into the first pair's scaling -- the nibu
+% 90->1 (-0.5zw) glue came out +1.75pt exactly that way).
+\def\jlreqpdf@state@neutral{%
+  \global\jlreqpdf@lastclass=90
+  \global\jlreqpdf@lastnodechar=-1
+  \global\jlreqpdf@pend=0
+  \global\jlreqpdf@inhibit=0
+  \global\jlreqpdf@lastzw=\jlreq@jareg
+  \global\jlreqpdf@glyphmark=0
+}
+% entry hook for everyhbox/everyvbox. NO \aftergroup (see the
+% semantic-frames comment). Guard: no-op inside backend-internal
+% construction.
+\def\jlreqpdf@box@enter{%
+  \ifnum\jlreqpdf@nest=0
+    \jlreqpdf@box@neutralize
+  \fi
+}
+%. -------------------------------------------- JA<->LA xspc class table
+% jlreq.cls:1227-1237 (\__jlreq_addjaxspmode) as class numbers.
+% pre  = xkanjiskip allowed on the LEFT side only (latin -> char OK,
+%        char -> latin suppressed): iteration 9, prolonged 10, small
+%        kana 11, hiragana 15, katakana 16
+% post = allowed on the RIGHT side only (char -> latin OK,
+% everything else: both sides (ltj default xspc=3).
+\expandafter\def\csname jlreqpdf@xspc@pre@9\endcsname{1}%
+\expandafter\def\csname jlreqpdf@xspc@pre@10\endcsname{1}%
+\expandafter\def\csname jlreqpdf@xspc@pre@11\endcsname{1}%
+\expandafter\def\csname jlreqpdf@xspc@pre@15\endcsname{1}%
+\expandafter\def\csname jlreqpdf@xspc@pre@16\endcsname{1}%
+\expandafter\def\csname jlreqpdf@xspc@post@4\endcsname{1}%
+
+%. --------------------------- unified boundary emitter
+% One boundary = ONE emitter. It produces, between the previous glyph
+% and the next glyph:
+%   [end_adjust candidate series]   (only when the PREVIOUS class has
+%      end_adjust data): for ascending candidates e_1..e_m (zw, kept
+%      ASCENDING as the .def emits them, 0 included):
+%        kern(e_1) penalty(p)
+%        [kern(e_{i+1}-e_i) penalty(p)] ...
+%        kern(-e_m) penalty(10000)
+%      then the pair glue follows. A break at candidate i leaves the
+%      cumulative kern (= e_i) on the line (PROTRUSION); a break at the
+%      glue leaves net 0 (the series sums to zero) = the e=0 candidate.
+%      The 0 candidate stays in the list; the glue itself remains the
+%      final legal break (its break is the net-0/ordinary one) so no
+%      duplicate break is created beyond that.
+%      (Reference: ltj-adjust.lua:366-393 insert_lineend_kern,
+%      extended mode; verified empirically that pdfTeX keeps the
+%      preceding kerns on the broken line and drops the rest.)
+%   [pair glue] nat/str/shr scaled by the blended zw + the kanjiskip
+%      companion glue (separate node, from the CURRENT
+%      \jlreqkanjiskip/\jlreqxkanjiskip per the pair's knat/kstr/kshr
+%      flags).
+% The single boundary penalty p = post(prev) + pre(next) is applied at
+% every candidate (each candidate is a legal break). kinsoku-forbidden
+% boundaries (p>=10000) emit the series too -- the candidates simply
+% cannot be chosen -- and the pair glue keeps its stretch/shrink (no
+% kern-ification; the old kernmode hack is gone).
+\def\jlreqpdf@emitpair{%
+  \ifnum\jlreqpdf@inhibit=1
+    \global\jlreqpdf@inhibit=0
+  \else
+    \jlreqpdf@emitpair@xspc
+  \fi
+}
+% xspc suppression:
+%  latin -> CJK blocked when curclass is postonly (4)
+%  CJK -> latin blocked when lastclass is preonly (9,10,11,15,16)
+\def\jlreqpdf@emitpair@xspc{%
+  \ifnum\jlreqpdf@lastclass=27
+    \expandafter\ifx\csname jlreqpdf@xspc@post@\number\jlreqpdf@curclass\endcsname\relax
+      \jlreqpdf@emitpair@main
+    \else
+      % latin -> postonly char: no glue
+    \fi
+  \else
+    \ifnum\jlreqpdf@curclass=27
+      \expandafter\ifx\csname jlreqpdf@xspc@pre@\number\jlreqpdf@lastclass\endcsname\relax
+        \jlreqpdf@emitpair@main
+      \else
+        % preonly char -> latin: no glue
+      \fi
+    \else
+      \jlreqpdf@emitpair@main
+    \fi
+  \fi
+}
+% main: evaluate the pair (9 fields, live fallback) then emit.
+% jidorimode (字取り/空き組み) replaces the pair glue as before.
+\def\jlreqpdf@emitpair@main{%
+  \ifnum\jlreqpdf@lastclass=93
+    % explicit space between: no boundary glue (ltj: glue pseudo-char)
+  \else
+    \ifnum\jlreqpdf@jidorimode>0
+      \ifnum\jlreqpdf@lastclass=90
+        % 行頭相当（box先頭）: グルーなし
+      \else
+        \ifnum\jlreqpdf@jidorimode=2
+          \hskip 0pt plus 1fil\relax
+        \else
+          \hskip\jlreqpdf@akiskip
+        \fi
+      \fi
+    \else
+      \jlreqpdf@evalpair
+      \jlreqpdf@emitboundary
+    \fi
+  \fi
+}
+% ---- pair evaluation (shared by the emitter, calc@jfmglue and the
+% strict paragraph module) --
+% Sets: \jlreqpdf@nat/@str/@shr (pair glue, sp), \jlreqpdf@knat/@kstr/
+% @kshr (kanjiskip companion components, sp; 0 when no companion),
+% \jlreqpdf@pairspri/@pairshpri (tier priorities for the strict
+% paragraph module), and the blended zw pair used for the scaling.
+% Lookup key:
+% \jlreqpdf@jfm@pair@<lastclass>@<curclass>.
+%  - defined pair: all 9 fields evaluated. nat/str/shr are in zw units;
+%    with different zw on the two sides (mixed font sizes) each
+%    component x is realized as the ltj average blend
+%      b_val = (1-r_b) x zw_prev + r_b x zw_cur
+%      a_val = (1-r_a) x zw_prev + r_a x zw_cur
+%      val   = (b_val + a_val)/2       (diffmet_rule = two_paverage,
+%                                      ltj-jfmglue.lua:157,812-824)
+%    where r_b/r_a are the pair's ratio (field 4; 0.5 default).
+%  - undefined pair: fallback = the CURRENT \jlreqkanjiskip (JA-JA) /
+%    \jlreqxkanjiskip (latin side) glue spec, parsed live (no fixed
+%    constants). The companion is the full (x)kanjiskip glue in this
+%    case (ltj: `if not g then g = get_(x)kanjiskip').
+\newcount\jlreqpdf@jidorimode \global\jlreqpdf@jidorimode=0
+\newskip\jlreqpdf@akiskip
+\newdimen\jlreqpdf@parratio
+\def\jlreqpdf@evalpair{%
+  \edef\jlreqpdf@pairname{%
+    jlreqpdf@jfm@pair@\number\jlreqpdf@lastclass
+    @\number\jlreqpdf@curclass}%
+  \expandafter\ifx\csname\jlreqpdf@pairname\endcsname\relax
+    \jlreqpdf@evalpair@fallback
+  \else
+    \global\jlreqpdf@zw@prev=\jlreqpdf@lastzw
+    \global\jlreqpdf@zw@cur=\jlreq@jareg
+    \global\jlreqpdf@fbmode=0
+    \csname\jlreqpdf@pairname\endcsname
+    \global\jlreqpdf@lastzw=\jlreqpdf@zw@cur
+  \fi
+}
+% \jlreqpdf@lastzw: zw in effect when the PREVIOUS glyph was placed
+% (font-size changes between glyphs change \jlreq@jareg AFTER the glyph;
+% record it at each glyph observation -- \jlreqpdf@pre does this).
+\newdimen\jlreqpdf@lastzw \global\jlreqpdf@lastzw=10pt
+% live fallback: the CURRENT \jlreqkanjiskip / \jlreqxkanjiskip glue
+% SPEC (verbatim, orders preserved -- no fixed constants). Since the
+% fallback glue IS the full skip, it is emitted verbatim via
+% \jlreqpdf@fbmode: emitglue then does `\hskip\jlreqpdf@fbskip'.
+% (Decomposing `\the<skip>' into a dimen would leak the ` plus...'
+% tokens into the stream and lose fil orders; the verbatim skip keeps
+% both exact.)
+\newskip\jlreqpdf@fbskip
+\newcount\jlreqpdf@fbmode % 1 = fallback: emit \jlreqpdf@fbskip verbatim
+\def\jlreqpdf@evalpair@fallback{%
+  \global\jlreqpdf@zw@prev=\jlreqpdf@lastzw
+  \global\jlreqpdf@zw@cur=\jlreq@jareg
+  \global\jlreqpdf@fbmode=1
+  \ifnum\jlreqpdf@lastclass=27 \jlreqpdf@fbskip=\jlreqxkanjiskip
+  \else\ifnum\jlreqpdf@curclass=27 \jlreqpdf@fbskip=\jlreqxkanjiskip
+  \else \jlreqpdf@fbskip=\jlreqkanjiskip
+  \fi\fi
+  \global\jlreqpdf@lastzw=\jlreqpdf@zw@cur
+  % fallback = the full skip: it IS the pair glue; no separate companion
+  \global\jlreqpdf@knat=0pt
+  \global\jlreqpdf@kstr=0pt
+  \global\jlreqpdf@kshr=0pt
+  \global\jlreqpdf@pairspri=0
+  \global\jlreqpdf@pairshpri=0
+}
+% pairfields: evaluate ALL NINE fields. #1..#3 nat/str/
+% shr (zw), #4 ratio, #5 spri, #6 shpri, #7 knat, #8 kstr, #9 kshr.
+% The zw scaling uses the two_paverage blend of the prev/cur zw; with
+\def\jlreqpdf@pairfields#1#2#3#4#5#6#7#8#9{%
+  \jlreqpdf@parratio=#4pt\relax % ratio as a pt-dimen: 0.500000 -> 0.5pt
+  \jlreqpdf@blendzw{#1}\jlreqpdf@nat
+  \jlreqpdf@blendzw{#2}\jlreqpdf@str
+  \jlreqpdf@blendzw{#3}\jlreqpdf@shr
+  \global\jlreqpdf@pairspri=#5\relax
+  \global\jlreqpdf@pairshpri=#6\relax
+  % kanjiskip companion: a SEPARATE glue node derived from the CURRENT
+  % \jlreqkanjiskip (its natural/stretch/shrink), gated by the pair's
+  % knat/kstr/kshr flags (ltj get_kanjiskip_low(flag=true,...)):
+  %   knat=1 -> companion natural = kanjiskip natural, etc.
+  % Natural extraction: `\the<skip>' expands to the FULL glue spec
+  % ("0.0pt plus 2.5pt...") and a dimen assignment would leak the
+  % ` plus...' tokens into the stream -- so the natural is split off
+  % via the space-delimited \jlreqpdf@ksnatsplit (see below; glue
+  % naturals are always finite; stretch/shrink are read directly via
+  % \gluestretch/\glueshrink).
+  \jlreqpdf@fbskip=\jlreqkanjiskip\relax
+  \ifnum#7=1
+    \edef\jlreqpdf@ksnattext{\the\jlreqpdf@fbskip}%
+    \edef\jlreqpdf@ksnat{\expandafter\jlreqpdf@ksnatsplit\jlreqpdf@ksnattext\relax}%
+    \global\jlreqpdf@knat=\jlreqpdf@ksnat\relax
+  \else \global\jlreqpdf@knat=0pt \fi
+  \ifnum#8=1 \global\jlreqpdf@kstr=\gluestretch\jlreqpdf@fbskip
+  \else \global\jlreqpdf@kstr=0pt \fi
+  \ifnum#9=1 \global\jlreqpdf@kshr=\glueshrink\jlreqpdf@fbskip
+  \else \global\jlreqpdf@kshr=0pt \fi
+}
+% Kanjiskip-natural extraction: `\the<skip>' is "3.0pt plus 2.5pt..."
+% with catcode-12 `pt' -- a delimited split on file-text `pt' can
+% never match (that catcode mismatch was the "extra }" bug). Split on
+% the first SPACE instead (space tokens keep catcode 10 through
+% \edef): "0.0pt plus 2.5pt..." -> "0.0pt" (glue naturals are always
+% finite; fil orders live only in the plus/minus parts, which are
+% read separately via \gluestretch/\glueshrink).
+\def\jlreqpdf@ksnatsplit#1 #2\relax{#1}
+% blendzw{<zw-number>}{<target dimen>}: target = x * blended zw with
+%   ltj-jfmglue.lua:812-857; b == a here because both sides share the
+%   single jlreq JFM and its ratio, so the average halves b).
+% \jlreqpdf@parratio holds r as a pt-dimen (0.500000 -> 0.5pt).
+% sp^2 products overflow \dimexpr for glyph-sized inputs, so the blend
+% is assembled with \advance: b = zw_prev + r*(zw_cur - zw_prev)
+% (the delta is at most one glyph size, so the product stays small).
+\def\jlreqpdf@blendzw#1#2{%
+  \jlreqpdf@tmpa=\jlreqpdf@zw@cur
+  \advance\jlreqpdf@tmpa-\jlreqpdf@zw@prev
+  % dimen*dimen = sp^2; /65536 (plain integer, NO unit keyword --
+  % `\dimexpr../65536pt' leaks the `pt' tokens) gives sp:
+  %   r (pt-dimen) * delta / 1pt = r*delta
+  \jlreqpdf@tmpa=\dimexpr\jlreqpdf@parratio*\jlreqpdf@tmpa/65536\relax
+  \advance\jlreqpdf@tmpa\jlreqpdf@zw@prev
+  % tmpa = b (blended zw); result = x * b  (x = #1, a plain coefficient)
+  #2=\dimexpr#1\jlreqpdf@tmpa\relax
+}
+% ---- the emission itself ---------------------------------------------
+% p = post(prev) + pre(next) -- ONE penalty value for the whole boundary.
+% NOTE: dedicated registers only -- this runs INSIDE the CJK decoder
+% (\@tempcnta carries the codepoint there; clobbering it produced
+% "Bad character code" and corrupted glyphs).
+\newcount\jlreqpdf@bpen
+\def\jlreqpdf@boundaryp{%
+  \jlreqpdf@bpen=0
+  \expandafter\ifx\csname jlreqpdf@kin@post@\number\jlreqpdf@lastclass\endcsname\relax
+  \else
+    \jlreqpdf@bpen=\csname jlreqpdf@kin@post@\number\jlreqpdf@lastclass\endcsname\relax
+  \fi
+  \expandafter\ifx\csname jlreqpdf@kin@pre@\number\jlreqpdf@curclass\endcsname\relax
+  \else
+    \advance\jlreqpdf@bpen\csname jlreqpdf@kin@pre@\number\jlreqpdf@curclass\endcsname\relax
+  \fi
+}
+% end_adjust candidate walker state
+\newbox\jlreqpdf@charbox
+\newdimen\jlreqpdf@tmpa
+\newdimen\jlreqpdf@eaval
+\newdimen\jlreqpdf@eaprev
+\def\jlreqpdf@emitboundary{%
+  \jlreqpdf@boundaryp
+  \expandafter\ifx\csname jlreqpdf@jfm@endadj@\number\jlreqpdf@lastclass\endcsname\relax
+    % no end_adjust data: the plain boundary -- one penalty + glue
+    \ifnum\jlreqpdf@bpen>0 \penalty\jlreqpdf@bpen \fi
+    \jlreqpdf@emitglue
+  \else
+    % candidate series (ascending e_1..e_m; 0 kept in the list).
+    % NOTE the #1 indirection: `\expandafter\jlreqpdf@eawalk\csname...'
+    % would hand the ENDADJ MACRO TOKEN to eawalk (an undelimited
+    % argument takes a control sequence as one token); the wrapper's
+    % `\expandafter...#1' expands the macro first so the walker sees
+    % the brace-group FIELDS one by one.
+    \jlreqpdf@eaprev=0pt
+    \expandafter\jlreqpdf@easeries
+      \csname jlreqpdf@jfm@endadj@\number\jlreqpdf@lastclass\endcsname
+  \fi
+}
+\def\jlreqpdf@easeries#1{\expandafter\jlreqpdf@eawalk#1\jlreqpdf@eaend}
+% eawalk{<e_i>}: emit kern(e_i - e_{i-1}) [penalty(p) kern(...)] ...
+% series layout (first candidate: kern(e_1) then penalty(p)):
+%   kern(e_1) penalty(p) kern(e_2-e_1) penalty(p) ... kern(e_m-e_{m-1})
+%   penalty(p) kern(-e_m) penalty(10000)  THEN the pair glue.
+\def\jlreqpdf@eawalk#1{%
+  \def\jlreqpdf@eafield{#1}%
+  \ifx\jlreqpdf@eafield\jlreqpdf@eaendmark
+    % finish: undo kern + close the series, THEN the pair glue
+    % (the glue break after penalty(10000) is the net-0/e=0 legal
+    % break; the series sums to zero so a glue break leaves e=0)
+    \kern-\jlreqpdf@eaprev
+    \penalty10000
+    \jlreqpdf@emitglue
+    \expandafter\@gobble
+  \else
+    \jlreqpdf@eaval=#1\jlreqpdf@zw@prev\relax
+    \ifdim\jlreqpdf@eaprev=0pt
+      \kern\jlreqpdf@eaval
+    \else
+      \kern\dimexpr\jlreqpdf@eaval-\jlreqpdf@eaprev\relax
+    \fi
+    \ifnum\jlreqpdf@bpen>0 \penalty\jlreqpdf@bpen \else \penalty0 \fi
+    \jlreqpdf@eaprev=\jlreqpdf@eaval
+    \expandafter\@firstofone
+  \fi
+  {\jlreqpdf@eawalk}%
+}
+\def\jlreqpdf@eaendmark{\jlreqpdf@eaend}
+\def\jlreqpdf@eaend{\jlreqpdf@eaend}
+% the pair glue + kanjiskip companion emission.
+% Fallback (fbmode=1): the CURRENT (x)kanjiskip glue verbatim (orders
+% preserved). Defined pair: nat/str/shr (finite, zw-scaled) + the
+% kanjiskip companion as its own glue node when any component is
+% nonzero (ltj real_insert(k)). All-zero pair glue emits nothing
+% (keeps the node stream lean; the candidate series already ended
+% with penalty(10000) so no break is lost).
+\def\jlreqpdf@emitglue{%
+  \ifnum\jlreqpdf@fbmode=1
+    \hskip\jlreqpdf@fbskip
+  \else
+    \ifdim\jlreqpdf@nat=0pt
+      \ifdim\jlreqpdf@str=0pt
+        \ifdim\jlreqpdf@shr=0pt
+        \else \jlreqpdf@emitglue@do
+        \fi
+      \else \jlreqpdf@emitglue@do
+      \fi
+    \else \jlreqpdf@emitglue@do
+    \fi
+  \fi
+  \ifdim\jlreqpdf@knat=0pt
+    \ifdim\jlreqpdf@kstr=0pt
+      \ifdim\jlreqpdf@kshr=0pt
+      \else \jlreqpdf@emitkcomp
+      \fi
+    \else \jlreqpdf@emitkcomp
+    \fi
+  \else \jlreqpdf@emitkcomp
+  \fi
+}
+\def\jlreqpdf@emitglue@do{%
+  \hskip\jlreqpdf@nat
+  \ifdim\jlreqpdf@str>0pt plus\jlreqpdf@str\fi
+  \ifdim\jlreqpdf@shr>0pt minus\jlreqpdf@shr\fi
+}
+\def\jlreqpdf@emitkcomp{%
+  \hskip\jlreqpdf@knat
+  \ifdim\jlreqpdf@kstr>0pt plus\jlreqpdf@kstr\fi
+  \ifdim\jlreqpdf@kshr>0pt minus\jlreqpdf@kshr\fi
+}
+
+%. -------------------------------- kinsoku per-class penalty tables
+% The class-number tables below are the jlreq.cls defaults (the same
+% lists jlreq.cls passes to \__jlreq_setpost/prebreakpenalty). They are
+% the FALLBACK: at load time, if the loaded .def carries its own
+% kin@pre@<n>/kin@post@<n> data (per the data contract comment above),
+% the .def values win (the loader below re-keys them). Runtime
+% \jlreqsetup kinsoku keys WRITE into these very tables via
+% jlreq.cls's aux definitions, so setup changes take effect.
+% post-break 10000 (char must not END a line):
+%   opening brackets (1), prefixed abbreviations (12)
+% pre-break 10000 (char must not START a line):
+%   closing brackets (2), hyphens (300,301,302 -- class 3 in jlreq.cls),
+%   dividing punct (4), middle dots (5), full stops (6), commas (7),
+%   inseparable (8: jlreq.cls sets pre only, batch prohibition note),
+%   iteration marks (9), prolonged sound mark (10), small kana (11)
+\expandafter\def\csname jlreqpdf@kin@post@1\endcsname{10000}%
+\expandafter\def\csname jlreqpdf@kin@post@12\endcsname{10000}%
+\expandafter\def\csname jlreqpdf@kin@pre@2\endcsname{10000}%
+\expandafter\def\csname jlreqpdf@kin@pre@4\endcsname{10000}%
+\expandafter\def\csname jlreqpdf@kin@pre@5\endcsname{10000}%
+\expandafter\def\csname jlreqpdf@kin@pre@6\endcsname{10000}%
+\expandafter\def\csname jlreqpdf@kin@pre@7\endcsname{10000}%
+\expandafter\def\csname jlreqpdf@kin@pre@8\endcsname{10000}%
+\expandafter\def\csname jlreqpdf@kin@pre@9\endcsname{10000}%
+\expandafter\def\csname jlreqpdf@kin@pre@10\endcsname{10000}%
+\expandafter\def\csname jlreqpdf@kin@pre@11\endcsname{10000}%
+\expandafter\def\csname jlreqpdf@kin@pre@300\endcsname{10000}%
+\expandafter\def\csname jlreqpdf@kin@pre@301\endcsname{10000}%
+\expandafter\def\csname jlreqpdf@kin@pre@302\endcsname{10000}%
+
+%. ------------------------------------------------ post-break scratch
+% (kept for external probes/tests; the emitter now computes p on the
+% fly via \jlreqpdf@boundaryp, and \jlreqpdf@setpost below only records
+% the class of the glyph just placed for \lastnodechar maintenance)
+\def\jlreqpdf@setpost{%
+  \global\jlreqpdf@lastnodechar=\jlreqpdf@cp
+}
+
+%. ----------------------------- hanging (negative end_adjust path)
+% ぶら下げ（hanging_punctuation, -b 変種）はクラス6/7の end_adjust
+% 候補 {-0.5, 0, 0.5}（zw）の「負候補」として同じ候補列で表現される。
+% 行末で break が負候補 e=-0.5zw を選ぶと行は 0.5zw 突き出す。
+% したがって:
+%   - 裸字形専用分岐 (hangglyph), 負 hangkern, \rpcode 設定,
+%     \pdfprotrudechars 変更 — すべて撤去 (JFM幅付き字形boxが標準)
+%   - microtype との二重調整: 本バックエンドは \rpcode を一切設定
+%     しない（microtype 既定の欧文 protrusion には触れない。欧文以外
+%     のslotへ protrusion を設定するのは microtype 自身の設定次第で
+%     あり、ここでは干渉しない — コメントとしての明記のみ）。
+%   - 通常段落の末尾（para/end）: 最終和文字クラスに負の最小
+%     end_adjust があれば、その tail kern (e_min) を parfillskip の
+%     前へ挿入する（短い最終行を無理に両端揃えしない）。
+%     ltj insert_lineend_kern_tail (ltj-adjust.lua:397-411) 相当。
+\newdimen\jlreqpdf@tailkern
+\def\jlreqpdf@para@endhook{%
+  % If the paragraph's last node is a box, the tail-kern read
+  % must use boxbdd semantics (no stale interior end_adjust).
+  \jlreqpdf@boxbdd
+  % inside the paragraph, before \parfillskip is added: if the last
+  % observed CJK class has a negative minimal end_adjust candidate,
+  % insert its kern so the final short line keeps the protrusion.
+  \expandafter\ifx\csname jlreqpdf@jfm@endadj@\number\jlreqpdf@lastclass\endcsname\relax
+  \else
+    \jlreqpdf@tailkern=0pt
+    % the #1 wrapper expands the endadj macro first (the same
+    % undelimited-argument rule as \jlreqpdf@easeries -- see there)
+    \expandafter\jlreqpdf@tailseries
+      \csname jlreqpdf@jfm@endadj@\number\jlreqpdf@lastclass\endcsname
+    \ifdim\jlreqpdf@tailkern<0pt \kern\jlreqpdf@tailkern \fi
+  \fi
+}
+\def\jlreqpdf@tailseries#1{\expandafter\jlreqpdf@tailwalk#1\jlreqpdf@eaend}
+\def\jlreqpdf@tailwalk#1{%
+  \def\jlreqpdf@eafield{#1}%
+  \ifx\jlreqpdf@eafield\jlreqpdf@eaendmark
+    \expandafter\@gobble
+  \else
+    \jlreqpdf@eaval=#1\jlreqpdf@zw@cur\relax
+    \ifdim\jlreqpdf@eaval<\jlreqpdf@tailkern
+      \jlreqpdf@tailkern=\jlreqpdf@eaval
+    \fi
+    \expandafter\@firstofone
+  \fi
+  {\jlreqpdf@tailwalk}%
+}
+
+%. ------------------------------------------------- codepoint -> class
+% The hooks receive the DECIMAL codepoint; the .def dispatch is keyed
+% by hex. Rather than converting per character at runtime, the whole
+% dispatch is re-keyed to decimal names ONCE here at load time:
+%   \jlreqpdf@dcls@<decimal>  = class number.
+% The hex keys are enumerated from the per-class chars@<n> lists of
+% the loaded .def (U+XXXX entries; AJ1-<gid> entries are pTeX/VF-only
+% and have no codepoint -- skipped). The combo lists (comma groups)
+% are parsed too: the trailing codepoint of each combo is recorded in
+% \jlreqpdf@combomarks so the runtime treats it as an attaching mark
+% (no pair glue, no state update).
+\newcount\jlreqpdf@cnta
+\newcount\jlreqpdf@cntb
+\newcount\jlreqpdf@hexacc
+% hex -> decimal: \jlreqpdf@hextodec{<hexdigits>} sets \jlreqpdf@hexacc
+\def\jlreqpdf@hextodec#1{%
+  \global\jlreqpdf@hexacc=0
+  \jlreqpdf@hextodec@a#1\jlreqpdf@htx@end
+}
+\def\jlreqpdf@hextodec@a#1{%
+  \def\jlreqpdf@hxt{#1}%
+  \ifx\jlreqpdf@hxt\jlreqpdf@htx@end
+  \else
+    {\jlreqpdf@cnta=`#1\relax
+     \ifnum\jlreqpdf@cnta>96 \advance\jlreqpdf@cnta-87 % a-f -> 10..15
+     \else\ifnum\jlreqpdf@cnta>64 \advance\jlreqpdf@cnta-55 % A-F
+     \else\advance\jlreqpdf@cnta-48 % 0-9
+     \fi\fi
+     \global\multiply\jlreqpdf@hexacc16
+     \global\advance\jlreqpdf@hexacc\jlreqpdf@cnta}%
+    \expandafter\jlreqpdf@hextodec@a
+  \fi
+}
+\def\jlreqpdf@htx@end{\jlreqpdf@htx@end}%
+
+% The class list comes from the LOADED .def
+% (\jlreqpdf@jfm@classlist, emitted by make_pdftex_jfm.lua 2.0+). The
+% hardcoded 25-class list is gone. An old .def without classlist is an
+% explicit data-version error.
+\expandafter\ifx\csname jlreqpdf@jfm@classlist\endcsname\relax
+  \PackageError{jlreq-pdftex-rules}{JFM~data~file~lacks~jlreqpdf@jfm@classlist}{%
+    The~loaded~JFM~data~variant~was~generated~by~an~old~make_pdftex_jfm.lua\MessageBreak
+    (pre-2.0,~no~classlist).~Regenerate~with~`make~pdftex-jfm'.\MessageBreak
+    \@ehc}%
+\fi
+\edef\jlreqpdf@classlist{\csname jlreqpdf@jfm@classlist\endcsname}%
+% Load-time re-key of the dispatch into decimal names, plus the combo
+% trailing-mark table (plain TeX/LaTeX2e only: the parent backend's
+% \RequirePackage{expl3} leaves the ambient \ExplSyntaxOn regime
+% unreliable mid-class, so this file avoids expl3 runtime functions).
+%   \jlreqpdf@dcls@<decimal>  = class number
+%   \jlreqpdf@combo@<decimal> = 1  (attaching mark: no pair glue)
+\def\jlreqpdf@loadentry#1#2{% <entry> <class>
+  \def\jlreqpdf@loadentry@com##1,##2\jlreqpdf@htx@end{%
+    \def\jlreqpdf@loadentry@a{##1}\def\jlreqpdf@loadentry@b{##2}}%
+  \expandafter\jlreqpdf@loadentry@com#1,\jlreqpdf@htx@end
+  \expandafter\jlreqpdf@ajtest\jlreqpdf@loadentry@a\@nil
+  \ifnum\jlreqpdf@ajflag=1 %
+    % AJ1-<gid> entries are pTeX/VF-only: no codepoint, skip
+  \else
+    \ifx\jlreqpdf@loadentry@b\@empty
+      \expandafter\jlreqpdf@regsingle\jlreqpdf@loadentry@a
+        \jlreqpdf@htx@end{#2}%
+    \else
+      \expandafter\jlreqpdf@regcombo\jlreqpdf@loadentry@b
+        \jlreqpdf@htx@end
+    \fi
+  \fi
+}
+% #1 = hex digits (variable length), #2 = class (for regsingle)
+\def\jlreqpdf@ajtest#1#2#3#4\@nil{%
+  \global\jlreqpdf@ajflag=0
+  \def\jlreqpdf@ajfirst{#1}%
+  \def\jlreqpdf@ajmark{A}%
+  \ifx\jlreqpdf@ajfirst\jlreqpdf@ajmark
+    \def\jlreqpdf@ajsecond{#2}%
+    \def\jlreqpdf@ajmark{J}%
+    \ifx\jlreqpdf@ajsecond\jlreqpdf@ajmark
+      \global\jlreqpdf@ajflag=1
+    \fi
+  \fi
+}%
+\newcount\jlreqpdf@ajflag
+\def\jlreqpdf@regsingle U+#1\jlreqpdf@htx@end#2{%
+  \jlreqpdf@hextodec{#1}%
+  \expandafter\xdef\csname jlreqpdf@dcls@\number\jlreqpdf@hexacc\endcsname{#2}%
+}
+\def\jlreqpdf@regcombo U+#1\jlreqpdf@htx@end{%
+  \jlreqpdf@hextodec{#1}%
+  \expandafter\xdef\csname jlreqpdf@combo@\number\jlreqpdf@hexacc\endcsname{1}%
+}
+\def\jlreqpdf@walklist#1#2{% <chars|combo> <class>
+  \expandafter\ifx\csname jlreqpdf@jfm@#1@#2\endcsname\relax
+  \else
+    \edef\jlreqpdf@tempa{\csname jlreqpdf@jfm@#1@#2\endcsname\space}%
+    \expandafter\jlreqpdf@walk@a\jlreqpdf@tempa\jlreqpdf@htx@end{#2}%
+  \fi
+}
+\def\jlreqpdf@walk@a#1 #2\jlreqpdf@htx@end#3{%
+  \def\jlreqpdf@item{#1}%
+  \ifx\jlreqpdf@item\@empty
+    % list exhausted (the trailing space we append)
+  \else
+    \jlreqpdf@loadentry{#1}{#3}%
+    \jlreqpdf@walk@a#2 \jlreqpdf@htx@end{#3}%
+  \fi
+}
+\def\jlreqpdf@loadclass#1{%
+  \jlreqpdf@walklist{chars}{#1}%
+  \jlreqpdf@walklist{combo}{#1}%
+}
+\@for\jlreqpdf@cls:=\jlreqpdf@classlist\do{%
+  \expandafter\jlreqpdf@loadclass\expandafter{\jlreqpdf@cls}%
+}
+
+%. ------------------------------------------------------ runtime lookup
+% \jlreqpdf@setclassof{<byte>}: CJK.sty の内部 \CJKsymbol は
+% 「\CJK@plane（16進2桁のプレーン接頭）×256 + バイト値」形式で文字を渡す
+% （例: 「= U+300C → plane "30", byte 12 → 0x30*256+12 = 12300）。
+% Unicodeコードポイントを復元してからクラス表を引く。
+% （undefined codepoint => class 0 = default CJK, as in the JFM.）
+\def\jlreqpdf@setclassof#1{%
+  \expandafter\jlreqpdf@hextodec\expandafter{\CJK@plane}
+  \global\jlreqpdf@cp=\jlreqpdf@hexacc
+  \multiply\jlreqpdf@cp256
+  \advance\jlreqpdf@cp#1\relax
+  \expandafter\ifx\csname jlreqpdf@combo@\number\jlreqpdf@cp\endcsname\relax
+    \expandafter\ifx\csname jlreqpdf@dcls@\number\jlreqpdf@cp\endcsname\relax
+      \global\jlreqpdf@curclass=0
+    \else
+      \global\jlreqpdf@curclass=\csname jlreqpdf@dcls@\number\jlreqpdf@cp\endcsname\relax
+    \fi
+  \else
+    % 接着記（combo後続コードポイント，例: U+309A）: 前クラス維持・無出力
+    \global\jlreqpdf@curclass=\jlreqpdf@lastclass
+    \global\jlreqpdf@inhibit=1
+  \fi
+}%
+
+%. ------------------------------------------------------------ the hooks
+% \jlreqpdf@pre{<cp>}: before every CJK glyph (non-math). The unified
+% boundary emitter handles [candidate series] [pair glue] with the
+% single penalty p = post(prev)+pre(next) at every legal candidate.
+
+%. ------------------------------------- shared pair evaluator
+% \jlreqpdf@classofchar{<char-or-token>} -> \jlreqpdf@evalclass (count):
+% the JFM class of the FIRST CJK glyph of the argument, implemented by
+% typesetting the argument into a scratch box with the rules hooks
+% active (\jlreqpdf@pre records the class of every observed glyph into
+% \global\jlreqpdf@lastclass; the box's frame push/pop keeps the
+% running state intact). No CJK glyph observed -> class 27 (alchar:
+% latin run semantics). Undefined codepoints read class 0 (default
+% CJK, as in the JFM).
+\newcount\jlreqpdf@evalclass
+\newbox\jlreqpdf@evalbox
+\def\jlreqpdf@classofchar#1{%
+  \global\jlreqpdf@evalclass=0
+  \global\jlreqpdf@lastclass=90
+  \global\jlreqpdf@inhibit=0
+  \setbox\jlreqpdf@evalbox=\hbox{#1}%
+  \ifnum\jlreqpdf@lastclass=90
+    % no CJK glyph observed: latin run (alchar semantics)
+    \global\jlreqpdf@evalclass=27
+  \else
+    \global\jlreqpdf@evalclass=\jlreqpdf@lastclass
+  \fi
+  \global\jlreqpdf@lastclass=90
+}
+% \jlreqpdf@classofcp{<decimal cp>}: the JFM class of a CODEPOINT,
+% read straight from the loaded class tables -- no \char (pdfTeX \char
+% only addresses 0..255; \tatechuyoko's before-glue query passes the
+% observed \lastnodechar scalar, a full Unicode codepoint). Contract
+% mirrors \jlreqpdf@setclassof: undefined codepoint -> class 0, combo
+% continuation -> the PREVIOUS class (callers pass a leading real glyph,
+% so the combo branch is not reachable here).
+\def\jlreqpdf@classofcp#1{%
+  \expandafter\ifx\csname jlreqpdf@combo@#1\endcsname\relax
+    \expandafter\ifx\csname jlreqpdf@dcls@#1\endcsname\relax
+      \global\jlreqpdf@evalclass=0
+    \else
+      \global\jlreqpdf@evalclass=\csname jlreqpdf@dcls@#1\endcsname\relax
+    \fi
+  \else
+    \global\jlreqpdf@evalclass=0
+  \fi}
+% \jlreqpdf@evalpairglue{<class-a>}{<class-b>}: set the pair glue
+% (natural only -- calc@jfmglue's contract is a skip natural) into
+% \jlreqpdf@nat via the SAME evaluation the runtime boundary uses.
+% Undefined pairs use the live fallback ((x)kanjiskip natural).
+\def\jlreqpdf@evalpairglue#1#2{%
+  % NO group: pairfields' dimen assignments are LOCAL to the current
+  % level; inside a group they would be lost on close (verified: nat
+  % reverted to 0). The caller (calc@jfmglue) wraps itself in \begingroup.
+  \global\jlreqpdf@lastclass=#1\relax
+  \global\jlreqpdf@curclass=#2\relax
+  \global\jlreqpdf@fbmode=0
+  \jlreqpdf@evalpair
+  \ifnum\jlreqpdf@fbmode=1
+    % fallback: the CURRENT (x)kanjiskip natural
+    \jlreqpdf@fbskip=\jlreqkanjiskip
+    \ifnum#1=27 \jlreqpdf@fbskip=\jlreqxkanjiskip
+ \else\ifnum#2=27 \jlreqpdf@fbskip=\jlreqxkanjiskip
+ \fi\fi
+    \edef\jlreqpdf@ksnattext{\the\jlreqpdf@fbskip}%
+    \edef\jlreqpdf@ksnat{\expandafter\jlreqpdf@ksnatsplit\jlreqpdf@ksnattext\relax}%
+    \jlreqpdf@nat=\jlreqpdf@ksnat\relax
+  \fi
+}
+% Latin adjacency: when a CJK glyph is decoded at a
+% paragraph/box head (lastclass=90) directly after a LATIN run
+% (lastnodetype=0, a char node), the preceding latin text is treated
+% as class 27 so the LA->JA boundary glue (xkanjiskip) fires.
+% The check CANNOT live in \jlreqpdf@pre: inside the CJK decoder the
+% font-switch whatsits make \lastnodetype read -1 there (verified by
+% probe). It runs instead at the WRAPPED \CJK@X/XX/XXX/XXXX helper
+% heads (\jlreqpdf@latadj), before the decoder emits anything.
+% Discrimination (lastnodetype probes): latin run -> 0; indent
+% box -> 1 (hlist); explicit space -> 11 (glue); kern -> 12; box ->
+% 1; empty paragraph -> the indent box or nothing; ONLY type 0 is a
+% char node = the latin run case. 空段落・indent・明示空白・glue・
+% kern・直前boxは欧文と誤判定されない。
+\def\jlreqpdf@latadj{%
+  \ifnum\jlreqpdf@lastclass=90
+    \ifnum\lastnodetype=0
+      % direct latin adjacency at a paragraph/box head: class 27
+      \global\jlreqpdf@lastclass=27
+    \else
+      % With every glyph boxed (boxglyphs), the preceding node is
+      % OUR glyph box, not a char -- the glyphmark distinguishes it
+      % from a user box (boxbdd keeps user boxes neutral).
+      \ifnum\lastnodetype=1
+        \ifnum\jlreqpdf@glyphmark=1
+          \global\jlreqpdf@lastclass=27
+        \fi
+      \fi
+    \fi
+  \fi
+}
+\def\jlreqpdf@pre#1{%
+  \ifmmode
+    % CJK char inside math: no glue, no penalty, state untouched
+    % (math counts as an alchar/latin boundary, set by the $-peek or
+    % left over from the preceding latin run)
+  \else
+    % If the reader directly follows a closed user box, apply
+    % boxbdd semantics -- the boundary pseudo class 90, not the stale
+    % interior state (see \jlreqpdf@boxbdd).
+    \jlreqpdf@boxbdd
+    \jlreqpdf@setclassof{#1}%
+    % Ruby adapter: while a ruby base pass is armed, record the
+    % FIRST observed glyph's class/zw for the ruby's left boundary
+    % (no-op unless \jlreqpdf@ruby@rec is armed; defined in
+    % jlreq-pdftex-ruby.sty -- never re-run the base for this)
+    \jlreqpdf@ruby@recordfirst
+    \ifnum\jlreqpdf@inhibit=1
+      \global\jlreqpdf@inhibit=0
+    \else
+      \jlreqpdf@beforeglyph
+      \jlreqpdf@setpost
+    \fi
+    \global\jlreqpdf@lastclass=\jlreqpdf@curclass
+    % This glyph's node (bare char or our nest-guarded charbox)
+    % is about to become the last node; mark it ours so a following
+    % \lastnodetype=13/14 read at the next boundary is not mistaken
+    % for a user box (see the semantic-frames comment).
+    \global\jlreqpdf@glyphmark=1
+  \fi
+}
+% \jlreqpdf@beforeglyph: the zero-glue \unskip (kinsoku residual --
+% removes a FOREIGN zero-natural glue before a prebreak char; real,
+% stretchy or negative user glue is never touched) then the boundary.
+\def\jlreqpdf@beforeglyph{%
+  \expandafter\ifx\csname jlreqpdf@kin@pre@\number\jlreqpdf@curclass\endcsname\relax
+  \else
+    \ifnum\lastnodetype=11
+      \ifdim\lastskip=0pt
+        \unskip
+      \fi
+    \fi
+  \fi
+  \jlreqpdf@emitpair
+}
+% \jlreqpdf@peek: installed as \CJK@ignorespaces; runs after every CJK
+% glyph. Detects a latin (or math-shift) follower and emits the
+% CJK->LA boundary through the SAME unified emitter.
+% この形は避ける: 「\ifmmode\else\futurelet..\fi」形は CJKutf8 の \CJK@XXX 末尾条件
+% （\expandafter\CJK@ignorespaces\else..\fi\fi の残り \fi 群内）で展開され
+% ると壊れる: \else スキップで消えたはずの \jlreqpdf@peek@a が古い
+% \jlreqpdf@next で実行され，\CJK@XXX 末尾の \fi 群と突いて Extra \fi
+% （再現条件: 直前に和文がある状態の $あ$ / 行列セル内和文）．
+% 未来let本体を\elseスキップ域の外へ出し，数式時は引数ごと捨てる
+% \@gobble イディオムに変える（引数形なのでスキップ域に未来letが残らない）．
+\def\jlreqpdf@peek{%
+  \ifmmode
+    \expandafter\@gobble
+  \else
+    \expandafter\@firstofone
+  \fi
+  {\jlreqpdf@peek@do}%
+}
+% \jlreqpdf@peek@resume -- the aftergroup continuation of a peek
+% deferred at a group end. It is the plain futurelet form: no
+% correction is re-emitted at the group end itself (the follower's
+% own hook emits the boundary), so no double boundary emission can
+% happen. Note: when the closing group was a BOX whose
+% last node was a CJK glyph, this resume still runs its \futurelet at
+% the box edge -- the case \leaders\hbox{..<CJK>}<glue> remains
+% unsupported (leader boxes with a bare CJK tail; the LaTeX TOC
+% leader box ends in \null after the glyph, so the TOC path never
+% defers). The universal leader breakage (every \leaders box, any
+% content, via the frame-pop \aftergroup) is fixed by removing that
+% \aftergroup (see the semantic-frames comment above).
+\def\jlreqpdf@peek@resume{\jlreqpdf@peek}
+% 非数式モードのときだけ実行される本体．
+\def\jlreqpdf@peek@do{%
+  \futurelet\jlreqpdf@next\jlreqpdf@peek@a
+}
+% CJK -> latin/math boundary: emit through the unified machinery with
+% curclass=27 (the inhibit interlock is consumed here too --
+% \inhibitglue between a CJK glyph and a latin run suppresses the
+% xkanjiskip exactly once).
+\def\jlreqpdf@peek@lat{%
+  {\global\jlreqpdf@curclass=27
+   \jlreqpdf@emitpair}%
+  \global\jlreqpdf@lastclass=27
+}
+
+\def\jlreqpdf@peek@a{%
+  \ifx\jlreqpdf@next\inhibitglue
+    % \inhibitglue directly after a CJK glyph: consume it, execute it
+    % (sets the interlock) and re-peek at the REAL follower, so a
+    % latin follower goes through peek@lat -- which consumes the
+    % interlock and suppresses the boundary glue exactly once (ltj
+    % semantics; the 漢\inhibitglue abcあ case: the abc->あ boundary
+    % then behaves normally instead of eating a second suppression).
+    % The dispatch goes through a one-token body macro so the argument
+    % scan of \jlreqpdf@eatig reaches the INPUT (the original token),
+    % not this macro's own body (\else etc.).
+    \expandafter\jlreqpdf@peek@ig
+  \else
+    \expandafter\jlreqpdf@peek@rest
+  \fi
+}
+\def\jlreqpdf@peek@ig{\jlreqpdf@eatig}
+% eat the lookahead'd \inhibitglue token, execute it, re-peek at the
+% real follower (taking it as an argument CONSUMES the token: a plain
+% token insertion looped forever on the never-consumed original)
+\def\jlreqpdf@eatig#1{#1\jlreqpdf@peek}
+\def\jlreqpdf@peek@rest{%
+  \ifx\jlreqpdf@next\@sptoken
+    % explicit space: neutral (ltj's glue pseudo-char: no boundary
+    % glue across a user space)
+    \global\jlreqpdf@lastclass=93
+  \else
+    \ifx\jlreqpdf@next\egroup
+      % group end: resume the peek after the group.
+      % The resume macro (not \jlreqpdf@peek itself) first checks
+      % whether the group that closed was a BOX (\lastnodetype 13/14
+      % and glyphmark=0): a box edge is boxbdd, no boundary glue is
+      % emitted against the box, and -- critically -- the check makes
+      % the aftergroup token expand to NOTHING there, so
+      % \leaders\hbox{...}<glue> scans stay intact (this aftergroup
+      % is what previously surfaced as \futurelet inside the leader
+      % glue scan). Plain {..} groups contribute no node, so the
+      % resumed peek proceeds there exactly as before.
+      \aftergroup\jlreqpdf@peek@resume
+    \else
+      \ifx\jlreqpdf@next$%
+        \jlreqpdf@peek@lat
+      \else
+        % tate では $ はアクティブ文字になる（jlreq-pdftex.sty の数式
+        % キャプチャ入口）．アクティブ$トークンの意味は
+        % \jlreqpdf@tate@dollar@cmp と一致するため，その \ifx で捕える．
+        % 横組みでは \jlreqpdf@tate@dollar@cmp は未定義のままで，
+        % この枝は常に偽（既存挙動と一致）．
+        \ifx\jlreqpdf@next\jlreqpdf@tate@dollar@cmp
+          \jlreqpdf@peek@lat
+        \else
+        \ifcat\noexpand\jlreqpdf@next a%
+          \jlreqpdf@peek@lat
+        \else
+          \ifcat\noexpand\jlreqpdf@next 1%
+            \jlreqpdf@peek@lat
+          \else
+            % CJK bytes, control sequences, groups: leave the state;
+            % the follower's own hook handles the pair
+          \fi
+        \fi
+        \fi
+      \fi
+    \fi
+  \fi
+}
+\def\jlreqpdf@eatig#1{#1\jlreqpdf@peek}
+% (peek@cont removed -- its role was "futurelet-only
+% continuation" to avoid the double hangkern, but hangkern itself is
+% gone with the old rpcode machinery; the aftergroup peek at egroup is
+% already the plain futurelet form. No caller remains.)
+
+% \jlreqpdf@glyph{<cp>}: the glyph typesetter called from the inner
+% \CJKsymbol hook (all UTF-8 routes funnel here under noCJKpunct).
+% JFM class metrics say the glyph advance may be < 1zw (class@<n>
+% {w}{h}{d}{align}: e.g. 約物 class 1/2/6/7 = 0.5zw, 半角 class 192
+% = 0.333zw). The font glyph is always full-width (IPAex), so the
+% JFM width is realized by typesetting the glyph in an \hbox of the
+% JFM width and positioning it per the class align field
+% (ltj/luatexja-jfm.lua: the "align" table shifts the glyph inside
+% the char box):
+%   left   = glyph at the LEFT edge of the box (overhangs right)
+%   middle = glyph centered (overhangs both)
+%   right  = glyph at the RIGHT edge of the box (overhangs left)
+% w = 1zw (or no metrics: default CJK class) -> unchanged typesetting
+% (no box, byte-identical node stream, marker-kern machinery safe).
+% The JFM h/d stay font-natural: align placement is horizontal only
+% (the box keeps the glyph's own height/depth, as in ltj where the
+% vertical metrics are untouched). The IPAex glyph is always
+% FULL-width (1zw) while the box is w<1zw, so the box is SHORTER than
+% its content: the spacers must be \hss (negative shrink). \hfil
+% (plus-only) cannot shrink and turns every narrowed punct into an
+% overfull box.
+\def\jlreqpdf@glyph#1{%
+  \ifmmode
+    % 数式内: \hboxに包んで出す．数式中の\charはバイト値を「ASCIIのmathcode」
+    % で再解釈してしまう（あ=U+3042→サブフォントバイト0x42が欧文フォントの
+    % 「B」と化ける）ため、\charがテキストモード扱いに戻る\hboxが必須．
+    % C70フォント選択は\CJK@punctchar側の\usefont群が済ませているので
+    % フォントはボックス内に引き継がれる．
+    % \jlreqpdf@preは数式でクラス更新しないためJFM狭めボックス等も使わず，
+    % 常に自然幅．状態には触れない．
+    % backend-internal box: guard the frame machinery
+    \global\advance\jlreqpdf@nest1
+    \hbox{\jlreqpdf@orig@CJKsymbol{#1}}%
+    \global\advance\jlreqpdf@nest-1
+  \else
+    \if@tate
+      \jlreqpdf@glyph@tate{#1}%
+    \else
+      \expandafter\ifx\csname jlreqpdf@jfm@class@\number\jlreqpdf@curclass\endcsname\relax
+        \jlreqpdf@orig@CJKsymbol{#1}%
+      \else
+        \expandafter\jlreqpdf@placeglyph
+          \csname jlreqpdf@jfm@class@\number\jlreqpdf@curclass\endcsname
+          {#1}%
+      \fi
+    \fi
+  \fi
+}
+%. --------------------------------------------------------- tate glyph
+% 縦組みグリフ（プロファイル駆動）. 1 グリフ = 内側（水平段落）枠
+% 組みの JFM クラス幅進行ボックス。グリフ選択はフォントプロファイル
+% （jlreq-pdftex-fonts-*.def が供給、jlreq-pdftex.sty が読み込む）:
+%   \jlreqpdf@vglyph@<HEX>{{sub}{adv}{vorg}{ink x0 y0 x1 y1}{shard}{slot}{uni}}
+% sub=1 → 補助縦フォントの真縦字形（upright・回転なし）を slot 経由で
+%   出力（advance は vmtx 由来）。
+% sub=0 → 通常グリフを 90°（CCW）回転（内枠組；出荷の -90° で正立）。
+% 進行幅 = JFM クラス幅（class@<n> の w）× 現在 \jlreq@zw。固定 1zw は
+% 使わない。高さ/深さ = JFM クラスの h/d × \jlreq@zw（縦組みデータは
+% 0.5/0.5）。ink/vorigin 補正は em 単位 × 現在の jareg で毎回計算
+% （サイズ/書体/系列変更後もプロファイル×現zwで再計算される）。
+% 旧 off@<class> 生 pt 表（10pt 代表字由来）は廃止。
+\def\jlreqpdf@glyph@tate#1{%
+  % \jlreqpdf@pre (called first by the CJKsymbol wrap) restores the
+  % Unicode codepoint into \jlreqpdf@cp (the raw #1 here is just the
+  % plane byte: `\CJK@plane*256+#1').  The profile keys are DECIMAL
+  % codepoints.
+  \expandafter\ifx\csname jlreqpdf@vglyph@\number\jlreqpdf@cp\endcsname\relax
+    \jlreqpdf@glyph@tate@plain{#1}%
+  \else
+    \expandafter\jlreqpdf@vgparse
+      \csname jlreqpdf@vglyph@\number\jlreqpdf@cp\endcsname
+    \ifnum\jlreqpdf@vg@sub=1
+      \jlreqpdf@glyph@tate@vert{#1}%
+    \else
+      \jlreqpdf@glyph@tate@rot{#1}%
+    \fi
+  \fi
+}
+% {{sub}{adv}{vorg}{{x0}{y0}{x1}{y1}}{shard}{slot}{uni}}
+\def\jlreqpdf@vgparse#1{\expandafter\jlreqpdf@vgparse@a#1}
+\def\jlreqpdf@vgparse@a#1#2#3#4#5#6#7{%
+  \jlreqpdf@vg@sub=#1
+  \def\jlreqpdf@vg@adv{#2}%
+  \def\jlreqpdf@vg@vorg{#3}%
+  \def\jlreqpdf@vg@ink{#4}%
+  \def\jlreqpdf@vg@shard{#5}%
+  \def\jlreqpdf@vg@slot{#6}%
+  \def\jlreqpdf@vg@uni{#7}%
+}
+\newcount\jlreqpdf@vg@sub
+% sub=0: rotate the normal glyph; place ink per the profile ink/vorg in em
+% units against the JFM class cell.  The old fixed raise/shift pt table is
+% replaced by per-glyph em data × current \jlreq@jareg.
+% 挿入物文脈フラグ \jlreqpdf@insctx (=1 のとき): 挿入物(脚注等)の
+% 内側では縦字形ボックスの ht/dp を JFM クラスの h/d×zw に正規化する。
+% 本文では従来どおり rotatebox の自然寸法(ht=エム/dp=0)のまま — 本文側は
+% 出荷回転の第一行カーンでこの規約を補正しているため(実測一致)。
+% 挿入物側は native 縦組と同じ「エム箱が行基準線を挟んで中央」の
+% 行内配置が全行(折返し行・複数段落脚注を含む)で得られる。
+\newcount\jlreqpdf@insctx \global\jlreqpdf@insctx=0
+\def\jlreqpdf@glyph@tate@rot#1{%
+  \jlreqpdf@tate@classdims
+  % backend-internal box: guard the frame machinery
+  \global\advance\jlreqpdf@nest1
+  \setbox\jlreqpdf@charbox=\hbox{%
+    \rotatebox{90}{\jlreqpdf@orig@CJKsymbol{#1}}}%
+  \global\advance\jlreqpdf@nest-1
+  \wd\jlreqpdf@charbox=\jlreqpdf@cls@w\jlreq@zw
+  \ifnum\jlreqpdf@insctx=1
+    \ht\jlreqpdf@charbox=\jlreqpdf@cls@h\jlreq@zw
+    \dp\jlreqpdf@charbox=\jlreqpdf@cls@d\jlreq@zw
+  \fi
+  \box\jlreqpdf@charbox}
+% sub=1: true vertical form from the auxiliary vertical font. The aux
+% TFM is selected per family and the slot glyph is typeset inside the
+% JFM-width cell.
+% 脚注ブロック実測修正: 内枠（水平組み）は出荷の -90° 回転の
+% 「回転前」空間であるため、その中身はすべて +90° 予備回転して
+% 組む必要がある（rot path は \rotatebox{90} で行っている）。
+% vert path は補助縦フォントの字形を素のまま描いていたため、
+% 最終ページで全補助縦字形（（）。ー 等 sub=1 の全文字）が
+% 90° 横倒しで刷られていた（実測: fn （ が横倒し、native と
+% 形状不一致）。rot path と同じ回転を補助字形にもかけ、
+% 回転後のボックス寸法は JFM クラスの w/h/d×zw で正規化する。
+% さらに native vf と同一の置き型として、半角クラスの全角進行
+% 字形を -(1zw-セル幅) だけ行頭側へずらして描く（uplatex 実測:
+% （ セル [c,c+0.5em] に対し ink [c,c+1em]）。
+\def\jlreqpdf@glyph@tate@vert#1{%
+  \jlreqpdf@tate@classdims
+  \global\advance\jlreqpdf@nest1
+  \setbox\jlreqpdf@charbox=\hbox{%
+    \kern\dimexpr\jlreqpdf@cls@w\jlreq@zw-1\jlreq@zw\relax
+    \rotatebox{90}{%
+      \jlreqpdf@auxfont
+      \expandafter\char\jlreqpdf@vg@slot\relax}}%
+  \global\advance\jlreqpdf@nest-1
+  \ht\jlreqpdf@charbox=\jlreqpdf@cls@h\jlreq@zw
+  \dp\jlreqpdf@charbox=\jlreqpdf@cls@d\jlreq@zw
+  \wd\jlreqpdf@charbox=\jlreqpdf@cls@w\jlreq@zw
+  \box\jlreqpdf@charbox}
+% no profile entry (e.g. yoko-only font in tate): rotate the plain glyph
+% and keep the class width -- but ONLY when a profile exists at all;
+% missing profile is a load-time error, not a silent fallback.
+\def\jlreqpdf@glyph@tate@plain#1{%
+  \jlreqpdf@glyph@tate@rot{#1}}
+% class dims: w from class@<n>; h/d applied via the box's height/depth
+\def\jlreqpdf@tate@classdims{%
+  \expandafter\ifx\csname jlreqpdf@jfm@class@\number\jlreqpdf@curclass\endcsname\relax
+    \def\jlreqpdf@cls@w{1}%
+  \else
+    % NOTE the #1 wrapper: `\expandafter\splitcls\csname...' hands the
+    % CLASS MACRO TOKEN to splitcls as ONE undelimited argument (the
+    % same rule as \jlreqpdf@easeries) -- the wrapper expands the
+    % macro first so splitcls sees the five brace-group fields.
+    \expandafter\jlreqpdf@tate@classdims@split
+      \csname jlreqpdf@jfm@class@\number\jlreqpdf@curclass\endcsname
+  \fi
+}
+\def\jlreqpdf@tate@classdims@split#1{\expandafter\jlreqpdf@splitcls#1}
+% #1 = {{w}{h}{d}{align}{left}}, #2 = codepoint
+% The JFM-width glyph box is THE standard for punct classes
+% (no bare-glyph hanging branch; hanging protrusion is the negative
+% end_adjust candidate of the SAME box glyph, applied at line end by
+% the candidate series).
+\def\jlreqpdf@placeglyph#1#2{%
+  \expandafter\jlreqpdf@splitcls#1%
+  \edef\jlreqpdf@tmpw{\jlreqpdf@cls@w\jlreq@zw}%
+  \ifdim\jlreqpdf@tmpw=1\jlreq@zw
+    \ifnum\jlreqpdf@boxglyphs=1
+      % The strict paragraph environment boxes EVERY glyph
+      % (1zw classes too) so its line interior contains only
+      % boxes/glues/kerns/penalties -- the per-line distribution walk
+      % can then address each item box. Nest-guarded like the punct
+      % path (same frame-machinery reason).
+      \global\advance\jlreqpdf@nest1
+      \setbox\jlreqpdf@charbox=\hbox{\jlreqpdf@orig@CJKsymbol{#2}}%
+      \hbox to \jlreqpdf@cls@w\jlreq@zw{%
+        \jlreqpdf@placealign
+        \box\jlreqpdf@charbox
+        \jlreqpdf@placealign@post}%
+      \global\advance\jlreqpdf@nest-1
+    \else
+      \jlreqpdf@orig@CJKsymbol{#2}%
+    \fi
+  \else
+    % backend-internal boxes: guard the frame machinery for BOTH the
+    % measurement hbox and the outer JFM-width hbox (the everyhbox
+    % hook must not push a frame here -- the glyph box is not a
+    % semantic boundary and its push would neutralize lastclass
+    % mid-run, wrecking the NEXT boundary's pair lookup).
+    \global\advance\jlreqpdf@nest1
+    \setbox\jlreqpdf@charbox=\hbox{\jlreqpdf@orig@CJKsymbol{#2}}%
+    \hbox to \jlreqpdf@cls@w\jlreq@zw{%
+      \jlreqpdf@placealign
+      \box\jlreqpdf@charbox
+      \jlreqpdf@placealign@post}%
+    \global\advance\jlreqpdf@nest-1
+  \fi
+}
+% {<w>}{<h>}{<d>}{<align>}{<left>} -- brace-group delimited (the .def
+% values are exactly one brace group each; digit-bearing control words
+% are formed via \csname at the caller, never by \def here)
+% h/d も保存する（縦字形ボックスの ht/dp を JFM クラス値で
+% 正規化するため。cls@h/cls@d は {0.5} のような係数）。
+\def\jlreqpdf@splitcls#1#2#3#4#5{%
+  \def\jlreqpdf@cls@w{#1}%
+  \def\jlreqpdf@cls@h{#2}%
+  \def\jlreqpdf@cls@d{#3}%
+  \def\jlreqpdf@cls@align{#4}%
+}
+\def\jlreqpdf@cls@h{0.5}%
+\def\jlreqpdf@cls@d{0.5}%
+% \jlreq@pdftex@tate@chtc@dp -- jlreq.cls measures \Cht/\Cdp via
+% \hbox{阿} at class load (before begin document); under the pdfTeX
+% tate path the glyph layer gives horizontal-metric box extents, not
+% the pTeX \cht/\cdp (= vertical JFM class-0 h/d). This helper reads
+% the tate class-0 h/d from the generated JFM data (already input by
+% the time jlreq.cls reaches its measurement) and hands them to the
+% class, which applies them against the current zw. Called ONLY in
+% the d+tate branch of the class measurement.
+\def\jlreqpdf@cls@h{}
+\def\jlreqpdf@cls@d{}
+\def\jlreq@pdftex@tate@chtc@dp#1{%
+  \expandafter\jlreqpdf@tate@chtc@dp@split#1%
+}
+\def\jlreqpdf@tate@chtc@dp@split#1#2#3#4#5{%
+  \def\jlreqpdf@cls@h{#2}%
+  \def\jlreqpdf@cls@d{#3}%
+  \setlength\Cht{\jlreqpdf@cls@h\jlreq@jareg}%
+  \setlength\Cdp{\jlreqpdf@cls@d\jlreq@jareg}%
+}
+% leading spacer: absent for left (glyph flush left), \hss otherwise
+\def\jlreqpdf@placealign{%
+  \def\jlreqpdf@tmpb{left}%
+  \ifx\jlreqpdf@cls@align\jlreqpdf@tmpb
+    \expandafter\@gobble
+  \else
+    \expandafter\@firstofone
+  \fi
+  {\hss}%
+}
+% trailing spacer: absent for right (glyph flush right), \hss otherwise
+\def\jlreqpdf@placealign@post{%
+  \def\jlreqpdf@tmpb{right}%
+  \ifx\jlreqpdf@cls@align\jlreqpdf@tmpb
+    \expandafter\@gobble
+  \else
+    \expandafter\@firstofone
+  \fi
+  {\hss}%
+}
+
+%. -------------------------------------------------------- installation
+% Everything touching CJK/bxcjkjatype definitions must run AFTER those
+% packages load (the parent loads this file first, bxcjkjatype after;
+% bxcjkjatype itself redefines the inner \CJKsymbol, which would
+% overwrite a load-time wrap). All of it is deferred to begin-document.
+\newtoks\jlreqpdf@evhbox
+\newtoks\jlreqpdf@evvbox
+\def\jlreqpdf@evh@tmp{}%
+% \jlreqpdf@evh@save<everyhbox|everyvbox>: capture the current tokens
+% (via \edef -- a `\toks=\expandafter{...}' scan is invalid syntax)
+% into the paired scratch register, then re-assign the primitive with
+% our hook PREPENDED (user tokens still run exactly once, after ours).
+\def\jlreqpdf@evh@save#1#2{%
+  \edef\jlreqpdf@evh@tmp{\the#1}%
+  \global#2\expandafter{\jlreqpdf@evh@tmp}%
+}
+\AtBeginDocument{%
+  % (a) neutralize CJK's own inter-char glue: our pair glue resets
+  %     \lastkern so their \CJK@testLastCJK/\CJK@testLastKern machinery
+  %     cannot fire after our nodes; nulling the two glue macros makes
+  %     the cases where we emit NOTHING (math, explicit space,
+  %     inhibited boundaries) safe from double spacing too. Their
+  %     net-zero marker kerns (\CJK@kern/\CJK@CJK) stay untouched.
+  \renewcommand{\CJKglue}{}%
+  \def\CJK@nobreakglue{\nobreak}%
+  % (b) wrap the inner \CJKsymbol (robust-command internals; every
+  %     UTF-8 route funnels here under noCJKpunct): class lookup,
+  %     pair glue and kinsoku before the glyph
+  \expandafter\let\expandafter\jlreqpdf@orig@CJKsymbol
+    \csname CJKsymbol \endcsname
+  \expandafter\def\csname CJKsymbol \endcsname#1{%
+    \jlreqpdf@pre{#1}\jlreqpdf@glyph{#1}%
+  }%
+  % (c) post-glyph peek: the byte macros append \CJK@ignorespaces after
+  %     each char (\CJKspace sets it to \@empty).
+  %     F-peek fix: \CJK@ignorespaces runs INSIDE the helper's \ifx..\else
+  %     branch (CJK@X/XX/XXX/XXXX, CJK.sty:975-1012), so a \futurelet there
+  %     sees the helper's own trailing \fi, never the real follower --
+  %     peek@lat (CJK->LA xkanjiskip) could never fire. Instead, restore
+  %     \CJK@ignorespaces to its passive job (\@empty via \CJKspace) and
+  %     wrap the four helpers so our peek runs AFTER the helper returns,
+  %     i.e. after its \ifx has closed: \futurelet then sees the real
+  %     next token.
+  \global\let\CJK@ignorespaces\@empty
+  \expandafter\let\csname jlreqpdf@orig@CJK@X\expandafter\endcsname
+    \csname CJK@X\endcsname
+  \expandafter\def\csname CJK@X\endcsname#1{%
+    \jlreqpdf@latadj\csname jlreqpdf@orig@CJK@X\endcsname{#1}%
+    \futurelet\jlreqpdf@next\jlreqpdf@peek@a}%
+  \expandafter\let\csname jlreqpdf@orig@CJK@XX\expandafter\endcsname
+    \csname CJK@XX\endcsname
+  \expandafter\def\csname CJK@XX\endcsname#1#2{%
+    \jlreqpdf@latadj\csname jlreqpdf@orig@CJK@XX\endcsname{#1}{#2}%
+    \futurelet\jlreqpdf@next\jlreqpdf@peek@a}%
+  \expandafter\let\csname jlreqpdf@orig@CJK@XXX\expandafter\endcsname
+    \csname CJK@XXX\endcsname
+  \expandafter\def\csname CJK@XXX\endcsname#1#2#3{%
+    \jlreqpdf@latadj\csname jlreqpdf@orig@CJK@XXX\endcsname{#1}{#2}{#3}%
+    \futurelet\jlreqpdf@next\jlreqpdf@peek@a}%
+  \expandafter\let\csname jlreqpdf@orig@CJK@XXXX\expandafter\endcsname
+    \csname CJK@XXXX\endcsname
+  \expandafter\def\csname CJK@XXXX\endcsname#1#2#3#4{%
+    \jlreqpdf@latadj\csname jlreqpdf@orig@CJK@XXXX\endcsname{#1}{#2}{#3}{#4}%
+    \futurelet\jlreqpdf@next\jlreqpdf@peek@a}%
+  % (d) semantic frames: PREPEND our state hook to the primitive
+  %     everyhbox/everyvbox tokens (kernel's everymath-style freeze:
+  %     capture the pre-existing user tokens into scratch token
+  %     registers FIRST, then re-assign; the captured copy runs exactly
+  %     once, after ours. Every box opens a group -> \aftergroup
+  %     restores the parent state at close. Backend-internal boxes are
+  %     guarded via \jlreqpdf@nest (see glyph/placeglyph/math).
+  \jlreqpdf@evh@save\everyhbox\jlreqpdf@evhbox
+  \global\everyhbox{\jlreqpdf@box@enter\the\jlreqpdf@evhbox}%
+  \jlreqpdf@evh@save\everyvbox\jlreqpdf@evvbox
+  \global\everyvbox{\jlreqpdf@box@enter\the\jlreqpdf@evvbox}%
+  % (e) para/end hook: the short-final-line tail kern. \AddToHook{para/end}
+  %     runs when the paragraph is being wrapped up -- BEFORE
+  %     \parfillskip is contributed by TeX's paragraph builder? No:
+  %     para/end runs when \par finishes the paragraph; material
+  %     contributed there lands at the end of the paragraph content
+  %     (before \parfillskip/\rightskip which TeX appends during
+  %     line breaking). The tail kern is thus the last node before
+  %     parfillskip -- the ltj insert_lineend_kern_tail position.
+  \AddToHook{para/end}{\jlreqpdf@para@endhook}%
+  % (f) document-start state: paragraph-boundary class, neutral scalars
+  \jlreqpdf@state@neutral
+}
+
+
+% NB: jlreq.cls reads the backend chain mid-class with @ as a letter;
+% keep that state (no \makeatother here), like jlreq-pdftex.sty.
+\endinput

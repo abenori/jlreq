@@ -1,0 +1,36 @@
+% 検証：JFMペアグルーの実測（.defデータとの一致をtypeoutで判定）
+% 各測定前に状態機構を段落境界(90)へ戻して測定間の汚染を防ぐ．
+\documentclass[pdflatex]{jlreq}
+\begin{document}
+\makeatletter
+\newbox\mboxa
+\def\meas#1#2#3{%
+  \ifx d\jlreq@engine\global\jlreqpdf@lastclass=90\fi
+  \setbox\mboxa=\hbox{#3}%
+  \ifdim\wd\mboxa=#1\relax
+    \typeout{PASS: #2 = \the\wd\mboxa}%
+  \else
+    \typeout{FAIL: #2 expected #1, got \the\wd\mboxa}%
+  \fi
+}
+% kanjiskip自然長0: かな連続は追加空きなし (10+10)
+\meas{20pt}{kanji-kanji (kanjiskip nat 0)}{漢字}
+% 90->1: 行頭括弧に空きなし (開き括弧グリフ自体が0.5zw箱 → 5)
+\meas{5pt}{parbdd-bracket (90->1 = 0)}{「}
+% 1->1: 括弧連続も空きなし (5+5)
+\meas{10pt}{bracket-bracket (pair 1->1 = 0)}{「「}
+% 15->1: かな→開き括弧は二分アキ(jfm-jlreq.lua:592) (10+5+5)
+\meas{20pt}{kanji-bracket (pair 15->1 nat 0.5zw)}{あ「}
+% 2->15: 閉じ括弧→かな 0.5zw (5+5+10)
+\meas{20pt}{bracket-kanji (pair 2->15 nat 0.5zw)}{」あ}
+% 0->1: 漢字→開き括弧 0.5zw (10+5+5)
+\meas{20pt}{kanji0-bracket (pair 0->1 nat 0.5zw)}{漢「}
+% JA->LA: xkanjiskip 0.25zw (F-peek修正後は境界グルーが実際に出る:
+% 10 + 2.5 + abcの実幅15.27779 = 27.77779。修正前はpeekが\fi デブリを
+% 見て境界グルーが出ず、abc幅との数値偶然で25.27779が通っていた)
+\meas{27.77779pt}{ja-la boundary (xkanjiskip 0.25zw)}{漢abc}
+% 段落先頭のLA->JA境界にもxkanjiskipが入る（既に修正済み:
+% rules の段落先頭latin隣接判定。latin-adjacency.tex の
+% para-head-latin-adjacency が本挙動を検証する）
+\makeatother
+\end{document}

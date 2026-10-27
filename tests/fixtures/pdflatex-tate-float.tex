@@ -1,0 +1,80 @@
+% pdflatex-tate-float.tex -- tate 浮遊体（figure/table）フィクスチャ
+% uplatex+tate を ground truth とした実測比較の結論:
+%   * [t] 浮遊体は本文カラムの右側カラムに置かれ，内容は縦組みとして
+%     組まれる（キャプション文・和文は正立縦積み，欧文文字は横倒し縦積み）．
+%     pdftex回転出荷も uplatex もカラム位置が一致（約1.5pt以内）．
+%   * \includegraphics 画像も双方とも「回転されて」出る（uplatex: cm
+%     0 -60 40 0; pdftex: shipout回転内）→ 正立ボックス化は行わない
+%     （JLREQ的にも縦組本の図版は縦枠に従う；uplatexをGTとする限り現状維持）．
+% 検証内容:
+%   FLOAT-FNUM    : \figurename=図, \tablename=表 が空でなく期待文字
+%   FLOAT-CAPTYPE : figure 環境内で \@captype=figure
+%   FLOAT-COUNT   : \caption で c@figure=1, c@table=1 が立つ
+%   FLOAT-JAREG   : キャプション相当サイズ(\smallの箱)でも \jlreq@jareg が
+%                   正しく追従（旧連結バグの回帰ガード）
+%   コンパイル成立自体が [t]/[b] フロート + \caption + tabular のゲート
+\documentclass[pdflatex,tate,paper=a5]{jlreq}
+\pagestyle{empty}
+\begin{document}
+\makeatletter
+% --- FLOAT-FNUM: 図表名（tatechuyoko* はパススルー：図＊/表＊の＊部分のみ）
+\protected@edef\jlreq@testa{\figurename}%
+\def\jlreq@testb{図}%
+\ifx\jlreq@testa\jlreq@testb
+  \typeout{TATE-PASS: FLOAT-FNUM-fig (\jlreq@testa)}%
+\else
+  \typeout{TATE-FAIL: FLOAT-FNUM-fig (\jlreq@testa)}%
+\fi
+\protected@edef\jlreq@testa{\tablename}%
+\def\jlreq@testb{表}%
+\ifx\jlreq@testa\jlreq@testb
+  \typeout{TATE-PASS: FLOAT-FNUM-tab (\jlreq@testa)}%
+\else
+  \typeout{TATE-FAIL: FLOAT-FNUM-tab (\jlreq@testa)}%
+\fi
+% --- FLOAT-JAREG: \small 箱での実寸追従（\small = .9\jlreq@fontsize）
+\setbox\@tempboxa=\vbox{\reset@font\small
+  \xdef\jlreq@testjareg{\the\jlreq@jareg}X}%
+\ifdim\jlreq@testjareg=\dimexpr.9\jlreq@fontsize\relax
+  \typeout{TATE-PASS: FLOAT-JAREG (\jlreq@testjareg)}%
+\else
+  \typeout{TATE-FAIL: FLOAT-JAREG (\jlreq@testjareg, expected \the\dimexpr.9\jlreq@fontsize\relax)}%
+\fi
+\makeatother
+縦組み本文の中に配置される浮遊体の前。
+\begin{figure}[t]
+\centering
+\rule{30pt}{20pt}
+\caption{「浮遊体」のキャプション、禁則文字を含む長めのもの。}
+\makeatletter
+\protected@edef\jlreq@testa{\@captype}%
+\def\jlreq@testb{figure}%
+\ifx\jlreq@testa\jlreq@testb
+  \typeout{TATE-PASS: FLOAT-CAPTYPE (\jlreq@testa)}%
+\else
+  \typeout{TATE-FAIL: FLOAT-CAPTYPE (\jlreq@testa)}%
+\fi
+\makeatother
+\end{figure}
+浮遊体の後の本文。表組みの浮遊体も試す。
+\begin{table}[b]
+\centering
+\caption{表組みテスト}
+\begin{tabular}{ll}
+項目一 & 値 \\
+項目二 & 値 \\
+\end{tabular}
+\end{table}
+\makeatletter
+\ifnum\c@figure=1\relax
+  \typeout{TATE-PASS: FLOAT-COUNT-fig (\the\c@figure)}%
+\else
+  \typeout{TATE-FAIL: FLOAT-COUNT-fig (\the\c@figure, expected 1)}%
+\fi
+\ifnum\c@table=1\relax
+  \typeout{TATE-PASS: FLOAT-COUNT-tab (\the\c@table)}%
+\else
+  \typeout{TATE-FAIL: FLOAT-COUNT-tab (\the\c@table, expected 1)}%
+\fi
+\makeatother
+\end{document}

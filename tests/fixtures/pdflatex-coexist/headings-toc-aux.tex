@@ -1,0 +1,14 @@
+% headings-toc-aux: 見出し・目次・.aux moving argument のpdfTeX検証
+% （見出し・目次・.aux の往復を含む統合シナリオ）。
+% 日本語見出しが .toc/.aux を往返し，目次と参照（\ref/\pageref）が
+% 復元されるかを2パスで確認する。
+\documentclass[pdflatex]{jlreq}
+\begin{document}
+\tableofcontents
+\section{日本語の見出し}\label{sec:first}
+本文。\ref{sec:first}の参照と，\pageref{sec:first}のページ参照。
+\subsection{下位の見出し with English}
+下位セクションの本文。
+\section{第二の見出し「括弧」付き}
+脚注付き本文\footnote{見出しではなく本文側の脚注。}。
+\end{document}

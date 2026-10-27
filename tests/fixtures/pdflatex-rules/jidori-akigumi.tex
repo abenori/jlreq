@@ -1,0 +1,9 @@
+% \jidori{L}{text}: L幅へ均等字取り。\akigumi{S}{text}: 文字間Sの空き組み。
+% 4エンジン回帰用（自前グルー規則 jidorimode で再現）。
+% pdfTeX検証: pdftotext -bbox で字間・空きを測定。
+\documentclass{jlreq}
+\begin{document}
+あ\jidori{60pt}{字取}い
+空\akigumi{3pt}{き組}試験。
+継続文章は通常のペアグルーに戻る。
+\end{document}

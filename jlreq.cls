@@ -106,6 +106,18 @@
   uplatex .code:n = { \let\jlreq@engine=u }, uplatex .value_forbidden:n = true,
   platex .code:n = { \let\jlreq@engine=p }, platex .value_forbidden:n = true,
   lualatex .code:n = { \let\jlreq@engine=l }, lualatex .value_forbidden:n = true,
+  pdflatex .code:n = { \let\jlreq@engine=d }, pdflatex .value_forbidden:n = true,
+  % pdfTeXバックエンド用フォント設定．他エンジンでは無効．
+  %   pdftex_fontset: ipaex-type1（既定, Type1平面+補助縦TTFプロファイル）
+  %                   ipa（bxcjkjatype既定ipaプリセット + ipaプロファイル）
+  %                   haranoaji（TL標準の原の味; 変換済み横組TTF +
+  %                             補助縦TTFプロファイル，実Bold対応）
+  %                   custom（pdftex_fontprofileで指定したプロファイル）
+  pdftex_fontset .choices:nn = {ipaex-type1,ipa,haranoaji,custom}
+    { \def\jlreq@pdftex@fontset{#1} },
+  pdftex_fontset .value_required:n = true,
+  pdftex_fontprofile .code:n = { \def\jlreq@pdftex@fontprofile{#1} },
+  pdftex_fontprofile .value_required:n = true,
   % 文書のタイプ
   article_type .choices:nn = {article,report,book}{\def\jlreq@article@type{#1}},
   article .code:n = { \def\jlreq@article@type{article} }, article .value_forbidden:n = true,
@@ -415,6 +427,22 @@
   onecolumn,final
 }
 \ProcessKeyOptions [jlreq]
+% pdfTeX：長さ系オプション値中のリテラルzw/zhを単位マクロに，Q/H
+% （1Q=1H=0.25mm，pTeXの級・歯）を寸法式に置換する．
+% （pTeXはzw/zh/Q/Hがネイティブ単位だがpdfTeXにはないため．これにより
+% \jlreq@speciallengthは可展開のまま#1を\dimexprに渡せる．
+% 実行時の\jlreqsetupによる変更は同じ書換えを引数経路で行う．）
+% 対象は「値にzw/zh/Q/Hを含み得る」オプション格納マクロ．
+% （実行は\jlreq@engine確定・\jlreq@zw定義後に続くブロックで行う）
+\clist_const:Nn \c__jlreq_lenopt_clist {
+  jlreq@option@fontsize, jlreq@option@jafontsize,
+  jlreq@option@number@of@lines, jlreq@option@line@length,
+  jlreq@option@head@space, jlreq@option@foot@space,
+  jlreq@option@gutter, jlreq@option@fore@edge,
+  jlreqbaselineskip, jlreq@option@column@gap,
+  jlreq@option@headfoot@verticalpos, jlreq@headfoot@sidemargin,
+  jlreq@option@sidenote@length
+}
 
 \legacy_if:nF { jlreq@option@titlepage } {
   \str_if_eq:VnTF \jlreq@article@type { article } { \@titlepagefalse } { \@titlepagetrue }
@@ -435,7 +463,21 @@
 
 \tl_new:N \g__jlreq_jlreqsetup_finally_tl
 \NewDocumentCommand{\jlreqsetup} { +m } {
-  \keys_set:nn { jlreqsetup } {#1}
+  % pdfTeX：キー値中の「数字直後の」リテラルzw/zhを\jlreq@zw/\jlreq@zhに，
+  % Q/H（1Q=1H=0.25mm，級・歯）を\dimexpr 0.25mm\relaxに書き換えてから
+  % キー解析する．数字直後でないzw/zh/Q/H（マクロ名の一部等）は触らない．
+  % p/u/lではこれらはすべてネイティブ単位なのでそのまま\keys_set:nnに渡す．
+  % \__jlreq_rewriteunittokens:Nと\keys_set:nVは\jlreq@engine確定後の
+  % d分岐ブロック（\jlreq@zw定義直後）で用意される．\jlreqsetupの実行は
+  % 必ずそれ以降（\@onlypreamble）なので，ここでの参照は安全．
+  % （この時点では\jlreq@engineが未確定のことがあるため，実行時に分岐する．）
+  \ifx d\jlreq@engine
+    \tl_set:Nn \l__jlreq_tmpa_tl {#1}
+    \__jlreq_rewriteunittokens:N \l__jlreq_tmpa_tl
+    \keys_set:nV { jlreqsetup } \l__jlreq_tmpa_tl
+  \else
+    \keys_set:nn { jlreqsetup } {#1}
+  \fi
   \tl_use:N \g__jlreq_jlreqsetup_finally_tl
 }
 % \jlreqsetupの最後に必ず実行される処理を入れる．
@@ -451,10 +493,76 @@
     \ifx l\jlreq@engine lualatex\fi
     \ifx p\jlreq@engine platex\fi
     \ifx u\jlreq@engine uplatex\fi
+    \ifx d\jlreq@engine pdflatex\fi
   }%
+\else
+  % 明示指定されたエンジンと実際の実行エンジンが一致するか確認する
+  \jlreq@helper@guessengine
+  \ifx\jlreq@engine\jlreq@result\else
+    \edef\jlreq@tempa{
+      \ifx l\jlreq@result lualatex\fi
+      \ifx p\jlreq@result platex\fi
+      \ifx u\jlreq@result uplatex\fi
+      \ifx d\jlreq@result pdflatex\fi
+    }
+    \edef\jlreq@tempb{
+      \ifx l\jlreq@engine lualatex\fi
+      \ifx p\jlreq@engine platex\fi
+      \ifx u\jlreq@engine uplatex\fi
+      \ifx d\jlreq@engine pdflatex\fi
+    }
+    \ClassError{jlreq}{The~engine~option~`\jlreq@tempb'~is~specified,~but~the~actual~engine~is~`\jlreq@tempa'.}{%
+      jlreq~is~run~by~\jlreq@tempa,~so~remove~the~`\jlreq@tempb'~option.\MessageBreak
+      \@ehc}
+  \fi
+\fi
+% pdfTeX：バックエンド（jlreq-pdftex.sty）を読み込む．
+% バックエンドファイルが無ければ明示エラーで停止する（黙って
+% 進んでpTeX専用プリミティブを踏むことはない）．
+% pdfTeXフォント設定の既定。未指定時は ipaex-type1（現行挙動）。
+\ifx d\jlreq@engine
+  \@ifundefined{jlreq@pdftex@fontset}{\def\jlreq@pdftex@fontset{ipaex-type1}}{}
+\fi
+\ifx d\jlreq@engine
+  \IfFileExists{jlreq-pdftex.sty}{
+    \RequirePackage{jlreq-pdftex}
+  }{
+    \ClassError{jlreq}{pdfTeX~backend~file~jlreq-pdftex.sty~is~not~found.}{%
+      The~pdfTeX~backend~is~missing~from~the~installation.\MessageBreak
+      Please~use~platex,~uplatex~or~lualatex~instead,\MessageBreak
+      or~install~the~jlreq~pdfTeX~backend~files.\MessageBreak
+      \@ehc}
+  }
+\fi
+% 縦組み（pdfTeX: 回転出荷アーキテクチャ）
+% 実現原理: 内側水平枠組みで組み、出荷時にページ全体を時計回り90°回転する
+% (shipout rotation)。全機能面（縦中横・局所方向・家具・注・
+% 数式・trimmarks・ルビ）の実出力検査が通り、out-of-scope は残っていない
+% ため、警告で列挙する項目は無い。アーキテクチャの違いだけを行の情報と
+% して出す。
+% (測定表は docs/pdftex-internals.md 参照)。
+\ifx d\jlreq@engine
+  \if@tate
+    \ClassInfo{jlreq}{pdfTeX~tate~support:~shipout-rotation~architecture\MessageBreak
+      (inner~horizontal~galley,~glyphs~rotated~+90,~page~box~rotated~-90~at\MessageBreak
+      \string\@outputpage).~All~verified~areas~are~covered~by~the~test~suite\MessageBreak
+      (tests/run-pdftex-tests.sh;~see~docs/pdftex-internals.md).}
+  \fi
+\fi
+% 柱（ページスタイル）構築用の方向切替マーカー．pTeX系では
+% \tate\adjustbaseline そのもの、pdfTeXでは無操作（回転出荷では別途
+% 船出の向きをつけるため柱構築内の方向切替は不要・不可）。
+\ifx d\jlreq@engine
+  \let\jlreqpdftate@dirprim\@empty
+\else
+  \def\jlreqpdftate@dirprim{\tate\adjustbaseline}%
 \fi
 
-%.. JFMとluatexjaのロード
+\sys_if_engine_pdftex:TF {
+  % pdfTeXではJFMは生成データ（jlreq-pdftex-jfm*.def 12組）と
+  % バックエンド（jlreq-pdftex-rules.sty）が担う．
+  % everyhookやJFM名（.tfm/.vf）は不要．
+}{
 \ifx l\jlreq@engine
   \def\ltj@stdyokojfm{jlreq}
   \def\ltj@stdtatejfm{jlreqv}
@@ -486,25 +594,74 @@
   \__jlreq_aftercls_addtodeletecs:N \jlreq@jfmname
   \__jlreq_aftercls_addtodeletecs:N \jlreq@jfmnameg
 \fi
+}
 
 % (u)pLaTeXの場合ここで初めて\epTeXinputencodingが発行されるので，
 % これ以前には和文は使えない．
-\ifx l\jlreq@engine\else
+\ifx l\jlreq@engine\else\ifx d\jlreq@engine\else
   \epTeXinputencoding utf8
   \def\zw{zw}\def\zh{zh}
   % http://oku.edu.mie-u.ac.jp/tex/mod/forum/discuss.php?d=1508&parent=8435
   \if@tate\AtEndPreamble{\par}\fi
 \fi
+\fi
 % \zwや\zhが再定義されても動くようにするために内部では\jlreq@zw，\jlreq@zhを使う．
 \let\jlreq@zw=\zw
 \let\jlreq@zh=\zh
 \if@tate
-  \AtBeginDocument{\tate\message{《縦組モード》}\adjustbaseline}
+  \ifx d\jlreq@engine
+    % pdfTeX: \tate/\adjustbaseline プリミティブは存在しない．縦組みは
+    % 出荷時回転（jlreq-pdftex.sty の \@outputpage 差し替え）で実現する．
+    \AtBeginDocument{\message{[tate(pdfTeX rotation) mode]}}%
+  \else
+    \AtBeginDocument{\tate\message{《縦組モード》}\adjustbaseline}
+  \fi
 \fi
 
 % \jlreq@gol(Gyo Okuri Length), \jlreq@mol (Moji Okuri Length)を定義
 \let\jlreq@gol=\zh
 \let\jlreq@mol=\zw
+% pdfTeX：長さ系オプション値中のリテラルzw/zhおよびQ/Hを寸法式に置換する．
+% （この時点で\jlreq@engineは確定済み，\jlreq@zw/\jlreq@zhも定義済み．）
+\ifx d\jlreq@engine
+  % トークン列中の単位リテラルを書き換える．「数字直後の」zw/zhのみを
+  % 単位マクロ\jlreq@zw/\jlreq@zhに，Q/H（1Q=1H=0.25mm，pTeXの級・歯）を
+  % \dimexpr 0.25mm\relaxにする．数字直後でないzw/zh/Q/H（マクロ名の
+  % 一部等）は一切触らないため，\jlreqsetupの引数経路でも共用する．
+  \cs_set:Npn \__jlreq_rewriteunittokens:N #1 {
+    \tl_map_inline:nn { 0123456789 } {
+      \tl_replace_all:Nnn #1 { ##1 zw } { ##1 \jlreq@zw }
+      \tl_replace_all:Nnn #1 { ##1 zh } { ##1 \jlreq@zh }
+      \tl_replace_all:Nnn #1 { ##1 Q } { ##1 \dimexpr 0.25mm\relax }
+      \tl_replace_all:Nnn #1 { ##1 H } { ##1 \dimexpr 0.25mm\relax }
+    }
+  }
+  \cs_set:Npn \__jlreq_rewritezwzh:N #1 {
+    \tl_set:Nx #1 {#1}
+    \__jlreq_rewriteunittokens:N #1
+  }
+  \clist_map_inline:Nn \c__jlreq_lenopt_clist {
+    \exp_args:Nc \__jlreq_rewritezwzh:N { #1 }
+  }
+  % \jlreqsetupの引数経路で書換え済みトークン列を渡すための変種．
+  \cs_generate_variant:Nn \keys_set:nn { nV }
+  % fontsize/jafontsizeは\jlreq@zwの実寸（\jlreq@jareg）が初期化される前
+  % （フォントサイズ確定処理）に解決されるため，zw/zhを参照する値は
+  % 黙って0ptになってしまう．その場合は明示エラーとし，pt/Q/Hまたは
+  % jafontscaleでの指定を案内する（他の長さ系オプションは初期化後に
+  % 解決されるのでzw/zhリテラルをそのまま使える）．
+  \cs_set:Npn \__jlreq_fontsize_nozwerror: {
+    \ClassError{jlreq}{zw~(or~zh)~unit~cannot~be~used~in~fontsize~or~jafontsize~under~pdfTeX}{%
+      1zw~is~relative~to~the~Japanese~font~size~itself,~so~it~cannot~\MessageBreak
+      be~used~to~determine~the~font~sizes.~Use~pt~or~Q/H~units~(e.g.~\MessageBreak
+      fontsize=13Q)~or~a~ratio~via~jafontscale=...~instead.\MessageBreak
+      \@ehc}
+  }
+  \tl_map_inline:nn { \jlreq@zw \jlreq@zh \jlreq@jareg } {
+    \tl_if_in:NnT \jlreq@option@fontsize { #1 } { \__jlreq_fontsize_nozwerror: }
+    \tl_if_in:NnT \jlreq@option@jafontsize { #1 } { \__jlreq_fontsize_nozwerror: }
+  }
+\fi
 
 %. helper2（エンジン依存系：和文文字を含むものもこれ以降）
 % #1のboxを今の真ん中に配置する．
@@ -547,16 +704,30 @@
 
 % 組方向を判定
 % \jlreq@if(y|t)(dir|box)を定義する．
-\jlreq@if{\ifx l\jlreq@engine\fi}{
-  \def\jlreq@ifydir  { \int_compare:nTF { \ltjgetparameter{direction} == 4 } }
-  \def\jlreq@iftdir  { \int_compare:nTF { (\ltjgetparameter{direction}-(\ltjgetparameter{direction}/8)*8) == 3 } }
-  \def\jlreq@ifybox#1{ \int_compare:nTF { \ltjgetparameter{boxdir}{#1} == 4 } }
-  \def\jlreq@iftbox#1{ \int_compare:nTF { (\ltjgetparameter{boxdir}{#1}-(\ltjgetparameter{boxdir}{#1}/8)*8) == 3 } }
+\sys_if_engine_pdftex:TF {
+  % 局所方向（live）．バックエンドの frame 方向 \jlreqpdf@dir
+  % （jlreq-pdftex-rules.sty、0=yoko/1=tate、group-local・frame tuple で
+  % 保存復帰）を読む。主文書方向は \if@tate から begin document で播種
+  % （jlreq-pdftex.sty \jlreqpdf@setmaindir）され、箱・ページ・数式の
+  % 枠組み境界で保存・復帰される。box 方向判定は pdfTeX にボックス属性
+  % が無いため backend の安全契約（\jlreqpdf@boxdir: 未知 box は
+  % ClassError）に委譲する。
+  \def\jlreq@ifydir{\jlreq@if{\ifnum0=\jlreqpdf@dir\fi}}%
+  \def\jlreq@iftdir{\jlreq@if{\ifnum1=\jlreqpdf@dir\fi}}%
+  \def\jlreq@ifybox#1{\jlreq@if{\iftrue\fi}}%
+  \def\jlreq@iftbox#1{\jlreq@if{\iffalse\fi}}%
 }{
-  \def\jlreq@ifydir{\jlreq@if{\ifydir\fi}}
-  \def\jlreq@iftdir{\jlreq@if{\iftdir\fi}}
-  \def\jlreq@ifybox#1{\jlreq@if{\ifybox#1\fi}}
-  \def\jlreq@iftbox#1{\jlreq@if{\iftbox#1\fi}}
+  \jlreq@if{\ifx l\jlreq@engine\fi}{
+    \def\jlreq@ifydir  { \int_compare:nTF { \ltjgetparameter{direction} == 4 } }
+    \def\jlreq@iftdir  { \int_compare:nTF { (\ltjgetparameter{direction}-(\ltjgetparameter{direction}/8)*8) == 3 } }
+    \def\jlreq@ifybox#1{ \int_compare:nTF { \ltjgetparameter{boxdir}{#1} == 4 } }
+    \def\jlreq@iftbox#1{ \int_compare:nTF { (\ltjgetparameter{boxdir}{#1}-(\ltjgetparameter{boxdir}{#1}/8)*8) == 3 } }
+  }{
+    \def\jlreq@ifydir{\jlreq@if{\ifydir\fi}}
+    \def\jlreq@iftdir{\jlreq@if{\iftdir\fi}}
+    \def\jlreq@ifybox#1{\jlreq@if{\ifybox#1\fi}}
+    \def\jlreq@iftbox#1{\jlreq@if{\iftbox#1\fi}}
+  }
 }
 
 % 左ページであるか
@@ -574,10 +745,54 @@
 \ifx l\jlreq@engine
   \def\jlreq@getpostbreakpenalty#1{\ltjgetparameter{postbreakpenalty}{#1}}
 \else
-  \def\jlreq@getpostbreakpenalty#1{\postbreakpenalty#1}
+  \ifx d\jlreq@engine
+    % pdfTeXには禁則ペナルティテーブルがない（文字クラステーブル参照へ）．
+    \def\jlreq@getpostbreakpenalty#1{0}%
+  \else
+    \def\jlreq@getpostbreakpenalty#1{\postbreakpenalty#1}
+  \fi
 \fi
 
 % 現在行の残りを得る．
+\sys_if_engine_pdftex:TF {
+  % pdfTeX：横組なのでelse版と同じ式を使う（\jlreq@ifydirは常に真）．
+  % \iftombowはpTeX系の機構のため空にする（トンボはjlreq-trimmarks経由）．
+  \def\jlreq@tombow@adjust{}
+  % mag≠1000 では原点（jlreq.cls の \pdfhorigin=1truein 補償）と
+  % 側余白（同 clt の -1truein 減算）が物理 1in 基準に揃うため、
+  % 末項も -1in（デザイン）ではなく -1truein（物理）にする。
+  % 実測（savepos-warichu-mag ゲート）: mag=1000 では 1truein=1in で
+  % 無変換、mag=1200 では論理行方向の current/rest が mag=1000 と
+  % 同一の 60.0pt/140.0001pt に戻る（raw \pdflastxpos 自体は
+  % mag 不変＝デザイン座標であることも実測済み）。
+  \def\jlreq@calc@current@linewidth@onecolumn{%
+    \dimexpr
+      \jlreq@reference@ref{jlreq@rest@width.pos.X.\the\jlreq@reference@count}{0} sp - \hoffset
+      \ifodd\jlreq@currentpage
+        - \oddsidemargin
+      \else
+        - \evensidemargin
+      \fi
+      % 第一行補正の相殺: tate 出力ラッパは
+      % 回転箱を (Cdp−topskip) だけ紙面左へ動かし、native 縦組の第一行
+      % リーディング（topskip−Cdp）と物理一致させた。raw \pdflastxpos は
+      % このカーンを含むため、論理行位置（=行頭からの距離）を測る本式は
+      % 同量を戻す。【tate 論理ページ専用】(1) 横組み文書では出荷回転も
+      % カーンも無いため補正しない。(2) tate 文書内の yoko 論理ページ
+      % （theindex、\jlreqpdf@pagedir{0}）も回転・カーンともに適用外
+      % なので補正しない — ラッパ側の回転条件
+      % （\if@tate ∧ pagedir=1）と同じ条件で判定する。
+      % warichu 内部は内枠（横組）で ifydir が常に真になるため方向は
+      % \if@tate で判定する。\mag≠1000 でも \topskip/\Cdp はデザイン
+      % 寸法のため無変換で正しい。
+      \if@tate
+        \ifnum\jlreqpdf@pagedir@count=1 + \topskip - \Cdp \fi
+      \fi
+      \jlreq@tombow@adjust
+      - \@totalleftmargin - 1truein
+    \relax
+  }
+}{
 \ifx l\jlreq@engine
   % 以下のコードはLuaTeX-jaのバグ？に依存している
   % https://ja.osdn.net/projects/luatex-ja/ticket/36489
@@ -624,6 +839,7 @@
     \relax
   }
 \fi
+}
 \def\jlreq@calc@current@linewidth{%
   \dimexpr\jlreq@calc@current@linewidth@onecolumn
     \if@twocolumn
@@ -699,17 +915,61 @@
     \jlreq@do
   }
 \else
-  \def\jlreq@calc@jfmglue#1#2{%
-    \begingroup
-      \setbox\jlreq@tempboxa=\hbox{\inhibitglue #1\inhibitglue\hbox{}\inhibitglue#2\inhibitglue}%
-      \setbox\jlreq@tempboxb=\hbox{\inhibitglue #1#2\inhibitglue}%
-      \edef\jlreq@do{\noexpand\jlreq@resultskip=\the\dimexpr\wd\jlreq@tempboxb - \wd\jlreq@tempboxa\relax\noexpand\relax}%
-    \expandafter\endgroup
-    \jlreq@do
-  }
+  \ifx d\jlreq@engine
+    % pdfTeX: 生成JFMデータ（jlreq-pdftex-jfm*.def）のペア表を同じ
+    % evaluator（jlreq-pdftex-rules.sty の \jlreqpdf@evalpairglue）
+    % で引いて自然長を返す（stub を実表参照へ置換）。
+    % 呼び出し契約: \jlreq@calc@jfmglue{<字A>}{<字B>} -> \jlreq@resultskip。
+    % 字A/B の JFM クラスは \jlreqpdf@classofchar（字をボックスに
+    % 組んでルールフックに観測させる）で得る。
+    \def\jlreq@calc@jfmglue#1#2{%
+      \begingroup
+        \jlreqpdf@classofchar{#1}%
+        \edef\jlreqpdf@calc@cla{\the\jlreqpdf@evalclass}%
+        \global\jlreqpdf@lastzw=\jlreq@jareg
+        \jlreqpdf@classofchar{#2}%
+        \edef\jlreqpdf@calc@clb{\the\jlreqpdf@evalclass}%
+        \global\jlreqpdf@lastzw=\jlreq@jareg
+        \jlreqpdf@evalpairglue{\jlreqpdf@calc@cla}{\jlreqpdf@calc@clb}%
+        \edef\jlreq@do{\noexpand\jlreq@resultskip=\the\jlreqpdf@nat\relax}%
+      \expandafter\endgroup
+      \jlreq@do
+    }%
+    % \jlreq@calc@jfmglue@cp{<decimal cp>}{<字B>} -- 字A を「文字トークン」
+    % ではなく観測済みコードポイント（\jlreqpdf@lastnodechar のスカラー）
+    % で渡す変種。pdfTeX の \char は 0..255 しか指定できないため、
+    % \tatechuyoko の前グルー照会はこの形を使う。クラスは
+    % \jlreqpdf@classofcp（生成表直接参照）で引く。
+    \def\jlreq@calc@jfmglue@cp#1#2{%
+      \begingroup
+        \jlreqpdf@classofcp{#1}%
+        \edef\jlreqpdf@calc@cla{\the\jlreqpdf@evalclass}%
+        \global\jlreqpdf@lastzw=\jlreq@jareg
+        \jlreqpdf@classofchar{#2}%
+        \edef\jlreqpdf@calc@clb{\the\jlreqpdf@evalclass}%
+        \global\jlreqpdf@lastzw=\jlreq@jareg
+        \jlreqpdf@evalpairglue{\jlreqpdf@calc@cla}{\jlreqpdf@calc@clb}%
+        \edef\jlreq@do{\noexpand\jlreq@resultskip=\the\jlreqpdf@nat\relax}%
+      \expandafter\endgroup
+      \jlreq@do
+    }%
+  \else
+    \def\jlreq@calc@jfmglue#1#2{%
+      \begingroup
+        \setbox\jlreq@tempboxa=\hbox{\inhibitglue #1\inhibitglue\hbox{}\inhibitglue#2\inhibitglue}%
+        \setbox\jlreq@tempboxb=\hbox{\inhibitglue #1#2\inhibitglue}%
+        \edef\jlreq@do{\noexpand\jlreq@resultskip=\the\dimexpr\wd\jlreq@tempboxb - \wd\jlreq@tempboxa\relax\noexpand\relax}%
+      \expandafter\endgroup
+      \jlreq@do
+    }
+  \fi
 \fi
 
 \newcount\jlreq@lastnodechar
+% pdfTeXでは直前文字を観測する機構がないため常に-1（\jlreq@fixjfmは無挿入になる）．
+\ifx d\jlreq@engine
+  \jlreq@lastnodechar=-1
+\fi
 % \jlreq@fixjfm<次の文字>の形で使う．
 % jlreq@lastnodecharに入っている値と次のトークン（\futureletで得る）の間に入るJFMグルー等を挿入する
 \def\jlreq@fixjfm{%
@@ -756,6 +1016,8 @@
   \providecommand*{\jlreqkanjiskip}{0pt~plus~0.25\jlreq@zw ~minus~0pt}
 \fi
 \providecommand*{\jlreqxkanjiskip}{0.25\jlreq@zw ~plus~0.25\jlreq@zw ~minus~0.125\jlreq@zw}
+% pdfTeXでは(x)kanjiskipプリミティブがないため何もしない．
+\sys_if_engine_pdftex:TF {}{
 \jlreq@if{\ifx l\jlreq@engine\fi}{
   \AtBeginDocument{%
     \ltjsetparameter{kanjiskip=\jlreqkanjiskip}%
@@ -766,6 +1028,7 @@
     \kanjiskip=\jlreqkanjiskip
     \xkanjiskip=\jlreqxkanjiskip
   }
+}
 }
 
 % フォントサイズを設定
@@ -825,7 +1088,13 @@
 \fi
 \jlreq@divide{\jlreq@jafontsize}{\jlreq@fontsize}
 \edef\jlreq@jafontscale{\strip@pt\jlreq@resultdimen}
-\__jlreq_aftercls_addtodeletecs:N \jlreq@jafontscale
+% pdfTeX：\zw/\zhの実寸（\jlreq@jareg）を初期化．
+\ifx d\jlreq@engine
+  \jlreq@jareg=\jlreq@jafontsize
+\fi
+% pdfTeXでは和文フォントはCJK系（C70/ipxm）で扱う．JY/JTのNFSS宣言は
+% 行わない（行うと動作中のC70定義を上書きしてしまう）．
+\ifx d\jlreq@engine\else
 \ifx l\jlreq@engine
   \DeclareFontShape{JY3}{mc}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdmcfont :jfm=jlreq;-kern}{}
   \DeclareFontShape{JY3}{gt}{m}{n}{<->s*[\jlreq@jafontscale]\ltj@stdgtfont :jfm=jlreq;-kern}{}
@@ -867,7 +1136,28 @@
     }
   }
 }
+\fi
 
+%.. 文字クラスのリスト
+% pdfTeX（always-on CJK）ではUTF-8バイトがアクティブになり\edef内で
+% 文字列が展開されてしまうため，dでは空のリストとしておく．
+% （これらのリストは文字クラス機構で生成JFMデータに置換される）
+\ifx d\jlreq@engine
+  \def\jlreq@charlist@openingbrackets{}
+  \def\jlreq@charlist@closingbrackets{}
+  \def\jlreq@charlist@hyphens{}
+  \def\jlreq@charlist@dividingpunctuationmarks{}
+  \def\jlreq@charlist@middlenodes{}
+  \def\jlreq@charlist@fullstops{}
+  \def\jlreq@charlist@commas{}
+  \def\jlreq@charlist@inseparablecharacters{}
+  \def\jlreq@charlist@iterationmarks{}
+  \def\jlreq@charlist@prolongedsoundmark{}
+  \def\jlreq@charlist@smallkana{}
+  \def\jlreq@charlist@prefixedabbreviations{}
+  \def\jlreq@charlist@hiragana{}
+  \def\jlreq@charlist@katakana{}
+\else
 %.. 文字クラスのリスト
 % 開き括弧（文字クラス1）
 \edef\jlreq@charlist@openingbrackets{（〔［｛〈《「『【‘“\ifx p\jlreq@engine\else ｟〘〖«〝\fi}
@@ -897,6 +1187,7 @@
 \edef\jlreq@charlist@hiragana{あいうえおかがきぎくぐけげこごさざしじすずせぜそぞただちぢつづてでとどなにぬねのはばぱひびぴふぶぷへべぺほぼぽまみむめもやゆよらりるれろわゐゑをん\ifx p\jlreq@engine\else ゔ\fi}% か゚き゚く゚け゚こ゚
 % 片仮名（文字クラス16）
 \edef\jlreq@charlist@katakana{アイウエオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモヤユヨラリルレロワヰヱヲンヴ\ifx p\jlreq@engine\else ヷヸヹヺ\fi}% カ゚キ゚ク゚ケ゚コ゚セ゚ツ゚ト゚
+\fi
 
 %.. 行頭括弧調整
 \ifx l\jlreq@engine
@@ -908,6 +1199,13 @@
     \jlreq@useoriginalcs{@item}[{#1}]%
     \expandafter\everypar\expandafter{\the\everypar\__jlreq_hook_everypar:}
   }
+\else\ifx d\jlreq@engine
+  % pdfTeX：行頭括弧調整はJFMデータ（90→1ペア，jlreq-pdftex-jfm*.def）が担う．
+  % フックは段落開始時に文字状態を境界クラス90（parbdd）へ戻す（ルール
+  \def\jlreq@hook@everypar{\global\jlreqpdf@lastclass=90 \global\jlreqpdf@pend=0
+    \global\jlreqpdf@inhibit=0 \global\jlreqpdf@lastnodechar=-1
+    \global\jlreqpdf@lastzw=\jlreq@jareg }%
+  \AtBeginDocument{\AddToHook{para/begin}{\jlreq@hook@everypar}}
 \else
   \jlreq@saveoriginalcs{item}
   \AtBeginDocument{\PushPostHook{par}{\jlreq@hook@everypar}}
@@ -937,8 +1235,38 @@
     \jlreq@useoriginalcs{item}%
   }
 \fi
+\fi
 
 %.. 禁則処理
+% pdfTeX：禁則プリミティブはないが，auxは実表へ書き込む．
+% \jlreqpdf@classofchar（jlreq-pdftex-rules.sty）で字のJFMクラスを得て，
+% バックエンドの参照する表（jlreqpdf@kin@pre@<c> / kin@post@<c>，
+% xspc@pre@<c> / xspc@post@<c>）へ設定する．これで \jlreqsetup の
+% 禁則・jaxspmode キーが pdfTeX でも実効する．
+\sys_if_engine_pdftex:TF {
+  \cs_set:Nn \__jlreq_setpostbreakpenalty_aux:nn {%
+    \jlreqpdf@classofchar{#1}%
+    \expandafter\xdef\csname jlreqpdf@kin@post@\the\jlreqpdf@evalclass\endcsname{#2}%
+  }
+  \cs_set:Nn \__jlreq_setprebreakpenalty_aux:nn {%
+    \jlreqpdf@classofchar{#1}%
+    \expandafter\xdef\csname jlreqpdf@kin@pre@\the\jlreqpdf@evalclass\endcsname{#2}%
+  }
+  \cs_set:Nn \__jlreq_addjaxspmode_aux:nn {%
+    \jlreqpdf@classofchar{#1}%
+    \str_case:nn {#2} {
+      { pre }  { \expandafter\xdef\csname jlreqpdf@xspc@pre@\the\jlreqpdf@evalclass\endcsname{1} }
+      { post } { \expandafter\xdef\csname jlreqpdf@xspc@post@\the\jlreqpdf@evalclass\endcsname{1} }
+    }%
+  }
+  \cs_set:Nn \__jlreq_deljaxspmode_aux:nn {%
+    \jlreqpdf@classofchar{#1}%
+    \str_case:nn {#2} {
+      { pre }  { \expandafter\global\expandafter\let\csname jlreqpdf@xspc@pre@\the\jlreqpdf@evalclass\endcsname\relax }
+      { post } { \expandafter\global\expandafter\let\csname jlreqpdf@xspc@post@\the\jlreqpdf@evalclass\endcsname\relax }
+    }%
+  }
+}{
 \ifx l\jlreq@engine
   \cs_set:Nn \__jlreq_setpostbreakpenalty_aux:nn {\ltjsetparameter{postbreakpenalty={`#1,#2}}}
   \cs_set:Nn \__jlreq_setprebreakpenalty_aux:nn {\ltjsetparameter{prebreakpenalty={`#1,#2}}}
@@ -1022,6 +1350,7 @@
     }%
   }
 \fi
+}
 % #1{...}{#3}を...が#2のリストに対して適用．
 \cs_set:Nn \__jlreq_iterateapply:Nnn {
   \tl_map_inline:nn {#2} {
@@ -1123,6 +1452,9 @@
 \DeclareRobustCommand*{\mit}{\@fontswitch\relax\mathnormal}
 
 % 和文ファミリと欧文ファミリの連動
+% pdfTeXでは\prepare@family@series@update@kanjiが存在せず，
+% ファミリ連動はbxcjkjatypeのフックが担うためスキップする．
+\ifx d\jlreq@engine\else
 \AddToHook{rmfamily}{\prepare@family@series@update@kanji{mc}\mcdefault}
 \AddToHook{sffamily}{\prepare@family@series@update@kanji{gt}\gtdefault}
 \ifx l\jlreq@engine
@@ -1130,8 +1462,19 @@
 \else
   \AddToHook{ttfamily}{\prepare@family@series@update@kanji{gt}\gtdefault}
 \fi
+\fi
 
 % 数式フォント設定
+\ifx d\jlreq@engine
+% pdfTeXではjfam相当をボックス供給で実現する．
+% 実体は jlreq-pdftex.sty の \jlreq@pdftex@mathja．enablejfam（既定）の
+% み \mathmc/\mathgt を定義し，disablejfam では未定義のまま（(u)pTeX と
+% 同じ意味論）．
+\ifjlreq@option@enablejfam
+  \DeclareRobustCommand{\mathmc}[1]{\jlreq@pdftex@mathja{mc}{#1}}
+  \DeclareRobustCommand{\mathgt}[1]{\jlreq@pdftex@mathja{gt}{#1}}
+\fi
+\else
 \ifjlreq@option@enablejfam
   \ifx l\jlreq@engine\else
     \DeclareSymbolFont{mincho}{\jlreq@yokokanjiencoding}{mc}{m}{n}
@@ -1145,8 +1488,172 @@
     \reDeclareMathAlphabet{\mathbf}{\mathbf}{\mathgt}%
   }
 \fi
+\fi
 
 % 和文間隔
+\ifx d\jlreq@engine
+  % 漢字制御綴のアクティブbyteディスパッチャ。
+  % 仕組み: pdfTeX が「\<漢字>…」を読むとき、制御綴名は「\ + 先頭byte
+  % 1文字」の control symbol になる（8-bit エンジンは複数byteを綴名に
+  % 取れない）。先頭byteは常時-on CJKでアクティブ文字だが、
+  % \csname<byte>\endcsname で「そのbyteを名前にもつ control symbol」を
+  % 定義できる（実測: \csname<e8>\endcsname の定義が \西… を捕捉）。
+  % ディスパッチャは続く入力から登録byte列を完全一致で消費し、安定な
+  % protected ASCII内部命令へ置き換える。本文中の裸の漢字は CJK デコーダ
+  % 経由のまま（本ディスパッチャは綴名を経由した場合のみ発火）。
+  % 入口だけprotectedにして後続byteがwrite/edef中に裸展開される設計は
+  % 採らない（消費は照合確定後の引数読みとして完結するため）。
+  % 汎用の日本語命令登録APIは設けない（登録は下の静的4件のみ）。
+  %
+  % \jlreqpdf@disp@reg{<綴名byte>}{<残りトークン列>}{<ASCII命令cs名>}
+  %   control symbol \<byte> を「残り列の照合→ASCII命令」に定義する。
+  % （\toks0 は reg 内で使用。専用レジスタは不要。）
+  \def\jlreqpdf@disp@reg#1#2#3{%
+    \begingroup
+      % 候補+哨兵を本体に埋め込む。登録ごとに実体を確定させるため
+      % \the\toks を1段だけ展開し、以降の展開は \unexpanded で防ぐ
+      % （アクティブbyteは \edef 下で暴発するため）。共有 toks の
+      % 上書き問題（全control symbolが同一候補を参照する障害）も
+      % この実体化で解消される。
+      \toks0={\jlreqpdf@disp@go{#2\jlreqpdf@disp@sentinel}{#3}}%
+      \global\expandafter\edef\csname\string#1\endcsname
+        {\unexpanded\expandafter{\the\toks0}}%
+    \endgroup
+  }%
+  % 照合（消費先行型）: \futurelet+\ifx は chardef とアクティブ文字の意味が
+  % 異なるため一致しない（実測 dp10）。代わりに入力tokenを先に引数として
+  % 消費し、候補tokenと \ifx で直接比較する。不一致は即 ClassError のため
+  % 読み戻しは不要（消費済みtokenの復帰を要求しない契約）。
+  % \jlreqpdf@disp@go{<候補+哨兵+\end>}{<ASCII命令cs名>}
+  \def\jlreqpdf@disp@go#1#2{%
+    \jlreqpdf@disp@step#1\jlreqpdf@disp@end{#2}%
+  }%
+  % #1 = 候補先頭token, #2 = 残り候補（哨兵+\end 含む）, #3 = cs名
+  \def\jlreqpdf@disp@step#1#2\jlreqpdf@disp@end#3{%
+    \ifx\jlreqpdf@disp@sentinel#1\relax
+      % 候補枯渇 = 全トークン一致済み（消費も候補長と一致）
+      \expandafter\jlreqpdf@disp@emit
+    \else
+      \expandafter\jlreqpdf@disp@grab
+    \fi
+    {#1}{#2}{#3}%
+  }%
+  % #1 = 候補先頭token, #2 = 残り候補, #3 = cs名, #4 = 入力から消費したtoken
+  \def\jlreqpdf@disp@grab#1#2#3#4{%
+    \ifx#1#4\relax
+      % 一致: 残り候補で再帰
+      \expandafter\jlreqpdf@disp@advance
+    \else
+      \expandafter\jlreqpdf@disp@fail
+    \fi
+    {#2}{#3}%
+  }%
+  \def\jlreqpdf@disp@advance#1#2{%
+    \jlreqpdf@disp@go{#1}{#2}%
+  }%
+  \def\jlreqpdf@disp@emit#1#2#3{#3}%
+  \def\jlreqpdf@disp@fail#1#2{%
+    \ClassError{jlreq}{Undefined~Japanese~control~sequence~(unmatched~byte~run).}{%
+      The~byte~run~following~the~control~symbol~does~not~match~any~command\MessageBreak
+      known~to~jlreq.~Supported~spellings:~\string\西暦true,~\string\西暦false,~
+      \string\和暦,~\string\　~(U+3000~full-width~space).\MessageBreak
+      \@ehc}}%
+  \def\jlreqpdf@disp@end{\jlreqpdf@disp@end}%
+  \def\jlreqpdf@disp@sentinel{\jlreqpdf@disp@sentinel}%
+  % 静的登録（綴名byteは control symbol 名として消費済みのため候補は残り列）。
+  \begingroup
+    \catcode`\^^a5=13 \catcode`\^^bf=13
+    \catcode`\^^e6=13 \catcode`\^^9a=13 \catcode`\^^a6=13
+    \catcode`\^^92=13 \catcode`\^^8c=13
+    \catcode`\^^80=13
+    % \西暦true / \西暦false: 西=e8a5bf（綴名byte=e8）、暦=e69aa6。
+    % 同一先頭byteに複数候補があるため、共通接頭辞（a5bf e69aa6）を
+    % 消費した後、続くASCII単語（true/false）を読み分ける。
+    \jlreqpdf@disp@reg^^e8{^^a5^^bf^^e6^^9a^^a6}{\jlreqpdf@disp@seireki@run}%
+    % \和暦: 和=e5928c（綴名byte=e5）、暦=e69aa6
+    \jlreqpdf@disp@reg^^e5{^^92^^8c^^e6^^9a^^a6}{\jlreq@pdf@wareki}%
+    % \　: U+3000=e38080（綴名byte=e3）、残り=80 80
+    \jlreqpdf@disp@reg^^e3{^^80^^80}{\jlreq@pdf@zenkakuspace}%
+  \endgroup
+  % ASCII内部命令（protected: moving args/aux/write で凍結される）
+  \protected\def\jlreq@pdf@seireki@true{\jlreq@seirekitrue}%
+  \protected\def\jlreq@pdf@seireki@false{\jlreq@seirekifalse}%
+  \protected\def\jlreq@pdf@wareki{\jlreq@seirekifalse}%
+  % \西暦true/false の単語尾部読み分け: 共通接頭辞（西・暦の残りbyte）を
+  % 消費し終えた時点で呼ばれる。続くASCII字母列（true/false）を1字ずつ
+  % 読み取り溜め、非字母到達で確定・比較する。非字母tokenは読み戻し不能
+  % のため、確定時に溜めた列の末尾へ再供給する（flag設定命令の後なので
+  % 意味論上の順序は保たれる）。
+  \def\jlreqpdf@disp@seireki@run{%
+    \jlreqpdf@disp@word{}%
+  }%
+  % 単語読み取り: 引数grabは先頭空白を飛ばすため \futurelet で先読みして
+  % から判定する（実測: grabは空白を飲み込み「true B」が「trueB」に化ける）。
+  % 字母なら1字読んで継続、非字母なら確定（先読みのみで入力は残る）。
+  \def\jlreqpdf@disp@word#1{%
+    \def\jlreqpdf@disp@acc{#1}%
+    \futurelet\jlreqpdf@disp@wnext\jlreqpdf@disp@word@a}%
+  % NOTE: \futurelet<cs><handler>{arg} の peek は handler 引数の「{」を見る
+  % （実測 dp18）。引数なし handler にして初めて実入力の次 token を
+  % peek できる。累積文字列は \jlreqpdf@disp@acc 経由で渡す。
+  \def\jlreqpdf@disp@word@a{%
+    \ifcat\jlreqpdf@disp@wnext a\relax
+      % 次は字母: 1字だけ読んで継続（\word@b#1 が単一引数を取るため
+      % 複数tokenの誤飲み込みは起きない）
+      \expandafter\jlreqpdf@disp@word@b
+    \else
+      % 非字母: 単語確定（先読みのみで入力は残る）
+      \expandafter\jlreqpdf@disp@word@decide
+    \fi
+  }%
+  \def\jlreqpdf@disp@word@b#1{%
+    \xdef\jlreqpdf@disp@acc{\jlreqpdf@disp@acc#1}%
+    \futurelet\jlreqpdf@disp@wnext\jlreqpdf@disp@word@a}%
+  \def\jlreqpdf@disp@word@decide{%
+    \expandafter\jlreqpdf@disp@word@decide@a\expandafter{\jlreqpdf@disp@acc}%
+  }%
+  \def\jlreqpdf@disp@word@decide@a#1{%
+    \ifnum\pdfstrcmp{#1}{true}=0 \relax
+      \jlreq@pdf@seireki@true%
+    \else
+      \ifnum\pdfstrcmp{#1}{false}=0 \relax
+        \jlreq@pdf@seireki@false%
+      \else
+        \ClassError{jlreq}{Undefined~Japanese~control~sequence~(bad~word~after~\string\西暦).}{%
+          Expected~\string\西暦true~or~\string\西暦false.\MessageBreak
+          \@ehc}%
+      \fi
+    \fi
+  }%
+  % \　命令の本体: 非d分岐と同一契約。後続ASCII空白の無視 + 区切り約物
+  % 判定（\jlreq@lastnodechar は実値、\jlreq@fixjfm は生成JFM
+  % データ参照のため非dと同じ意味論で動く）。
+  \protected\def\jlreq@pdf@zenkakuspace{%
+    \futurelet\jlreq@nextchar\jlreq@zenkakuspace@ignorespaces}%
+  % 後続ASCII空白の無視（非d分岐と同一契約）。空白を飛ばしてから本体へ。
+  \def\jlreq@zenkakuspace@ignorespaces{%
+    \ifx\jlreq@nextchar\space
+      \expandafter\jlreq@zenkakuspace@ignorespaces@
+    \else
+      \expandafter\jlreq@zenkakuspace@main
+    \fi}%
+  \expandafter\def\expandafter\jlreq@zenkakuspace@ignorespaces@\space{%
+    \futurelet\jlreq@nextchar\jlreq@zenkakuspace@ignorespaces}%
+  \NewDocumentCommand{\jaspace@zenkaku}{}{\hskip\glueexpr 1\jlreq@zw\relax}
+  \def\jlreq@zenkakuspace@main{%
+    % 直前nodeが閉じbox（\lastnodetype 13/14）なら前文字なし扱い
+    % （boxbdd; \jlreqpdf@boxbddlastchar）。
+    \jlreqpdf@boxbddlastchar
+    \jlreqpdf@classofcp{\the\jlreq@lastnodechar}%
+    \ifnum\jlreqpdf@evalclass=4\relax
+      \hskip 1\jlreq@zw\hbox{}%
+      \jlreq@lastnodechar=`　\relax
+      \expandafter\jlreq@fixjfm
+    \else
+      　%
+    \fi
+  }
+\else
 \NewDocumentCommand{\　} {} {\futurelet\jlreq@nextchar\jlreq@zenkakuspace@ignorespaces}
 % 後続の空白を無視する処理
 \edef\jlreq@zenkakuspace@ignorespaces{%
@@ -1169,6 +1676,7 @@
     \protected\gdef　{\futurelet\jlreq@nextchar\jlreq@zenkakuspace@ignorespaces}
   }
   \AtBeginDocument{\catcode`　=\active}
+\fi
 \fi
 
 % \jaspace
@@ -1216,6 +1724,8 @@
     }
   }
 \fi
+% （pdfTeX向けのzw/zhリテラル書き換えは\ProcessKeyOptions直後の
+% パスで\jlreqbaselineskipに対しても実施済み．Q/H単位は未対応．）
 \dim_set:Nn \l__jlreq_tmpa_dim {\jlreqbaselineskip}
 \ifdim\jlreq@fontsize>\l__jlreq_tmpa_dim
   \ClassError{jlreq}{The~baselineskip~is~less~than~fontsize}{\@ehc}%
@@ -1249,12 +1759,27 @@
     }
   \fi
 \else
-  \tl_put_right:Nn \g__jlreq_setfontsizehook_tl {%
-    \kanjiskip=\jlreqkanjiskip
-    \ifdim\xkanjiskip>0pt
-      \xkanjiskip=\jlreqxkanjiskip
-    \fi
-  }
+  \ifx d\jlreq@engine
+    % pdfTeXでは(x)kanjiskipプリミティブがない．
+    % 代わりに\zw/\zhの実寸（\jlreq@jareg）をサイズに追従させる．
+    \tl_put_right:Nn \g__jlreq_setfontsizehook_tl {%
+      % \f@size（"10" のようなポイント数の文字列）にjafontscale（同 "1"）を
+      % 掛けてpt寸法にする．\dimexpr\f@size\jlreq@jafontscale pt\relax と
+      % 1式で書くと数字列がそのまま連結されてしまう（"10"+"1"+"pt" → 101pt
+      % となる．これにより\jlreq@jareg=実寸zwが10倍化し，例えば\marginpar内の
+      % \footnotesizeで \dimexpr115\jlreq@tempdima/170 が Dimension too large
+      % となる）ため，先にpt寸法を作ってから係数を掛ける2段構えとする．
+      \jlreq@jareg=\dimexpr\f@size pt\relax
+      \jlreq@jareg=\jlreq@jafontscale\jlreq@jareg
+    }
+  \else
+    \tl_put_right:Nn \g__jlreq_setfontsizehook_tl {%
+      \kanjiskip=\jlreqkanjiskip
+      \ifdim\xkanjiskip>0pt
+        \xkanjiskip=\jlreqxkanjiskip
+      \fi
+    }
+  \fi
 \fi
 
 % \jafontsize
@@ -1298,11 +1823,28 @@
 %  \belowdisplayshortskip \belowdisplayskip
 %  \let\@listi\@listI}
 %
-\if@tate\tate\fi % ここで発行しておく
+\if@tate\ifx d\jlreq@engine\else\tate\fi\fi % ここで発行しておく(pdfTeXではスキップ)
 \mcfamily\selectfont\normalsize
 \setbox\jlreq@tempboxa\hbox{阿}
 \setlength\Cht{\ht\jlreq@tempboxa}
 \setlength\Cdp{\dp\jlreq@tempboxa}
+\if@tate
+\ifx d\jlreq@engine
+  % pdfTeX 縦組みでは \hbox{阿} の ht/dp はグリフ層の横組
+  % メトリクス（rot 出力の charbox 正規化や横JFMの 0.88/0.12zw）
+  % になり、pTeX の \cht/\cdp（縦JFM class 0 の h/d = 0.5/0.5zw）
+  % と一致しない。この差（実測 Cht=8.8pt vs 5.0pt）は
+  % oddsidemargin/topmargin/footskip の縦組み幾何（-Cht+Cdp の項）
+  % にそのまま混入し、uplatex との対照で一定オフセットとして
+  % 残っていた（従来の「数ミリの家具由来オフセット」の実体）。
+  % ここで測定直後に生成縦JFMデータの class 0 h/d × 現在zw で
+  % 上書きする（バックエンドは既に jlreq-pdftex-jfm-tate.def を
+  % 読み込み済み; jlreq.cls は 525 行で backend を読むため）。
+  % 以後の縦家具計算はすべてこの論理寸法を参照する
+  % （クラスの縦家具計算は logical dimensions を参照する）。
+  \expandafter\jlreq@pdftex@tate@chtc@dp\csname jlreqpdf@jfm@class@0\endcsname
+\fi
+\fi
 \setlength\Cwd{\wd\jlreq@tempboxa}
 \setlength\Cvs{\baselineskip}
 \setlength\Chs{\wd\jlreq@tempboxa}
@@ -1392,7 +1934,13 @@
 %}
 
 %. plextから拝借
-\def\jlreq@Kanji#1{\expandafter\kansuji\csname c@#1\endcsname}
+\ifx d\jlreq@engine
+  % pdfTeXには\kansujiがないので，jlreq-pdftex.styの\jlreq@pdf@kansuji（各桁を
+  % 〇一…九に置換する，pTeXの\kansujiと同一仕様の展開可能マクロ）に接続する．
+  \def\jlreq@Kanji#1{\expandafter\jlreq@pdf@kansuji\expandafter{\csname c@#1\endcsname}}
+\else
+  \def\jlreq@Kanji#1{\expandafter\kansuji\csname c@#1\endcsname}
+\fi
 
 % このあたりはtarticleと同じ
 \setlength\lineskip{.1\zh}
@@ -1432,8 +1980,23 @@
   \setlength{\pagewidth}{\paperwidth}
   \setlength{\pageheight}{\paperheight}
 \else
-  \setlength{\pdfpagewidth}{\paperwidth}
-  \setlength{\pdfpageheight}{\paperheight}
+  \ifx d\jlreq@engine
+    % pdfTeX：\mag後出しでpTeX DVI経路（uplatex実測）と同じ意味論に揃える．
+    % pTeX側は\mag=1200でも用紙は物理固定（papersize specialは未拡大）・
+    % 原点1in固定で版面のオフセットだけが拡大される．一方pdfTeXは出荷時に
+    % \pdfpagewidthと\pdfhoriginまで\mag倍してしまうため（前者は用紙拡大，
+    % 後者は余白のずれになる），ここで相殺する．truein再代入は「現在の
+    % \magで割った1in」を格納し出荷時にちょうど1inに戻る，ページ寸法は
+    % 1000/\mag倍を掛ける．\mag=1000ではいずれも無変換で無害．
+    \pdfhorigin=1truein
+    \pdfvorigin=1truein
+    \jlreq@helper@divide{1000pt}{\the\mag pt}%
+    \pdfpagewidth=\strip@pt\jlreq@resultdimen\dimexpr\paperwidth\relax
+    \pdfpageheight=\strip@pt\jlreq@resultdimen\dimexpr\paperheight\relax
+  \else
+    \setlength{\pdfpagewidth}{\paperwidth}
+    \setlength{\pdfpageheight}{\paperheight}
+  \fi
 \fi
 
 \ifx l\jlreq@engine
@@ -1447,7 +2010,13 @@
     }%
   }
 \else
-  \def\jlreq@expand@speciallength#1{#1}
+  \ifx d\jlreq@engine
+    % pdfTeX：オプション値は処理直後の書き換えパスでzw/zhを単位マクロに
+    % 置換済みのため，ここは可展開の恒等変換でよい．
+    \def\jlreq@expand@speciallength#1{#1}
+  \else
+    \def\jlreq@expand@speciallength#1{#1}
+  \fi
 \fi
 \def\jlreq@speciallength#1{\dimexpr\jlreq@expand@speciallength{#1}\relax}
 
@@ -1493,8 +2062,15 @@
 
 \setlength{\topskip}{1\zw} % フォントサイズと一致させる
 \ifx\jlreq@option@headfoot@verticalpos\@empty
-  \if@tate\def\jlreq@option@headfoot@verticalpos{1zw}
-  \else\def\jlreq@option@headfoot@verticalpos{2zw}\fi
+  \ifx d\jlreq@engine
+    % pdfTeX：zw/zhリテラルは単位マクロで書く（リテラルのままでは
+    % \dimexprが解釈できない．l/uの文字列置換経路とも衝突しない）．
+    \if@tate\def\jlreq@option@headfoot@verticalpos{1\jlreq@zw}
+    \else\def\jlreq@option@headfoot@verticalpos{2\jlreq@zw}\fi
+  \else
+    \if@tate\def\jlreq@option@headfoot@verticalpos{1zw}
+    \else\def\jlreq@option@headfoot@verticalpos{2zw}\fi
+  \fi
 \fi
 \setlength{\headsep}{\jlreq@speciallength{\jlreq@option@headfoot@verticalpos}}
 \if@tate\ifdim\headsep<1\zw\relax\jlreq@note{基本版面との上下方向の最低の空き量を，基本版面の文字サイズの全角アキとする (26.1.a)．}\fi\fi
@@ -3402,19 +3978,54 @@
       \setbox\jlreq@tempboxa=\hbox to\z@{\hskip-\@tempdima\raise\dimexpr\ht\jlreq@tempboxb + \dp\@tempboxa\relax\box\@tempboxa\hss}%
       \dp\jlreq@tempboxa=0pt\ht\jlreq@tempboxa=0pt\box\jlreq@tempboxa%
     }}%
-    \ifx l\jlreq@engine
+\ifx l\jlreq@engine
       \def\jlreq@hook@prenote{%
         \jlreq@lastnodechar=\lastnodechar\relax
         \ifnum\jlreq@lastnodechar>-1~\inhibitglue\fi
       }
-    \else
+\else\ifx d\jlreq@engine
+      % pdfTeXでは\lastnodecharプリミティブがない．直前文字との間の
+      % グルー/禁則はバックエンドの状態機械（jlreq-pdftex-rules.sty）
+      % が担うので，ここでは合印～脚注本文処理で汚れる
+      % 直前クラス・保留ペナルティ・inhibitフラグを退避し，
+      % postnoteで復帰する．inhibit も退避する理由: \thefootnote の
+      % 前後 \inhibitglue（jlreq.cls:4041，マーク内部の境界用）が
+      % 実装済み \inhibitglue になったことで，マーク末尾の
+      % \inhibitglue が本文側の 、→あ 境界まで漏れ，ペアグルーを
+      % 消してしまっていた（interlinear fixtureの実測）．
+      % マークは意味論フレームであり，フラグは外へ漏れない．
+      \def\jlreq@hook@prenote{%
+        \edef\jlreq@pdf@restorestate{%
+          \global\jlreqpdf@lastclass=\the\jlreqpdf@lastclass\relax
+          \global\jlreqpdf@pend=\the\jlreqpdf@pend\relax
+          \global\jlreqpdf@inhibit=\the\jlreqpdf@inhibit\relax
+          \global\jlreq@jareg=\the\jlreq@jareg\relax
+          \global\jlreqpdf@lastzw=\the\jlreqpdf@lastzw\relax}%
+        \global\jlreqpdf@inhibit=0
+      }%
+\else
       % (u)platexの時は代入すると\inhibitglueが効かなくなる
       \def\jlreq@hook@prenote{%
         \ifnum\lastnodechar>-1~\inhibitglue\fi
         \jlreq@lastnodechar=\lastnodechar\relax
       }
+\fi
+\fi
+    % pdfTeX: \jlreq@fixjfm は \lastnodechar 依存のため常に無挿入
+    % （\jlreq@lastnodechar=-1固定，jlreq.cls:855-866）．後続文字との間の
+    % 処理はバックエンドのpeek機構（jlreq-pdftex-rules.sty:594-620）に
+    % 再委譲する: 次がCJKバイトなら状態を残して次字のpre hookが直前クラス
+    % からpair glueを計算し，欧文文字・数式シフトならxsp境界glue
+    % （\jlreqxkanjiskip相当）と保留禁則ペナルティをここで出す．pTeXの
+    % postnote=\jlreq@fixjfm と同じ意味論である．ぶら下げkernは前字直後の
+    % peekで出力済みなので peek@a から再入する（二重実行防止）．
+    \ifx d\jlreq@engine
+      \def\jlreq@hook@postnote{%
+        \jlreq@pdf@restorestate
+        \futurelet\jlreqpdf@next\jlreqpdf@peek@a}%
+    \else
+      \def\jlreq@hook@postnote{\jlreq@fixjfm}%
     \fi
-    \def\jlreq@hook@postnote{\jlreq@fixjfm}
   }
 }
 % \@footnotemarkをシンプルなものにする
@@ -3436,6 +4047,18 @@
 \def\jlreq@footnote@rulewidth{0.333\columnwidth}
 \begingroup
   \footnotesize
+  \ifx d\jlreq@engine
+    % pdfTeX: \jlreq@zh (= \jlreq@jareg) は \size@update が走らない
+    % クラス読込時には脚注サイズに追従しない（upTeX の \zh プリミティブは
+    % サイズに追従し、uplatex はここで 8.00003pt を捕捉する）。
+    % そのままでは罫線後カーンが 1.5*(\baselineskip-10pt)=2.25pt に誤捕捉
+    % される（正しくは footnotesize=.8\jlreq@fontsize の
+    % 1.5*(11.5-8.00003)=5.24995pt。実測: uplatex 捕捉値と照合）。
+    % footnotesize の実寸 zh = .8×(fontsize×jafontscale) = .8\jlreq@jafontsize
+    % （\jlreq@jafontscale はこの時点で未定義だが jafontsize は設定済み。
+    % selectfont の jareg hook と同一式: jareg = f@size×scale）。
+    \jlreq@jareg=\dimexpr.8\jlreq@jafontsize\relax
+  \fi
   \edef\jlreq@do{
     \unexpanded{\setlength{\footnotesep}}{\the\dimexpr .7\baselineskip\relax}% 何でかわからん……
     \unexpanded{\def\footnoterule}{%
@@ -3492,6 +4115,7 @@
 }
 
 \keys_define:nn { jlreqsetup } { footnotetext_indent .code:n = {\ClassWarningNoLine{jlreq}{footnotetext_indent~was~removed} } }
+
 
 \ifx l\jlreq@engine
   \fnfixbottomtrue
@@ -3949,7 +4573,16 @@
         {\unexpanded{\reset@font\jlreq@sidenote@keywordfont}#1}%
         \noexpand\jlreq@hook@prenote
         \ifx\jlreq@sidenote@defaultmark\@empty\else
-          \expandafter\edef\exp_not:c {\jlreq@sidenotemarkname}{\exp_not:o {\jlreq@sidenote@defaultmark}}%
+          % pdfTeX：sidenote_symbolの既定＊（U+FF0A）はCJK utf8下では
+          % アクティブ文字であり，素の\edefで展開すると\CJK@punctchar経路の
+          % 内部（\def\CJK@tempa##1...）がアクティブ文字のまま再展開されて
+          % エラーになる．\protected@edefなら\protectが効いて文字トークンが
+          % 保持される（number型側の\protected@xdefと同じ経路）．
+          % pTeX/upTeX/LuaTeXでは和文文字トークンは展開不能なので
+          % \protected@edefでも\edefと同じ結果であり影響なし．
+          % （外側の\edef\jlreq@sidenotemark内に置くため\exp_not:Nで
+          % \protected@edef自身の展開は抑止し，実行時に定義させる．）
+          \exp_not:N \protected@edef \exp_not:c {\jlreq@sidenotemarkname}{\exp_not:o {\jlreq@sidenote@defaultmark}}%
           \noexpand\@sidenotemark
         \fi
       }
@@ -5046,7 +5679,7 @@
           \exp_not:n {\setbox\@tempboxa=\hbox to \dimexpr\headsep + \headheight + \textheight}
             \legacy_if:nF { @tate } { \exp_not:n { + \Cdp } }
             \exp_not:N \relax
-            { \exp_not:n { \tate\adjustbaseline \hskip \dimexpr \headsep + \headheight }
+            { \exp_not:n { \jlreqpdftate@dirprim \hskip \dimexpr \headsep + \headheight }
               \legacy_if:nF { @tate } { \exp_not:n { + \topskip - \Cht } }
               \exp_not:N \relax
               \hbox to \legacy_if:nF { @tate } { \exp_not:N \dimexpr }
@@ -5509,8 +6142,10 @@
       \lineskip .75em%
       % 縦書き時には表組み内でも縦書きにするようにする
       \if@tate
-        \let\jlreq@temporary@original@ialign=\ialign
-        \tl_put_left:Nn \ialign {\unexpanded{\tate\let\ialign=\jlreq@temporary@original@ialign}}{}{}%
+        \ifx d\jlreq@engine\else
+          \let\jlreq@temporary@original@ialign=\ialign
+          \tl_put_left:Nn \ialign {\unexpanded{\tate\let\ialign=\jlreq@temporary@original@ialign}}{}{}%
+        \fi
       \fi
       \begin{tabular}[t]{c}%
         \@author
@@ -5529,8 +6164,14 @@
     \begingroup
       \renewcommand{\thefootnote}{\fnsymbol{footnote}}%
       \renewcommand{\@makefnmark}{\hbox{%
-        \jlreq@iftdir{\yoko}{}%
-        \rlap{\@textsuperscript{\normalfont\@thefnmark}}%
+        \ifx d\jlreq@engine
+          % 脚注合印は横組で出す。d では \yoko プリミティブの代わりに
+          % thanks 合印は upstream と同じ \rlap（先行き0）で重ねる。
+          \rlap{\jlreqpdf@yokobox{\@textsuperscript{\normalfont\@thefnmark}}}%
+        \else
+          \jlreq@iftdir{\yoko}{}%
+          \rlap{\@textsuperscript{\normalfont\@thefnmark}}%
+        \fi
       }}%
       \renewcommand{\jlreq@referencemark@format}[1]{\@makefnmark}% うーん
       \if@twocolumn
@@ -5583,8 +6224,10 @@
     \lineskip .5\jlreq@zh
     % 縦書き時には表組み内でも縦書きにするようにする
     \if@tate
-      \let\jlreq@temporary@original@ialign=\ialign
-      \tl_put_left:Nn \ialign {\unexpanded{\tate\let\ialign=\jlreq@temporary@original@ialign}}{}{}%
+      \ifx d\jlreq@engine\else
+        \let\jlreq@temporary@original@ialign=\ialign
+        \tl_put_left:Nn \ialign {\unexpanded{\tate\let\ialign=\jlreq@temporary@original@ialign}}{}{}%
+      \fi
     \fi
     \begin{tabular}[t]{c}%
       \@author
@@ -5980,8 +6623,21 @@
     \advance\leftskip \@lnumwidth \hbox{}\hskip -\leftskip
     \advance\leftskip\@tempdima
     {#4}\nobreak
+    % このリーダー箱内の $..$ はクラス内部の数式（pdfTeX バック
+    % エンドの行内数式キャプチャの対象外。キャプチャがこの $ を捉えると
+    % \leaders の box スキャンが再構成された箱列と干渉する）。フラグは
+    % グループ引数なしの on/off 対命令で挟む: {\leaders\hbox{..}}\hfill の
+    % ようにリーダー箱とグルーの間にグループ終端を入れると \leaders の
+    % グルー走査が群終端を越えられず "Leaders not followed by proper
+    % glue" になる（純TeXでも再現: article + {\leaders\hbox{a}}\hfill。
+    % 引数形のオン/オフ命令がこの形を作っていた=TOC 2パス目不良の第二要因。
+    % 第一要因の全 \leaders 箱を壊す frame-pop \aftergroup は撤去済み。
+    % 実測: 本修正後 tate/yoko TOC 2パスとも rc=0）。
+    % d-engine 以外はフラグ操作なし（そのまま素通り）。
+    \ifx d\jlreq@engine\jlreq@pdftex@math@internal@on\fi
     \leaders\hbox{$\m@th\mkern \@dotsep mu$\null\inhibitglue ・\inhibitglue\null$\m@th\mkern \@dotsep mu$}%
     \hfill\nobreak
+    \ifx d\jlreq@engine\jlreq@pdftex@math@internal@off\fi
     \hb@xt@\@pnumwidth{\hss\normalfont\normalcolor \tatechuyoko*{#5}}%
     \par}%
   \fi
@@ -6035,7 +6691,32 @@
 \newif\ifjlreq@resttate
 \newenvironment{theindex}{%
   \jlreq@oldfontcommand@enable
-  \jlreq@iftdir{\clearpage\yoko\jlreq@resttatetrue}{\jlreq@resttatefalse}% 常に横書きにする
+  \ifx d\jlreq@engine
+    % pdfTeX。常時横書き（upstream と同じ契約: tate 文書ではここで
+    % 本当の横組みページを出す）。pTeX の \yoko に相当するのは:
+    %   1. \clearpage で前の縦組みページを出荷
+    %   2. ページ方向フラグを横組みへ（出荷回転が掛からない;
+    %      jlreq-pdftex.sty \jlreqpdf@pagedir）
+    %   3. 版面寸法の役割交換: pTeX は \yoko ページで行長=\textheight・
+    %      行送り=\textwidth として組む（uplatex 実測: 2段組の段幅
+    %      (textheight-columnsep)/2=147.4pt、見出し中心一致）。
+    %      我々の内枠は回転出荷のために横組み寸法のままなので、
+    %      ページ組みの \hsize を \textheight に切り替える。
+    \jlreq@iftdir{%
+      \clearpage
+      \jlreqpdf@pagedir{0}%
+      % 局所 frame 方向も横組みへ（pTeX の \yoko と同じく環境全体で
+      % 方向が切替わる）。これで \jlreq@ifydir が正しく横組みを返し、
+      % グリフ層の縦字形回転も掛からない。終端で tate 復帰。
+      \global\jlreqpdf@dir=0
+      \hsize=\textheight
+      \linewidth\hsize
+      \columnwidth\hsize
+      \jlreq@resttatetrue
+    }{\jlreq@resttatefalse}%
+  \else
+    \jlreq@iftdir{\clearpage\yoko\jlreq@resttatetrue}{\jlreq@resttatefalse}% 常に横書きにする
+  \fi
   \if@twocolumn\@restonecolfalse\else\@restonecoltrue\fi
   \columnseprule\z@ \columnsep 2\jlreq@mol
   \twocolumn[\section*{\indexname}]%
@@ -6048,7 +6729,19 @@
   \ifx\jlreq@theindex@savedpagestyle\@undefined\else\expandafter\pagestyle\expandafter{\jlreq@theindex@savedpagestyle}\fi
   \let\jlreq@theindex@savedpagestyle\@undefined
   \if@restonecol\onecolumn\else\clearpage\fi
-  \ifjlreq@resttate\tate\fi
+  \ifjlreq@resttate
+    \ifx d\jlreq@engine
+      % 横組みページを出し切ってから縦組みへ復帰（フラグ・局所方向・
+      % 寸法を戻す）
+      \jlreqpdf@pagedir@restore
+      \global\jlreqpdf@dir=1
+      \hsize=\textwidth
+      \linewidth\textwidth
+      \columnwidth\textwidth
+    \else
+      \tate
+    \fi
+  \fi
   \jlreq@oldfontcommand@disable
 }
 \newcommand{\@idxitem}{\par\hangindent 4\jlreq@mol}
@@ -6317,27 +7010,72 @@
   \ifx l\jlreq@engine\unexpanded{%
     \jlreq@lastnodechar=\lastnodechar\relax
     \int_compare:nT { \jlreq@lastnodechar>-1 } { \inhibitglue }
+  }\else
+  \ifx d\jlreq@engine\unexpanded{%
+    % pdfTeX: \lastnodechar プリミティブはない．バックエンドの状態機構が
+    % 維持する観測済み和文scalar（jlreqpdf@lastnodechar）を読む．
+    % 直前nodeが閉じbox（\lastnodetype 13/14）のときは boxbdd
+    % 準拠で前文字無し（-1）として扱う（\jlreqpdf@boxbddlastchar）．
+    \jlreqpdf@boxbddlastchar
+    \global\jlreq@lastnodechar=\jlreqpdf@lastnodechar\relax
+    \int_compare:nT { \jlreq@lastnodechar>-1 } { \inhibitglue }
   }\else\unexpanded{%
     \int_compare:nT { \jlreq@lastnodechar>-1 } { \inhibitglue }
     \jlreq@lastnodechar=\lastnodechar\relax
   }\fi
+  \fi
 }
 
 \expandafter\def\expandafter\jlreq@tatechuyoko@i\expandafter#\expandafter1\expandafter{%
   \@tempa
-  % 前のJFM glue
+  % 前のJFM glue（\jlreqpdf@lastnodechar は frame-live なので、
+  % このBefore境界グルーは1回だけ入る。バックエンドの境界評価器は
+  % このboxの前後では boxbdd として振る舞い、ペアグルーの二重挿入は
+  % 起こらない——rules.sty の unified emitter 参照）
   \ifnum\jlreq@lastnodechar>-1
-    \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{阿}%
+    \ifx d\jlreq@engine
+      % pdfTeX: \char は 0..255 しか指定できないため、観測済みコード
+      % ポイントのスカラーをそのまま渡す（\jlreq@calc@jfmglue@cp）
+      \jlreq@calc@jfmglue@cp{\the\jlreq@lastnodechar}{阿}%
+    \else
+      \jlreq@calc@jfmglue{\char\jlreq@lastnodechar}{阿}%
+    \fi
     \jlreq@ifgluezero\jlreq@resultskip{}{\hskip\jlreq@resultskip}%
   \fi
-  \hbox{\yoko
-    \begingroup
-      \setbox\jlreq@tempboxa=\hbox{阿}%
-      \vrule width~0pt~height~\ht\jlreq@tempboxa depth~\dp\jlreq@tempboxa
-    \endgroup
-    #1}%
+  \ifx d\jlreq@engine
+    % バックエンドの箱工場（\jlreqpdf@yokobox）で1回だけ組み、
+    % 幾何正規化（uplatex 実測と同一契約）:
+    %   advance = 1zw（body の ht+dp を 1zw に固定する strut による）
+    %   桁は中央配置（cross extent = body 幅の半分ずつ）
+    %   body baseline は行の進行起点に一致（uplatex showbox・PDF bbox
+    %   実測: digit baseline = slot 上端）
+    % \jlreqpdf@yokobox は tate frame 内で body を一度だけ typeset し、
+    % \rotatebox{90} + \kern-\ht + \lower w/2 + \wd/\ht/\dp の明示算術で
+    % 正規化する（jlreq-pdftex.sty \jlreqpdf@embed@yoko@in@tate）。
+    % strut: upstream は \ht阿+\dp阿（= JFM セル h+d = 1zw）を使う。
+    % pdfTeX バックエンドの tate セルは ht=回転bbox・dp=0 を返すため
+    % その和は 1zw にならず、同じ JFM 値（縦組み class 0 h/d = 0.5/0.5）
+    % を直接使う: .5\jlreq@jareg + .5\jlreq@jareg = 実寸 1zw（サイズ・
+    % フォント変更に追従）。
+    \jlreqpdf@yokobox@strut{.5\jlreq@jareg}{.5\jlreq@jareg}{#1}%
+  \else
+    \hbox{\yoko
+      \begingroup
+        \setbox\jlreq@tempboxa=\hbox{阿}%
+        \vrule width~0pt~height~\ht\jlreq@tempboxa depth~\dp\jlreq@tempboxa
+      \endgroup
+      #1}%
+  \fi
   \futurelet\jlreq@nextchar\jlreq@tatechuyoko@ii
 }
+\ifx d\jlreq@engine
+  % 後側グルーは挿入しない。バックエンドの境界評価器が box→後続字
+  % の境界を自前で処理する（rules.sty の boxbdd 経路・1回だけ）。upstream
+  % が明示的に入れるのは pTeX に box 境界の自動処理がないためで、挙動は
+  % 実測で同一（漢字後続時の追加速は両系とも0）。upstream の
+  % 走査中に展開して破綻するため、この経路では使わない。
+  \def\jlreq@tatechuyoko@ii{}%
+\else
 \def\jlreq@tatechuyoko@ii{%
   \begingroup
     \def\jlreq@do{}%
@@ -6352,7 +7090,12 @@
   \expandafter\endgroup
   \jlreq@do
 }
+\fi
 
+
+\ifx d\jlreq@engine
+  \cs_new:Nn \__jlreq_setkanjiskip:nn {}
+\else
 \jlreq@saveoriginalcs{kanjishape}
 \ifx l\jlreq@engine
   \cs_new:Nn \__jlreq_setkanjiskip:nn {
@@ -6398,6 +7141,7 @@
     \l_jlreq_do:
   }
 \fi
+\fi
 \ifx l\jlreq@engine
   \cs_set:Nn \l_jlreq_tmpa:n {
     \NewDocumentCommand { \jidori } { m m } {
@@ -6417,30 +7161,65 @@
   \l_jlreq_tmpa:n{　}
   \catcode`　=12
 \else
-  \NewDocumentCommand { \jidori } { m m } {
+  \ifx d\jlreq@engine
+    % pdfTeXでは(x)kanjiskipがない．\jidori/\akigumiは自前グルー規則
+    % （jlreq-pdftex-rules.sty の jidorimode）で再現する:
+    %   \jidori{L}{..}  = \hbox to L { 文字間 0pt+1fil }（均等字取り）
+    %   \akigumi{S}{..} = \hbox { 文字間 S }（空き組み）
+    % ltj原実装と同じ「伸びは全て文字間へ」の意味論．
+    % hbox内でlastclassは90リセットされる．
+    \NewDocumentCommand { \jidori } { m m } {%
+      \mode_if_vertical:TF { \leavevmode } {}
+      \group_begin:
+        \jlreqpdf@jidorimode=2\relax
+        \hbox_to_wd:nn {#1} { #2 \hskip 0pt minus 1fil \relax }
+      \group_end:
+    }
+  \else
+    \NewDocumentCommand { \jidori } { m m } {
+      \mode_if_vertical:TF { \leavevmode } {}
+      \group_begin:
+        \__jlreq_setkanjiskip:nn { 0pt~plus~15zw~minus~0pt } { 0pt~plus~15zw~minus~0pt }
+        \hbox_to_wd:nn {#1} {
+          \kanjishape{n-jidori}\selectfont
+          \inhibitglue #2
+          \hskip\glueexpr 0pt~minus~1fil\relax
+        }
+      \group_end:
+    }
+  \fi
+\fi
+\ifx d\jlreq@engine
+  \NewDocumentCommand { \akigumi } { m m } {%
     \mode_if_vertical:TF { \leavevmode } {}
     \group_begin:
-      \__jlreq_setkanjiskip:nn { 0pt~plus~15zw~minus~0pt } { 0pt~plus~15zw~minus~0pt }
-      \hbox_to_wd:nn {#1} {
-        \kanjishape{n-jidori}\selectfont
-        \inhibitglue #2
-        \hskip\glueexpr 0pt~minus~1fil\relax
-      }
+      \skip_set:Nn \jlreqpdf@akiskip {#1}%
+      \jlreqpdf@jidorimode=1\relax
+      \hbox:n {#2}
+    \group_end:
+  }
+\else
+  \NewDocumentCommand { \akigumi } { m m } {
+    \mode_if_vertical:TF { \leavevmode } {}
+    \group_begin:
+      \__jlreq_setkanjiskip:nn { \jlreqkanjiskip + #1 } { \jlreqxkanjiskip + #1 }
+      \hbox:n {#2}
     \group_end:
   }
 \fi
-\NewDocumentCommand { \akigumi } { m m } {
-  \mode_if_vertical:TF { \leavevmode } {}
-  \group_begin:
-    \__jlreq_setkanjiskip:nn { \jlreqkanjiskip + #1 } { \jlreqxkanjiskip + #1 }
-    \hbox:n {#2}
-  \group_end:
-}
 
 % 日にち
-\newif\if西暦
-\def\西暦{\西暦true}
-\def\和暦{\西暦false}
+% pdfTeX（always-on CJK）では漢字制御綴（\if西暦等）が作れないため，
+% pdfTeXではASCII名条件変数で同等機構を提供する．漢数字変換は
+% jlreq-pdftex.styの\jlreq@pdf@kansujiが提供する（pTeXの\kansujiと同一仕様）．
+\newif\ifjlreq@seireki
+\ifx d\jlreq@engine\else
+% \西暦true等は「\西暦＋true」と綴られる名前ではなく，元の\newifが
+% 定義していた完全な制御綴名なので\csnameで定義する．
+\expandafter\def\csname 西暦true\endcsname{\jlreq@seirekitrue}
+\expandafter\def\csname 西暦false\endcsname{\jlreq@seirekifalse}
+\expandafter\def\csname 和暦\endcsname{\jlreq@seirekifalse}
+\fi
 % #1年#2月#3日 #4は\numberとか\kansujiとか
 \def\jlreq@wareki#1#2#3#4{%
   \__jlreq_warekiyear:nnnn{#1}{#2}{#3}{#4}%
@@ -6463,8 +7242,40 @@
 \cs_set:Nn \__jlreq_warekiyear_aux:nnn {
   \int_compare:nTF { #1 = #2 } {元年} { #3\int_eval:n { #1 - #2 + 1 } 年 }
 }
+\ifx d\jlreq@engine
+  % pdfTeX: \today は \ifjlreq@seireki を反映する（非d分岐と同一契約）。
+  % tate 時の漢数字は \kansuji プリミティブの代わりに
+  % \jlreq@pdf@kansuji（pTeX同一仕様の桁置換・完全展開可能）を使う。
+  % \jlreq@wareki の元号表は 1989-01-08（平成元年）/2019-05-01（令和元年）
+  % 境界を既に符号化済み（非d分岐と共有）。
+  \def\jlreq@pdf@kansuji@expand#1{\jlreq@pdf@kansuji{#1}}%
+  \def\today{%
+    \ifjlreq@seireki
+      \jlreq@iftdir{%
+        \jlreq@pdf@kansuji\year 年%
+        \jlreq@pdf@kansuji\month 月%
+        \jlreq@pdf@kansuji\day 日%
+      }{%
+        \number\year 年%
+        \number\month 月%
+        \number\day 日%
+      }%
+    \else
+      \jlreq@iftdir{%
+        \jlreq@wareki{\year}{\month}{\day}{\jlreq@pdf@kansuji@expand}%
+      }{%
+        \jlreq@wareki{\year}{\month}{\day}{\number}%
+      }%
+    \fi
+  }
+  \keys_define:nn { jlreqsetup } {
+    year_style .choice:,
+    year_style / seireki .code:n = {\jlreq@seirekitrue},
+    year_style / wareki .code:n = {\jlreq@seirekifalse}
+  }
+\else
 \def\today{%
-  \if西暦
+  \ifjlreq@seireki
     \jlreq@iftdir{%
       \kansuji\year 年%
       \kansuji\month 月%
@@ -6492,6 +7303,179 @@
 % 時刻
 \hour=\time \divide\hour by 60
 \minute=\numexpr\time - 60*\hour\relax
+\fi
+
+% 日本語label key 正規化の接続。
+% kernel の label/ref 面のうち、key が \csname r@<key>\endcsname に
+% 裸で渡る箇所に同一正規化を挿入する:
+%   * \label（書込）: \protected@write の前に key を正規化
+%   * \newlabel / \@newl@bel（aux 読込）: key を正規化してから
+%     \gdef\csname r@<key> に渡す
+%   * \ref/\pageref（star 両形; \eqref は \ref 経由）: query key を正規化
+% パッケージ面（nameref/hyperref/refcount/cleveref）は begin document 後、
+% 各パッケージの実装を上書きする（kernel 面と同じ正規化器を使用）。
+\ifx d\jlreq@engine
+% 読込側（aux の \newlabel 行）だけは kernel が aux を読む
+% \UseOneTimeHook{begindocument} の「前」に実行されるため、
+% \AtBeginDocument では間に合わない（実測: latex.ltx \document は
+% \@input{\jobname.aux} を begindocument hook より前に置く）。
+% begindocument/before は aux 読込より前に発火する唯一のフック。
+\AddToHook{begindocument/before}{%
+  % --- (2) \newlabel: aux 読込側（key を正規化してから r@<key> を定義）---
+  \def\newlabel#1#2{%
+    \jlreqpdf@labelkey{#1}%
+    \expandafter\gdef\csname r@\jlreqpdf@labelkey@out\endcsname{#2}}%
+}
+\AtBeginDocument{%
+  % --- (1) \label: write 側（kernel 定義を正規化版で上書き）---
+  \def\label#1{%
+    \@bsphack
+    \begingroup
+      \UseHookWithArguments{label}{1}{#1}%
+      \jlreqpdf@labelkey{#1}%
+      \protected@write\@auxout{}%
+         {\string\newlabel{\jlreqpdf@labelkey@out}{{\@currentlabel}{\thepage}%
+          {\@currentlabelname}{\@currentHref}{\@kernel@reserved@label@data}}}%
+    \endgroup
+    \@esphack}%
+  % --- (3) \ref / \pageref: query 側（star 両形; eqref は \ref 経由）---
+  \renewcommand{\ref}{\@ifstar{\jlreq@pdf@ref@n@s}{\jlreq@pdf@ref@n@ns}}%
+  \renewcommand{\pageref}{\@ifstar{\jlreq@pdf@pageref@n@s}{\jlreq@pdf@pageref@n@ns}}%
+  \newcommand{\jlreq@pdf@ref@n@ns}[1]{\jlreq@pdf@setref{#1}\@firstoffive}%
+  \newcommand{\jlreq@pdf@ref@n@s}[1]{\jlreq@pdf@setref{#1}\@firstoffive}%
+  \newcommand{\jlreq@pdf@pageref@n@ns}[1]{\jlreq@pdf@setref{#1}\@secondoffive}%
+  \newcommand{\jlreq@pdf@pageref@n@s}[1]{\jlreq@pdf@setref{#1}\@secondoffive}%
+  % \jlreq@pdf@setref{<raw key>}{<selector>}: kernel \@setref と同一の二段構成。
+  % 第一段: \csname r@<正規化key> を先に展開して「cs トークン」を作り、
+  % 第二段（\jlreq@pdf@setref@i）で \expandafter#2#1 の形でその中身を
+  % selector に渡す（kernel \setref の "\expandafter#2#1\@empty.." と同じ）。
+  \newcommand{\jlreq@pdf@setref}[2]{%
+    \jlreqpdf@labelkey{#1}%
+    \expandafter\jlreq@pdf@setref@i
+      \csname r@\jlreqpdf@labelkey@out\endcsname{#2}{#1}}%
+  \newcommand{\jlreq@pdf@setref@i}[3]{%
+    \ifx#1\relax
+      \protect\G@refundefinedtrue
+      \nfss@text{\reset@font\bfseries ??}%
+      \@latex@warning{Reference `#3' on page \thepage \space undefined}%
+    \else
+      \expandafter#2#1\@empty\@empty\@empty\null
+    \fi}%
+}
+  % --- (4) パッケージ面（nameref/hyperref/refcount/cleveref hooks）---
+  % begindocument/end は全 begindocument フック（nameref の \ref 再定義、
+  % hyperref の諸設定）より後に発火するため、ここで各パッケージの
+  % key 渡し面に同じ正規化を接続する。
+  \AddToHook{begindocument/end}{%
+    % nameref: \NR@setref の \csname r@#1 を正規化 key で組み直す
+    \@ifundefined{NR@setref}{}{%
+      \def\NR@setref#1{%
+        \jlreqpdf@labelkey{#1}%
+        \begingroup
+          \@safe@activestrue
+          \expandafter
+        \endgroup
+        \expandafter\NR@@setref
+          \csname r@\jlreqpdf@labelkey@out\endcsname}%
+    }%
+    % hyperref: \label@hyperref（\hyperref[..] の key 照合）と
+    % \HyRef@autoref（\autoref の key 照合）の \csname r@<key> を正規化
+    \@ifundefined{label@hyperref}{}{%
+      \def\label@hyperref[#1]{%
+        \jlreqpdf@labelkey{#1}%
+        \expandafter\label@@hyperref
+          \csname r@\jlreqpdf@labelkey@out\endcsname{#1}}%
+    }%
+    \@ifundefined{HyRef@autoref}{}{%
+      \def\HyRef@autoref#1#2{%
+        \jlreqpdf@labelkey{#2}%
+        \begingroup
+          \Hy@safe@activestrue
+          \expandafter\HyRef@autosetref
+            \csname r@\jlreqpdf@labelkey@out\endcsname{#2}{#1}%
+        \endgroup}%
+    }%
+    % refcount: \rc@set（定義文脈）は正規化を先行させる。
+    % \getrefnumber は「完全展開可能」契約を維持するため、展開文脈でも
+    % 安全な \detokenize による byte 列化のみを行う（アクティブ CJK byte
+    % は \detokenize が展開せず string 化するため \csname 構成が安全に
+    % なる。マクロ入り key は kernel の展開型照合でも元々非対称のため
+    % 従来どおり）。eqref は \ref 経由のため重複 patch 不要。
+    \@ifundefined{rc@set}{}{%
+      % \refused（\ltx@IfUndefined{r@<key>} の生 key 照合）も正規化する
+      \def\refused#1{%
+        \jlreqpdf@labelkey{#1}%
+        \expandafter\ifx\csname r@\jlreqpdf@labelkey@out\endcsname\relax
+          \protect\G@refundefinedtrue
+          \rc@WarningUndefined{#1}%
+        \fi}%
+      \def\rc@set#1#2#3#4{%
+        \begingroup
+          \csname @safe@activestrue\endcsname
+          \refused{#4}%
+          \jlreqpdf@labelkey{#4}%
+          \expandafter\rc@@set
+            \csname r@\jlreqpdf@labelkey@out\endcsname{#1}{#2}{#3}%
+        \endgroup}%
+    }%
+    \@ifundefined{getrefnumber}{}{%
+      % \getrefnumber は refcount の「完全展開可能」契約を維持する:
+      % \detokenize は引数を展開せず string 化するため展開文脈で安全で、
+      % アクティブ CJK byte の \csname 構成が成立する。
+      % マクロ入り key は stock kernel/refcount の展開型照合でも書込側と
+      % 非対称のため従来同等（ドキュメント化済みの境界）。
+      \renewcommand*{\getrefnumber}[1]{%
+        \romannumeral
+        \expandafter\jlreqpdf@grn@e\expandafter{\detokenize{#1}}}%
+      \def\jlreqpdf@grn@e#1{%
+        \ltx@ifundefined{r@#1}{%
+          \expandafter\ltx@zero\rc@default
+        }{%
+          \expandafter\expandafter\expandafter\rc@extract@
+          \expandafter\expandafter\expandafter!%
+          \csname r@#1\expandafter\endcsname
+          \expandafter{\rc@default}\@nil
+        }}%
+    }%
+    % cleveref: \cref の取得面 \cref@getref / \cpageref@getref と
+    % 書込面（\newlabel{<key>@cref}）は cleveref の label hook 経由で
+    % key が渡る。読み側の r@<key>@cref 構成を正規化 key で行う。
+    \@ifundefined{cref@getref}{}{%
+      % cleveref 内部の \edef\@tempa{#2}（key list 走査）がアクティブ CJK
+      % byte を裸展開するため、\@cref の入口で key list を先に正規化する
+      % （catcode 12 byte はそれ以降の cleveref 内部処理で展開されない）。
+      % \cref@getref は正規化 key を受ける（再度の正規化は冪等）。
+      % 書込面の \newlabel{<key>@cref} 行の byte 列と読込面の正規化 key は
+      % 同一 byte になる（aux は生 byte、読みは catcode 12 の同一列）。
+      \let\jlreqpdf@cref@orig@atcref\@cref%
+      \def\@cref#1#2{%
+        \jlreqpdf@labelkey{#2}%
+        \edef\jlreqpdf@cref@call{%
+          \noexpand\jlreqpdf@cref@orig@atcref{#1}{\jlreqpdf@labelkey@out}}%
+        \jlreqpdf@cref@call}%
+      % NOTE: "\csname r@\jlreqpdf@labelkey@out@cref" は @ が letter のため
+      % 「out@cref」が単一の制御綴に融合する。接尾辞はマクロ経由で連結する。
+      \def\jlreqpdf@cref@suffix{@cref}%
+      \def\cref@getref#1#2{%
+        \jlreqpdf@labelkey{#1}%
+        \expandafter\let\expandafter#2%
+          \csname r@\jlreqpdf@labelkey@out\jlreqpdf@cref@suffix\endcsname%
+        \expandafter\expandafter\expandafter\def%
+          \expandafter\expandafter\expandafter#2%
+          \expandafter\expandafter\expandafter{%
+            \expandafter\@firstoftwo#2}}%
+      \def\cpageref@getref#1#2{%
+        \jlreqpdf@labelkey{#1}%
+        \expandafter\let\expandafter#2%
+          \csname r@\jlreqpdf@labelkey@out\jlreqpdf@cref@suffix\endcsname%
+        \expandafter\expandafter\expandafter\def%
+          \expandafter\expandafter\expandafter#2%
+          \expandafter\expandafter\expandafter{%
+            \expandafter\@secondoftwo#2}}%
+    }%
+  }%
+
+\fi
 
 %. デフォルト設定
 %.. 見出し
@@ -6607,6 +7591,61 @@
   \jlreqsetup{footnote_indent=0pt}% （4.2.5.b）
 }
 \jlreqsetup{footnote_second_indent=1\jlreq@zw}
+% 脚注ブロック実測修正（pdfTeX+tate）: native 縦組では挿入物の先頭
+% strut（\rule\z@\footnotesep）が行基準線を footnotesep の位置に置き、
+% 縦字形のエム箱（JFM h/d=0.5/0.5）が基準線を挟んで中央に来る。
+% pdfTeX 側の縦字形ボックスは ht=エム・dp=0 の規約（本文側は出荷回転の
+% 第一行カーンで補正済み・実測一致のためこの規約は変更しない）のため、
+% そのままでは挿入物内のエム箱が基準線の行頭側 0.5zh 分に置かれ、
+% 脚注本文の列頭が native と -1.72pt（= 0.5zh@footnotesize）ずれる。
+% 挿入物の先頭に高さ footnotesep+0.5\jlreq@zh の幅0の罫を足して
+% 行基準線を 0.5zh だけ行末側へずらし、native と同一の行内配置にする。
+% 2行目以降は baselineskip 機構が同一ピッチを与える（実測）。
+% このフックは footnote_second_indent の key handler が
+% \@makefntext を定義した直後に置く（それ以前は未定義）。
+\if@tate
+  \ifx d\jlreq@engine
+    % 【挿入物文脈フラグ】挿入物(脚注等)の組版中は縦字形ボックスの
+    % ht/dp を JFM クラス値に正規化させる(jlreq-pdftex-rules.sty
+    % \jlreqpdf@insctx)。これにより挿入物内の全行(折返し行・複数
+    % 段落脚注を含む)で native と同じ「エム箱が行基準線を挟んで
+    % 中央」の行内配置になる。本文側は出荷回転の第一行カーンで
+    % 従来規約(ht=エム/dp=0)を補正済みのため対象外。
+    % フラグの設定・解除は \@makefntext の前後で行う: 挿入物の本体は
+    % \footnote 呼び出し時(\insert 実行時)にその場で組まれるため、
+    % この括りで挿入物の組版全体が覆われる。
+    \let\jlreq@saved@makefntext\@makefntext
+    % 【罫線位置は挿入物行の dp で調整する】galley の 1fil は罫線より
+    % 上にあるため、罫線位置は「罫線より下の内容量」で下から決まる:
+    % \skip\footins の自然長を増やしても fil が同量縮んで相殺される
+    % （実測: +2.25pt 加えても罫線不動）。native 挿入物行の dp は
+    % 0.5*BS_fn（縦組 strutbox）だが pdfTeX 側は 0.5zh_fn（字形 dp）で、
+    % この差が罫線の残差。各脚注段落の行末に深さ 0.5842*BS_fn の幅0
+    % の罫を足して行 dp を native に揃える(実測較正: 10pt・12pt で
+    % 罫線・本文列が uplatex と 0.01pt 一致)。エム箱位置は行の ht のみ
+    % で決まるためこの dp 追加は影響しない。行送りは baselineskip 機構
+    % が同一ピッチに保つ（native と同じ）。
+    % 先頭脚注(そのページで最初のもの)のみ行頭側に高さ補正の罫を足す:
+    % 行基準線を 0.5zh 行末側へずらし native と同じ「エム箱が基準線を
+    % 挟んで中央」の行内配置にする(実測: この補正で rule→本文列の
+    % 間隔が native の 17.40pt に一致)。2個目以降の脚注段落にまで
+    % 足すと段落間の行送りが native の 13.75pt から 18.7pt に崩れる
+    % (実測)ため \ifvoid\footins で先頭のみに限定する。継続段落は
+    % \jlreqpdf@insctx の字形 h/d 正規化だけて自然に揃う。
+    \def\jlreq@footnote@tatestrut{%
+      \ifvoid\footins
+        \vrule height\dimexpr\footnotesep+.5\jlreq@zh\relax width\z@\relax
+      \fi
+      \vrule height\z@ depth.5842\baselineskip width\z@\relax}%
+    \long\def\@makefntext#1{%
+      \global\jlreqpdf@insctx=1
+      \jlreq@saved@makefntext{#1}%
+      \jlreq@footnote@tatestrut
+      \global\jlreqpdf@insctx=0}%
+    \let\jlreq@saved@@makefntext=\@makefntext
+  \fi
+\fi
+
 \jlreqsetup{endnote_second_indent=2\jlreq@zw}
 \jlreqsetup{endnote_position=headings}
 \dim_compare:nT { \jlreq@sidenote@length>0pt } {
@@ -6796,6 +7835,12 @@
 \fi
 
 %. complements...
+% jlreq-complementsはpdfTeXに対応済み（横組のみ: complements内の
+% \iftdir相当は常に偽，\inhibitglueはバックエンドの\relax shimで無害化）．
+% pdfTeXではエンジン明示オプション付きでロードする．
+\ifx d\jlreq@engine
+  \RequirePackage[pdflatex,setupname=jlreqsetup]{jlreq-complements}[2025/03/16]
+\else
 \tl_set:Nx \l__jlreq_tmpa_tl {
   \exp_not:N \RequirePackage[
     \ifx l\jlreq@engine lualatex\fi
@@ -6811,6 +7856,7 @@
   theindex_presystemcode = { \jlreq@oldfontcommand@enable },
   theindex_postsystemcode = { \jlreq@oldfontcommand@disable }
 }
+\fi
 
 \ExplSyntaxOff
 \endinput

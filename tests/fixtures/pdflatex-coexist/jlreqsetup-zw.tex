@@ -1,0 +1,22 @@
+% U2: \jlreqsetup キー値中のリテラルzw/zh（およびQ/H）単位
+% pdfTeXでは\jlreqsetup引数の書換えで「数字直後の」zw/zhを\jlreq@zw/zhに，
+% Q/Hを\dimexpr 0.25mm\relaxに変換する．マクロ形式1\zw（数字直後でない
+% zw）は書換え対象外としてそのまま動くことも併せて検証する．
+\documentclass[pdflatex]{jlreq}
+\jlreqsetup{
+  footnote_indent=2zw,%        既定フォント10ptなので2zw=20pt
+  footnote_second_indent=1zw,% 1zw=10pt
+  quote_indent=2zw,%
+  quote_end_indent=0.5zh,%     0.5zh=5pt
+  quote_beforeafter_space=4Q,% 4Q=1mm
+  endnote_second_indent=1\zw,% マクロ形式は書換え対象外（\zw=\jlreq@jareg）
+}
+\begin{document}
+\makeatletter
+\typeout{JSETUP-FNI=\the\dimexpr\jlreq@footnoteindent\relax}% 期待: 20.0pt
+\typeout{JSETUP-QI=\the\dimexpr\jlreq@quote@indent\relax}% 期待: 20.0pt
+\typeout{JSETUP-QEI=\the\dimexpr\jlreq@quote@end@indent\relax}% 期待: 5.0pt
+\typeout{JSETUP-QSPACE=\the\dimexpr\jlreq@quote@beforeafter@space\relax}% 4Q=1mmの実測
+\makeatother
+本文。\footnote{脚注の字下げは2zw（リテラル）指定．}
+\end{document}

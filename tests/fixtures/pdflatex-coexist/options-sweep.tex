@@ -1,0 +1,29 @@
+% L1マトリクス掃引: 代表クラスオプション一式（非既定値）のコンパイル検証
+% 値のリテラルzw/zh/Q/H は jlreq.cls の d 分岐リテラル書換え
+% （数字直後zw/zh→\jlreq@zw/\jlreq@zh 単位マクロ、Q/H→0.25mm）で
+% 動作する（jlreqsetup-zw.tex が本経路を検証）．
+\documentclass[pdflatex,paper=b5,fontsize=12pt,line_length=40zw,number_of_lines=10,head_space=15mm,foot_space=20mm,gutter=15mm,fore_edge=20mm,baselineskip=20pt,column_gap=2zw,twoside]{jlreq}
+\jlreqsetup{
+  caption_font=\small,
+  caption_label_format={表#1:},
+  itemization_itemsep=0.2\baselineskip,
+  warichu_opening=（, warichu_closing=）,
+  % U1/U3追加分: pdfTeXでもQ/H単位（級・歯，1Q=1H=0.25mm）とリテラルzwが
+  % 使える（クラスの書換えパスで寸法式/単位マクロへ変換）．2Q=0.5mm, 1H=0.25mm．
+  quote_indent=2Q, quote_end_indent=1H,
+  footnote_indent=1zw,
+}
+\begin{document}
+\section{版面オプションの掃引}
+紙・行長・行数・天地・のど・小口・行送り・段間を非既定値にした文書．
+割注\warichu{割注一行目\\割注二行目}を含む．
+\begin{itemize}\item 箇条書きの項目間空き検証．\end{itemize}
+\begin{table}[htbp]\centering\caption{キャプション書式検証}
+\begin{tabular}{cc} あ & い \\ う & え \\\end{tabular}\end{table}
+\subsection{小見出し}
+\makeatletter
+\typeout{SWEEP-QI=\the\dimexpr\jlreq@quote@indent\relax}% 2Q=0.5mmの実測
+\typeout{SWEEP-QEI=\the\dimexpr\jlreq@quote@end@indent\relax}% 1H=0.25mmの実測
+\typeout{SWEEP-FNI=\the\dimexpr\jlreq@footnoteindent\relax}% 1zw=12pt（fontsize=12pt）
+\makeatother
+\end{document}

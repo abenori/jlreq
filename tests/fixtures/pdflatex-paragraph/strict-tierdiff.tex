@@ -1,0 +1,36 @@
+% strict-tierdiff: the "2tier以上でnative一括伸縮と差が出る例"
+% case -- a line whose stretch demand is filled by the
+% TIER ORDER (explicit tier 50 first) instead of the native one-shot
+% proportional stretch. Assertions via log probes (runner greps).
+\documentclass[pdflatex]{jlreq}
+\begin{document}
+\makeatletter
+\def\jlreqpar@verifywd{1}%
+% hsize chosen so line 1 must stretch ~23pt. The line contains:
+%   - a JFM 」pair glue   (tier -10 stretch)
+%   - kanjiskip boundaries (tier 0 stretch, ~9 x 2.5pt)
+%   - one explicit \hspace{0pt plus 30pt} (tier 50 stretch)
+% Native one-shot proportional stretch would give the hspace
+%   23pt * 30/52.5 = ~13.1pt and every kanjiskip boundary
+%   ~1.1pt; the tier engine gives the hspace the whole 23pt
+% (within its 30pt capacity) and the lower tiers ZERO.
+\hsize=158pt
+\begin{jlreqparagraph}
+あい」うえお。\hspace{0pt plus 30pt}かきくけこ。さしすせそ。たちつてと。
+\end{jlreqparagraph}
+% STRICT-PASS probes: dump the tier-50 explicit glue's delta (GD@1@k
+% where the GI spec has 30pt stretch) and assert the kanjiskip
+% boundaries' deltas are 0.
+\count0=0
+\loop
+  \advance\count0 1
+  \ifnum\count0<40
+    \expandafter\ifx\csname jlreqpar@GD@1@\the\count0\endcsname\relax\else
+      \message{TIERTOP: line=1 gk=\the\count0
+        delta=\csname jlreqpar@GD@1@\the\count0\endcsname
+        GI=\csname jlreqpar@GI@1@\the\count0\endcsname}%
+    \fi
+\repeat
+\makeatother
+x
+\end{document}

@@ -1,0 +1,21 @@
+% date-boundaries.tex -- 和暦境界日と元年、スタイル切替（和暦境界日行）。
+% 検証: 5つの境界日（1989-01-07=昭和64年1月7日, 1989-01-08=平成元年1月8日,
+%   2019-04-30=平成31年4月30日, 2019-05-01=令和元年5月1日,
+%   1926-12-24/25=昭和元年扱いの開始日）と \西暦true/\和暦 の文書中切替。
+% 判定は tests/check-date-boundaries.py（抽出テキストの完全一致検査）。
+\documentclass[pdflatex]{jlreq}
+\pagestyle{empty}
+\jlreqsetup{year_style=wareki}
+\newcommand{\dtest}[4]{\year=#1\relax\month=#2\relax\day=#3\relax #4: \today\par}
+\begin{document}
+\dtest{1989}{1}{7}{A}
+\dtest{1989}{1}{8}{B}
+\dtest{2019}{4}{30}{C}
+\dtest{2019}{5}{1}{D}
+\dtest{1926}{12}{24}{E}
+\西暦true
+\year=2019\relax\month=5\relax\day=1\relax
+F: \today\par
+\和暦
+G: \today\par
+\end{document}

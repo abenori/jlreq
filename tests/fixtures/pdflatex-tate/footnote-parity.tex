@@ -1,0 +1,25 @@
+% footnote-parity.tex -- acceptance gate (footnote-block parity):
+% the d-tate footnote block micro-layout vs the uplatex consensus,
+% measured at the INK level with pymupdf (the same pattern as
+% savepos-anchor-pdf.tex; the runner compiles the SAME file under
+% pdflatex and uplatex and runs tests/check-footnote-parity.py).
+%
+% Anchors (all single glyphs, found by codepoint):
+%   あ : the first body glyph = the shared logical origin
+%   ☆ : the FIRST glyph of the footnote text = the fn text column head
+%   （ : the footnote opener （１） bracket = the fn mark column head
+%   rule : the thin vertical drawing = the footnote rule
+% The checker locates each anchor's ink box in the reading frame,
+% aligns the あ origins, and asserts:
+%   - fn text column head: |Δ| <= 0.5pt (cross position of ☆)
+%   - fn opener: |Δ| <= 0.5pt (cross position of the fn-area （）
+%   - fn rule cross position: |Δ| <= 0.5pt
+%   - rule length: |Δ| <= 0.5pt
+%   - rule -> text column gap: |Δ| <= 0.5pt
+% (the pre-fix residuals were: rule -8.54pt, text -1.72pt, opener
+% -3.71pt at 10pt; docs/pdftex-internals.md の縦組み脚注パリティ表.)
+\documentclass[pdflatex,tate,paper=a5]{jlreq}
+\pagestyle{empty}
+\begin{document}
+あ\footnote{☆脚注本文。いちにさん。}\typeout{FNPAR: probing}%
+\end{document}

@@ -1,0 +1,40 @@
+% 受入: jlreqparagraph 厳密段落環境の基本動作（yoko）
+% 判定: ログ内 STRICT-PASS / STRICT-FAIL（runner が grep）。
+\documentclass[pdflatex]{jlreq}
+\begin{document}
+\makeatletter
+% ---- 1. snapshot: 環境入口の値が実値と一致すること ----
+\begingroup
+\edef\snaphsize{\the\hsize}%
+\edef\snappi{\the\parindent}%
+\edef\snapbs{\the\baselineskip}%
+\hsize=333pt
+\parindent=20pt
+\begin{jlreqparagraph}
+スナップショット検証用の段落。あいうえおかきくけこさしすせそ。
+\end{jlreqparagraph}
+\ifdim\jlreqpar@hsize=333pt\relax\else
+  \typeout{STRICT-FAIL: hsize-snapshot (\the\jlreqpar@hsize)}\fi
+\makeatother
+通常段落へ戻る。
+\makeatletter
+\ifdim\hsize=333pt\else\typeout{STRICT-FAIL: hsize-restored}\fi
+\endgroup
+\makeatother
+% ---- 2. 基本: 多行・括弧・約物・欧文混在（Overfull/Underfull 0 は
+%         runner が検査） ----
+\begin{jlreqparagraph}
+厳密段落テスト。日本語の文章をここに入れる。優先順位付きの伸縮が厳密に処理される。漢字とひらがな、そして「括弧」や句読点、English words too。あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん。
+\end{jlreqparagraph}
+% ---- 3. 連続環境（2環境連続、行間が正常につながること） ----
+\begin{jlreqparagraph}
+一号環境。あいうえおかきくけこさしすせそたちつてとなにぬねの。
+\end{jlreqparagraph}
+\begin{jlreqparagraph}
+二号環境。はひふへほまみむめもやゆよらりるれろわをん。
+\end{jlreqparagraph}
+後続の通常段落。
+\makeatletter
+\typeout{STRICT-PASS: basic-multiline}
+\makeatother
+\end{document}

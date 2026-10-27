@@ -1,0 +1,63 @@
+% latin-adjacency.tex -- 段落/box 先頭の LA->JA 境界（abc漢）と
+% 誤判定ガード（空段落・indent・明示空白・kern・直前box は欧文と
+% みなさない）。判定は lastclass=90 && lastnodetype=0（char ノード）
+% のみ（\jlreqpdf@latadj, CJK@X helper head で実行）。
+\documentclass[pdflatex]{jlreq}
+\makeatletter
+\newbox\lboxa
+\newbox\lboxb
+\newdimen\ldim
+\def\ltest#1{% name; compares \lboxa vs \lboxb
+  \ldim=\dimexpr\wd\lboxa-\wd\lboxb\relax
+  \ifdim\ldim<\z@ \ldim=-\ldim \fi
+  \ifdim\ldim<0.5pt\relax
+    \typeout{P3-PASS: #1 (\the\wd\lboxa)}%
+  \else
+    \typeout{P3-FAIL: #1 (\the\wd\lboxa~vs~\the\wd\lboxb, diff \the\ldim)}%
+  \fi}
+
+\begin{document}
+% ---- 1. 段落先頭 abc漢: xkanjiskip 0.25zw が入る（既知制限の解消）
+\setbox\lboxa=\vbox{\hsize=200pt\parindent=0pt abc漢\par}%
+\setbox\lboxb=\vbox{\hsize=200pt\parindent=0pt abc\hskip\jlreqxkanjiskip 漢\par}%
+\ltest{para-head-latin-adjacency}
+
+% ---- 2. box 内 abc漢
+\global\jlreqpdf@lastclass=90
+\setbox\lboxa=\hbox{abc漢}%
+\global\jlreqpdf@lastclass=90
+\setbox\lboxb=\hbox{abc\hskip\jlreqxkanjiskip 漢}%
+\ltest{box-latin-adjacency}
+
+% ---- 3. 空段落の後（誤判定なし: 空きは入らない）
+\setbox\lboxa=\vbox{\hsize=200pt\parindent=0pt \par 漢\par}%
+\setbox\lboxb=\vbox{\hsize=200pt\parindent=0pt \par 漢\par}%
+\ltest{empty-para-no-glue}
+
+% ---- 4. indent の後（indent box は欧文とみなさない: 段落先頭和文と同一）
+\setbox\lboxa=\vbox{\hsize=200pt 漢\par}%
+\setbox\lboxb=\vbox{\hsize=200pt 漢\par}%
+\ltest{indent-not-latin}
+
+% ---- 5. 明示空白の後（glue は欧文とみなさない）
+\global\jlreqpdf@lastclass=90
+\setbox\lboxa=\hbox{漢\kern1pt 漢}%
+\global\jlreqpdf@lastclass=90
+\setbox\lboxb=\hbox{漢\kern1pt 漢}%
+\ltest{kern-not-latin}
+
+% ---- 6. 直前 box（mbox）の後（box は欧文とみなさない）
+\global\jlreqpdf@lastclass=90
+\setbox\lboxa=\hbox{\mbox{x}漢}%
+\global\jlreqpdf@lastclass=90
+\setbox\lboxb=\hbox{\mbox{x}漢}%
+\ltest{box-not-latin}
+
+% ---- 7. 段落途中の abc漢（中間欧文走行: peek が処理済み——変化なし）
+\global\jlreqpdf@lastclass=90
+\setbox\lboxa=\hbox{漢abc漢}%
+\global\jlreqpdf@lastclass=90
+\setbox\lboxb=\hbox{漢\hskip\jlreqxkanjiskip abc\hskip\jlreqxkanjiskip 漢}%
+\ltest{mid-para-latin-run}
+
+\end{document}

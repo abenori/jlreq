@@ -1,0 +1,106 @@
+# .github/workflows/pdftex.yml -- pdfTeX backend CI.
+#
+# 単一jobでビルド成果物を使うコマンド群と staged install smoke
+# を実行する。参照環境は TeX Live 2025 最終配布。
+#
+# TeX Live の導入: 公式 texlive/texlive Docker イメージ
+# (TL2025-historic = scheme-full 相当, TL2025 final 相当のバイナリ)
+# をコンテナとして使う。かつて install-tl を workflow 内で実行して
+# いたが、CTANミラーの動的リダイレクト先が壊れる/一時的に到達不能
+# になり CI が間欠的に落ちたため、イメージに固定した。
+# bxcjkjatype / CJK / ruby / zhmetrics / ipaex-type1 は含まれる。
+name: pdftex
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  suite:
+    runs-on: ubuntu-latest
+    container:
+      image: texlive/texlive:TL2025-historic
+    timeout-minutes: 60
+    env:
+      # ドキュメントPDFのフォントプリセット（HiraginoはCIに無いため
+      # TL収録の ipaex プリセットで組む。上流の hiragino-pron と同じ
+      # テンプレート経路・同じ版数であることを保証する）。
+      README_LTPRESET: ipaex
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python test dependencies (FontTools + PyMuPDF + poppler tools)
+        run: |
+          set -e
+          # pandoc: make tds が README の PDF/HTML 生成に使う
+          #（scheme-full/イメージには含まれないシステムツール）。
+          apt-get update -qq
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+            python3-pip poppler-utils pandoc git make
+          pip3 install --break-system-packages fonttools pymupdf
+
+      - name: Required resource probe (missing = FAIL, never SKIP)
+        run: |
+          set -e
+          command -v pdflatex platex uplatex lualatex texlua ttf2tfm makejvf
+          kpsewhich bxcjkjatype.sty
+          kpsewhich CJKutf8.sty
+          kpsewhich ruby.sty
+          kpsewhich ipaexm.ttf
+          kpsewhich ipxm-r-u30.pfb
+          kpsewhich ipxg-r-u30.pfb
+          kpsewhich Unicode.sfd
+          kpsewhich unisong30.tfm
+          kpsewhich cmtt9.tfm
+          kpsewhich HaranoAjiMincho-Regular.otf
+          # kpsewhich does not index fonts/source/ (not in ls-R); the
+          # Makefile locates this file itself via ls -RL over TEXMFDIST.
+          # Probe the same way.
+          ls "$(kpsewhich --var-value TEXMFDIST)/fonts/source/uptex-fonts/makejvf-upjpn.cnf" >/dev/null
+          ttf2tfm --version
+          texlua --version | head -1
+          python3 -c 'import fontTools, pymupdf; print("fonttools+pymupdf OK")'
+          command -v pdftotext pdffonts makejvf uppltotf ppltotf pandoc
+
+      - name: make -j4 pdftex-fonts pdftex-jfm (parallel generators, no races)
+        run: make -j4 pdftex-fonts pdftex-jfm
+
+      - name: make check-pdftex-jfm
+        run: make check-pdftex-jfm
+
+      - name: make check-pdftex-fonts
+        run: make check-pdftex-fonts
+
+      - name: texlua check_jfm_pdftex.lua
+        run: texlua check_jfm_pdftex.lua
+
+      - name: sh tests/run-pdftex-tests.sh (4-engine suite + staged install smoke)
+        run: sh tests/run-pdftex-tests.sh
+
+      - name: make tds (full TDS bundle)
+        run: make tds
+
+      - name: TDS bundle listing
+        run: find tds -type f | sort
+
+      - name: Collect failure artifacts (logs/PDFs/diffs)
+        if: failure()
+        run: |
+          # collect all suite workdirs (mktemp-based), staged trees and tds
+          mkdir -p artifacts
+          cp -r /tmp/jlreq-tests.* artifacts/ 2>/dev/null || true
+          cp -r /tmp/jlreq-staged.* artifacts/ 2>/dev/null || true
+          cp -r /tmp/jlreq-smoke.* artifacts/ 2>/dev/null || true
+          cp -r tds artifacts/ 2>/dev/null || true
+          # keep the regenerated outputs for byte-diff triage
+          cp pdftex-jfm-manifest.lua artifacts/ 2>/dev/null || true
+          cp fonts/pdftex/*.def artifacts/ 2>/dev/null || true
+
+      - name: Upload failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdftex-failure-logs-${{ github.run_id }}
+          path: artifacts/
+          if-no-files-found: ignore
+          retention-days: 14

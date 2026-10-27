@@ -1,0 +1,19 @@
+% 共存試験: 表（\begin{table}+tabular，和文キャプション・和文セル）
+\documentclass[pdflatex]{jlreq}
+\begin{document}
+\section{表の検証}
+\begin{table}[htbp]
+\centering
+\caption{日本語と英数字の混在表}
+\begin{tabular}{lcc}
+\hline
+項目名 & 数値 & 備考 \\
+\hline
+りんご & 100 & 青森産 \\
+みかん & 80 & 和歌山産 \\
+バナナ & 120 & 輸入品 \\
+\hline
+\end{tabular}
+\end{table}
+表\ref{tab:one}を参照する文章．
+\end{document}

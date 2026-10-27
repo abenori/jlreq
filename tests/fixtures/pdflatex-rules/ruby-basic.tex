@@ -1,0 +1,157 @@
+% ruby-basic.tex -- ruby.sty provider adapter, yoko placement + boundary glue.
+% 自己表明型 (RUBY-PASS/RUBY-FAIL をログへ出力; runner の T9 ゲートが grep)。
+% 検査対象（ruby の配置と境界グルー）:
+%   1. 横組み: ルビは本文の上 (annotation above base)
+%   2. 境界グルー: 、→ルビ の 0.5zw ペアグルーが 1 回だけ出る
+%      (本文直接組との差分 0 = 二重発行なし・欠落なし)
+%   3. ルビ→次の和文 の境界 (base 右端クラスで評価)
+%   4. ルビ→欧文 の右エッジ xkanjiskip (0.25zw)
+%   5. 欧文→ルビ の左エッジ xkanjiskip
+%   6. 連続ルビ: overlap の前ルビふち出し kern (\ruby@width) が生きる
+%   7. 本文より長いルビ: nooverlap で外枠がルビ幅になる
+% 測定方法: ペア位置は \pdfsavepos ではなく box 幅差分
+%   (wd(ルビを含む行片) - wd(対応する直接組)) == 0 で境界グルー同一。
+\documentclass[pdflatex,paper=a5]{jlreq}
+\pagestyle{empty}
+\usepackage{ruby}
+\makeatletter
+\newbox\rboxa
+\newbox\rboxb
+\newdimen\rdiff
+% RTEST <name> <tolerance> {ruby-side} {plain-side}:
+%   2 つの hbox 幅の差が tol 以内なら RUBY-PASS。
+\long\def\RTEST#1#2#3#4{%
+  \setbox\rboxa=\hbox{#3}% 前後の文脈ごと凍結
+  \setbox\rboxb=\hbox{#4}%
+  \rdiff=\dimexpr\wd\rboxa-\wd\rboxb\relax
+  \ifdim\rdiff<\z@ \rdiff=-\rdiff \fi
+  \ifdim\rdiff<#2\relax
+    \typeout{RUBY-PASS: #1 (diff=\the\rdiff)}%
+  \else
+    \typeout{RUBY-FAIL: #1 (diff=\the\rdiff, ruby=\the\wd\rboxa, plain=\the\wd\rboxb)}%
+  \fi}
+% 幅だけの比較では「ルビ箱が外にはみ出す」場合を区別できないため、
+% 基準側にも同じ幅の phantom を置く (\rlap で重ねた実組でも可)。
+% --- ここでの比較は「ルビ両側の境界グルー」に限る: ルビ本体幅は
+% provider 計算 (base/annotation 幅) に従うため、基準側に
+% \ruby と同じ box を置いて両側だけを交換する。
+\begin{document}
+% ================= 1. 横: annotation は上 =================
+% annotation の baseline 位置 = base の上 (provider の vbox:
+%   .7\baselineskip - .5ex + .3 ann-baselineskip)。実測で
+%   annotation の深さ方向位置が base baseline より上であることを
+%   確認する: ルビ全体 box の高さ > base だけの box の高さ。
+\setbox\rboxa=\hbox{\ruby{漢}{かん}}%
+\setbox\rboxb=\hbox{漢}%
+\ifdim\ht\rboxa>\ht\rboxb
+  \typeout{RUBY-PASS: annotation-above (ht=\the\ht\rboxa\space vs base \the\ht\rboxb)}%
+\else
+  \typeout{RUBY-FAIL: annotation-above (ht=\the\ht\rboxa\space vs base \the\ht\rboxb)}%
+\fi
+% annotation の横位置: base グループの中央 (hss センタリング)。
+%   ann box が base 幅より狭い → ann の左右空きは対称。
+\setbox\rboxa=\hbox{\ruby{漢}{か}}%
+% \box0 (provider の base box) は \ruby 呼び出し後も残る:
+%   ann box は \@tempboxa (消費される)。代わりに幾何で確認:
+%   ルビ box 幅 = base 幅 (wd0; ann が狭い場合)。
+\ifdim\wd\rboxa=\dimexpr1\jlreq@jareg\relax
+  \typeout{RUBY-PASS: narrow-ann-box-width (wd=\the\wd\rboxa)}%
+\else
+  \typeout{RUBY-FAIL: narrow-ann-box-width (wd=\the\wd\rboxa, expected \the\jlreq@jareg)}%
+\fi
+% ================= 2. 境界グルー: 、→ルビ =================
+% \ruby{字}{じ} の base を plain の 字 に置き換えた対照行と
+% 全体幅が一致すれば、境界グルーが同一 (かつ 1 回だけ)。
+\RTEST{punct-left-glue}{0.02pt}{漢、\ruby{字}{じ}あ}{漢、字あ}
+% ルビの右: base 右端→次の和文
+\RTEST{right-glue-cjk}{0.02pt}{漢\ruby{字}{じ}あ}{漢字あ}
+% ルビの右→欧文 (xkanjiskip 0.25zw)
+\RTEST{right-glue-latin}{0.02pt}{漢\ruby{字}{じ}a}{漢字a}
+% 欧文→ルビの左 (xkanjiskip 0.25zw)
+\RTEST{left-glue-latin}{0.02pt}{a\ruby{字}{じ}b}{a字b}
+% 区切り約物の左エッジ (「、」はルビ base に入る)
+\RTEST{punct-base-inside}{0.02pt}{漢\ruby{字、}{じ}あ}{漢字、あ}
+% ================= 3. 連続ルビ (overlap) =================
+% 2 つ目のルビは 1 つ目の ruby@width (= (ann幅-base幅)/2 = 0.9zw) を
+% kern(\@tempdimb) として進む (hmode では先頭ふち出し kern は出ない:
+% provider の vm kern は真の段落頭のみ)。全体幅 = 10 + 9 + 10。
+\setbox\rboxa=\hbox{\ruby{漢}{かんたんいそん}\ruby{字}{じ}}%
+\rdiff=\wd\rboxa
+\advance\rdiff-\dimexpr2\jlreq@jareg+0.9\jlreq@jareg\relax
+\ifdim\rdiff<\z@ \rdiff=-\rdiff \fi
+\ifdim\rdiff<0.01pt
+  \typeout{RUBY-PASS: consecutive-overlap-advance (wd=\the\wd\rboxa)}%
+\else
+  \typeout{RUBY-FAIL: consecutive-overlap-advance (wd=\the\wd\rboxa, expected 2.9\jlreq@jareg, residual=\the\rdiff)}%
+\fi
+% ================= 4. 本文より長いルビ (nooverlap) =================
+\rubynooverlap
+\setbox\rboxa=\hbox{\ruby{漢}{かんたんいそんですよ}}%
+% 外枠 = ann 幅 (10 glyphs × 0.4 × f@size; f@size=9.99994pt なので
+% 厳密には 39.99939pt — 0.01pt の許容で検査)。
+\rdiff=\wd\rboxa
+\rdiff=-\rdiff
+\advance\rdiff4\jlreq@jareg
+\ifdim\rdiff<\z@ \rdiff=-\rdiff \fi
+\ifdim\rdiff<0.01pt
+  \typeout{RUBY-PASS: long-ann-nooverlap-width (wd=\the\wd\rboxa)}%
+\else
+  \typeout{RUBY-FAIL: long-ann-nooverlap-width (wd=\the\wd\rboxa, expected 4\jlreq@jareg, diff=\the\rdiff)}%
+\fi
+% base が長い場合: 外枠 = base 幅。
+\setbox\rboxa=\hbox{\ruby{依存関係}{いぞん}}%
+\ifdim\wd\rboxa=\dimexpr4\jlreq@jareg\relax
+  \typeout{RUBY-PASS: long-base-nooverlap-width (wd=\the\wd\rboxa)}%
+\else
+  \typeout{RUBY-FAIL: long-base-nooverlap-width (wd=\the\wd\rboxa, expected \the\dimexpr4\jlreq@jareg\relax)}%
+\fi
+\rubyoverlap
+% ================= 5. provider パラメータ =================
+% rubysize: annotation のフォントサイズ = 0.5\f@size。
+\renewcommand{\rubysize}{0.5}%
+\setbox\rboxa=\hbox{\ruby{漢}{かん}}%
+% ann 幅 = 2 × 0.5 × 10pt = 10pt (= base 幅 → ruby@width = 0)
+\ifdim\wd\rboxa=\jlreq@jareg
+  \typeout{RUBY-PASS: rubysize-05 (wd=\the\wd\rboxa)}%
+\else
+  \typeout{RUBY-FAIL: rubysize-05 (wd=\the\wd\rboxa, expected \the\jlreq@jareg)}%
+\fi
+\renewcommand{\rubysize}{0.4}%
+% rubysep: \rubysep は provider が kern として使うだけなので
+% box の高さに反映される (テスト: 0 にすると kern が消える)。
+\renewcommand{\rubysep}{0pt}%
+\setbox\rboxa=\hbox{\ruby{漢}{かん}}%
+\setbox\rboxb=\hbox{\ruby{漢}{かん}}%
+\ifdim\ht\rboxa=\ht\rboxb
+  \typeout{RUBY-PASS: rubysep-set (ht=\the\ht\rboxa)}%
+\else
+  \typeout{RUBY-FAIL: rubysep-set (\the\ht\rboxa\space vs \the\ht\rboxb)}%
+\fi
+\renewcommand{\rubysep}{-0.5ex}%
+% ================= 6. 段落先頭・末尾 =================
+% 段落先頭ルビ: 行頭グルーなし (parbdd 90→first は 0-natural)。
+% コンパイル成立 + 行頭位置で検査 (PDF 側は runner の幾何ゲート)。
+段落先頭のルビ。
+\par
+段落末尾の\ruby{ルビ}{ruby}
+\par
+% ================= 7. 書体・サイズ変更 =================
+{\gtfamily\ruby{漢}{かん}ゴシック}
+{\fontsize{14pt}{14pt}\selectfont\ruby{漢}{かん}大きい}
+\ruby{\gtfamily 漢}{かん}
+\typeout{RUBY-PASS: font-change-compiled}%
+% ================= 8. 状態隔離: ルビの後の境界 =================
+% ルビ直後の次の和文境界が base 右端クラスで評価されること。
+% (ルビの base が句読点で終わる場合: pair 7→0 = 0.5zw が出る)
+\RTEST{state-exit-baseclass}{0.02pt}{\ruby{漢、}{かん}字}{漢、字}
+% 逆: base が開き括弧で始まる (pair 90→1 = 0)
+\RTEST{state-line-head-open}{0.02pt}{\ruby{「あ」}{かん}い}{「あ」い}
+% ルビ内で空きなく続く base の内部境界 (箱の中は隔離フレーム)
+\RTEST{base-internal-isolated}{0.02pt}{x\ruby{漢、}{かん}x}{x漢、x}
+% ================= 9. rubylatin (provider の latin モード) ====
+% \rubylatin は境界グルーを出さない契約: 基準 = グルーなし直接組。
+\rubylatin
+\RTEST{rubylatin-no-edge-glue}{0.02pt}{漢\ruby{字}{じ}あ}{漢字あ}
+\rubyCJK
+\typeout{RUBY-DONE}
+\end{document}

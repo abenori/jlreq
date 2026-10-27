@@ -1,0 +1,4 @@
+Auxiliary vertical font for the jlreq pdfTeX backend.
+Derived from /nix/store/dc6z4jb2hpj82mcbxfibpp98fyrfvada-texlive-2025-r78234-final-env-texmfdist/fonts/truetype/public/ipaex/ipaexg.ttf; the glyph outlines are the source font's vertical (vert/vrt2) forms.
+copyright: Copyright(c) Information-technology Promotion Agency, Japan (IPA), 2003-2019. You must accept "https://opensource.org/licenses/IPA/" to use this product.
+license: https://opensource.org/licenses/IPA/

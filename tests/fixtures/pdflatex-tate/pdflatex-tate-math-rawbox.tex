@@ -1,0 +1,34 @@
+% pdflatex-tate-math-rawbox.tex -- raw primitive box 境界の保証
+% 判定（TATE-PASS/TATE-FAIL; runner は -halt-on-error なしで実行）:
+%   LEGAL   : \text{...} 引数内の raw \hbox は合法（wrapper exempt）で
+%             rawerr カウンタが立たないこと
+%   RAWERR  : 捕捉本体トップレベルの raw \hbox で ClassError 発火
+%             （\jlreqpdf@math@rawerrcnt で実測; 文言は runner が grep）
+%   VBOXERR : raw \vbox でも同様（カウンタ合計 2）
+\documentclass[pdflatex,tate,paper=a5]{jlreq}
+\usepackage{amsmath}
+\pagestyle{empty}
+\makeatletter
+\begin{document}
+% ---- LEGAL: wrapper 引数内の raw box は検査対象外 ----
+漢$\text{和\hbox{文}}$漢
+\ifnum\jlreqpdf@math@rawerrcnt=0
+  \typeout{TATE-PASS: LEGAL (raw box in wrapper arg: no ClassError)}%
+\else
+  \typeout{TATE-FAIL: LEGAL (unexpected raw err count=\the\jlreqpdf@math@rawerrcnt)}%
+\fi
+% ---- RAWERR: 捕捉本体のトップレベル raw \hbox → ClassError ----
+漢$x\hbox{漢}y$漢
+\ifnum\jlreqpdf@math@rawerrcnt=1
+  \typeout{TATE-PASS: RAWERR (raw hbox raised ClassError)}%
+\else
+  \typeout{TATE-FAIL: RAWERR (count=\the\jlreqpdf@math@rawerrcnt, expected 1)}%
+\fi
+% ---- VBOXERR: raw \vbox → ClassError ----
+漢$x\vbox{漢}y$漢
+\ifnum\jlreqpdf@math@rawerrcnt=2
+  \typeout{TATE-PASS: VBOXERR (raw vbox raised ClassError; total 2)}%
+\else
+  \typeout{TATE-FAIL: VBOXERR (count=\the\jlreqpdf@math@rawerrcnt, expected 2)}%
+\fi
+\end{document}

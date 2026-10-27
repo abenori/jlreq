@@ -1,0 +1,26 @@
+% 受入: 禁止構成要素の具体的エラー（display math / float / footnote /
+% verbatim / 未知のマクロ）。各ケースは単独セクションで実行し、
+% ログに期待エラー文言が出ることを runner が grep する（-halt-on-error
+% なしで実行）。
+\documentclass[pdflatex]{jlreq}
+\begin{document}
+% (A) 未知マクロ → エラー
+\begin{jlreqparagraph}
+未知マクロテスト。\thismacroisundefined あいうえお。
+\end{jlreqparagraph}
+% (B) 環境内 display math → エラー
+\begin{jlreqparagraph}
+表示数式テスト。
+\[ x=1 \]
+あいうえお。
+\end{jlreqparagraph}
+% (C) 環境内脚注
+\begin{jlreqparagraph}
+脚注テスト\footnote{環境内脚注}。あいうえお。
+\end{jlreqparagraph}
+% (D) その後も処理が続くこと（回帰）
+\begin{jlreqparagraph}
+正常環境。あいうえおかきくけこさしすせそ。
+\end{jlreqparagraph}
+後続段落。
+\end{document}

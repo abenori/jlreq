@@ -1,0 +1,29 @@
+% 共存試験: hyperref + amsmath の \eqref（和文コンテキスト中の式番号参照）。
+% 検証するもの:
+%   (a) 和文に挟まれた位置での \eqref/\ref（ASCIIラベル名）の解決
+%   (b) \text{和文} を含む式と、直打ち和文を含む式（backend で後者も組める）
+%   (c) 和文見出し（bookmarks 同様 UTF-16BE 経路）と式番号の共存
+% 和文ラベル名（解消済み）:
+%   * \label{eq:あ} 等の和文ラベル名は対称正規化（\jlreqpdf@labelkey）
+%     で解決する（label-packages.tex が ref/pageref/eqref/autoref/nameref/
+%     cref/refcount の全面行列を実測）。本fixtureはASCIIラベルでの
+%     和文コンテキスト検証として残す。
+\documentclass[pdflatex]{jlreq}
+\usepackage{amsmath}
+\usepackage[unicode]{hyperref}
+\begin{document}
+\section{和文の見出しと式番号}\label{sec:top}
+和文に挟まれた参照\eqref{eq:euler}と、節の参照\ref{sec:top}。
+\begin{equation}
+e^{i\pi}+1=0 \label{eq:euler}
+\end{equation}
+和文を含む式の参照\eqref{eq:distance}:
+\begin{equation}
+\text{道のり} = \text{速さ} \times \text{時間} \label{eq:distance}
+\end{equation}
+直打ち和文を含む式の参照\eqref{eq:einstein}:
+\begin{equation}
+E = mc^2 \quad アインシュタイン \label{eq:einstein}
+\end{equation}
+式\eqref{eq:euler}、\eqref{eq:distance}、\eqref{eq:einstein}をまとめて参照。
+\end{document}

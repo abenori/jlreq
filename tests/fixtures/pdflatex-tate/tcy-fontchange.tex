@@ -1,0 +1,51 @@
+% tcy-fontchange.tex -- 縦中横の内部フォント変更（\gtfamily 等）と
+% 境界（前後のJFMグルー二重挿入なし・kinsoku 保持）のゲート。
+% 契約:
+%   * \tatechuyoko{...\gtfamily 12} のような内部の書体変更が
+%     1 回だけの組版で反映される（工場は body を一度だけ組む）。
+%   * 前後の和文との境界グルーは二重に挿入されない（before-glue は
+%     \jlreq@calc@jfmglue@cp が 1 回、box→後続字の境界は rules の
+%     評価器が 1 回）。
+%   * 非star形の yoko での使用は ClassError（別 fixture tcy-star-error）。
+\documentclass[pdflatex,tate,paper=a5]{jlreq}
+\pagestyle{empty}
+\makeatletter
+\begin{document}
+% --- TCY-GT: 内部 \gtfamily 変更（body は一度だけ組まれbox寸法に反映）
+\newbox\tcybox
+\setbox\tcybox=\hbox{\tatechuyoko{\gtfamily 12}}%
+\ifdim\wd\tcybox=\dimexpr1\jlreq@jareg\relax
+  \typeout{TATE-PASS: TCY-GT (wd=\the\wd\tcybox)}%
+\else
+  \typeout{TATE-FAIL: TCY-GT (wd=\the\wd\tcybox)}%
+\fi
+% --- TCY-BF: 内部 \bfseries
+\setbox\tcybox=\hbox{\tatechuyoko{\bfseries 34}}%
+\ifdim\wd\tcybox=\dimexpr1\jlreq@jareg\relax
+  \typeout{TATE-PASS: TCY-BF (wd=\the\wd\tcybox)}%
+\else
+  \typeout{TATE-FAIL: TCY-BF (wd=\the\wd\tcybox)}%
+\fi
+% --- TCY-BOUNDARY: 直前和文→縦中横→直後和文の境界で追加グルーは
+% uplatex と同じくほぼ 0（阿→box と box→阿）。実測: セル数を揃えて
+% 「阿伊\tatechuyoko{12}阿伊阿」（2+tcy+2 = 5 セル相当）と
+% 「阿伊阿阿伊阿」（素の漢字 5 セル）の行長差。許容 0.5pt
+% （境界グルーが 0 でない場合に破綻するのは 1zw=10pt 級のズレ）。
+\newdimen\lenwithtcy \newdimen\lenplain
+\setbox\tcybox=\hbox{阿伊\tatechuyoko{12}阿伊阿}%
+\lenwithtcy=\wd\tcybox
+\setbox\tcybox=\hbox{阿伊阿阿伊阿}%
+\lenplain=\wd\tcybox
+\ifdim\dimexpr\lenwithtcy-\lenplain\relax<0.5pt\relax
+  \ifdim\dimexpr\lenplain-\lenwithtcy\relax<0.5pt\relax
+    \typeout{TATE-PASS: TCY-BOUNDARY (delta=\the\dimexpr\lenwithtcy-\lenplain\relax)}%
+  \else
+    \typeout{TATE-FAIL: TCY-BOUNDARY (delta=\the\dimexpr\lenwithtcy-\lenplain\relax)}%
+  \fi
+\else
+  \typeout{TATE-FAIL: TCY-BOUNDARY (delta=\the\dimexpr\lenwithtcy-\lenplain\relax, expected within 0.5pt of 0)}%
+\fi
+% --- 実レンダリング
+阿伊\tatechuyoko{\gtfamily 12}阿伊\tatechuyoko{\bfseries 56}阿伊
+縦中横と、句読点。\tatechuyoko{12}「引用」の禁則も保持される。
+\end{document}

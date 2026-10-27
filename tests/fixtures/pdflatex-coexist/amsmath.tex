@@ -1,0 +1,22 @@
+% 共存試験: amsmath（和文混在数式・amsthm連動）
+% 注意: 数式環境のセル内の直接の和文文字はCJKアクティブ文字とamsmathの
+% 行列組み立てが衝突するため対象外（テキストモードでの和文混在のみ検証）．
+\documentclass[pdflatex]{jlreq}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\newtheorem{theorem}{定理}
+\begin{document}
+\begin{theorem}
+すべての実数$x$に対し，$x^2 \ge 0$が成り立つ．
+\end{theorem}
+\begin{proof}
+自明である．
+\end{proof}
+align環境の確認:
+\begin{align}
+a &= b + c \\
+  &= d + e
+\end{align}
+行列 $\begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix}$ と
+和文を含む文 $f(x) = x^2 + 1$ の混在も確認する．
+\end{document}

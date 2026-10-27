@@ -1,0 +1,29 @@
+% 検証（F-peek）：和欧文境界グルー（CJK→LA xkanjiskip）
+% peekが CJK デコーダの \fi 残骸を見ていた頃は CJK→LA 境界グルーが
+% 一度も出ていなかった（pairs の ja-la 測定は abc の実幅との数値偶然で
+% PASS していた）。ヘルパ CJK@X/XX/XXX/XXXX をラップして peek を
+% \ifx 閉包の後に実行するよう修正し，全ルートで実トークンが見える。
+\documentclass[pdflatex]{jlreq}
+\begin{document}
+\makeatletter
+\newbox\mboxa
+\def\meas#1#2#3{%
+  \ifx d\jlreq@engine\global\jlreqpdf@lastclass=90\fi
+  \setbox\mboxa=\hbox{#3}%
+  \ifdim\wd\mboxa=#1\relax
+    \typeout{PASS: #2 = \the\wd\mboxa}%
+  \else
+    \typeout{FAIL: #2 expected #1, got \the\wd\mboxa}%
+  \fi}
+% 漢字→欧文: xkanjiskip 0.25zw (pair@0@27 未定義→fallback)
+\meas{17.5pt}{kanji-latin (0->27 xkanji 0.25zw)}{漢a}
+\meas{27.77779pt}{kanji-abc (0->27 xkanji)}{漢abc}
+% 閉じ括弧→欧文: pair@2@27 = 0.5zw (」box 5pt + 5pt + a 5pt)
+\meas{15.0pt}{closebracket-latin (2->27 nat 0.5zw)}{」a}
+% かな→欧文: xspc pre-only (class 15) によりグルー抑制が正の挙動
+\meas{15.27798pt}{kana-latin (15->27 suppressed by xspc)}{あx}
+\makeatother
+% 実ページ: 漢字とabcの間に二分半の空きが見えること
+\parindent=0pt
+日本語とlatin textの混在。xkanjiskipが両境界に入る。
+\end{document}

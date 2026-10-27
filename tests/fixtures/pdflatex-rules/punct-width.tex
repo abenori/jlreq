@@ -1,0 +1,43 @@
+% 検証（クラス幅）：JFMクラス幅の実装（約物・半角の字送り縮小）
+% class@<n>{w}{h}{d}{align} の w<1zw クラスは \hbox to w*zw で字送りを
+% 縮小し，align に従ってグリフを配置する（ltj の align 相当）．
+% 測定: typeout で実測幅を出力し，pairs.tex 形式の PASS/FAIL 判定も行う．
+\documentclass[pdflatex]{jlreq}
+\begin{document}
+\makeatletter
+\newbox\pwbox
+\def\pwmeas#1#2#3{%
+  \ifx d\jlreq@engine\global\jlreqpdf@lastclass=90\fi
+  \setbox\pwbox=\hbox{#3}%
+  \ifdim\wd\pwbox=#1\relax
+    \typeout{PASS: #2 = \the\wd\pwbox}%
+  \else
+    \typeout{FAIL: #2 expected #1, got \the\wd\pwbox}%
+  \fi
+}
+% 単字: 約物は 0.5zw，かな/漢字/記号類は 1zw
+\pwmeas{5.0pt}{touten-halfwidth (class7 w=0.5 align=left)}{、}
+\pwmeas{5.0pt}{kuten-halfwidth (class6 w=0.5 align=left)}{。}
+\pwmeas{5.0pt}{close-bracket-halfwidth (class2 w=0.5 align=left)}{」}
+\pwmeas{5.0pt}{colon-halfwidth (class5 w=0.5 align=middle)}{：}
+% 90->1 = {0,0,0}（parbdd突き出し: インクは左へはみ出し，字送りは0.5zw）
+\pwmeas{5.0pt}{open-bracket-tentsuki (class1 w=0.5 align=right, 90->1=0)}{「}
+\pwmeas{10.0pt}{kanji-fullwidth (class0 w=1)}{漢}
+\pwmeas{10.0pt}{prolonged-fullwidth (class10 w=1 align=middle)}{ー}
+\pwmeas{10.0pt}{excl-fullwidth (class4 w=1 align=middle)}{！}
+% 組合せ: ペアグルーはグリフ箱と独立
+% 15->7 = nat 0 (kernmode抑制) : 10+0+5
+\pwmeas{15.0pt}{kanji-touten (15->7 nat 0)}{あ、}
+% 7->15 = nat 0.5zw : 5+5+10
+\pwmeas{20.0pt}{touten-kanji (7->15 nat 0.5zw)}{、あ}
+% 15->1 = nat 0.5zw + 開き括弧右寄せ : 10+5+5
+\pwmeas{20.0pt}{kanji-openbracket (15->1 nat 0.5zw)}{あ「}
+% 2->15 = nat 0.5zw : 5+5+10
+\pwmeas{20.0pt}{closebracket-kanji (2->15 nat 0.5zw)}{」あ}
+\pwmeas{20.0pt}{kanji-kanji (kanjiskip nat 0)}{漢字}
+\makeatother
+% 実ページ（目視確認用）: 約物の詰まりと開き括弧の突き出し
+\parindent=0pt
+あ、い。う「え」お：か！き…くー
+「x」（y）
+\end{document}

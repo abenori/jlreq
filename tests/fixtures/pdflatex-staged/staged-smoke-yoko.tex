@@ -1,0 +1,38 @@
+% staged-install-smoke.tex -- staged TDS no-shell-escape smoke.
+% これは「配布物から同じ動作が得られるビルド」検査のフィクスチャ本体
+% （JFMを触らない通常利用ではtexluaを起動せず、配布済みfontを
+% 使うため Python/fontTools/ttf2tfmを起動しない。
+% -no-shell-escape でインストール済みTDSだけからコンパイルできる）。
+%
+% runner (tests/run-pdftex-tests.sh の T12 セクション) は本ファイルを
+% リポジトリ外の作業ディレクトリへコピーし、TEXINPUTS/TEXFONTS/TEXENCS
+% を staged TEXMF (make install JLREQ_TEXMF=<tmp>) のみへ向けて pdflatex
+% -no-shell-escape を実行する。ここでは全機能面を1文書に含める:
+%   - 横組み本文 + 和欧文混植 + 約物 + 禁則
+%   - ページ家具（見出し・目次・脚注）
+%   - 数式内和文 (mathmc)
+%   - ruby (provider: ruby.sty)
+%   - 厳密段落 jlreqparagraph
+% 判定は runner 側で行う: rc=0、ログに shell-out 証跡 0 件
+% (runsystem/write18/shellescape の出力無し)、PDF抽出の照合。
+\RequirePackage{ifpdf}
+\documentclass[pdflatex]{jlreq}
+\usepackage{ruby}
+\begin{document}
+\section{はじめに}
+これは配布検証用の文書である。段落調整、約物「括弧」、句読点、
+そしてEnglish wordsとの混植を含む本文である。あいうえおかきくけこ
+さしすせそたちつてとなにぬねの。長い行は禁則処理を通り、行頭に句読点
+が来ないようにpackされる。脚注\footnote{これは脚注である。}も出す。
+数式内和文は $\mathmc{和文} + x = 1$ のように書く。
+ルビは \ruby{漢字}{かんじ} のように振る。連続しても大丈夫:
+\ruby{東京}{とうきょう}\ruby{大阪}{おおさか}。
+\begin{jlreqparagraph}
+厳密段落。優先順位付き伸縮が厳密に扱われる専用環境である。日本語と
+Latin混在、約物（「」、。・）を含む複数行にわたる段落をここに置く。
+あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめ
+もやゆよらりるれろわをん。
+\end{jlreqparagraph}
+通常段落へ戻る。これで横組みの確認は終わり。
+\typeout{STAGED-YOKO-PASS}
+\end{document}

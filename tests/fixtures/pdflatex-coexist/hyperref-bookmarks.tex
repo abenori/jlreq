@@ -1,0 +1,14 @@
+% 共存試験: hyperref（日本語見出しのしおり・\hypersetup{unicode}）
+% 注意: CJK文字を含むURLはCJKのアクティブ文字展開と\urlが衝突するため
+% 対象外（ASCII URLのみ検証）．
+\documentclass[pdflatex]{jlreq}
+\usepackage[unicode]{hyperref}
+\begin{document}
+\section{はじめてのしおり}\label{sec:one}
+hyperrefとの共存を確認する．\hyperref[sec:two]{次章へのリンク}．
+URL: \url{https://example.jp/path}．
+\section{数式と参照}\label{sec:two}
+式~\ref{eq:euler}を参照する．
+\begin{equation}e^{i\pi}+1=0\label{eq:euler}\end{equation}
+\subsection{小見出しのテスト}
+\end{document}

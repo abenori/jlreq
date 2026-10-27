@@ -1,0 +1,53 @@
+% TATE pairs (JFM pair glue in tate data) -- pairfields API.
+% Measures pair glue widths against the tate .def table by capturing the
+% pairfields natural directly (the OLD kernmode/fixedpair capture macros
+% were removed with the end_adjust rework: pair data now flows through
+% \jlreqpdf@pairfields -> blendzw -> \jlreqpdf@nat).
+% NOTE: the pair state (\jlreqpdf@lastclass etc.) must be set INSIDE the
+% measurement hbox (the everyhbox frame hook neutralizes the outer
+% state on box entry -- a box is a semantic frame), and the \setbox
+% itself must be \global (the measurement group is closed before the
+% width is read).
+\documentclass[pdflatex,tate,paper=a5,line_length=20zw]{jlreq}
+\makeatletter
+\newbox\pbox
+\newdimen\pmeasured
+\newdimen\pexpected
+\def\measurepair#1#2{% from,to
+  \expandafter\ifx\csname jlreqpdf@jfm@pair@#1@#2\endcsname\relax
+    \typeout{TATE-PAIR-SKIP: #1->#2 (undefined in table)}%
+  \else
+    % expected: evaluate the pairfields directly
+    {\global\jlreqpdf@lastclass=#1\relax
+     \global\jlreqpdf@curclass=#2\relax
+     \global\jlreqpdf@lastzw=\jlreq@jareg
+     \global\jlreqpdf@fbmode=0\relax
+     \csname jlreqpdf@jfm@pair@#1@#2\endcsname
+     \global\pexpected=\jlreqpdf@nat}%
+    % measured: run the SAME boundary through the real emitter, with the
+    % pair state set INSIDE the box (after the frame hook)
+    \begingroup
+      \global\setbox\pbox=\hbox{%
+        \global\jlreqpdf@lastclass=#1\relax
+        \global\jlreqpdf@curclass=#2\relax
+        \global\jlreqpdf@inhibit=0\relax
+        \global\jlreqpdf@lastzw=\jlreq@jareg
+        \jlreqpdf@emitpair}%
+    \endgroup
+    \pmeasured=\wd\pbox
+    \@tempdima=\dimexpr\pmeasured-\pexpected\relax
+    \ifdim\@tempdima<\z@ \@tempdima=-\@tempdima \fi
+    \ifdim\@tempdima<0.5pt\relax
+      \typeout{TATE-PASS: PAIR #1->#2 (\the\pmeasured~==~\the\pexpected)}%
+    \else
+      \typeout{TATE-FAIL: PAIR #1->#2 (\the\pmeasured~!=~\the\pexpected)}%
+    \fi
+  \fi}
+\begin{document}
+\measurepair{15}{6}
+\measurepair{15}{7}
+\measurepair{1}{15}
+\measurepair{7}{15}
+\measurepair{6}{15}
+\measurepair{15}{15}
+\end{document}

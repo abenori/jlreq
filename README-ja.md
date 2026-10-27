@@ -1,10 +1,11 @@
 # jlreq
 
 ## これは何？
-[日本語組版処理の要件](https://www.w3.org/TR/jlreq/?lang=ja)の実装を試みる[LuaTeX-ja](https://osdn.jp/projects/luatex-ja/wiki/FrontPage) / pLaTeX / upLaTeX用のクラスファイルと，それに必要なJFMの組み合わせです．
+[日本語組版処理の要件](https://www.w3.org/TR/jlreq/?lang=ja)の実装を試みる[LuaTeX-ja](https://osdn.jp/projects/luatex-ja/wiki/FrontPage) / pLaTeX / upLaTeX用のクラスファイルと，それに必要なJFMの組み合わせです（pdfLaTeXは実験的に対応）．
 
 ## 提供されるもの
 クラスファイルjlreq.clsと，横書きLuaTeX-ja用のJFMであるjfm-jlreq.luaが用意されています．また，縦書きのJFMやpLaTeX / upLaTeX用のJFMを生成するいくつかのスクリプトがあります．
+開発用に`tests/`（回帰・規則フィクスチャと一括テスト）と`tests/reference/`（参照エンジンの定量検証結果）も同梱されています．詳細は`docs/pdftex-tests.md`を参照してください．
 
 ## インストール
 `make`で必要なJFMを生成してください．その後，
@@ -25,13 +26,28 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
 
 リリース時点での最新版での動作を確認しています．
 
+### pdfLaTeX（実験的）
+pdfLaTeXでも文書がコンパイルできます（実験的なサポート・横組み/縦組み）．クラス
+オプションに`pdflatex`を渡すか，エンジンを自動判定させてください．内部で
+bxcjkjatype（CJKutf8）と実験的なバックエンド（jlreq-pdftex.sty）を読み込み，
+JFMに基づく文字間グルー・禁則・和欧文間隔を適用します．日本語ラベル・和暦
+`\today`・ルビ（`ruby`パッケージ経由）・`\tatechuyoko`・優先順位付き伸縮の
+厳密段落環境 `jlreqparagraph` に対応します．フォントセットは
+`pdftex_fontset=`クラスオプションで選択します（`ipaex-type1`（既定）/
+`haranoaji`/`ipa`/`custom`）．
+
+詳細は `docs/pdftex-compatibility.md` を参照してください．
+
+
+リリース時点での最新版での動作を確認しています．
+
 
 ## 使い方
 通常通り
 ```latex
 \documentclass{jlreq}
 ```
-とします．これで横書きのarticle相当の文書クラスとなります．エンジンは自動判定されますが，指定する場合はクラスオプションに`platex/uplatex/lualatex`のいずれかを渡してください．縦書きにするには`tate`オプションを渡します．また，reportやbook相当の文書クラスとするには，それぞれ`report`や`book`オプションを渡します．たとえば，縦書きの本を作成するには
+とします．これで横書きのarticle相当の文書クラスとなります．エンジンは自動判定されますが，指定する場合はクラスオプションに`platex/uplatex/lualatex/pdflatex`のいずれかを渡してください．縦書きにするには`tate`オプションを渡します．また，reportやbook相当の文書クラスとするには，それぞれ`report`や`book`オプションを渡します．たとえば，縦書きの本を作成するには
 ```latex
 \documentclass[tate,book]{jlreq}
 ```
@@ -86,7 +102,7 @@ pLaTeX / upLaTeX / LuaLaTeX上で動きます．以下のパッケージを内�
 全角空白（U+3000）一文字からなるマクロです．和字間隔を挿入します．LuaLaTeXでは`　`のみでも和字間隔を入力できます．
 
 ### その他
-* ルビや圏点は提供されません．[PXrubrica](https://github.com/zr-tex8r/PXrubrica)または`luatexja-ruby`（LuaLaTeX，LuaTeX-jaパッケージに付属）を使うと良いかと思います．
+* ルビや圏点はクラス自身では提供されません．[PXrubrica](https://github.com/zr-tex8r/PXrubrica)または`luatexja-ruby`（LuaLaTeX，LuaTeX-jaパッケージに付属）を使うと良いかと思います．pdfLaTeX利用時はCJKパッケージの`ruby`（`\usepackage{ruby}`、オプション`overlap`/`nooverlap`/`CJK`/`latin`、パラメータ`\rubysize`/`\rubysep`）が使えます: 実験的なpdfTeXバックエンドにはプロバイダ適合ファイル（`jlreq-pdftex-ruby.sty`、自動読み込み）が同梱され、プロバイダの`\ruby{本文}{ルビ}`をバックエンドの境界・状態機構に接続します——横組みではルビは本文の上、縦組みでは読み-frame右に付き、境界グルーは通常本文と同一のクラス表値、プロバイダ自身のoverlap判定も保存されます（詳細は`docs/pdftex-compatibility.md`）．
 * pLaTeX / upLaTeX利用時はそれぞれ`zw`および`zh`に展開されるマクロ`\zw`と`\zh`が定義されます．LuaLaTeX利用時はLuaTeX-ja内で同名のマクロが定義されます．
 * 日本語組版処理の要件2.3.2.dによれば，横組みにおける二段組の最後のページの各段の行数は揃えることが望ましいとされていますが，この処理は行われません．`nidanfloat`パッケージを使い，
 

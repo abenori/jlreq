@@ -1,0 +1,23 @@
+% 検証（行頭禁則残差）：欧文＋閉じ括弧
+% docs/pdftex-compatibility.md の既知違反 note: 狭い行で欧文の直後に
+% 閉じ括弧が来ると、CJKデコーダ機構が残すゼログルー（natural 0）が改行点に
+% なり，\penalty10000 より先の位置で折れて 」が行頭に落ちていた。
+% 修正: beforeglyph が行頭禁則文字の直前のゼログルーを \unskip で除去する
+% （\lastnodetype=11 かつ \lastskip=0pt のときのみ。自前のペアグルーは
+%   kernmode で抑制済みなので，ここに出るゼログルーは CJK 側由来のみ）。
+% このフィクスチャは修正前は 」が行頭に落ちた（FAIL）。
+\documentclass[pdflatex]{jlreq}
+\begin{document}
+\hsize=65pt \parindent=0pt
+% 「x」の x が行末に達する配置: 修正前は 」が行頭に落ちる
+あああああ「x」ああああああああ
+% （）版
+あああああ（x）ああああああああ
+% 欧文主体
+Latin word, then （x） followed by more text to force wrapping in this narrow box.
+% 既存の禁則ケースが壊れていないこと（kinsoku.tex 相当）
+漢漢漢漢漢漢」漢漢漢漢漢漢
+
+漢漢漢漢漢「漢漢漢漢漢漢
+
+\end{document}

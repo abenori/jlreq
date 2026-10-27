@@ -1,0 +1,21 @@
+% savepos-anchor-pdf.tex -- acceptance gate (PDF level): reference
+% mark + footnote anchors under d-tate, compared against upLaTeX
+% same-source PDFs at the INK level with pymupdf (runner: check script
+% tests/check-anchor-parity.py). The fixture body is deliberately
+% direction-agnostic (the class option switches the engine path); the
+% SAME file compiles under pdflatex and uplatex.
+%
+% Markers (single glyphs, easy to find by codepoint):
+%   ◆ (U+25C6) : interlinear reference mark position (mid-line)
+%   ☆ (U+2606) : inside the footnote text (footnote anchor)
+%   あ          : the first body glyph = the shared logical origin
+% The check script locates each glyph's bbox in the reading frame
+% (pdflatex pages are the inner frame rotated -90: +90 back; uplatex
+% pages are already reading-frame), aligns the あ origins, and
+% requires the ◆/☆ anchor centers to agree within 0.5pt.
+\documentclass[pdflatex,tate,paper=b5j,line_length=20zw]{jlreq}
+\jlreqsetup{reference_mark=interlinear}
+\begin{document}
+あいうえおかきくけこ\footnote{☆脚注本文。}さしすせそ\footnote{◆合印}\newline
+たちつてとなにぬねのはひふへほまみむめもやゆよらり
+\end{document}

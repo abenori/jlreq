@@ -1,0 +1,98 @@
+% ruby-tate.tex -- ruby.sty provider adapter, tate placement.
+% 自己表明型 (RUBY-PASS/RUBY-FAIL をログへ出力; runner の T8 ruby ゲートが grep)。
+% 検査対象（「縦ではreading frameの右にルビを配置し、
+% annotationの字形はそれぞれのlocal directionへ従う」）:
+%   1. ルビは読み-frame 右にあること (annotation 列 x > base 列 x)
+%   2. annotation は上→下に読め、各グリフは縦字形 (直立) であること
+%      = 出荷回転後の最終ページで annotation が base の行方向に沿って
+%      並ぶ (y 方向に単調増加)
+%   3. base 進行は通常の本文グリフと同じ行方向ピッチ (1zw)
+%   4. 境界グルー: 、→ルビ の 0.5zw ペアグルーが 1 回だけ出る
+%      (本文直接組との box 幅差分 0)
+%   5. 連続ルビ: overlap の kern(\@tempdimb) が生きる
+%   6. 状態隔離: ルビの後の和文境界が base 右端クラスで評価される
+% 測定は \pdfsavepos (aux 往環) ではなく box 内寸法で行う (tate は
+% 出荷回転のため最終幾何は runner の PDF 幾何ゲートが担当)。
+\documentclass[pdflatex,tate,paper=a5]{jlreq}
+\pagestyle{empty}
+\usepackage{ruby}
+\makeatletter
+\newbox\ttboxa
+\newbox\ttboxb
+\newdimen\ttdiff
+\long\def\TTEST#1#2#3#4{%
+  \setbox\ttboxa=\hbox{#3}%
+  \setbox\ttboxb=\hbox{#4}%
+  \ttdiff=\dimexpr\wd\ttboxa-\wd\ttboxb\relax
+  \ifdim\ttdiff<\z@ \ttdiff=-\ttdiff \fi
+  \ifdim\ttdiff<#2\relax
+    \typeout{RUBY-PASS: #1 (diff=\the\ttdiff)}%
+  \else
+    \typeout{RUBY-FAIL: #1 (diff=\the\ttdiff, ruby=\the\wd\ttboxa, plain=\the\wd\ttboxb)}%
+  \fi}
+
+\begin{document}
+% 1. ルビ箱の「上」方向 = 内枠 (inner horizontal frame) の height。
+%    tate 出荷回転 (-90°) で内枠の +y は最終ページの +x (読みframe の
+%    右) に写る。よって「ルビ全体 box の height が base だけの box より
+%    高い」= annotation は内枠上 = 最終右。
+\setbox\ttboxa=\hbox{\ruby{漢}{かん}}%
+\setbox\ttboxb=\hbox{漢}%
+\ifdim\ht\ttboxa>\ht\ttboxb
+  \typeout{RUBY-PASS: ann-inner-above (ht=\the\ht\ttboxa\space vs base \the\ht\ttboxb; maps to final RIGHT under -90 shipout)}%
+\else
+  \typeout{RUBY-FAIL: ann-inner-above (ht=\the\ht\ttboxa\space vs base \the\ht\ttboxb)}%
+\fi
+% 2. annotation の box が base の行方向に「並ぶ」: ルビ box の幅
+%    (内枠進行方向) = base 幅 (ann が狭い場合、外枠は base 幅)。
+\setbox\ttboxa=\hbox{\ruby{漢}{か}}%
+\ifdim\wd\ttboxa=\dimexpr1\jlreq@jareg\relax
+  \typeout{RUBY-PASS: ann-line-advance (wd=\the\wd\ttboxa)}%
+\else
+  \typeout{RUBY-FAIL: ann-line-advance (wd=\the\wd\ttboxa, expected \the\jlreq@jareg)}%
+\fi
+% 3. base の内部進行: 依存 = 2zw (tate JFM クラス幅)
+\setbox\ttboxa=\hbox{\ruby{依存}{いぞん}}%
+\ifdim\wd\ttboxa=\dimexpr2\jlreq@jareg\relax
+  \typeout{RUBY-PASS: base-advance-2zw (wd=\the\wd\ttboxa)}%
+\else
+  \typeout{RUBY-FAIL: base-advance-2zw (wd=\the\wd\ttboxa, expected \the\dimexpr2\jlreq@jareg\relax)}%
+\fi
+% 4. 境界グルー: 、→ルビ (0.5zw) — 直接組対照との幅差 0
+\TTEST{punct-left-glue-tate}{0.02pt}{漢、\ruby{字}{じ}あ}{漢、字あ}
+% ルビ右→和文 (base 右端クラス)
+\TTEST{right-glue-cjk-tate}{0.02pt}{漢\ruby{字}{じ}あ}{漢字あ}
+% ルビ右→欧文 (xkanjiskip)
+\TTEST{right-glue-latin-tate}{0.02pt}{漢\ruby{字}{じ}a}{漢字a}
+% 5. 連続ルビ (overlap): 2 つ目のルビは 1 つ目の ruby@width を進む
+\setbox\ttboxa=\hbox{\ruby{漢}{かんたんいそん}\ruby{字}{じ}}%
+\ttdiff=\wd\ttboxa
+\advance\ttdiff-\dimexpr2\jlreq@jareg+0.9\jlreq@jareg\relax
+\ifdim\ttdiff<\z@ \ttdiff=-\ttdiff \fi
+\ifdim\ttdiff<0.01pt
+  \typeout{RUBY-PASS: consecutive-overlap-tate (wd=\the\wd\ttboxa)}%
+\else
+  \typeout{RUBY-FAIL: consecutive-overlap-tate (wd=\the\wd\ttboxa, expected 2.9\jlreq@jareg, residual=\the\ttdiff)}%
+\fi
+% 6. 状態隔離: base が句読点で終わるルビの後の和文境界 (pair 7→0)
+\TTEST{state-exit-baseclass-tate}{0.02pt}{\ruby{漢、}{かん}字}{漢、字}
+% 7. 本文より長いルビ (nooverlap): 外枠 = ann 幅
+\rubynooverlap
+\setbox\ttboxa=\hbox{\ruby{漢}{かんたんいそんですよ}}%
+\ttdiff=\wd\ttboxa
+\advance\ttdiff-4\jlreq@jareg
+\ifdim\ttdiff<\z@ \ttdiff=-\ttdiff \fi
+\ifdim\ttdiff<0.01pt
+  \typeout{RUBY-PASS: long-ann-nooverlap-tate (wd=\the\wd\ttboxa)}%
+\else
+  \typeout{RUBY-FAIL: long-ann-nooverlap-tate (wd=\the\wd\ttboxa, expected 4\jlreq@jareg, diff=\the\ttdiff)}%
+\fi
+\rubyoverlap
+% 8. 書体・サイズ変更
+{\gtfamily\ruby{漢}{かん}ゴシック}
+{\fontsize{14pt}{14pt}\selectfont\ruby{漢}{かん}大きい}
+\typeout{RUBY-PASS: font-change-compiled-tate}%
+% 本文実組 (PDF 幾何ゲートの対象: annotation 右・縦字形)
+縦組みの本文に\ruby{依存}{いぞん}という語を埋め込む。次は、\ruby{試験}{テスト}である。
+\typeout{RUBY-DONE-TATE}
+\end{document}

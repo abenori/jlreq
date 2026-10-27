@@ -1,0 +1,17 @@
+% 共存試験: xcolor・graphicx（色付き和文・\includegraphicsの代替として\rule）
+\documentclass[pdflatex]{jlreq}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\begin{document}
+\section{色と図}
+{\color{red}赤い日本語}と{\color{blue}青い日本語}の混在．
+\textcolor[rgb]{0,0.5,0}{RGB指定の文字}も確認する．
+
+黒い矩形（graphicx不要の図代用）:
+\begin{figure}[htbp]
+\centering
+\rule{3cm}{1cm}
+\caption{図のキャプション（日本語）}
+\end{figure}
+\scalebox{2}{拡大された和文}も確認する．
+\end{document}

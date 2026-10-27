@@ -1,0 +1,32 @@
+% 共存試験: 行列・場合分けのセル内和文（CJKアクティブ文字と\halignの相互作用）。
+% root cause（修正済み）: backend の post-glyph peek \jlreqpdf@peek（=
+% \CJK@ignorespaces）が「\ifmmode\else\futurelet..\fi」形だったため、CJKutf8の
+% \CJK@XXX 末尾条件群内で展開されると \else スキップを越えて窥き見本体が古い
+% \jlreqpdf@next で走り、\CJK@XXX の \fi 群を突いて Extra \fi で落ちた（再現:
+% 直前に和文がある状態の $あ$、行列セル内和文）。\@gobble イディオム化＋数式内
+% グリフの自然幅化で解消。以下がすべて組めることを検証する。
+\documentclass[pdflatex]{jlreq}
+\usepackage{amsmath}
+\begin{document}
+行内: \(\begin{pmatrix} あ & b \\ c & d \end{pmatrix}\) と、
+行列内和文を含む式の前後「前 \(\begin{pmatrix} あ \\ い \end{pmatrix}\) 後」。
+別行立て:
+\[
+\begin{pmatrix}
+\mathmc{漢} & あ & x \\
+y & \text{和} & 1
+\end{pmatrix}
+\quad
+\begin{bmatrix}
+\alpha & （あ） \\
+い & \beta
+\end{bmatrix}
+\quad
+\begin{Bmatrix}
+。 & 、 \\
+! & ?
+\end{Bmatrix}
+\]
+場合分け: \(f(x)=\begin{cases} あ & x>0 \\ い & x\le 0 \end{cases}\)。
+直前が和文で数式: 解答は \(あ=1\) である。次の文、\(い=2\) も確認。
+\end{document}

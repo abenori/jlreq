@@ -1,0 +1,17 @@
+% pdflatex-tate-boxdump.tex -- boxdump galley for kinsoku analysis.
+% Compiled by the runner WITHOUT -halt-on-error (\showbox emits `! OK'
+% and would otherwise stop the run). tests/check-tate-boxdump.py parses
+% the galley dump and asserts that no galley line starts with 、。的
+% (plane 30, bytes 1/2) and counts line boxes.
+\documentclass[pdflatex,tate,paper=a5,line_length=10zw]{jlreq}
+\pagestyle{empty}
+\makeatletter
+\begin{document}
+\setbox\@tempboxa=\vbox{\hsize=10\jlreq@zw\baselineskip=\baselineskip\parindent=0pt
+  あいうえおかきくけ、こさしすせそ。たちつてとなにぬねのは、ひふへほまみむめも。
+  やゆよ、わをんあいうえおかきくけこさしすせそたちつてと、なにぬねの}
+\typeout{TATE-GALLEY-BEGIN}
+\showboxbreadth=10000 \showboxdepth=8 \showbox\@tempboxa
+\typeout{TATE-GALLEY-END}
+本文。
+\end{document}

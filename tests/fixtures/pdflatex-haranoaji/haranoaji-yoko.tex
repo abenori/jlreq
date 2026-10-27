@@ -1,0 +1,17 @@
+% haranoaji-yoko.tex -- pdftex_fontset=haranoaji 横組検査（追加fontset）。
+% 判定は runner 側: rc=0、ログマーカ、PDF埋込フォント（pdffonts）が
+% HaranoAjiMincho/Gothic（＋実Bold面）、抽出照合。
+% 注: \section 見出しを含めると見出し後の本文までゴシックで組まれる
+% 既知の縦横backend欠陥（ipa fontsetでも同一; \CJK@global=\global化で
+% \gtfamily の family 選択が group を漏れる）があるため、本検査では
+% 見出しを使わず明朝本文そのものを検査する。
+\RequirePackage{ifpdf}
+\documentclass[pdflatex,pdftex_fontset=haranoaji]{jlreq}
+\begin{document}
+これは原の味フォントセットの横組検証文書である。漢字「括弧」、句読点。
+ーっ‥のような縦字形対象文字も横組では通常字形で組まれる。
+English混植も含む。あいうえおかきくけこさしすせそたちつてと。
+明朝本文の次に太字\textbf{実Bold面}、ゴシック{\gtfamily ゴシック体}、
+ゴシック太字{\gtfamily\bfseries ゴシック太字}を検査する。
+\typeout{HARANOAJI-YOKO-PASS}
+\end{document}

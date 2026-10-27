@@ -1,0 +1,42 @@
+% trimmarks-tate-banner.tex -- tate-document rotated-banner stock geometry.
+% In a tate document the banner slots must sit at the STOCK edges with
+% the same geometry as uplatex+jlreq-trimmarks+dvipdfmx (the physical
+% frame; the rotated body does not move the stock).  The d engine
+% renders the vertical (tate-slot) banners via \rotatebox{-90} with
+% per-slot-family stock corrections (see jlreq-trimmarks.sty):
+%   * tate@top@left / intate@top@right : anchor shifted LEFT by cross
+%   * tate@bottom@right / intate@bottom@left : anchor shifted RIGHT by
+%     cross
+%   * all bottom families: the run pre-shifted UP by its own length
+%     inside the slot wrapper (the pTeX \hss-first tate box pushes the
+%     run upward; the wrapper height is re-flattened so the tombow row
+%     geometry is untouched)
+% with cross = wd of the rotated run and run length = dp of the rotated
+% run -- formulas of the box's own dimensions, NOT tuned constants.
+% They were derived from uplatex ground truth measured on TWO bleed
+% configurations (gutter=0/fore=6mm and gutter=6/fore=0mm), two page
+% parities and run lengths of 2..11 characters, and re-verified on both
+% (agreement 0.01pt; see docs/pdftex-compatibility.md).
+%
+% This fixture is configuration A (gutter=0mm, fore-edge=6mm).  The
+% windows in tests/check-banner-tate.py are computed INDEPENDENTLY from
+% the fixture dimensions (B5 JIS stock +2in, bleed table, cmtt9 advance
+% 0.525em) -- not from this implementation's output.
+\documentclass[pdflatex,tate,paper=b5,twoside]{jlreq}
+\usepackage{graphicx}
+\usepackage[bleed_margin={gutter=0mm,fore-edge=6mm,top=3mm,bottom=3mm},show={trimmarks,banner}]{jlreq-trimmarks}
+\jlreqtrimmarkssetup{
+  banner={
+    top-left={tate={TLTATE}},
+    top-right={tate={TRTATE}},
+    top-left={in-tate={TLIN}},
+    top-right={in-tate={TRIN}},
+    center-left={in={CLIN}},
+    center-right={in={CRIN}},
+    bottom-left={tate={BLTATE}},
+    bottom-right={tate={BRTATE}},
+    bottom-left={in-tate={BLIN}},
+    bottom-right={in-tate={BRIN}},
+  }
+}
+\begin{document}あ\newpage い\end{document}

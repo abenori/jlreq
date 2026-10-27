@@ -1,0 +1,1215 @@
+%%
+%% This is file 'jlreq-pdftex.sty'.
+%% Experimental pdfTeX backend for the jlreq class (internal use).
+%%
+%% Loaded by jlreq.cls only when the engine is pdfTeX (engine letter `d').
+%% NOT a public package: the loading contract, macro names and behaviour
+%% may change at any time while the backend is under development.
+%%
+%% Scope (see docs/pdftex-compatibility.md):
+%%   - glyph output via bxcjkjatype (CJKutf8, ipaex-type1 Type1 fonts)
+%%   - always-on CJK state from class load time (metrics measurable)
+%%   - \zw/\zh as size-tracking dimen-register macros; \Cht..\Chs declared
+%%   - \mcfamily/\gtfamily/\mgfamily via CJKfamily; bold via CJKbold
+%%   - JFM pair glue / kinsoku / line-end adjustment: jlreq-pdftex-rules.sty
+%%
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{jlreq-pdftex}[2026/10/23 v0.2 jlreq pdfTeX backend (experimental)]
+\RequirePackage{expl3}
+\RequirePackage{jlreq-pdftex-rules}
+\RequirePackage{jlreq-pdftex-ruby}
+\RequirePackage{jlreq-pdftex-paragraph}
+
+%. ---------------------------------------------------------- glyph base
+% Fontset: the class key pdftex_fontset
+% (ipaex-type1|ipa|haranoaji|custom) selects the HORIZONTAL font axis:
+%   ipaex-type1 -> ipaex-type1 (Type1 subfonts ipxm/ipxg; the default,
+%                  unchanged behavior, embeds everywhere, ToUnicode ok)
+%   ipa         -> ipa (TrueType uniweight preset: zhmetrics dynamic TFM
+%                  chain unisong@Unicode@ etc.; dependency on
+%                  zhmetrics/unisong*.tfm/Unicode.sfd is documented in
+%                  docs/pdftex-dependencies.md and fails with the exact
+%                  resource names if missing)
+%   haranoaji   -> no bxcjkjatype preset either: HaranoAji ships OTF-only
+%                  (CFF; no .sty/.tfm support files), so pdfTeX's TrueType
+%                  chain reuses the SAME font-agnostic zhmetrics dynamic
+%                  TFMs (unisong@Unicode@ etc.) and only re-points the
+%                  pdfmapline target at our build-time converted
+%                  full-font quadratic TTFs (make_pdftex_fonts.py
+%                  --fontset haranoaji emits haranoaji-mincho-ttf.ttf,
+%                  haranoaji-mincho-bold-ttf.ttf, haranoaji-gothic-ttf.ttf,
+%                  haranoaji-gothic-bold-ttf.ttf; the same cu2qu
+%                  conversion as the aux vertical shards).  The REAL Bold
+%                  faces are wired through bxcjkjatype multiweight
+%                  (mnb -> unili@Unicode@, gtb -> uniyou@Unicode@ chains),
+%                  so \bfseries selects HaranoAjiMincho/Gothic-Bold
+%                  instead of embolden (empirically verified: pdffonts
+%                  shows HaranoAjiMincho-Bold + HaranoAjiGothic-Bold).
+%                  The vertical axis is the committed profile
+%                  jlreq-pdftex-fonts-haranoaji.def (aux vert TTFs).
+%   custom      -> no preset here: the user's profile supplies the
+%                  vertical axis; the horizontal axis stays on the
+%                  currently active CJK family (set up via
+%                  \setminchofont/\setgothicfont by the user's profile
+%                  or preamble)
+% noCJKpunct : jlreq's own punctuation spacing comes from its JFM rules
+%              (jlreq-pdftex-rules.sty); CJKpunct's quanjiao kerning would double-apply.
+% no `whole' : the CJK state is turned on here (always-on), not per env.
+\def\jlreqpdf@fontopt{ipaex-type1}%
+\ifx d\jlreq@engine
+  \@ifundefined{jlreq@pdftex@fontset}{}{%
+    \expandafter\ifx\csname jlreq@pdftex@fontset\endcsname\@empty\else
+      \edef\jlreqpdf@fontopt{\csname jlreq@pdftex@fontset\endcsname}%
+    \fi
+  }%
+\fi
+% \pdfstrcmp compares the whole expansion byte-wise (a plain \ifx on a
+% macro-to-char-tokens would compare only the FIRST token pair, so
+% `custom' would lose its first letter and mis-branch).
+\ifnum\pdfstrcmp\expandafter{\jlreqpdf@fontopt}{custom}=0 \relax
+  \RequirePackage[noCJKpunct]{bxcjkjatype}%
+\else\ifnum\pdfstrcmp\expandafter{\jlreqpdf@fontopt}{haranoaji}=0 \relax
+  \RequirePackage[noCJKpunct]{bxcjkjatype}%
+  \setminchofont{haranoaji-mincho-ttf.ttf}%
+  \setboldminchofont{haranoaji-mincho-bold-ttf.ttf}%
+  \setgothicfont{haranoaji-gothic-ttf.ttf}%
+  \setboldgothicfont{haranoaji-gothic-bold-ttf.ttf}%
+  \setmarugothicfont{haranoaji-gothic-ttf.ttf}%
+\else
+  \expandafter\RequirePackage\expandafter[\jlreqpdf@fontopt,noCJKpunct]{bxcjkjatype}%
+\fi\fi
+
+%. --------------------------------------------------- always-on CJK state
+% jlreq evaluates Japanese literals at class load time outside any env
+% (char-class lists, \contentsname, heading labels, notes), so a
+% site-by-site env approach cannot cover that; uncap CJK's
+% encapsulation: make its \global/\active/\local prefixes really global
+% and start the UTF8/ipxm state once. State then persists file-wide.
+\makeatletter
+\let\CJK@global\global
+\let\CJK@active\global
+\let\CJK@local\global
+% The CJK family follows the fontset's horizontal preset:
+% ipaex-type1 -> ipxm/ipxg (Type1 planes, unchanged);
+% ipa         -> mc/gt (the preset's uniweight TTF TFM chain);
+% haranoaji   -> mc/gt (same zhmetrics chains; our converted TTFs are
+%                the mapline targets -- see the fontset comment above);
+% custom      -> mc/gt (the user's profile/preamble sets the real fonts).
+\def\jlreqpdf@cjkfam{ipxm}%
+\ifx\jlreqpdf@fontopt custom\relax
+  \def\jlreqpdf@cjkfam{mc}%
+\else
+  \expandafter\ifx\jlreqpdf@fontopt ipa\relax
+    \def\jlreqpdf@cjkfam{mc}%
+  \fi
+  \ifnum\pdfstrcmp\expandafter{\jlreqpdf@fontopt}{haranoaji}=0 \relax
+    \def\jlreqpdf@cjkfam{mc}%
+  \fi
+\fi
+\CJK@envStart{}{UTF8}{\jlreqpdf@cjkfam}%
+% \CJK@ignorespaces is NOT set up by envStart when entered directly
+% (CJK.sty sets it in \CJKspace, normally called from the env form).
+\CJKspace
+% CJK's lazy \CJK@input (\makeatother..\makeatletter) may have flipped
+% the @ catcode; re-issue before using @-named internals.
+\makeatletter
+
+%. --------------------------------------------------------------- units
+% pdfTeX has no zw/zh units. Plain TeX's <factor><internal dimen>
+% scan-dimen syntax (e.g. 2\baselineskip) still works, so define the
+% units as macros expanding to a dimen register. jlreq keeps internal
+% \jlreq@zw/\jlreq@zh via \let (= \zw below), so all existing
+% `N\jlreq@zw' uses keep working; literal "zw" text inside option
+% strings is rewritten by \jlreq@expand@speciallength (cls gate).
+\newdimen\jlreq@jareg
+\def\zw{\jlreq@jareg}%
+\def\zh{\jlreq@jareg}%
+% ipaex full-width glyphs are square: 1zh == 1zw == the JA design size.
+
+% \Cht..\Chs are engine-provided under pTeX (plcore.ltx) and LuaTeX-ja
+% (lltjfont.sty) but never declared by jlreq.cls; declare them here so
+% the cls load-time measurement block works unmodified.
+\newdimen\Cht
+\newdimen\Cdp
+\newdimen\Cwd
+\newdimen\Cvs
+\newdimen\Chs
+
+%. -------------------------------------------------------------- fonts
+% bxcjkjatype[ipaex-type1] already: \mcdefault->ipxm, \gtdefault->ipxg,
+% \mgdefault->ipxg, \mcfamily/\gtfamily/\mgfamily as CJKfamily wrappers,
+% rmfamily/sffamily/ttfamily hooked to CJKfamily selection. Latin NFSS
+% stays a separate axis (no conflation). Nothing to redefine here.
+
+% Bold: no bold IPAex Type1 face exists; bxcjkjatype defaults
+% \CJKboldbyembolden ON (PDF 2 Tr), but \bfseries alone does not raise
+% \CJK@bold@. Track the current NFSS series and switch CJK bold so
+% \sffamily\gtfamily\bfseries headings embolden the kanji too.
+\AddToHook{selectfont}{%
+  \jlreq@pdftex@trackseries
+}
+\def\jlreq@pdftex@trackseries{%
+  % カーネルの判定と同一（latex.ltxの\bfseries）: 系列名がbで始まる＝太字
+  % （b, bx を捕捉．sb は捕捉しない——カーネルと同じ挙動）．
+  \if b\expandafter\@car\f@series\@nil
+    \expandafter\jlreq@pdftex@bold
+  \else
+    \expandafter\jlreq@pdftex@nobold
+  \fi
+}
+\def\jlreq@pdftex@bold{\CJKbold}%
+\def\jlreq@pdftex@nobold{\CJKnormal}%
+
+
+%. ----------------------------------------------- font profile
+% 縦組みグリフ選択・位置補正のデータ源。クラスオプション
+% pdftex_fontset（ipaex-type1|ipa|haranoaji|custom）既定 ipaex-type1:
+%   ipaex-type1 -> jlreq-pdftex-fonts-ipaex.def（縦字形はipaexm/ipaexg
+%                  のvertから生成した補助縦TTF; 横書きはType1平面）
+%   ipa         -> jlreq-pdftex-fonts-ipa.def（ipam/ipag由来）
+%   haranoaji   -> jlreq-pdftex-fonts-haranoaji.def（HaranoAji OTF由来;
+%                  CFF輪郭はcu2quで二次曲線化して補助縦TTFへ）
+%   custom      -> pdftex_fontprofile=<file>（必須; 指定が無ければ
+%                  その旨のエラーで停止——10pt明朝表への黙った
+%                  fallbackはしない）
+% profile の内容（make_pdftex_fonts.py が生成）:
+%   \jlreqpdf@fontprofile@(mc|gt)@shards / @tfm@<n> / @enc@<n>
+%   \pdfmapline{...}（補助縦TTFの埋め込み）
+%   \jlreqpdf@vglyph@<HEXcp>{{sub}{adv}{vorg}{ink}{shard}{slot}{uni}}
+%   \pdfglyphtounicode{jlreqvXXXX}{...}（文字抽出契約）
+%   \pdfgentounicode=1
+\def\jlreqpdf@profile@file{}%
+\ifx d\jlreq@engine
+  \@ifundefined{jlreq@pdftex@fontset}{\def\jlreq@pdftex@fontset{ipaex-type1}}{}%
+  % \pdfstrcmp: byte-wise (a plain \ifx compares only the first token
+  % pair of the macro expansion -- see the fontopt note above).
+  \ifnum\pdfstrcmp\expandafter{\csname jlreq@pdftex@fontset\endcsname}{custom}=0 \relax
+    \@ifundefined{jlreq@pdftex@fontprofile}{%
+      \PackageError{jlreq-pdftex}{%
+        pdftex_fontset=custom requires pdftex_fontprofile}{%
+        The~fontset~`custom'~needs~a~profile~file~generated~by\MessageBreak
+        `make_pdftex_fonts.py~--fontset~custom~--mincho~<TTF>~--gothic~<TTF>'.\MessageBreak
+        Pass~the~generated~profile~via~the~class~option\MessageBreak
+        pdftex_fontprofile=<file>.~No~silent~fallback~is~performed.\MessageBreak
+        \@ehc}%
+    }{%
+      \edef\jlreqpdf@profile@file{\csname jlreq@pdftex@fontprofile\endcsname}%
+    }%
+  \else
+    \ifnum\pdfstrcmp\expandafter{\csname jlreq@pdftex@fontset\endcsname}{ipa}=0 \relax
+      \def\jlreqpdf@profile@file{jlreq-pdftex-fonts-ipa.def}%
+    \else\ifnum\pdfstrcmp\expandafter{\csname jlreq@pdftex@fontset\endcsname}{haranoaji}=0 \relax
+      \def\jlreqpdf@profile@file{jlreq-pdftex-fonts-haranoaji.def}%
+    \else
+      \def\jlreqpdf@profile@file{jlreq-pdftex-fonts-ipaex.def}%
+    \fi\fi
+  \fi
+\fi
+% tate でプロファイルが無い/読めない場合は縦グリフデータ不足として
+% 明示エラー（横組みだけならプロファイル無しで動く: 補助縦フォントは
+% 縦組みの要求するデータであり、横組み文書に要求しない）。
+\ifx\jlreqpdf@profile@file\@empty
+  \if@tate
+    \PackageError{jlreq-pdftex}{%
+      tate typesetting needs a pdfTeX font profile}{%
+      The~vertical~glyph~data~(profile~.def~+~aux~vertical~TTF/TFM/enc)\MessageBreak
+      is~required~for~tate.~Build~it~with~`make~pdftex-fonts'~(built-in\MessageBreak
+      fontsets)~or~`make_pdftex_fonts.py~--fontset~custom'~(custom~fonts).\MessageBreak
+      yoko-only~documents~do~not~need~it.\MessageBreak
+      \@ehc}%
+  \fi
+\else
+  % Search order: (1) the repo build directory (fonts/pdftex/ -- the
+  % working-tree location of `make pdftex-fonts'), (2) the bare name via
+  % kpathsea (TEXMF/tex/latex/jlreq after `make install'/'make tds';
+  % a user-supplied pdftex_fontprofile=<path> resolves directly here).
+  \IfFileExists{fonts/pdftex/\jlreqpdf@profile@file}{%
+    \input{fonts/pdftex/\jlreqpdf@profile@file}%
+  }{%
+    \IfFileExists{\jlreqpdf@profile@file}{%
+      \input{\jlreqpdf@profile@file}%
+    }{%
+      \PackageError{jlreq-pdftex}{%
+        font profile file \jlreqpdf@profile@file\space is missing}{%
+      The~pdfTeX~backend~cannot~find~the~font~profile~\MessageBreak
+      \jlreqpdf@profile@file.\MessageBreak
+      Run~`make~pdftex-fonts'~in~the~jlreq~source~tree~to~build~the\MessageBreak
+      built-in~profiles,~or~install~the~profile~for~your~fontset\MessageBreak
+      (installed~profiles~live~in~tex/latex/jlreq).\MessageBreak
+      \@ehc}%
+    }%
+  }%
+\fi
+
+% tate + プロファイルに縦グリフ表（vglyph）が無い場合: 縦組みに必要な
+% データが profile に存在しない。黙って回転代用しない（tate
+% profile不足なら生成方法付きエラー）。横組みならここを通らない。
+\if@tate
+  \@ifundefined{jlreqpdf@fontprofile@mc@tfm@0}{%
+    \PackageError{jlreq-pdftex}{%
+      the font profile has no vertical glyph data (tate)}{%
+    The~loaded~profile~contains~no~aux~vertical~font~shards.\MessageBreak
+    Regenerate~the~profile~with~`make_pdftex_fonts.py~--fontset~custom\MessageBreak
+    --mincho~<TTF>~--gothic~<TTF>~--profile~<file>'~so~the~vertical\MessageBreak
+    forms~are~built~into~the~profile.~Yoko-only~documents~may~keep~a\MessageBreak
+    profile~without~vertical~data.\MessageBreak
+    \@ehc}%
+  }{}%
+\fi
+% 縦字形の実フォント選択: 現在の CJK family に追従して mc/gt 各シャード
+% の補助TFMへ切替える（rules の \jlreqpdf@glyph@tate@vert が
+% \jlreqpdf@auxfont を使い、シャード番号は \jlreqpdf@vg@shard）。
+% family 判定は CJK.sty の現在値 \CJK@family（\usefont の選択に使われ
+% るもの; ipaex-type1 では ipxm/ipxg, ipa プリセットでは mc/gt）と
+% \gtdefault の比較: ゴシック系 == \gtdefault。プロファイル表の
+% mc/gt 軸はこの論理判定で一対一に対応する。
+\def\jlreqpdf@aux@fam{mc}%
+\def\jlreqpdf@auxfont@select#1{%
+  % 脚注ブロック実測修正: 補助縦TFMは design size 10pt のままでは
+  % 現在サイズに追従しない（footnotesize の縦約物が 9.96pt で組まれ、
+  % uplatex は同位置に 7.97pt で組む。fn 行の高さが strut ではなく
+  % この未スケール字形の ink で決まってしまい、列頭 1.72pt の残差と
+  % マーク（１）の -2pt 出張りの主因）。\jlreq@jareg は selectfont で
+  % サイズ追従する（cls の size@update hook）ため at 指定で実寸化する。
+  \edef\jlreqpdf@aux@name{%
+    \csname jlreqpdf@fontprofile@\jlreqpdf@aux@fam @tfm@#1\endcsname}%
+  \expandafter\font\expandafter\jlreqpdf@auxtok
+    \csname jlreqpdf@aux@name\expandafter\endcsname\space
+    at\jlreq@jareg\relax
+  \jlreqpdf@auxtok
+}
+\def\jlreqpdf@auxfont{%
+  \ifx\CJK@family\gtdefault
+    \def\jlreqpdf@aux@fam{gt}%
+  \else
+    \def\jlreqpdf@aux@fam{mc}%
+  \fi
+  \jlreqpdf@auxfont@select{\jlreqpdf@vg@shard}%
+}
+%. ------------------------------------------- shims / direction / state
+% \inhibitglue: real one-boundary suppression. Sets the rules
+% machinery's interlock so the NEXT eligible CJK boundary's JFM/auto
+% skip is suppressed ONCE (the emitter consumes the flag at the first
+% boundary it serves -- including the CJK->LA boundary the peek
+% machinery detects). Paragraph/box/math starts re-initialize the flag
+% (everypar / the frame push / the math entry), so a stale token never
+% leaks into a later paragraph.
+\protected\def\inhibitglue{\global\jlreqpdf@inhibit=1 }
+
+% Live local direction. \jlreqpdf@dir (rules.sty
+% frame tuple, 0=yoko/1=tate) is group-local state: the main document
+% direction seeds it from \if@tate at begin document (and restores it
+% after each page shipout via the same seed, below), the box factory
+% and the page-direction switch change it inside their groups, and the
+% frame push/pop carries it across box boundaries. These conditionals
+% read the CURRENT frame direction -- jlreq.cls's \jlreq@ifydir/@iftdir
+% alias them (cls d-branch), so all class callers become live.
+\protected\def\jlreqpdftex@ifydir{%
+  \ifnum\jlreqpdf@dir=0 \expandafter\@firstoftwo \else \expandafter\@secondoftwo \fi}
+\protected\def\jlreqpdftex@iftdir{%
+  \ifnum\jlreqpdf@dir=1 \expandafter\@firstoftwo \else \expandafter\@secondoftwo \fi}
+% direction seeding: main-document direction. Called at begin document
+% and re-run after each page shipout (the page builder flattens groups;
+% re-seeding keeps the flag in sync with \if@tate for plain pages).
+% \jlreqpdf@setmaindir must be idempotent and group-free.
+\def\jlreqpdf@setmaindir{%
+  \if@tate \global\jlreqpdf@dir=1 \else \global\jlreqpdf@dir=0 \fi}
+\AtBeginDocument{\jlreqpdf@setmaindir}%
+
+%. ---------------------------------------- direction box factory
+% \jlreqpdf@yokobox{<body>} / \jlreqpdf@tatebox{<body>}: the backend-
+% owned box factory for local direction switches. Contract:
+%   * typesets <body> ONCE, in a box whose frame direction is yoko /
+%     tate respectively; the surrounding direction is restored after;
+%   * cross-direction embedding is normalized to the basic geometry:
+%     a yoko box (w,h,d) placed upright in a tate frame advances h+d,
+%     with cross extent h' = w/2, d' = w - h' (basic normalization;
+%     exact arithmetic, no slack);
+%   * in the SAME direction as the current frame, the box is returned
+%     unchanged (identity, no extra wrapper);
+%   * the factory's boxes carry the direction in the frame state while
+%     they are built; for register \copy/\box re-use the direction is
+%     whatever the current frame is at unboxing time (pdfTeX has no box
+%     attributes; the private-query helper below enforces honesty).
+% In the shipout-rotation model the inner frame of a tate document
+% is horizontal: a "tatebox" body is typeset as a normal horizontal
+% paragraph (the glyphs self-rotate via the rules glyph layer) and a
+% "yokobox" body likewise; the geometric transform for the cross case
+% is therefore applied only when the OUTER frame is the opposite of the
+% requested one, as explicit box arithmetic (\kern/\raise + rotatebox),
+% mirroring pTeX's automatic yoko-in-tate embedding:
+%   anchor A, body B(w,h,d) upright:
+%     advance = h+d, cross: ht=w/2 dp=w-h/2, B's baseline at A.
+\newbox\jlreqpdf@dirbox
+\long\def\jlreqpdf@yokobox#1{%
+  \ifnum\jlreqpdf@dir=0
+    % already yoko: identity (single typeset pass, no wrapper)
+    #1%
+  \else
+    % yoko body inside a tate frame: normalized upright embedding.
+    % Guard the rules frame machinery for the measurement pass (this is
+    % a backend-internal box, not a semantic boundary).
+    \global\advance\jlreqpdf@nest1
+    \global\jlreqpdf@dir=0
+    \setbox\jlreqpdf@dirbox=\hbox{{#1}}%
+    \global\jlreqpdf@dir=1
+    \global\advance\jlreqpdf@nest-1
+    \jlreqpdf@embed@yoko@in@tate
+  \fi}
+% \jlreqpdf@yokobox@strut{<ht>}{<dp>}{<body>}: like \jlreqpdf@yokobox but
+% the measured body box's height/depth are SET to <ht>/<dp> before the
+% embedding arithmetic. pTeX's tcy pins the body's ht+dp at 1zw via a
+% strut rule whose extent the (pTeX-metric) digits never exceed; the
+% pdfTeX latin metrics can exceed .5zw halves, so the pinning is done on
+% the BOX DIMS directly (content may overhang the body box -- boxes do
+% not clip, and the outer box's ht/dp/wd are still the normalized values,
+% matching uplatex's showbox: outer ht=dp=w/2, advance=ht+dp=1zw).
+\long\def\jlreqpdf@yokobox@strut#1#2#3{%
+  \ifnum\jlreqpdf@dir=0
+    #3%
+  \else
+    \global\advance\jlreqpdf@nest1
+    \global\jlreqpdf@dir=0
+    \setbox\jlreqpdf@dirbox=\hbox{{#3}}%
+    \global\jlreqpdf@dir=1
+    \global\advance\jlreqpdf@nest-1
+    \ht\jlreqpdf@dirbox=#1\relax
+    \dp\jlreqpdf@dirbox=#2\relax
+    \jlreqpdf@embed@yoko@in@tate
+  \fi}
+\long\def\jlreqpdf@tatebox#1{%
+  \ifnum\jlreqpdf@dir=1
+    % already tate: identity
+    #1%
+  \else
+    % tate body inside a yoko frame: the body is typeset horizontally
+    % (inner frame of the rotation model); its glyphs must read as a
+    % vertical run in the final yoko page, so the run is rotated 90deg
+    % CCW and the advance is normalized to the body's cross extent.
+    \global\advance\jlreqpdf@nest1
+    \global\jlreqpdf@dir=1
+    \setbox\jlreqpdf@dirbox=\hbox{{#1}}%
+    \global\jlreqpdf@dir=0
+    \global\advance\jlreqpdf@nest-1
+    \jlreqpdf@embed@tate@in@yoko
+  \fi}
+% yoko-in-tate exact embedding (the tcy primitive; also the generic
+% factory path). Body = \box\jlreqpdf@dirbox (w,h,d). Uses the SAME
+% graphicx \rotatebox{90} bbox normalization the tate glyph renderer
+% relies on: \rotatebox{90}{B} yields wd=h+d, ht=w, dp=0, with B's
+% baseline at x=ht(B) inside the result (measured: rot4 probe).
+\def\jlreqpdf@embed@yoko@in@tate{%
+  % save the body's geometry FIRST: \rotatebox's argument \box-empties
+  % \jlreqpdf@dirbox, so w/h/d must not be read after the rotation.
+  \jlreqpdf@emb@w=\wd\jlreqpdf@dirbox
+  \jlreqpdf@emb@h=\ht\jlreqpdf@dirbox
+  \jlreqpdf@emb@d=\dp\jlreqpdf@dirbox
+  \setbox\@tempboxa=\hbox{\rotatebox{90}{\box\jlreqpdf@dirbox}}%
+  % \box\@tempboxa: wd=h+d, ht=w, dp=0; its left edge = B's TOP, and B's
+  % baseline sits at x=ht(B) inside the result (measured: rot4 probe).
+  % Shift so B's baseline lands on the outer reference x=0 (B's height
+  % then hangs into the previous cell, exactly pTeX's anchor mapping:
+  % uplatex PDF bbox shows digit baseline = advance-slot top) and the
+  % cross extent (B's width) is centered on the tate baseline.
+  \setbox\@tempboxa=\hbox{%
+    \kern-\jlreqpdf@emb@h
+    \lower.5\jlreqpdf@emb@w
+    \box\@tempboxa}%
+  % advance = h+d of the body (pTeX's yoko-in-tate advance; with the tcy
+  % rule strut ht+dp = 1zw). The kern makes the NATURAL width d only, so
+  % the advance is set EXPLICITLY (no slack; matches uplatex showbox:
+  % outer box wd = ht_B + dp_B).
+  \wd\@tempboxa=\dimexpr\jlreqpdf@emb@h+\jlreqpdf@emb@d\relax
+  % cross extent: the body's width split evenly around the tate baseline
+  % (pTeX dirbox normalization; uplatex showbox: ht=dp=w/2)
+  \ht\@tempboxa=\dimexpr.5\jlreqpdf@emb@w\relax
+  \dp\@tempboxa=\dimexpr\jlreqpdf@emb@w-.5\jlreqpdf@emb@w\relax
+  \box\@tempboxa}
+\newdimen\jlreqpdf@emb@w
+\newdimen\jlreqpdf@emb@h
+\newdimen\jlreqpdf@emb@d
+% tate-in-yoko exact embedding: the tate run (built horizontally in
+% the inner frame) rotated CCW so it reads top-to-bottom in the yoko
+% page; advance = the body's cross extent, cross = its run length.
+\def\jlreqpdf@embed@tate@in@yoko{%
+  \setbox\@tempboxa=\hbox{\rotatebox{90}{\box\jlreqpdf@dirbox}}%
+  \box\@tempboxa}
+% \jlreqpdf@boxdir{<box register>}: private query helper. pdfTeX has no
+% box-direction attribute: a box built by the factory is only known to
+% be direction-tagged while it is being built. Once the box is a bare
+% register, its interior direction CANNOT be derived. This helper is
+% the plan's safety contract: it STOPS with ClassError for any box not
+% currently known (no silent yoko fallback), and returns the direction
+% only for boxes recorded by the factory in the same group scope.
+% Normal jlreq documents never hit it: every internal caller uses the
+% factory helpers above.
+\def\jlreqpdf@boxdir#1{%
+  \ClassError{jlreq}{pdfTeX~backend:~direction~of~an~unknown~box~cannot~be~queried}{%
+    pdfTeX~has~no~box-direction~attribute.~A~box~is~direction-tagged~only\MessageBreak
+    while~the~backend~factory~(\noexpand\jlreqpdf@yokobox/\noexpand\jlreqpdf@tatebox)\MessageBreak
+    builds~it.~Use~the~factory~instead~of~querying~raw~registers.\MessageBreak
+    \@ehc}%
+  % error recovery: assume the current frame direction (never a silent
+  % yoko fallback -- the error above has already fired)
+  \ifnum\jlreqpdf@dir=0 yoko\else tate\fi}
+
+% \lastnodechar: a REAL scalar maintained by the rules machinery
+% (\jlreqpdf@lastnodechar: set to the codepoint at each observed CJK
+% glyph, -1 at paragraph/box boundaries). jlreq.cls's own
+% \jlreq@lastnodechar counter is aliased to the same register in the
+% cls d-branch (a count is not \let-aliasable for assignment, so the
+% cls wires \jlreq@lastnodechar as the register itself -- see the cls
+% edit), so legacy readers (\jlreq@fixjfm, \tatechuyoko) see live
+% values and cls assignments (zenkaku-space `　) stay visible to both.
+\newcount\jlreqpdftex@lastnodechar
+\jlreqpdftex@lastnodechar=-1
+
+% Pending APIs: fail loudly at use time, not silently.
+\def\jlreqpdftex@pending#1{%
+  \ClassError{jlreq}{pdfTeX~backend:~#1~is~not~implemented~yet.}{%
+    This~feature~is~planned~for~a~later~milestone~of~the~pdfTeX~backend.\MessageBreak
+    See~docs/pdftex-compatibility.md~for~the~current~status.\MessageBreak
+    \@ehc}%
+}
+
+%. --------------------------------------------------- math
+% pTeX 系の \DeclareSymbolFont{mincho}/\jfam は pdfTeX には無いため，
+% 数式内和文は「テキスト字体のボックス」で供給する．\mathmc/\mathgt 本体の
+% 宣言は enablejfam 時に jlreq.cls 側が行う（disablejfam では未定義＝
+% (u)pTeX と同じ意味論）．
+% \jlreq@pdftex@mathja{<mc|gt>}{<本文>}:
+%   数式内: \mathchoice で text/script/scriptscript のサイズを切り替え，
+%     対応サイズの \hbox に本文を \mcfamily/\gtfamily で組む．\hbox 内は
+%     テキストモードなので CJK アクティブ文字→組版ルール機構（ペアグルー・
+%     禁則）がそのまま働き，直打入力和文との整合も取れる．
+%   数式外: 単に {\<fam>family 本文} に展開する（数式外 \mathmc は
+%     (u)pTeX ではエラーだが，ここでは寛容にフォント切替として扱う）．
+\def\jlreq@pdftex@mathja#1#2{%
+  \ifmmode
+    \def\jlreq@pdftex@mathja@fam{#1}%
+    \def\jlreq@pdftex@mathja@body{#2}%
+    \mathchoice
+      {\jlreq@pdftex@mathja@box{\f@size}}%
+      {\jlreq@pdftex@mathja@box{\f@size}}%
+      {\jlreq@pdftex@mathja@box{\sf@size}}%
+      {\jlreq@pdftex@mathja@box{\ssf@size}}%
+  \else
+    {\csname #1family\endcsname #2}%
+  \fi
+}
+% #1 = サイズ指定マクロ（\f@size/\sf@size/\ssf@size；pt省略数値を展開する）
+\def\jlreq@pdftex@mathja@box#1{%
+  % backend-internal box: guard the frame machinery. The everyhbox
+  % hook sees the nest count and stays a no-op inside.
+  \global\advance\jlreqpdf@nest1
+  \hbox{%
+    \fontsize{#1}{#1}\selectfont
+    \csname\jlreq@pdftex@mathja@fam family\endcsname
+    % ボックス先頭は parbdd 相当: lastclass=93（中立）でペアグルー抑制し，
+    % 直前文脈の pending 禁則ペナルティはボックス内へ持ち込まない
+    \global\jlreqpdf@lastclass=93 \global\jlreqpdf@pend=0
+    \jlreq@pdftex@mathja@body
+  }%
+  \global\advance\jlreqpdf@nest-1
+  % 数式は欧文境界（peek@lat と同じく lastclass=27 に戻す: jlreq.cls の
+  % 「数式は欧文とみなす」仕様整合）
+  \global\jlreqpdf@lastclass=27
+}
+
+%. ------------------------------------------- kanji numerals (\kansuji)
+% pTeXの\kansujiに相当するプリミティブはpdfTeXには無い．uplatex/platexでの
+% 実測（0–1000000をtypeout照合）により，pTeXの仕様は「十進の各桁を
+% 〇一二三四五六七八九に置き換える」桁置換であり（10→一〇，100→一〇〇，
+% 2025→二〇二五），十・百・千の位取りは行わない．0→〇，負数→空．
+% これを完全展開可能なマクロで再現する．
+%
+% always-on CJK下では和文リテラル（UTF-8活字化バイト列）を\edefや素の
+% \writeで展開するとCJK内部の条件分岐（\CJK@XXX）が破綻するため，字形
+% への置換は組版時まで遅延させる設計:
+%  * \jlreq@kjczero..\jlreq@kjcnine : 各桁の生文字マクロ（UTF-8リテラル）．
+%  * \jlreq@kansuji@digit{<d>} : 1桁印字．\protectedなので\edef/\write/
+%    \mark/\typeoutのすべてで凍結され，TOC・柱・見出しラベルを安全に
+%    通過する（組版時に展開されて生文字を出力）．
+%  * \jlreq@pdf@kansuji{<num>} : 完全展開可能．<num>は\numexpr式または
+%    単一トークン（\c@chapter等）．展開結果は\jlreq@kansuji@digitの列．
+%    jlreq.clsの\jlreq@Kanji（d側）からカウンタ名経由で呼ばれる．
+%  * \jlreq@pdf@kansuji@run{<printer>}{<num>} : プリンタ差替口．テストが
+%    \detokenize系プリンタを渡してログ照合に用いる．
+\def\jlreq@kjczero{〇}
+\def\jlreq@kjcone{一}
+\def\jlreq@kjctwo{二}
+\def\jlreq@kjcthree{三}
+\def\jlreq@kjcfour{四}
+\def\jlreq@kjcfive{五}
+\def\jlreq@kjcsix{六}
+\def\jlreq@kjcseven{七}
+\def\jlreq@kjceight{八}
+\def\jlreq@kjcnine{九}
+\protected\def\jlreq@kansuji@digit#1{%
+  \ifcase#1 \jlreq@kjczero\or \jlreq@kjcone\or \jlreq@kjctwo\or \jlreq@kjcthree\or
+    \jlreq@kjcfour\or \jlreq@kjcfive\or \jlreq@kjcsix\or \jlreq@kjcseven\or
+    \jlreq@kjceight\or \jlreq@kjcnine\fi}
+\def\jlreq@pdf@kansuji#1{\jlreq@pdf@kansuji@run\jlreq@kansuji@digit{#1}}
+\def\jlreq@pdf@kansuji@run#1#2{%
+  \expandafter\jlreq@pdf@kansuji@norm\expandafter#1\expandafter{\the\numexpr#2\relax}}
+% #1=プリンタ，#2=符号付き10進文字列（\the\numexpr済み）．負数は空．
+\def\jlreq@pdf@kansuji@norm#1#2{%
+  \ifnum#2<\z@\else\jlreq@pdf@kansuji@loop#1#2\jlreq@pdf@kansuji@stop\fi}
+% 再帰呼出しは \expandafter で自身の \fi を先に閉じる（さもないと次桁ではなく
+% \fi が #2 として拾われて無限再帰になる，定番の罠）．
+\def\jlreq@pdf@kansuji@loop#1#2{%
+  \ifx#2\jlreq@pdf@kansuji@stop
+  \else
+    #1{#2}%
+    \expandafter\jlreq@pdf@kansuji@loop\expandafter#1%
+  \fi}
+\def\jlreq@pdf@kansuji@stop{\jlreq@pdf@kansuji@stop}
+
+%. ------------------------------- label key normalizer
+% 日本語ラベル key の対称正規化。常時CJK（UTF8 byte 群がアクティブ）の
+% pdfTeX では、\label{日本語} の key は \csname r@<key>\endcsname
+% （kernel \@kernel@sref 等）で裸展開され、byte マクロ内部の \global・
+% \futurelet が \csname 内に混入して "Missing \endcsname" になる
+% （実測: 2バイト・3バイト文字で再現）。CJK の byte マクロは
+% \ifx\protect\@typeset@protect 分岐で「\protect がタイプセット保護の
+% 間は自らを \noexpand する」契約なので、kernel の \protected@write /
+% \protected@edef と同じ仕組みで展開を先導すると生 byte が残る:
+%   (1) \protected@edef 系で key を一度「凍結」すると、UTF8 byte は
+%       catcode 12/13 のまま文字列化された byte 列になる
+%       （実測: \let\protect\@unexpandable@protect + \edef で
+%        日本語ラベル が同一 byte 列に凍結される）。
+%   (2) \detokenize{<凍結済み列>} は catcode を 12 に揃えるだけで
+%       byte は一切変えない（実測: 2 回適用で同一、pdfstrcmp 0）。
+%   (3) catcode 12 の byte 列は \csname 構成でも安全（実測:
+%       gdef\csname r@<detok列> の定義・参照が丸ごと成立）。
+% よって正規化器は「\detokenize で key 全体を同一 byte 列化」である。
+% これは ASCII key に対しては完全な恒等変換（aux の ASCII \newlabel 行は
+% byte 不変、実測: \newlabel{sec:top} が1 byte 単位で不変）。
+% マクロ label（\label{\mylabelmacro}）も \detokenize 前に
+% \protected@edef の保護下で通常どおり展開されるため意味が変わらない
+% （kernel \label の書込経路と同一条件）。
+% 対象は write（\label 系の key 部）・read（aux の \newlabel 行）・
+% query（\ref 系の key）の3点で全て同じ正規化を通す（対称性）。
+\long\def\jlreqpdf@labelkey#1{%
+  \begingroup
+    \let\protect\@unexpandable@protect
+    % 段階1: 通常マクロ・カウンタは従来どおり展開し、UTF8 byte は
+    % CJK byte マクロの保護分岐（\noexpand<byte>）で凍結する。
+    % （実測: この条件下の \edef で日本語ラベル が同一 byte に凍結）
+    \protected@edef\jlreqpdf@labelkey@res{#1}%
+    % 段階2: catcode を 12 に揃える（byte は不変）。\detokenize は引数を
+    % 展開しないため、段階1で展開を済ませてから適用する
+    \protected@edef\jlreqpdf@labelkey@res{\detokenize\expandafter{\jlreqpdf@labelkey@res}}%
+  \expandafter\endgroup
+  \expandafter\def\expandafter\jlreqpdf@labelkey@out\expandafter{\jlreqpdf@labelkey@res}%
+}
+% ↑ 定義系（非展開）入口: 結果を \jlreqpdf@labelkey@out に返す。
+% 段階1で user macro（\mylabel 等）は kernel \label の書込経路と同じ
+% 条件で展開され、UTF8 byte は凍結。段階2で csname-safe 化する。
+\long\def\jlreqpdf@labelkey@write#1#2{%
+  % #1 = \write 出力先（\@auxout 等; kernel protected@write と同じ
+  %     呼び出し規約）, #2 = 正規化済み key を含む出力本体
+  \protected@write#1{}{#2}%
+}
+
+%. ------------------------------------------------ tate output
+% 出荷時回転（shipout rotation）＋薄い出力ラッパ。
+%
+% 【再構成】かつてはカーネル \@outputpage 本体を丸写しして家具行の幅を
+% \textheight に差し替えていた。丸写しは (a) カーネル進化（tagging
+% socket・catcode ブロック等）に自動追従しない、(b) 本体パッチや
+% build/page フックの追加を複製し忘れる、という構造的リスクを抱える。
+% この再構成は丸写しを廃止し、begin document で「その時点のカーネル実装」を
+% \jlreqpdf@saved@outputpage に保存して呼び出す薄いラッパに置き換えた:
+%
+%   1. ページ方向フラグ \jlreqpdf@pagedir@count（1=tate 論理ページ/
+%      0=yoko 論理ページ; theindex 系が 0 にする; 既定 1）を見る。
+%   2. tate のとき本文箱 \@outputbox を -90° 回転して \@outputbox に
+%      戻す（回転はここだけ; 家具・shipout は元実装のまま流れる）。
+%   3. 家具行の幅: カーネル本体は \hb@xt@\textwidth{\@thehead} で
+%      柱・ノンブル行を組む。縦組みページの最終枠巾は版面高
+%      （\textheight）なので、ラッパは saved 本体の実行中だけ
+%      \textwidth を \textheight に（局所 group。版面巾と版面高という
+%      論理寸法と物理寸法の区別はこの一箇所に集約する — 散在する
+%      raise/kern・寸法上書きはしない）。yoko 論理ページ（theindex）も
+%      同じ最終枠巾で家具を組むため同じ差し替えを使う。
+%   4. 保存した元実装を呼ぶ。build/page/* フック・kernel の hook 付き
+%      shipout・trimmarks の \@tombowreset@@paper（build/page/reset）は
+%      すべて元実装の内部でそのまま走る。
+%
+% yoko 文書（\if@tate が偽）はこのラッパを一切通さない: カーネルの
+% \@outputpage がそのまま使われる。
+%
+% NOTE: \if@tate は \newif 条件トークン。\if@tate...\fi の中に本体を
+% 置くと条件スキップが \if@newlist を数えてしまうので、
+% \expandafter\@firstofone/\@gobble イディオムで条件を閉じてから
+% ブロックを読む（出力ルーチン改修以来維持している注意）。
+%
+% ページ方向フラグ: theindex（complements の theindex_yoko を含む）は
+% tate 文書内に本当の横組み論理ページを作る。ページレベルの方向はこの
+% フラグ: \if@tate かつフラグ=1 のとき出荷回転が掛かる。フラグを切り
+% 替えたページは先に \clearpage で流し切る（呼出し側; フラグが作り途中
+% のページに遡って効かないため）。
+\newcount\jlreqpdf@pagedir@count \global\jlreqpdf@pagedir@count=1
+\def\jlreqpdf@pagedir@restore{\global\jlreqpdf@pagedir@count=1 }%
+\def\jlreqpdf@pagedir#1{\global\jlreqpdf@pagedir@count=#1\relax}%
+\if@tate\expandafter\@firstofone\else\expandafter\@gobble\fi
+  {\AtBeginDocument{%
+    \expandafter\let\expandafter\jlreqpdf@saved@outputpage\csname @outputpage\endcsname
+    \expandafter\def\csname @outputpage\endcsname{%
+      \begingroup
+        \ifnum\jlreqpdf@pagedir@count=1
+          % tate 論理ページ: 本文箱を -90° 回転（advance=元の ht+dp、
+          % cross=体幅半分ずつ — rotatebox の正規化。回転はここだけ）。
+          %  【第一行リーディング補正（縦組列配置の完全一致）】
+          %  native 縦組（uplatex）では最初の列のグリフは
+          % 版面の右端から topskip−Cdp だけ内側に来る（galley 第一行の
+          % baseline が topskip 位置にあり、グリフが baseline から Cdp
+          % だけ行頭側へ出るため。実測: uplatex col1 右端 359.7pt =
+          % 版面右端 365.06pt − (topskip 10pt − Cdp 5pt) + ink 0.36）。
+          % 回転箱は galley の上端を回転後の右端にそのまま置くため、
+          % この第一行オフセットが失われ、列全体が版面右端に
+          % 貼り付いていた（実測 +4.98pt ≈ topskip−Cdp）。カーンで
+          % (Cdp−topskip) だけ左へ戻して native と一致させる。
+          % この補正は脚注ブロック・合印も同一の第一行機構で
+          % 下流するため、それらの残差も同時に閉じる。
+          \setbox\@outputbox=\hbox{%
+            \kern\dimexpr\Cdp-\topskip\relax
+            \rotatebox{-90}{\box\@outputbox}}%
+        \else
+          % yoko 論理ページ（theindex）: 内枠は既に最終方位なので
+          % 無回転で出す。行長（\textwidth）は版面巾より狭く、余白は
+          % galley 側で配分される（実測どおり）。
+        \fi
+        % 家具行の幅 = 最終枠巾（縦組みページでは版面高）。saved 本体は
+        % \hb@xt@\textwidth{...} を 2 箇所で読むため、実行中だけ差し替え
+        % る。物理用紙寸法（\paperwidth/\paperheight）や版面高は無関係。
+        \textwidth\textheight
+        \jlreqpdf@saved@outputpage
+      \endgroup
+    }%
+  }}
+
+%. ------------------------------------------------ math capture
+% 数式の統一キャプチャ（active-$ 撤去・全入口を一回実行へ統合）。
+%
+% 【状態と ground truth（実測・uplatex 同一ソース bbox/showbox）】
+%   * tate 文書: 行内数式は式全体が δ_t 下げ（uplatex: \hbox{$x$} の
+%     ht/dp が raw 数式寸法からちょうど δ_t だけ下がる。δ_t =
+%     plcore.ltx:776-792 \adjustbaseline と同一式）。
+%     δ_t = (h_M+d_M−JH−JD)/2 + JD − d_M
+%     （M=現在の欧文フォントを無補正で測定、JH/JD=現JFM class 0 の
+%      高さ/深さ×zw。縦JFM は対称 h=d=0.5zw なので
+%      δ_t=(h_M+d_M−1zw)/2+0.5zw−d_M）
+%   * yoko 文書: uplatex は行内数式に一切シフトを掛けない
+%     （\ybaselineshift=0 のまま; 実測: \hbox{$x$} が raw 数式寸法と
+%      完全一致。adjustbaseline の \iftdir 分岐が tbaselineshift しか
+%      計算しないため）。→ 横組みではシフト無し・キャプチャ不要。
+%   * 数式内テキスト box（\text/\mbox/\mathmc 等、tate で横組内容）:
+%     uplatex では式全体の δ_t に加え、方向一致部品が
+%     ptex-base.ch [36.720] shift_sub_exp_box により
+%     t_baseline_shift×factor(1000/700/500) だけ逆向きに戻される。
+%     実測（jlreq 既定 \ybaselineshift=0）での部品の静止位置:
+%       net = −δ_yoko_formula（10pt: +0.35562pt 上方、14pt: +0.42934pt）
+%     ここで δ_yoko_formula は横JFM(h=0.88/d=0.12zw)で計算した
+%     adjustbaseline 値（符号は負）。pdfTeX 側の実装:
+%       counter = (δ_t − δ_yoko) × factor/1000 を部品 box に
+%       \raise で与える（式全体 −δ_t との和が静止位置 = −δ_yoko になる）。
+%   * 表示数式: 出荷回転構成のまま y-baseline 0（uplatex strip 配置
+%     一致は実測済み）。frozen@everydisplay には触れない。
+%
+% 【キャプチャ経路（cat3-$ 維持・frozen everymath 差し替え）】
+%   カーネルは数式開始時にプリミティブ everymath（= \frozen@everymath）を
+%   「1回だけ」実行する。これを {\jlreqpdf@math@entry} に差し替える:
+%     outer entry（guard=0・tate）: 本体を閉じ cat3-$ までトークン歩行
+%       で捕捉し、(a) カーネルの開始時処理（\aftergroup\@ignorefalse・
+%       mathlevel 更新・\check@mathfonts・ユーザー \everymath）を
+%       ちょうど1回だけ外側の空数式で実行、(b) 本体を
+%       \raise−δ_t\hbox{\m@th$<body>$} に載せ替える。
+%       \mathsurround は外側の空数式に1対だけ付く（内側は \m@th）。
+%     inner entry（guard≠0）: 同一式の再入力。素通り（何もしない）。
+%       \text 等の box 内で新しく始まる数式もこの素通り経路になり、
+%       「横組形式の部品内数式 = 無補正」という uplatex 挙動と一致する
+%       （yoko 文書の数式と同一の静止位置）。
+%   \$ は catcode 3 のままなので、moving argument・\mark・aux・bookmark
+%   でアクティブ文字展開の破綻が原理的に起こらない。
+%   \(...\) は専用 wrapper（\) は protected で delimiter scan 中に展開
+%   されないため素通りの frozen 経路では捕捉できない）。
+%   math 環境はカーネル定義 \math=\( / \endmath=\) なので \( の差し替えで
+%   自動的に同経路に載る。\ensuremath の $\relax#1$ も outer entry 経由。
+%
+% 【yoko 文書】 δ=0 かつ uplatex は無補正のため、entry は保存済みの
+%   元 frozen トークンを実行して素通りする（キャプチャなし・ノード構造
+%   も従来と byte 互換）。横組みでは raw box 検出も行わない
+%   （捕捉が存在しないため; 保証契約は縦組みの捕捉 body に対するもの）。
+%
+% 【raw primitive box 境界】 捕捉した本体のトークン歩行中、
+%   登録済み text-wrapper（\text/\mbox/\makebox/\mathmc/\mathgt/旧字体
+%   コマンド）の引数の外側に明示的な \hbox/\vbox/\vtop/\vcenter が
+%   現れたら実行前に ClassError で停止し \mbox/\text への置換を示す。
+%   wrapper 引数内・通常の {..} グループ内・マクロ展開で生成される
+%   primitive は契約外（docs/pdftex-internals.md に明記）。
+%
+% --------------------------------------------------------------------
+\newdimen\jlreqpdf@math@delta      % δ_t（現方向; yoko では常に 0）
+\newdimen\jlreqpdf@math@delta@yoko % 横JFM で計算した δ（部品 counter 用）
+\newbox\jlreqpdf@math@probebox
+\newbox\jlreqpdf@mathbox
+\newcount\jlreqpdf@math@grab      % one-shot guard: 0=素通り, 1=同一式再入力
+\newtoks\jlreqpdf@math@frozen@saved  % カーネル元 frozen トークンの複製
+\newtoks\jlreqpdf@math@body      % 捕捉した本体
+\newcount\jlreqpdf@math@depth    % 歩行中の wrapper 引数深度（未使用深度は0固定）
+\expandafter\let\expandafter\jlreqpdf@dollar@plain\expandafter=$%
+
+% ---- δ 計算（plcore.ltx:776-792 と同一の演算順序/sp整数演算）----
+% plcore: dimen = ht(M)+dp(M); dimen -= cHT; dimen /= 2; dimen += cdp;
+%         dimen -= dp(M)   （cHT=cht+cdp=JH+JD, cdp=JD）
+% M の測定は毎回の数式開始時（fontsize/family 変化に自動追従）。
+% JH/JD は現 JFM (.def) class 0 の h/d × 現在の zw（\jlreq@jareg）。
+\def\jlreqpdf@math@setdelta{%
+  % 欧文フォント M の無補正寸法（backend-internal box: guard）
+  \global\advance\jlreqpdf@nest1
+  \setbox\jlreqpdf@math@probebox=\hbox{M}%
+  \global\advance\jlreqpdf@nest-1
+  % 現JFM class 0 の h/d（zw 小数列を dimexpr で実寸化）
+  \expandafter\jlreqpdf@math@splitcls@i\csname jlreqpdf@jfm@class@0\endcsname
+  \@tempdima=\jlreqpdf@cls@h\jlreq@jareg   % JH
+  \@tempdimb=\jlreqpdf@cls@d\jlreq@jareg   % JD
+  % δ_t（現方向）
+  \jlreqpdf@math@delta=\ht\jlreqpdf@math@probebox
+  \advance\jlreqpdf@math@delta\dp\jlreqpdf@math@probebox
+  \advance\jlreqpdf@math@delta-\@tempdima
+  \advance\jlreqpdf@math@delta-\@tempdimb
+  \divide\jlreqpdf@math@delta\tw@
+  \advance\jlreqpdf@math@delta\@tempdimb
+  \advance\jlreqpdf@math@delta-\dp\jlreqpdf@math@probebox
+  % δ_yoko（横JFM h=0.88/d=0.12zw で同式; 部品 counter 用）
+  \jlreqpdf@math@delta@yoko=\ht\jlreqpdf@math@probebox
+  \advance\jlreqpdf@math@delta@yoko\dp\jlreqpdf@math@probebox
+  \advance\jlreqpdf@math@delta@yoko-\jlreq@jareg
+  \divide\jlreqpdf@math@delta@yoko\tw@
+  \advance\jlreqpdf@math@delta@yoko.12\jlreq@jareg
+  \advance\jlreqpdf@math@delta@yoko-\dp\jlreqpdf@math@probebox
+  % 横組み文書では行内数式シフト無し（uplatex 実測: ybaselineshift=0）
+  \ifnum\jlreqpdf@dir=0
+    \jlreqpdf@math@delta=\z@
+    \jlreqpdf@math@delta@yoko=\z@
+  \fi
+}
+% δ の再計算点は plcore と同じ「サイズ更新時」（\size@update 内の
+% \adjustbaseline と同一契約; selectfont フックは常にテキストモードで
+% 走るため M プローブが安全）。数式開始時はこのキャッシュ値を読む。
+% （数式内でのフォント変更は selectfont を経由するため同じフックで
+%  再計算される; jlreq既定では行内数式中のサイズ変更は \mathchoice
+%  分岐の hbox 内 = hmode で行われる。）
+\def\jlreqpdf@math@setdelta@font{%
+  % plcore の size@update は「サイズ変化時」のみ \adjustbaseline を
+  % 再実行する（ファミリ切替では tbaselineshift は変わらない:
+  % uplatex 実測 tt/sf でも数式内和文静止位置は同一）。
+  % 同じ契約で (1) JFM データがロード済み（クラスロード中でない）、
+  % かつ (2) サイズが前回と異なる場合のみ再計算する。
+  \@ifundefined{jlreqpdf@jfm@classlist}{}{%
+    \expandafter\ifx\csname jlreqpdf@math@lastsize\endcsname\f@size
+    \else
+      \expandafter\edef\csname jlreqpdf@math@lastsize\endcsname{\f@size}%
+      \jlreqpdf@math@setdelta
+    \fi
+  }%
+}
+\AddToHook{selectfont}{\jlreqpdf@math@setdelta@font}%
+\AtBeginDocument{\jlreqpdf@math@setdelta}%
+% class 0 メトリクス {w}{h}{d}{align}{left} の分割
+\def\jlreqpdf@math@splitcls#1#2#3#4#5{%
+  \def\jlreqpdf@cls@w{#1}\def\jlreqpdf@cls@h{#2}\def\jlreqpdf@cls@d{#3}%
+  \def\jlreqpdf@cls@align{#4}\def\jlreqpdf@cls@left{#5}%
+}
+\def\jlreqpdf@math@splitcls@i#1{\expandafter\jlreqpdf@math@splitcls#1}
+
+% ---- 捕捉入り口（frozen@everymath の中身そのもの）----
+% トークン代入のみ（\edef/\xdef 禁止: \the\everymath 起点の再展開で
+% 条件トークンの対応が崩れる——実測で "Incomplete \iffalse" を起こす。
+% toks 代入は内容を再展開しないため安全）。
+\def\jlreqpdf@math@entry{%
+  \ifnum\jlreqpdf@dir=1
+    \expandafter\jlreqpdf@math@entry@tate
+  \else
+    % yoko: 元 frozen トークンを実行して素通り（byte 互換・キャプチャ無し）
+    \expandafter\the\expandafter\jlreqpdf@math@frozen@saved
+  \fi
+}
+% tate: guard で「生の外側入口」と「同一式の内側再入力」を判別
+% カーネル/クラス内部の数式開始（tabular の $..\halign..$ 構成、
+% 目次ドットリーダーの $\m@th\mkern..$ 等）は素通りさせる:
+% LaTeX の \@tabular は \hbox\bgroup $..\halign..$ の構成で、環境全体を
+% 数式内に組み、\endtabular の $ で閉じる（latex.ltx:16554-16560）。
+% この内部 $ を捕捉すると \halign が mmode で再実行され破綻する
+% （実測: "File ended while scanning use of \jlreqpdf@math@scan"）。
+% 環境の begin/end でカウンタを 1/0 するグループ安全なフラグで
+% 判別する（ネスト対応; tabular/tabular* 両方の入口でインクリメント）。
+\newcount\jlreqpdf@math@in@array
+\def\jlreqpdf@math@array@flag{%
+  \global\advance\jlreqpdf@math@in@array\@ne
+  \aftergroup\jlreqpdf@math@array@unflag
+}
+\def\jlreqpdf@math@array@unflag{%
+  \global\advance\jlreqpdf@math@in@array-\@ne
+}
+% \jlreq@pdftex@math@internal{<body>}: クラス内部の数式（tabular 等の
+% フラグ保護実行）。body 内の数式開始は everymath 経路で
+% 「内部扱い = 素通り」となる。ボディ直後の即時解除で十分
+% （body は1つのグループ; \aftergroup は使わない）。
+\long\def\jlreq@pdftex@math@internal#1{%
+  \global\advance\jlreqpdf@math@in@array\@ne
+  #1%
+  \global\advance\jlreqpdf@math@in@array-\@ne
+}
+% グループ引数を取らない on/off 対命令。\leaders\hbox{...}<glue> の
+% ように「ボックスとグルーの間にグループ終端が入ってはならない」場所
+% で使う（\leaders のグルー走査は群終端を越えられないため、引数形
+% {\leaders\hbox{..}}\hfill は純TeXでも "Leaders not followed by
+% proper glue" になる。目次リーダー＝TOC 2パス目不良の第二要因）。
+% on と off の間で \leaders が break/エラーで中断されても破綻しない
+% よう、off 側は現在値を明示的に戻す（保存値の完全な対称性は
+% 保護対象が浅い入れ子（leader 箱内の $..$）のみのため不要）。
+\def\jlreq@pdftex@math@internal@on{%
+  \global\advance\jlreqpdf@math@in@array\@ne
+}
+\def\jlreq@pdftex@math@internal@off{%
+  \global\advance\jlreqpdf@math@in@array-\@ne
+}
+% 表示数式環境の登録（表示入口; ネイティブ処理を維持）
+\def\jlreqpdf@math@reg@disp#1{%
+  \expandafter\def\csname jlreqpdf@math@disp@#1\endcsname{1}}%
+\jlreqpdf@math@reg@disp{equation}%
+\jlreqpdf@math@reg@disp{equation*}%
+\jlreqpdf@math@reg@disp{align}%
+\jlreqpdf@math@reg@disp{align*}%
+\jlreqpdf@math@reg@disp{gather}%
+\jlreqpdf@math@reg@disp{gather*}%
+\jlreqpdf@math@reg@disp{multline}%
+\jlreqpdf@math@reg@disp{multline*}%
+\jlreqpdf@math@reg@disp{flalign}%
+\jlreqpdf@math@reg@disp{flalign*}%
+\jlreqpdf@math@reg@disp{alignat}%
+\jlreqpdf@math@reg@disp{alignat*}%
+\jlreqpdf@math@reg@disp{xalignat}%
+\jlreqpdf@math@reg@disp{xxalignat}%
+\jlreqpdf@math@reg@disp{split}%
+\jlreqpdf@math@reg@disp{aligned}%
+\jlreqpdf@math@reg@disp{gathered}%
+\jlreqpdf@math@reg@disp{cases}%
+\jlreqpdf@math@reg@disp{matrix}%
+\jlreqpdf@math@reg@disp{pmatrix}%
+\jlreqpdf@math@reg@disp{bmatrix}%
+\jlreqpdf@math@reg@disp{Bmatrix}%
+\jlreqpdf@math@reg@disp{vmatrix}%
+\jlreqpdf@math@reg@disp{Vmatrix}%
+\jlreqpdf@math@reg@disp{smallmatrix}%
+\jlreqpdf@math@reg@disp{subarray}%
+\jlreqpdf@math@reg@disp{eqnarray}%
+\jlreqpdf@math@reg@disp{eqnarray*}%
+\jlreqpdf@math@reg@disp{displaymath}%
+% tabular/tabular* の入口でフラグを立てる（\@tabular は latex.ltx:16560
+% の \hbox\bgroup $.. 構成; tabular* は \tabular を経由して同じ
+% \@tabular に入る。array 系パッケージが再定義しても構わないよう
+% begin document で「その時点の \@tabular」をラップする）。
+\AtBeginDocument{%
+  \let\jlreqpdf@math@saved@tabular\@tabular
+  \def\@tabular{\jlreqpdf@math@array@flag\jlreqpdf@math@saved@tabular}%
+}
+% 表示数式環境内の内部 $ は素通り: amsmath の equation/align 系は本体を
+% インライン数式 $..$ として組む（\endequation 内の $ と対応する）。
+% これを捕捉すると環境機構（\refstepcounter・\label・行組み立て）が
+% キャプチャ内で破綻する（実測: "Display math should end with $$" /
+% "File ended while scanning"）。表示入口は「native 処理を
+% 維持」が契約のため、これらの環境では捕捉しない。
+\def\jlreqpdf@math@if@dispenv{%
+  \expandafter\ifx\csname jlreqpdf@math@disp@\@currenvir\endcsname\relax
+    \expandafter\@secondoftwo
+  \else
+    \expandafter\@firstoftwo
+  \fi}
+\def\jlreqpdf@math@entry@tate{%
+  \ifnum\jlreqpdf@math@grab=\z@
+    \jlreqpdf@math@if@dispenv{%
+      % 表示数式環境（equation/align/…）の内部 $ は native 処理を維持
+      \jlreqpdf@math@passthrough
+    }{%
+      \ifinner
+        \ifnum\jlreqpdf@math@in@array=\z@
+          \expandafter\jlreqpdf@math@capture
+        \else
+          \expandafter\jlreqpdf@math@passthrough
+        \fi
+      \else
+        \expandafter\jlreqpdf@math@passthrough
+      \fi
+    }%
+  \fi
+}
+% 素通り: 元 frozen トークン（\aftergroup\@ignorefalse・mathlevel 更新・
+% \check@mathfonts・ユーザー \everymath）をそのまま1回実行する。
+\def\jlreqpdf@math@passthrough{%
+  \the\jlreqpdf@math@frozen@saved
+}
+% ---- 外側入口: 本体の区切り子走査捕捉 ----
+% TeX 自身の区切り付き引数走査 `#1$' を使う（旧 active-$ 実装と \( の
+% 経路で実績のある方式: 括弧対応・アクティブ byte・マクロ展開のすべてが
+% TeX の標準引数取得と同一に扱われる。walk 方式は グループ引数/CJK
+% byte 列/内部ボックス機構との干渉が相次いだため撤去）。
+% wrapper 引数（\text{..} 等）は {..} グループとして #1 内に丸ごと
+% 入るため raw box 検査の対象外（exempt と同一意味論）。
+\def\jlreqpdf@math@capture{%
+  \global\jlreqpdf@math@grab=\@ne
+  \jlreqpdf@math@scan
+}
+\long\def\jlreqpdf@math@scan#1${%
+  % raw box 検出（token level; wrapper 引数 {..} は1引数として不透過）
+  \jlreqpdf@math@rawcheck{#1}%
+  % カーネルの開始時処理（frozen の残り）を外側数式でちょうど1回。
+  % \aftergroup は使わない: 捕捉対象の $..$ が \leaders の直前にある
+  % 移動引数（目次の見出し等）で、aftergroup トークンがリーダーと
+  % 干渉して "Leaders not followed by proper glue" になる（実測:
+  % TOC 2パス目）。外側の空数式は直後に閉じるため、\@ignorefalse は
+  % $ の直後で即時に実行すればカーネルと同一位置・同一意味になる。
+  \advance\@math@level\@ne
+  \check@mathfonts
+  \the\everymath
+  % 外側数式を閉じる（空数式; \mathsurround 1対はここに付く）
+  \jlreqpdf@dollar@plain
+  \@ignorefalse
+  % 本体: 自然幅 hbox を δ 下げ（yoko では δ=0 のため無組版差）
+  \global\advance\jlreqpdf@nest1
+  \setbox\jlreqpdf@mathbox=\hbox{\m@th
+    \jlreqpdf@dollar@plain#1\jlreqpdf@dollar@plain}%
+  \global\advance\jlreqpdf@nest-1
+  \ifdim\jlreqpdf@math@delta=\z@
+    \box\jlreqpdf@mathbox
+  \else
+    \raise-\jlreqpdf@math@delta\box\jlreqpdf@mathbox
+  \fi
+  \global\jlreqpdf@math@grab=\z@
+  % 数式は欧文境界（クラス27; peek@lat と同じ意味論）
+  \global\jlreqpdf@lastclass=27
+}
+
+% ---- \(...\) 専用 wrapper ----
+% カーネルの \) は protected（DeclareRobustCommand）のため delimiter scan
+% 中に展開されず、素通りの frozen 経路では本体の終端が見つからない
+% （参照実装の指摘どおり）。よって \( は \) TOKEN を終端として
+% 本体を直接捕捉する専用 wrapper に差し替える。math 環境
+% （\math=\(, \endmath=\)）もこの経路に自動的に載る。
+% 本体中の raw box 検出は wrapper に限定した簡易走査（歩行と同一契約）。
+\protected\def\jlreqpdf@imath@paren#1\){%
+  \ifnum\jlreqpdf@dir=1
+    % δ は selectfont フックで計算済み（plcore の size@update 契約と同一）
+    \global\jlreqpdf@math@grab=\@ne
+    \jlreqpdf@math@rawcheck{#1}%
+    % 開始時処理1回（raw $ 経路と同じ; ここでは外側数式はまだ無いので
+    % 空数式を1つだけ開いて閉じ、\mathsurround 1対をその中に置く。
+    % \aftergroup は \leaders 干渉のため使用しない（raw 経路の注記参照））
+    \jlreqpdf@dollar@plain
+      \advance\@math@level\@ne
+      \check@mathfonts
+      \the\everymath
+    \jlreqpdf@dollar@plain
+    \@ignorefalse
+    \global\advance\jlreqpdf@nest1
+    \setbox\jlreqpdf@mathbox=\hbox{\m@th
+      \jlreqpdf@dollar@plain#1\jlreqpdf@dollar@plain}%
+    \global\advance\jlreqpdf@nest-1
+    \ifdim\jlreqpdf@math@delta=\z@
+      \box\jlreqpdf@mathbox
+    \else
+      \raise-\jlreqpdf@math@delta\box\jlreqpdf@mathbox
+    \fi
+    \global\jlreqpdf@math@grab=\z@
+    \global\jlreqpdf@lastclass=27
+  \else
+    % yoko: 素通り（元の \( の意味: \relax\ifmmode\@badmath\else$\fi）
+    \begingroup
+      \the\jlreqpdf@math@frozen@saved
+    \endgroup
+    \jlreqpdf@dollar@plain\relax#1\jlreqpdf@dollar@plain
+  \fi
+}
+% 簡易 raw 検査（\( 経路: トークンレベル・wrapper 引数は透過扱い）
+\def\jlreqpdf@math@rawcheck#1{%
+  \def\jlreqpdf@math@raw@ctx{0}%
+  \jlreqpdf@math@raw@loop#1\jlreqpdf@math@raw@stop
+}
+\def\jlreqpdf@math@raw@stop{\jlreqpdf@math@raw@stop}
+\def\jlreqpdf@math@raw@loop#1{%
+  \ifx\jlreqpdf@math@raw@stop#1%
+  \else
+    \jlreqpdf@math@raw@one{#1}%
+    \expandafter\jlreqpdf@math@raw@loop
+  \fi}
+\def\jlreqpdf@math@raw@one#1{%
+  \ifx\text#1\def\jlreqpdf@math@raw@ctx{1}%
+  \else\ifx\mbox#1\def\jlreqpdf@math@raw@ctx{1}%
+  \else\ifx\mathmc#1\def\jlreqpdf@math@raw@ctx{1}%
+  \else\ifx\mathgt#1\def\jlreqpdf@math@raw@ctx{1}%
+  \else\ifx\jlreq@oldfontcommand@mc#1\def\jlreqpdf@math@raw@ctx{1}%
+  \else\ifx\jlreq@oldfontcommand@gt#1\def\jlreqpdf@math@raw@ctx{1}%
+  \else\ifx\makebox#1\def\jlreqpdf@math@raw@ctx{2}%
+  \else
+    \ifnum\jlreqpdf@math@raw@ctx=\z@
+      \ifx\hbox#1\jlreqpdf@math@rawerr{hbox}%
+      \else\ifx\vbox#1\jlreqpdf@math@rawerr{vbox}%
+      \else\ifx\vtop#1\jlreqpdf@math@rawerr{vtop}%
+      \else\ifx\vcenter#1\jlreqpdf@math@rawerr{vcenter}%
+      \fi\fi\fi\fi
+    \fi
+    \def\jlreqpdf@math@raw@ctx{0}%
+  \fi\fi\fi\fi\fi\fi\fi}
+\newcount\jlreqpdf@math@rawerrcnt
+\def\jlreqpdf@math@rawerr#1{%
+  \global\advance\jlreqpdf@math@rawerrcnt\@ne
+  \ClassError{jlreq}{pdfTeX~backend:~raw~primitive~box~\string#1~in~a~captured~math~formula}{%
+  pTeX~applies~its~math~baseline~adjustment~only~to~boxes~it~can~direction-tag.\MessageBreak
+  The~pdfTeX~backend~has~no~box-direction~attribute,~so~an~unmodified~raw\MessageBreak
+  \string#1~in~a~captured~formula~is~outside~the~guaranteed~path.\MessageBreak
+  Replace~it~with~\string\mbox{...}~or~\string\text{...}~(amstext),~or~put~the\MessageBreak
+  content~in~a~registered~text~wrapper.~Macro-expanded~primitive~boxes~are\MessageBreak
+  outside~the~contract~by~design.\MessageBreak
+  \@ehc}%
+}
+
+% ---- frozen@everymath 差し替え（begin document; トークン代入のみ）----
+% \toks 代入は \the を再帰展開しない（\edef は \the\everymath 起点の
+% 二段階展開で条件トークンの対応を壊す——実測: "Incomplete \iffalse"）。
+\AtBeginDocument{%
+  \global\jlreqpdf@math@frozen@saved\expandafter{\the\frozen@everymath}%
+  \global\frozen@everymath{\jlreqpdf@math@entry}%
+  % \( 差し替え（\math/\endmath = \( /\) も同経路化）
+  \protected\def\({\relax\ifmmode\@badmath\else\expandafter\jlreqpdf@imath@paren\fi}%
+}
+
+%. ---------------- text-in-math 2層補正（tate のみ非0）----
+% 方向一致部品の counter = (δ_t − δ_yoko) × factor/1000。
+% factor: display/text=1000, script=700, scriptscript=500
+% （ptex-base.ch shift_sub_exp_box と同一係数）。
+% uplatex 実測との対応: 部品静止位置 = −δ_yoko_formula
+% （10pt: 0.35562pt 上方, 14pt: 0.42934pt 上方; 実測値）。
+\newdimen\jlreqpdf@tim@shift
+\newcount\jlreqpdf@tim@cnt
+\def\jlreqpdf@tim@raise#1{% #1 = factor (1000/700/500)
+  \ifnum\jlreqpdf@dir=1
+    \jlreqpdf@tim@shift=\jlreqpdf@math@delta
+    \advance\jlreqpdf@tim@shift-\jlreqpdf@math@delta@yoko
+    \ifdim\jlreqpdf@tim@shift=\z@\else
+      % sp 整数演算（δ×factor÷1000 を sp で丸める）
+      \jlreqpdf@tim@cnt=\jlreqpdf@tim@shift
+      \multiply\jlreqpdf@tim@cnt#1\relax
+      \divide\jlreqpdf@tim@cnt\@m
+      \jlreqpdf@tim@shift=\jlreqpdf@tim@cnt sp\relax
+      \kern\jlreqpdf@tim@shift
+    \fi
+  \fi
+}
+
+%. ---------------- mathja rework（スタイル分岐維持 + counter）----
+% \jlreq@pdftex@mathja{<mc|gt>}{<本文>}:
+%   数式内: \mathchoice の4分岐でサイズ（f@size/sf@size/ssf@size）を
+%     切り替え、対応サイズの \hbox に本文を組む（uplatex の jfam は
+%     スタイルごとに実フォントサイズで和文を組む——10pt→7pt→5pt の
+%     実測互換のため分岐維持。「box once + copy」を取ると script 環境
+%     で実サイズの縮小表現が不可能になるため、分岐ごとの組版とし、
+%     同一サイズ分岐（display/text はともに f@size）は1回の組版結果を
+%     2番目の分岐で \copy 再利用する（組版回数 4→3）。
+%     各分岐には方向一致部品の counter（factor 1000/700/500）を適用。
+%   数式外: {\<fam>family 本文}（従来どおり）。
+\newbox\jlreq@pdftex@mathja@boxa
+\def\jlreq@pdftex@mathja#1#2{%
+  \ifmmode
+    \def\jlreq@pdftex@mathja@fam{#1}%
+    \def\jlreq@pdftex@mathja@body{#2}%
+    \global\setbox\jlreq@pdftex@mathja@boxa=\box\voidb@x
+    \mathchoice
+      {\jlreq@pdftex@mathja@box@save\f@size{1000}}%
+      {\jlreq@pdftex@mathja@box@use\f@size{1000}}%
+      {\jlreq@pdftex@mathja@box@wrap\sf@size{700}}%
+      {\jlreq@pdftex@mathja@box@wrap\ssf@size{500}}%
+  \else
+    {\csname #1family\endcsname #2}%
+  \fi
+}
+% #1 = サイズ（pt数値マクロ）, #2 = counter factor
+% 「組むだけ」: box レジスタに本文を組む（emit は呼び出し側; レジスタの
+% 空き抜きをしないため display/text 分岐間で copy/box 共有が可能）。
+\def\jlreq@pdftex@mathja@box#1#2{%
+  \global\advance\jlreqpdf@nest1
+  \global\setbox\jlreq@pdftex@mathja@boxa=\hbox{%
+    \fontsize{#1}{#1}\selectfont
+    \csname\jlreq@pdftex@mathja@fam family\endcsname
+    \global\jlreqpdf@lastclass=93 \global\jlreqpdf@pend=0
+    \jlreq@pdftex@mathja@body
+  }%
+  \global\advance\jlreqpdf@nest-1
+  \global\jlreqpdf@lastclass=27
+}
+% 方向一致部品の counter（2層目）。数式モードでは \raise は直接使え
+% ないため、部品 box を raise 付きの外側 hbox で包む（mmode でも可）。
+% counter = (δ_t − δ_yoko) × factor/1000（uplatex 実測: 部品静止位置が
+% plain 位置 + (−δ_yoko) になる。raise は cross-frame 方向 = uplatex
+% の box shift_amount と同一方向）。
+\newdimen\jlreqpdf@tim@raise
+\def\jlreqpdf@tim@emit#1#2{%
+  % #1 = factor (1000/700/500), #2 = box register
+  \jlreqpdf@tim@raise=\z@
+  \ifnum\jlreqpdf@dir=1
+    \jlreqpdf@tim@shift=\jlreqpdf@math@delta
+    \advance\jlreqpdf@tim@shift-\jlreqpdf@math@delta@yoko
+    \ifdim\jlreqpdf@tim@shift=\z@\else
+      % sp 整数演算（δ×factor÷1000 を sp で丸める）
+      \jlreqpdf@tim@cnt=\jlreqpdf@tim@shift
+      \multiply\jlreqpdf@tim@cnt#1\relax
+      \divide\jlreqpdf@tim@cnt\@m
+      \jlreqpdf@tim@raise=\jlreqpdf@tim@cnt sp\relax
+    \fi
+  \fi
+  \ifdim\jlreqpdf@tim@raise=\z@
+    \copy#2%
+  \else
+    \hbox{\raise\jlreqpdf@tim@raise\copy#2}%
+  \fi
+}
+% emit path: counter raise wraps the branch box（factor は分岐ごと）。
+% display 分岐は \tim@emit が \box で消費し、text 分岐（同サイズ）は
+% \copy で再利用するため、同一サイズの本体組版は1回だけになる
+% （本体副作用 4→3; script/scriptscript は実サイズが必要なため別組版）。
+\def\jlreq@pdftex@mathja@box@save#1#2{%
+  \jlreq@pdftex@mathja@box{#1}{#2}%
+  \jlreqpdf@tim@emit{#2}\jlreq@pdftex@mathja@boxa
+}
+\def\jlreq@pdftex@mathja@box@use#1#2{%
+  \ifvoid\jlreq@pdftex@mathja@boxa
+    \expandafter\jlreq@pdftex@mathja@box\expandafter{#1}{#2}%
+  \fi
+  \jlreqpdf@tim@emit{#2}\jlreq@pdftex@mathja@boxa
+}
+\def\jlreq@pdftex@mathja@box@wrap#1#2{%
+  \jlreq@pdftex@mathja@box{#1}{#2}%
+  \jlreqpdf@tim@emit{#2}\jlreq@pdftex@mathja@boxa}
+
+%. ------------------------------------ text extraction guarantee
+% profile 読込時に \pdfgentounicode=1 が設定される（補助縦グリフの
+% ToUnicode は \pdfglyphtounicode 登録が主体）。文書が後から
+% \pdfgentounicode を 0 へ戻した場合、その出力の文字抽出は保証外
+% （U+FFFD化・喪失）なので、文書末に明示エラーで診断する
+% （受入試験も失敗にする）。
+\AtEndDocument{%
+  \ifnum\pdfgentounicode=\z@
+    \PackageError{jlreq-pdftex}{%
+      \string\pdfgentounicode=0 breaks the text extraction guarantee}{%
+    The~pdfTeX~backend~registers~per-glyph~ToUnicode~maps~for~the~vertical\MessageBreak
+    auxiliary~font~slots;~they~only~take~effect~while\MessageBreak
+    \string\pdfgentounicode=1.~The~document~set~it~to~0.\MessageBreak
+    Restore~\string\pdfgentounicode=1~before~the~end~of~the~document.\MessageBreak
+    \@ehc}%
+  \fi
+}
+% NB: jlreq.cls reads us mid-class where @ is a letter; keep it that way.
+\makeatletter

@@ -1,0 +1,67 @@
+% inhibit-one-shot.tex -- \inhibitglue の一境界抑止（両側）。
+% \inhibitglue は次の適格和文境界の JFM/自動skip を一度だけ抑止する
+% （実装済み \inhibitglue は jlreqpdf@inhibit=1 を立て，境界
+% エミッタが一度消費する）。段落・box・math 開始でフラグは初期化。
+\documentclass[pdflatex]{jlreq}
+\makeatletter
+\newbox\ibowa
+\newbox\ibowb
+\newdimen\ibodim
+\def\itest#1#2#3{% name expected-diff boxa boxb
+  \ibodim=\dimexpr\wd#2-\wd#3\relax
+  \ifdim\ibodim<\z@ \ibodim=-\ibodim \fi
+  \ifdim\ibodim<0.5pt\relax
+    \typeout{P3-PASS: #1 (diff \the\ibodim)}%
+  \else
+    \typeout{P3-FAIL: #1 (diff \the\ibodim, expected within 0.5pt)}%
+  \fi}
+
+\begin{document}
+% ---- 1. 漢\inhibitglue漢: ペアグルー（kanjiskip自然長0）が消える
+\global\jlreqpdf@lastclass=90
+\setbox\ibowa=\hbox{漢\inhibitglue 漢}%
+\global\jlreqpdf@lastclass=90
+\setbox\ibowb=\hbox{漢漢}%
+\itest{inhibit-ja-ja}{\ibowa}\ibowb
+
+% ---- 2. 漢\inhibitglue abc: JA->LA の xkanjiskip が抑止される
+%      （\inhibitglue は peek の直後に来るため peek はそれ以上進まず，
+%      境界グルーは出ない。抑止後の最初の適格境界は復活する:
+%      `漢\inhibitglue abcあ` の abc→あ 境界は xkanjiskip が入る）
+\global\jlreqpdf@lastclass=90
+\setbox\ibowa=\hbox{漢\inhibitglue abcあ}%
+% 期待値: 漢(1zw) + abc実幅 + (abc->あ の xkanjiskip 0.25zw) + あ(1zw)
+% （漢->a 境界は抑止済み——出力に現れない。abc実幅は別ボックスで測る）
+\global\jlreqpdf@lastclass=90
+\setbox\ibowb=\hbox{abc}%
+\ibodim=\dimexpr\wd\ibowa-1\jlreq@zw-\wd\ibowb-1\jlreq@zw-0.25\jlreq@zw\relax
+\ifdim\ibodim<\z@ \ibodim=-\ibodim \fi
+\ifdim\ibodim<0.5pt\relax
+  \typeout{P3-PASS: inhibit-ja-la (\the\wd\ibowa; boundary xkanjiskip present, ja->la suppressed)}%
+\else
+  \typeout{P3-FAIL: inhibit-ja-la (\the\wd\ibowa, expected 1zw+abc+0.25zw+1zw, diff \the\ibodim)}%
+\fi
+% ---- 3. 抑止は一度だけ: 漢\inhibitglue 漢漢（2文字目の境界は復活）
+\global\jlreqpdf@lastclass=90
+\setbox\ibowa=\hbox{漢\inhibitglue 漢漢}%
+\global\jlreqpdf@lastclass=90
+\setbox\ibowb=\hbox{漢漢漢}%
+\itest{inhibit-once}{\ibowa}\ibowb
+
+% ---- 4. 段落開始でフラグ初期化: 前段落の残った inhibit は次段落に
+%      漏れない（\par を挟んでも最初の境界は通常どおり）
+\global\jlreqpdf@inhibit=1
+\setbox\ibowa=\vbox{\hsize=100pt 漢漢\par}%
+\global\jlreqpdf@lastclass=90
+\setbox\ibowb=\vbox{\hsize=100pt 漢漢\par}%
+\itest{inhibit-para-reset}{\ibowa}\ibowb
+
+% ---- 5. box 開始の中立化 + aftergroup 復元（\inhibitglue は box 内の
+%      最初の適格境界だけを消す）
+\global\jlreqpdf@lastclass=90
+\setbox\ibowa=\hbox{\inhibitglue 漢漢}%
+\global\jlreqpdf@lastclass=90
+\setbox\ibowb=\hbox{漢漢}%
+\itest{inhibit-box-entry}{\ibowa}\ibowb
+
+\end{document}

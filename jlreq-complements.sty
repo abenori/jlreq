@@ -18,6 +18,8 @@
   platex .value_forbidden:n = true,
   lualatex .code:n = { \str_set:Nn \g__jlreq_complements_engine_str { lualatex } },
   lualatex .value_forbidden:n = true,
+  pdflatex .code:n = { \str_set:Nn \g__jlreq_complements_engine_str { pdflatex } },
+  pdflatex .value_forbidden:n = true,
 }
 \SetKeys [jlreq-complements] { setupname = jlreqcomplementssetup }
 \ProcessKeyOptions [jlreq-complements]
@@ -28,11 +30,17 @@
     \ifx l\jlreq@result lualatex \fi
     \ifx u\jlreq@result uplatex \fi
     \ifx p\jlreq@result platex \fi
+    \ifx d\jlreq@result pdflatex \fi
   }
 }
 \str_if_empty:NT \g__jlreq_complements_engine_str {
   \PackageError { jlreq-complements } { Cannot~determine~the~engine }{\@ehc}
 }
+% pdfTeX: supported (horizontal only). The complements' feature set
+% (thebibliography/theindex/theorem customization) is engine-neutral; the
+% only pTeX-isms are \iftdir (no vertical under pdfTeX: always false) and
+% \inhibitglue (shimmed to \relax by the jlreq-pdftex backend, or here when
+% the class is absent). The explicit error gate is therefore removed.
 
 \str_if_eq:VnTF \g__jlreq_complements_engine_str { lualatex } {
   \prg_new_conditional:Nnn \__jlreq_complements_iftdir: { T, F, TF} {
@@ -40,13 +48,45 @@
       { \prg_return_true: } { \prg_return_false: }
   }
 }{
-  \prg_new_conditional:Nnn \__jlreq_complements_iftdir: { T, F, TF} { \iftdir \prg_return_true: \else \prg_return_false: \fi }
+  \str_if_eq:VnTF \g__jlreq_complements_engine_str { pdflatex } {
+    % 局所方向（live）。jlreq-pdftex バックエンドの frame 方向
+    % \jlreqpdf@dir（0=yoko/1=tate、group-local・frame tuple で保存復帰）
+    % を読む。クラス経由でロードされた場合は主文書方向が begin document
+    % で播種済み。バックエンド不在（complements 単独ロード）の場合は
+    % \if@tate 相当の情報もないため従来どおり常に偽。
+    \cs_if_exist:cTF { jlreqpdf@dir } {
+      \prg_new_conditional:Nnn \__jlreq_complements_iftdir: { T, F, TF} {
+        \int_compare:nTF { \csname jlreqpdf@dir\endcsname = 1 }
+          { \prg_return_true: } { \prg_return_false: }
+      }
+    }{
+      \prg_new_conditional:Nnn \__jlreq_complements_iftdir: { T, F, TF} { \prg_return_false: }
+    }
+  }{
+    \prg_new_conditional:Nnn \__jlreq_complements_iftdir: { T, F, TF} { \iftdir \prg_return_true: \else \prg_return_false: \fi }
+  }
 }
 
 \@ifundefined{jlreq@zw}{
-  \str_if_eq:VnTF \g__jlreq_complements_engine_str { lualatex }
-    { \def\jlreq@zw{\zw} }
-    { \def\jlreq@zw{zw}  }
+  % クラスからロードされた場合，jlreq（lualatex）またはjlreq-pdftex
+  % バックエンド（pdflatex）が既に\zwを実寸単位として定義済みなので参照する．
+  % complements単独使用でバックエンド不在の場合:
+  %   lualatexは\zwが常に使え，pTeX/upTeXはzwが本当の単位，
+  %   pdfTeXにはzw単位が存在しないため\jlreq@jareg（バックエンドの全角
+  %   dimen）があれば使う．無ければ\zw未定義のまま残し使用時エラーで検出．
+  \str_case:VnF \g__jlreq_complements_engine_str {
+    { lualatex } { \def\jlreq@zw{\zw} }
+    { pdflatex } {
+      \@ifundefined{jlreq@jareg}{ \def\jlreq@zw{\zw} }{ \def\jlreq@zw{\jlreq@jareg} }
+    }
+  }{ \def\jlreq@zw{zw}  }
+}
+% complements単独使用時（クラス非ロード）にpdfTeXで読まれた場合，
+% \inhibitglueは未定義のまま残るとamsthm連動部で死ぬ．バックエンドが
+% ロード済みなら\relax shim済み，未ロードならここで無害化する．
+% （クラス経由のロードでは必ずバックエンドが先にいるため影響しない）
+\str_if_eq:VnT \g__jlreq_complements_engine_str { pdflatex } {
+  \@ifundefined{inhibitglue}{ \let\inhibitglue\relax }{}
 }
 
 \exp_args:Nx \@ifundefined { \g__jlreq_complements_setupname_str } {
@@ -159,7 +199,26 @@
   \prop_item:Nn \g__jlreq_complements_theindex_prop { precode }
   \bool_set_false:N \l__jlreq_complements_resttate_bool
   \bool_if:NT \g__jlreq_complements_theindex_yoko_bool {
-    \__jlreq_complements_iftdir:T { \clearpage \yoko \bool_set_true:N \l__jlreq_complements_resttate_bool }
+    \__jlreq_complements_iftdir:T {
+      \clearpage
+      \cs_if_exist:cTF { jlreqpdf@pagedir } {
+        % pdfTeX バックエンド。ページ方向フラグと版面寸法の役割交換
+        % で本当の横組みページを組む（jlreq.cls の theindex d 分岐と
+        % 同一契約; pTeX の \yoko 相当。uplatex 実測: 行長=\textheight）。
+        % NOTE: expl3 では @ は catcode 12 のため制御綴名に含められ
+        % ない。\cs_if_exist:c / \use:c で csname 経由で参照する。
+        \use:c { jlreqpdf@pagedir } {0}%
+        % 局所 frame 方向も横組みへ（pTeX \yoko 相当; cls theindex と
+        % 同じく環境全体で切替え、終端で戻す）
+        \global\jlreqpdf@dir=0
+        \hsize=\textheight
+        \linewidth\hsize
+        \columnwidth\hsize
+      }{
+        \yoko
+      }
+      \bool_set_true:N \l__jlreq_complements_resttate_bool
+    }
   }
   \bool_set:Nn \l__jlreq_complements_theindex_maincolumn_bool { \legacy_if_p:n { @twocolumn } }
   \bool_if:NTF \g__jlreq_complements_theindex_twocolumn_bool {
@@ -187,7 +246,19 @@
     \bool_if:NT \l__jlreq_complements_theindex_maincolumn_bool { \twocolumn }
   }
   \clearpage
-  \bool_if:NT \l__jlreq_complements_resttate_bool { \tate }
+  \bool_if:NT \l__jlreq_complements_resttate_bool {
+    \cs_if_exist:cTF { jlreqpdf@pagedir@restore } {
+      % pdfTeX: フラグ・局所方向・寸法を縦組みへ戻す（csname 経由;
+      % 上記NOTE参照）
+      \use:c { jlreqpdf@pagedir@restore }%
+      \global\jlreqpdf@dir=1
+      \hsize=\textwidth
+      \linewidth\textwidth
+      \columnwidth\textwidth
+    }{
+      \tate
+    }
+  }
   \prop_item:Nn \g__jlreq_complements_theindex_prop { postcode }
   \prop_item:Nn \g__jlreq_complements_theindex_prop { postsystemcode }
 }

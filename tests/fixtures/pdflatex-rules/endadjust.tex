@@ -1,0 +1,10 @@
+% 検証：行末調整（end_adjust近似）の効果測定
+% クラス2（閉じ括弧」）のend_adjustは{0,0.5}＝最大0.5zwまで詰め可．
+% 行幅75.3pt: 」あ」と続く行で，」後の0.5zwグルー(5pt)が
+% shrink対象になるため，詰めなしでは75.3ptに収まらない行が収まる．
+\documentclass[pdflatex]{jlreq}
+\begin{document}
+\hsize=75.3pt \parindent=0pt
+漢漢漢漢漢漢漢漢漢」漢漢漢漢漢漢漢漢漢漢
+\par
+\end{document}

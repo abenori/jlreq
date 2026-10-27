@@ -1,0 +1,31 @@
+% savepos-warichu-mag.tex -- acceptance gate: the savepos logical-line
+% extents under \mag=1200. Same 20zw-line/6-cell geometry as
+% savepos-warichu.tex, compiled with \mag=1200 (set before the class
+% loads, as the mag-tombow fixture does). The contract requires that
+% the logical extents stay mag-invariant.
+% Assertions (log markers, asserted on pass 2 by the runner):
+%   REST-WIDTH: current/rest in DESIGN size = the mag=1000 values
+%              (60.0pt / 140.0001pt) within 0.1pt. This is the
+%              mag fix: the class's savepos formula ends in -1truein
+%              (physical 1in, matching the \pdfhorigin=1truein
+%              compensation and the side margins' -1truein), so the
+%              logical line extents are mag-invariant.
+%   MAG-RAW   : the raw \pdflastxpos integer at the probe point
+%              (mag-independent, design-size; recorded for the doc).
+\mag=1200
+\documentclass[pdflatex,tate,paper=b5,line_length=20zw]{jlreq}
+\jlreqsetup{reference_mark=interlinear}
+\makeatletter
+\begin{document}
+あいうえお\warichu{割注一行目　割注二行目}残りの本文。
+\typeout{REST-WIDTH: current=\the\jlreq@current@linewidth,
+  rest=\the\jlreq@rest@linewidth, linewidth=\the\linewidth}%
+% RAW probe: an independent savepos at this point; pass 2 reads pass 1's
+% value. The raw sp integer must be ~1.2x the mag=1000 counterpart.
+\global\advance\jlreq@reference@count by 1
+\pdfsavepos
+\jlreq@reference@label{jlreq@mag@probe.X.\the\jlreq@reference@count}{\noexpand\the\noexpand\pdflastxpos}%
+\typeout{MAG-RAW: x=\jlreq@reference@ref{jlreq@mag@probe.X.\the\jlreq@reference@count}{0} sp,
+  mag=\the\mag}%
+続きの文章。ここで検査は終わる。\footnote{mag 下の脚注。}
+\end{document}

@@ -1,0 +1,22 @@
+% 数式内和文（jfam相当, audit B19）の検証: \mathmc/\mathgt のボックス供給。
+% pdfTeXでは \DeclareSymbolFont{mincho}/\jfam が無いため、jlreq-pdftex.styの
+% \jlreq@pdftex@mathja が \mathchoice で sizes を切り替え、対応サイズの
+% \hbox に \mcfamily/\gtfamily で本文を組む。enablejfam（既定）でのみ定義。
+% disablejfam 側は math-jfm-disablejfam.tex を参照（\mathmc 未定義 = (u)pTeX
+% と同じ意味論）。
+\documentclass[pdflatex]{jlreq}
+\usepackage{amsmath}
+\begin{document}
+行内: 明朝 $\mathmc{漢字}$、ゴシック $\mathgt{漢字}$、添字 $v_{\mathmc{添字}}$。
+別行立て:
+\[
+  \int_0^1 \mathmc{変数}\,dt = \sqrt{\mathmc{和}} + \mathgt{太字}
+\]
+二重添字 $a_{b_{\mathmc{添}}}$、複数文字 $\mathmc{日本語}\ne\mathgt{日本語}$、
+上付き $x^{\mathmc{上}}$ も正しく小さく組まれる（10pt→7pt→5pt 実測）。
+
+直打ち和文との併用 $E=mc^2（アインシュタイン）$、\text{} 経由 $\text{和文}$、
+行列内の \mathmc: $\begin{pmatrix} \mathmc{漢} & あ \\ c & d \end{pmatrix}$。
+
+数式外 \mathmc{利用} はフォント切替として寛容に扱う。
+\end{document}

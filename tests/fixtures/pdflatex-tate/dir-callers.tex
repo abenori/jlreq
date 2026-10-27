@@ -1,0 +1,36 @@
+% dir-callers.tex -- 移行済みクラス呼出しの総合ゲート。
+%   * 脚注合印（\@makefnmark d 分岐: \rlap + 箱工場）
+%   * maketitle 著者表組み（\if@tate 時の \ialign への \tate shim は
+%     d では適用しない: 内枠は既に正しい向き）
+%   * theindex（d: ページ方向フラグ + \hsize=\textheight の役割交換で
+%     本当の横組みページを出し、終端で tate 復帰）
+%   * complements の theindex_yoko 既定（tate 文書では false = tate 索引）
+\documentclass[pdflatex,tate,paper=a5]{jlreq}
+\makeatletter
+\begin{document}
+% --- CALLER-FOOTNOTE: 脚注（合印は横組で、本文は縦組）
+本文\footnote{脚注は縦組み}の続き。
+\typeout{TATE-PASS: CALLER-FOOTNOTE (footnote mark compiled via factory)}%
+% --- CALLER-MAKETITLE: 著者表組み（tabular の行は右から左の列になる）
+\title{縦組標題}
+\author{著者一 \\ 著者二}
+\date{}
+\maketitle
+\typeout{TATE-PASS: CALLER-MAKETITLE (author tabular compiled under d)}%
+\newpage
+% --- CALLER-INDEX: 索引（jlreq.cls の theindex: 常に横書きページ）
+本文。
+\begin{theindex}
+\item 阿伊, 3
+\end{theindex}
+% --- CALLER-INDEX-RESTORE: 索引後に縦組みに戻っている
+本文再開。
+\ifnum\jlreqpdf@dir=1
+  \typeout{TATE-PASS: CALLER-INDEX-RESTORE (dir=1 after theindex)}%
+\else
+  \typeout{TATE-FAIL: CALLER-INDEX-RESTORE (dir=\the\jlreqpdf@dir, expected 1)}%
+\fi
+% complements 既定の確認: tate 文書では theindex_yoko=false（索引自体は
+% tate のまま。uplatex 同一挙動）。横組み索引ページは theindex_yoko=true
+% 時の dir-index-yoko fixture が検査する。
+\end{document}

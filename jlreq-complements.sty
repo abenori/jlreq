@@ -208,14 +208,6 @@
   }
 }
 
-\keys_set:Vn \g__jlreq_complements_setupname_str {
-  theorem_beforeafter_space=0.5\baselineskip,
-  theorem_indent=0pt,
-  theorem_label_font = {\bfseries\gtfamily\sffamily},
-  theorem_font = {\normalfont},
-  proof_label_font = {\bfseries\gtfamily\sffamily},
-}
-
 \let\jlreq@complements@original@@begintheorem=\@begintheorem
 \let\jlreq@complements@original@@opargbegintheorem=\@opargbegintheorem
 \def\@begintheorem#1#2{%
@@ -256,6 +248,14 @@
     {\dimexpr\prop_item:Nn \g__jlreq_complements_theorem_prop { indent } }
     {\prop_item:Nn \g__jlreq_complements_theorem_prop { label_font } }
     {}{1\jlreq@zw}{\thmname{##1}\thmnumber{\ ##2}\thmnote{（##3）}}
+}
+
+\keys_set:Vn \g__jlreq_complements_setupname_str {
+  theorem_beforeafter_space=0.5\baselineskip,
+  theorem_indent=0pt,
+  theorem_label_font = {\bfseries\gtfamily\sffamily},
+  theorem_font = {\normalfont},
+  proof_label_font = {\bfseries\gtfamily\sffamily},
 }
 
 \@ifpackageloaded{amsthm}{

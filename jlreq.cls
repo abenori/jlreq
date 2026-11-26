@@ -580,7 +580,7 @@
 % 現在行の残りを得る．
 \ifx l\jlreq@engine
   % 以下のコードはLuaTeX-jaのバグ？に依存している
-  % https://ja.osdn.net/projects/luatex-ja/ticket/36489
+  % https://github.com/luatexja/luatexja/issues/61
   \def\jlreq@calc@current@linewidth@onecolumn{%
     \dimexpr
        \jlreq@reference@ref{jlreq@rest@width.pos.X.\the\jlreq@reference@count}{0} sp - \@totalleftmargin -

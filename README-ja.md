@@ -1,7 +1,7 @@
 # jlreq
 
 ## これは何？
-[日本語組版処理の要件](https://www.w3.org/TR/jlreq/?lang=ja)の実装を試みる[LuaTeX-ja](https://osdn.jp/projects/luatex-ja/wiki/FrontPage) / pLaTeX / upLaTeX用のクラスファイルと，それに必要なJFMの組み合わせです．
+[日本語組版処理の要件](https://www.w3.org/TR/jlreq/?lang=ja)の実装を試みる[LuaTeX-ja](https://github.com/luatexja/luatexja) / pLaTeX / upLaTeX用のクラスファイルと，それに必要なJFMの組み合わせです．
 
 ## 提供されるもの
 クラスファイルjlreq.clsと，横書きLuaTeX-ja用のJFMであるjfm-jlreq.luaが用意されています．また，縦書きのJFMやpLaTeX / upLaTeX用のJFMを生成するいくつかのスクリプトがあります．

@@ -1,7 +1,7 @@
 # jlreq-trimmarks
 
 ## What is this?
-This package outputs trim (register) marks. It works with [LuaTeX-ja](https://osdn.jp/projects/luatex-ja/wiki/FrontPage) / pLaTeX / upLaTeX / dvipdfmx / Dvips / dviout and any document class (not only with jlreq class). It provides the following.
+This package outputs trim (register) marks. It works with [LuaTeX-ja](https://github.com/luatexja/luatexja) / pLaTeX / upLaTeX / dvipdfmx / Dvips / dviout and any document class (not only with jlreq class). It provides the following.
 
 * Output trim marks
 * Set TrimBox and BleedBox if possible.

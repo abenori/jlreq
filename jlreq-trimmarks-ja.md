@@ -1,7 +1,7 @@
 # jlreq-trimmarks
 
 ## これは何？
-トンボ（トリムマーク）を出力するためのパッケージです．[LuaTeX-ja](https://osdn.jp/projects/luatex-ja/wiki/FrontPage) / pLaTeX / upLaTeX / dvipdfmx / Dvips / dviout上で動きます．jlreqクラスファイルのみでなく，汎用的に動くように設計されています．以下の機能を提供します．
+トンボ（トリムマーク）を出力するためのパッケージです．[LuaTeX-ja](https://github.com/luatexja/luatexja) / pLaTeX / upLaTeX / dvipdfmx / Dvips / dviout上で動きます．jlreqクラスファイルのみでなく，汎用的に動くように設計されています．以下の機能を提供します．
 
 * トンボの出力
 * 可能な場合には，TrimBox / BleedBoxを設定
